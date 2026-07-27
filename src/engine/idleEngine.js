@@ -5,11 +5,12 @@
 
 import { getLevelFromXP } from './experience.js'
 import {
-  effectiveStrength, meleeMaxHit, effectiveAttack, maxAttackRoll,
+  effectiveStrength, wornMeleeMaxHit, effectiveAttack, maxAttackRoll,
   maxDefenceRoll, hitChance, getMeleeStyleBonuses,
-  effectiveRanged, rangedMaxHit, getRangedStyleBonus,
+  effectiveRanged, wornRangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
+import { poweredStaffMagicBaseDamage } from './combatPrimitives.js'
 import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage, chargedScaleArmourSlots } from './equipment.js'
 import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops, usesShardglassGatherTool, resolveShardglassToolSource, consumeShardglassGatherCharge, SHARDGLASS_GATHER_TOOLS } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
@@ -988,13 +989,14 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
   if (combatType === 'ranged') {
     const styleBonus = getRangedStyleBonus(stance)
     const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
-    maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * voidMult.rangedDamage)
+    maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * voidMult.rangedDamage)
     atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.ranged || 0)
   } else if (combatType === 'magic') {
     const effMag = effectiveMagic(playerStats.magic || 1)
-    // Powered staffs (Sanguinesti, Trident) scale max hit with magic level: floor(magic/3)+9.
-    const baseDamage = spell ? spell.baseDamage : Math.max(1, Math.floor((playerStats.magic || 1) / 3) + 9)
+    const baseDamage = spell
+      ? spell.baseDamage
+      : poweredStaffMagicBaseDamage(playerStats.magic || 1, equipment?.weapon ? itemsData[equipment.weapon.itemId] : null)
     const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
     maxHit = magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat)
     atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy)
@@ -1004,7 +1006,7 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     const weaponStyle = getMeleeAttackStyle(equipment, itemsData)
     const styleBonuses = getMeleeStyleBonuses(stance)
     const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-    maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * voidMult.meleeDamage)
+    maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * voidMult.meleeDamage)
     const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
     atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * voidMult.meleeAccuracy)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle] || 0)

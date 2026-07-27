@@ -2315,6 +2315,15 @@
     "shopValue": 221,
     "isGeneralStore": false
   },
+  "shardglass_arrowtips": {
+    "id": "shardglass_arrowtips",
+    "name": "Shardglass Arrowtips",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 2850,
+    "isGeneralStore": false,
+    "description": "Knapped shardglass points, waiting on a shaft."
+  },
   "steel_arrow": {
     "id": "steel_arrow",
     "legacy_item_id": "steel_arrow",
@@ -2379,6 +2388,25 @@
     "shopValue": 78,
     "isGeneralStore": false
   },
+  "shardglass_arrow": {
+    "id": "shardglass_arrow",
+    "name": "Shardglass Arrow",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "arrow",
+    "requirements": {
+      "ranged": 75
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 85,
+      "magicDamage": 0
+    },
+    "shopValue": 2894,
+    "isGeneralStore": false,
+    "description": "Arrows tipped with knapped shardglass. Fletched, not found."
+  },
   "dragon_arrow": {
     "id": "dragon_arrow",
     "legacy_item_id": "dragon_arrow",
@@ -2395,8 +2423,27 @@
       "rangedStrength": 60,
       "magicDamage": 0
     },
-    "shopValue": 2894,
+    "shopValue": 900,
     "isGeneralStore": false
+  },
+  "seraphic_arrow": {
+    "id": "seraphic_arrow",
+    "name": "Seraphic Arrow",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "arrow",
+    "requirements": {
+      "ranged": 85
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 100,
+      "magicDamage": 0
+    },
+    "shopValue": 4200,
+    "isGeneralStore": false,
+    "description": "Feathered with something that was never a bird. Hauled out of the deep raids by the quiverful."
   },
   "shortbow_u": {
     "id": "shortbow_u",
@@ -2479,7 +2526,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 6,
       "magicDamage": 0
     },
     "requirements": {
@@ -2515,7 +2562,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 13,
       "magicDamage": 0
     },
     "requirements": {
@@ -2551,7 +2598,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 21,
       "magicDamage": 0
     },
     "requirements": {
@@ -2587,7 +2634,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 30,
       "magicDamage": 0
     },
     "requirements": {
@@ -2623,7 +2670,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 42,
       "magicDamage": 0
     },
     "requirements": {
@@ -2874,7 +2921,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 58,
+      "meleeStrength": 62,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -3795,7 +3842,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 29,
+      "meleeStrength": 30,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -3830,7 +3877,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 44,
+      "meleeStrength": 42,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -4591,7 +4638,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 12,
       "magicDamage": 0
     },
     "requirements": {
@@ -4627,7 +4674,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 21,
       "magicDamage": 0
     },
     "requirements": {
@@ -4663,7 +4710,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 32,
       "magicDamage": 0
     },
     "requirements": {
@@ -5911,7 +5958,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 0,
-      "slash": 82,
+      "slash": 98,
       "crush": 0,
       "magic": 0,
       "ranged": 0
@@ -5924,7 +5971,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 82,
+      "meleeStrength": 104,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -5934,7 +5981,7 @@
     "specialAttack": {
       "type": "stun",
       "energyCost": 50,
-      "description": "Energy Drain: Lashes at the target \u2014 if it connects, the creature is stunned for one attack cycle, skipping its next hit."
+      "description": "Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit."
     },
     "shopValue": 1214445,
     "isGeneralStore": false,
@@ -6053,7 +6100,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 8,
-      "slash": 67,
+      "slash": 74,
       "crush": -2,
       "magic": 0,
       "ranged": 0
@@ -6066,7 +6113,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 66,
+      "meleeStrength": 84,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -6107,7 +6154,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 69,
+      "meleeStrength": 80,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -7021,7 +7068,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 42,
+      "rangedStrength": 58,
       "magicDamage": 0
     },
     "requirements": {
@@ -7057,7 +7104,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 6,
+    "attackSpeed": 5,
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 0,
@@ -7074,7 +7121,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 132,
+      "meleeStrength": 152,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -7098,7 +7145,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 6,
+    "attackSpeed": 5,
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 0,
@@ -7115,7 +7162,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 132,
+      "meleeStrength": 152,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -7139,7 +7186,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 6,
+    "attackSpeed": 5,
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 0,
@@ -7156,7 +7203,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 132,
+      "meleeStrength": 152,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -7181,7 +7228,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 6,
+    "attackSpeed": 5,
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 0,
@@ -7198,7 +7245,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 132,
+      "meleeStrength": 152,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -7239,7 +7286,8 @@
     "otherBonus": {
       "meleeStrength": 14,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "meleeDamage": 7
     },
     "requirements": {
       "defence": 65
@@ -7272,7 +7320,8 @@
     "otherBonus": {
       "meleeStrength": 10,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "meleeDamage": 6
     },
     "requirements": {
       "defence": 65
@@ -7305,7 +7354,8 @@
     "otherBonus": {
       "meleeStrength": 9,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "meleeDamage": 5
     },
     "requirements": {
       "defence": 65
@@ -7447,7 +7497,7 @@
     "attackSpeed": 4,
     "attackStyle": "slash",
     "attackBonus": {
-      "stab": 18,
+      "stab": 76,
       "slash": 38,
       "crush": -2,
       "magic": 0,
@@ -7461,7 +7511,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 82,
+      "meleeStrength": 104,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -7472,7 +7522,7 @@
       "type": "lightning",
       "energyCost": 100,
       "lightningMax": 16,
-      "description": "Lumina Lightning: A two-hit attack \u2014 a melee strike followed by a divine lightning bolt dealing 1\u201316 magic damage (always hits)."
+      "description": "Lumina Lightning: A two-hit attack — a melee strike followed by a divine lightning bolt dealing 1–16 magic damage (always hits)."
     },
     "shopValue": 169802,
     "isGeneralStore": false,
@@ -7515,7 +7565,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 90,
+      "rangedStrength": 112,
       "magicDamage": 0
     },
     "requirements": {
@@ -7556,7 +7606,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 75,
+      "meleeStrength": 88,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -7652,7 +7702,8 @@
     "otherBonus": {
       "meleeStrength": 16,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "meleeDamage": 6
     },
     "requirements": {},
     "shopValue": 3252765,
@@ -8762,7 +8813,9 @@
     "otherBonus": {
       "meleeStrength": 20,
       "rangedStrength": 20,
-      "magicDamage": 20
+      "magicDamage": 20,
+      "meleeDamage": 6,
+      "rangedDamage": 6
     },
     "requirements": {},
     "shopValue": 0,
@@ -9009,7 +9062,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 100,
+      "rangedStrength": 132,
       "magicDamage": 0
     },
     "requirements": {
@@ -9034,7 +9087,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 100,
-      "slash": 120,
+      "slash": 132,
       "crush": 0,
       "magic": 0,
       "ranged": 0
@@ -9047,7 +9100,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 110,
+      "meleeStrength": 126,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -9121,7 +9174,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 85,
+      "rangedStrength": 106,
       "magicDamage": 0
     },
     "requirements": {
@@ -9328,7 +9381,7 @@
     "attackBonus": {
       "stab": 0,
       "slash": 0,
-      "crush": 135,
+      "crush": 150,
       "magic": 0,
       "ranged": 0
     },
@@ -9340,7 +9393,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 147,
+      "meleeStrength": 168,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -9403,7 +9456,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "scalesWithMagic": true,
@@ -9412,7 +9465,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 70
+      "ranged": 110
     },
     "defenceBonus": {
       "stab": 0,
@@ -9423,7 +9476,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 20,
+      "rangedStrength": 90,
       "magicDamage": 0
     },
     "requirements": {
@@ -9441,10 +9494,10 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "stab",
     "attackBonus": {
-      "stab": 55,
+      "stab": 122,
       "slash": 50,
       "crush": 0,
       "magic": 0,
@@ -9458,7 +9511,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 60,
+      "meleeStrength": 118,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -9469,7 +9522,7 @@
     "specialAttack": {
       "type": "fang",
       "energyCost": 25,
-      "description": "Strikes with deadly precision \u2014 rolls accuracy twice and avoids low hits, dealing 15%\u201385% of max."
+      "description": "Strikes with deadly precision — rolls accuracy twice and avoids low hits, dealing 15%–85% of max."
     },
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9648,15 +9701,21 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "magic",
     "poweredStaff": true,
     "magicDamageMultiplier": 3,
-    "magicDamageMultiplierCap": 100,
+    "magicDamageMultiplierCap": 170,
     "scaleCharged": true,
     "chargeRecipe": [
-      { "itemId": "chaos_rune", "qty": 5 },
-      { "itemId": "soul_rune", "qty": 2 }
+      {
+        "itemId": "chaos_rune",
+        "qty": 5
+      },
+      {
+        "itemId": "soul_rune",
+        "qty": 2
+      }
     ],
     "iconId": "wizard_staff",
     "attackBonus": {
@@ -9683,7 +9742,8 @@
     },
     "shopValue": 1500000000,
     "isGeneralStore": false,
-    "isBossUnique": true
+    "isBossUnique": true,
+    "poweredStaffBaseDamage": 39
   },
   "zyrite_amulet": {
     "id": "zyrite_amulet",
@@ -9849,7 +9909,8 @@
     "otherBonus": {
       "meleeStrength": 25,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "meleeDamage": 12
     },
     "requirements": {},
     "shopValue": 20539001,
@@ -10087,10 +10148,10 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "stab",
     "attackBonus": {
-      "stab": 94,
+      "stab": 144,
       "slash": 55,
       "crush": 0,
       "magic": 0,
@@ -10104,7 +10165,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 89,
+      "meleeStrength": 142,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -10122,11 +10183,11 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 55,
-      "slash": 94,
+      "slash": 144,
       "crush": 0,
       "magic": 0,
       "ranged": 0
@@ -10139,7 +10200,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 89,
+      "meleeStrength": 142,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -10167,11 +10228,11 @@
     "scaleCharged": true,
     "chargeItemId": "blood_rune",
     "scythePassive": true,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 70,
-      "slash": 125,
+      "slash": 155,
       "crush": 30,
       "magic": 0,
       "ranged": 0
@@ -10184,7 +10245,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 75,
+      "meleeStrength": 132,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -10234,7 +10295,8 @@
     },
     "shopValue": 150000000,
     "isGeneralStore": false,
-    "isBossUnique": true
+    "isBossUnique": true,
+    "poweredStaffBaseDamage": 36
   },
   "avernal_defender": {
     "id": "avernal_defender",
@@ -10260,7 +10322,8 @@
     "otherBonus": {
       "meleeStrength": 8,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "meleeDamage": 5
     },
     "requirements": {
       "attack": 70,
@@ -11013,7 +11076,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 78,
+      "rangedStrength": 96,
       "magicDamage": 0
     },
     "requirements": {
@@ -14429,7 +14492,7 @@
     },
     "isUntradeable": false,
     "requirements": {
-      "ranged": 65
+      "ranged": 85
     },
     "isClueReward": true
   },
@@ -15626,7 +15689,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 0,
-      "slash": 90,
+      "slash": 108,
       "crush": 0,
       "magic": 0,
       "ranged": 0
@@ -15639,7 +15702,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 86,
+      "meleeStrength": 112,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -15649,7 +15712,7 @@
     "specialAttack": {
       "type": "stun",
       "energyCost": 50,
-      "description": "Energy Drain: Lashes at the target \u2014 if it connects, the creature is stunned for one attack cycle, skipping its next hit."
+      "description": "Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit."
     },
     "shopValue": 1714037,
     "isGeneralStore": false,
@@ -15694,10 +15757,10 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "stab",
     "attackBonus": {
-      "stab": 89,
+      "stab": 158,
       "slash": 52,
       "crush": 0,
       "magic": 0,
@@ -15711,7 +15774,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 84,
+      "meleeStrength": 156,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -15732,11 +15795,11 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 60,
-      "slash": 130,
+      "slash": 168,
       "crush": 0,
       "magic": 0,
       "ranged": 0
@@ -15749,7 +15812,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 122,
+      "meleeStrength": 172,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -15770,12 +15833,12 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 6,
+    "attackSpeed": 5,
     "attackStyle": "crush",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
-      "crush": 128,
+      "crush": 172,
       "magic": 0,
       "ranged": 0
     },
@@ -15787,7 +15850,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 139,
+      "meleeStrength": 218,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -15827,7 +15890,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 85,
+      "rangedStrength": 120,
       "magicDamage": 0
     },
     "requirements": {
@@ -16560,7 +16623,8 @@
     "otherBonus": {
       "meleeStrength": 14,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "meleeDamage": 8
     },
     "requirements": {
       "attack": 80,
@@ -16807,7 +16871,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 30,
-      "slash": 70,
+      "slash": 128,
       "crush": -2,
       "magic": 0,
       "ranged": 0
@@ -16820,7 +16884,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 75,
+      "meleeStrength": 124,
       "rangedStrength": 0,
       "magicDamage": 0,
       "slayerTaskAccuracyPercent": 30,
@@ -16949,7 +17013,7 @@
     "attackSpeed": 4,
     "attackStyle": "stab",
     "attackBonus": {
-      "stab": 75,
+      "stab": 88,
       "slash": 5,
       "crush": -3,
       "magic": 0,
@@ -16963,7 +17027,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 72,
+      "meleeStrength": 106,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -17005,7 +17069,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 58,
+      "rangedStrength": 72,
       "magicDamage": 0
     },
     "requirements": {
@@ -17086,7 +17150,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 55,
+      "rangedStrength": 64,
       "magicDamage": 0
     },
     "requirements": {
@@ -17147,7 +17211,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 28,
-      "slash": 74,
+      "slash": 84,
       "crush": -2,
       "magic": 0,
       "ranged": 0
@@ -17160,7 +17224,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 76,
+      "meleeStrength": 98,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -17182,7 +17246,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": -5,
-      "slash": 76,
+      "slash": 86,
       "crush": 0,
       "magic": 0,
       "ranged": 0
@@ -17195,7 +17259,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 80,
+      "meleeStrength": 100,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -17232,7 +17296,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 62,
+      "rangedStrength": 78,
       "magicDamage": 0
     },
     "requirements": {
@@ -17641,7 +17705,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 25,
-      "slash": 69,
+      "slash": 78,
       "crush": -2,
       "magic": 0,
       "ranged": 0
@@ -17654,7 +17718,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 69,
+      "meleeStrength": 88,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -17976,13 +18040,13 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 16,
+      "magic": 20,
       "ranged": -3
     },
     "defenceBonus": {
@@ -18003,7 +18067,9 @@
     "shopValue": 100000000,
     "isGeneralStore": false,
     "isBossUnique": true,
-    "description": "A hollow staff torn from the Duskmare. Attune an orb to unlock its true power."
+    "description": "A hollow staff torn from the Duskmare. Attune an orb to unlock its true power.",
+    "poweredStaff": true,
+    "poweredStaffBaseDamage": 29
   },
   "umbral_orb": {
     "id": "umbral_orb",

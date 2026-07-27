@@ -206,7 +206,7 @@ export function getEquipmentBonuses(equipment, itemsData) {
   const bonuses = {
     attackBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
     defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
-    otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 }
+    otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0, meleeDamage: 0, rangedDamage: 0 }
   }
 
   for (const slot of EQUIPMENT_SLOTS) {

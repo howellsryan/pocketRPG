@@ -33,6 +33,16 @@ You have 11 equipment slots: weapon, ammo, head, body, legs, shield, neck, glove
 
 Ranged weapons need matching ammunition equipped in your ammo slot (for example arrows for a bow), and ammunition is consumed as you shoot — in live and idle combat alike. If you run out mid-fight your attacks stop with a warning, so stock plenty before long idle sessions. A few special weapons use built-in charges instead of ammunition.
 
+Both halves of a ranged setup carry damage: the bow or crossbow itself and the ammunition loaded into it. The arrow ladder runs Bronze through Runeforged and Dragon, then **Shardglass Arrows** (Ranged 75), knapped from shardglass shards at Smithing 85 and fletched at Fletching 85, and finally **Seraphic Arrows** (Ranged 85), which drop by the quiverful from the endgame raids. Crossbow bolts run their own ladder up to the enchanted dragon bolts, which carry procs as well as raw strength.
+
+## Magic: spells and powered staves
+
+Standard combat spells step through five tiers — Strike, Bolt, Blast, Wave and Surge — each a real jump in base damage over the one below, so the spell you can cast keeps pace with your Magic level. Casting speed comes from the staff you hold, which is why a faster staff is an upgrade even when its bonuses match.
+
+Powered staves are the other path: they need no runes and scale their base hit with your Magic level instead of using a spell. They are tiered, so a better staff hits harder at the same level — the Duskmare Staff, then the Trident of Venom, the Sanguine Staff, and the Shadow of Tumaken at the top, which triples your worn magic damage.
+
+Worn **magic damage %** multiplies whatever you cast. Melee and Ranged have the same lever: prestige gear like the Amulet of Torment, Ferocious Gloves and the Grondar set carries a melee damage percentage that multiplies your max hit on every swing, specials included.
+
 ## Special attacks
 
 Some weapons have a special attack, triggered manually with the ⚡ Special Attack button during a fight. Special attack energy runs 0–100: each fight starts at full energy, using a special drains its energy cost, and energy refills when you get a kill. Specials never fire automatically or while offline. Each weapon's special has its own effect — stuns, heals, bonus damage and more — shown on the button. The Sunbearer Ring keeps your special attack energy pinned at 100% in PvE, letting you fire specials back-to-back with no cooldown.
@@ -89,7 +99,7 @@ Quests are journeys across the world map: meet the requirements (skill levels, q
 
 ## Kingdom of Royals
 
-Completing the "Crown Complications" quest unlocks Kingdom of Royals on the Adventures screen. Deposit coins into the royal coffer (up to 25,000,000) to fund a kingdom that gathers resources for you, even while you're offline — a full coffer runs for about 5 days. Assign your 4 labour points across Mining, Fishing, Woodcutting and Farm Herbs (any split, e.g. 1 each or all 4 on one); each point works at half a real player's pace, producing ore, logs, fish or herbs weighted toward whatever your own skill level can reach — rarer, higher-level resources are less common than basic ones. Funding the kingdom costs a flat 5,000,000 coins per 24 hours regardless of how many points are allocated; the coffer stops draining and gathering stops the instant it runs dry. Gathered resources pile up as loot in the kingdom's treasury — they don't auto-bank, so check the Gathered Loot section on the Kingdom screen and withdraw it to your bank yourself. You can withdraw unspent coffer coins back to your bank at any time too.
+Completing the "Crown Complications" quest unlocks Kingdom of Royals on the Adventures screen. Deposit coins into the royal coffer (up to 25,000,000) to fund a kingdom that gathers resources for you, even while you're offline — a full coffer runs for about 5 days. Assign your 4 labour points across Mining, Fishing, Woodcutting, Farm Herbs and Gathering (any split, e.g. 1 each or all 4 on one); each point works at half a real player's pace, producing ore, logs, fish or herbs weighted toward whatever your own skill level can reach — rarer, higher-level resources are less common than basic ones. Gathering is the exception with no level requirement at all: those workers bring back a random mix of everything the Gather screen offers — eye of newt, limpwurt root, snape grass, white berries, red spiders' eggs, potato cactus, Wine of Krylth, bowstring, seaweed and buckets of sand — so the kingdom can keep you stocked with potion secondaries. It won't make planks or soda ash, as kingdom workers carry no materials or coins of their own. Funding the kingdom costs a flat 5,000,000 coins per 24 hours regardless of how many points are allocated; the coffer stops draining and gathering stops the instant it runs dry. Gathered resources pile up as loot in the kingdom's treasury — they don't auto-bank, so check the Gathered Loot section on the Kingdom screen and withdraw it to your bank yourself. You can withdraw unspent coffer coins back to your bank at any time too.
 
 ## Clue scrolls
 

@@ -284,11 +284,13 @@ describe('computeBotIntents', () => {
 
   it('swaps to a finisher weapon when the bow cannot KO but the bag weapon can', () => {
     // Opponent on very low hp: a melee finisher (dagger spec) should be able
-    // to KO when the equipped bow's snapshot cannot reach.
+    // to KO when the equipped bow's snapshot cannot reach. The bow is
+    // deliberately the weakest in the game — a mid-tier bow out-damages both
+    // bag finishers outright, so the swap branch would never be reached.
     const bot = makeCombatant({
       equipment: {
-        weapon: { itemId: 'magic_shortbow' },
-        ammo:   { itemId: 'dragon_arrow', quantity: 500 },
+        weapon: { itemId: 'shortbow' },
+        ammo:   { itemId: 'bronze_arrow', quantity: 500 },
       },
       activePotions: { super_combat: 50 },
       activeCombatPrayer: 'rigour',
@@ -297,8 +299,8 @@ describe('computeBotIntents', () => {
       eatCooldown: 0,
       combatType: 'ranged',
     })
-    // hp 50 is above the bow snapshot ceiling (36) but within the dragon
-    // dagger double-hit burst (56), so the bot should swap to the dagger.
+    // hp 50 is above the bow snapshot ceiling but within the dragon dagger
+    // double-hit burst, so the bot should swap to the dagger.
     const state = makeState(bot, makeOpponent({ hp: 50, attackTimer: 4 }))
     const intents = computeBotIntents(state, 99, itemsData)
     const equip = intents.find((i: any) => i.type === 'equip')
@@ -339,8 +341,8 @@ describe('computeBotIntents', () => {
     // (double-hit burst 56 >= 52) to push the kill through the heal.
     const bot = makeCombatant({
       equipment: {
-        weapon: { itemId: 'magic_shortbow' },
-        ammo:   { itemId: 'dragon_arrow', quantity: 500 },
+        weapon: { itemId: 'shortbow' },
+        ammo:   { itemId: 'bronze_arrow', quantity: 500 },
       },
       activePotions: { super_combat: 50 },
       activeCombatPrayer: 'rigour',

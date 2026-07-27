@@ -6,6 +6,7 @@
  */
 import skillsData from '../data/skills.json'
 import farmingData from '../data/farming.json'
+import { GATHER_TASKS } from './gatherTasks.js'
 import { TICK_DURATION } from '../utils/constants.js'
 
 // Curated action-id ladders per gathering skill (excludes non-ladder actions
@@ -45,6 +46,20 @@ function buildHerbTiers() {
     .sort((a, b) => a.level - b.level)
 }
 
+// Gathering — the Gather screen's tasks (potion secondaries, sand, seaweed,
+// bowstring). Only the tasks that consume nothing are eligible: a kingdom
+// worker has no pack and no purse, so a task with `materials` or `gpCost`
+// (the plank/soda-ash/nest conversions) would mint its product from nothing.
+// GATHER_TASKS carry no skill or level, so every tier is level 1 — the
+// category is ungated and every task is equally likely.
+function buildGatherTiers() {
+  return GATHER_TASKS
+    .filter(t => !t.materials && !t.gpCost)
+    .map(t => ({ id: t.id, product: t.product, level: 1, actionMs: t.ticks * TICK_DURATION, weight: tierWeight(1) }))
+}
+
+let gatherTiers = null
+
 export const KINGDOM_RESOURCE_TIERS = {
   mining: buildSkillTiers('mining', MINING_TIER_IDS),
   woodcutting: buildSkillTiers('woodcutting', WOODCUTTING_TIER_IDS),
@@ -52,6 +67,12 @@ export const KINGDOM_RESOURCE_TIERS = {
   // Farm Herbs — gated/weighted by Farming level (not Herblore); output is
   // the plain herb crop item, this game has no grimy-herb variant.
   farming: buildHerbTiers(),
+  // Lazy: reading GATHER_TASKS at module-eval time is the §12 TDZ hazard that
+  // aborts the whole inline bundle if gatherTasks.js is concatenated later.
+  get gathering() {
+    if (!gatherTiers) gatherTiers = buildGatherTiers()
+    return gatherTiers
+  },
 }
 
 /** Tiers the kingdom can currently produce for a category, given a skill level. */

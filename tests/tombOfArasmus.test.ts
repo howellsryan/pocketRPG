@@ -155,12 +155,15 @@ describe('Tomb of Arasmus item effects', () => {
     }
   })
 
-  it('caps the Shadow of Tumaken tripled magic damage at +100% (OSRS parity)', () => {
+  it('caps the Shadow of Tumaken tripled magic damage at its authored ceiling', () => {
     const shadow = (itemsData as any).shadow_of_tumaken
-    expect(shadow.magicDamageMultiplierCap).toBe(100)
+    // The game's priciest weapon, so the cap is set above OSRS parity (+100%)
+    // to keep it the strongest magic weapon rather than a slower Trident.
+    const cap = shadow.magicDamageMultiplierCap
+    expect(cap).toBeGreaterThan(100)
     const equip = { weapon: { itemId: 'shadow_of_tumaken' } }
-    // 99% worn × 3 = 297% → capped to 100
-    expect(getEffectiveWornMagicDamage(99, equip, itemsData as any)).toBe(100)
+    // worn × 3, clamped to the cap
+    expect(getEffectiveWornMagicDamage(99, equip, itemsData as any)).toBe(cap)
     // below the cap the full tripled value still applies (20 × 3 = 60)
     expect(getEffectiveWornMagicDamage(20, equip, itemsData as any)).toBe(60)
     // a non-multiplier weapon is never capped and never scaled

@@ -15,7 +15,7 @@ export const KINGDOM_COINS_PER_MS = KINGDOM_DAILY_COST / DAY_MS
 
 export const DEFAULT_KINGDOM = Object.freeze({
   cofferBalance: 0,
-  allocations: Object.freeze({ mining: 0, fishing: 0, woodcutting: 0, farming: 0 }),
+  allocations: Object.freeze({ mining: 0, fishing: 0, woodcutting: 0, farming: 0, gathering: 0 }),
   lastTickAt: null,
   pendingLoot: Object.freeze({}),
 })
@@ -129,6 +129,9 @@ export function simulateKingdom(kingdom, stats, elapsedMs, itemsData = {}) {
   for (const category of KINGDOM_CATEGORIES) {
     const points = state.allocations[category]
     if (points <= 0) continue
+    // 'gathering' has no matching skill in `stats`, which lands on level 1 —
+    // correct, because its tiers are all level 1 (the Gather screen's tasks
+    // carry no level requirement either).
     const level = getLevelFromXP(stats?.[category]?.xp || 0)
     const tiers = getEligibleTiers(category, level)
     if (tiers.length === 0) continue

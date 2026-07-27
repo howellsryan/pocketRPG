@@ -329,10 +329,14 @@ describe('New Items', () => {
     expect((wand as any).elemental).toBe('water_rune')
   })
 
-  it('elder maul should have crush +135 and strength +147', () => {
-    const maul = itemsData['ancient_maul' as keyof typeof itemsData]
-    expect((maul as any).attackBonus.crush).toBe(135)
-    expect((maul as any).otherBonus.meleeStrength).toBe(147)
+  it('ancient maul carries the biggest strength budget of the 75-tier melee weapons', () => {
+    const maul = itemsData['ancient_maul' as keyof typeof itemsData] as any
+    expect(maul.attackSpeed).toBe(5)
+    for (const rivalId of ['blade_of_saeldor', 'abyssal_tentacle', 'grondar_godsword']) {
+      const rival = itemsData[rivalId as keyof typeof itemsData] as any
+      expect(maul.otherBonus.meleeStrength, `str vs ${rivalId}`)
+        .toBeGreaterThan(rival.otherBonus.meleeStrength)
+    }
   })
 
   it('dragon claws should have slice_and_dice special attack at 50% cost', () => {

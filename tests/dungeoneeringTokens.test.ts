@@ -35,9 +35,12 @@ describe('dungeoneering reward prices and progression balance', () => {
     }
   })
   it('has configured costs', () => {
+    // The chaotic weapons are the top of their respective ladders, so they cost
+    // more than the kiteshields they sit alongside.
     for (const a of actions.filter((x:any) => x.category === 'reward')) {
       const n = String(a.name).toLowerCase()
       if (n.includes('arcane necklace')) expect(a.tokenCost).toBe(65000)
+      else if (n.includes('chaotic')) expect(a.tokenCost).toBe(1000000)
       else expect(a.tokenCost).toBe(300000)
     }
   })

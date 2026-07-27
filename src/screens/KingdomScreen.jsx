@@ -19,12 +19,18 @@ const CATEGORY_LABELS = {
   fishing: 'Fishing',
   woodcutting: 'Woodcutting',
   farming: 'Farm Herbs',
+  gathering: 'Gathering',
 }
 const CATEGORY_ICONS = {
   mining: 'mining',
   fishing: 'fishing_pole',
   woodcutting: 'wood_axe',
   farming: 'kingsherb',
+  gathering: 'eye_of_newt',
+}
+// Only for a category whose name doesn't say what it produces.
+const CATEGORY_HINTS = {
+  gathering: 'Potion secondaries & supplies',
 }
 
 export default function KingdomScreen({ onBack }) {
@@ -168,8 +174,13 @@ export default function KingdomScreen({ onBack }) {
                     <span class="w-9 flex justify-center items-center flex-shrink-0">
                       <GameIcon iconKey={CATEGORY_ICONS[category]} size={28} />
                     </span>
-                    <div class="flex-1 min-w-0 text-sm font-semibold text-[var(--color-parchment)]">
-                      {CATEGORY_LABELS[category]}
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm font-semibold text-[var(--color-parchment)]">
+                        {CATEGORY_LABELS[category]}
+                      </div>
+                      {CATEGORY_HINTS[category] && (
+                        <div class="text-xs text-[var(--color-parchment)] opacity-60">{CATEGORY_HINTS[category]}</div>
+                      )}
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
                       <button

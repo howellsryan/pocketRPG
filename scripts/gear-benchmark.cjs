@@ -29,6 +29,7 @@
  * Usage:
  *   node scripts/gear-benchmark.cjs
  *   node scripts/gear-benchmark.cjs --level=99 --target-level=200 --target-def-bonus=100
+ *   node scripts/gear-benchmark.cjs --by-level
  *   node scripts/gear-benchmark.cjs --triangle-tolerance=1.35
  *   node scripts/gear-benchmark.cjs --out=reports/gear-benchmark
  */
@@ -256,6 +257,220 @@ function buildReferenceLoadout(style) {
   return { weapon, gear }
 }
 
+// ── Level-band parity (--by-level) ──
+//
+// The level-99 model above answers "is max gear balanced". This one answers the
+// harder question: does a player of level L have comparable DPS whichever style
+// they picked? It differs from the model above in four ways that all matter at
+// mid level, and it is the model the combat-style rebalance was tuned against:
+//
+//   1. gear/weapon/ammo/spell pool is restricted to what level L can equip;
+//   2. the ranged `rapid` stance (-1 tick) is modelled — the single biggest DPS
+//      lever in the game, and invisible to a stance-less model;
+//   3. combat set bonuses are applied, so Shardglass/Masari/Kodai builds score;
+//   4. DPS is averaged over real monsters of the right combat level rather than
+//      one synthetic target, so monster magic defence counts against magic.
+
+const BANDS = [30, 40, 50, 60, 70, 75, 80, 85, 90, 99]
+const monsters = readJson('monsters.json')
+
+// COMBAT_SETS is a plain array literal in an ES module we can't require(); pull
+// the literal out and evaluate it so set multipliers are real, not guessed.
+function readCombatSets() {
+  try {
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'engine', 'combatSetBonuses.js'), 'utf8')
+    const start = src.indexOf('const COMBAT_SETS = [')
+    if (start < 0) return []
+    const open = src.indexOf('[', start)
+    let depth = 0
+    for (let i = open; i < src.length; i++) {
+      if (src[i] === '[') depth++
+      else if (src[i] === ']' && --depth === 0) {
+        // eslint-disable-next-line no-new-func
+        return new Function(`return ${src.slice(open, i + 1)}`)()
+      }
+    }
+  } catch { /* fall through */ }
+  return []
+}
+const COMBAT_SETS = readCombatSets()
+
+function setMultipliers(wornIds, weaponId) {
+  const out = {
+    meleeAccuracy: 1, meleeDamage: 1, rangedAccuracy: 1, rangedDamage: 1,
+    magicAccuracy: 1, magicDamageBonusFlat: 0,
+  }
+  for (const set of COMBAT_SETS) {
+    const slots = Object.values(set.slots || {})
+    if (!slots.length || !slots.every((aliases) => aliases.some((id) => wornIds.has(id)))) continue
+    if (set.requiredWeapons && !set.requiredWeapons.includes(weaponId)) continue
+    for (const [k, v] of Object.entries(set.multipliers || {})) out[k] *= v
+    out.magicDamageBonusFlat += set.magicDamageBonusFlat || 0
+  }
+  return out
+}
+
+// Percentage damage bonuses (otherBonus.meleeDamage / rangedDamage) mirror
+// magicDamage and multiply the final max hit — see src/engine/formulas.js.
+function stylePercentBonus(item, style) {
+  const o = item?.otherBonus || {}
+  if (style === 'melee') return o.meleeDamage || 0
+  if (style === 'ranged') return o.rangedDamage || 0
+  return 0
+}
+
+function poweredStaffBase(weapon, magicLevel) {
+  const anchor = Number(weapon?.poweredStaffBaseDamage)
+  const baseAtAnchor = Number.isFinite(anchor) && anchor > 0 ? anchor : 34
+  return Math.max(1, Math.floor(magicLevel / 3) + (baseAtAnchor - Math.floor(75 / 3)))
+}
+
+function bandTargetOf(monster, style) {
+  const d = monster.defenceBonus || {}
+  const bonus = style === 'melee' ? Math.max(d.stab || 0, d.slash || 0, d.crush || 0) : (d[style] || 0)
+  return { defLevel: monster.stats?.defence || 1, magLevel: monster.stats?.magic || 1, bonus }
+}
+
+function bandDPS(style, level, weapon, gear, target, opts) {
+  const worn = [weapon, ...Object.values(gear)].filter(Boolean).filter((it) => ammoCompatible(weapon, it))
+  const wornIds = new Set(worn.map((it) => it.id))
+  const mult = setMultipliers(wornIds, weapon?.id)
+  const attackBonus = worn.reduce((s, it) => s + styleAttackBonus(it, style), 0)
+  const pct = worn.reduce((s, it) => s + stylePercentBonus(it, style), 0)
+
+  let speed = Number(weapon?.attackSpeed) || 4
+  let stanceBonus = 0
+  if (style === 'ranged') {
+    if (opts.stance === 'rapid') speed = Math.max(1, speed - 1)
+    else stanceBonus = 3 // accurate
+  }
+
+  let maxHit, atkRoll, defRoll
+  if (style === 'melee') {
+    const str = worn.reduce((s, it) => s + styleDamageBonus(it, 'melee'), 0)
+    maxHit = Math.floor(Math.floor(meleeMaxHit(effective(level, 3), str) * (1 + pct / 100)) * mult.meleeDamage)
+    atkRoll = Math.floor(attackRoll(effective(level), attackBonus) * mult.meleeAccuracy)
+    defRoll = (target.defLevel + 9) * (target.bonus + 64)
+  } else if (style === 'ranged') {
+    const str = worn.reduce((s, it) => s + styleDamageBonus(it, 'ranged'), 0)
+    maxHit = Math.floor(Math.floor(rangedMaxHit(effective(level, stanceBonus), str) * (1 + pct / 100)) * mult.rangedDamage)
+    atkRoll = Math.floor(attackRoll(effective(level, stanceBonus), attackBonus) * mult.rangedAccuracy)
+    if (weapon?.scalesWithMagic) {
+      const M = Math.min(250, Math.max(1, target.magLevel))
+      const ai = Math.floor((3 * M) / 10) - 100
+      const di = Math.floor((3 * M) / 10) - 140
+      const am = Math.min(140, Math.max(0, 140 + Math.floor((3 * M - 10) / 100) - Math.floor((ai * ai) / 100))) / 100
+      const dm = Math.min(250, Math.max(0, 250 + Math.floor((3 * M - 14) / 100) - Math.floor((di * di) / 100))) / 100
+      atkRoll = Math.floor(atkRoll * am)
+      maxHit = Math.floor(maxHit * dm)
+    }
+    defRoll = (target.defLevel + 9) * (target.bonus + 64)
+  } else {
+    const raw = worn.reduce((s, it) => s + styleDamageBonus(it, 'magic'), 0)
+    const md = effectiveWornMagicDamage(raw, weapon) + mult.magicDamageBonusFlat
+    const base = weapon?.poweredStaff ? poweredStaffBase(weapon, level) : (opts.spell?.baseDamage || 0)
+    maxHit = magicMaxHit(base, md)
+    atkRoll = Math.floor(attackRoll(effective(level), attackBonus) * mult.magicAccuracy)
+    const magDefLevel = Math.floor(target.magLevel * 0.7) + Math.floor(target.defLevel * 0.3)
+    defRoll = (magDefLevel + 9) * (target.bonus + 64)
+  }
+
+  const acc = hitChance(atkRoll, defRoll)
+  return (acc * ((1 + maxHit) / 2)) / (speed * TICK_SECONDS)
+}
+
+// Greedy per-slot BiS, run once per (weapon, stance, spell) candidate. Greedy
+// alone cannot discover a 3-piece set bonus, so full set kits are offered as
+// explicit whole-loadout candidates on top.
+//
+// Slots are filled against a cheap style-neutral target (the ranking of one
+// armour piece over another is stable whatever we shoot at), but the finished
+// candidates are RANKED on the real monster pool. That distinction is load
+// bearing: against a synthetic target whose magic level matches its defence,
+// the Twisted Longbow's scalesWithMagic multiplier makes it look like the
+// best bow in the game for everything, when its whole design is to be a
+// specialist that falls off a cliff against ordinary low-magic monsters.
+const SET_KITS = COMBAT_SETS.map((set) => Object.values(set.slots || {}).map((aliases) => aliases[0]))
+
+function bandBest(style, level, target, scoreLoadout) {
+  const pool = weapons.filter((w) => weaponStyle(w) === style && requirementLevel(w) <= level)
+  const stances = style === 'ranged' ? ['rapid', 'accurate'] : [null]
+  const spellPool = style === 'magic'
+    ? Object.values(spells).filter((s) => Number(s.baseDamage) > 0 && (s.levelReq || 1) <= level)
+    : [null]
+
+  let best = null
+  const consider = (weapon, gear, opts) => {
+    const dps = scoreLoadout(style, weapon, gear, opts)
+    if (!best || dps > best.dps) best = { dps, weapon, gear, opts }
+  }
+
+  for (const stance of stances) {
+    for (const weapon of pool) {
+      const spellChoices = style === 'magic' && !weapon.poweredStaff ? spellPool : [null]
+      for (const spell of spellChoices) {
+        const opts = { stance, spell }
+        const gear = {}
+        for (let pass = 0; pass < 3; pass++) {
+          for (const slot of GEAR_SLOTS) {
+            if (slot === 'shield' && weapon.twoHanded) { delete gear[slot]; continue }
+            let pick = gear[slot] || null
+            let bestSlotDps = bandDPS(style, level, weapon, { ...gear, [slot]: pick || undefined }, target, opts)
+            for (const it of gearBySlot[slot]) {
+              if (requirementLevel(it) > level || !servesStyle(it, style)) continue
+              const dps = bandDPS(style, level, weapon, { ...gear, [slot]: it }, target, opts)
+              if (dps > bestSlotDps) { bestSlotDps = dps; pick = it }
+            }
+            if (pick) gear[slot] = pick
+          }
+        }
+        consider(weapon, gear, opts)
+        for (const kit of SET_KITS) {
+          if (kit.some((id) => !items[id] || requirementLevel({ ...items[id] }) > level)) continue
+          const kitted = { ...gear }
+          for (const id of kit) kitted[items[id].slot] = { id, ...items[id] }
+          if (weapon.twoHanded) delete kitted.shield
+          consider(weapon, kitted, opts)
+        }
+      }
+    }
+  }
+  return best
+}
+
+function levelBandReport() {
+  const rows = []
+  for (const level of BANDS) {
+    // Monsters a player of this level would realistically be killing.
+    const pool = Object.entries(monsters)
+      .map(([id, m]) => ({ id, ...m }))
+      .filter((m) => (m.combatLevel || 0) >= level * 0.8 && (m.combatLevel || 0) <= level * 3.2 && (m.hitpoints || 0) > 0)
+    if (!pool.length) continue
+    // Loadouts are picked against one style-neutral target, then scored across
+    // the real pool — otherwise each style optimises for a different monster.
+    const neutral = { defLevel: 2 * level, magLevel: 2 * level, bonus: level }
+    const avgOver = (style, weapon, gear, opts) =>
+      pool.reduce((sum, m) => sum + bandDPS(style, level, weapon, gear, bandTargetOf(m, style), opts), 0) / pool.length
+
+    const row = { level, monsters: pool.length, styles: {} }
+    for (const style of STYLES) {
+      const picked = bandBest(style, level, neutral, avgOver)
+      if (!picked) continue
+      row.styles[style] = {
+        dps: avgOver(style, picked.weapon, picked.gear, picked.opts),
+        weapon: picked.weapon?.name || '—',
+        ammo: picked.gear.ammo?.name || null,
+        spell: picked.opts.spell?.name || null,
+        stance: picked.opts.stance || null,
+      }
+    }
+    const values = STYLES.map((s) => row.styles[s]?.dps).filter((v) => typeof v === 'number')
+    row.ratio = values.length ? Math.max(...values) / Math.min(...values) : 0
+    rows.push(row)
+  }
+  return rows
+}
+
 // Marginal DPS an item adds when swapped into the reference loadout's own slot.
 function marginalDPS(item, style, ref) {
   if (item.type === 'weapon') {
@@ -341,6 +556,8 @@ for (const style of STYLES) {
 
 // ── Report ──
 
+const bands = args['by-level'] ? levelBandReport() : null
+
 writeReport()
 
 function writeReport() {
@@ -356,6 +573,8 @@ function writeReport() {
   p('')
   p(`Best-in-slot loadout DPS per style. Tolerance band: max/min ≤ **${TRIANGLE_TOLERANCE}**.`)
   p('')
+  p('This section models one bare loadout against one synthetic target: no combat stances, no set bonuses, no monster variety. It is the right lens for the per-slot rankings below, and the wrong one for judging the combat triangle — run **`--by-level`** for that, which models all three and disagrees with the ratio here.')
+  p('')
   p('| Style | BiS weapon | Max hit | Hit chance | DPS |')
   p('|---|---|---:|---:|---:|')
   for (const t of triangle) {
@@ -364,6 +583,28 @@ function writeReport() {
   p('')
   p(`**Ratio (max/min): ${triangleRatio.toFixed(2)} — ${triangleOk ? 'WITHIN tolerance ✅' : 'OUT OF tolerance ⚠️'}**`)
   p('')
+
+  if (bands) {
+    p('## Level-band parity')
+    p('')
+    p('Best-in-slot DPS per style at each player level, restricted to gear/ammo/spells that level can equip, averaged over real monsters of the right combat level. Models the ranged `rapid` stance and combat set bonuses.')
+    p('')
+    p('| Level | Melee | Ranged | Magic | Ratio | Melee BiS | Ranged BiS | Magic BiS |')
+    p('|---:|---:|---:|---:|---:|---|---|---|')
+    for (const r of bands) {
+      const cell = (s) => {
+        const v = r.styles[s]
+        if (!v) return '—'
+        return [v.weapon, v.ammo, v.spell, v.stance].filter(Boolean).join(' + ')
+      }
+      const dps = (s) => (r.styles[s] ? r.styles[s].dps.toFixed(2) : '—')
+      p(`| ${r.level} | ${dps('melee')} | ${dps('ranged')} | ${dps('magic')} | ${r.ratio.toFixed(2)} | ${cell('melee')} | ${cell('ranged')} | ${cell('magic')} |`)
+    }
+    p('')
+    const worst = bands.reduce((a, b) => (b.ratio > a.ratio ? b : a))
+    p(`**Worst band: level ${worst.level} at ${worst.ratio.toFixed(2)}.**`)
+    p('')
+  }
   p('Reference loadouts (greedy BiS per style):')
   p('')
   for (const style of STYLES) {
@@ -429,6 +670,7 @@ function writeReport() {
     triangle: triangle.map((t) => ({ style: t.style, weapon: t.weapon?.id, dps: t.dps, maxHit: t.maxHit, acc: t.acc })),
     triangleRatio,
     triangleOk,
+    bands,
     dominated: dominated.map((d) => ({ style: d.style, slot: d.slot, item: leaf(d.item), by: leaf(d.by) })),
     inversions: inversions.map((i) => ({ style: i.style, slot: i.slot, item: leaf(i.item), vs: leaf(i.vs) })),
     groups: groups.map((g) => ({ style: g.style, slot: g.slot, items: g.scored.map(leaf) })),
@@ -436,8 +678,16 @@ function writeReport() {
 
   // Console summary
   console.log(`Gear balance benchmark → ${path.relative(ROOT, outMd)}, ${path.relative(ROOT, outJson)}`)
-  console.log(`Triangle DPS: ${triangle.map((t) => `${t.style} ${t.dps.toFixed(1)}`).join(' | ')} (ratio ${triangleRatio.toFixed(2)}, ${triangleOk ? 'ok' : 'OUT OF BAND'})`)
+  console.log(`Bare-loadout DPS (no stances/sets): ${triangle.map((t) => `${t.style} ${t.dps.toFixed(1)}`).join(' | ')} (ratio ${triangleRatio.toFixed(2)}, ${triangleOk ? 'ok' : 'OUT OF BAND'}) — see --by-level for real triangle parity`)
   console.log(`Dominated items: ${dominated.length} | Value inversions: ${inversions.length}`)
+  if (bands) {
+    for (const r of bands) {
+      const dps = (s) => (r.styles[s] ? r.styles[s].dps.toFixed(2).padStart(6) : '     —')
+      console.log(`  L${String(r.level).padStart(2)}  melee ${dps('melee')} | ranged ${dps('ranged')} | magic ${dps('magic')}  ratio ${r.ratio.toFixed(2)}`)
+    }
+    const worst = bands.reduce((a, b) => (b.ratio > a.ratio ? b : a))
+    console.log(`Worst level band: ${worst.level} at ${worst.ratio.toFixed(2)}`)
+  }
 }
 
 function leaf(s) {
