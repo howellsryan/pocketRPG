@@ -79,6 +79,12 @@ export const coopApi = {
     method: 'POST',
     body: JSON.stringify(Number.isFinite(sinceTick) ? { sinceTick } : {}),
   }),
+  // A 60s, single-fight token for the WebSocket transport: a browser cannot put
+  // the session JWT on a socket handshake, so it is exchanged here instead.
+  socketTicket: (sessionId) => coopRequest(`/api/coop/session/${sessionId}/socket`, {
+    method: 'POST',
+    body: '{}',
+  }),
   sendAction: (sessionId, action) => coopRequest(`/api/coop/session/${sessionId}/intent`, {
     method: 'POST',
     body: JSON.stringify({ action }),

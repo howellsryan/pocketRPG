@@ -14,13 +14,12 @@ import CoopChatPanel from '../components/CoopChatPanel.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import { useGame } from '../state/gameState.jsx'
-import { coopApi } from '../cloud/coop.js'
+import { openCoopFeed } from '../cloud/coopFeed.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
 import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
 import { coopRaidSummary, raidProgress } from '../engine/coopRaidEngine.js'
-import { nextPollDelayMs } from '../utils/coopPolling.js'
 import { appendChatLines, chatLinesFromCoopEvents } from '../utils/coopChat.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
@@ -30,16 +29,16 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import monstersData from '../data/monsters.json'
 
-// The server rejects a tick that arrives early anyway, so a failed poll just
-// backs off rather than hammering.
-const COOP_ERROR_BACKOFF_MS = 2000
-
 /**
  * Live view of a server-run co-op boss fight. Deliberately renders the same HUD
  * as the solo fight (CombatScreen's mobile layout, via components/CombatHud) —
  * the only difference a player should feel is that the swings come from the
  * server. The client renders only: every hit is resolved server-side and
- * arrives through the tick poll, and actions are queued as intents.
+ * arrives on the room's own beat, and actions are queued as intents.
+ *
+ * The transport is cloud/coopFeed.js — a WebSocket the room pushes to, falling
+ * back to polling where a socket cannot be had. This screen sees beats either
+ * way and must not care which.
  */
 export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath, addToast }) {
   const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell } = useGame()
@@ -64,14 +63,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
   // gets pressed twice.
   const [readyEcho, setReadyEcho] = useState(null)
   const chatIdRef = useRef(0)
-  const pollTimer = useRef(null)
-  const stoppedRef = useRef(false)
+  // The live connection to the room. It owns the tick it last saw, so nothing
+  // is missed across a reconnect or a transport switch.
+  const feedRef = useRef(null)
   const splatTimersRef = useRef(new Set())
   const leavingRef = useRef(false)
-  // Last tick this client has rendered. The room replays everything after it,
-  // so nothing is missed between polls — under the old transport a member only
-  // saw the ticks their own request happened to advance, roughly one in eight.
-  const sinceTickRef = useRef(null)
 
   const me = state?.members?.[String(characterId)] || null
   // The room's record with the last tap laid over it. Everything reads this, so
@@ -116,110 +112,96 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
     onDeath?.()
   }, [me?.status, onDeath])
 
-  const poll = useCallback(async () => {
-    if (stoppedRef.current) return
-    const sentAt = Date.now()
-    try {
-      const res = await coopApi.tick(sessionId, sinceTickRef.current ?? undefined)
-      if (stoppedRef.current) return
-      if (res.state) {
-        setState(res.state)
-        if (res.state.phase !== 'lobby') setStartingRaid(false)
-        // The room has now spoken for the beat the tap was stamped for, so its
-        // answer replaces the echo — including a refusal, which un-does it.
-        // Time is the backstop for an intent that was never acknowledged.
-        const tick = Number(res.state.tick) || 0
-        setEcho((prev) => {
-          if (!prev) return prev
-          if (prev.tick != null && tick >= prev.tick) return null
-          return sentAt - prev.at > 3000 ? null : prev
-        })
-        setReadyEcho((prev) => {
-          if (!prev) return prev
-          const mine = res.state.members?.[String(characterId)]
-          return (!!mine?.ready === prev.value || sentAt - prev.at > 3000) ? null : prev
-        })
-      }
-      if (Number.isFinite(res.current_tick)) sinceTickRef.current = res.current_tick
-      if (res.events?.length) {
-        emitXpDrops(xpDropsFromCombatEvents(res.events, characterId))
-
-        const chat = chatLinesFromCoopEvents(res.events, chatIdRef.current)
-        if (chat.lines.length > 0) {
-          chatIdRef.current = chat.nextId
-          setChatLog((prev) => appendChatLines(prev, chat.lines))
-        }
-
-        const tickSplats = splatsFromCoopEvents(res.events, characterId)
-        pushSplats(setBossSplats, tickSplats.boss)
-        pushSplats(setAddSplats, tickSplats.add)
-        pushSplats(setPlayerSplats, tickSplats.player)
-        // A refused equip is resolved a tick later on the server, so without
-        // this the tap just looks ignored.
-        // Run-shaped events: everybody in the party sees these, not just the
-        // member they name.
-        for (const ev of res.events) {
-          if (ev.type === 'raidBossAdvance') addToast?.(`\u2694\uFE0F ${ev.bossName} — boss ${ev.bossIndex + 1}/${ev.totalBosses}`, 'info')
-          else if (ev.type === 'raidWiped') addToast?.('Your party was wiped out. Back to the lobby.', 'error')
-        }
-        for (const ev of res.events) {
-          if (Number(ev.characterId) !== Number(characterId)) continue
-          if (ev.type === 'equipRefused') addToast?.(describeCoopEquipRefusal(ev), 'error')
-          else if (ev.type === 'actionRefused') addToast?.(describeCoopActionRefusal(ev), 'error')
-          else if (ev.type === 'slayerCredit' && ev.completed) {
-            addToast?.(`\u{1F480} Slayer Task #${ev.totalTasks} Completed - ${(ev.pointsEarned || 0).toLocaleString()} points.`, 'levelup')
-          }
-        }
-        // Read names off the response, not the render closure — this callback
-        // is captured once for the life of the session, so anything from render
-        // is stale by the time a kill lands. The kill arrives as an event in
-        // the replayed stream, so the winner sees their own loot modal whether
-        // or not their poll was the one in flight when the boss died.
-        for (const ev of res.events) {
-          if (ev.type !== 'killSettled') continue
-          const raidCleared = res.events.find((e) => e.type === 'raidComplete')
-          const killedName = raidCleared?.raidName || monstersData?.[res.state?.bossId]?.name || 'The boss'
-          const outcome = coopKillOutcome(ev, characterId)
-          if (outcome.kind === 'loot') {
-            setLootModal({ monsterName: killedName, loot: outcome.loot, killCount: outcome.killCount, isRaid: !!raidCleared })
-          } else if (outcome.kind === 'diverged') {
-            addToast?.('Your loot could not be granted — something else changed your save. Leave and rejoin.', 'error')
-          } else if (outcome.kind === 'failed') {
-            addToast?.(`${killedName} defeated, but the loot could not be granted. Leave and rejoin.`, 'error')
-          } else {
-            addToast?.(
-              `${killedName} defeated — you did not deal enough damage for a drop.`
-              + (outcome.winners > 0 ? ` ${outcome.winners} ${outcome.winners === 1 ? 'player' : 'players'} looted it.` : ''),
-              'info',
-            )
-          }
-        }
-      }
-      setError(null)
-      // Aimed at the room's next beat rather than a flat tick from now: polling
-      // 600ms after each response lands means a period of 600ms plus the round
-      // trip, which drifts out of phase and delivers the fight in clumps.
-      pollTimer.current = setTimeout(poll, nextPollDelayMs(res.next_tick_in_ms, Date.now() - sentAt))
-    } catch (err) {
-      if (stoppedRef.current) return
-      if (err.status === 403 || err.status === 404 || err.status === 409) {
-        setError(err.message || 'This fight has ended.')
-        return
-      }
-      setError(err.message || 'Connection problem — retrying…')
-      pollTimer.current = setTimeout(poll, COOP_ERROR_BACKOFF_MS)
+  const onBeat = useCallback(({ state: nextState, events }) => {
+    const at = Date.now()
+    if (nextState) {
+      setState(nextState)
+      if (nextState.phase !== 'lobby') setStartingRaid(false)
+      // The room has now spoken for the beat the tap was stamped for, so its
+      // answer replaces the echo — including a refusal, which un-does it.
+      // Time is the backstop for an intent that was never acknowledged.
+      const tick = Number(nextState.tick) || 0
+      setEcho((prev) => {
+        if (!prev) return prev
+        if (prev.tick != null && tick >= prev.tick) return null
+        return at - prev.at > 3000 ? null : prev
+      })
+      setReadyEcho((prev) => {
+        if (!prev) return prev
+        const mine = nextState.members?.[String(characterId)]
+        return (!!mine?.ready === prev.value || at - prev.at > 3000) ? null : prev
+      })
     }
-  }, [sessionId, characterId, addToast])
+    if (!events?.length) return
+
+    emitXpDrops(xpDropsFromCombatEvents(events, characterId))
+
+    const chat = chatLinesFromCoopEvents(events, chatIdRef.current)
+    if (chat.lines.length > 0) {
+      chatIdRef.current = chat.nextId
+      setChatLog((prev) => appendChatLines(prev, chat.lines))
+    }
+
+    const tickSplats = splatsFromCoopEvents(events, characterId)
+    pushSplats(setBossSplats, tickSplats.boss)
+    pushSplats(setAddSplats, tickSplats.add)
+    pushSplats(setPlayerSplats, tickSplats.player)
+    // Run-shaped events: everybody in the party sees these, not just the
+    // member they name.
+    for (const ev of events) {
+      if (ev.type === 'raidBossAdvance') addToast?.(`⚔️ ${ev.bossName} — boss ${ev.bossIndex + 1}/${ev.totalBosses}`, 'info')
+      else if (ev.type === 'raidWiped') addToast?.('Your party was wiped out. Back to the lobby.', 'error')
+    }
+    for (const ev of events) {
+      if (Number(ev.characterId) !== Number(characterId)) continue
+      // A refused equip is resolved a tick later on the server, so without this
+      // the tap just looks ignored.
+      if (ev.type === 'equipRefused') addToast?.(describeCoopEquipRefusal(ev), 'error')
+      else if (ev.type === 'actionRefused') addToast?.(describeCoopActionRefusal(ev), 'error')
+      else if (ev.type === 'slayerCredit' && ev.completed) {
+        addToast?.(`\u{1F480} Slayer Task #${ev.totalTasks} Completed - ${(ev.pointsEarned || 0).toLocaleString()} points.`, 'levelup')
+      }
+    }
+    // Read names off the beat, not the render closure — this callback is
+    // captured once for the life of the session, so anything from render is
+    // stale by the time a kill lands. The kill arrives as an event on the
+    // room's own beat, so the winner sees their loot modal whether or not they
+    // were looking at the moment the boss died.
+    for (const ev of events) {
+      if (ev.type !== 'killSettled') continue
+      const raidCleared = events.find((e) => e.type === 'raidComplete')
+      const killedName = raidCleared?.raidName || monstersData?.[nextState?.bossId]?.name || 'The boss'
+      const outcome = coopKillOutcome(ev, characterId)
+      if (outcome.kind === 'loot') {
+        setLootModal({ monsterName: killedName, loot: outcome.loot, killCount: outcome.killCount, isRaid: !!raidCleared })
+      } else if (outcome.kind === 'diverged') {
+        addToast?.('Your loot could not be granted — something else changed your save. Leave and rejoin.', 'error')
+      } else if (outcome.kind === 'failed') {
+        addToast?.(`${killedName} defeated, but the loot could not be granted. Leave and rejoin.`, 'error')
+      } else {
+        addToast?.(
+          `${killedName} defeated — you did not deal enough damage for a drop.`
+          + (outcome.winners > 0 ? ` ${outcome.winners} ${outcome.winners === 1 ? 'player' : 'players'} looted it.` : ''),
+          'info',
+        )
+      }
+    }
+  }, [characterId, addToast])
 
   useEffect(() => {
-    stoppedRef.current = false
-    poll()
+    const feed = openCoopFeed({
+      sessionId,
+      onTick: onBeat,
+      onStatus: setError,
+      onFatal: setError,
+    })
+    feedRef.current = feed
     return () => {
-      stoppedRef.current = true
-      if (pollTimer.current) clearTimeout(pollTimer.current)
+      feedRef.current = null
+      feed.close()
     }
-    // Re-running on every `poll` identity change would restart the loop each
-    // tick; the session is what actually scopes this effect.
+    // Re-opening on a new `onBeat` identity would drop the socket every render;
+    // the session is what actually scopes this connection.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId])
 
@@ -230,7 +212,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
     const at = Date.now()
     if (patch) setEcho((prev) => ({ patch: { ...(prev?.patch || {}), ...patch }, tick: null, at }))
     try {
-      const res = await coopApi.sendAction(sessionId, action)
+      const res = await feedRef.current?.send(action)
       // The tick the room stamped it for — the beat whose state supersedes this.
       if (patch) {
         setEcho((prev) => (prev && prev.at === at ? { ...prev, tick: Number(res?.tick_number) || null } : prev))
@@ -246,7 +228,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
 
   const sendChat = async (text) => {
     try {
-      await coopApi.sendAction(sessionId, { type: 'chat', text })
+      await feedRef.current?.send({ type: 'chat', text })
     } catch (err) {
       addToast?.(err.status === 429 ? 'Slow down — too many messages.' : (err.message || 'Message not sent'), 'error')
     }
@@ -255,12 +237,12 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
   // Leaving the fight is the back arrow, exactly as it is in a solo fight.
   // Releasing the session is CombatScreen's job (it owns the session id, so it
   // is also what releases it when the player navigates away instead) — this
-  // just stops polling and hands over.
+  // just drops the connection and hands over. Closing the socket is itself the
+  // fastest signal the room gets that this player has gone.
   const handleLeave = () => {
     if (leavingRef.current) return
     leavingRef.current = true
-    stoppedRef.current = true
-    if (pollTimer.current) clearTimeout(pollTimer.current)
+    feedRef.current?.close()
     onExit?.()
   }
 

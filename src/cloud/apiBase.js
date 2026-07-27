@@ -21,3 +21,14 @@ function isNativeApp() {
 export function apiUrl(path) {
   return isNativeApp() ? `${PROD_API_ORIGIN}${path}` : path
 }
+
+/**
+ * Absolute ws:// URL for the same API. A WebSocket constructor has no relative
+ * form, so unlike apiUrl this always resolves an origin — the page's own in a
+ * browser, the live one inside a native shell where the page origin is
+ * capacitor://localhost.
+ */
+export function wsUrl(path) {
+  const origin = isNativeApp() || typeof location === 'undefined' ? PROD_API_ORIGIN : location.origin
+  return `${origin.replace(/^http/, 'ws')}${path}`
+}

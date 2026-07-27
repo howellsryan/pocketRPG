@@ -33,6 +33,18 @@ import {
 import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
 import { coopEpicDropEvents } from '../../src/engine/lootBroadcast.js'
 import { chatRateVerdict, sanitizeChat } from '../../src/engine/playerChat.js'
+import {
+  COOP_FRAME_ACK,
+  COOP_FRAME_BYE,
+  COOP_FRAME_NACK,
+  COOP_FRAME_PONG,
+  COOP_FRAME_SYNC,
+  COOP_FRAME_TICK,
+  COOP_SOCKET_LINGER_MS,
+  deltaWorthSending,
+  projectionDelta,
+} from '../../src/engine/coopSocketProtocol.js'
+import { validateCoopAction } from '../../functions/_lib/game/coopIntent.js'
 import { auditLog } from '../../functions/_lib/game/audit.js'
 import itemsData from '../../src/data/items.json'
 import monstersData from '../../src/data/monsters.json'
@@ -56,8 +68,24 @@ import type { Env } from './env'
 const TICK_MS = 600
 /** How often the live fight is mirrored back to D1. The room is the authority
  * while it lives; the checkpoint exists so the crash sweep has something recent
- * to write members back from. */
+ * to write members back from. Deliberately NOT lengthened to save writes — the
+ * cost of a longer interval is a player's lost progress when a DO is evicted
+ * mid-fight, which is worth more than the row it saves. */
 const CHECKPOINT_EVERY_TICKS = 25
+/** A lobby is not a fight: nothing is at risk, so mirroring it every 15s is
+ * pure write cost for a party standing still. Membership, readiness and phase
+ * changes still force an immediate checkpoint, so the lobby list stays honest. */
+const LOBBY_CHECKPOINT_EVERY_TICKS = 100
+/** A member's heartbeat row only has to stay fresher than COOP_SESSION_STALE_MS
+ * (90s), because that is what /api/save reads to decide their save is locked.
+ * Writing it on every checkpoint spent a row per member per 15s to prove
+ * something 30s of margin already proves. */
+const HEARTBEAT_WRITE_EVERY_MS = 30_000
+/** A socket may send this many frames per window before the room stops
+ * believing it is a game client. The intent queue is capped separately (that
+ * cap is about the fight); this one is about the room's CPU. */
+const SOCKET_FRAME_WINDOW_MS = 10_000
+const SOCKET_FRAME_MAX_IN_WINDOW = 120
 /** A member may have this many actions waiting for the next beat. The room is
  * single-threaded so there is no table to contend on any more — this only stops
  * a client spending the room's memory. */
@@ -70,6 +98,20 @@ const CHAT_RATE_MAX_IN_WINDOW = 8
 
 type AnyState = Record<string, any>
 type QueuedIntent = { tick_number: number; characterId: number; characterSeq: number; action: unknown }
+/**
+ * One live client connection.
+ *
+ * `projection` is the baseline every delta is measured from, and it is per
+ * SOCKET rather than per member on purpose: a reconnect can briefly leave two
+ * sockets on one character, and sharing a baseline would send the second one
+ * deltas against a state it has never seen.
+ */
+type Conn = {
+  key: string
+  projection: AnyState | null
+  ackTick: number
+  frameTimes: number[]
+}
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -99,6 +141,12 @@ export class CoopBossRoom {
    * keeps settlement off the tick it settles. */
   private pendingChat: AnyState[] = []
   private chatTimes: Record<string, number[]> = {}
+  /** Live push connections. A member with an entry here is proving they are
+   * present on every beat, so they never reach the 90s poll-staleness path. */
+  private conns = new Map<WebSocket, Conn>()
+  /** When each member's heartbeat row was last written, so the checkpoint can
+   * refresh it on its own 30s clock instead of on every 15s checkpoint. */
+  private heartbeatWrittenAt: Record<string, number> = {}
   private intentSeq = 0
   private tickTimer: ReturnType<typeof setInterval> | null = null
   private loading: Promise<void> | null = null
@@ -141,15 +189,20 @@ export class CoopBossRoom {
     // A cross-script DO call never runs the Worker's own fetch handler, so the
     // preview quest-gate bypass has to be installed in this isolate too.
     setQuestGateBypass(resolveQuestGateBypass(this.env, request.url))
-    const action = new URL(request.url).pathname.split('/').filter(Boolean).pop()
-    const body = await request.json().catch(() => ({})) as Record<string, any>
+    const url = new URL(request.url)
+    const action = url.pathname.split('/').filter(Boolean).pop()
+    // A socket upgrade is a GET and carries no body, so its parameters ride the
+    // query string the Pages proxy built after it checked the ticket.
+    const body = action === 'socket'
+      ? Object.fromEntries(url.searchParams) as Record<string, any>
+      : await request.json().catch(() => ({})) as Record<string, any>
     // Answered before any session lookup, so the Pages side can ask an
     // arbitrary room object what this Worker understands. Pages and the world
     // Worker deploy separately, and a Pages build that knows about raids
     // talking to a Worker that does not is not a harmless mismatch: the old
     // room ignores `state.raid`, so it respawns the raid's FIRST boss forever
     // and settles each kill against that boss's drop table.
-    if (action === 'capabilities') return jsonResponse({ ok: true, raids: true })
+    if (action === 'capabilities') return jsonResponse({ ok: true, raids: true, sockets: true })
 
     const sessionId = Number(body?.sessionId)
     const characterId = Number(body?.characterId)
@@ -168,6 +221,7 @@ export class CoopBossRoom {
     switch (action) {
       case 'poll': return this.handlePoll(key, body)
       case 'intent': return this.handleIntent(key, body)
+      case 'socket': return this.handleSocket(key, request, body)
       case 'depart': return this.handleDepart(key)
       default: return jsonResponse({ error: 'unknown_action' }, 404)
     }
@@ -329,13 +383,19 @@ export class CoopBossRoom {
       }
 
       const phaseChanged = String(next.phase || 'active') !== this.checkpointedPhase
-      if (phaseChanged || (next.tick || 0) - this.lastCheckpointTick >= CHECKPOINT_EVERY_TICKS) {
+      const every = String(next.phase || 'active') === 'lobby' ? LOBBY_CHECKPOINT_EVERY_TICKS : CHECKPOINT_EVERY_TICKS
+      if (phaseChanged || (next.tick || 0) - this.lastCheckpointTick >= every) {
         await this.checkpoint(now)
       }
     } finally {
       // Every exit from the beat, including the kill path's early return: the
       // tick becomes visible only now that nothing more can be appended to it.
       if (this.state) this.publishedTick = this.state.tick || 0
+      // …and only now may it be pushed, for exactly the same reason a poll may
+      // not see it earlier: a client that has acknowledged a tick can never be
+      // shown anything appended to it afterwards, and settlement appends to the
+      // tick the kill went out on.
+      this.broadcast()
     }
   }
 
@@ -442,8 +502,10 @@ export class CoopBossRoom {
       }
       this.state = removeCoopMember(this.state, member.characterId)
       this.pending = this.pending.filter((i) => String(i.characterId) !== id)
+      this.dropSockets(id, 'ejected')
       delete this.lastSeen[id]
       delete this.chatTimes[id]
+      delete this.heartbeatWrittenAt[id]
       this.dirty = true
       this.events = pushEvents(this.events, [{
         type: 'memberLeft', tick: this.state?.tick || 0, characterId: member.characterId,
@@ -477,14 +539,32 @@ export class CoopBossRoom {
   }
 
   private handleIntent(key: string, body: Record<string, any>): Response {
+    const result = this.queueIntent(key, body?.action)
+    return result.error
+      ? jsonResponse({ error: result.error }, result.status || 400)
+      : jsonResponse({ ok: true, tick_number: result.tick_number })
+  }
+
+  /**
+   * Accepts one action from a member, whichever transport carried it.
+   *
+   * Validation runs HERE rather than only at the Pages edge, because a socket
+   * frame never passes through the edge: chat would reach the room unsanitised
+   * and toggle_prayer would arrive without the slot resolved from the prayer's
+   * own data. Re-validating an action the edge already normalised is a no-op.
+   */
+  private queueIntent(key: string, rawAction: unknown): { error?: string; status?: number; tick_number?: number } {
     const member = this.state!.members[key]
     this.lastSeen[key] = Date.now()
+    const validated = validateCoopAction(rawAction) as { error?: string; action?: AnyState }
+    if (validated.error) return { error: validated.error, status: 400 }
+    const action = validated.action as AnyState
     // Chat is not a combat action: it takes no queue slot, and it works while
     // dead and through the respawn wait, which is when a group actually talks.
-    if (body?.action?.type === 'chat') return this.handleChat(key, member, body.action.text)
-    if (member.status !== 'alive') return jsonResponse({ error: 'member_dead' }, 409)
+    if (action.type === 'chat') return this.queueChat(key, member, action.text)
+    if (member.status !== 'alive') return { error: 'member_dead', status: 409 }
     const queued = this.pending.filter((i) => String(i.characterId) === key).length
-    if (queued >= MAX_PENDING_INTENTS_PER_MEMBER) return jsonResponse({ error: 'too_many_queued_actions' }, 429)
+    if (queued >= MAX_PENDING_INTENTS_PER_MEMBER) return { error: 'too_many_queued_actions', status: 429 }
     this.intentSeq += 1
     this.pending.push({
       tick_number: (this.state!.tick || 0) + 1,
@@ -492,17 +572,17 @@ export class CoopBossRoom {
       // A monotonic counter, not a wall-clock remainder: two actions in the
       // same millisecond used to collide and order arbitrarily.
       characterSeq: this.intentSeq,
-      action: body?.action,
+      action,
     })
-    return jsonResponse({ ok: true, tick_number: (this.state!.tick || 0) + 1 })
+    return { tick_number: (this.state!.tick || 0) + 1 }
   }
 
-  private handleChat(key: string, member: AnyState, raw: unknown): Response {
+  private queueChat(key: string, member: AnyState, raw: unknown): { error?: string; status?: number; tick_number?: number } {
     const text = sanitizeChat(typeof raw === 'string' ? raw : '')
-    if (!text) return jsonResponse({ error: 'invalid_chat' }, 400)
+    if (!text) return { error: 'invalid_chat', status: 400 }
     const verdict = chatRateVerdict(this.chatTimes[key], Date.now(), CHAT_RATE_WINDOW_MS, CHAT_RATE_MAX_IN_WINDOW)
     this.chatTimes[key] = verdict.times
-    if (!verdict.allowed) return jsonResponse({ error: 'chat_rate_limited' }, 429)
+    if (!verdict.allowed) return { error: 'chat_rate_limited', status: 429 }
     this.pendingChat.push({
       type: 'chatMessage', characterId: member.characterId, username: member.username, text,
     })
@@ -516,7 +596,189 @@ export class CoopBossRoom {
       bossId: this.bossId,
       text,
     }, { swallow: true })
-    return jsonResponse({ ok: true })
+    return {}
+  }
+
+  /**
+   * Attaches a live push connection for one member.
+   *
+   * The fight was polled at ~1.7Hz per member, and every poll was a Pages
+   * invocation, a JWT verification and a `SELECT` against `characters` just to
+   * learn who was asking — 800-odd D1 reads a minute for a full room, to move a
+   * state the room could simply have pushed. This is that push: the caller has
+   * already been authenticated at the edge (a 60s socket ticket), so the room
+   * only has to decide what to send and when.
+   *
+   * Joining is deliberately NOT part of connecting. A reconnect must attach to
+   * the member who is already in the fight, never re-seed them — that would
+   * re-arm their timers and throw away the damage their loot share is measured
+   * from.
+   */
+  private handleSocket(key: string, request: Request, body: Record<string, any>): Response {
+    if (request.headers.get('Upgrade') !== 'websocket') {
+      return jsonResponse({ error: 'expected_websocket' }, 426)
+    }
+    const pair = new WebSocketPair()
+    const client = pair[0]
+    const server = pair[1]
+    // Plain accept() rather than the hibernation API: a room with a live fight
+    // holds its whole state in memory and beats on a 600ms interval, so it is
+    // never idle enough to hibernate. Hibernating would mean rebuilding the
+    // fight from a checkpoint up to 25 ticks old.
+    server.accept()
+
+    const since = Number(body?.sinceTick)
+    const conn: Conn = {
+      key,
+      projection: null,
+      ackTick: Number.isFinite(since) ? since : this.publishedTick,
+      frameTimes: [],
+    }
+    this.conns.set(server, conn)
+    this.lastSeen[key] = Date.now()
+    this.startTicking()
+
+    server.addEventListener('message', (event: MessageEvent) => {
+      this.onSocketFrame(server, conn, event.data)
+    })
+    const drop = () => {
+      if (!this.conns.delete(server)) return
+      this.onConnClosed(conn)
+    }
+    server.addEventListener('close', drop)
+    server.addEventListener('error', drop)
+
+    // The full picture first, so every later frame can be a delta against it.
+    // A reconnect gets the events it missed too, bounded by the room's ring.
+    const projection = projectStateForMember(this.state, key) as AnyState
+    conn.projection = projection
+    const events = projectEventsForMember(eventsSince(this.events, conn.ackTick, this.publishedTick), key)
+    conn.ackTick = this.publishedTick
+    this.sendFrame(server, {
+      t: COOP_FRAME_SYNC,
+      tick: this.publishedTick,
+      state: projection,
+      events,
+    })
+
+    return new Response(null, { status: 101, webSocket: client })
+  }
+
+  private onSocketFrame(ws: WebSocket, conn: Conn, data: unknown): void {
+    const now = Date.now()
+    conn.frameTimes = conn.frameTimes.filter((t) => now - t < SOCKET_FRAME_WINDOW_MS)
+    conn.frameTimes.push(now)
+    if (conn.frameTimes.length > SOCKET_FRAME_MAX_IN_WINDOW) {
+      // Not a refusal the client can retry past — a game client cannot produce
+      // this rate, so the socket is closed rather than throttled.
+      this.sendFrame(ws, { t: COOP_FRAME_BYE, reason: 'flooding' })
+      try { ws.close(1008, 'flooding') } catch { /* already gone */ }
+      return
+    }
+
+    let frame: Record<string, any>
+    try {
+      frame = JSON.parse(typeof data === 'string' ? data : '') as Record<string, any>
+    } catch {
+      return
+    }
+    if (frame?.t === 'ping') {
+      this.sendFrame(ws, { t: COOP_FRAME_PONG })
+      this.lastSeen[conn.key] = now
+      return
+    }
+    if (frame?.t !== 'intent') return
+    // A member the room has already ejected must not be able to act; the socket
+    // is closed rather than left half-alive.
+    if (!this.state?.members?.[conn.key]) {
+      this.sendFrame(ws, { t: COOP_FRAME_BYE, reason: 'not_a_member' })
+      try { ws.close(1008, 'not_a_member') } catch { /* already gone */ }
+      return
+    }
+    const result = this.queueIntent(conn.key, frame.action)
+    this.sendFrame(ws, result.error
+      // The status travels with the refusal because the client still reads it:
+      // a rate-limited message is "slow down", not the raw error code the
+      // player would otherwise be shown.
+      ? { t: COOP_FRAME_NACK, id: frame.id ?? null, error: result.error, status: result.status || 400 }
+      : { t: COOP_FRAME_ACK, id: frame.id ?? null, tick_number: result.tick_number })
+  }
+
+  /**
+   * A socket went away. If it was this member's last one they are given a short
+   * linger and then ejected by the ordinary staleness path — expressed by
+   * back-dating their heartbeat rather than as a second timer, because the save
+   * lock follows the member and one clock is easier to reason about than two.
+   *
+   * Back-dating also means any later proof of life undoes it for free: a client
+   * whose socket failed and fell back to polling stamps `lastSeen = now` on its
+   * next poll and is simply not stale any more.
+   */
+  private onConnClosed(conn: Conn): void {
+    for (const other of this.conns.values()) if (other.key === conn.key) return
+    const seen = this.lastSeen[conn.key] ?? 0
+    const lingerUntilStale = Date.now() - (COOP_SESSION_STALE_MS - COOP_SOCKET_LINGER_MS)
+    this.lastSeen[conn.key] = Math.min(seen, lingerUntilStale)
+  }
+
+  /** Closes every socket belonging to a member the room has finished with, so a
+   * client is told rather than left watching a fight it is no longer in. */
+  private dropSockets(key: string, reason: string): void {
+    for (const [ws, conn] of this.conns) {
+      if (conn.key !== key) continue
+      this.conns.delete(ws)
+      this.sendFrame(ws, { t: COOP_FRAME_BYE, reason })
+      try { ws.close(1000, reason) } catch { /* already gone */ }
+    }
+  }
+
+  private sendFrame(ws: WebSocket, frame: Record<string, unknown>): void {
+    try {
+      ws.send(JSON.stringify(frame))
+    } catch {
+      // A send to a socket the runtime has already torn down is not an error
+      // worth failing a tick over; the close listener cleans it up.
+    }
+  }
+
+  /**
+   * Pushes the beat to every connected client.
+   *
+   * Only what moved: each socket carries the projection it was last sent, so a
+   * steady tick costs the boss's HP, the mover's combat state and the events —
+   * not the pack, gear, levels and quest list that dominate a member record and
+   * change a few times an hour. A beat where nothing but the tick counter moved
+   * and no event fired is not sent at all, which is what makes a raid lobby
+   * cost nothing to sit in.
+   */
+  private broadcast(): void {
+    if (this.conns.size === 0) return
+    const tick = this.publishedTick
+    const now = Date.now()
+    for (const [ws, conn] of this.conns) {
+      const member = this.state?.members?.[conn.key]
+      if (!member) {
+        this.conns.delete(ws)
+        this.sendFrame(ws, { t: COOP_FRAME_BYE, reason: 'not_a_member' })
+        try { ws.close(1000, 'not_a_member') } catch { /* already gone */ }
+        continue
+      }
+      // An open socket is proof of presence, so a connected member never
+      // reaches the poll-staleness path.
+      this.lastSeen[conn.key] = now
+      const projection = projectStateForMember(this.state, conn.key) as AnyState
+      const events = projectEventsForMember(eventsSince(this.events, conn.ackTick, tick), conn.key)
+      const delta = projectionDelta(conn.projection, projection)
+      if (!deltaWorthSending(delta, events.length)) continue
+      conn.projection = projection
+      conn.ackTick = tick
+      this.sendFrame(ws, {
+        t: COOP_FRAME_TICK,
+        tick,
+        delta,
+        ...(events.length > 0 ? { events } : {}),
+      })
+    }
   }
 
   private handleDepart(key: string): Promise<Response> {
@@ -542,35 +804,50 @@ export class CoopBossRoom {
     // boss_id, phase and host_character_id are mirrored so the lobby list can be
     // rendered from the row alone — a party browser must not have to wake every
     // room to find out whether it has set off yet.
-    await this.env.DB.prepare(
-      `UPDATE coop_boss_sessions
-          SET state_json = ?, current_tick = ?, last_tick_at = ?, member_count = ?,
-              boss_hp = ?, boss_max_hp = ?, kill_seq = ?, boss_id = ?, phase = ?, host_character_id = ?
-        WHERE id = ?`,
-    ).bind(
-      JSON.stringify(this.state), this.state.tick || 0, now, memberCount(this.state),
-      this.state.boss?.currentHP ?? null, this.state.boss?.maxHP ?? null, this.killSeq,
-      this.state.bossId || this.bossId, this.state.phase || 'active',
-      this.state.hostCharacterId ?? null, this.sessionId,
-    ).run()
+    const statements = [
+      this.env.DB.prepare(
+        `UPDATE coop_boss_sessions
+            SET state_json = ?, current_tick = ?, last_tick_at = ?, member_count = ?,
+                boss_hp = ?, boss_max_hp = ?, kill_seq = ?, boss_id = ?, phase = ?, host_character_id = ?
+          WHERE id = ?`,
+      ).bind(
+        JSON.stringify(this.state), this.state.tick || 0, now, memberCount(this.state),
+        this.state.boss?.currentHP ?? null, this.state.boss?.maxHP ?? null, this.killSeq,
+        this.state.bossId || this.bossId, this.state.phase || 'active',
+        this.state.hostCharacterId ?? null, this.sessionId,
+      ),
+    ]
     // /api/save reads coop_session_members.last_seen_at to decide whether this
-    // character's save is locked, so each member's OWN last poll has to reach
-    // the row — stamping `now` across the board would keep a crashed member's
-    // heartbeat fresh and lock them out of their save until the room emptied,
-    // which is the whole bug the per-member clock exists to fix.
-    const heartbeats = Object.keys(this.state.members || {})
-      .map((id) => [Number(id), this.lastSeen[id] || 0] as const)
-      .filter(([, seen]) => seen > 0)
-    if (heartbeats.length > 0) {
-      await this.env.DB.batch(heartbeats.map(([characterId, seen]) =>
-        this.env.DB.prepare(
-          'UPDATE coop_session_members SET last_seen_at = ? WHERE session_id = ? AND character_id = ? AND left_at IS NULL',
-        ).bind(seen, this.sessionId, characterId)))
+    // character's save is locked, so each member's OWN last proof of life has to
+    // reach the row — stamping `now` across the board would keep a crashed
+    // member's heartbeat fresh and lock them out of their save until the room
+    // emptied, which is the whole bug the per-member clock exists to fix.
+    //
+    // Refreshed on its own 30s clock rather than on every checkpoint: the row
+    // only has to stay inside COOP_SESSION_STALE_MS (90s), so writing it four
+    // times a minute per member bought nothing. A heartbeat that moved BACKWARDS
+    // is written immediately — that is a socket closing, and the sooner the row
+    // says so the sooner the player has their save back.
+    for (const id of Object.keys(this.state.members || {})) {
+      const seen = this.lastSeen[id] || 0
+      if (seen <= 0) continue
+      const written = this.heartbeatWrittenAt[id] || 0
+      if (seen >= written && now - written < HEARTBEAT_WRITE_EVERY_MS) continue
+      this.heartbeatWrittenAt[id] = now
+      statements.push(this.env.DB.prepare(
+        'UPDATE coop_session_members SET last_seen_at = ? WHERE session_id = ? AND character_id = ? AND left_at IS NULL',
+      ).bind(seen, this.sessionId, Number(id)))
     }
+    // One batch, one round trip: the state row and the heartbeats used to be two
+    // awaits inside a beat that is already holding the room.
+    await this.env.DB.batch(statements)
   }
 
   private async closeRoom(now: number): Promise<void> {
     this.stopTicking()
+    for (const key of new Set([...this.conns.values()].map((c) => c.key))) {
+      this.dropSockets(key, 'session_ended')
+    }
     if (!this.sessionId) return
     await this.env.DB.prepare(
       `UPDATE coop_boss_sessions SET status = 'completed', ended_at = ?, member_count = 0, last_tick_at = ?
@@ -582,5 +859,6 @@ export class CoopBossRoom {
     this.pending = []
     this.pendingChat = []
     this.chatTimes = {}
+    this.heartbeatWrittenAt = {}
   }
 }
