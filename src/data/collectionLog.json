@@ -500,6 +500,14 @@
           ]
         },
         {
+          "id": "autumntodt",
+          "label": "Autumntodt",
+          "icon": "\ud83d\udd25",
+          "items": [
+            "tomb_of_fire"
+          ]
+        },
+        {
           "id": "barbarian_assault",
           "label": "Viking Assault",
           "icon": "\u2694\ufe0f",

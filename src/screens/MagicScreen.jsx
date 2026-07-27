@@ -345,7 +345,7 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
                   meta={<>
                     <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {formatActionDuration(action.ticks)}
                     {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) =>
-                      staffRuneType === id ? `Staff (${itemsData[id]?.name || id})` : `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
+                      staffRuneType === id ? `${staff?.name || 'Staff'} (${itemsData[id]?.name || id})` : `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                     {action.materials && <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                     {availCount !== null && <span class="text-[var(--color-gold)]"> · {availCount.toLocaleString()} actions</span>}
                     {levelOk && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip elemental staff)</span>}

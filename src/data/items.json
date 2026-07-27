@@ -326,7 +326,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -2507,7 +2507,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -2543,7 +2543,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -2579,7 +2579,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -2615,7 +2615,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -2651,7 +2651,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -4547,7 +4547,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -4583,7 +4583,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -4619,7 +4619,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -4655,7 +4655,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -4691,7 +4691,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -7049,7 +7049,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -7546,7 +7546,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -8632,7 +8632,7 @@
     "breakdownQty": 7500,
     "poweredStaff": true,
     "poweredStaffBaseDamage": 34,
-    "attackSpeed": 3,
+    "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": {
       "stab": 0,
@@ -9154,7 +9154,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "dragonHunter": true,
@@ -15871,7 +15871,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -17131,7 +17131,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -17277,7 +17277,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -18114,7 +18114,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": {
       "stab": 0,
@@ -18155,7 +18155,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "magic",
     "attackBonus": {
       "stab": 0,
@@ -18191,7 +18191,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": {
       "stab": 0,
@@ -18669,5 +18669,42 @@
     "isGeneralStore": false,
     "isBossUnique": true,
     "description": "A Vigil Sigil bound to hallowed bone. Prayers burn half as fast while it is carried."
+  },
+  "tomb_of_fire": {
+    "id": "tomb_of_fire",
+    "name": "Tomb of Fire",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "isUntradeable": true,
+    "elemental": "fire_rune",
+    "spellRuneDamage": {
+      "fire_rune": 10
+    },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 80
+    },
+    "shopValue": 1250000,
+    "isGeneralStore": false,
+    "description": "A grimoire bound in ember-scorched leather. It never runs out of fire runes and stokes every fire spell that leaves its pages."
   }
 }

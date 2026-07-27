@@ -9,11 +9,11 @@ const dungeoneering = (skills as Record<string, any>).dungeoneering
 const itemIds = new Set(Object.keys(items as Record<string, any>))
 
 const REWARD_SPECS: Record<string, { level: number; product: string; tokenCost: number }> = {
-  unlock_chaotic_rapier:        { level: 80, product: 'chaotic_rapier', tokenCost: 1000000 },
-  unlock_chaotic_longsword:     { level: 80, product: 'chaotic_longsword', tokenCost: 1000000 },
-  unlock_chaotic_maul:          { level: 80, product: 'chaotic_maul', tokenCost: 1000000 },
-  unlock_chaotic_crossbow:      { level: 80, product: 'chaotic_crossbow', tokenCost: 1000000 },
-  unlock_chaotic_staff:         { level: 80, product: 'chaotic_staff', tokenCost: 1000000 },
+  unlock_chaotic_rapier:        { level: 80, product: 'chaotic_rapier', tokenCost: 300000 },
+  unlock_chaotic_longsword:     { level: 80, product: 'chaotic_longsword', tokenCost: 300000 },
+  unlock_chaotic_maul:          { level: 80, product: 'chaotic_maul', tokenCost: 300000 },
+  unlock_chaotic_crossbow:      { level: 80, product: 'chaotic_crossbow', tokenCost: 300000 },
+  unlock_chaotic_staff:         { level: 80, product: 'chaotic_staff', tokenCost: 300000 },
   unlock_eagle_eyed_kiteshield: { level: 80, product: 'eagle_eyed_kiteshield', tokenCost: 300000 },
   unlock_arcane_kiteshield:     { level: 80, product: 'arcane_kiteshield', tokenCost: 300000 },
   unlock_arcane_necklace:       { level: 65, product: 'arcane_necklace', tokenCost: 65000 },

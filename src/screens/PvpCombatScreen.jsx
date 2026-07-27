@@ -294,6 +294,18 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     pushSplats(setOppSplats, opp)
   }
 
+  // The room's replay: already filtered to what this client has not seen, so it
+  // needs no tick filter of its own — only the mount guard, so joining a duel
+  // in progress doesn't dump its whole history on screen at once.
+  const ingestSplatEvents = (events, tick) => {
+    const seen = lastSplatTickRef.current
+    lastSplatTickRef.current = Number(tick) || seen || 0
+    if (seen === null || !Array.isArray(events) || events.length === 0) return
+    const { self, opp } = splatsFromPvpEvents(events, selfId)
+    pushSplats(setSelfSplats, self)
+    pushSplats(setOppSplats, opp)
+  }
+
   const serverSpecialQueued = !!pair.self?.specialAttackQueued
   const specialVisuallyQueued = specialQueuedOverride !== null
     ? specialQueuedOverride
@@ -476,42 +488,42 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     tickInFlight.current = true
     try {
       if (terminalHandledRef.current) return false
-      // Post every queued gear swap for this tick (server orders them by
-      // character_seq), so a full set of armour/weapon changes applies at once.
+      // Everything queued for this beat goes in one request: gear swaps first
+      // (the room applies them in array order), then the consumables — one
+      // normal food plus one combo item, so both resolve on the SAME tick for
+      // the combined heal — then the pending action. The engine still enforces
+      // the eat/combo cooldowns, so over-eating is rejected there.
+      const queuedActions = []
       if (pendingGearRef.current.length > 0) {
-        const gearBatch = pendingGearRef.current
+        queuedActions.push(...pendingGearRef.current)
         pendingGearRef.current = []
-        for (const gearAction of gearBatch) {
-          if (terminalHandledRef.current) break
-          await pvpApi.postIntent(matchId, latestTick.current, gearAction)
-        }
       }
-      // Post the consumables for this tick (one normal food + one combo item), so
-      // a food and a combo resolve on the SAME server tick (combined heal). The
-      // engine enforces the eat/combo cooldowns, so over-eating is rejected there.
       if (pendingConsumablesRef.current.length > 0) {
-        const consBatch = pendingConsumablesRef.current
+        queuedActions.push(...pendingConsumablesRef.current.map((entry) => entry.action))
         pendingConsumablesRef.current = []
-        for (const entry of consBatch) {
-          if (terminalHandledRef.current) break
-          await pvpApi.postIntent(matchId, latestTick.current, entry.action)
-        }
       }
       const action = pendingActionRef.current
       if (action) {
-        await pvpApi.postIntent(matchId, latestTick.current, action)
+        queuedActions.push(action)
         pendingActionRef.current = null
         setPendingAction(null)
       }
-      const tickRes = await pvpApi.tickMatch(matchId)
+      if (queuedActions.length > 0) await pvpApi.postIntents(matchId, queuedActions)
+
+      const tickRes = await pvpApi.tickMatch(matchId, latestTick.current || undefined)
       if (!mounted.current) return false
 
       if (tickRes.state) {
         const normalizedState = normalizePvpState(tickRes.state)
         if (normalizedState) {
           setState(normalizedState)
-          latestTick.current = normalizedState.tick || latestTick.current
-          ingestSplats(normalizedState)
+          // The room replays every event after the tick we acknowledged, so
+          // splats come from that list rather than from the state's own
+          // 20-event tail — a poll that spans several beats shows them all.
+          ingestSplatEvents(tickRes.events, normalizedState.tick)
+          latestTick.current = Number.isFinite(tickRes.current_tick)
+            ? tickRes.current_tick
+            : (normalizedState.tick || latestTick.current)
         }
       }
       lastPollOkAt.current = Date.now()

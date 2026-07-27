@@ -5,6 +5,7 @@ import {
   renamePreset,
   applyPreset,
   MAX_EQUIPMENT_PRESETS,
+  equipmentPresetLimit,
 } from '../src/engine/equipmentPresets.js'
 
 const ITEMS: any = {
@@ -50,6 +51,26 @@ describe('equipmentPresets — snapshot', () => {
     expect(r.name).toHaveLength(24)
     expect(renamePreset(p, '   ').name).toBe('Mage Setup') // empty falls back to current
     expect(MAX_EQUIPMENT_PRESETS).toBe(3)
+  })
+})
+
+describe('equipmentPresetLimit — purchased extra tabs', () => {
+  it('starts at three and grows by one per purchased tab, without a ceiling', () => {
+    expect(equipmentPresetLimit({ extraEquipmentTabs: 0 })).toBe(3)
+    expect(equipmentPresetLimit({ extraEquipmentTabs: 1 })).toBe(4)
+    expect(equipmentPresetLimit({ extraEquipmentTabs: 25 })).toBe(28)
+  })
+
+  it('falls back to the base three for a save predating the unlock', () => {
+    expect(equipmentPresetLimit(undefined)).toBe(3)
+    expect(equipmentPresetLimit({})).toBe(3)
+    expect(equipmentPresetLimit({ doubleSlayerXp: true })).toBe(3)
+  })
+
+  it('never shrinks the base limit on a junk or negative count', () => {
+    expect(equipmentPresetLimit({ extraEquipmentTabs: -5 })).toBe(3)
+    expect(equipmentPresetLimit({ extraEquipmentTabs: 'lots' })).toBe(3)
+    expect(equipmentPresetLimit({ extraEquipmentTabs: 2.7 })).toBe(5)
   })
 })
 

@@ -25,7 +25,6 @@ export function accountDeletionPlan(identityId, { now = Date.now() } = {}) {
     { sql: `DELETE FROM kill_counts WHERE ${inOwned}`, params: [identityId] },
     { sql: `DELETE FROM action_nonces WHERE ${inOwned}`, params: [identityId] },
     { sql: `DELETE FROM pvp_waiting_room WHERE ${inOwned}`, params: [identityId] },
-    { sql: `DELETE FROM pvp_intents WHERE ${inOwned}`, params: [identityId] },
     {
       sql: `DELETE FROM pvp_invitations WHERE from_character IN (${ownedChars}) OR to_character IN (${ownedChars})`,
       params: [identityId, identityId],

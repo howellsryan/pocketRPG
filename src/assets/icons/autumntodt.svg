@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="autumntodt_cover" x1="0.1" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#7a2418"/>
+      <stop offset="0.55" stop-color="#4a1108"/>
+      <stop offset="1" stop-color="#210703"/>
+    </linearGradient>
+    <linearGradient id="autumntodt_blaze" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#fff0a0"/>
+      <stop offset="0.35" stop-color="#ffb020"/>
+      <stop offset="1" stop-color="#c72708"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#15110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M192 60 C 244 55 292 60 328 70 L328 200 C 292 190 244 185 192 190 Z" fill="#e8dcbe"/>
+    <path d="M164 60 C 182 53 198 53 212 58 L212 200 C 198 195 182 195 164 204 Z" fill="#2c0a04"/>
+    <path d="M204 52 C 256 47 306 53 336 64 L336 194 C 306 183 256 177 204 182 Z" fill="url(#autumntodt_cover)"/>
+    <path d="M222 74 C 264 70 306 74 324 82 L324 176 C 306 168 264 164 222 168 Z" fill="none" stroke="#c9a24a" stroke-width="7"/>
+    <path d="M276 92 C 300 122 310 142 310 164 C 310 190 292 206 272 206 C 250 206 234 190 234 168 C 234 152 242 142 250 134 C 250 152 258 160 266 160 C 274 160 276 150 270 136 C 264 120 268 106 276 92 Z" fill="url(#autumntodt_blaze)" stroke-width="11"/>
+    <path d="M256 236 C 322 302 356 344 356 396 C 356 442 312 470 256 470 C 200 470 156 442 156 396 C 156 358 176 336 194 316 C 194 362 214 380 234 380 C 254 380 260 356 248 322 C 234 282 238 268 256 236 Z" fill="url(#autumntodt_blaze)"/>
+    <path d="M256 340 C 292 384 304 406 304 424 C 304 448 284 464 256 464 C 228 464 208 448 208 424 C 208 404 220 386 240 366 C 238 400 246 412 258 412 C 270 412 274 388 256 340 Z" fill="#ffe07a" stroke="none"/>
+    <path d="M124 468 L204 428 M388 468 L308 428" stroke="#6a4520" stroke-width="26"/>
+    <path d="M124 468 L204 428 M388 468 L308 428" stroke="#3a2410" stroke-width="10"/>
+  </g>
+</svg>
