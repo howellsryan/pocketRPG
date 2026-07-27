@@ -48,11 +48,33 @@ export function raidBossOrder(raidId) {
 }
 
 /**
+ * Every hitpoint one boss makes a party chew through — the whole fight, not the
+ * health bar it opens on.
+ *
+ * A phased boss hands out a fresh bar per form (Verzik: 2000, then 3250, then
+ * 2500), and a double-kill boss regenerates to full once (Olm: 800 twice). Both
+ * are health the party actually has to remove, so both count; reading
+ * `monster.hitpoints` or the seeded state alone charges the loot gate for a
+ * fraction of the fight it is supposed to measure.
+ */
+function bossFightHitpoints(monster, monstersData) {
+  const seed = createCombatState(monster, 'melee', 'accurate', null, monstersData)
+  let total = Math.max(0, Math.floor(Number(seed?.monster?.currentHP) || 0))
+  if (monster.verzikPhased && monster.multiForm && monster.forms) {
+    const order = monster.formCycleOrder || Object.keys(monster.forms)
+    const startIndex = order.indexOf(monster.initialForm || order[0])
+    for (const key of order.slice(Math.max(0, startIndex) + 1)) {
+      const phaseHP = monster.forms[key]?.phaseHP ?? monster.hitpoints
+      total += Math.max(0, Math.floor(Number(phaseHP) || 0))
+    }
+  }
+  if (monster.requiresDoubleKill) total *= 2
+  return total
+}
+
+/**
  * Every hitpoint a party has to chew through to finish this raid.
  *
- * Seeded through createCombatState rather than read straight off
- * `monster.hitpoints` because a phased boss starts on its first form's phaseHP,
- * and the loot threshold has to measure the fight players actually have.
  * Computed once when the raid starts and stored on the state, so the HUD can
  * show a member's share of the whole run from the first swing.
  */
@@ -61,8 +83,7 @@ export function raidTotalHitpoints(raidId, monstersData) {
   for (const bossId of raidBossOrder(raidId)) {
     const monster = monstersData?.[bossId]
     if (!monster) continue
-    const seed = createCombatState(monster, 'melee', 'accurate', null, monstersData)
-    total += Math.max(0, Math.floor(Number(seed?.monster?.currentHP) || 0))
+    total += bossFightHitpoints(monster, monstersData)
   }
   return total
 }

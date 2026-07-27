@@ -221,6 +221,10 @@ export function createCoopBossState(bossId, monstersData, now = Date.now()) {
       add: null,
       addSpawnCountdown: seed.addSpawnCountdown,
       addsDefeated: 0,
+      // Shared, because a double-kill boss's first death is the ROOM's progress,
+      // not the progress of whichever member happened to land the last hit — a
+      // member's engine is rebuilt from scratch every tick.
+      doubleKillCount: 0,
       killedAt: null,
       respawnCountdown: 0,
     },
@@ -446,9 +450,10 @@ export function coopLootDamageRequired(maxHP) {
  * The health pool the 10% gate is measured against.
  *
  * A boss room pays per kill, so it is that boss's max HP. A raid pays once, at
- * the end, so it is every boss in the run added together and member damage is
- * never reset between them — otherwise a member could carry five bosses and
- * still be dry because they were low on supplies for the sixth.
+ * the end, so it is every boss in the run added together — every phase and every
+ * kill of them (raidTotalHitpoints) — and member damage is never reset between
+ * them, otherwise a member could carry five bosses and still be dry because they
+ * were low on supplies for the sixth.
  */
 export function coopLootBasisHP(state) {
   const raidHP = Number(state?.raid?.maxHP)
@@ -564,6 +569,7 @@ function hydrateCombatState(state, member, monstersData, spellsData) {
   const engine = createCombatState(monster, member.combat.combatType, member.combat.stance, spell, monstersData)
   Object.assign(engine.monster, state.boss.monster || {})
   engine.monster.currentHP = state.boss.currentHP
+  engine.doubleKillCount = state.boss.doubleKillCount || 0
   engine.playerAttackTimer = member.combat.playerAttackTimer
   engine.monsterAttackTimer = member.combat.monsterAttackTimer
   engine.eatCooldown = member.combat.eatCooldown
@@ -923,6 +929,12 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     }
     next.boss.currentHP = Math.max(0, combatState.monster.currentHP)
     Object.assign(next.boss.monster, pickMutableMonsterFields(combatState.monster))
+    // A phase change hands the boss a new bar (Verzik's second form is bigger
+    // than her first), and its first death is progress the room owns — the
+    // member sessions are rebuilt each tick and would each ask for their own.
+    const phaseHP = Math.floor(Number(combatState.monster.hitpoints) || 0)
+    if (phaseHP > 0) next.boss.maxHP = phaseHP
+    next.boss.doubleKillCount = combatState.doubleKillCount || 0
 
     // Invariant 2: only the target advances the add's spawn countdown, but any
     // member's damage to a live add sticks.

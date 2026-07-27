@@ -5,6 +5,7 @@ import {
   coopKillOutcome,
   coopLootBasisHP,
   coopLootDamageRequired,
+  createCoopBossState,
   createCoopMember,
   createCoopRaidState,
   lootEligibleCharacterIds,
@@ -100,6 +101,58 @@ describe('coopRaidEngine — raid catalogue', () => {
     const total = raidTotalHitpoints(RAID, monstersData)
     const biggest = Math.max(...raidBossOrder(RAID).map((id) => monstersData[id].hitpoints))
     expect(total).toBeGreaterThan(biggest)
+  })
+
+  it('counts every phase of a phased boss, not the bar it opens on', () => {
+    // Verzik hands out three health bars (2000 / 3250 / 2500). Counting only the
+    // first charges the loot gate for a quarter of the fight she actually is.
+    const raidId = 'crimson_night_theatre'
+    const openingBars = raidBossOrder(raidId).reduce((sum, id) => sum + monstersData[id].hitpoints, 0)
+    const verzik = monstersData.verzik_vitur
+    const laterPhases = verzik.forms.phase2.phaseHP + verzik.forms.phase3.phaseHP
+    expect(raidTotalHitpoints(raidId, monstersData)).toBe(openingBars + laterPhases)
+  })
+
+  it('counts a double-kill boss twice — the party removes its health twice', () => {
+    const raidId = 'vaults_of_xyren'
+    const openingBars = raidBossOrder(raidId).reduce((sum, id) => sum + monstersData[id].hitpoints, 0)
+    expect(monstersData.the_great_olm.requiresDoubleKill).toBe(true)
+    expect(raidTotalHitpoints(raidId, monstersData)).toBe(openingBars + monstersData.the_great_olm.hitpoints)
+  })
+})
+
+describe('coopRaidEngine — a double-kill boss in the room', () => {
+  it('survives its first death and dies on the second', () => {
+    // The health raidTotalHitpoints counts twice has to be health that exists.
+    // doubleKillCount lives on the combat state, and a member's session is built
+    // from scratch every tick — kept off the shared boss record, Olm regenerates
+    // to full forever and the raid can never be finished.
+    let state: any = createCoopBossState('the_great_olm', monstersData, 1_000)
+    state = addCoopMember(
+      state,
+      createCoopMember({ characterId: 7, username: 'player7', savePayload: savePayload(), itemsData, now: 1_000 }),
+    )
+
+    let regenerated = false
+    let kill: any = null
+    for (let i = 0; i < 400 && !kill; i++) {
+      // On the edge, so the next landed hit resolves a death without having to
+      // grind the boss down through its defence.
+      state.boss.currentHP = 1
+      state.members['7'].hp = state.members['7'].maxHP
+      const result = tick(state)
+      state = result.stateNext
+      if (result.events.some((e: any) => e.type === 'bossPhaseReset')) {
+        regenerated = true
+        expect(result.kill).toBeNull()
+        expect(state.boss.currentHP).toBe(monstersData.the_great_olm.hitpoints)
+        expect(state.boss.doubleKillCount).toBe(1)
+      }
+      kill = result.kill
+    }
+
+    expect(regenerated).toBe(true)
+    expect(kill).not.toBeNull()
   })
 })
 
