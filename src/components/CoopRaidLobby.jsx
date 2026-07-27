@@ -5,7 +5,7 @@ import SkillEmblem from './SkillEmblem.jsx'
 import EquipmentPaperdoll from './EquipmentPaperdoll.jsx'
 import InventoryGrid from './InventoryGrid.jsx'
 import { combatLevelFromLevels } from '../engine/combatLevel.js'
-import { isCoopHost, raidReadyCount } from '../engine/coopRaidEngine.js'
+import { isCoopHost, raidPartyReady, raidReadyCount } from '../engine/coopRaidEngine.js'
 import { getRaidArt } from '../utils/combatArt.js'
 
 // The raid lobby: who is coming, what they are bringing, and the host's Start
@@ -86,6 +86,9 @@ export default function CoopRaidLobby({
   const hostName = members.find((m) => Number(m.characterId) === Number(state?.hostCharacterId))?.username || 'the host'
   const maxMembers = 8
   const readiness = raidReadyCount(state)
+  // Same predicate the room enforces, so the button never offers a start the
+  // server will refuse.
+  const partyReady = raidPartyReady(state)
 
   return (
     <div class="cb-party">
@@ -159,9 +162,9 @@ export default function CoopRaidLobby({
       <p class="cb-area__blurb cb-party__note">
         {iAmHost
           ? (readiness.total > 0
-            // Readiness informs the host, it does not gate them: a party must
-            // never be stranded by one member who walked away from their phone.
-            ? `${readiness.ready}/${readiness.total} ready. Nobody can join once you set off.`
+            ? `${readiness.ready}/${readiness.total} ready. ${partyReady
+              ? 'Nobody can join once you set off.'
+              : 'The whole party has to be ready before you can start.'}`
             : 'Nobody can join once you set off, so wait for your party before you start.')
           : `Waiting for ${hostName} to start the raid. Eat, drink and swap gear while you wait.`}
       </p>
@@ -172,9 +175,13 @@ export default function CoopRaidLobby({
           <span>Leave party</span>
         </button>
         {iAmHost ? (
-          <button class="cb-act is-on" disabled={starting} onClick={starting ? undefined : onStart}>
+          <button
+            class={'cb-act' + (partyReady ? ' is-on' : '')}
+            disabled={starting || !partyReady}
+            onClick={starting || !partyReady ? undefined : onStart}
+          >
             <GameIcon iconKey="temple_gate" color="currentColor" size={18} />
-            <span>{starting ? 'Starting…' : 'Start Raid'}</span>
+            <span>{starting ? 'Starting…' : partyReady ? 'Start Raid' : `Waiting · ${readiness.ready}/${readiness.total}`}</span>
           </button>
         ) : (
           // The slot a non-host used to lose to a dead "Host starts" button.

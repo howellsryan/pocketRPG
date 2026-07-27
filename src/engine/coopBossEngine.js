@@ -29,6 +29,8 @@ import {
   isCoopHost,
   nextHostCharacterId,
   raidBossOrder,
+  raidPartyReady,
+  raidReadyCount,
   raidTotalHitpoints,
 } from './coopRaidEngine.js'
 
@@ -143,6 +145,11 @@ export function describeCoopEquipRefusal(event) {
 export function describeCoopActionRefusal(event) {
   if (event?.reason === 'spell_level') return `Need Magic level ${event.required} to cast ${event.name || 'that spell'}`
   if (event?.reason === 'prayer_level') return `Need Prayer level ${event.required} to use ${event.name || 'that prayer'}`
+  if (event?.reason === 'party_not_ready') {
+    const waiting = Math.max(0, (event.total ?? 0) - (event.ready ?? 0))
+    return `The party is not ready — ${waiting} ${waiting === 1 ? 'raider is' : 'raiders are'} still getting set`
+  }
+  if (event?.reason === 'not_host') return 'Only the host can start the raid'
   return 'Could not do that'
 }
 
@@ -696,6 +703,16 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
       }
       if (!isCoopHost(state, member.characterId)) {
         events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'not_host' })
+        return
+      }
+      // The party sets off together: nobody is left mid-restock by a host who
+      // pressed Start while they were still in the bank. Enforced here rather
+      // than by disabling the button, because the button is not the authority.
+      if (!raidPartyReady(state)) {
+        const { ready, total } = raidReadyCount(state)
+        events.push({
+          type: 'actionRefused', characterId: member.characterId, reason: 'party_not_ready', ready, total,
+        })
         return
       }
       startCoopRaid(state, monstersData, events)

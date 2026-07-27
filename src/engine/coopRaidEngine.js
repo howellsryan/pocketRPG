@@ -127,17 +127,31 @@ export function isCoopLobby(state) {
 }
 
 /**
- * How much of the party has said it is ready, for the host's Start button.
+ * Everyone whose readiness the host is waiting on.
  *
- * The host is excluded on both counts: pressing Start IS their answer, so
- * counting them would leave the button reading "3/4 ready" at the moment the
- * host is the only one left to press it.
+ * The host is excluded: pressing Start IS their answer, so counting them would
+ * leave the button reading "3/4 ready" at the moment the host is the only one
+ * left to press it. So are the dead — a party comes back from a wipe with its
+ * casualties still in it, they are never revived, and the intent path refuses
+ * actions from a dead member, so counting them would strand the party behind
+ * somebody who cannot answer.
  */
-export function raidReadyCount(state) {
+function readinessRoster(state) {
   const hostId = state?.hostCharacterId
-  const others = Object.values(state?.members || {})
-    .filter((m) => hostId == null || Number(m.characterId) !== Number(hostId))
-  return { ready: others.filter((m) => m.ready).length, total: others.length }
+  return Object.values(state?.members || {})
+    .filter((m) => (hostId == null || Number(m.characterId) !== Number(hostId)) && m.status !== 'dead')
+}
+
+/** How much of the party has said it is ready, for the host's Start button. */
+export function raidReadyCount(state) {
+  const roster = readinessRoster(state)
+  return { ready: roster.filter((m) => m.ready).length, total: roster.length }
+}
+
+/** Whether the host may set off. The gate, and the same count the lobby shows —
+ * a Start button that disagrees with the server is worse than a locked one. */
+export function raidPartyReady(state) {
+  return readinessRoster(state).every((m) => !!m.ready)
 }
 
 /** Progress line for the fight HUD: "Boss 3/6", and the name of what is next. */

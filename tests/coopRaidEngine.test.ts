@@ -19,6 +19,7 @@ import {
   isCoopRaidId,
   nextHostCharacterId,
   raidBossOrder,
+  raidPartyReady,
   raidProgress,
   raidReadyCount,
   raidTotalHitpoints,
@@ -52,7 +53,9 @@ function savePayload(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function party(ids: number[], hostId = ids[0]) {
+/** A party in its lobby. Readied by default, since that is now the precondition
+ * for starting at all — pass `{ ready: false }` to test the gate itself. */
+function party(ids: number[], hostId = ids[0], { ready = true } = {}) {
   let state: any = createCoopRaidState(RAID, monstersData, { hostCharacterId: hostId, now: 1_000 })!
   for (const [i, id] of ids.entries()) {
     state = addCoopMember(
@@ -66,6 +69,7 @@ function party(ids: number[], hostId = ids[0]) {
       }),
     )
   }
+  if (ready) for (const member of Object.values(state.members) as any[]) member.ready = true
   return state
 }
 
@@ -127,7 +131,7 @@ describe('coopRaidEngine — readiness in the lobby', () => {
     ({ tick_number: 1, characterId, characterSeq: 1, action: { type: 'set_ready', value } })
 
   it('lets a member say they are ready, and take it back', () => {
-    let state = tick(party([7, 8]), [readyIntent(8, true)]).stateNext
+    let state = tick(party([7, 8], 7, { ready: false }), [readyIntent(8, true)]).stateNext
     expect(state.members['8'].ready).toBe(true)
     state = tick(state, [readyIntent(8, false)]).stateNext
     expect(state.members['8'].ready).toBe(false)
@@ -136,18 +140,50 @@ describe('coopRaidEngine — readiness in the lobby', () => {
   it('counts readiness for the host without counting the host', () => {
     // Pressing Start is the host's answer, so counting them would leave the
     // button reading "1/2 ready" at the moment the host is all that is left.
-    const state = tick(party([7, 8, 9]), [readyIntent(8, true)]).stateNext
+    const state = tick(party([7, 8, 9], 7, { ready: false }), [readyIntent(8, true)]).stateNext
     expect(raidReadyCount(state)).toEqual({ ready: 1, total: 2 })
+    expect(raidPartyReady(state)).toBe(false)
   })
 
-  it('does not gate the start on it', () => {
-    // A party must never be stranded by one member who walked away.
-    const state = tick(party([7, 8]), [startIntent(7)]).stateNext
+  it('refuses to start while anyone is still getting set', () => {
+    // The party sets off together: nobody is left mid-restock by a host who
+    // pressed Start while they were still in the bank.
+    const { stateNext, events } = tick(party([7, 8, 9], 7, { ready: false }), [startIntent(7)])
+    expect(stateNext.phase).toBe('lobby')
+    expect(events.find((e: any) => e.type === 'actionRefused')).toMatchObject({
+      reason: 'party_not_ready', ready: 0, total: 2, characterId: 7,
+    })
+  })
+
+  it('starts once the last of them says so', () => {
+    let state = party([7, 8], 7, { ready: false })
+    state = tick(state, [startIntent(7)]).stateNext
+    expect(state.phase).toBe('lobby')
+    state = tick(state, [readyIntent(8, true)]).stateNext
+    state = tick(state, [startIntent(7)]).stateNext
     expect(state.phase).toBe('active')
   })
 
+  it('lets a host with nobody to wait for set off alone', () => {
+    const state = tick(party([7], 7, { ready: false }), [startIntent(7)]).stateNext
+    expect(state.phase).toBe('active')
+  })
+
+  it('is not held up by a member who died on the last run', () => {
+    // A wipe returns the party to its lobby with its casualties still in it,
+    // they are never revived, and the intent path refuses actions from a dead
+    // member — so counting them would strand the party behind somebody who
+    // cannot answer.
+    const state = party([7, 8], 7, { ready: false })
+    state.members['8'].status = 'dead'
+    state.members['8'].hp = 0
+    expect(raidReadyCount(state)).toEqual({ ready: 0, total: 0 })
+    expect(raidPartyReady(state)).toBe(true)
+    expect(tick(state, [startIntent(7)]).stateNext.phase).toBe('active')
+  })
+
   it('clears readiness when the run starts and again when the party comes back', () => {
-    let state = tick(party([7, 8]), [readyIntent(8, true)]).stateNext
+    let state = tick(party([7, 8], 7, { ready: false }), [readyIntent(8, true)]).stateNext
     state = tick(state, [startIntent(7)]).stateNext
     expect(state.members['8'].ready).toBe(false)
 
@@ -160,7 +196,7 @@ describe('coopRaidEngine — readiness in the lobby', () => {
   })
 
   it('shows the rest of the party who is ready', () => {
-    const state = tick(party([7, 8]), [readyIntent(8, true)]).stateNext
+    const state = tick(party([7, 8], 7, { ready: false }), [readyIntent(8, true)]).stateNext
     const seenBy7: any = projectStateForMember(state, '7')
     expect(seenBy7.members['8'].ready).toBe(true)
     expect(lobbyMember(state.members['8']).ready).toBe(true)
