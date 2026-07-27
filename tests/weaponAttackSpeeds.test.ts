@@ -43,7 +43,14 @@ describe('Duskmare staves', () => {
 })
 
 describe('powered staves', () => {
-  it('swings the Trident of Venom every 4 ticks', () => {
+  it('swings the Trident of Venom and the Sanguine Staff every 4 ticks', () => {
     expect(itemsData.trident_of_venom.attackSpeed).toBe(4)
+    expect(itemsData.sanguine_staff.attackSpeed).toBe(4)
+  })
+})
+
+describe('Chaotic weapons', () => {
+  it('casts with the Chaotic Staff every 4 ticks, matching the powered staves', () => {
+    expect(itemsData.chaotic_staff.attackSpeed).toBe(4)
   })
 })

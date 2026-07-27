@@ -226,6 +226,18 @@ export function poweredStaffMagicBaseDamage(magicLevel, weapon = null) {
   return Math.max(1, Math.floor((Number(magicLevel) || 1) / 3) + offset)
 }
 
+/**
+ * Item-modal summary for a powered staff: the base max hit it lands at
+ * `magicLevel`. Null for every other weapon — a powered staff's damage lives in
+ * `poweredStaffBaseDamage` rather than in any bonus block, so nothing else in
+ * the modal reveals it.
+ */
+export function poweredStaffDamageSummary(item, magicLevel) {
+  if (!item?.poweredStaff) return null
+  const level = Math.max(1, Math.floor(Number(magicLevel) || 1))
+  return { maxHit: poweredStaffMagicBaseDamage(level, item), magicLevel: level }
+}
+
 function zeroMagicSwing() {
   return { hit: false, damage: 0, accuracy: 0, maxHit: 0, attackRoll: 0, defenceRoll: 0, style: 'magic' }
 }

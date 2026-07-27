@@ -263,7 +263,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Dungeoneering is trained by clearing dungeons of increasing difficulty, from novice upward. Every clear grants Dungeoneering XP and also earns Dungeoneering tokens (0.15 tokens per XP, rounded up per clear). Spend tokens on exclusive rewards with level requirements — for example the Arcane Necklace at level 65 for 65,000 tokens, or the Chaotic weapons and kiteshields at level 80 for 300,000 tokens each. Dungeoneering rewards count toward your collection log."
+  "text": "Dungeoneering is trained by clearing dungeons of increasing difficulty, from novice upward. Every clear grants Dungeoneering XP and also earns Dungeoneering tokens (0.15 tokens per XP, rounded up per clear). Spend tokens on exclusive rewards with level requirements — for example the Arcane Necklace at level 65 for 65,000 tokens, or the Chaotic weapons and kiteshields at level 80 for 300,000 tokens each. Claiming them is not the same as wielding them: the Chaotic Rapier, Longsword and Maul need Attack 80 and Strength 90, the Chaotic Crossbow needs Ranged 90 and the Chaotic Staff Magic 90, and both kiteshields need Defence 70 plus 90 in their combat skill. Dungeoneering rewards count toward your collection log."
  },
  {
   "id": "guide_summoning",

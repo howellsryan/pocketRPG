@@ -35,10 +35,23 @@ describe('armoury classifier', () => {
     expect(categoryOf({ type: 'armour', otherBonus: { magicDamage: 5 } })).toBe('magic')
   })
 
-  it('derives tier from the lowest requirement (0 when unrestricted)', () => {
+  it('derives tier from the highest requirement (0 when unrestricted)', () => {
     expect(tierOf({ requirements: { attack: 60, strength: 60 } })).toBe(60)
     expect(tierOf({ requirements: { defence: 1 } })).toBe(1)
     expect(tierOf({})).toBe(0)
+    // A secondary gate never understates the tier: it is the level you must
+    // reach to wield the item, not the cheapest requirement on it.
+    expect(tierOf({ requirements: { attack: 80, strength: 90, dungeoneering: 80 } })).toBe(90)
+    expect(tierOf({ requirements: { ranged: 60, defence: 1 } })).toBe(60)
+  })
+
+  it('tiers the live Dungeoneering and hide gear at the level that actually gates it', () => {
+    // Chaotic gear is claimed at Dungeoneering 80 but wielded at 90.
+    for (const id of ['chaotic_rapier', 'chaotic_longsword', 'chaotic_maul', 'chaotic_crossbow', 'chaotic_staff']) {
+      expect([id, tierOf(items[id])]).toEqual([id, 90])
+    }
+    expect(tierOf(items.red_d_hide_body)).toBe(60)
+    expect(tierOf(items.masari_mask)).toBe(80)
   })
 
   it('groups by item kind (the noun in the name), not material family', () => {
