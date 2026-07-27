@@ -9,6 +9,8 @@ import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import SellConfirmModal from '../components/SellConfirmModal.jsx'
 import { freeSlots, countItem, removeItem, addItem, getBreakdownYield, sumSlotCharges } from '../engine/inventory.js'
 import { resolveInventoryEat } from '../engine/consumables.js'
+import GameIcon from '../components/GameIcon.jsx'
+import { getSkillArt } from '../utils/skillArt.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
 import { getIronmanShopValue } from '../utils/itemValue.js'
 import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
@@ -593,10 +595,11 @@ export default function InventoryScreen() {
             Deposit All
           </button>
           {/* Outside combat nothing else shows HP, so "should I eat?" was unanswerable. */}
-          <span class={`text-xs font-[var(--font-mono)] ${currentHP < getMaxHP()
+          <span class={`inline-flex items-center gap-1 text-xs font-[var(--font-mono)] ${currentHP < getMaxHP()
             ? 'text-[var(--color-blood)] font-bold'
             : 'text-[var(--color-parchment)] opacity-40'}`}>
-            ❤ {currentHP}/{getMaxHP()}
+            <GameIcon iconKey={getSkillArt('hitpoints').icon} size={14} title="Hitpoints" />
+            {currentHP}/{getMaxHP()}
           </span>
           <span class="text-xs font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
             {free} free
