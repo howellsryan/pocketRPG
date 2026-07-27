@@ -114,7 +114,81 @@ not just within-slot rivals:
 This also closed most of the melee/ranged gap: melee's max-gear DPS rose from
 ~7.5 to ~8.5, now within 2% of ranged's ~8.6.
 
-## Recommended follow-up (needs a deliberate pass, not applied here)
+## Combat-style parity pass
+
+The follow-up below was taken as a scoped change. The level-99 lens above could not
+see the problem: it models no combat stances, no set bonuses, and one synthetic
+target. Adding those (`--by-level`) showed the triangle was far wider than the
+"melee ≈ ranged within 2%" reading, and that the worst spot was mid-game:
+
+| Player level | Melee | Ranged | Magic | Ratio before → after |
+|---:|---:|---:|---:|---|
+| 30 | 2.56 | 2.66 | 2.91 | 1.25 → **1.14** |
+| 50 | 4.24 | 4.68 | 5.35 | 1.25 → **1.26** |
+| 70 | 9.08 | 8.85 | 10.58 | 2.09 → **1.20** |
+| 75 | 14.69 | 15.39 | 16.36 | 1.61 → **1.11** |
+| 85 | 17.39 | 19.23 | 21.00 | 1.52 → **1.21** |
+| 99 | 21.74 | 22.69 | 23.59 | 1.53 → **1.09** |
+
+Run `node scripts/gear-benchmark.cjs --by-level` to regenerate.
+
+**What was wrong, and what changed.** Five structural causes, all fixed by buffing
+rather than nerfing (the sole exception is noted below):
+
+1. **Melee had no percentage damage lever.** Magic stacks worn `magicDamage` to
+   +100% at 99, doubling its base hit; melee and ranged had only flat strength,
+   diluted by the `+64` in the max-hit formula. Added `otherBonus.meleeDamage` /
+   `rangedDamage` (`wornMeleeMaxHit` / `wornRangedMaxHit` in `formulas.js`), spread
+   across prestige gear — Torment, Berserker Ring, Ferocious Gloves, the Grondar
+   set, Avernal Defender, Max Cape. Every max-hit site routes through the helpers,
+   so special attacks inherit it too.
+2. **Powered staves were untierable.** `combat.js` hardcoded `floor(magic/3)+9` for
+   every staff, so the Trident, Sanguine Staff and Shadow of Tumaken all hit
+   identically — and `poweredStaffBaseDamage: 34` sat unread in `items.json`. That
+   field is now honoured as *the staff's base damage at Magic 75*; the Trident's
+   authored 34 is exactly the old curve, so absent-field staves are unchanged.
+3. **The spell ladder barely grew.** Base damage stepped +1 within *and between*
+   tiers (fire_bolt 12 → wind_blast 13), leaving magic flat from 40 to 74. Each
+   tier is now a real step: bolt 9–15, blast 16–22, wave 28–36, surge 38–47.
+4. **Bows carried no ranged strength and arrows dead-ended at level 60.** Every bow
+   below Stonegale had `rangedStrength: 0`, so a mid-game ranged player's whole
+   damage budget was one arrow — and arrows stopped at Dragon (+60) while bolts
+   reached +135. The bow ladder now carries strength, and two arrows sit above
+   Dragon: **Shardglass Arrow** (Ranged 75, crafted — Smithing 85 arrowtips from
+   shardglass shards, then Fletching 85) and **Seraphic Arrow** (Ranged 85, a bulk
+   `rewards.always` drop from the endgame raids, the ranged mirror of how magic
+   gets its endgame runes).
+5. **Weapon progression stopped mid-game.** No melee weapon above level 75 beat the
+   Blade of Saeldor. The 80/90 tiers were re-statted so each is a genuine upgrade,
+   and the Dungeoneering chaotic tier — previously pegged at 95% of a *tradeable*
+   reference, which put a level-90 reward below a level-80 weapon — is now the top
+   of its ladder, priced at 1,000,000 tokens to match.
+
+**The two flagships now earn their price.** Shadow of Tumaken (1.5B) was a slower
+Trident with the same effective cap; it is now 4 ticks with a higher base and a
++170% multiplier cap, the strongest magic weapon outright. The Twisted Longbow
+(1.58B) had +20 ranged strength at 5 ticks, so a mid-tier bow beat it before its
+magic-scaling multiplier even applied; at 4 ticks and +90 it dominates the
+high-magic bosses its formula exists for, and stays deliberately poor elsewhere.
+
+**One non-buff:** the 2nd Age Bow's requirement moved from Ranged 65 to 85. Its
+stats are untouched — a 1.4B clue reward firing every 1.2s at level 65 was the
+single cause of the 2.09 ratio through the 60s, and this is placement, not power.
+
+## Still open
+
+- **Melee has no flagship and no weapon between requirement 82 and 90.** Magic's
+  top weapon costs 1.5B and ranged's 1.58B; melee's dearest is the 300M Scythe of
+  Vythar. That gap is why band 85 sits at 1.21 — magic unlocks Shadow of Tumaken
+  there and melee has nothing to answer with. Filling it is new content.
+- **Attuned Duskmare Staff's description** claims it casts "one tick faster than
+  any other staff"; the Archmage and Ancestral Wands are also 4 ticks. Left alone
+  deliberately — fixing it means either a reword or a speed change with a
+  compensating damage cut.
+- **Ammunition and rune cost per hit** are not modelled, so the parity table says
+  nothing about which style is cheapest to run.
+
+## Earlier follow-up list (superseded by the pass above)
 
 Weapon DPS and magic-damage % changes ripple into PvE boss kill-times and
 server-authoritative PvP (§10), so they were left for a scoped pass rather than a

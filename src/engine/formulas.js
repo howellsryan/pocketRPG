@@ -90,6 +90,25 @@ export function rangedMaxHit(effectiveRng, rangedStrengthBonus) {
   return Math.floor(0.5 + effectiveRng * (rangedStrengthBonus + 64) / 640)
 }
 
+// ── Worn max hits ──
+
+// otherBonus.meleeDamage / rangedDamage are percentage multipliers on the final
+// max hit, the melee/ranged twins of otherBonus.magicDamage. Flat strength is
+// diluted by the +64 in the max-hit formula, so a percentage is the only lever
+// that scales a loadout the way magic damage % scales a spell. Every max-hit
+// site — normal swings and special attacks alike — goes through these, so a
+// worn damage bonus can never apply to some hits and not others.
+
+export function wornMeleeMaxHit(effectiveStr, otherBonus) {
+  const flat = meleeMaxHit(effectiveStr, otherBonus?.meleeStrength || 0)
+  return Math.floor(flat * (1 + (otherBonus?.meleeDamage || 0) / 100))
+}
+
+export function wornRangedMaxHit(effectiveRng, otherBonus) {
+  const flat = rangedMaxHit(effectiveRng, otherBonus?.rangedStrength || 0)
+  return Math.floor(flat * (1 + (otherBonus?.rangedDamage || 0) / 100))
+}
+
 // ── Magic ──
 
 export function effectiveMagic(magicLevel, potionBonus = 0, prayerMult = 1.0, styleBonus = 0) {

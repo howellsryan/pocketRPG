@@ -1210,6 +1210,18 @@
         }
       },
       {
+        "id": "smith_shardglass_arrowtips",
+        "name": "Knap shardglass arrowtips (10)",
+        "level": 85,
+        "ticks": 4,
+        "xp": 92,
+        "product": "shardglass_arrowtips",
+        "productQty": 10,
+        "materials": {
+          "shardglass_shards": 6
+        }
+      },
+      {
         "id": "forge_godsword_blade",
         "name": "Forge godsword blade",
         "level": 80,
@@ -1654,6 +1666,19 @@
         "materials": {
           "headless_arrow": 15,
           "runeforged_arrowtips": 15
+        }
+      },
+      {
+        "id": "shardglass_arrows",
+        "name": "Make shardglass arrows (15)",
+        "level": 85,
+        "ticks": 3,
+        "xp": 195,
+        "product": "shardglass_arrow",
+        "productQty": 15,
+        "materials": {
+          "headless_arrow": 15,
+          "shardglass_arrowtips": 15
         }
       },
       {
@@ -3766,7 +3791,7 @@
         "xp": 0,
         "product": "chaotic_rapier",
         "category": "reward",
-        "tokenCost": 300000
+        "tokenCost": 1000000
       },
       {
         "id": "unlock_chaotic_longsword",
@@ -3776,7 +3801,7 @@
         "xp": 0,
         "product": "chaotic_longsword",
         "category": "reward",
-        "tokenCost": 300000
+        "tokenCost": 1000000
       },
       {
         "id": "unlock_chaotic_maul",
@@ -3786,7 +3811,7 @@
         "xp": 0,
         "product": "chaotic_maul",
         "category": "reward",
-        "tokenCost": 300000
+        "tokenCost": 1000000
       },
       {
         "id": "unlock_chaotic_crossbow",
@@ -3796,7 +3821,7 @@
         "xp": 0,
         "product": "chaotic_crossbow",
         "category": "reward",
-        "tokenCost": 300000
+        "tokenCost": 1000000
       },
       {
         "id": "unlock_chaotic_staff",
@@ -3806,7 +3831,7 @@
         "xp": 0,
         "product": "chaotic_staff",
         "category": "reward",
-        "tokenCost": 300000
+        "tokenCost": 1000000
       },
       {
         "id": "unlock_eagle_eyed_kiteshield",
