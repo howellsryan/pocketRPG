@@ -34,6 +34,14 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | melee | cape | Max Cape | 0 | 1,000,000,000 | 0.16 | 50 | Infernal Max Cape | 1.03 | 125 | 0 | 0 |
 | ranged | cape | Max Cape | 0 | 1,000,000,000 | 0.09 | 50 | Infernal Max Cape | 0.96 | 125 | 0 | 0 |
 | magic | cape | Max Cape | 0 | 1,000,000,000 | 0.30 | 50 | Infernal Max Cape | 2.09 | 125 | 0 | 0 |
+| melee | shield | Aegis Wraithbone Shield | 75 | 900,000,000 | 0.00 | 263 | Shardglass Shield | 0.15 | 345 | 70 | 300,000 |
+| ranged | shield | Aegis Wraithbone Shield | 75 | 900,000,000 | 0.00 | 263 | Shardglass Shield | 0.00 | 345 | 70 | 300,000 |
+| magic | shield | Aegis Wraithbone Shield | 75 | 900,000,000 | 0.00 | 263 | Shardglass Shield | 0.00 | 345 | 70 | 300,000 |
+| melee | shield | Runeward Wraithbone Shield | 75 | 400,000,000 | 0.00 | 225 | Avernal Defender | 0.80 | 252 | 70 | 80,000,000 |
+| melee | shield | Vigil Wraithbone Shield | 75 | 400,000,000 | 0.00 | 245 | Avernal Defender | 0.80 | 252 | 70 | 80,000,000 |
+| ranged | shield | Runeward Wraithbone Shield | 75 | 400,000,000 | 0.00 | 225 | Shardglass Shield | 0.00 | 345 | 70 | 300,000 |
+| ranged | shield | Vigil Wraithbone Shield | 75 | 400,000,000 | 0.00 | 245 | Shardglass Shield | 0.00 | 345 | 70 | 300,000 |
+| magic | shield | Vigil Wraithbone Shield | 75 | 400,000,000 | 0.00 | 245 | Shardglass Shield | 0.00 | 345 | 70 | 300,000 |
 | melee | cape | 2nd Age Cloak | 65 | 375,060,000 | 0.00 | 45 | Infernal Max Cape | 1.03 | 125 | 0 | 0 |
 | ranged | cape | 2nd Age Cloak | 65 | 375,060,000 | 0.00 | 45 | Infernal Max Cape | 0.96 | 125 | 0 | 0 |
 | magic | cape | 2nd Age Cloak | 65 | 375,060,000 | 0.00 | 45 | Infernal Max Cape | 2.09 | 125 | 0 | 0 |
@@ -60,6 +68,9 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | ranged | body | 2nd Age Range Top | 65 | 36,063,781 | 0.37 | 50 | Drake Leather Body | 0.57 | 155 | 60 | 4,200,000 |
 | magic | body | 2nd Age Range Top | 65 | 36,063,781 | 0.00 | 50 | Shroud Robes Top | 1.11 | 60 | 55 | 3,500,000 |
 | ranged | weapon | Zephyra Crossbow | 70 | 33,658,260 | 4.03 | 0 | Stonegale Bow | 5.46 | 0 | 60 | 4,000,000 |
+| melee | shield | Hallowed Wraithbone Shield | 70 | 30,000,000 | 0.00 | 225 | Shardglass Shield | 0.15 | 345 | 70 | 300,000 |
+| ranged | shield | Hallowed Wraithbone Shield | 70 | 30,000,000 | 0.00 | 225 | Shardglass Shield | 0.00 | 345 | 70 | 300,000 |
+| magic | shield | Hallowed Wraithbone Shield | 70 | 30,000,000 | 0.00 | 225 | Shardglass Shield | 0.00 | 345 | 70 | 300,000 |
 | melee | boots | Skyfury Boots | 75 | 29,422,433 | 0.00 | 19 | Grondar Boots | 0.52 | 24 | 65 | 675,775 |
 | magic | boots | Skyfury Boots | 75 | 29,422,433 | -0.12 | 19 | Evermore Boots | 0.24 | 23 | 75 | 4,926,153 |
 | melee | weapon | Lumira Godsword | 75 | 28,950,625 | 4.60 | 0 | Abyssal Tentacle | 5.45 | 0 | 75 | 1,714,037 |
@@ -94,6 +105,7 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | magic | head | Ashen Slayer Helm | 80 | 7,500,000 | 0.00 | 112 | Gravehusk Helm | 0.00 | 170 | 60 | 2,400,000 |
 | magic | weapon | Staff of the Dead | 75 | 5,659,314 | 5.86 | 12 | Archmage Wand | 7.12 | 12 | 50 | 1,000,000 |
 | melee | shield | Slayer Defender | 85 | 5,000,000 | 0.56 | -50 | Dragon Defender | 0.56 | 67 | 60 | 500,000 |
+| melee | shield | Wraithbone Shield | 55 | 5,000,000 | 0.00 | 165 | Runeforged Kiteshield | 0.00 | 188 | 40 | 32,108 |
 | melee | boots | Evermore Boots | 75 | 4,926,153 | 0.00 | 23 | Grondar Boots | 0.52 | 24 | 65 | 675,775 |
 | ranged | weapon | Razorwing Crossbow | 60 | 4,900,000 | 3.51 | 0 | Magic Shortbow | 4.15 | 0 | 50 | 814 |
 | melee | weapon | Cindermaw Maul | 60 | 4,500,000 | 3.64 | 0 | Zesta Longsword | 4.85 | 3 | 60 | 120,000 |
@@ -165,6 +177,7 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | melee | cape | Herblore Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 1.03 | 125 | 0 | 0 |
 | melee | cape | Agility Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 1.03 | 125 | 0 | 0 |
 | melee | cape | Thieving Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 1.03 | 125 | 0 | 0 |
+| melee | cape | Summoning Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 1.03 | 125 | 0 | 0 |
 | ranged | cape | Attack Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.96 | 125 | 0 | 0 |
 | ranged | cape | Strength Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.96 | 125 | 0 | 0 |
 | ranged | cape | Defence Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.96 | 125 | 0 | 0 |
@@ -182,6 +195,7 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | ranged | cape | Herblore Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.96 | 125 | 0 | 0 |
 | ranged | cape | Agility Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.96 | 125 | 0 | 0 |
 | ranged | cape | Thieving Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.96 | 125 | 0 | 0 |
+| ranged | cape | Summoning Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.96 | 125 | 0 | 0 |
 | magic | cape | Attack Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.09 | 125 | 0 | 0 |
 | magic | cape | Strength Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.09 | 125 | 0 | 0 |
 | magic | cape | Defence Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.09 | 125 | 0 | 0 |
@@ -199,6 +213,7 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | magic | cape | Herblore Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.09 | 125 | 0 | 0 |
 | magic | cape | Agility Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.09 | 125 | 0 | 0 |
 | magic | cape | Thieving Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.09 | 125 | 0 | 0 |
+| magic | cape | Summoning Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.09 | 125 | 0 | 0 |
 | ranged | body | Verdant D'Hide Body | 70 | 97,706 | 0.35 | 0 | Black D'Hide Body | 0.50 | 278 | 70 | 7,322 |
 | melee | weapon | Torvek's Hammers | 70 | 96,264 | 4.19 | 0 | Dragon Scimitar | 4.82 | 0 | 60 | 59,656 |
 | ranged | body | Grondar D'Hide Body | 70 | 94,484 | 0.35 | 0 | Black D'Hide Body | 0.50 | 278 | 70 | 7,322 |
@@ -247,6 +262,8 @@ A far cheaper item (≤ half the price) lands within 5% of this item's DPS while
 | melee | head | Cinderforged Helm | 80 | 8,000,000 | 0.00 | 228 | Gorath's Helm | 70 | 139,250 | 0.00 | 228 |
 | melee | weapon | Zul-Kaar's Blade | 80 | 5,000,000 | 5.61 | 0 | Abyssal Tentacle | 75 | 1,714,037 | 5.45 | 0 |
 | melee | body | Cindermaw Scale Body | 60 | 5,000,000 | 0.00 | 355 | Dravok's Platebody | 70 | 826,212 | 0.00 | 475 |
+| ranged | shield | Wraithbone Shield | 55 | 5,000,000 | 0.00 | 165 | Eagle Eyed Kiteshield | 90 | 200,000 | 0.62 | 215 |
+| magic | shield | Wraithbone Shield | 55 | 5,000,000 | 0.00 | 165 | Arcane Kiteshield | 90 | 200,000 | 2.24 | 215 |
 | melee | body | Gravehusk Platebody | 60 | 4,800,000 | 0.00 | 344 | Dravok's Platebody | 70 | 826,212 | 0.00 | 475 |
 | melee | weapon | Boneclaw Rapier | 60 | 3,800,000 | 5.04 | 0 | Abyssal Tentacle | 75 | 1,714,037 | 5.45 | 0 |
 | ranged | shield | Boneclaw Shield | 60 | 2,900,000 | 0.00 | 184 | Eagle Eyed Kiteshield | 90 | 200,000 | 0.62 | 215 |
@@ -658,15 +675,15 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
 | Arcane Kiteshield | 90 | 200,000 | 2.24 | 215 |
+| Runeward Wraithbone Shield | 75 | 400,000,000 | 1.26 | 225 |
 | Ward Of Elidria | 75 | 50,000,000 | 0.81 | 40 |
 | Arcane Grimoire | 50 | 1,000,000 | 0.56 | 11 |
 | Warped Buckler | 75 | 13,978,735 | 0.00 | 60 |
 | Shardglass Shield | 70 | 300,000 | 0.00 | 345 |
 | Boneclaw Shield | 60 | 2,900,000 | 0.00 | 184 |
-| Runeforged Defender | 40 | 750,000 | -0.11 | 52 |
-| Dragon Defender | 60 | 500,000 | -0.11 | 67 |
-| Visage Shield | 75 | 3,700,524 | -0.18 | 90 |
-| Avernal Defender | 70 | 80,000,000 | -0.18 | 252 |
+| Wraithbone Shield | 55 | 5,000,000 | 0.00 | 165 |
+| Hallowed Wraithbone Shield | 70 | 30,000,000 | 0.00 | 225 |
+| Aegis Wraithbone Shield | 75 | 900,000,000 | 0.00 | 263 |
 
 ### magic — cape
 

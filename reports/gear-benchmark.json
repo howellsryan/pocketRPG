@@ -195,6 +195,166 @@
     },
     {
       "style": "melee",
+      "slot": "shield",
+      "item": {
+        "id": "aegis_wraithbone_shield",
+        "name": "Aegis Wraithbone Shield",
+        "req": 75,
+        "value": 900000000,
+        "dps": 0,
+        "def": 263
+      },
+      "by": {
+        "id": "shardglass_shield",
+        "name": "Shardglass Shield",
+        "req": 70,
+        "value": 300000,
+        "dps": 0.155,
+        "def": 345
+      }
+    },
+    {
+      "style": "ranged",
+      "slot": "shield",
+      "item": {
+        "id": "aegis_wraithbone_shield",
+        "name": "Aegis Wraithbone Shield",
+        "req": 75,
+        "value": 900000000,
+        "dps": 0,
+        "def": 263
+      },
+      "by": {
+        "id": "shardglass_shield",
+        "name": "Shardglass Shield",
+        "req": 70,
+        "value": 300000,
+        "dps": 0,
+        "def": 345
+      }
+    },
+    {
+      "style": "magic",
+      "slot": "shield",
+      "item": {
+        "id": "aegis_wraithbone_shield",
+        "name": "Aegis Wraithbone Shield",
+        "req": 75,
+        "value": 900000000,
+        "dps": 0,
+        "def": 263
+      },
+      "by": {
+        "id": "shardglass_shield",
+        "name": "Shardglass Shield",
+        "req": 70,
+        "value": 300000,
+        "dps": 0,
+        "def": 345
+      }
+    },
+    {
+      "style": "melee",
+      "slot": "shield",
+      "item": {
+        "id": "runeward_wraithbone_shield",
+        "name": "Runeward Wraithbone Shield",
+        "req": 75,
+        "value": 400000000,
+        "dps": 0,
+        "def": 225
+      },
+      "by": {
+        "id": "avernal_defender",
+        "name": "Avernal Defender",
+        "req": 70,
+        "value": 80000000,
+        "dps": 0.801,
+        "def": 252
+      }
+    },
+    {
+      "style": "melee",
+      "slot": "shield",
+      "item": {
+        "id": "vigil_wraithbone_shield",
+        "name": "Vigil Wraithbone Shield",
+        "req": 75,
+        "value": 400000000,
+        "dps": 0,
+        "def": 245
+      },
+      "by": {
+        "id": "avernal_defender",
+        "name": "Avernal Defender",
+        "req": 70,
+        "value": 80000000,
+        "dps": 0.801,
+        "def": 252
+      }
+    },
+    {
+      "style": "ranged",
+      "slot": "shield",
+      "item": {
+        "id": "runeward_wraithbone_shield",
+        "name": "Runeward Wraithbone Shield",
+        "req": 75,
+        "value": 400000000,
+        "dps": 0,
+        "def": 225
+      },
+      "by": {
+        "id": "shardglass_shield",
+        "name": "Shardglass Shield",
+        "req": 70,
+        "value": 300000,
+        "dps": 0,
+        "def": 345
+      }
+    },
+    {
+      "style": "ranged",
+      "slot": "shield",
+      "item": {
+        "id": "vigil_wraithbone_shield",
+        "name": "Vigil Wraithbone Shield",
+        "req": 75,
+        "value": 400000000,
+        "dps": 0,
+        "def": 245
+      },
+      "by": {
+        "id": "shardglass_shield",
+        "name": "Shardglass Shield",
+        "req": 70,
+        "value": 300000,
+        "dps": 0,
+        "def": 345
+      }
+    },
+    {
+      "style": "magic",
+      "slot": "shield",
+      "item": {
+        "id": "vigil_wraithbone_shield",
+        "name": "Vigil Wraithbone Shield",
+        "req": 75,
+        "value": 400000000,
+        "dps": 0,
+        "def": 245
+      },
+      "by": {
+        "id": "shardglass_shield",
+        "name": "Shardglass Shield",
+        "req": 70,
+        "value": 300000,
+        "dps": 0,
+        "def": 345
+      }
+    },
+    {
+      "style": "melee",
       "slot": "cape",
       "item": {
         "id": "2nd_age_cloak",
@@ -711,6 +871,66 @@
         "value": 4000000,
         "dps": 5.465,
         "def": 0
+      }
+    },
+    {
+      "style": "melee",
+      "slot": "shield",
+      "item": {
+        "id": "hallowed_wraithbone_shield",
+        "name": "Hallowed Wraithbone Shield",
+        "req": 70,
+        "value": 30000000,
+        "dps": 0,
+        "def": 225
+      },
+      "by": {
+        "id": "shardglass_shield",
+        "name": "Shardglass Shield",
+        "req": 70,
+        "value": 300000,
+        "dps": 0.155,
+        "def": 345
+      }
+    },
+    {
+      "style": "ranged",
+      "slot": "shield",
+      "item": {
+        "id": "hallowed_wraithbone_shield",
+        "name": "Hallowed Wraithbone Shield",
+        "req": 70,
+        "value": 30000000,
+        "dps": 0,
+        "def": 225
+      },
+      "by": {
+        "id": "shardglass_shield",
+        "name": "Shardglass Shield",
+        "req": 70,
+        "value": 300000,
+        "dps": 0,
+        "def": 345
+      }
+    },
+    {
+      "style": "magic",
+      "slot": "shield",
+      "item": {
+        "id": "hallowed_wraithbone_shield",
+        "name": "Hallowed Wraithbone Shield",
+        "req": 70,
+        "value": 30000000,
+        "dps": 0,
+        "def": 225
+      },
+      "by": {
+        "id": "shardglass_shield",
+        "name": "Shardglass Shield",
+        "req": 70,
+        "value": 300000,
+        "dps": 0,
+        "def": 345
       }
     },
     {
@@ -1391,6 +1611,26 @@
         "value": 500000,
         "dps": 0.562,
         "def": 67
+      }
+    },
+    {
+      "style": "melee",
+      "slot": "shield",
+      "item": {
+        "id": "wraithbone_shield",
+        "name": "Wraithbone Shield",
+        "req": 55,
+        "value": 5000000,
+        "dps": 0,
+        "def": 165
+      },
+      "by": {
+        "id": "runeforged_kiteshield",
+        "name": "Runeforged Kiteshield",
+        "req": 40,
+        "value": 32108,
+        "dps": 0,
+        "def": 188
       }
     },
     {
@@ -2814,6 +3054,26 @@
       }
     },
     {
+      "style": "melee",
+      "slot": "cape",
+      "item": {
+        "id": "summoning_cape",
+        "name": "Summoning Cape",
+        "req": 99,
+        "value": 99000,
+        "dps": 0,
+        "def": 45
+      },
+      "by": {
+        "id": "infernal_max_cape",
+        "name": "Infernal Max Cape",
+        "req": 0,
+        "value": 0,
+        "dps": 1.029,
+        "def": 125
+      }
+    },
+    {
       "style": "ranged",
       "slot": "cape",
       "item": {
@@ -3154,6 +3414,26 @@
       }
     },
     {
+      "style": "ranged",
+      "slot": "cape",
+      "item": {
+        "id": "summoning_cape",
+        "name": "Summoning Cape",
+        "req": 99,
+        "value": 99000,
+        "dps": 0,
+        "def": 45
+      },
+      "by": {
+        "id": "infernal_max_cape",
+        "name": "Infernal Max Cape",
+        "req": 0,
+        "value": 0,
+        "dps": 0.961,
+        "def": 125
+      }
+    },
+    {
       "style": "magic",
       "slot": "cape",
       "item": {
@@ -3479,6 +3759,26 @@
       "item": {
         "id": "thieving_cape",
         "name": "Thieving Cape",
+        "req": 99,
+        "value": 99000,
+        "dps": 0,
+        "def": 45
+      },
+      "by": {
+        "id": "infernal_max_cape",
+        "name": "Infernal Max Cape",
+        "req": 0,
+        "value": 0,
+        "dps": 2.092,
+        "def": 125
+      }
+    },
+    {
+      "style": "magic",
+      "slot": "cape",
+      "item": {
+        "id": "summoning_cape",
+        "name": "Summoning Cape",
         "req": 99,
         "value": 99000,
         "dps": 0,
@@ -4313,6 +4613,46 @@
         "value": 826212,
         "dps": 0,
         "def": 475
+      }
+    },
+    {
+      "style": "ranged",
+      "slot": "shield",
+      "item": {
+        "id": "wraithbone_shield",
+        "name": "Wraithbone Shield",
+        "req": 55,
+        "value": 5000000,
+        "dps": 0,
+        "def": 165
+      },
+      "vs": {
+        "id": "eagle_eyed_kiteshield",
+        "name": "Eagle Eyed Kiteshield",
+        "req": 90,
+        "value": 200000,
+        "dps": 0.62,
+        "def": 215
+      }
+    },
+    {
+      "style": "magic",
+      "slot": "shield",
+      "item": {
+        "id": "wraithbone_shield",
+        "name": "Wraithbone Shield",
+        "req": 55,
+        "value": 5000000,
+        "dps": 0,
+        "def": 165
+      },
+      "vs": {
+        "id": "arcane_kiteshield",
+        "name": "Arcane Kiteshield",
+        "req": 90,
+        "value": 200000,
+        "dps": 2.236,
+        "def": 215
       }
     },
     {
@@ -6662,6 +7002,46 @@
           "def": 215
         },
         {
+          "id": "wraithbone_shield",
+          "name": "Wraithbone Shield",
+          "req": 55,
+          "value": 5000000,
+          "dps": 0,
+          "def": 165
+        },
+        {
+          "id": "hallowed_wraithbone_shield",
+          "name": "Hallowed Wraithbone Shield",
+          "req": 70,
+          "value": 30000000,
+          "dps": 0,
+          "def": 225
+        },
+        {
+          "id": "runeward_wraithbone_shield",
+          "name": "Runeward Wraithbone Shield",
+          "req": 75,
+          "value": 400000000,
+          "dps": 0,
+          "def": 225
+        },
+        {
+          "id": "aegis_wraithbone_shield",
+          "name": "Aegis Wraithbone Shield",
+          "req": 75,
+          "value": 900000000,
+          "dps": 0,
+          "def": 263
+        },
+        {
+          "id": "vigil_wraithbone_shield",
+          "name": "Vigil Wraithbone Shield",
+          "req": 75,
+          "value": 400000000,
+          "dps": 0,
+          "def": 245
+        },
+        {
           "id": "boneclaw_shield",
           "name": "Boneclaw Shield",
           "req": 60,
@@ -6874,6 +7254,14 @@
           "value": 1255173674,
           "dps": 0,
           "def": 50
+        },
+        {
+          "id": "summoning_cape",
+          "name": "Summoning Cape",
+          "req": 99,
+          "value": 99000,
+          "dps": 0,
+          "def": 45
         }
       ]
     },
@@ -8706,6 +9094,46 @@
           "def": 11
         },
         {
+          "id": "wraithbone_shield",
+          "name": "Wraithbone Shield",
+          "req": 55,
+          "value": 5000000,
+          "dps": 0,
+          "def": 165
+        },
+        {
+          "id": "hallowed_wraithbone_shield",
+          "name": "Hallowed Wraithbone Shield",
+          "req": 70,
+          "value": 30000000,
+          "dps": 0,
+          "def": 225
+        },
+        {
+          "id": "runeward_wraithbone_shield",
+          "name": "Runeward Wraithbone Shield",
+          "req": 75,
+          "value": 400000000,
+          "dps": 0,
+          "def": 225
+        },
+        {
+          "id": "aegis_wraithbone_shield",
+          "name": "Aegis Wraithbone Shield",
+          "req": 75,
+          "value": 900000000,
+          "dps": 0,
+          "def": 263
+        },
+        {
+          "id": "vigil_wraithbone_shield",
+          "name": "Vigil Wraithbone Shield",
+          "req": 75,
+          "value": 400000000,
+          "dps": 0,
+          "def": 245
+        },
+        {
           "id": "runeforged_defender",
           "name": "Runeforged Defender",
           "req": 40,
@@ -8990,6 +9418,14 @@
           "value": 1255173674,
           "dps": 0,
           "def": 50
+        },
+        {
+          "id": "summoning_cape",
+          "name": "Summoning Cape",
+          "req": 99,
+          "value": 99000,
+          "dps": 0,
+          "def": 45
         }
       ]
     },
@@ -10716,6 +11152,14 @@
           "def": 215
         },
         {
+          "id": "runeward_wraithbone_shield",
+          "name": "Runeward Wraithbone Shield",
+          "req": 75,
+          "value": 400000000,
+          "dps": 1.264,
+          "def": 225
+        },
+        {
           "id": "ward_of_elidria",
           "name": "Ward Of Elidria",
           "req": 75,
@@ -10754,6 +11198,38 @@
           "value": 2900000,
           "dps": 0,
           "def": 184
+        },
+        {
+          "id": "wraithbone_shield",
+          "name": "Wraithbone Shield",
+          "req": 55,
+          "value": 5000000,
+          "dps": 0,
+          "def": 165
+        },
+        {
+          "id": "hallowed_wraithbone_shield",
+          "name": "Hallowed Wraithbone Shield",
+          "req": 70,
+          "value": 30000000,
+          "dps": 0,
+          "def": 225
+        },
+        {
+          "id": "aegis_wraithbone_shield",
+          "name": "Aegis Wraithbone Shield",
+          "req": 75,
+          "value": 900000000,
+          "dps": 0,
+          "def": 263
+        },
+        {
+          "id": "vigil_wraithbone_shield",
+          "name": "Vigil Wraithbone Shield",
+          "req": 75,
+          "value": 400000000,
+          "dps": 0,
+          "def": 245
         },
         {
           "id": "runeforged_defender",
@@ -11048,6 +11524,14 @@
           "value": 1255173674,
           "dps": 0,
           "def": 50
+        },
+        {
+          "id": "summoning_cape",
+          "name": "Summoning Cape",
+          "req": 99,
+          "value": 99000,
+          "dps": 0,
+          "def": 45
         }
       ]
     },
