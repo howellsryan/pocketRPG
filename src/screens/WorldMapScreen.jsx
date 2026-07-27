@@ -5,7 +5,8 @@ import { isPlaceVaryingSkillRef, autoStartFromTask, placeActivities, activityLoc
 import { SCREENS } from '../utils/constants.js'
 import { createTravelTask, travelFraction, travelDestName, travelCancelLocation } from '../engine/travel.js'
 import { journeyStatus, teleportIntoJourney, planQuestJourney } from '../engine/journeys.js'
-import { teleportCheck, deductRunes, formatRuneCost } from '../engine/teleports.js'
+import { teleportCheck, deductRunes, formatRuneCost, teleportRuneCost } from '../engine/teleports.js'
+import TeleportRuneCost from '../components/TeleportRuneCost.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { PlaceIcon, PlaceScene, WorldTerrain } from '../components/PlaceArt.jsx'
 import GameIcon from '../components/GameIcon.jsx'
@@ -123,8 +124,13 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   // Teleporting supersedes whatever occupied the single task slot — the same rule
   // as starting a walk — except a journey walking leg, which re-plans from the
   // landing place (landing on the waypoint itself skips straight to the search).
-  const teleCheckFor = (destId) =>
-    teleportCheck(destId, { magicLevel, inventory, bank, equipment, itemsData })
+  // The rune bill rides along with the check so both teleport buttons can show
+  // what a cast costs — including when it is locked, which is exactly when the
+  // player needs to know what to go and buy.
+  const teleCheckFor = (destId) => {
+    const chk = teleportCheck(destId, { magicLevel, inventory, bank, equipment, itemsData })
+    return { ...chk, runeCost: teleportRuneCost(chk.runes, { inventory, bank, itemsData }) }
+  }
 
   const castTeleport = (destId) => {
     if (destId === here && !travel) return
@@ -445,7 +451,12 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
                     disabled={!tele.ok}
                     title={tele.ok ? `Consumes ${formatRuneCost(tele.runes, itemsData)} · +${tele.xp} Magic XP` : tele.reason}
                   >
-                    <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--fm-ink-faint)'} size={16} /> Teleport ahead
+                    <span class="wm-travelbar-tele__lead">
+                      <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--fm-ink-faint)'} size={16} /> Teleport ahead
+                    </span>
+                    {/* The cost used to live in a title attribute, which a phone
+                        never shows. */}
+                    <TeleportRuneCost runes={tele.runeCost} size={13} />
                   </button>
                 )}
                 <button class="wm-travelbar-cancel" onClick={cancelTravel}>{js ? 'Abandon journey' : 'Turn back'}</button>
@@ -566,7 +577,10 @@ function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTrave
               <span class="wm-tele-btn__lead">
                 <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--fm-ink-faint)'} size={16} /> Teleport · Magic {place.teleport.level}
               </span>
-              <span class="wm-tele-btn__cost">{tele.ok ? formatRuneCost(tele.runes, itemsData) : tele.reason}</span>
+              {/* Runes stay on screen when the cast is refused: the reason says
+                  what is wrong, the icons say what it would take. */}
+              <TeleportRuneCost runes={tele.runeCost} />
+              {!tele.ok && <span class="wm-tele-btn__cost">{tele.reason}</span>}
             </button>
           )}
           <div class="wm-hub-sectionhead"><span>Available here</span></div>

@@ -145,6 +145,7 @@ const sourceFiles = [
   'components/Modal.js',
   'components/BackLink.js', // -> game chunk (only chunk screens use it)
   'components/PlaceArt.js', // -> game chunk (map art; only WorldMapScreen renders it)
+  'components/TeleportRuneCost.js', // -> game chunk (world map teleport buttons)
   'components/ActivityPickerModal.js', // -> game chunk (world map / place map only)
   'components/ActivityIcon.js', // -> game chunk (world map / place map only)
   'components/PlaceMapView.js', // -> game chunk (world map / place map only)
@@ -278,6 +279,7 @@ const sourceFiles = [
 const GAME_CHUNK_FILES = new Set([
   'components/BackLink.js',
   'components/PlaceArt.js',
+  'components/TeleportRuneCost.js',
   'components/ActivityPickerModal.js',
   'components/ActivityIcon.js',
   'components/PlaceMapView.js',

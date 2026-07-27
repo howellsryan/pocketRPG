@@ -62,6 +62,23 @@ export function deductRunes(runes, inventory) {
   return { inventory: newInv, bankUpdates }
 }
 
+/**
+ * The rune bill for a cast, per rune: what it takes and what the player can put
+ * toward it. Shaped for display — `deductRunes` is what actually spends them.
+ *
+ * `have` counts inventory AND bank because that is where a cast draws from, and
+ * a bill that ignored the bank would read as short while the runes are sitting
+ * in it. Elements an equipped staff supplies never reach here: `runes` is
+ * already what would be consumed (teleportCheck runs getRunesToConsume), so a
+ * staff simply drops that rune off the bill.
+ */
+export function teleportRuneCost(runes, { inventory = [], bank = {}, itemsData = {} } = {}) {
+  return Object.entries(runes || {}).map(([itemId, need]) => {
+    const have = countItem(inventory, itemId) + (bank?.[itemId]?.quantity || 0)
+    return { itemId, name: itemsData?.[itemId]?.name || itemId, need, have, short: have < need }
+  })
+}
+
 /** Compact "1× Law, 3× Air" cost string for buttons/tooltips. */
 export function formatRuneCost(runes, itemsData = {}) {
   return Object.entries(runes || {})

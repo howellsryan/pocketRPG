@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getTeleport, teleportCheck, deductRunes, formatRuneCost } from '../src/engine/teleports.js'
+import { getTeleport, teleportCheck, deductRunes, formatRuneCost, teleportRuneCost } from '../src/engine/teleports.js'
 import world from '../src/data/world.json'
 import items from '../src/data/items.json'
 
@@ -112,5 +112,50 @@ describe('deductRunes', () => {
 describe('formatRuneCost', () => {
   it('renders a compact cost string without the Rune suffix', () => {
     expect(formatRuneCost(VARRICK.runes, items as any)).toBe('1× Law, 3× Air, 1× Fire')
+  })
+})
+
+describe('teleportRuneCost', () => {
+  it('bills each rune against what the player can actually pay with', () => {
+    const cost = teleportRuneCost(VARRICK.runes, {
+      inventory: inv(['law_rune', 1], ['air_rune', 1]),
+      bank: { air_rune: { quantity: 400 } },
+      itemsData: items as any,
+    })
+    expect(cost).toEqual([
+      { itemId: 'law_rune', name: 'Law Rune', need: 1, have: 1, short: false },
+      // Inventory + bank, because that is where a cast draws from: a bill that
+      // read the inventory alone would show "short" with 400 in the bank.
+      { itemId: 'air_rune', name: 'Air Rune', need: 3, have: 401, short: false },
+      { itemId: 'fire_rune', name: 'Fire Rune', need: 1, have: 0, short: true },
+    ])
+  })
+
+  it('bills a locked teleport too — that is when the runes matter most', () => {
+    // teleportCheck computes the runes before it refuses, so a player under the
+    // Magic level still gets told what the cast would take.
+    const chk = teleportCheck('varrick', { magicLevel: 1, inventory: inv(), bank: {}, itemsData: items as any })
+    expect(chk.ok).toBe(false)
+    const cost = teleportRuneCost(chk.runes, { inventory: inv(), bank: {}, itemsData: items as any })
+    expect(cost.map((r) => r.itemId)).toEqual(['law_rune', 'air_rune', 'fire_rune'])
+    expect(cost.every((r) => r.short)).toBe(true)
+  })
+
+  it('drops what an equipped staff supplies, so the bill is what gets spent', () => {
+    const equipment = { weapon: { itemId: 'staff_of_air' } }
+    const chk = teleportCheck('varrick', {
+      magicLevel: 99,
+      inventory: inv(['law_rune', 5], ['fire_rune', 5]),
+      bank: {},
+      equipment,
+      itemsData: items as any,
+    })
+    const cost = teleportRuneCost(chk.runes, { inventory: inv(['law_rune', 5], ['fire_rune', 5]), bank: {}, itemsData: items as any })
+    expect(cost.map((r) => r.itemId)).not.toContain('air_rune')
+    expect(chk.ok).toBe(true)
+  })
+
+  it('is empty for a teleport that costs nothing', () => {
+    expect(teleportRuneCost(null, {})).toEqual([])
   })
 })
