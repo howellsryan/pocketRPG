@@ -6,6 +6,7 @@ import PvpLobbyModal from './PvpLobbyModal.jsx'
 import PvpCombatScreen from './PvpCombatScreen.jsx'
 import CoopBossScreen from './CoopBossScreen.jsx'
 import CoopSessionBrowser, { CoopSessionList } from '../components/CoopSessionBrowser.jsx'
+import CoopRaidPartyList from '../components/CoopRaidPartyList.jsx'
 import Modal from '../components/Modal.jsx'
 import LootResultModal from '../components/LootResultModal.jsx'
 import HPBar from '../components/HPBar.jsx'
@@ -50,6 +51,7 @@ import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { isCoopBossId } from '../engine/coopBossEngine.js'
+import { isCoopRaidId } from '../engine/coopRaidEngine.js'
 import { hasWorldLair, worldLairZone } from '../engine/worldLairs.js'
 import { openWorld, worldBossLairsEnabled } from '../utils/helpers.js'
 import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
@@ -361,6 +363,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [coopBrowser, setCoopBrowser] = useState({ sessions: [], loading: true, activeSessionId: null })
   const [coopJoiningSession, setCoopJoiningSession] = useState(null)
   const [showCoopSessions, setShowCoopSessions] = useState(false)
+  // Raid parties. `raidChoice` is the solo-or-party prompt; `raidParties` is the
+  // lobby list for whichever raid it is showing.
+  const [raidChoice, setRaidChoice] = useState(null)
+  const [raidParties, setRaidParties] = useState(null)
+  const [raidJoining, setRaidJoining] = useState(null)
+  // The party this character is still held by. A party that has SET OFF is not
+  // in the lobby list — that is the point of the lobby — so without this a
+  // player who refreshed mid-raid has no way back into their own run.
+  const [activeRaidParty, setActiveRaidParty] = useState(null)
 
   // Dungeon mode: this screen renders one place's foes (Monsters / Bosses /
   // Raids) instead of the world-wide picker. PvP is hidden (not place-bound);
@@ -1520,6 +1531,101 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
   }
 
+  // Raids run as parties, not as drop-in rooms: `offersRaidParty` is what puts
+  // the solo-or-party prompt in front of a raid tap, and every picker entry
+  // point routes through pickRaidForFight so the two layouts cannot disagree.
+  const offersRaidParty = (raid) => isCoopRaidId(raid?.id) && !isDemo
+  const pickRaidForFight = (raid) => {
+    if (offersRaidParty(raid)) setRaidChoice(raid)
+    else startRaid(raid)
+  }
+
+  // The open lobbies for the raid the prompt is showing. Re-read on every open
+  // so a party that set off between renders stops being offered.
+  const reloadRaidPartiesRef = useRef(null)
+  useEffect(() => {
+    if (!raidChoice) {
+      setRaidParties(null)
+      return undefined
+    }
+    let cancelled = false
+    const load = async () => {
+      try {
+        const res = await coopApi.listRaids()
+        if (cancelled) return
+        heldCoopSessionRef.current = Number.isFinite(res?.activeSessionId) ? res.activeSessionId : null
+        setActiveRaidParty(res?.activeParty || null)
+        const entry = (res?.raids || []).find((r) => r.raidId === raidChoice.id)
+        setRaidParties(entry?.parties || [])
+      } catch {
+        if (!cancelled) setRaidParties([])
+      }
+    }
+    reloadRaidPartiesRef.current = load
+    load()
+    const timer = setInterval(load, COOP_BROWSER_POLL_MS)
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+      reloadRaidPartiesRef.current = null
+    }
+  }, [raidChoice])
+
+  // Opens a party (sessionId null) or joins a named lobby. The save is flushed
+  // first for the same reason the co-op boss join does it: the server snapshots
+  // it on join and owns the pack from that moment.
+  const startRaidParty = async (raid, sessionId = null) => {
+    if (isDemo) {
+      addToast('\u{1F512} Raid parties are available with a free account.', 'info')
+      return
+    }
+    const req = checkRaidRequirements(raid)
+    if (req.locked) {
+      addToast(req.reason, 'error')
+      return
+    }
+    setRaidJoining(sessionId ?? 'new')
+    try {
+      const saved = await runLockedSave()
+      // A co-op lock is not a failed save — it means a room already owns this
+      // character, and the join below is what releases it.
+      if (!saved && lastSaveLockCode() !== 'CHARACTER_IN_COOP_SESSION') {
+        addToast('Could not save before joining — try again.', 'error')
+        return
+      }
+      const res = await joinRaidWithRecovery(raid.id, sessionId)
+      setRaidChoice(null)
+      setCoopSessionId(res.sessionId)
+    } catch (err) {
+      const code = err?.body?.code
+      if (code === 'RAID_ALREADY_STARTED' || code === 'COOP_SESSION_UNAVAILABLE') reloadRaidPartiesRef.current?.()
+      if (code === 'RAID_REQUIREMENTS_NOT_MET') addToast(err?.body?.error || 'You have not unlocked this raid yet.', 'error')
+      else if (code === 'RAID_ALREADY_STARTED') addToast(err?.body?.error || 'That party has already set off.', 'error')
+      else if (code === 'COOP_SESSION_UNAVAILABLE') addToast(err?.body?.error || 'That party is no longer taking raiders.', 'error')
+      else if (code === 'CHARACTER_IN_WORLD_SESSION') addToast('You are adventuring in the World.', 'error')
+      else if (code === 'CHARACTER_IN_ACTIVE_MATCH') addToast('Finish your duel first.', 'error')
+      else if (code === 'CHARACTER_IN_COOP_SESSION') addToast(err?.body?.error || 'Leave your current group fight first.', 'error')
+      else if (code === 'COOP_UNAVAILABLE') addToast('Raid parties are offline right now — raid alone for the moment.', 'error')
+      else addToast(err?.message || 'Could not join the party.', 'error')
+    } finally {
+      setRaidJoining(null)
+    }
+  }
+
+  /** Same stale-hold recovery the boss join uses: a player whose last fight
+   * ended in a refresh has no way to leave that room by hand. */
+  const joinRaidWithRecovery = async (raidId, sessionId) => {
+    try {
+      return await coopApi.joinRaid(raidId, sessionId)
+    } catch (err) {
+      const held = heldCoopSessionRef.current
+      if (err?.body?.code !== 'CHARACTER_IN_COOP_SESSION' || !held) throw err
+      try { await coopApi.leave(held) } catch { /* the join below reports the real state */ }
+      heldCoopSessionRef.current = null
+      return await coopApi.joinRaid(raidId, sessionId)
+    }
+  }
+
   // Sends the player into the boss's own instanced room in the open world. From
   // the moment they connect the world server owns their save, so flush first —
   // the same reason the co-op join above does. The world opens in its own tab;
@@ -2389,7 +2495,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             onFight={pickMonsterForFight}
             offersCoop={offersCoop}
             onMonsterInfo={setSelectedMonsterInfo}
-            onStartRaid={startRaid}
+            onStartRaid={pickRaidForFight}
             onRaidInfo={setSelectedRaidInfo}
             checkBossRequirements={checkBossRequirements}
             checkRaidRequirements={checkRaidRequirements}
@@ -2610,7 +2716,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               return (
                 <div key={raid.id} class="flex gap-2 items-center" title={isRaidLocked ? raidLockReason : ''}>
                   <button
-                    onClick={() => !isRaidLocked && startRaid(raid)}
+                    onClick={() => !isRaidLocked && pickRaidForFight(raid)}
                     disabled={isRaidLocked}
                     title={isRaidLocked ? raidLockReason : ''}
                     class={`flex-1 p-3 rounded-xl border transition-colors text-left flex items-center justify-between
@@ -2780,7 +2886,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monstersData={monstersData}
           itemsData={itemsData}
           raidKillCounts={raidKillCounts}
-          onStartRaid={(raid) => { setSelectedRaidInfo(null); startRaid(raid) }}
+          onStartRaid={(raid) => { setSelectedRaidInfo(null); pickRaidForFight(raid) }}
           onClose={() => setSelectedRaidInfo(null)}
         />
       )}
@@ -2885,6 +2991,67 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               onJoin={(session, monster) => startCoopFight(monster, session.sessionId)}
             />
           </div>
+        </Modal>
+      )}
+
+      {/* Solo-or-party prompt for a raid. Same place and same reasoning as the
+          boss prompt below: every picker path into a raid comes through here. */}
+      {raidChoice && (
+        <Modal onClose={() => setRaidChoice(null)}>
+          <div class="flex items-center gap-2 mb-1">
+            <SkillEmblem iconKey={getRaidArt(raidChoice.id).icon} accent={getRaidArt(raidChoice.id).accent} size={28} glow={0} />
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">{raidChoice.name}</h3>
+          </div>
+          <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-4">How do you want to run this raid?</p>
+
+          <div class="space-y-2 mb-4">
+            <button
+              onClick={() => { const r = raidChoice; setRaidChoice(null); startRaid(r) }}
+              class="w-full text-left p-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)]"
+            >
+              <div class="text-sm font-semibold text-[var(--color-parchment)]">Raid alone</div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                Every boss, back to back, and the whole reward table is yours.
+              </div>
+            </button>
+          </div>
+
+          <div class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider mb-2">Raid together</div>
+          <p class="text-[10px] text-[var(--color-parchment)] opacity-60 mb-2">
+            Up to eight of you share one run. Deal 10% of the raid's health and you roll the
+            reward table yourself. Nobody can join once the host sets off.
+          </p>
+          {activeRaidParty?.raidId === raidChoice.id && activeRaidParty.phase !== 'lobby' && (
+            <button
+              onClick={() => startRaidParty(raidChoice, activeRaidParty.sessionId)}
+              disabled={raidJoining === activeRaidParty.sessionId}
+              class="w-full text-left p-3 mb-2 rounded-xl border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)] disabled:opacity-40"
+            >
+              <div class="text-sm font-semibold text-[var(--color-gold)]">
+                {raidJoining === activeRaidParty.sessionId ? 'Rejoining\u2026' : 'Rejoin your run'}
+              </div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                Your party is already raiding. It is not in the list below because nobody
+                can join a run once it has started.
+              </div>
+            </button>
+          )}
+
+          <div class="max-h-80 overflow-y-auto">
+            <CoopRaidPartyList
+              raid={raidChoice}
+              parties={raidParties}
+              joining={raidJoining}
+              activeSessionId={heldCoopSessionRef.current}
+              onHost={() => startRaidParty(raidChoice)}
+              onJoin={(party) => startRaidParty(raidChoice, party.sessionId)}
+            />
+          </div>
+
+          <p class="text-[10px] text-[var(--color-parchment)] opacity-50 mt-3">
+            While you are in a party the server runs your character, so the rest of the game is
+            paused until you come back.
+          </p>
         </Modal>
       )}
 

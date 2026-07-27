@@ -25,6 +25,40 @@ function roomStub(env, sessionId) {
 }
 
 /**
+ * Whether the deployed world Worker's rooms can actually run a raid.
+ *
+ * Pages and the world Worker deploy separately (§20), so a Pages build that
+ * knows about raid parties can be pointed at a Worker that does not. That
+ * mismatch is not a degraded raid — the old room ignores `state.raid`
+ * entirely, so it respawns the raid's FIRST boss forever and settles every
+ * kill against that boss's drop table. The server grants those items, so it
+ * has to be a refusal, not a fallback.
+ *
+ * Probed against a throwaway room id: `capabilities` is answered before any
+ * session lookup, so this costs no D1 and needs no session to exist. Any other
+ * answer — a 404 from a room that has no such action, a 400 for the missing
+ * session id it insists on, an unreachable Worker — means no raids.
+ */
+export async function coopRoomSupportsRaids(env) {
+  if (!coopRoomsAvailable(env)) return false
+  try {
+    const stub = env.COOP_ROOM.get(env.COOP_ROOM.idFromName('coop:capabilities'))
+    const res = await stub.fetch('https://coop-room/capabilities', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    })
+    const body = await res.json().catch(() => null)
+    return res.status === 200 && body?.raids === true
+  } catch (err) {
+    console.error('[PocketRPG][coop] raid capability probe failed', {
+      message: (err && (err.message || String(err))) || 'unknown',
+    })
+    return false
+  }
+}
+
+/**
  * Calls one of the room's actions ('poll' | 'intent' | 'depart').
  * The URL host is arbitrary — a DO stub routes on the object, not the name —
  * but the path is what the room switches on.

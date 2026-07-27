@@ -40,21 +40,47 @@ export function publicMember(member) {
 }
 
 /**
+ * Public view of somebody in a raid LOBBY: the above plus what they are
+ * bringing.
+ *
+ * A raid party sizes itself up before it sets off — a lobby that cannot show
+ * you a member's gear cannot tell you whether the run is worth starting — so
+ * inspecting a party member's kit is the point of the screen, not a leak.
+ * Deliberately confined to the lobby: during the fight the room broadcasts at
+ * ~1.7Hz and eight full packs per beat is payload nobody reads.
+ */
+export function lobbyMember(member) {
+  return {
+    ...publicMember(member),
+    levels: member.levels || null,
+    equipment: member.equipment || {},
+    inventory: Array.isArray(member.inventory) ? member.inventory : [],
+    joinedAt: member.joinedAt ?? null,
+  }
+}
+
+/**
  * The room state as one member is allowed to see it: their own record in full,
- * everyone else reduced to the damage table.
+ * everyone else reduced to the damage table — or, in a raid lobby, to the
+ * damage table plus their kit.
  */
 export function projectStateForMember(state, characterId) {
   if (!state) return null
   const selfKey = String(characterId)
+  const inLobby = state.phase === 'lobby'
   const members = {}
   for (const [id, member] of Object.entries(state.members || {})) {
-    members[id] = id === selfKey ? member : publicMember(member)
+    if (id === selfKey) members[id] = member
+    else members[id] = inLobby ? lobbyMember(member) : publicMember(member)
   }
   return {
     tick: state.tick || 0,
     bossId: state.bossId,
     boss: state.boss,
     targetCharId: state.targetCharId ?? null,
+    phase: state.phase || 'active',
+    hostCharacterId: state.hostCharacterId ?? null,
+    raid: state.raid || null,
     members,
     memberCount: Object.keys(state.members || {}).length,
   }

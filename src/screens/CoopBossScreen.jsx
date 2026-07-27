@@ -9,6 +9,7 @@ import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
 import CoopLootShare from '../components/CoopLootShare.jsx'
+import CoopRaidLobby from '../components/CoopRaidLobby.jsx'
 import CoopChatPanel from '../components/CoopChatPanel.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
@@ -17,8 +18,9 @@ import { coopApi } from '../cloud/coop.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
+import { coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
+import { coopRaidSummary, raidProgress } from '../engine/coopRaidEngine.js'
 import { appendChatLines, chatLinesFromCoopEvents } from '../utils/coopChat.js'
-import { coopKillOutcome, describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -49,6 +51,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [showQuickPrayerConfig, setShowQuickPrayerConfig] = useState(false)
   const [lootModal, setLootModal] = useState(null)
+  // Cleared by the poll that reports the raid running, so a double-tap on Start
+  // cannot queue two starts (the second is refused server-side either way).
+  const [startingRaid, setStartingRaid] = useState(false)
   const [chatLog, setChatLog] = useState([])
   const chatIdRef = useRef(0)
   const pollTimer = useRef(null)
@@ -66,6 +71,12 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
   const bossName = monster?.name || 'Boss'
   const memberCount = state ? Object.keys(state.members || {}).length : 0
   const activeAdd = boss?.add && boss.add.currentHP > 0 ? boss.add : null
+  // A raid party runs in this same screen: the lobby replaces the HUD until the
+  // host sets off, and the fight after that is the co-op boss fight with a run
+  // counter on it. Keeping both here is what makes the group raid feel like the
+  // group boss it is built on.
+  const raid = raidProgress(state, monstersData)
+  const inLobby = state?.phase === 'lobby'
 
   const pushSplats = (setter, splats) => {
     if (!splats.length) return
@@ -98,7 +109,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
     try {
       const res = await coopApi.tick(sessionId, sinceTickRef.current ?? undefined)
       if (stoppedRef.current) return
-      if (res.state) setState(res.state)
+      if (res.state) {
+        setState(res.state)
+        if (res.state.phase !== 'lobby') setStartingRaid(false)
+      }
       if (Number.isFinite(res.current_tick)) sinceTickRef.current = res.current_tick
       if (res.events?.length) {
         emitXpDrops(xpDropsFromCombatEvents(res.events, characterId))
@@ -115,6 +129,12 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         pushSplats(setPlayerSplats, tickSplats.player)
         // A refused equip is resolved a tick later on the server, so without
         // this the tap just looks ignored.
+        // Run-shaped events: everybody in the party sees these, not just the
+        // member they name.
+        for (const ev of res.events) {
+          if (ev.type === 'raidBossAdvance') addToast?.(`\u2694\uFE0F ${ev.bossName} — boss ${ev.bossIndex + 1}/${ev.totalBosses}`, 'info')
+          else if (ev.type === 'raidWiped') addToast?.('Your party was wiped out. Back to the lobby.', 'error')
+        }
         for (const ev of res.events) {
           if (Number(ev.characterId) !== Number(characterId)) continue
           if (ev.type === 'equipRefused') addToast?.(describeCoopEquipRefusal(ev), 'error')
@@ -130,10 +150,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         // or not their poll was the one in flight when the boss died.
         for (const ev of res.events) {
           if (ev.type !== 'killSettled') continue
-          const killedName = monstersData?.[res.state?.bossId]?.name || 'The boss'
+          const raidCleared = res.events.find((e) => e.type === 'raidComplete')
+          const killedName = raidCleared?.raidName || monstersData?.[res.state?.bossId]?.name || 'The boss'
           const outcome = coopKillOutcome(ev, characterId)
           if (outcome.kind === 'loot') {
-            setLootModal({ monsterName: killedName, loot: outcome.loot, killCount: outcome.killCount })
+            setLootModal({ monsterName: killedName, loot: outcome.loot, killCount: outcome.killCount, isRaid: !!raidCleared })
           } else if (outcome.kind === 'diverged') {
             addToast?.('Your loot could not be granted — something else changed your save. Leave and rejoin.', 'error')
           } else if (outcome.kind === 'failed') {
@@ -218,6 +239,64 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
     )
   }
 
+  // Built before the lobby branch below and rendered by BOTH: clearing a raid
+  // settles the loot and puts the party back in its lobby on the same tick, so
+  // a modal rendered only by the fight view is set and never seen.
+  const lootModalNode = lootModal ? (() => {
+    const { hero, heroItem, rest, total } = shapeLootForModal(lootModal.loot, itemsData)
+    return (
+      <LootResultModal
+        theme={hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
+        kind="loot"
+        eyebrow={lootModal.isRaid ? 'Raid Complete' : 'Boss Defeated'}
+        title={lootModal.monsterName}
+        sub={lootModal.killCount ? `Kill ${lootModal.killCount.toLocaleString()}` : undefined}
+        heroItem={heroItem}
+        heroName={hero ? (heroItem?.name || hero.itemId) : null}
+        heroQuantity={hero ? hero.quantity : null}
+        heroGp={hero ? hero.totalGp : 0}
+        heroUnitGp={hero ? hero.unitGp : 0}
+        loot={rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
+        lootTitle="Loot Secured"
+        lootTotal={total}
+        primaryAction={{ label: lootModal.isRaid ? 'Back to Lobby' : 'Keep Fighting', onClick: () => setLootModal(null) }}
+        onClose={() => setLootModal(null)}
+      >
+        {(lootModal.loot?.length ?? 0) === 0 && (
+          <div class="text-center text-[12px] text-[var(--color-parchment)] opacity-70 py-4" style={{ position: 'relative', zIndex: 4 }}>
+            No drops this time — the kill still counts.
+          </div>
+        )}
+      </LootResultModal>
+    )
+  })() : null
+
+  if (inLobby && raid) {
+    const summary = coopRaidSummary(raid.raidId, monstersData)
+    return (
+      <div class="forge-shell h-full flex flex-col p-4">
+        <BackLink onClick={handleLeave} className="mb-3" />
+        <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar">
+          <CoopRaidLobby
+            state={state}
+            characterId={characterId}
+            itemsData={itemsData}
+            raidName={summary?.name || raid.name}
+            bossNames={summary?.bossNames || []}
+            starting={startingRaid}
+            onLeave={handleLeave}
+            onStart={() => {
+              setStartingRaid(true)
+              send({ type: 'start_raid' })
+            }}
+          />
+          {error && <div class="text-[11px] text-[var(--color-blood-light)] text-center">{error}</div>}
+        </div>
+        {lootModalNode}
+      </div>
+    )
+  }
+
   const mArt = getMonsterArt(monster || { id: state.bossId, name: bossName })
   const form = monster?.multiForm && boss?.monster?.currentForm && monster.forms?.[boss.monster.currentForm]
     ? monster.forms[boss.monster.currentForm]
@@ -245,8 +324,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
           accent={mArt.accent}
           name={bossName}
           nameColor={getStyleArt(form ? form.attackStyle : monster?.attackStyle).color}
-          sub={`${memberCount} ${memberCount === 1 ? 'player' : 'players'} in this fight`}
-          meta={<CoopLootShare member={me} maxHP={boss?.maxHP ?? 0} />}
+          sub={raid
+            ? `Boss ${raid.position}/${raid.total} \u00B7 ${memberCount} ${memberCount === 1 ? 'raider' : 'raiders'}`
+            : `${memberCount} ${memberCount === 1 ? 'player' : 'players'} in this fight`}
+          meta={<CoopLootShare member={me} maxHP={coopLootBasisHP(state)} />}
           combatLevel={monster?.combatLevel}
         />
 
@@ -303,7 +384,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
 
         {boss?.respawnCountdown > 0 && (
           <div class="cb-respawn">
-            <span class="cb-respawn__label">Next {bossName} in</span>
+            <span class="cb-respawn__label">
+              {raid ? `${raid.nextBossName || 'Next boss'} arrives in` : `Next ${bossName} in`}
+            </span>
             <span class="cb-respawn__v">{Math.ceil(boss.respawnCountdown * 0.6)}s</span>
           </div>
         )}
@@ -351,34 +434,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
           mid-fight, and shut it costs a single row. */}
       <CoopChatPanel messages={chatLog} onSend={sendChat} />
 
-      {lootModal && (() => {
-        const { hero, heroItem, rest, total } = shapeLootForModal(lootModal.loot, itemsData)
-        return (
-          <LootResultModal
-            theme={hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
-            kind="loot"
-            eyebrow="Boss Defeated"
-            title={lootModal.monsterName}
-            sub={lootModal.killCount ? `Kill ${lootModal.killCount.toLocaleString()}` : undefined}
-            heroItem={heroItem}
-            heroName={hero ? (heroItem?.name || hero.itemId) : null}
-            heroQuantity={hero ? hero.quantity : null}
-            heroGp={hero ? hero.totalGp : 0}
-            heroUnitGp={hero ? hero.unitGp : 0}
-            loot={rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
-            lootTitle="Loot Secured"
-            lootTotal={total}
-            primaryAction={{ label: 'Keep Fighting', onClick: () => setLootModal(null) }}
-            onClose={() => setLootModal(null)}
-          >
-            {(lootModal.loot?.length ?? 0) === 0 && (
-              <div class="text-center text-[12px] text-[var(--color-parchment)] opacity-70 py-4" style={{ position: 'relative', zIndex: 4 }}>
-                No drops this time — the kill still counts.
-              </div>
-            )}
-          </LootResultModal>
-        )
-      })()}
+      {lootModalNode}
 
       {showQuickPrayerConfig && (
         <QuickPrayerConfigModal

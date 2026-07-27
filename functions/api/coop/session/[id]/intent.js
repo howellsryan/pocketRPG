@@ -16,6 +16,10 @@ const VALID_STANCES = new Set(['accurate', 'aggressive', 'controlled', 'defensiv
 export function validateCoopAction(action) {
   if (!action || typeof action !== 'object') return { error: 'invalid_action' }
   switch (action.type) {
+    case 'start_raid':
+      // No payload — the room decides whether this member is the host and
+      // whether there is a lobby to end.
+      return { action: { type: 'start_raid' } }
     case 'change_stance':
       if (!VALID_STANCES.has(action.stance)) return { error: 'invalid_stance' }
       return { action: { type: 'change_stance', stance: action.stance } }

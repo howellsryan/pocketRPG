@@ -144,11 +144,12 @@ describe('coopBossEngine — respawn pacing', () => {
     }
   })
 
-  it('waits the same 15 seconds for every boss', () => {
+  it('waits the same 5 seconds for every boss', () => {
     // Deliberate replacement of the old HP-based curve, which made a 255 HP boss
     // wait 30s and a 2000 HP one 6s. Players get one predictable number instead.
-    expect(COOP_RESPAWN_TICKS).toBe(25)
-    expect(COOP_RESPAWN_TICKS * 0.6).toBe(15)
+    expect(COOP_RESPAWN_TICKS).toBe(8)
+    // The HUD counts down in ceil(ticks * 0.6) seconds, and it has to read "5s".
+    expect(Math.ceil(COOP_RESPAWN_TICKS * 0.6)).toBe(5)
     const waits = new Set(Object.keys(COOP_BOSSES).map((id) => coopRespawnTicks(id)))
     expect([...waits]).toEqual([COOP_RESPAWN_TICKS])
   })

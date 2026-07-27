@@ -207,7 +207,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Tap most bosses in the combat picker and you are asked whether to fight solo or join a group. A group holds up to 8 players against one shared boss; you join the fullest group with room, or open a new one. Raid bosses stay inside their raids, and four bosses are solo only: Ember Tyrant, Ashen Crucible, Venomcoil Matriarch and Blighted Gauntlet. The server runs the whole fight — every swing, your XP, the food and potions you use and the loot roll. The fight plays the same as a solo one: same tick speed, prayers, special attacks, combo eating and gear swaps, and dying costs exactly what dying to that boss alone costs. The boss's entry requirements still apply to each player, quest, Slayer level and kill count alike. After a kill the boss comes back 15 seconds later, shown as a countdown. That wait is preparation time, not dead time: eat, drink potions, toggle prayers and swap gear as normal, and the group goes into the next pull ready."
+  "text": "Tap most bosses in the combat picker and you are asked whether to fight solo or join a group. A group holds up to 8 players against one shared boss; you join the fullest group with room, or open a new one. Raid bosses stay inside their raids, and four bosses are solo only: Ember Tyrant, Ashen Crucible, Venomcoil Matriarch and Blighted Gauntlet. The server runs the whole fight — every swing, your XP, the food and potions you use and the loot roll. The fight plays the same as a solo one: same tick speed, prayers, special attacks, combo eating and gear swaps, and dying costs exactly what dying to that boss alone costs. The boss's entry requirements still apply to each player, quest, Slayer level and kill count alike. After a kill the boss comes back 5 seconds later, shown as a countdown. That wait is preparation time, not dead time: eat, drink potions, toggle prayers and swap gear as normal, and the group goes into the next pull ready."
  },
  {
   "id": "guide_group_boss_loot_and_the_10_rule",
@@ -216,6 +216,14 @@ export const KNOWLEDGE_CHUNKS = [
    "guide"
   ],
   "text": "Every player who personally deals at least 10% of the boss's maximum hitpoints gets their own roll of its drop table — not a share of one drop. Two players over the line means two independent rolls, each with its own collection log entries and kill count. Miss the line and you get nothing from that kill. Damage from any source counts, including specials and summons, and it resets each time the boss respawns. The bar under the boss's name tracks your own progress toward the threshold: it fills as you deal the 10% you need and turns green when your drop is secured. With the group capped at 8, the top contributor always clears the line, so a kill never comes out empty for everyone. Being defeated does not cancel a drop you had already earned. Slayer task credit works differently — it goes to everyone still alive at the kill who has that boss as their task, whatever their damage. While you are in a group fight the server owns your save, so saving, skipping time, buying and Trading Post activity are all locked until you leave with the back arrow."
+ },
+ {
+  "id": "guide_raid_parties",
+  "title": "Raid parties",
+  "tags": [
+   "guide"
+  ],
+  "text": "Tap a raid and you can run it alone or take a party. Unlike bosses, a raid party is not drop-in: you either start a party and become its host, or join a party that is still waiting in its lobby. Once the host presses Start Raid, nobody else can join that run. The lobby lists everyone who has joined, with their combat level, and you can open any member's worn gear and inventory to see what they are bringing. Eat, drink and swap gear in the lobby — the wait between bosses works the same way, 5 seconds while the next boss walks in. The raid itself is the group boss fight: the server runs every swing, and it plays exactly like a solo run — same tick speed, prayers, specials and combo eating. The bosses come in order, and only the last one pays. Deal at least 10% of the whole raid's hitpoints — counted across every boss, not reset between them — and you roll the raid's reward table yourself, with your own collection log entries and raid kill count. Miss the line and you get nothing from the clear. Finishing the raid puts the party back in its lobby, so the host can start another run without everyone regrouping. If the whole party is wiped out, the run ends the same way. Dying costs what dying in a solo raid costs."
  },
  {
   "id": "guide_talking_in_a_group_fight",
