@@ -15909,7 +15909,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": {
       "stab": 0,
