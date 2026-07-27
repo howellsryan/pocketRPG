@@ -26,7 +26,8 @@ import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload } from './grants'
-import { isBossMonster, recordBossKill, uniqueDropsFrom } from './bossKills'
+import { dropBroadcastsFrom, isBossMonster, recordBossKill } from './bossKills'
+import { auditLog } from '../../functions/_lib/game/audit.js'
 import monstersDataJson from '../../src/data/monsters.json'
 
 type MonsterNames = Record<string, { name?: string } | undefined>
@@ -687,7 +688,18 @@ export class WorldZone extends Server<Env> {
         break // answered upstream, before the rate limiter — it's the keepalive
       case 'chat': {
         const text = sanitizeChat(message.text)
-        if (text) this.pendingChat.push({ e: 'chat', charId: player.charId, name: player.name, text })
+        if (text) {
+          this.pendingChat.push({ e: 'chat', charId: player.charId, name: player.name, text })
+          // Player-authored text broadcast to strangers needs a durable history
+          // for safety review. Swallowed: an audit outage must not silence the
+          // zone's chat, and the failure is logged either way.
+          void auditLog(this.env, 'world_chat', {
+            characterId: Number(player.charId),
+            identityId: player.identityId,
+            zone: this.name,
+            text,
+          }, { swallow: true })
+        }
         break
       }
       case 'moveInv':
@@ -1363,12 +1375,20 @@ export class WorldZone extends Server<Env> {
         // audit) — fire-and-forget D1 like the flushes below. No-op for
         // non-boss monsters.
         void recordBossKill(this.env, kill)
-        if (!isBossMonster(kill.monsterId)) continue
+        const isBoss = isBossMonster(kill.monsterId)
+        const drops = dropBroadcastsFrom(kill.monsterId, kill.loot, itemsData)
+        if (!isBoss && drops.length === 0) continue
         const monsterName = monsterNames[kill.monsterId]?.name ?? kill.monsterId
         const killerName = this.players.get(kill.owner)?.name ?? 'Someone'
-        broadcastEvents.push({ e: 'kill', monster: monsterName, killer: killerName })
-        for (const itemId of uniqueDropsFrom(kill.monsterId, kill.loot)) {
-          broadcastEvents.push({ e: 'uniqueDrop', monster: monsterName, player: killerName, item: itemNameOf(itemId) })
+        if (isBoss) broadcastEvents.push({ e: 'kill', monster: monsterName, killer: killerName })
+        for (const drop of drops) {
+          broadcastEvents.push({
+            e: 'uniqueDrop',
+            monster: monsterName,
+            player: killerName,
+            item: itemNameOf(drop.itemId),
+            epic: drop.epic,
+          })
         }
       }
       if (result.events.length > 0) eventsByChar.set(player.charId, result.events)

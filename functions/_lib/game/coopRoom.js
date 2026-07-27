@@ -31,11 +31,25 @@ function roomStub(env, sessionId) {
  */
 export async function callCoopRoom(env, sessionId, action, payload = {}) {
   const stub = roomStub(env, sessionId)
-  const res = await stub.fetch(`https://coop-room/${action}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...payload, sessionId: Number(sessionId) }),
-  })
+  let res
+  try {
+    res = await stub.fetch(`https://coop-room/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, sessionId: Number(sessionId) }),
+    })
+  } catch (err) {
+    // The binding can be configured while the room is still unreachable: the
+    // world Worker not deployed yet, deployed without the DO class, or throwing
+    // on start. That is the same situation as a missing binding — group fights
+    // are off — and it must degrade the same way. Without this it surfaced as
+    // an unmapped 500 with nothing in the logs to say why, because the endpoint
+    // maps anything that is not a GameApiError to a bare Internal server error.
+    console.error('[PocketRPG][coop] room unreachable', {
+      sessionId, action, message: (err && (err.message || String(err))) || 'unknown',
+    })
+    throw new GameApiError('COOP_UNAVAILABLE', 'Group boss fights are temporarily unavailable', 503)
+  }
   let body = null
   try { body = await res.json() } catch { /* room always speaks JSON; treat a blank as an error */ }
   return { status: res.status, body }

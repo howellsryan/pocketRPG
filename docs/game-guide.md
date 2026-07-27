@@ -130,6 +130,11 @@ The lobby lists everyone who has joined, with their combat level, and you can op
 The raid itself is the group boss fight: the server runs every swing, and it plays exactly like a solo run — same tick speed, prayers, specials and combo eating. The bosses come in order, and only the last one pays. Deal at least 10% of the whole raid's hitpoints — counted across every boss, not reset between them — and you roll the raid's reward table yourself, with your own collection log entries and raid kill count. Miss the line and you get nothing from the clear.
 
 Finishing the raid puts the party back in its lobby, so the host can start another run without everyone regrouping. If the whole party is wiped out, the run ends the same way. Dying costs what dying in a solo raid costs.
+## Talking in a group fight
+
+Group boss fights have chat. The bar at the foot of the fight is one line when closed — the newest message — and opens into a short log with an input. Everyone in your instance sees what you send, and you can still talk while dead or during the respawn wait. Messages are kept for safety review, so keep it civil.
+
+Whenever anyone in your instance receives a drop worth over a million coins, the whole instance is told what it was and who got it. It reads in the fight chat in the idle game, and as a purple banner in the open world — where any kill counts, not just a boss.
 
 ## The Corporeal Horror
 

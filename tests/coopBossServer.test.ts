@@ -559,6 +559,19 @@ describe('coop intent validation', () => {
     expect(validateCoopAction({ type: 'grant_me_loot' }).error).toBe('unknown_action')
   })
 
+  it('sanitises chat at the edge and drops a message with nothing left in it', () => {
+    expect(validateCoopAction({ type: 'chat', text: '  pray melee  ' }).action)
+      .toEqual({ type: 'chat', text: 'pray melee' })
+    expect(validateCoopAction({ type: 'chat', text: '   ' }).error).toBe('invalid_chat')
+    expect(validateCoopAction({ type: 'chat' }).error).toBe('invalid_chat')
+    expect(validateCoopAction({ type: 'chat', text: 42 }).error).toBe('invalid_chat')
+  })
+
+  it('strips extra fields off a chat action, so nothing else rides into the room', () => {
+    expect(validateCoopAction({ type: 'chat', text: 'hi', characterId: 999, granted: [{ itemId: 'onyx' }] }).action)
+      .toEqual({ type: 'chat', text: 'hi' })
+  })
+
   it('rejects a bogus stance', () => {
     expect(validateCoopAction({ type: 'change_stance', stance: 'godmode' }).error).toBe('invalid_stance')
   })

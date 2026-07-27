@@ -10,6 +10,7 @@ import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
 import CoopLootShare from '../components/CoopLootShare.jsx'
 import CoopRaidLobby from '../components/CoopRaidLobby.jsx'
+import CoopChatPanel from '../components/CoopChatPanel.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import { useGame } from '../state/gameState.jsx'
@@ -19,6 +20,7 @@ import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
 import { coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
 import { coopRaidSummary, raidProgress } from '../engine/coopRaidEngine.js'
+import { appendChatLines, chatLinesFromCoopEvents } from '../utils/coopChat.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -52,6 +54,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
   // Cleared by the poll that reports the raid running, so a double-tap on Start
   // cannot queue two starts (the second is refused server-side either way).
   const [startingRaid, setStartingRaid] = useState(false)
+  const [chatLog, setChatLog] = useState([])
+  const chatIdRef = useRef(0)
   const pollTimer = useRef(null)
   const stoppedRef = useRef(false)
   const splatTimersRef = useRef(new Set())
@@ -112,6 +116,12 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
       if (Number.isFinite(res.current_tick)) sinceTickRef.current = res.current_tick
       if (res.events?.length) {
         emitXpDrops(xpDropsFromCombatEvents(res.events, characterId))
+
+        const chat = chatLinesFromCoopEvents(res.events, chatIdRef.current)
+        if (chat.lines.length > 0) {
+          chatIdRef.current = chat.nextId
+          setChatLog((prev) => appendChatLines(prev, chat.lines))
+        }
 
         const tickSplats = splatsFromCoopEvents(res.events, characterId)
         pushSplats(setBossSplats, tickSplats.boss)
@@ -188,6 +198,14 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
       await coopApi.sendAction(sessionId, action)
     } catch (err) {
       addToast?.(err.message || 'Action failed', 'error')
+    }
+  }
+
+  const sendChat = async (text) => {
+    try {
+      await coopApi.sendAction(sessionId, { type: 'chat', text })
+    } catch (err) {
+      addToast?.(err.status === 429 ? 'Slow down — too many messages.' : (err.message || 'Message not sent'), 'error')
     }
   }
 
@@ -378,6 +396,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
           <div class="text-[11px] text-[var(--color-blood-light)] text-center">{error}</div>
         )}
       </div>
+
+      {/* Outside the scroller: chat is the one thing that must not scroll away
+          mid-fight, and shut it costs a single row. */}
+      <CoopChatPanel messages={chatLog} onSend={sendChat} />
 
       {lootModal && (() => {
         const { hero, heroItem, rest, total } = shapeLootForModal(lootModal.loot, itemsData)

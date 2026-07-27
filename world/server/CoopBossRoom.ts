@@ -31,6 +31,11 @@ import {
   removeCoopMember,
 } from '../../src/engine/coopBossEngine.js'
 import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
+import { coopEpicDropEvents } from '../../src/engine/lootBroadcast.js'
+import { chatRateVerdict, sanitizeChat } from '../../src/engine/playerChat.js'
+import { auditLog } from '../../functions/_lib/game/audit.js'
+import itemsData from '../../src/data/items.json'
+import monstersData from '../../src/data/monsters.json'
 import {
   COOP_ENGINE_DEPS,
   COOP_SESSION_STALE_MS,
@@ -57,6 +62,11 @@ const CHECKPOINT_EVERY_TICKS = 25
  * single-threaded so there is no table to contend on any more — this only stops
  * a client spending the room's memory. */
 const MAX_PENDING_INTENTS_PER_MEMBER = 4
+/** Chat is capped on its own clock rather than against the combat queue: a
+ * player talking must never eat the action slots they need to eat and pray, and
+ * a player fighting must never be silenced by their own swings. */
+const CHAT_RATE_WINDOW_MS = 10_000
+const CHAT_RATE_MAX_IN_WINDOW = 8
 
 type AnyState = Record<string, any>
 type QueuedIntent = { tick_number: number; characterId: number; characterSeq: number; action: unknown }
@@ -83,6 +93,12 @@ export class CoopBossRoom {
   private events: AnyState[] = []
   private lastSeen: Record<string, number> = {}
   private pending: QueuedIntent[] = []
+  /** Chat said between beats, drained by the tick. Queued rather than appended
+   * on arrival because an event added to a tick a client has already
+   * acknowledged is filtered out by `> since` forever — the same rule that
+   * keeps settlement off the tick it settles. */
+  private pendingChat: AnyState[] = []
+  private chatTimes: Record<string, number[]> = {}
   private intentSeq = 0
   private tickTimer: ReturnType<typeof setInterval> | null = null
   private loading: Promise<void> | null = null
@@ -282,7 +298,9 @@ export class CoopBossRoom {
       const out = processCoopTick(this.state, intents, COOP_ENGINE_DEPS, now)
       const next = out.stateNext as AnyState
       this.state = next
-      this.events = pushEvents(this.events, out.events, next.tick)
+      const chat = this.pendingChat.map((ev) => ({ ...ev, tick: next.tick }))
+      this.pendingChat = []
+      this.events = pushEvents(this.events, [...out.events, ...chat], next.tick)
       this.dirty = true
 
       // Settlement runs AFTER the tick is committed to the room's state, and
@@ -345,7 +363,7 @@ export class CoopBossRoom {
         diverged: !!settlement.diverged,
         // Every share threw: the kill is an outage, not a dry roll.
         failed: shares.length > 0 && shares.every((s: AnyState) => !!s.failed),
-      }], this.state!.tick || 0)
+      }, ...this.epicDropEvents(shares)], this.state!.tick || 0)
     } catch (err) {
       console.error('[PocketRPG][coop] kill settlement failed', {
         sessionId: this.sessionId, bossId: this.bossId, killSeq: seq, message: (err as Error)?.message || err,
@@ -367,6 +385,22 @@ export class CoopBossRoom {
         failed: true,
       }], this.state?.tick || 0)
     }
+  }
+
+  /**
+   * The room-wide announcement of a purple drop. Deliberately NOT filtered by
+   * projectEventsForMember the way a settlement's item list is: who won a
+   * legendary and what it was is the one part of a kill everybody is meant to
+   * see. It carries that item only — the rest of the winner's drops stay theirs.
+   */
+  private epicDropEvents(shares: AnyState[]): AnyState[] {
+    return coopEpicDropEvents({
+      shares,
+      members: this.state?.members,
+      bossName: (monstersData as AnyState)?.[this.bossId]?.name || 'the boss',
+      tick: this.state?.tick || 0,
+      itemsData,
+    }) as AnyState[]
   }
 
   /**
@@ -395,6 +429,7 @@ export class CoopBossRoom {
       this.state = removeCoopMember(this.state, member.characterId)
       this.pending = this.pending.filter((i) => String(i.characterId) !== id)
       delete this.lastSeen[id]
+      delete this.chatTimes[id]
       this.dirty = true
       this.events = pushEvents(this.events, [{
         type: 'memberLeft', tick: this.state?.tick || 0, characterId: member.characterId,
@@ -426,6 +461,9 @@ export class CoopBossRoom {
   private handleIntent(key: string, body: Record<string, any>): Response {
     const member = this.state!.members[key]
     this.lastSeen[key] = Date.now()
+    // Chat is not a combat action: it takes no queue slot, and it works while
+    // dead and through the respawn wait, which is when a group actually talks.
+    if (body?.action?.type === 'chat') return this.handleChat(key, member, body.action.text)
     if (member.status !== 'alive') return jsonResponse({ error: 'member_dead' }, 409)
     const queued = this.pending.filter((i) => String(i.characterId) === key).length
     if (queued >= MAX_PENDING_INTENTS_PER_MEMBER) return jsonResponse({ error: 'too_many_queued_actions' }, 429)
@@ -439,6 +477,28 @@ export class CoopBossRoom {
       action: body?.action,
     })
     return jsonResponse({ ok: true, tick_number: (this.state!.tick || 0) + 1 })
+  }
+
+  private handleChat(key: string, member: AnyState, raw: unknown): Response {
+    const text = sanitizeChat(typeof raw === 'string' ? raw : '')
+    if (!text) return jsonResponse({ error: 'invalid_chat' }, 400)
+    const verdict = chatRateVerdict(this.chatTimes[key], Date.now(), CHAT_RATE_WINDOW_MS, CHAT_RATE_MAX_IN_WINDOW)
+    this.chatTimes[key] = verdict.times
+    if (!verdict.allowed) return jsonResponse({ error: 'chat_rate_limited' }, 429)
+    this.pendingChat.push({
+      type: 'chatMessage', characterId: member.characterId, username: member.username, text,
+    })
+    // Player-authored text broadcast to strangers needs a durable history for
+    // safety review. Swallowed: an audit outage must not silence the room, and
+    // the failure is logged either way.
+    void auditLog(this.env, 'coop_chat', {
+      characterId: member.characterId,
+      identityId: member.ownerId ?? null,
+      sessionId: this.sessionId,
+      bossId: this.bossId,
+      text,
+    }, { swallow: true })
+    return jsonResponse({ ok: true })
   }
 
   private handleDepart(key: string): Promise<Response> {
@@ -502,5 +562,7 @@ export class CoopBossRoom {
     this.sessionId = 0
     this.events = []
     this.pending = []
+    this.pendingChat = []
+    this.chatTimes = {}
   }
 }
