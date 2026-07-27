@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+import spellsData from '../src/data/spells.json' assert { type: 'json' }
 import { buildPlayerCombatant } from '../src/engine/combatant.js'
 import { createPvpState, processPvpTick } from '../src/engine/pvpEngine.js'
 import realItemsData from '../src/data/items.json'
@@ -655,7 +656,7 @@ describe('pvpEngine phase 2B contract', () => {
         { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'change_combat_spell', spellId: 'fire_bolt' } },
       ], mageItems)
       expect(out.stateNext.combatants['1'].spell.id).toBe('fire_bolt')
-      expect(out.stateNext.combatants['1'].spell.baseDamage).toBe(12)
+      expect(out.stateNext.combatants['1'].spell.baseDamage).toBe(spellsData.fire_bolt.baseDamage)
     })
 
     it('does not consume ammo for a magic combatant', () => {

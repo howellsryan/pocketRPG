@@ -24,7 +24,7 @@
 
 import {
   effectiveStrength, effectiveAttack, effectiveRanged, effectiveMagic,
-  meleeMaxHit, rangedMaxHit, magicMaxHit,
+  wornMeleeMaxHit, wornRangedMaxHit, magicMaxHit,
   maxAttackRoll, hitChance, rollDamage,
   getMeleeStyleBonuses, getRangedStyleBonus,
   effectiveDefence, playerDefenceRoll,
@@ -81,7 +81,7 @@ export function rollMeleeAttack(attacker, defender, itemsData) {
     atkMods.prayer.strength,
     atkStance.strengthStyleBonus,
   )
-  const maxHit = Math.floor(meleeMaxHit(effStr, atkBonuses.otherBonus.meleeStrength) * voidMult.meleeDamage)
+  const maxHit = Math.floor(wornMeleeMaxHit(effStr, atkBonuses.otherBonus) * voidMult.meleeDamage)
 
   const effAtk = effectiveAttack(
     attacker.stats.attack,
@@ -124,7 +124,7 @@ export function rollRangedAttack(attacker, defender, itemsData) {
 
   const effRngAttack = effectiveRanged(attacker.stats.ranged, atkMods.potions.ranged, atkMods.prayer.ranged, styleBonus)
   const effRngStrength = effectiveRanged(attacker.stats.ranged, atkMods.potions.ranged, atkMods.prayer.rangedStrength, styleBonus)
-  const maxHit = Math.floor(rangedMaxHit(effRngStrength, atkBonuses.otherBonus.rangedStrength) * voidMult.rangedDamage)
+  const maxHit = Math.floor(wornRangedMaxHit(effRngStrength, atkBonuses.otherBonus) * voidMult.rangedDamage)
 
   const atkRoll = Math.floor(maxAttackRoll(effRngAttack, atkBonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy)
 
@@ -207,14 +207,23 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
   }
 }
 
+// A staff's `poweredStaffBaseDamage` is its base damage AT MAGIC 75 — the anchor
+// the whole curve is expressed against, and the only thing that tiers one powered
+// staff above another. Absent, it falls back to 34 (== floor(75/3)+9), so a staff
+// without the field keeps the original single shared curve exactly.
+const POWERED_STAFF_ANCHOR_LEVEL = 75
+const DEFAULT_POWERED_STAFF_BASE_AT_ANCHOR = 34
+
 /**
- * Powered-staff base damage from magic level. Mirrors the PvE powered-staff
- * branch in combat.js (base at L75, +1 per 3 magic levels): floor(mag/3)+9.
- * Kept here so PvE and PvP share the same scaling for staves like the
- * Trident / Sanguinesti.
+ * Powered-staff base damage from magic level: +1 per 3 magic levels, offset so
+ * the staff hits its authored `poweredStaffBaseDamage` at Magic 75. Kept here so
+ * PvE and PvP share the same scaling for staves like the Trident / Sanguine.
  */
-export function poweredStaffMagicBaseDamage(magicLevel) {
-  return Math.max(1, Math.floor((Number(magicLevel) || 1) / 3) + 9)
+export function poweredStaffMagicBaseDamage(magicLevel, weapon = null) {
+  const anchor = Number(weapon?.poweredStaffBaseDamage)
+  const baseAtAnchor = Number.isFinite(anchor) && anchor > 0 ? anchor : DEFAULT_POWERED_STAFF_BASE_AT_ANCHOR
+  const offset = baseAtAnchor - Math.floor(POWERED_STAFF_ANCHOR_LEVEL / 3)
+  return Math.max(1, Math.floor((Number(magicLevel) || 1) / 3) + offset)
 }
 
 function zeroMagicSwing() {
@@ -242,7 +251,7 @@ export function resolveMagicSwing(attacker, defender, itemsData) {
   if (weapon?.poweredStaff) {
     const mods = getPvpCombatModifiers(attacker)
     const boostedMagic = Math.floor(((attacker?.stats?.magic || 1) + (mods.potions.magic || 0)) * (mods.prayer.magic || 1))
-    const maxHitOverride = poweredStaffMagicBaseDamage(boostedMagic)
+    const maxHitOverride = poweredStaffMagicBaseDamage(boostedMagic, weapon)
     return { swing: rollMagicAttack(attacker, defender, itemsData, { maxHitOverride }), runesToConsume: null, blocked: false }
   }
 

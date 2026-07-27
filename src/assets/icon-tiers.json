@@ -199,7 +199,8 @@
     },
     "arrowtip": {
       "bronze_arrowtips": "bronze", "iron_arrowtips": "iron", "steel_arrowtips": "steel",
-      "mithril_arrowtips": "mithril", "adamant_arrowtips": "adamant", "runeforged_arrowtips": "runeforged"
+      "mithril_arrowtips": "mithril", "adamant_arrowtips": "adamant", "runeforged_arrowtips": "runeforged",
+      "shardglass_arrowtips": "shardglass"
     },
     "charm": {
       "sacred_charm": "gold",

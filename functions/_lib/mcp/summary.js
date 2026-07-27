@@ -4,8 +4,9 @@ import { combatLevelFromStats } from '../../../src/engine/combatLevel.js'
 import { getEquipmentBonuses, getCombatType, getAttackSpeed, getEffectiveWornMagicDamage } from '../../../src/engine/equipment.js'
 import { getCombatSetMultipliers } from '../../../src/engine/combatSetBonuses.js'
 import {
-  effectiveStrength, meleeMaxHit, effectiveRanged, rangedMaxHit, magicMaxHit, getMeleeStyleBonuses,
+  effectiveStrength, wornMeleeMaxHit, effectiveRanged, wornRangedMaxHit, magicMaxHit, getMeleeStyleBonuses,
 } from '../../../src/engine/formulas.js'
+import { poweredStaffMagicBaseDamage } from '../../../src/engine/combatPrimitives.js'
 
 // Best-case max hits for the current stats + worn gear, reusing the exact live
 // combat formulas (combat.js). Melee is the aggressive-stance peak (+3 strength
@@ -18,16 +19,16 @@ function computeMaxHits(stats, equipment) {
   const setMult = getCombatSetMultipliers(equipment)
 
   const effStr = effectiveStrength(lvl('strength'), 0, 1.0, getMeleeStyleBonuses('aggressive').strengthStyleBonus)
-  const melee = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * setMult.meleeDamage)
+  const melee = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * setMult.meleeDamage)
 
   const effRng = effectiveRanged(lvl('ranged'), 0, 1.0, 0)
-  const ranged = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * setMult.rangedDamage)
+  const ranged = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * setMult.rangedDamage)
 
   let magic = null
   const weaponId = equipment?.weapon?.itemId ?? equipment?.weapon?.id
   const weapon = weaponId ? itemsData[weaponId] : null
   if (weapon?.poweredStaff) {
-    const baseDamage = Math.max(1, Math.floor(lvl('magic') / 3) + 9)
+    const baseDamage = poweredStaffMagicBaseDamage(lvl('magic'), weapon)
     const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
     magic = Math.floor(magicMaxHit(baseDamage, wornMagicDamage + setMult.magicDamageBonusFlat))
   }

@@ -205,12 +205,16 @@ describe('dungeoneering: best-in-slot guarantees', () => {
     return allItems.filter((it) => filter(it) && !exclude.has(it.id))
   }
 
-  it('chaotic_rapier is ~5% below ghraxis_rapier stats', () => {
+  // The chaotic tier used to be pegged at 95% of a tradeable reference, which
+  // put the level-90 Dungeoneering reward BELOW a level-80 weapon. It is now the
+  // top of its ladder instead, so level 90 is a real upgrade for every style.
+  it('chaotic_rapier out-classes the level-80 rapiers it replaces', () => {
     const item = itemsData.chaotic_rapier
-    const ref = itemsData.ghraxis_rapier
-    expect(item.attackBonus.stab).toBe(Math.floor(ref.attackBonus.stab * 0.95))
-    expect(item.attackBonus.slash).toBe(Math.floor(ref.attackBonus.slash * 0.95))
-    expect(item.otherBonus.meleeStrength).toBe(Math.floor(ref.otherBonus.meleeStrength * 0.95))
+    for (const refId of ['ghraxis_rapier', 'zul_kaars_blade']) {
+      const ref = itemsData[refId]
+      expect(item.attackBonus.stab, `stab vs ${refId}`).toBeGreaterThan(ref.attackBonus.stab)
+      expect(item.otherBonus.meleeStrength, `str vs ${refId}`).toBeGreaterThan(ref.otherBonus.meleeStrength)
+    }
   })
 
   it('chaotic_longsword is strictly best one-handed slash weapon', () => {
@@ -225,18 +229,20 @@ describe('dungeoneering: best-in-slot guarantees', () => {
     }
   })
 
-  it('chaotic_maul is ~5% below ancient_maul stats', () => {
+  it('chaotic_maul is the strongest crush weapon', () => {
     const item = itemsData.chaotic_maul
-    const ref = itemsData.ancient_maul
-    expect(item.attackBonus.crush).toBe(Math.floor(ref.attackBonus.crush * 0.95))
-    expect(item.otherBonus.meleeStrength).toBe(Math.floor(ref.otherBonus.meleeStrength * 0.95))
+    for (const other of competitors((it) => isWeapon(it) && styleIs(it, 'crush'))) {
+      expect(item.otherBonus.meleeStrength, `chaotic_maul str vs ${other.id}`)
+        .toBeGreaterThan(other.otherBonus?.meleeStrength ?? 0)
+    }
   })
 
-  it('chaotic_crossbow is ~5% below zephyra_crossbow stats', () => {
+  it('chaotic_crossbow leads every other crossbow on ranged strength', () => {
     const item = itemsData.chaotic_crossbow
-    const ref = itemsData.zephyra_crossbow
-    expect(item.attackBonus.ranged).toBe(Math.floor(ref.attackBonus.ranged * 0.95))
-    expect(item.otherBonus.rangedStrength).toBe(Math.floor(ref.otherBonus.rangedStrength * 0.95))
+    for (const other of competitors((it) => isWeapon(it) && styleIs(it, 'ranged') && /crossbow/.test(it.id))) {
+      expect(item.otherBonus.rangedStrength, `chaotic_crossbow rstr vs ${other.id}`)
+        .toBeGreaterThanOrEqual(other.otherBonus?.rangedStrength ?? 0)
+    }
   })
 
   it('chaotic_staff is strictly best one-handed magic weapon', () => {

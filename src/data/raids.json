@@ -52,6 +52,14 @@
             30
           ],
           "chance": 0.25
+        },
+        {
+          "itemId": "seraphic_arrow",
+          "quantity": [
+            150,
+            400
+          ],
+          "chance": 0.3
         }
       ],
       "unique": {
@@ -169,6 +177,14 @@
             20
           ],
           "chance": 0.5
+        },
+        {
+          "itemId": "seraphic_arrow",
+          "quantity": [
+            150,
+            400
+          ],
+          "chance": 0.3
         }
       ],
       "unique": {
@@ -414,6 +430,14 @@
             20
           ],
           "chance": 0.4
+        },
+        {
+          "itemId": "seraphic_arrow",
+          "quantity": [
+            150,
+            400
+          ],
+          "chance": 0.3
         }
       ],
       "unique": {
@@ -505,6 +529,14 @@
             30
           ],
           "chance": 0.25
+        },
+        {
+          "itemId": "seraphic_arrow",
+          "quantity": [
+            150,
+            400
+          ],
+          "chance": 0.3
         }
       ],
       "unique": {
@@ -622,6 +654,14 @@
             20
           ],
           "chance": 0.5
+        },
+        {
+          "itemId": "seraphic_arrow",
+          "quantity": [
+            150,
+            400
+          ],
+          "chance": 0.3
         }
       ],
       "unique": {
@@ -867,6 +907,14 @@
             20
           ],
           "chance": 0.4
+        },
+        {
+          "itemId": "seraphic_arrow",
+          "quantity": [
+            150,
+            400
+          ],
+          "chance": 0.3
         }
       ],
       "unique": {
