@@ -33,7 +33,10 @@ export async function assertNotInActiveMatch(env, characterId, knownActiveMatchI
   }
 
   if (activeMatchId) {
-    const activeMatch = await env.DB.prepare("SELECT id FROM pvp_matches WHERE id = ? AND status = 'active'").bind(activeMatchId).first()
+    // 'settling' counts as locked: the settlement holds that status while it
+    // reads and rewrites both duellists' saves, and a save push landing in that
+    // window would be overwritten by the loot transfer or overwrite it.
+    const activeMatch = await env.DB.prepare("SELECT id FROM pvp_matches WHERE id = ? AND status IN ('active', 'settling')").bind(activeMatchId).first()
     if (activeMatch?.id) {
       return json(
         { error: 'character_in_active_match', match_id: activeMatchId },
@@ -50,7 +53,7 @@ export async function assertNotInActiveMatch(env, characterId, knownActiveMatchI
     const activeRow = await env.DB.prepare(
       `SELECT id
          FROM pvp_matches
-        WHERE status = 'active'
+        WHERE status IN ('active', 'settling')
           AND (character_a = ? OR character_b = ?)
         LIMIT 1`
     ).bind(characterId, characterId).first()
@@ -64,21 +67,29 @@ export async function assertNotInActiveMatch(env, characterId, knownActiveMatchI
   return null
 }
 
-// Sweep stale waiting-room rows and timed-out matches. Called from every
-// PvP endpoint and from PUT /api/save so cleanup happens on natural
-// traffic — Cloudflare Pages Functions have no scheduler.
+// Sweep stale waiting-room rows and timed-out matches. Called from the lobby,
+// waiting-room and invitation endpoints and from PUT /api/save so cleanup
+// happens on natural traffic — Cloudflare Pages Functions have no scheduler.
+//
+// Deliberately NOT called from the match hot path any more. It ran seven
+// statements per request there, including a scan of `characters`, at ~3.3
+// requests a second per duel. The match stall cutoff is now a crash backstop
+// for rooms that never come back, not a pacing check: PvpMatchRoom heartbeats
+// last_tick_at every ~10s while a duel is live.
 //
 // Thresholds:
 //   - Waiting-room heartbeat: 30s. Any row with last_seen_at older than
 //     that gets dropped, so closed tabs don't leave ghost entries.
-//   - Active match stall: 15s with no tick advance. Such matches are
-//     marked 'aborted' and both characters' active_match_id is cleared.
+//   - Active match stall: PVP_MATCH_STALL_MS with no heartbeat. Such matches
+//     are marked 'aborted' and both characters' active_match_id is cleared.
 //     No loot transfer for an aborted match — the engine never resolved
 //     a winner, so it's safest to leave inventories untouched.
+export const PVP_MATCH_STALL_MS = 45_000
+
 export async function sweepStaleRows(env) {
   const now = Date.now()
   const waitingCutoff = now - 30_000
-  const matchCutoff = now - 15_000
+  const matchCutoff = now - PVP_MATCH_STALL_MS
 
   // We avoid env.DB.batch() here because the operations are independent
   // and partial failure is fine — next sweep tries again.
@@ -91,21 +102,23 @@ export async function sweepStaleRows(env) {
   }
 
   try {
-    // Find stalled active matches first, so we can clear the matching
-    // active_match_id columns on characters in the same pass.
+    // Find stalled matches first, so we can clear the matching active_match_id
+    // columns on characters in the same pass. 'settling' is included because a
+    // settlement that dies between claiming the match and completing it would
+    // otherwise leave both duellists locked out of their saves forever.
     const stalled = await env.DB.prepare(
       `SELECT m.id, m.character_a, m.character_b,
               ca.is_bot AS a_is_bot, cb.is_bot AS b_is_bot
          FROM pvp_matches m
          JOIN characters ca ON ca.id = m.character_a
          JOIN characters cb ON cb.id = m.character_b
-        WHERE m.status = 'active' AND m.last_tick_at < ?`
+        WHERE m.status IN ('active', 'settling') AND m.last_tick_at < ?`
     ).bind(matchCutoff).all()
 
     for (const m of stalled.results || []) {
       await env.DB.batch([
         env.DB.prepare(
-          "UPDATE pvp_matches SET status = 'aborted', ended_at = ? WHERE id = ? AND status = 'active'"
+          "UPDATE pvp_matches SET status = 'aborted', ended_at = ? WHERE id = ? AND status IN ('active', 'settling')"
         ).bind(now, m.id),
         env.DB.prepare(
           'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
@@ -132,11 +145,10 @@ export async function sweepStaleRows(env) {
     console.error('[pvp.sweep] invitation expiry failed:', e?.message || e)
   }
 
-  // Long-tail cleanup of completed/aborted match rows + their intents.
+  // Long-tail cleanup of completed/aborted match rows.
   // Keep retention policy and clear FK-like references before deleting matches.
   try {
     const matchRetention = now - 86_400_000   // 24h
-    const intentRetention = now - 3_600_000   // 1h
 
     // Optional defensive cleanup: if a character lock points at a missing
     // or non-active match, clear it to avoid stale mutation locks.
@@ -158,14 +170,11 @@ export async function sweepStaleRows(env) {
         "UPDATE pvp_invitations SET match_id = NULL WHERE match_id IN (SELECT id FROM pvp_matches WHERE status != 'active' AND ended_at IS NOT NULL AND ended_at < ?)"
       ).bind(matchRetention),
       env.DB.prepare(
-        "DELETE FROM pvp_intents WHERE match_id IN (SELECT id FROM pvp_matches WHERE status != 'active' AND ended_at IS NOT NULL AND ended_at < ?)"
-      ).bind(intentRetention),
-      env.DB.prepare(
         "DELETE FROM pvp_matches WHERE status != 'active' AND ended_at IS NOT NULL AND ended_at < ?"
       ).bind(matchRetention),
     ])
   } catch (e) {
-    console.error('[pvp.sweep] retention cleanup failed (invites/intents/matches):', e?.message || e)
+    console.error('[pvp.sweep] retention cleanup failed (invites/matches):', e?.message || e)
   }
 }
 

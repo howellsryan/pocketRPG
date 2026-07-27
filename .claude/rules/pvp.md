@@ -5,6 +5,7 @@ paths:
   - "functions/api/leaderboard.js"
   - "src/engine/pvp*.js"
   - "src/data/pvpBots.json"
+  - "world/server/PvpMatchRoom.ts"
 ---
 
 # PvP Rules (Current Lockdown)
