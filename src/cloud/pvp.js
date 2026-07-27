@@ -62,11 +62,20 @@ export const pvpApi = {
     const q = Number.isFinite(sinceTick) ? `?since_tick=${sinceTick}` : ''
     return pvpRequest(`/api/pvp/match/${id}${q}`)
   },
-  postIntent: (id, tickNumber, action) => pvpRequest(`/api/pvp/match/${id}/intent`, {
+  // One request for every queued action. The room applies them in array order
+  // on its next beat, so a full armour swap resolves together instead of
+  // costing a round-trip per piece.
+  postIntents: (id, actions) => pvpRequest(`/api/pvp/match/${id}/intent`, {
     method: 'POST',
-    body: JSON.stringify({ tick_number: tickNumber, action }),
+    body: JSON.stringify({ actions }),
   }),
-  tickMatch: (id) => pvpRequest(`/api/pvp/match/${id}/tick`, { method: 'POST', body: '{}' }),
+  // sinceTick is the last tick this client rendered. The room replays
+  // everything after it, so a poll landing between beats still sees every hit
+  // splat rather than only the beats it happened to arrive on.
+  tickMatch: (id, sinceTick) => pvpRequest(`/api/pvp/match/${id}/tick`, {
+    method: 'POST',
+    body: JSON.stringify(Number.isFinite(sinceTick) ? { sinceTick } : {}),
+  }),
   forfeitMatch: (id) => pvpRequest(`/api/pvp/match/${id}/forfeit`, { method: 'POST', body: '{}' }),
 
 }

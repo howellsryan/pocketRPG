@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import itemsData from '../src/data/items.json'
-import { validateIntentAction } from '../functions/api/pvp/match/[id]/intent.js'
+import { validateIntentAction } from '../functions/_lib/pvpIntent.js'
 
 function stateWithInventory(itemId: string) {
   return {
