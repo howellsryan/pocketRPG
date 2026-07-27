@@ -2,9 +2,9 @@
   "name": "pocketrpg-world",
   "main": "server/index.ts",
   "compatibility_date": "2026-07-01",
-  // Production (top-level, deployed by plain `wrangler deploy`). `migrations`
-  // (the Durable Object class migration tag) is a top-level-only key — it
-  // must NOT be repeated inside env.preview below, or wrangler rejects it.
+  // Production (top-level, deployed by plain `wrangler deploy`). `exports`
+  // (the Durable Object class lifecycle) is inheritable, so env.preview picks
+  // it up — declare it once here, never per environment.
   // workers_dev explicitly off: production is reached only via the
   // world.pocketrpg.co.uk custom domain (Cloudflare's own recommendation),
   // not the workers.dev URL — that's env.preview's job below. Explicit
@@ -21,10 +21,16 @@
       { "name": "CoopBossRoom", "class_name": "CoopBossRoom" }
     ]
   },
-  "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["WorldZone"] },
-    { "tag": "v2", "new_sqlite_classes": ["CoopBossRoom"] }
-  ],
+  // Declarative DO lifecycle — mutually exclusive with the legacy `migrations`
+  // tag chain it replaced, and never to be reverted to it: Cloudflare
+  // reconciles this against the namespaces already provisioned, so an existing
+  // class is a no-op, where the tag chain resent `new_sqlite_classes` from v1
+  // whenever the deployed script reported no migration tag (error 10074).
+  // `storage` is immutable — it must keep matching the backend that created it.
+  "exports": {
+    "WorldZone": { "type": "durable-object", "storage": "sqlite" },
+    "CoopBossRoom": { "type": "durable-object", "storage": "sqlite" }
+  },
   "d1_databases": [
     {
       "binding": "DB",
