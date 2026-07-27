@@ -346,6 +346,9 @@ ${SCROLL_CSS}
   opacity: 0; transition: opacity 0.3s;
 }
 #unique-banner.visible { opacity: 1; }
+/* A drop past the purple-loot threshold gets the same royal treatment the idle
+   game's loot modal gives it, so the two read as one moment. */
+#unique-banner.epic { color: #d7a6ff; background: rgba(38, 20, 56, 0.92); border-color: #b06bf5; }
 /* The wrapper is the visual input box (border/background/rounded corners); the
    <input> and the send button are transparent children inside it, so nothing
    pokes out past the button — the whole control reads as one aligned field. */
@@ -1774,10 +1777,11 @@ export function pushKillFeed(monster: string, killer: string): void {
 }
 
 /** Prominent zone-wide banner for a boss unique drop (item 11). */
-export function showUniqueBanner(monster: string, player: string, item: string): void {
+export function showUniqueBanner(monster: string, player: string, item: string, epic = false): void {
   const el = document.getElementById('unique-banner')
   if (!el) return
-  el.textContent = `✨ ${player} received ${item} from ${monster}!`
+  el.textContent = `${epic ? '💜' : '✨'} ${player} received ${item} from ${monster}!`
+  el.classList.toggle('epic', epic)
   el.classList.add('visible')
   window.clearTimeout(Number(el.dataset.timer) || undefined)
   const timer = window.setTimeout(() => el.classList.remove('visible'), UNIQUE_BANNER_MS)

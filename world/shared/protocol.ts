@@ -87,8 +87,10 @@ export type ZoneEvent =
   | { e: 'equip'; equipment: EquipmentMap }
   /** Zone-wide boss kill feed entry (item 11). */
   | { e: 'kill'; monster: string; killer: string }
-  /** Zone-wide broadcast when a boss drops a collection-log unique (item 11). */
-  | { e: 'uniqueDrop'; monster: string; player: string; item: string }
+  /** Zone-wide broadcast when a boss drops a collection-log unique (item 11), or
+   * when any kill drops an item worth the purple-loot threshold. `epic` marks
+   * the latter — the banner goes purple for it. */
+  | { e: 'uniqueDrop'; monster: string; player: string; item: string; epic?: boolean }
   /** Live damage-contribution readout for an in-combat boss, sorted by damage
    * descending — makes the top-damage loot rule legible mid-fight (item 11). */
   | { e: 'threat'; npcId: string; contributors: { charId: string; name: string; dmg: number }[] }

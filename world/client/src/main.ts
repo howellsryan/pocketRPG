@@ -218,7 +218,7 @@ function enterWorld(session: WorldSession): void {
     else if (event.e === 'spec') setSpecialEnergy(event.energy, event.queued)
     else if (event.e === 'prayer') setPrayerState(event.points, event.max, event.protection, event.combat)
     else if (event.e === 'kill') pushKillFeed(event.monster, event.killer)
-    else if (event.e === 'uniqueDrop') showUniqueBanner(event.monster, event.player, event.item)
+    else if (event.e === 'uniqueDrop') showUniqueBanner(event.monster, event.player, event.item, event.epic)
     else if (event.e === 'threat') threatByNpc.set(event.npcId, event.contributors)
     else if (event.e === 'equip') {
       renderEquipment(event.equipment)
