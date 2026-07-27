@@ -1,5 +1,5 @@
 // Raid parties — server side (§14 integrity boundary). Runs the real session
-// SQL, including migration 0033, against the real schema (tests/helpers/d1).
+// SQL, including migration 0034, against the real schema (tests/helpers/d1).
 import { describe, it, expect, beforeEach } from 'vitest'
 import { makeD1, FakeD1 } from './helpers/d1'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
