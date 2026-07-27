@@ -187,11 +187,12 @@ describe('magic weapon attack speeds', () => {
     expect(itemsData.trident_of_venom.attackSpeed).toBe(4)
   })
 
-  it('casts two ticks faster than the other Duskmare staves on the Attuned staff', () => {
+  it('keeps the Attuned staff exactly one tick ahead of every other Duskmare staff', () => {
     expect(itemsData.attuned_duskmare_staff.attackSpeed).toBe(3)
-    expect(itemsData.umbral_duskmare_staff.attackSpeed).toBe(5)
-    expect(itemsData.volatile_duskmare_staff.attackSpeed).toBe(5)
-    expect(itemsData.attuned_duskmare_staff.description).toContain('two ticks faster')
+    for (const id of ['duskmare_staff', 'umbral_duskmare_staff', 'volatile_duskmare_staff']) {
+      expect(itemsData[id].attackSpeed).toBe(4)
+    }
+    expect(itemsData.attuned_duskmare_staff.description).toContain('one tick faster')
   })
 })
 

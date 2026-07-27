@@ -161,7 +161,7 @@ Magic is trained by casting combat spells, which need runes. Each spell has a le
 
 The Tomb of Fire is a shield-slot book earned from Autumntodt (Catherra, Firemaking 80) and worn at Magic 80. It supplies every fire rune your spells need, adds 10% magic damage to fire spells, and gives +15 magic attack with any spell. It carries no defence bonuses.
 
-The Arcane Proving Grounds minigame (Edgevale, unlocked at Magic 50) is a timed grind for magic gear: the Boundless hat, robe top, robe bottom, boots and gloves (2 hours each), the Arcane Grimoire off-hand (4 hours) and the Archmage Wand (4 hours). The Duskmare boss (Canifel) drops the Duskmare Staff plus three orbs — Umbral, Attuned and Volatile. Attaching an orb to a Duskmare Staff forges a unique staff: Umbral's special restores Prayer points, Attuned casts standard spells two ticks faster for the highest sustained DPS, and Volatile's special hits harder the higher your Magic level.
+The Arcane Proving Grounds minigame (Edgevale, unlocked at Magic 50) is a timed grind for magic gear: the Boundless hat, robe top, robe bottom, boots and gloves (2 hours each), the Arcane Grimoire off-hand (4 hours) and the Archmage Wand (4 hours). The Duskmare boss (Canifel) drops the Duskmare Staff plus three orbs — Umbral, Attuned and Volatile. Attaching an orb to a Duskmare Staff forges a unique staff: Umbral's special restores Prayer points, Attuned casts standard spells one tick faster for the highest sustained DPS, and Volatile's special hits harder the higher your Magic level.
 
 ## Construction
 

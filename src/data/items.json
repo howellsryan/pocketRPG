@@ -18114,7 +18114,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": {
       "stab": 0,
@@ -18182,7 +18182,7 @@
     "shopValue": 14000000,
     "isGeneralStore": false,
     "isUntradeable": true,
-    "description": "Casts standard spells two ticks faster than any other staff — the highest sustained magic DPS."
+    "description": "Casts standard spells one tick faster than any other staff — the highest sustained magic DPS."
   },
   "volatile_duskmare_staff": {
     "id": "volatile_duskmare_staff",
@@ -18191,7 +18191,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": {
       "stab": 0,
