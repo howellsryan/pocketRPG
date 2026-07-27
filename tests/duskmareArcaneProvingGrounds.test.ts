@@ -48,7 +48,7 @@ describe('The Duskmare boss + orb-forged staffs', () => {
 
   it('forged staffs carry the right effects', () => {
     // Attuned = faster standard spells (lower attackSpeed), no special.
-    expect(items.attuned_duskmare_staff.attackSpeed).toBe(4)
+    expect(items.attuned_duskmare_staff.attackSpeed).toBe(3)
     expect(items.attuned_duskmare_staff.specialAttack).toBeUndefined()
     expect(items.umbral_duskmare_staff.specialAttack.type).toBe('soul_drain')
     expect(items.volatile_duskmare_staff.specialAttack.type).toBe('volatile_surge')

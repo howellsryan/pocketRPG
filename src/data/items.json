@@ -8632,7 +8632,7 @@
     "breakdownQty": 7500,
     "poweredStaff": true,
     "poweredStaffBaseDamage": 34,
-    "attackSpeed": 3,
+    "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": {
       "stab": 0,
@@ -18155,7 +18155,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "magic",
     "attackBonus": {
       "stab": 0,
@@ -18182,7 +18182,7 @@
     "shopValue": 14000000,
     "isGeneralStore": false,
     "isUntradeable": true,
-    "description": "Casts standard spells one tick faster than any other staff — the highest sustained magic DPS."
+    "description": "Casts standard spells two ticks faster than any other staff — the highest sustained magic DPS."
   },
   "volatile_duskmare_staff": {
     "id": "volatile_duskmare_staff",
@@ -18679,7 +18679,7 @@
     "isUntradeable": true,
     "elemental": "fire_rune",
     "spellRuneDamage": {
-      "fire_rune": 20
+      "fire_rune": 10
     },
     "attackBonus": {
       "stab": 0,

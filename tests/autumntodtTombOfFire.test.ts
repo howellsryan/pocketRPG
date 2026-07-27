@@ -5,6 +5,7 @@ import spells from '../src/data/spells.json'
 import collectionLog from '../src/data/collectionLog.json'
 import worldActivities from '../src/data/worldActivities.json'
 import bespokeIcons from '../src/data/bespokeIcons.json'
+import equipmentModels from '../src/data/equipmentModels.json'
 import {
   hasRequiredRunes,
   getRunesToConsume,
@@ -13,9 +14,11 @@ import {
 } from '../src/engine/runes.js'
 import {
   getSpellRuneMagicDamage,
+  getSpellRuneDamageTotals,
   getEquipmentBonuses,
   checkEquipRequirements,
 } from '../src/engine/equipment.js'
+import { spellRuneDamageLabel } from '../src/utils/bonusLabels.js'
 import { magicMaxHit } from '../src/engine/formulas.js'
 import { getXPForLevel } from '../src/engine/experience.js'
 import { isEquippable, typeFilterOf, describeObtainment } from '../src/utils/armoury.js'
@@ -82,9 +85,9 @@ describe('Tomb of Fire — item definition', () => {
     expect(Object.values(bonuses.defenceBonus).every(v => v === 0)).toBe(true)
   })
 
-  it('carries no unconditional magic damage — the 20% is fire-only', () => {
+  it('carries no unconditional magic damage — the 10% is fire-only', () => {
     expect(item.otherBonus.magicDamage).toBe(0)
-    expect(item.spellRuneDamage).toEqual({ fire_rune: 20 })
+    expect(item.spellRuneDamage).toEqual({ fire_rune: 10 })
   })
 
   it('needs Magic 80 to wield', () => {
@@ -126,10 +129,10 @@ describe('Tomb of Fire — unlimited fire runes', () => {
   })
 })
 
-describe('Tomb of Fire — 20% fire spell damage', () => {
-  it('adds 20 percentage points to fire spells only', () => {
+describe('Tomb of Fire — 10% fire spell damage', () => {
+  it('adds 10 percentage points to fire spells only', () => {
     for (const id of ['fire_strike', 'fire_bolt', 'fire_blast', 'fire_wave', 'fire_surge']) {
-      expect(getSpellRuneMagicDamage(tomeEquipped, itemsData, spellsData[id])).toBe(20)
+      expect(getSpellRuneMagicDamage(tomeEquipped, itemsData, spellsData[id])).toBe(10)
     }
     for (const id of ['wind_bolt', 'water_wave', 'earth_surge']) {
       expect(getSpellRuneMagicDamage(tomeEquipped, itemsData, spellsData[id])).toBe(0)
@@ -141,15 +144,70 @@ describe('Tomb of Fire — 20% fire spell damage', () => {
     expect(getSpellRuneMagicDamage(tomeEquipped, itemsData, null)).toBe(0)
   })
 
-  it('raises the fire spell max hit by 20% and leaves other elements alone', () => {
+  it('raises the fire spell max hit by 10% and leaves other elements alone', () => {
     const fireSurge = spellsData.fire_surge
     const base = magicMaxHit(fireSurge.baseDamage, 0)
     const withTome = magicMaxHit(fireSurge.baseDamage, getSpellRuneMagicDamage(tomeEquipped, itemsData, fireSurge))
     expect(base).toBe(47)
-    expect(withTome).toBe(56) // floor(47 * 1.2)
+    expect(withTome).toBe(51) // floor(47 * 1.1)
 
     const earthSurge = spellsData.earth_surge
     expect(magicMaxHit(earthSurge.baseDamage, getSpellRuneMagicDamage(tomeEquipped, itemsData, earthSurge)))
       .toBe(magicMaxHit(earthSurge.baseDamage, 0))
+  })
+})
+
+// The bonus panels (Equipment screen totals + the item modal) have no spell in
+// hand, so they read the worn totals and label them by element. Both halves are
+// derived from the item field, so a future book needs no display code.
+describe('conditional magic damage — bonus panel display', () => {
+  it('totals the worn element bonuses for the Equipment screen', () => {
+    expect(getSpellRuneDamageTotals(tomeEquipped, itemsData)).toEqual({ fire_rune: 10 })
+    expect(getSpellRuneDamageTotals({}, itemsData)).toEqual({})
+    expect(getSpellRuneDamageTotals({ shield: { itemId: 'arcane_grimoire' } }, itemsData)).toEqual({})
+  })
+
+  it('sums two books of the same element rather than showing the last one', () => {
+    const twoBooks: any = { fire_tome_a: { spellRuneDamage: { fire_rune: 10 } }, fire_tome_b: { spellRuneDamage: { fire_rune: 5 } } }
+    const worn = { shield: { itemId: 'fire_tome_a' }, cape: { itemId: 'fire_tome_b' } }
+    expect(getSpellRuneDamageTotals(worn, twoBooks)).toEqual({ fire_rune: 15 })
+  })
+
+  it('names the element in the label, derived from the rune id', () => {
+    expect(spellRuneDamageLabel('fire_rune')).toBe('Magic Damage (Fire spells)')
+    // Future elements label themselves — no table to extend.
+    expect(spellRuneDamageLabel('water_rune')).toBe('Magic Damage (Water spells)')
+    expect(spellRuneDamageLabel('blood_rune')).toBe('Magic Damage (Blood spells)')
+    expect(spellRuneDamageLabel('')).toBe('Magic Damage %')
+  })
+})
+
+describe('magic weapon attack speeds', () => {
+  it('swings the Trident of Venom every 4 ticks', () => {
+    expect(itemsData.trident_of_venom.attackSpeed).toBe(4)
+  })
+
+  it('casts two ticks faster than the other Duskmare staves on the Attuned staff', () => {
+    expect(itemsData.attuned_duskmare_staff.attackSpeed).toBe(3)
+    expect(itemsData.umbral_duskmare_staff.attackSpeed).toBe(5)
+    expect(itemsData.volatile_duskmare_staff.attackSpeed).toBe(5)
+    expect(itemsData.attuned_duskmare_staff.description).toContain('two ticks faster')
+  })
+})
+
+describe('3D shield placement', () => {
+  it('hangs both spellbooks off the arcane kiteshield placement, recoloured', () => {
+    const gear = (equipmentModels as any).gear
+    const shield = gear.arcane_kiteshield
+    for (const id of ['tomb_of_fire', 'arcane_grimoire']) {
+      const entry = gear[id]
+      expect(entry.model).toBe(shield.model)
+      expect(entry.slot).toBe('shield')
+      expect(entry.bone).toBe(shield.bone)
+      expect(entry.position).toEqual(shield.position)
+      expect(entry.rotationDeg).toEqual(shield.rotationDeg)
+      expect(entry.scale).toBe(shield.scale)
+      expect(entry.tint).not.toBe(shield.tint) // own colour, shared rig
+    }
   })
 })

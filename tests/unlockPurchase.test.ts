@@ -1,82 +1,89 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+// Character-unlock purchases (§14): credits are debited server-side against the
+// real schema, so the client never names a price. Covers the repeatable
+// Extra Equipment Tab, which has no ownership row — every buy is one more debit.
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { makeD1, FakeD1 } from './helpers/d1'
 
 vi.mock('../functions/_lib/auth.js', () => ({
   requireAuth: async () => ({ identity: { id: 1 } }),
-  json: (body: any, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
+  json: (body: any, status = 200) =>
+    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
 }))
 vi.mock('../functions/_lib/pvp.js', () => ({ assertNotInActiveMatch: async () => null }))
 vi.mock('../functions/_lib/game/audit.js', () => ({ auditLog: async () => {} }))
 
-const { onRequestPost } = await import('../functions/api/unlocks/purchase.js')
+import { onRequestPost } from '../functions/api/unlocks/purchase.js'
 
-// Minimal D1 stand-in: one character row holding `credits`, debited by the
-// endpoint's single UPDATE … WHERE credits >= ? RETURNING statement.
-function makeEnv(startingCredits: number) {
-  const state = { credits: startingCredits, used: 0 }
-  const env = {
-    DB: {
-      prepare(sql: string) {
-        const stmt = {
-          _args: [] as any[],
-          bind(...args: any[]) { stmt._args = args; return stmt },
-          async first() {
-            if (sql.includes('SELECT id FROM characters')) return { id: 42 }
-            const cost = stmt._args[0] as number
-            if (state.credits < cost) return null
-            state.credits -= cost
-            state.used += cost
-            return { credits_remaining: state.credits }
-          },
-        }
-        return stmt
-      },
-    },
-  }
-  return { env, state }
+let raw: any
+let env: { DB: FakeD1 }
+
+function char(id: number, credits: number, ownerId = 1) {
+  raw.prepare(
+    `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
+     VALUES (?, ?, ?, 0, 0, 0, ?, 0, 0, 50, 60, 0, 0)`,
+  ).run(id, ownerId, 'c' + id, credits)
 }
 
-async function purchase(env: any, unlockId: string) {
-  const req = new Request('https://example.com/api/unlocks/purchase', {
+function creditsOf(id: number) {
+  return raw.prepare('SELECT credits, credits_used FROM characters WHERE id = ?').get(id)
+}
+
+async function purchase(unlockId: string, characterId = 42) {
+  const req = new Request('https://x/api/unlocks/purchase', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+    headers: { 'Content-Type': 'application/json', 'X-Character-Id': String(characterId) },
     body: JSON.stringify({ unlock_id: unlockId }),
   })
   const res = await onRequestPost({ request: req, env } as any)
-  return { status: res.status, body: await res.json() as any }
+  return { status: res.status, body: (await res.json()) as any }
 }
 
-describe('extra equipment tab unlock', () => {
-  let env: any
-  let state: { credits: number }
-  beforeEach(() => { ({ env, state } = makeEnv(100)) })
+beforeEach(() => {
+  const d = makeD1()
+  env = { DB: d.DB }
+  raw = d.raw
+})
 
-  it('costs 10 credits, server-side — the client never names a price', async () => {
-    const out = await purchase(env, 'extra_equipment_tab')
+describe('POST /api/unlocks/purchase — extra equipment tab', () => {
+  it('debits exactly 10 credits and books them as used', async () => {
+    char(42, 100)
+    const out = await purchase('extra_equipment_tab')
     expect(out.status).toBe(200)
     expect(out.body.unlock_id).toBe('extra_equipment_tab')
-    expect(state.credits).toBe(90)
+    expect(out.body.credits_remaining).toBe(90)
+    expect(creditsOf(42)).toMatchObject({ credits: 90, credits_used: 10 })
   })
 
-  it('can be bought over and over — no ownership check blocks a repeat', async () => {
+  it('can be bought over and over — nothing blocks a repeat', async () => {
+    char(42, 100)
     for (let i = 1; i <= 10; i++) {
-      const out = await purchase(env, 'extra_equipment_tab')
+      const out = await purchase('extra_equipment_tab')
       expect(out.status).toBe(200)
       expect(out.body.credits_remaining).toBe(100 - i * 10)
     }
-    expect(state.credits).toBe(0)
+    expect(creditsOf(42)).toMatchObject({ credits: 0, credits_used: 100 })
   })
 
-  it('refuses once the credits run out', async () => {
-    for (let i = 0; i < 10; i++) await purchase(env, 'extra_equipment_tab')
-    const out = await purchase(env, 'extra_equipment_tab')
+  it('refuses once the credits run out, leaving the balance untouched', async () => {
+    char(42, 5)
+    const out = await purchase('extra_equipment_tab')
     expect(out.status).toBe(402)
     expect(out.body.code).toBe('INSUFFICIENT_CREDITS')
+    expect(creditsOf(42)).toMatchObject({ credits: 5, credits_used: 0 })
   })
 
-  it('still rejects an unknown unlock id', async () => {
-    const out = await purchase(env, 'free_everything')
+  it('still rejects an unknown unlock id without touching credits', async () => {
+    char(42, 100)
+    const out = await purchase('free_everything')
     expect(out.status).toBe(400)
     expect(out.body.code).toBe('UNKNOWN_UNLOCK')
-    expect(state.credits).toBe(100)
+    expect(creditsOf(42)).toMatchObject({ credits: 100 })
+  })
+
+  it("refuses to spend another owner's character's credits", async () => {
+    char(7, 100, 999)
+    const out = await purchase('extra_equipment_tab', 7)
+    expect(out.status).toBe(404)
+    expect(creditsOf(7)).toMatchObject({ credits: 100 })
   })
 })

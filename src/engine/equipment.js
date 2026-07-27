@@ -325,6 +325,29 @@ export function getSpellRuneMagicDamage(equipment, itemsData, spell) {
 }
 
 /**
+ * Worn `spellRuneDamage` summed per rune, e.g. `{ fire_rune: 10 }`. The display
+ * twin of getSpellRuneMagicDamage: that one answers "what does THIS spell get",
+ * this one answers "what is the player wearing" for the bonus panels, which have
+ * no spell in hand. Both read the same item field, so a new conditional book
+ * surfaces in the UI with no display code to write.
+ */
+export function getSpellRuneDamageTotals(equipment, itemsData) {
+  const totals = {}
+  if (!equipment) return totals
+  for (const slot of EQUIPMENT_SLOTS) {
+    const entry = equipment[slot]
+    if (!entry) continue
+    const table = itemsData?.[entry.itemId]?.spellRuneDamage
+    if (!table) continue
+    for (const [runeId, value] of Object.entries(table)) {
+      const v = Number(value) || 0
+      if (v) totals[runeId] = (totals[runeId] || 0) + v
+    }
+  }
+  return totals
+}
+
+/**
  * Get the attack speed of the equipped weapon (default 4 ticks unarmed)
  */
 export function getAttackSpeed(equipment, itemsData) {

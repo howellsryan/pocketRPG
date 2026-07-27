@@ -3,7 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import Model3DViewer from '../components/Model3DViewer.jsx'
 import { getCharacterAssetPath, getCharacterModel, getWeaponPlacement, getGearPlacements } from '../utils/equipModels.js'
 import { canRender3D } from '../utils/three3d.js'
-import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem, placeUnequippedItems } from '../engine/equipment.js'
+import { unequipSlot, getEquipmentBonuses, getSpellRuneDamageTotals, checkEquipRequirements, equipItem, placeUnequippedItems } from '../engine/equipment.js'
 import { createPreset, applyPreset, renamePreset, equipmentPresetLimit } from '../engine/equipmentPresets.js'
 import Modal from '../components/Modal.jsx'
 import { getActiveSetBonusDisplays } from '../engine/combatSetBonuses.js'
@@ -17,7 +17,7 @@ import SectionHeader from '../components/SectionHeader.jsx'
 import EquipmentPaperdoll, { EQ_SLOT_NAMES } from '../components/EquipmentPaperdoll.jsx'
 import InventoryGrid from '../components/InventoryGrid.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
-import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
+import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS, spellRuneDamageLabel } from '../utils/bonusLabels.js'
 import { formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 
 export default function EquipmentScreen() {
@@ -292,6 +292,9 @@ export default function EquipmentScreen() {
   }
 
   const bonuses = getEquipmentBonuses(equipment, itemsData)
+  // Element-only magic damage (Tomb of Fire and any future book) — kept out of
+  // the flat otherBonus totals because it applies to one spell element, not all.
+  const spellRuneDamage = getSpellRuneDamageTotals(equipment, itemsData)
 
   return (
     <div class="forge-shell h-full overflow-y-auto p-4">
@@ -418,6 +421,14 @@ export default function EquipmentScreen() {
                 </div>
               )
             })}
+            {Object.entries(spellRuneDamage).map(([runeId, v]) => (
+              <div key={runeId} class="flex justify-between text-[var(--color-parchment)] opacity-70">
+                <span>{spellRuneDamageLabel(runeId)}</span>
+                <span class="font-[var(--font-mono)]" style={{ color: v > 0 ? '#27ae60' : '#555' }}>
+                  {v > 0 ? '+' : ''}{v}%
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
