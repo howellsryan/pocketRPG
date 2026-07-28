@@ -16,10 +16,11 @@ import {
 } from './tick'
 import { STATIONS, recipeFor, stationTypeForVerb, isStationType } from '../shared/recipes'
 import { hasMaterials, maxCraftable } from './crafting'
-import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, emitSpecIfChanged, startCombat, FULL_SPECIAL_ENERGY } from './combat'
+import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, emitSpecIfChanged, FULL_SPECIAL_ENERGY } from './combat'
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
-import { npcsFromZone, pickAggroTarget, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { npcsFromZone, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { collisionWithMonsters } from '../shared/monsterSize'
 import { computeAoi, type AoiEntity } from './aoi'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
 import { sanitizeChat } from '../shared/chat'
@@ -39,6 +40,7 @@ import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { zoneSpawnSummary, type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { baseRoomZone, isInstancedRoom, MAX_PLAYERS_PER_INSTANCE } from '../shared/instances'
 import { ZONES } from './zones'
+import { endOneLifeRun, flipOneLifeOff } from './oneLife'
 import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
 import { BURY_XP, healAmount, primaryInvAction, resolveEatTiming, resolveDrink } from '../shared/itemActions'
@@ -95,6 +97,10 @@ type Player = TickPlayer & {
    * player's own drops (see loot.ts). Lives on the session so a reconnect keeps
    * it without a second D1 read. */
   isIronman: boolean
+  /** From characters.is_one_life, stamped at hello. Dying in the world revokes
+   * it exactly as dying in the idle game does; cleared once the D1 flip lands,
+   * restored on failure so the next death retries. */
+  isOneLife: boolean
   sessionId: string
   flushSeq: number
   /** Provenance pools for every unit in the pack (see sessionItems.ts).
@@ -439,8 +445,8 @@ export class WorldZone extends Server<Env> {
     }
 
     const row = await this.env.DB.prepare(
-      'SELECT id, username, is_ironman FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
-    ).bind(payload.character_id, payload.sub).first<{ id: number; username: string; is_ironman: number | null }>()
+      'SELECT id, username, is_ironman, is_one_life FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    ).bind(payload.character_id, payload.sub).first<{ id: number; username: string; is_ironman: number | null; is_one_life: number | null }>()
     if (!row) {
       connection.close(1008, 'character_not_found')
       return
@@ -554,6 +560,7 @@ export class WorldZone extends Server<Env> {
       lastMsgTimes: [],
       identityId: String(payload.sub),
       isIronman: !!row.is_ironman,
+      isOneLife: !!row.is_one_life,
       sessionId: crypto.randomUUID(),
       flushSeq: 0,
       pools,
@@ -672,12 +679,15 @@ export class WorldZone extends Server<Env> {
   private handleAuthedMessage(player: Player, message: ClientMessage): void {
     switch (message.t) {
       case 'walk': {
-        const path = findPath(this.zone.collision, { x: player.x, z: player.z }, { x: message.x, z: message.z })
+        const path = findPath(this.playerCollision(player), { x: player.x, z: player.z }, { x: message.x, z: message.z })
         player.path = path ? path.slice(1) : []
-        // Keep the combat session across a walk so a ranged/magic foe keeps
-        // attacking a fleeing player and the engine's attack timers aren't reset
-        // each step; stepCombat ends it once the player is beyond every reach.
+        // Walking away is disengaging: the session survives (so a monster that
+        // was fighting you keeps swinging while it can reach you, and the
+        // engine's attack timers aren't reset each step) but the player stops
+        // attacking until they click Attack again. stepCombat ends it once the
+        // monster is out of reach too.
         this.clearIntents(player, true)
+        if (player.combat) player.combat.passive = true
         break
       }
       case 'cancel':
@@ -1145,9 +1155,18 @@ export class WorldZone extends Server<Env> {
       return
     }
     this.clearIntents(player, true)
+    // Following is a movement order, so it disengages exactly as a walk does.
+    if (player.combat) player.combat.passive = true
     player.following = targetId
     player.followTargetTile = null
     this.ensureTicking()
+  }
+
+  /** The zone grid as this player may walk it: large monsters block their own
+   * footprint, minus whatever tile the player is standing on (a dragon can
+   * wander onto them, and being inside one must never wedge them in place). */
+  private playerCollision(player: Player): string[] {
+    return collisionWithMonsters(this.zone.collision, this.ensureNpcs().values(), { x: player.x, z: player.z })
   }
 
   private clearIntents(player: Player, keepCombat = false): void {
@@ -1274,7 +1293,9 @@ export class WorldZone extends Server<Env> {
       npcs,
       stations: this.ensureStations(),
       collision: this.zone.collision,
-      pathAdjacent: (from, to) => findPathAdjacent(this.zone.collision, from, to),
+      // Player approach paths route around large monsters; the raw grid stays
+      // on ctx.collision for line of sight and for npc chase steps.
+      pathAdjacent: (from, to) => findPathAdjacent(collisionWithMonsters(this.zone.collision, npcs.values(), from), from, to),
       players: positions,
     }
 
@@ -1312,25 +1333,6 @@ export class WorldZone extends Server<Env> {
       const engaged: { charId: string; x: number; z: number }[] = []
       for (const p of this.players.values()) if (p.combat?.npcId === npc.id) engaged.push({ charId: p.charId, x: p.x, z: p.z })
       reselectAttacker(npc, engaged, this.zone.collision)
-    }
-
-    // Aggressive idle npcs (bosses by default) pull the nearest unengaged player
-    // in radius + sight into combat — you can't stroll past Grondar unbothered.
-    // Force-starting the player's combat is what lets the engine roll the
-    // monster's swings against them (item 9).
-    const aggroCandidates = [...this.players.values()].map((p) => ({ charId: p.charId, x: p.x, z: p.z, inCombat: !!p.combat }))
-    for (const npc of npcs.values()) {
-      const targetId = pickAggroTarget(npc, aggroCandidates, this.zone.collision)
-      if (!targetId) continue
-      const target = this.players.get(targetId)
-      // Live re-check: the snapshot is from before this loop, so a player pulled
-      // by an earlier npc this tick must not be yanked into a second fight.
-      if (!target || target.combat) continue
-      startCombat(target, npc)
-      if (target.combat) {
-        npcChanged.add(npc.id)
-        playerEnts.set(target.charId, toEntityDiff(target))
-      }
     }
 
     // NPCs first (wander/respawn/heal) so player combat this tick reads fresh state.
@@ -1495,10 +1497,13 @@ export class WorldZone extends Server<Env> {
   }
 
   private respawnPlayer(player: Player, playerEnts: Map<string, EntityDiff>): void {
+    endOneLifeRun(player, (id) => flipOneLifeOff(this.env, id))
     // Item 10: a zone can require dying to be a real trip back out (e.g. the
     // dungeon respawns at Varrick's entrance, not its own spawn ~40 tiles from
     // the bosses) — cross-zone, so it's the same DB update + reconnect the
-    // walk-onto-an-exit transition uses, not a same-zone teleport.
+    // walk-onto-an-exit transition uses, not a same-zone teleport. Instanced
+    // rooms deliberately omit it: a boss room is closed, so death returns you
+    // to its own entrance rather than ejecting you into the overworld.
     const deathRespawn = this.zone.deathRespawn
     if (deathRespawn) {
       void this.respawnAcrossZone(player, deathRespawn)

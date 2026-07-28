@@ -41,7 +41,7 @@ import monstersData from '../data/monsters.json'
  * way and must not care which.
  */
 export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoin, onDeath, addToast }) {
-  const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell } = useGame()
+  const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell, revertOneLifeMode } = useGame()
   const [state, setState] = useState(null)
   const [error, setError] = useState(null)
   const [bossSplats, setBossSplats] = useState([])
@@ -162,6 +162,17 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       // the tap just looks ignored.
       if (ev.type === 'equipRefused') addToast?.(describeCoopEquipRefusal(ev), 'error')
       else if (ev.type === 'actionRefused') addToast?.(describeCoopActionRefusal(ev), 'error')
+      // The room already flipped the flag in D1; this mirrors it into the
+      // local player state and toasts it in the same voice as an idle
+      // death. The endpoint answers "not one-life" now, which the retry
+      // helper reads as an already-committed revert.
+      else if (ev.type === 'oneLifeEnded') {
+        void revertOneLifeMode().then(({ ok, isIronman }) => {
+          addToast?.(ok
+            ? (isIronman ? 'One-life protection lost — you are now a standard Ironman.' : 'One-life protection lost — you are now a standard account.')
+            : 'Connection issue confirming your account change — will retry on your next death.', 'error')
+        })
+      }
       else if (ev.type === 'slayerCredit' && ev.completed) {
         addToast?.(`\u{1F480} Slayer Task #${ev.totalTasks} Completed - ${(ev.pointsEarned || 0).toLocaleString()} points.`, 'levelup')
       }
@@ -190,7 +201,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
         )
       }
     }
-  }, [characterId, addToast])
+  }, [characterId, addToast, revertOneLifeMode])
 
   useEffect(() => {
     const feed = openCoopFeed({

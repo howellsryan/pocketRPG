@@ -16,9 +16,6 @@ export type ZoneNpcDef = {
   x: number
   z: number
   wander: { x: number; z: number; w: number; h: number }
-  /** Tiles within which this npc aggresses idle passers-by (0 = passive until
-   * clicked). Omitted → bosses default aggressive, everything else passive. */
-  aggroRadius?: number
 }
 
 export type ZoneExitDef = {

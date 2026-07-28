@@ -2,6 +2,7 @@
 // I/O — the DO owns the objects, calls tickPlayer once per player per tick, and
 // decides what to broadcast/flush from the results.
 import type { Tile } from './pathfind'
+import { reachAgainst } from '../shared/monsterSize'
 import type { CombatStance, EntityDiff, GearDescriptor, InvSlot, StationType, ZoneEvent } from '../shared/protocol'
 import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type GatherSkill, type MiningAction } from './mining'
 import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
@@ -319,8 +320,22 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
     // otherwise re-runs this branch each tick, and startCombat always builds a
     // fresh engine state (attack timer reset to 0) — a free instant hit that
     // defeats WorldZone.handleInteract's keepCombat preservation.
-    if (player.combat?.npcId === npc.id) return
-    const range = playerAttackRange(player)
+    // Already fighting this npc. A disengaged session (the player walked away)
+    // re-engages here — that click is the ONLY thing that makes them swing
+    // again — and walks back into reach if they wandered out of it.
+    if (player.combat?.npcId === npc.id) {
+      if (!player.combat.passive) return
+      player.combat.passive = false
+      const reach = reachAgainst(npc.monsterId, playerAttackRange(player))
+      if (withinRange(player, npc, reach)) return
+      const back = ctx.pathAdjacent?.(player, npc)
+      if (back && back.length > 1) {
+        player.path = cutPathToRange(back.slice(1), npc, reach)
+        player.pendingInteract = intent
+      }
+      return
+    }
+    const range = reachAgainst(npc.monsterId, playerAttackRange(player))
     if (withinRange(player, npc, range)) {
       startCombat(player, npc, result)
       return
@@ -471,14 +486,6 @@ export function emitRunIfChanged(player: TickPlayer, events: ZoneEvent[]): void 
  * resumes the fight without a fresh interact, mirroring how a real aggressive
  * monster keeps swinging once it catches up (melee at 1 tile, ranged/magic from
  * their reach). */
-function findAggroInRange(player: TickPlayer, ctx: TickContext): NpcState | undefined {
-  const collision = ctx.collision ?? []
-  for (const npc of ctx.npcs?.values() ?? []) {
-    if (npc.state === 'combat' && npc.attackerId === player.charId && withinRangeAndSight(player, npc, monsterAttackRange(npc.monsterId), collision)) return npc
-  }
-  return undefined
-}
-
 /** Re-paths a following player toward their target's current tile (stopping
  * adjacent, never onto the occupied tile) when it has moved since the last
  * path was computed. No-ops (cheaply) when the target hasn't moved — pathing
@@ -507,15 +514,10 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   const result = emptyResult()
   const before = { x: player.x, z: player.z, anim: player.anim, hp: player.hp }
 
-  if (!player.combat) {
-    const aggroNpc = findAggroInRange(player, ctx)
-    if (aggroNpc) startCombat(player, aggroNpc, result)
-  }
-
-  // Combat (attacking or being attacked) always wins over following — cancel
-  // it here rather than only at the {t:'follow'}/clearIntents call sites, so
-  // this catches every way combat can start (aggro pull, an interact/attack,
-  // this tick's own aggro check above).
+  // Combat always wins over following — cancel it here rather than only at the
+  // {t:'follow'}/clearIntents call sites, so this catches every way combat can
+  // start. Nothing starts it but the player's own attack: a monster you have
+  // not clicked never drags you into a fight.
   if (player.combat) {
     player.following = null
     player.followTargetTile = null

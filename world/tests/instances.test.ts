@@ -5,6 +5,7 @@ import {
   baseRoomZone,
   chooseInstanceRoom,
   instanceRoom,
+  INSTANCED_ZONES,
   isInstancedRoom,
   isInstancedZone,
   MAX_INSTANCES,
@@ -34,9 +35,113 @@ describe('instance room names', () => {
   })
 
   it('only instances zones that are actually registered and authored', () => {
-    for (const zoneId of ['grondar_lair']) {
+    for (const zoneId of INSTANCED_ZONES) {
       expect(isInstancedZone(zoneId)).toBe(true)
       expect(ZONES[zoneId]).toBeTruthy()
+    }
+  })
+})
+
+/** Tiles reachable on foot from the zone's spawn. */
+function walkableFrom(zone: ZoneDef): Set<string> {
+  const seen = new Set<string>([`${zone.spawn.x},${zone.spawn.z}`])
+  const queue = [[zone.spawn.x, zone.spawn.z]]
+  while (queue.length) {
+    const [x, z] = queue.pop()!
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx
+      const nz = z + dz
+      const key = `${nx},${nz}`
+      if (seen.has(key) || zone.collision[nz]?.[nx] !== '.') continue
+      seen.add(key)
+      queue.push([nx, nz])
+    }
+  }
+  return seen
+}
+
+// Every instanced room, not just Grondar's: a lair whose monsters or exit are
+// walled off by a prop footprint is a room the party cannot play, and the
+// generators place props by footprint maths that is easy to get wrong.
+describe.each([...INSTANCED_ZONES])('instanced lair %s', (zoneId) => {
+  const zone = ZONES[zoneId]
+
+  it('is a valid zone', () => {
+    expect(validateZone(zone)).toEqual({ valid: true })
+  })
+
+  it('has a hidden-marker way back to the overworld on a walkable tile', () => {
+    const exit = zone.exits?.[0]
+    expect(exit?.toZone).toBe('overworld')
+    expect(exit?.hideMarker).toBe(true)
+    expect(zone.collision[exit!.z][exit!.x]).toBe('.')
+  })
+
+  it('lets a player walk from the spawn to every monster and to the exit', () => {
+    const seen = walkableFrom(zone)
+    for (const npc of zone.npcs) expect(seen.has(`${npc.x},${npc.z}`), `${zoneId} npc ${npc.id}`).toBe(true)
+    for (const exit of zone.exits ?? []) expect(seen.has(`${exit.x},${exit.z}`), `${zoneId} ${exit.id}`).toBe(true)
+  })
+
+  it('keeps a death inside the instance', () => {
+    // An instanced room is closed: dying returns you to its own entrance. A
+    // `deathRespawn` would eject the party into the overworld and close the
+    // socket, which is the trip out they didn't ask for.
+    expect(zone.deathRespawn).toBeUndefined()
+  })
+
+  it('puts a bank chest within reach of the tile you arrive and respawn on', () => {
+    const chests = zone.objects.filter((o) => o.type === 'bank_chest')
+    expect(chests, `${zoneId} bank chest`).toHaveLength(1)
+    // chestAdjacent (WorldZone) is Chebyshev <= 1, so this is the difference
+    // between banking where you land and walking to find the chest.
+    const chest = chests[0]
+    expect(Math.max(Math.abs(chest.x - zone.spawn.x), Math.abs(chest.z - zone.spawn.z))).toBeLessThanOrEqual(1)
+    expect(zone.collision[chest.z][chest.x]).toBe('.')
+  })
+
+  it('gives every monster open ground to be fought on', () => {
+    for (const npc of zone.npcs) {
+      let open = 0
+      for (let dz = -2; dz <= 2; dz++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          if (zone.collision[npc.z + dz]?.[npc.x + dx] === '.') open += 1
+        }
+      }
+      expect(open, `${zoneId} npc ${npc.id}`).toBeGreaterThan(12)
+    }
+  })
+})
+
+describe('the three lairs added with the monster models', () => {
+  it('fields eight bulls, six fiends, and four of each dragon', () => {
+    const count = (zoneId: string, monsterId: string) =>
+      ZONES[zoneId].npcs.filter((n) => n.monsterId === monsterId).length
+    expect(count('cow_pasture', 'pasture_bull')).toBe(8)
+    expect(count('fiend_pit', 'lesser_fiend')).toBe(6)
+    expect(count('dragon_roost', 'green_dragon')).toBe(4)
+    expect(count('dragon_roost', 'red_dragon')).toBe(4)
+    expect(count('dragon_roost', 'black_dragon')).toBe(4)
+  })
+
+  it('keeps each dragon brood in its own quarter of the roost', () => {
+    // Separate areas is the point of the room: no brood may sit inside another
+    // brood's bounding box, or the walk between them stops being a decision.
+    const zone = ZONES.dragon_roost
+    const boxes = ['green_dragon', 'red_dragon', 'black_dragon'].map((id) => {
+      const pts = zone.npcs.filter((n) => n.monsterId === id)
+      return {
+        id,
+        x0: Math.min(...pts.map((p) => p.x)), x1: Math.max(...pts.map((p) => p.x)),
+        z0: Math.min(...pts.map((p) => p.z)), z1: Math.max(...pts.map((p) => p.z)),
+      }
+    })
+    for (const a of boxes) {
+      for (const b of boxes) {
+        if (a.id === b.id) continue
+        const overlaps = a.x0 <= b.x1 && b.x0 <= a.x1 && a.z0 <= b.z1 && b.z0 <= a.z1
+        expect(overlaps, `${a.id} vs ${b.id}`).toBe(false)
+      }
     }
   })
 })
@@ -46,11 +151,10 @@ describe("Grondar's lair zone", () => {
     expect(validateZone(grondarLair as unknown as ZoneDef)).toEqual({ valid: true })
   })
 
-  it('holds Grondar, a way out, and a death trip out of the instance', () => {
+  it('holds Grondar and a way out', () => {
     const zone = grondarLair as unknown as ZoneDef
     expect(zone.npcs.map((n) => n.monsterId)).toContain('warlord_grondar')
     expect(zone.exits?.some((e) => e.toZone === 'overworld')).toBe(true)
-    expect(zone.deathRespawn?.zone).toBe('overworld')
   })
 
   it('has room for a full instance to stand around the boss', () => {

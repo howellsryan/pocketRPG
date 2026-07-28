@@ -49,7 +49,14 @@
   "###################...##################",
   "###################...##################"
  ],
- "objects": [],
+ "objects": [
+  {
+   "id": "chest_1",
+   "type": "bank_chest",
+   "x": 21,
+   "z": 36
+  }
+ ],
  "npcs": [
   {
    "id": "grondar",
@@ -61,8 +68,7 @@
     "z": 8,
     "w": 13,
     "h": 7
-   },
-   "aggroRadius": 8
+   }
   }
  ],
  "exits": [
@@ -77,11 +83,6 @@
    "hideMarker": true
   }
  ],
- "deathRespawn": {
-  "zone": "overworld",
-  "x": 280,
-  "z": 56
- },
  "props": [
   {
    "model": "town_wall",

@@ -22,6 +22,9 @@ const CLIPS = [
   { clip: 'Idle', as: 'idle' },
   { clip: 'Walk', as: 'walk' },
   { clip: 'Death', as: 'die' },
+  // The farm pack ships no attack clip; the jump is the bull's lunge, and
+  // without one it stands still while its hit splat lands on the player.
+  { clip: 'Jump', as: 'attack' },
 ]
 
 await MeshoptDecoder.ready

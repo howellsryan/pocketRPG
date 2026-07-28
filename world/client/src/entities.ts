@@ -6,6 +6,7 @@ import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
 import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
 import { MONSTER_MODELS } from '../../shared/monsterModels'
+import { footprintRadius } from '../../shared/monsterSize'
 import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
 // Shared per-item placement registry — the SAME resolver the combat arena /
 // equip modal uses (src/utils/equipModels.js + src/data/equipmentModels.json),
@@ -146,9 +147,9 @@ function proxyFootprint(height: number): number {
 
 /** Adds the pick proxy to a rendered entity group. `height` is in world units;
  * the group's uniform scale is divided out because the proxy rides inside it. */
-function addPickProxy(group: THREE.Object3D, height: number): void {
+function addPickProxy(group: THREE.Object3D, height: number, widthTiles?: number): void {
   const scale = group.scale.x || 1
-  const width = proxyFootprint(height)
+  const width = widthTiles ?? proxyFootprint(height)
   const proxy = new THREE.Mesh(PICK_PROXY_GEOMETRY, PICK_PROXY_MATERIAL)
   proxy.name = PICK_PROXY
   proxy.visible = false
@@ -280,6 +281,25 @@ export async function createCowMesh(): Promise<{ mesh: THREE.Object3D; animator:
   }
 }
 
+/** Recolours the named materials of a monster model (MonsterModel.tint), so one
+ * GLB serves several monsters. Materials are CLONED first: loadTemplate hands
+ * back a shared cached GLTF and cloneSkeleton keeps its materials, so tinting in
+ * place would repaint every other dragon already on the map. */
+function applyMonsterTint(model: THREE.Object3D, tint: Record<string, string> | undefined): void {
+  if (!tint) return
+  model.traverse((o) => {
+    if (!(o instanceof THREE.Mesh) || !o.material) return
+    const one = (m: THREE.Material): THREE.Material => {
+      const hex = tint[m.name]
+      if (!hex) return m
+      const mm = m.clone() as THREE.MeshStandardMaterial
+      if (mm.color) mm.color.set(hex)
+      return mm
+    }
+    o.material = Array.isArray(o.material) ? o.material.map(one) : one(o.material)
+  })
+}
+
 /** Loads the registered model for a monster (centred, floored — or hovering,
  * for flyers — and scaled to its target height). Unregistered monsters get the
  * cow path (the Phase 2 default); any load failure gets the box placeholder. */
@@ -293,18 +313,26 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       // After disableFrustumCulling — it forces castShadow on everything it
       // walks, so opting out has to come second.
       if (spec.noShadow) model.traverse((obj) => { obj.castShadow = false })
+      applyMonsterTint(model, spec.tint)
       const b = spec.bounds
       model.position.set(-(b.minX + b.maxX) / 2, -b.minY + (spec.hover ?? 0), -(b.minZ + b.maxZ) / 2)
       const group = new THREE.Group()
       group.add(model)
       group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
-      addPickProxy(group, spec.targetHeight + (spec.hover ?? 0))
+      // A large monster's box spans its whole body, or the tap that looks like
+      // it landed on the dragon lands on the ground beside its centre tile.
+      const bodyTiles = 2 * footprintRadius(monsterId) + 1
+      addPickProxy(group, spec.targetHeight + (spec.hover ?? 0), bodyTiles > 1 ? bodyTiles : undefined)
       const animator = makeAnimator(model, gltf, ['idle', 'walk', 'attack', 'die'])
       if (animator?.kind === 'gltf') {
         if (spec.noLocomotionClip) animator.gait = { target: model, baseY: model.position.y, baseRotZ: model.rotation.z }
         // Sub-tick swing delay so this monster's impact frame lands on the hit
         // splat, exactly as the combat arena aligns it (shared windup helper).
-        animator.swingDelayMs = monsterAttackWindup(getMonsterModel(monsterId!)?.attackImpactSec ?? null, TICK_DURATION).startDelayMs
+        // The world registry wins over the arena's: these GLBs are built here
+        // and several monsters may share one, so the impact frame is a property
+        // of the world model, not of the arena entry (which most lack).
+        const impactSec = spec.attackImpactSec ?? getMonsterModel(monsterId!)?.attackImpactSec ?? null
+        animator.swingDelayMs = monsterAttackWindup(impactSec, TICK_DURATION).startDelayMs
       }
       return { mesh: group, animator }
     } catch {
@@ -312,8 +340,8 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
     }
   }
   // No GLB: render a procedural blend-shell creature if the monster has a
-  // creatures3d spec (e.g. Warlord Grondar). pasture_bull keeps its cow model.
-  if (monsterId && monsterId !== 'pasture_bull' && creatureSpecFor(monsterId)) {
+  // creatures3d spec (e.g. Warlord Grondar).
+  if (monsterId && creatureSpecFor(monsterId)) {
     const height = PROC_TARGET_HEIGHT[monsterId] ?? 2.4
     try {
       const proc = await buildProcCreature(monsterId, height)
