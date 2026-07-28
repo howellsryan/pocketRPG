@@ -15,6 +15,7 @@ import {
   processCoopTick,
   isRoomWideAttacker,
   advanceRoomWideAttackTimer,
+  advanceAddAttackTimer,
 } from '../src/engine/coopBossEngine.js'
 import {
   getAddSpec,
@@ -448,6 +449,61 @@ describe('room-wide attacks in a co-op session', () => {
     for (let i = 0; i < 8; i++) state = processCoopTick(state, [], deps, Date.now()).stateNext
     const damaged = Object.values(state.members).filter((m: any) => m.hp < startHP[m.characterId])
     expect(damaged.length).toBeLessThanOrEqual(1)
+  })
+
+  it('runs its minions off the room clock, so one swing is resolved per tick', () => {
+    const withAdd: any = { add: { attackSpeed: 3 } }
+    expect([1, 2, 3, 4, 5, 6].map(() => advanceAddAttackTimer(withAdd)))
+      .toEqual([false, false, true, false, false, true])
+  })
+
+  it('never swings a minion the room does not have, and rewinds the clock for the next one', () => {
+    const boss: any = { add: { attackSpeed: 3 } }
+    advanceAddAttackTimer(boss)
+    expect(boss.addAttackTimer).toBe(2)
+    boss.add = null
+    expect(advanceAddAttackTimer(boss)).toBe(false)
+    // A fresh minion gets a full wind-up rather than the dead one's countdown.
+    expect(boss.addAttackTimer).toBeNull()
+    boss.add = { attackSpeed: 3 }
+    expect(advanceAddAttackTimer(boss)).toBe(false)
+    expect(boss.addAttackTimer).toBe(2)
+  })
+
+  it('lands its minion on the whole room, one roll each and no more', () => {
+    // Room-wide works by every member's session resolving the same swing and
+    // each member taking their OWN roll — so a member must never lose more
+    // than one minion hit in a tick, however many members are in the room.
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    let state = joined(BOSS, [1, 2, 3])
+    // A live minion, with the boss's own clock held off so every point of
+    // damage below is the minion's.
+    state.boss.add = { ...monstersData.zaryth_bolt_sentinel, currentHP: 150, attackTimer: 1 }
+    state.boss.addAttackTimer = 1
+    state.boss.attackTimer = 999
+    const before = Object.fromEntries(Object.values(state.members).map((m: any) => [m.characterId, m.hp]))
+    const out = processCoopTick(state, [], deps, Date.now())
+    const maxHit = monstersData.zaryth_bolt_sentinel.maxHit
+    for (const m of Object.values(out.stateNext.members) as any[]) {
+      const taken = before[m.characterId] - m.hp
+      expect(taken, `member ${m.characterId} took ${taken}, max is ${maxHit}`).toBeLessThanOrEqual(maxHit)
+      // One event per member per swing — not one per member, per member.
+      const mine = out.events.filter((e: any) => e.fromAdd && e.type === 'monsterHit' && e.characterId === m.characterId)
+      expect(mine.length).toBeLessThanOrEqual(1)
+    }
+    // And it reached past the single member the boss happens to be facing.
+    const struck = (Object.values(out.stateNext.members) as any[])
+      .filter((m) => before[m.characterId] - m.hp > 0)
+    expect(struck.length).toBeGreaterThan(1)
+  })
+
+  it('leaves a normal boss\'s minion on its target alone', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    let state = joined('corporeal_horror', [1, 2, 3])
+    const before = Object.fromEntries(Object.values(state.members).map((m: any) => [m.characterId, m.hp]))
+    for (let i = 0; i < 8; i++) state = processCoopTick(state, [], deps, Date.now()).stateNext
+    const struck = (Object.values(state.members) as any[]).filter((m) => before[m.characterId] - m.hp > 0)
+    expect(struck.length).toBeLessThanOrEqual(1)
   })
 
   it('is playable as a group', () => {

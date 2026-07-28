@@ -116,6 +116,38 @@ export function advanceRoomWideAttackTimer(boss) {
   return true
 }
 
+/**
+ * The same room-owned clock for a room-wide attacker's MINION. The add object is
+ * copied into every member's session each tick, timer and all, so without this
+ * each session runs the add's countdown itself and swings on the same tick —
+ * which was harmless only while an add's hit landed on its target alone. Now
+ * that a room-wide boss's minions strike the whole room too, N sessions
+ * resolving N swings would multiply the damage by the size of the party.
+ *
+ * Returns false when there is no add, so a room between spawns never swings.
+ * The clock resets whenever the add is absent, so a fresh minion always gets a
+ * full wind-up instead of inheriting the dead one's countdown.
+ */
+export function advanceAddAttackTimer(boss) {
+  const add = boss?.add
+  if (!add) {
+    if (boss) boss.addAttackTimer = null
+    return false
+  }
+  const speed = Math.max(1, Math.floor(Number(add.attackSpeed) || 4))
+  // `null` is the cleared clock, and Number(null) is a finite 0 — reading it as
+  // a countdown would swing a just-spawned minion on its first tick.
+  const stored = boss.addAttackTimer
+  const current = stored == null || !Number.isFinite(Number(stored)) ? speed : Number(stored)
+  const next = current - 1
+  if (next > 0) {
+    boss.addAttackTimer = next
+    return false
+  }
+  boss.addAttackTimer = speed
+  return true
+}
+
 export function isCoopBossId(bossId) {
   return typeof bossId === 'string' && Object.prototype.hasOwnProperty.call(COOP_BOSSES, bossId)
 }
@@ -993,6 +1025,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   let bossSwungThisTick = false
   const roomWide = isRoomWideAttacker(monstersData?.[next.bossId])
   const roomWideSwing = roomWide && advanceRoomWideAttackTimer(next.boss)
+  const roomWideAddSwing = roomWide && advanceAddAttackTimer(next.boss)
 
   for (const id of memberIds) {
     const member = next.members[id]
@@ -1009,6 +1042,11 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     // and protection prayer against it.
     if (roomWide) engine.monsterAttackTimer = roomWideSwing ? 0 : Math.max(2, engine.monster.attackSpeed || 4)
     else if (!isTarget) engine.monsterAttackTimer = Math.max(2, engine.monster.attackSpeed || 4)
+    // Its minions run off the room's clock for the same reason (see
+    // advanceAddAttackTimer) — one swing resolved, landing on everybody.
+    if (roomWide && engine.add) {
+      engine.add.attackTimer = roomWideAddSwing ? 0 : Math.max(2, engine.add.attackSpeed || 4)
+    }
 
     const hpBefore = engine.monster.currentHP
     const addHpBefore = engine.add?.currentHP ?? null
@@ -1051,11 +1089,11 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
 
     for (const ev of engineEvents) {
       // Incoming from the boss — only the member it is actually facing, unless
-      // the boss attacks the whole room. Its minions never do: they stay on the
-      // target, so a room-wide swing is the boss's alone.
+      // the boss attacks the whole room, in which case its minions do too: they
+      // are its reach, not separate duellists. Only the target's session
+      // resolves either swing, so one event still means one swing at everybody.
       if (ev.type === 'monsterHit' || ev.type === 'dragonfireHit') {
-        const lands = roomWide ? (ev.fromAdd ? isTarget : true) : isTarget
-        if (lands) {
+        if (roomWide || isTarget) {
           member.hp = Math.max(0, member.hp - (ev.damage || 0))
           if (!roomWide) bossSwungThisTick = true
         }

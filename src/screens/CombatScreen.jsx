@@ -608,14 +608,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
   }, [activeCombatSpell, equipment])
 
-  // Auto-start fight from home shortcut
+  // Auto-start fight from home shortcut. Waits for kill counts for the same
+  // reason the render below does: this effect runs even while that loader is on
+  // screen (hooks run before the early return), so without the guard it opened
+  // the boss gate against an empty count map and refused a boss the player had
+  // long since unlocked.
   useEffect(() => {
-    if (initialMonsterId && !hasAutoStarted.current && !combat) {
+    if (initialMonsterId && killCountsLoaded && !hasAutoStarted.current && !combat) {
       hasAutoStarted.current = true
       const monster = monstersData[initialMonsterId]
       if (monster) startFight(monster)
     }
-  }, [initialMonsterId])
+  }, [initialMonsterId, killCountsLoaded])
 
   useEffect(() => {
     if (initialRaidId && !hasAutoStarted.current && !combat) {
