@@ -57,12 +57,14 @@ async function settle() {
 let beats: any[]
 let statuses: (string | null)[]
 let fatals: string[]
+let losses: string[]
 
 function open() {
   return openCoopFeed({
     sessionId: 12,
     onTick: (beat: any) => beats.push(beat),
     onStatus: (s: any) => statuses.push(s),
+    onLost: (r: any) => losses.push(r),
     onFatal: (m: any) => fatals.push(m),
   })
 }
@@ -72,6 +74,7 @@ beforeEach(() => {
   beats = []
   statuses = []
   fatals = []
+  losses = []
   FakeClientSocket.instances = []
   FakeClientSocket.failToOpen = false
   ;(globalThis as any).WebSocket = FakeClientSocket
@@ -155,17 +158,73 @@ describe('the socket transport', () => {
     feed.close()
   })
 
-  it('ends the fight on a close the room says is final', async () => {
+  it('gives up on a close the room says is final', async () => {
     const feed = open()
     await settle()
     const ws = FakeClientSocket.instances[0]
 
-    ws.serverSends({ t: 'bye', reason: 'session_ended' })
+    ws.serverSends({ t: 'bye', reason: 'flooding' })
 
     expect(fatals).toEqual(['This fight has ended.'])
     // …and nothing keeps trying afterwards.
     await vi.advanceTimersByTimeAsync(10_000)
     expect(coopApi.tick).not.toHaveBeenCalled()
+    feed.close()
+  })
+})
+
+// The regression: a phone that locks its screen closes the socket, the room
+// eventually lets the member go, and the reconnect is answered "not a member".
+// That used to end on an error screen whose only way out was the back arrow —
+// which reads as the fight breaking rather than as a moment away.
+describe('being let go while away', () => {
+  it('asks to be put back in rather than ending the fight', async () => {
+    const feed = open()
+    await settle()
+
+    FakeClientSocket.instances[0].serverSends({ t: 'bye', reason: 'not_a_member' })
+
+    expect(losses).toEqual(['not_a_member'])
+    expect(fatals).toEqual([])
+    feed.close()
+  })
+
+  it('treats an ejection and a finished session the same way', async () => {
+    for (const reason of ['ejected', 'session_ended']) {
+      losses = []
+      fatals = []
+      FakeClientSocket.instances = []
+      const feed = open()
+      await settle()
+      FakeClientSocket.instances[0].serverSends({ t: 'bye', reason })
+      expect(losses).toEqual([reason])
+      expect(fatals).toEqual([])
+      feed.close()
+    }
+  })
+
+  it('does the same when the refusal arrives as a status instead of a frame', async () => {
+    coopApi.socketTicket.mockRejectedValue(
+      Object.assign(new Error('not a member'), { status: 403, body: { code: 'NOT_A_MEMBER' } }),
+    )
+    const feed = open()
+    await settle()
+
+    expect(losses).toEqual(['NOT_A_MEMBER'])
+    expect(fatals).toEqual([])
+    // Nothing retries behind the rejoin.
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(coopApi.tick).not.toHaveBeenCalled()
+    feed.close()
+  })
+
+  it('stops for a lost login, which rejoining cannot fix', async () => {
+    coopApi.socketTicket.mockRejectedValue(Object.assign(new Error('Not authenticated'), { status: 401 }))
+    const feed = open()
+    await settle()
+
+    expect(fatals).toEqual(['Not authenticated'])
+    expect(losses).toEqual([])
     feed.close()
   })
 })
@@ -224,7 +283,7 @@ describe('falling back', () => {
 
     await vi.advanceTimersByTimeAsync(10_000)
 
-    expect(fatals).toEqual(['gone'])
+    expect(losses).toEqual(['gone'])
     expect(coopApi.tick).not.toHaveBeenCalled()
     feed.close()
   })

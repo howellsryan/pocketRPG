@@ -28,11 +28,24 @@ export const COOP_FRAME_PONG = 'pong'
 export const COOP_FRAME_INTENT = 'intent'
 export const COOP_FRAME_PING = 'ping'
 
-/** How long a member survives their socket closing before the room writes them
- * back and releases their save. Short on purpose: the save lock follows the
- * member (§20), and a player who closed the tab is otherwise locked out of
- * their own game. Long enough that a tunnel or a screen lock is not a wipe. */
-export const COOP_SOCKET_LINGER_MS = 10_000
+/**
+ * How long a member survives their socket closing before the room writes them
+ * back and releases their save.
+ *
+ * The pull is in both directions and the balance is not obvious. Shorter is
+ * better for a player who has GONE — the save lock follows the member (§20), so
+ * until this lapses they cannot save their own idle game. Longer is better for
+ * a player who is coming BACK, and phones close sockets for reasons that have
+ * nothing to do with leaving: a locked screen, an app switch, a handover from
+ * wifi to cellular. A suspended tab runs no timers at all, so it cannot even
+ * reconnect until the player returns to it.
+ *
+ * 10s was tuned for the first case and made the second one a wipe — glancing at
+ * a notification cost you the fight. Half the 90s lock TTL keeps most of the
+ * release win while covering an ordinary absence, and being dropped is no
+ * longer a dead end anyway: the client rejoins (see coopFeed's onLost).
+ */
+export const COOP_SOCKET_LINGER_MS = 45_000
 /** A socket that has said nothing for this long is presumed dead by the client
  * and reconnected. The room pushes on every beat of a live fight, so silence
  * this long is not quiet — it is gone. */
@@ -43,11 +56,23 @@ export const COOP_SOCKET_PING_MS = 15_000
 
 /** Reasons the room gives for a close that reconnecting cannot fix. Anything
  * else — a dropped tunnel, a backgrounded tab, a Worker redeploy — is worth
- * another attempt. */
+ * another attempt on the same socket. */
 const FATAL_CLOSE_REASONS = ['not_a_member', 'session_ended', 'ejected', 'flooding']
+
+/**
+ * …of which most mean only that this SESSION is no longer the player's — the
+ * room let them go while they were away, or the fight ended. Reconnecting is
+ * hopeless but rejoining is not, and a player who looked away for a minute
+ * should be put back in a fight rather than shown a dead screen.
+ */
+const REJOINABLE_CLOSE_REASONS = ['not_a_member', 'session_ended', 'ejected']
 
 export function isFatalCoopSocketReason(reason) {
   return FATAL_CLOSE_REASONS.includes(String(reason || ''))
+}
+
+export function isRejoinableCoopCloseReason(reason) {
+  return REJOINABLE_CLOSE_REASONS.includes(String(reason || ''))
 }
 
 /** Attempts before a client gives up on sockets for this fight and polls

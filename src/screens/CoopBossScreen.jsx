@@ -40,7 +40,7 @@ import monstersData from '../data/monsters.json'
  * back to polling where a socket cannot be had. This screen sees beats either
  * way and must not care which.
  */
-export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath, addToast }) {
+export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoin, onDeath, addToast }) {
   const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell } = useGame()
   const [state, setState] = useState(null)
   const [error, setError] = useState(null)
@@ -54,6 +54,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
   // cannot queue two starts (the second is refused server-side either way).
   const [startingRaid, setStartingRaid] = useState(false)
   const [chatLog, setChatLog] = useState([])
+  // The room let this player go while they were away and the screen is waiting
+  // to be put back in a fight. Distinct from the first-join spinner only in
+  // what it says, because it is not the player's first arrival.
+  const [rejoining, setRejoining] = useState(false)
   // What the last tap should have done, rendered over the room's record until
   // the beat it was stamped for comes back. `tick` is null until the intent is
   // acknowledged; `at` is the escape hatch for a request that never answers.
@@ -193,6 +197,15 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
       sessionId,
       onTick: onBeat,
       onStatus: setError,
+      // Being let go while your screen was locked is not an error to read, it
+      // is a fight to get back into. Falling back to the picker is the caller's
+      // job if the rejoin itself fails.
+      onLost: () => {
+        setState(null)
+        setError(null)
+        setRejoining(true)
+        onRejoin?.()
+      },
       onFatal: setError,
     })
     feedRef.current = feed
@@ -257,7 +270,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         ) : (
           <>
             <div class="w-8 h-8 border-2 border-[var(--color-gold)] border-t-transparent rounded-full animate-spin" />
-            <div class="text-sm text-[var(--color-parchment)] opacity-70">Joining the fight…</div>
+            <div class="text-sm text-[var(--color-parchment)] opacity-70">
+              {rejoining ? 'You were away — getting you back in…' : 'Joining the fight…'}
+            </div>
           </>
         )}
       </div>

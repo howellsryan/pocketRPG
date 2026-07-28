@@ -6,11 +6,13 @@
 // rots quietly rather than failing.
 import { describe, it, expect } from 'vitest'
 import {
+  COOP_SOCKET_LINGER_MS,
   COOP_SOCKET_MAX_ATTEMPTS,
   applyProjectionDelta,
   coopSocketBackoffMs,
   deltaWorthSending,
   isFatalCoopSocketReason,
+  isRejoinableCoopCloseReason,
   projectionDelta,
 } from '../src/engine/coopSocketProtocol.js'
 import { projectStateForMember } from '../functions/_lib/game/coopProjection.js'
@@ -168,6 +170,23 @@ describe('reconnect policy', () => {
     expect(isFatalCoopSocketReason('ejected')).toBe(true)
     expect(isFatalCoopSocketReason('idle')).toBe(false)
     expect(isFatalCoopSocketReason(undefined)).toBe(false)
+  })
+
+  // …but "this socket is finished" is not "this player is finished". Being let
+  // go while your screen was locked has to end in a fight, not an error screen.
+  it('separates a session the player can rejoin from a genuine dead end', () => {
+    expect(isRejoinableCoopCloseReason('not_a_member')).toBe(true)
+    expect(isRejoinableCoopCloseReason('ejected')).toBe(true)
+    expect(isRejoinableCoopCloseReason('session_ended')).toBe(true)
+    expect(isRejoinableCoopCloseReason('flooding')).toBe(false)
+    expect(isRejoinableCoopCloseReason('idle')).toBe(false)
+  })
+
+  // The number that caused the bug: at 10s, glancing at a notification cost you
+  // the fight. It must stay well inside the 90s lock TTL all the same.
+  it('gives a returning player longer than a glance, and still beats the lock TTL', () => {
+    expect(COOP_SOCKET_LINGER_MS).toBeGreaterThanOrEqual(30_000)
+    expect(COOP_SOCKET_LINGER_MS).toBeLessThan(90_000)
   })
 })
 

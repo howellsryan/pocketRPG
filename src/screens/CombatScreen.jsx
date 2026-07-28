@@ -352,6 +352,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // that fires straight after doesn't send a second leave for the same fight.
   const coopLeavingRef = useRef(false)
   const [coopJoining, setCoopJoining] = useState(null)
+  // What the player was fighting, so a session they were dropped from can be
+  // rejoined rather than dead-ended. Set at every join, read only on recovery.
+  const coopRejoinRef = useRef(null)
+  const coopRejoiningRef = useRef(false)
+  // Bumped on every rejoin so the fight screen remounts even when the player
+  // lands back in the same room, which is the usual case for a boss.
+  const [coopAttempt, setCoopAttempt] = useState(0)
   const [worldJoining, setWorldJoining] = useState(null)
   // Solo-or-group prompt: which boss was tapped, and how busy its instances are.
   const [coopChoice, setCoopChoice] = useState(null)
@@ -1509,6 +1516,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       }
       const res = await joinCoopWithRecovery(monster.id, sessionId)
       setShowCoopSessions(false)
+      // What to rejoin if the room lets this player go while they are away —
+      // a locked screen closes the socket, and the fight should be waiting for
+      // them rather than an error.
+      coopRejoinRef.current = { kind: 'boss', monster }
       setCoopSessionId(res.sessionId)
     } catch (err) {
       const code = err?.body?.code
@@ -1595,6 +1606,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       }
       const res = await joinRaidWithRecovery(raid.id, sessionId)
       setRaidChoice(null)
+      // A raid is rejoined by PARTY, never by opening a fresh one: joining a
+      // raid with no session id means "start a new party" (§21), which would
+      // strand a returning player alone in a lobby of their own.
+      coopRejoinRef.current = { kind: 'raid', raid, sessionId: res.sessionId }
       setCoopSessionId(res.sessionId)
     } catch (err) {
       const code = err?.body?.code
@@ -1683,6 +1698,59 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       addToast('Refresh to see your latest progress.', 'info')
     } finally {
       setCoopSessionId(null)
+    }
+  }
+
+  /**
+   * Puts a player back into the fight they were dropped from.
+   *
+   * A room lets a member go once their connection has been gone long enough
+   * (§20) — a locked phone or an app switch is enough — and it writes their save
+   * back and releases it on the way out. That used to leave the screen showing a
+   * "not a member" error with no way forward but the back arrow, which read as
+   * the fight breaking rather than as a brief absence.
+   *
+   * Rejoining is a fresh join, so the pull comes first: the room's write-back
+   * holds the XP and supplies from the fight so far, and joining snapshots
+   * whatever the save says at that moment.
+   */
+  const rejoinCoopFight = async () => {
+    if (coopRejoiningRef.current) return
+    coopRejoiningRef.current = true
+    const target = coopRejoinRef.current
+    const from = coopSessionId
+    try {
+      const pulled = await pullSave()
+      if (pulled?.payload) {
+        await applyCloudSave(pulled.payload, pulled.updatedAt)
+        await loadGame()
+      }
+      if (!target) throw new Error('Your group fight ended while you were away.')
+      const res = target.kind === 'raid'
+        ? await joinRaidWithRecovery(target.raid.id, target.sessionId)
+        : await joinCoopWithRecovery(target.monster.id)
+      // A boss rejoin usually lands in the very room the player was dropped
+      // from, so the id alone cannot restart the screen — the attempt counter
+      // is what remounts it and opens a fresh connection either way. The
+      // suppression flag is only armed when the id really does change, because
+      // it is consumed by an effect cleanup that would otherwise not run.
+      if (res.sessionId !== from) {
+        coopLeavingRef.current = true
+        setCoopSessionId(res.sessionId)
+      }
+      setCoopAttempt((n) => n + 1)
+    } catch (err) {
+      // An honest ending: the party set off without them, the room filled up
+      // while they were gone, or the fight is simply over. Deliberately NOT
+      // suppressing the effect's leave here — if the rejoin failed for a reason
+      // that left them still held, that call is what releases their save.
+      const code = err?.body?.code
+      if (code === 'RAID_ALREADY_STARTED') addToast('Your party set off without you.', 'error')
+      else if (code === 'COOP_SESSION_UNAVAILABLE') addToast('That group is no longer taking fighters.', 'error')
+      else addToast(err?.message || 'Your group fight ended while you were away.', 'error')
+      setCoopSessionId(null)
+    } finally {
+      coopRejoiningRef.current = false
     }
   }
 
@@ -2445,10 +2513,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   if (coopSessionId) {
     return (
       <CoopBossScreen
+        key={`coop-${coopSessionId}-${coopAttempt}`}
         sessionId={coopSessionId}
         characterId={parseInt(getCharacterId(), 10)}
         addToast={addToast}
         onExit={exitCoopFight}
+        onRejoin={rejoinCoopFight}
         onDeath={() => { if (oneLifeModeRef.current) revertOneLifeAfterDeath() }}
       />
     )

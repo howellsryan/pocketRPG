@@ -21,6 +21,7 @@ import {
   applyProjectionDelta,
   coopSocketBackoffMs,
   isFatalCoopSocketReason,
+  isRejoinableCoopCloseReason,
 } from '../engine/coopSocketProtocol.js'
 
 /** A failed poll backs off rather than hammering. */
@@ -29,9 +30,17 @@ const POLL_ERROR_BACKOFF_MS = 2000
  * screen's optimistic echo has its own time backstop, and a false "Action
  * failed" toast for an action that probably landed is worse than silence. */
 const INTENT_ACK_TIMEOUT_MS = 5000
-/** Statuses that mean this fight is over for this player. Reconnecting or
- * polling harder will not change any of them. */
-const FATAL_STATUSES = new Set([401, 403, 404, 409])
+/**
+ * Statuses that mean this SESSION is no longer this player's: the room let them
+ * go while they were away (403), the fight ended (404), or something else owns
+ * them now (409). None of them is fixed by asking again — but none of them is a
+ * reason to strand the player on an error screen either, so they end the feed
+ * through `onLost` and the caller rejoins.
+ */
+const LOST_STATUSES = new Set([403, 404, 409])
+/** A dead end proper. 401 means the login went, and rejoining would only fail
+ * the same way. */
+const FATAL_STATUSES = new Set([401])
 
 /**
  * Connects to a fight and streams it.
@@ -39,10 +48,10 @@ const FATAL_STATUSES = new Set([401, 403, 404, 409])
  * `onTick` fires once per delivered beat with the whole projected state (the
  * deltas are applied here, so callers never see the wire format) and the events
  * belonging to it. `onStatus` carries a transient connection message, or null
- * when healthy. `onFatal` is the end: the session is gone or this player is not
- * in it.
+ * when healthy. `onLost` means this session has moved on without the player and
+ * the caller should put them back in a fight; `onFatal` is the genuine dead end.
  */
-export function openCoopFeed({ sessionId, onTick, onStatus, onFatal }) {
+export function openCoopFeed({ sessionId, onTick, onStatus, onLost, onFatal }) {
   let stopped = false
   let socket = null
   let attempts = 0
@@ -88,6 +97,27 @@ export function openCoopFeed({ sessionId, onTick, onStatus, onFatal }) {
     stopped = true
     teardown()
     onFatal?.(message)
+  }
+
+  /** The room has moved on without this player. Nothing here is retryable, so
+   * stop cleanly and let the caller decide how to get them back into a fight. */
+  function lost(reason) {
+    if (stopped) return
+    stopped = true
+    teardown()
+    onLost?.(reason)
+  }
+
+  function endedBy(err) {
+    if (FATAL_STATUSES.has(err?.status)) {
+      fatal(err?.message || 'This fight has ended.')
+      return true
+    }
+    if (LOST_STATUSES.has(err?.status)) {
+      lost(err?.body?.code || err?.message || 'not_a_member')
+      return true
+    }
+    return false
   }
 
   function deliver(nextState, events, tick) {
@@ -137,7 +167,8 @@ export function openCoopFeed({ sessionId, onTick, onStatus, onFatal }) {
       case 'bye':
         // The room is finished with this socket. Whether that is the end of the
         // fight or just this connection is the reason's to say.
-        if (isFatalCoopSocketReason(frame.reason)) fatal('This fight has ended.')
+        if (isRejoinableCoopCloseReason(frame.reason)) lost(frame.reason)
+        else if (isFatalCoopSocketReason(frame.reason)) fatal('This fight has ended.')
         return
       default:
     }
@@ -149,10 +180,7 @@ export function openCoopFeed({ sessionId, onTick, onStatus, onFatal }) {
     try {
       ticket = (await coopApi.socketTicket(sessionId))?.ticket
     } catch (err) {
-      if (FATAL_STATUSES.has(err?.status)) {
-        fatal(err.message || 'This fight has ended.')
-        return
-      }
+      if (endedBy(err)) return
       scheduleRetry()
       return
     }
@@ -222,10 +250,7 @@ export function openCoopFeed({ sessionId, onTick, onStatus, onFatal }) {
       pollTimer = setTimeout(poll, nextPollDelayMs(res.next_tick_in_ms, Date.now() - sentAt))
     } catch (err) {
       if (stopped) return
-      if (FATAL_STATUSES.has(err?.status)) {
-        fatal(err.message || 'This fight has ended.')
-        return
-      }
+      if (endedBy(err)) return
       onStatus?.(err?.message || 'Connection problem — retrying…')
       pollTimer = setTimeout(poll, POLL_ERROR_BACKOFF_MS)
     }
