@@ -59,6 +59,36 @@ export async function coopRoomSupportsRaids(env) {
 }
 
 /**
+ * Opens a WebSocket to the room on the caller's behalf.
+ *
+ * The upgrade is a GET with no body, so the room's parameters ride the query
+ * string — this URL is internal to the two Workers and never reaches a browser.
+ * The caller has already been authenticated at the edge; the room decides only
+ * whether this character is a member.
+ *
+ * Returns the room's own 101 response (whose `webSocket` the runtime splices
+ * through to the client), or a plain error response. Anything other than a 101
+ * — a Worker deployed before sockets existed, a room that is gone — is the
+ * client's signal to fall back to polling, so it must be reported rather than
+ * thrown.
+ */
+export async function openCoopRoomSocket(env, sessionId, { characterId, sinceTick } = {}) {
+  const stub = roomStub(env, sessionId)
+  const params = new URLSearchParams({ sessionId: String(Number(sessionId)), characterId: String(Number(characterId)) })
+  if (Number.isFinite(sinceTick)) params.set('sinceTick', String(sinceTick))
+  try {
+    return await stub.fetch(`https://coop-room/socket?${params}`, {
+      headers: { Upgrade: 'websocket', Connection: 'Upgrade' },
+    })
+  } catch (err) {
+    console.error('[PocketRPG][coop] room socket unreachable', {
+      sessionId, message: (err && (err.message || String(err))) || 'unknown',
+    })
+    throw new GameApiError('COOP_UNAVAILABLE', 'Group boss fights are temporarily unavailable', 503)
+  }
+}
+
+/**
  * Calls one of the room's actions ('poll' | 'intent' | 'depart').
  * The URL host is arbitrary — a DO stub routes on the object, not the name —
  * but the path is what the room switches on.
