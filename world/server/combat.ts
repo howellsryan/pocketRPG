@@ -12,6 +12,7 @@ import spellsData from '../../src/data/spells.json'
 import prayersData from '../../src/data/prayers.json'
 import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRangeAndSight, type TickPlayer } from './tick'
 import { recordDamage, topDamageContributor, type NpcState } from './npc'
+import { reachAgainst } from '../shared/monsterSize'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
 import { spawnDrops } from './loot'
@@ -140,7 +141,14 @@ function syncStateBuffsToSession(player: TickPlayer, state: EngineState): void {
   player.activeCombatPrayer = state.activeCombatPrayer
   player.activePotions = state.activePotions
 }
-export type CombatSession = { npcId: string; state: EngineState }
+export type CombatSession = {
+  npcId: string
+  state: EngineState
+  /** The player walked away from this fight. The session survives so the
+   * monster can keep swinging at them, but the player lands nothing until they
+   * click Attack again — no auto-retaliate, ever. */
+  passive?: boolean
+}
 
 /** True when an attack intent re-targets the npc the player is already fighting
  * — the click must NOT reset the live engine attack timer (Q5: spam-clicking an
@@ -287,15 +295,21 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // monster from its own. The fight only ends when the player is beyond BOTH —
   // fleeing past a ranged/magic foe still leaves it able to attack while it
   // chases. Aggro persists either way (npc.ts keeps chasing).
-  const playerRange = rangeForCombatType(combat.state.combatType as string)
-  const monsterRange = monsterAttackRange(npc.monsterId)
+  // Both reaches are widened by the monster's body (a 3×3 dragon is fought from
+  // the edge of its footprint, not from its centre tile).
+  const playerRange = reachAgainst(npc.monsterId, rangeForCombatType(combat.state.combatType as string))
+  const monsterRange = reachAgainst(npc.monsterId, monsterAttackRange(npc.monsterId))
   const collision = ctx.collision ?? []
   // Ranged/magic need line of sight to land (both directions) — a wall between
   // the two blocks the shot, so a player can't kite a boss from behind a pillar
   // it can never see through, and vice versa.
   const inPlayerRange = withinRangeAndSight(player, npc, playerRange, collision)
   const inMonsterRange = withinRangeAndSight(player, npc, monsterRange, collision)
-  if (!inPlayerRange && !inMonsterRange) {
+  // Whether the PLAYER's swings count this tick. A disengaged player is only
+  // still in this fight because the monster is chasing them, so their own reach
+  // no longer keeps it alive either.
+  const playerLands = inPlayerRange && !combat.passive
+  if (!playerLands && !inMonsterRange) {
     player.combat = null
     player.anim = 'idle'
     endCombatSpecial(player, result)
@@ -357,7 +371,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
 
   for (const ev of events as { type: string; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string; itemId?: string; qty?: number }[]) {
     if (ev.type === 'playerHit') {
-      if (!inPlayerRange) continue
+      if (!playerLands) continue
       player.anim = attackAnimFor(combat.state.combatType as string)
       npc.hp = Math.max(0, combatState.monster.currentHP)
       recordDamage(npc, player.charId, ev.damage ?? 0, ctx.tick)
@@ -386,7 +400,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       if (ev.itemId) consumeEquippedAmmo(player, ev.itemId, ev.qty ?? 1)
       result.equipmentDirty = true
     } else if (ev.type === 'specialHit') {
-      if (!inPlayerRange) continue
+      if (!playerLands) continue
       // Debit the session here, not from the engine state — a special that lands
       // the killing blow leaves the engine's energy back at 100 (its refill-on-
       // kill), which would silently refund the cost.
@@ -411,11 +425,16 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       if (!isTarget || !inMonsterRange) continue
       result.hits.push({ targetId: player.charId, dmg: 0 })
     } else if (ev.type === 'xp' && ev.xpSkills) {
-      if (!inPlayerRange) continue
+      if (!playerLands) continue
       for (const [skill, amount] of Object.entries(ev.xpSkills)) {
         if (amount) result.events.push(...grantSessionXp(player, skill, Math.floor(amount)))
       }
     } else if (ev.type === 'monsterDeath') {
+      // Guarded by the same gate as playerHit: the engine rolls the player's
+      // swing even on a tick the server discards it (out of reach, or
+      // disengaged), and an ungated death would hand out the kill and its loot
+      // for damage that never landed.
+      if (!playerLands) continue
       killNpc(player, npc, ev.loot ?? [], ctx, result)
     }
   }

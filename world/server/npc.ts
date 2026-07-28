@@ -5,6 +5,7 @@ import monstersData from '../../src/data/monsters.json'
 import type { EntityDiff } from '../shared/protocol'
 import type { ZoneNpcDef } from '../shared/zone'
 import { monsterAttackRange, withinRangeAndSight, type TickContext, type TickResult } from './tick'
+import { reachAgainst } from '../shared/monsterSize'
 import type { Tile } from './pathfind'
 
 type Monsters = Record<string, { name?: string; hitpoints?: number; boss?: boolean }>
@@ -117,7 +118,7 @@ export function reselectAttacker(
     return
   }
   const range = monsterAttackRange(npc.monsterId)
-  const inReach = engaged.filter((p) => withinRangeAndSight(npc, p, range, collision))
+  const inReach = engaged.filter((p) => withinRangeAndSight(npc, p, reachAgainst(npc.monsterId, range), collision))
   const pool = inReach.length > 0 ? inReach : engaged
   const threat = (charId: string): number => npc.damageByChar.get(charId)?.dmg ?? 0
   let best = pool.find((p) => p.charId === npc.attackerId) ?? pool[0]
@@ -271,7 +272,7 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
     // down to regain reach+sight — leashed to a radius around home so it can't
     // trek across the whole zone.
     const target = ctx.players?.get(npc.attackerId)
-    if (!target || withinRangeAndSight(npc, target, monsterAttackRange(npc.monsterId), ctx.collision ?? [])) return
+    if (!target || withinRangeAndSight(npc, target, reachAgainst(npc.monsterId, monsterAttackRange(npc.monsterId)), ctx.collision ?? [])) return
     if (chebyshev(npc, npc.home) >= PURSUE_LEASH_TILES) {
       giveUpPursuit(npc)
       result.npcChanged.push(npc.id)

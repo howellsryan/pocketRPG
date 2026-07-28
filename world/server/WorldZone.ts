@@ -20,6 +20,7 @@ import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfC
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { npcsFromZone, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { collisionWithMonsters } from '../shared/monsterSize'
 import { computeAoi, type AoiEntity } from './aoi'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
 import { sanitizeChat } from '../shared/chat'
@@ -672,12 +673,15 @@ export class WorldZone extends Server<Env> {
   private handleAuthedMessage(player: Player, message: ClientMessage): void {
     switch (message.t) {
       case 'walk': {
-        const path = findPath(this.zone.collision, { x: player.x, z: player.z }, { x: message.x, z: message.z })
+        const path = findPath(this.playerCollision(player), { x: player.x, z: player.z }, { x: message.x, z: message.z })
         player.path = path ? path.slice(1) : []
-        // Keep the combat session across a walk so a ranged/magic foe keeps
-        // attacking a fleeing player and the engine's attack timers aren't reset
-        // each step; stepCombat ends it once the player is beyond every reach.
+        // Walking away is disengaging: the session survives (so a monster that
+        // was fighting you keeps swinging while it can reach you, and the
+        // engine's attack timers aren't reset each step) but the player stops
+        // attacking until they click Attack again. stepCombat ends it once the
+        // monster is out of reach too.
         this.clearIntents(player, true)
+        if (player.combat) player.combat.passive = true
         break
       }
       case 'cancel':
@@ -1145,9 +1149,18 @@ export class WorldZone extends Server<Env> {
       return
     }
     this.clearIntents(player, true)
+    // Following is a movement order, so it disengages exactly as a walk does.
+    if (player.combat) player.combat.passive = true
     player.following = targetId
     player.followTargetTile = null
     this.ensureTicking()
+  }
+
+  /** The zone grid as this player may walk it: large monsters block their own
+   * footprint, minus whatever tile the player is standing on (a dragon can
+   * wander onto them, and being inside one must never wedge them in place). */
+  private playerCollision(player: Player): string[] {
+    return collisionWithMonsters(this.zone.collision, this.ensureNpcs().values(), { x: player.x, z: player.z })
   }
 
   private clearIntents(player: Player, keepCombat = false): void {
@@ -1274,7 +1287,9 @@ export class WorldZone extends Server<Env> {
       npcs,
       stations: this.ensureStations(),
       collision: this.zone.collision,
-      pathAdjacent: (from, to) => findPathAdjacent(this.zone.collision, from, to),
+      // Player approach paths route around large monsters; the raw grid stays
+      // on ctx.collision for line of sight and for npc chase steps.
+      pathAdjacent: (from, to) => findPathAdjacent(collisionWithMonsters(this.zone.collision, npcs.values(), from), from, to),
       players: positions,
     }
 

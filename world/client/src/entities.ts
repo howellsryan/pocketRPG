@@ -6,6 +6,7 @@ import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
 import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
 import { MONSTER_MODELS } from '../../shared/monsterModels'
+import { footprintRadius } from '../../shared/monsterSize'
 import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
 // Shared per-item placement registry — the SAME resolver the combat arena /
 // equip modal uses (src/utils/equipModels.js + src/data/equipmentModels.json),
@@ -146,9 +147,9 @@ function proxyFootprint(height: number): number {
 
 /** Adds the pick proxy to a rendered entity group. `height` is in world units;
  * the group's uniform scale is divided out because the proxy rides inside it. */
-function addPickProxy(group: THREE.Object3D, height: number): void {
+function addPickProxy(group: THREE.Object3D, height: number, widthTiles?: number): void {
   const scale = group.scale.x || 1
-  const width = proxyFootprint(height)
+  const width = widthTiles ?? proxyFootprint(height)
   const proxy = new THREE.Mesh(PICK_PROXY_GEOMETRY, PICK_PROXY_MATERIAL)
   proxy.name = PICK_PROXY
   proxy.visible = false
@@ -318,7 +319,10 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       const group = new THREE.Group()
       group.add(model)
       group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
-      addPickProxy(group, spec.targetHeight + (spec.hover ?? 0))
+      // A large monster's box spans its whole body, or the tap that looks like
+      // it landed on the dragon lands on the ground beside its centre tile.
+      const bodyTiles = 2 * footprintRadius(monsterId) + 1
+      addPickProxy(group, spec.targetHeight + (spec.hover ?? 0), bodyTiles > 1 ? bodyTiles : undefined)
       const animator = makeAnimator(model, gltf, ['idle', 'walk', 'attack', 'die'])
       if (animator?.kind === 'gltf') {
         if (spec.noLocomotionClip) animator.gait = { target: model, baseY: model.position.y, baseRotZ: model.rotation.z }

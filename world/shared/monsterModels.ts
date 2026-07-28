@@ -79,10 +79,13 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
   },
   // One dragon build, three hides. Sized by combat level (79 / 152 / 227); the
   // GLB only flies (Flying_Idle / Fast_Flying), so they hover as they wander.
+  // Deliberately the largest things in the world — they also carry a 3×3
+  // footprint (shared/monsterSize.ts) so a player fights the head instead of
+  // standing under the jaw.
   green_dragon: {
     url: '/models/dragon.glb',
     bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
-    targetHeight: 2.2,
+    targetHeight: 2.6,
     hover: 0.25,
     attackImpactSec: 0.55,
     tint: { Dragon_Main: '#3f7a35', Dragon_Secondary: '#24451f' },
@@ -90,7 +93,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
   red_dragon: {
     url: '/models/dragon.glb',
     bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
-    targetHeight: 2.5,
+    targetHeight: 3.0,
     hover: 0.25,
     attackImpactSec: 0.55,
     tint: { Dragon_Main: '#8f2118', Dragon_Secondary: '#3d0f0a' },
@@ -98,7 +101,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
   black_dragon: {
     url: '/models/dragon.glb',
     bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
-    targetHeight: 2.8,
+    targetHeight: 3.4,
     hover: 0.25,
     attackImpactSec: 0.55,
     tint: { Dragon_Main: '#26262b', Dragon_Secondary: '#111114' },

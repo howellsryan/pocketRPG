@@ -2,6 +2,7 @@
 // I/O — the DO owns the objects, calls tickPlayer once per player per tick, and
 // decides what to broadcast/flush from the results.
 import type { Tile } from './pathfind'
+import { reachAgainst } from '../shared/monsterSize'
 import type { CombatStance, EntityDiff, GearDescriptor, InvSlot, StationType, ZoneEvent } from '../shared/protocol'
 import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type GatherSkill, type MiningAction } from './mining'
 import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
@@ -319,8 +320,22 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
     // otherwise re-runs this branch each tick, and startCombat always builds a
     // fresh engine state (attack timer reset to 0) — a free instant hit that
     // defeats WorldZone.handleInteract's keepCombat preservation.
-    if (player.combat?.npcId === npc.id) return
-    const range = playerAttackRange(player)
+    // Already fighting this npc. A disengaged session (the player walked away)
+    // re-engages here — that click is the ONLY thing that makes them swing
+    // again — and walks back into reach if they wandered out of it.
+    if (player.combat?.npcId === npc.id) {
+      if (!player.combat.passive) return
+      player.combat.passive = false
+      const reach = reachAgainst(npc.monsterId, playerAttackRange(player))
+      if (withinRange(player, npc, reach)) return
+      const back = ctx.pathAdjacent?.(player, npc)
+      if (back && back.length > 1) {
+        player.path = cutPathToRange(back.slice(1), npc, reach)
+        player.pendingInteract = intent
+      }
+      return
+    }
+    const range = reachAgainst(npc.monsterId, playerAttackRange(player))
     if (withinRange(player, npc, range)) {
       startCombat(player, npc, result)
       return
