@@ -167,11 +167,15 @@ const exits = [
   { id: 'exit_highlands', x: 32, z: 63, toZone: 'overworld', toX: 272, toZ: 50, label: 'The Dragonspine', hideMarker: true },
 ]
 
+// A bank chest on the arrival plaza, within reach of the tile you land (and
+// respawn) on: an instance is a closed room, so restocking has to happen in it.
+const SPAWN = { x: 32, z: 57 }
+const objects = [{ id: 'chest_1', type: 'bank_chest', x: SPAWN.x + 1, z: SPAWN.z }]
+
 // ── Collision post-pass, then reopen every route that must stay walkable ──
 for (const p of props) blockFootprint(p)
 carveMouth()
 for (const s of SPINES) clearRect(s.pass)
-const SPAWN = { x: 32, z: 57 }
 clearRect({ x: 28, z: 50, w: 9, h: 9 })
 clearRect({ x: 31, z: 20, w: 3, h: 40 })
 clearRect({ x: 20, z: 36, w: 24, h: 2 })
@@ -179,6 +183,7 @@ clearRect({ x: 26, z: 16, w: 13, h: 6 })
 for (const n of npcs) clear(n.x, n.z)
 for (const e of exits) clear(e.x, e.z)
 clear(SPAWN.x, SPAWN.z)
+for (const o of objects) clear(o.x, o.z)
 
 const zone = {
   id: 'dragon_roost',
@@ -187,10 +192,9 @@ const zone = {
   height: H,
   spawn: SPAWN,
   collision: grid.map((row) => row.join('')),
-  objects: [],
+  objects,
   npcs,
   exits,
-  deathRespawn: { zone: 'overworld', x: 272, z: 50 },
   props,
   palette: { walkableA: '#6a6a52', walkableB: '#5f6049', blockedA: '#4a4438', blockedB: '#3e3930' },
   ambience: { sky: '#4a3a44', hemiIntensity: 0.55, sunIntensity: 0.8 },
