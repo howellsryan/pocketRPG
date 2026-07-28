@@ -138,11 +138,16 @@ const exits = [
   { id: 'exit_farmland', x: 20, z: 39, toZone: 'overworld', toX: 170, toZ: 166, label: 'Farmland', hideMarker: true },
 ]
 
+// A bank chest inside the gate, within reach of the tile you land (and respawn)
+// on: an instance is a closed room, so restocking has to happen in it.
+const SPAWN = { x: 20, z: 35 }
+const objects = [{ id: 'chest_1', type: 'bank_chest', x: SPAWN.x + 1, z: SPAWN.z }]
+
 // ── Collision post-pass, then reopen everything that must stay walkable ──
 for (const p of props) blockFootprint(p)
 carveGate()
-const SPAWN = { x: 20, z: 35 }
 clear(SPAWN.x, SPAWN.z)
+for (const o of objects) clear(o.x, o.z)
 for (let z = 12; z <= 38; z++) for (const x of [19, 20, 21]) clear(x, z)
 for (const z of PADDOCK_GATE_Z) clear(PADDOCK.x1, z)
 for (const n of npcs) clear(n.x, n.z)
@@ -155,7 +160,7 @@ const zone = {
   height: H,
   spawn: SPAWN,
   collision: grid.map((row) => row.join('')),
-  objects: [],
+  objects,
   npcs,
   exits,
   props,

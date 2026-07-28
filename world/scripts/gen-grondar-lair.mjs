@@ -113,17 +113,22 @@ const npcs = [
 ]
 
 // The lair has no walk-in entrance: players arrive by instance handoff and the
-// door is the way back out. Dying does the same trip the hard way. No marker —
-// the door prop is the signpost; a glowing pad on a barrow floor is not.
+// door is the way back out. No marker — the door prop is the signpost; a
+// glowing pad on a barrow floor is not.
 const exits = [
   { id: 'exit_wilds', x: 20, z: 39, toZone: 'overworld', toX: 280, toZ: 56, label: 'The Wilds', hideMarker: true },
 ]
 
+// A bank chest inside the door, within reach of the tile you land (and respawn)
+// on: an instance is a closed room, so restocking has to happen in it.
+const SPAWN = { x: 20, z: 36 }
+const objects = [{ id: 'chest_1', type: 'bank_chest', x: SPAWN.x + 1, z: SPAWN.z }]
+
 // ── Collision post-pass, then reopen everything that must stay walkable ──
 for (const p of props) blockFootprint(p)
 carveEntry()
-const SPAWN = { x: 20, z: 36 }
 clear(SPAWN.x, SPAWN.z)
+for (const o of objects) clear(o.x, o.z)
 for (const n of npcs) clear(n.x, n.z)
 for (const e of exits) clear(e.x, e.z)
 
@@ -134,10 +139,9 @@ const zone = {
   height: H,
   spawn: SPAWN,
   collision: grid.map((row) => row.join('')),
-  objects: [],
+  objects,
   npcs,
   exits,
-  deathRespawn: { zone: 'overworld', x: 280, z: 56 },
   props,
   palette: { walkableA: '#3a352e', walkableB: '#332e28', blockedA: '#272320', blockedB: '#1e1b18' },
   ambience: { sky: '#0a0d12', hemiIntensity: 0.3, sunIntensity: 0.45 },

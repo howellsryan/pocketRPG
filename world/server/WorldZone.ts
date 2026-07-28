@@ -40,6 +40,7 @@ import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { zoneSpawnSummary, type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { baseRoomZone, isInstancedRoom, MAX_PLAYERS_PER_INSTANCE } from '../shared/instances'
 import { ZONES } from './zones'
+import { endOneLifeRun, flipOneLifeOff } from './oneLife'
 import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
 import { BURY_XP, healAmount, primaryInvAction, resolveEatTiming, resolveDrink } from '../shared/itemActions'
@@ -96,6 +97,10 @@ type Player = TickPlayer & {
    * player's own drops (see loot.ts). Lives on the session so a reconnect keeps
    * it without a second D1 read. */
   isIronman: boolean
+  /** From characters.is_one_life, stamped at hello. Dying in the world revokes
+   * it exactly as dying in the idle game does; cleared once the D1 flip lands,
+   * restored on failure so the next death retries. */
+  isOneLife: boolean
   sessionId: string
   flushSeq: number
   /** Provenance pools for every unit in the pack (see sessionItems.ts).
@@ -440,8 +445,8 @@ export class WorldZone extends Server<Env> {
     }
 
     const row = await this.env.DB.prepare(
-      'SELECT id, username, is_ironman FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
-    ).bind(payload.character_id, payload.sub).first<{ id: number; username: string; is_ironman: number | null }>()
+      'SELECT id, username, is_ironman, is_one_life FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    ).bind(payload.character_id, payload.sub).first<{ id: number; username: string; is_ironman: number | null; is_one_life: number | null }>()
     if (!row) {
       connection.close(1008, 'character_not_found')
       return
@@ -555,6 +560,7 @@ export class WorldZone extends Server<Env> {
       lastMsgTimes: [],
       identityId: String(payload.sub),
       isIronman: !!row.is_ironman,
+      isOneLife: !!row.is_one_life,
       sessionId: crypto.randomUUID(),
       flushSeq: 0,
       pools,
@@ -1491,10 +1497,13 @@ export class WorldZone extends Server<Env> {
   }
 
   private respawnPlayer(player: Player, playerEnts: Map<string, EntityDiff>): void {
+    endOneLifeRun(player, (id) => flipOneLifeOff(this.env, id))
     // Item 10: a zone can require dying to be a real trip back out (e.g. the
     // dungeon respawns at Varrick's entrance, not its own spawn ~40 tiles from
     // the bosses) — cross-zone, so it's the same DB update + reconnect the
-    // walk-onto-an-exit transition uses, not a same-zone teleport.
+    // walk-onto-an-exit transition uses, not a same-zone teleport. Instanced
+    // rooms deliberately omit it: a boss room is closed, so death returns you
+    // to its own entrance rather than ejecting you into the overworld.
     const deathRespawn = this.zone.deathRespawn
     if (deathRespawn) {
       void this.respawnAcrossZone(player, deathRespawn)

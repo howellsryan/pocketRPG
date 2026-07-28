@@ -83,6 +83,23 @@ describe.each([...INSTANCED_ZONES])('instanced lair %s', (zoneId) => {
     for (const exit of zone.exits ?? []) expect(seen.has(`${exit.x},${exit.z}`), `${zoneId} ${exit.id}`).toBe(true)
   })
 
+  it('keeps a death inside the instance', () => {
+    // An instanced room is closed: dying returns you to its own entrance. A
+    // `deathRespawn` would eject the party into the overworld and close the
+    // socket, which is the trip out they didn't ask for.
+    expect(zone.deathRespawn).toBeUndefined()
+  })
+
+  it('puts a bank chest within reach of the tile you arrive and respawn on', () => {
+    const chests = zone.objects.filter((o) => o.type === 'bank_chest')
+    expect(chests, `${zoneId} bank chest`).toHaveLength(1)
+    // chestAdjacent (WorldZone) is Chebyshev <= 1, so this is the difference
+    // between banking where you land and walking to find the chest.
+    const chest = chests[0]
+    expect(Math.max(Math.abs(chest.x - zone.spawn.x), Math.abs(chest.z - zone.spawn.z))).toBeLessThanOrEqual(1)
+    expect(zone.collision[chest.z][chest.x]).toBe('.')
+  })
+
   it('gives every monster open ground to be fought on', () => {
     for (const npc of zone.npcs) {
       let open = 0
@@ -134,11 +151,10 @@ describe("Grondar's lair zone", () => {
     expect(validateZone(grondarLair as unknown as ZoneDef)).toEqual({ valid: true })
   })
 
-  it('holds Grondar, a way out, and a death trip out of the instance', () => {
+  it('holds Grondar and a way out', () => {
     const zone = grondarLair as unknown as ZoneDef
     expect(zone.npcs.map((n) => n.monsterId)).toContain('warlord_grondar')
     expect(zone.exits?.some((e) => e.toZone === 'overworld')).toBe(true)
-    expect(zone.deathRespawn?.zone).toBe('overworld')
   })
 
   it('has room for a full instance to stand around the boss', () => {
