@@ -22,7 +22,7 @@ import { resolveSlayerTaskKill } from './slayerTasks.js'
 import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
-import { questRequirementMet } from './questGates.js'
+import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
 import {
   COOP_RAID_ADVANCE_TICKS,
   coopRaidData,
@@ -180,14 +180,6 @@ export function describeCoopActionRefusal(event) {
   }
   if (event?.reason === 'not_host') return 'Only the host can start the raid'
   return 'Could not do that'
-}
-
-function questIdList(completedQuests) {
-  if (Array.isArray(completedQuests)) return completedQuests.filter((q) => typeof q === 'string')
-  if (completedQuests && typeof completedQuests === 'object') {
-    return Object.keys(completedQuests).filter((q) => completedQuests[q])
-  }
-  return []
 }
 
 /** Mirrors checkEquipRequirements, but against the level map the session
@@ -389,7 +381,7 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     maxHP,
     stats,
     levels: allStatLevels(savePayload),
-    completedQuests: questIdList(savePayload?.completedQuests),
+    completedQuests: [...completedQuestsFromSave(savePayload)],
     equipment,
     inventory,
     status: 'alive',

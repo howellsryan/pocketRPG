@@ -68,7 +68,7 @@
         },
         {
           "id": "zaryth_the_empty_lord",
-          "label": "Zaryth, the Empty Lord",
+          "label": "Zaryth",
           "icon": "🕳️",
           "items": [
             "zaryth_vambraces",
@@ -76,8 +76,7 @@
             "zaryth_platebody",
             "zaryth_platelegs",
             "zaryth_crossbow",
-            "zaryth_hilt",
-            "zaryth_godsword"
+            "zaryth_hilt"
           ]
         },
         {

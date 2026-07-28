@@ -25,6 +25,30 @@ export function worldLairZone(monsterId) {
   return WORLD_MONSTER_LAIRS[monsterId] ?? null
 }
 
+/**
+ * The monster whose lair a zone is, or null when the zone is not a lair — the
+ * inverse of worldLairZone, for the server gate on world entry (a handoff
+ * names the zone, and the entry requirements are authored on the monster).
+ *
+ * Several monsters may share a room (the dragon roost), so this answers with
+ * the FIRST monster mapped to the zone: they are alternative occupants of one
+ * room, and a shared room can only be gated on one of them.
+ *
+ * Built lazily rather than at module scope: this file is concatenated into the
+ * single-file bundle and a top-level derived constant is a TDZ hazard (§12).
+ */
+let lairZoneToMonster = null
+export function worldLairMonster(zoneId) {
+  if (!zoneId) return null
+  if (!lairZoneToMonster) {
+    lairZoneToMonster = {}
+    for (const [monsterId, zone] of Object.entries(WORLD_MONSTER_LAIRS)) {
+      if (!(zone in lairZoneToMonster)) lairZoneToMonster[zone] = monsterId
+    }
+  }
+  return lairZoneToMonster[zoneId] ?? null
+}
+
 export function hasWorldLair(monsterId) {
   return worldLairZone(monsterId) != null
 }

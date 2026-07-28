@@ -28,6 +28,8 @@ import { PVP_SPECIAL_ATTACK_LABELS } from '../src/engine/pvpSpecialAttacks.js'
 import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
 import { createPvpState, processPvpTick } from '../src/engine/pvpEngine.js'
 import { monsterMechanics } from '../functions/_lib/mcp/reference.js'
+import bespokeIcons from '../src/data/bespokeIcons.json'
+import { MONSTER_ART } from '../src/utils/combatArt.js'
 import { readFileSync } from 'node:fs'
 import equipmentModels from '../src/data/equipmentModels.json'
 import { worldLairZone } from '../src/engine/worldLairs.js'
@@ -54,7 +56,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('Zaryth, the Empty Lord — monster data', () => {
+describe('Zaryth — monster data', () => {
   it('is the hardest boss in the game by combat level and hitpoints', () => {
     const others = Object.values(monstersData).filter((m: any) => m.boss && m.id !== BOSS)
     expect(boss.boss).toBe(true)
@@ -128,7 +130,7 @@ describe('Zaryth, the Empty Lord — monster data', () => {
   })
 })
 
-describe('Zaryth, the Empty Lord — entry gate', () => {
+describe('Zaryth — entry gate', () => {
   const ctx = (bossKillCounts: Record<string, number>) => ({
     slayerLevel: 99,
     completedQuests: new Set<string>(),
@@ -140,7 +142,7 @@ describe('Zaryth, the Empty Lord — entry gate', () => {
   it('is locked until all four god wars generals have been killed once', () => {
     const locked = checkBossRequirementsPure({ ...boss, id: BOSS }, ctx({ warlord_grondar: 1 }))
     expect(locked.locked).toBe(true)
-    expect(locked.reason).toContain('Zaryth, the Empty Lord')
+    expect(locked.reason).toContain('Zaryth')
   })
 
   it('opens once every prerequisite kill is on record', () => {
@@ -161,7 +163,7 @@ describe('Zaryth, the Empty Lord — entry gate', () => {
   })
 })
 
-describe('Zaryth, the Empty Lord — slayer assignment', () => {
+describe('Zaryth — slayer assignment', () => {
   it('is kept out of the boss-only slayer pool, which cannot verify its kill-count gate', () => {
     const zulKaar = SLAYER_MASTERS.find((m: any) => m.id === 'zul_kaar')!
     const ids = zulKaar.monsterPool.map((e: any) => (typeof e === 'string' ? e : e.id))
@@ -270,7 +272,7 @@ describe('Zaryth gear', () => {
   })
 
   it('marks every unique as a boss unique with a positive value', () => {
-    for (const id of [...UNIQUES, 'zaryth_godsword']) {
+    for (const id of UNIQUES) {
       expect(itemsData[id].isBossUnique, `${id} isBossUnique`).toBe(true)
       expect(itemsData[id].shopValue).toBeGreaterThan(0)
     }
@@ -310,6 +312,20 @@ describe('Zaryth special attacks', () => {
 
   it('registers the cleave as a self-healing special so the HP is actually restored', () => {
     expect(SELF_HEALING_SPEC_TYPES.has('empty_lord_cleave')).toBe(true)
+  })
+
+  it('matches the other life-stealing specials it shares its healing path with', () => {
+    // The cleave heals through the same specialHit.healAmount field these do,
+    // and the co-op room applies all of them from one branch — so a change to
+    // that field's meaning has to break here, not silently in a group fight.
+    const siphon = fire(
+      { weapon: { itemId: 'venom_blowpipe' }, ammo: { itemId: 'dragon_arrow', quantity: 100 } },
+      0,
+    )
+    expect(siphon.specType).toBe('toxic_siphon')
+    expect(siphon.totalDamage).toBeGreaterThan(0)
+    expect(siphon.healAmount).toBe(Math.floor(siphon.totalDamage / 2))
+    expect(SELF_HEALING_SPEC_TYPES.has('toxic_siphon')).toBe(true)
   })
 
   it('costs 50 energy and is described to the player on both weapons', () => {
@@ -463,7 +479,7 @@ describe('room-wide attacks in a co-op session', () => {
   })
 })
 
-describe('Zaryth, the Empty Lord — 3D rig', () => {
+describe('Zaryth — 3D rig', () => {
   const arena = (equipmentModels as any).monsters[BOSS]
 
   /** Clip names straight out of a GLB's JSON chunk — no three.js needed. */
@@ -522,13 +538,49 @@ describe('Zaryth, the Empty Lord — 3D rig', () => {
   })
 })
 
-describe('Zaryth, the Empty Lord — content wiring', () => {
+describe('Zaryth — naming, price and art', () => {
+  it('is named just "Zaryth"', () => {
+    expect(boss.name).toBe('Zaryth')
+    // The id keys D1 kill counts, the collection log and live saves — renaming
+    // the display name must never rename it.
+    expect(BOSS).toBe('zaryth_the_empty_lord')
+  })
+
+  it('costs 20 credits to skip', () => {
+    expect(boss.skipCost).toBe(20)
+  })
+
+  it('never drops the godsword — the hilt forges it', () => {
+    const dropped = new Set(boss.drops.map((d: any) => d.itemId))
+    expect(dropped.has('zaryth_hilt')).toBe(true)
+    expect(dropped.has('zaryth_godsword')).toBe(false)
+  })
+
+  it('has bespoke art for the boss and every unique it drops', () => {
+    // Falling through to a game-icons glyph is what the default looked like.
+    expect(bespokeIcons[BOSS], 'boss emblem missing').toBeDefined()
+    for (const id of UNIQUES.concat('zaryth_godsword')) {
+      expect(bespokeIcons[id], `${id} has no bespoke icon`).toBeDefined()
+      expect(bespokeIcons[id].body.length).toBeGreaterThan(200)
+    }
+  })
+
+  it('points its combat emblem at that bespoke art', () => {
+    expect(MONSTER_ART[BOSS].icon).toBe(BOSS)
+    expect(bespokeIcons[MONSTER_ART[BOSS].icon]).toBeDefined()
+  })
+})
+
+describe('Zaryth — content wiring', () => {
   it('has a collection log section covering every unique it can drop', () => {
     const section = (collectionLog as any).categories
       .flatMap((c: any) => c.sections)
       .find((s: any) => s.id === BOSS)
     expect(section, 'collection log section missing').toBeDefined()
-    for (const id of [...UNIQUES, 'zaryth_godsword']) {
+    // The godsword is forged from the hilt, never dropped — the four other god
+    // wars bosses log their hilt alone for the same reason.
+    expect(section.items).not.toContain('zaryth_godsword')
+    for (const id of UNIQUES) {
       expect(section.items, `${id} missing from collection log`).toContain(id)
     }
   })

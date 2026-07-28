@@ -22,6 +22,7 @@ import { countItem } from './inventory.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, isAddAlive, activeTarget, isAddTarget } from './bossAdds.js'
+import { monsterMaxHit } from './monsterMaxHit.js'
 
 
 function getAvasAmmoSaveChance(equipment) {
@@ -222,26 +223,11 @@ function resolveEnemySwing(attacker, attackStyle, state, boostedPlayerStats, pla
   const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8
   const defRoll = effDef * ((bonuses.defenceBonus[attackStyle] || bonuses.defenceBonus.crush || 0) + 64)
   const acc = hitChance(monsterAtkRoll, defRoll)
-  // Max hit precedence:
-  //  1. per-form maxHit (multi-form bosses)
-  //  2. derived from the offensive stat that matches the attack style —
-  //     ranged attacks scale with Ranged, magic with Magic, melee with Strength.
-  //     This is the single source of truth for non-multi-form monsters.
-  let monsterMaxHit
-  if (attacker.formMaxHit != null) {
-    monsterMaxHit = attacker.formMaxHit
-  } else if (attacker.maxHit != null) {
-    monsterMaxHit = attacker.maxHit
-  } else {
-    const damageStat = attackStyle === 'ranged'
-      ? attacker.stats.ranged
-      : attackStyle === 'magic'
-        ? attacker.stats.magic
-        : attacker.stats.strength
-    const stat = (damageStat == null) ? attacker.stats.strength : damageStat
-    monsterMaxHit = Math.floor(0.5 + (stat + 8) * ((attacker.strengthBonus || 0) + 64) / 640)
-  }
-  let damage = rollDamage(acc, monsterMaxHit)
+  // Per-form maxHit, then the monster's own, then derived from the stat that
+  // matches the attack style — monsterMaxHit.js owns that precedence so the
+  // info surfaces quote the same number this rolls.
+  const monsterMax = monsterMaxHit(attacker, attackStyle)
+  let damage = rollDamage(acc, monsterMax)
 
   // Apply protection prayer damage reduction if active and matches attack style
   if (state.activeProtectionPrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activeProtectionPrayer]) {

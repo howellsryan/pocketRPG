@@ -10798,12 +10798,12 @@
   },
   "zaryth_the_empty_lord": {
     "id": "zaryth_the_empty_lord",
-    "name": "Zaryth, the Empty Lord",
+    "name": "Zaryth",
     "icon": "🕳️",
     "boss": true,
     "combatLevel": 1500,
     "hitpoints": 3500,
-    "skipCost": 6,
+    "skipCost": 20,
     "killCountRequirement": {
       "warlord_grondar": 1,
       "commander_zephyra": 1,
