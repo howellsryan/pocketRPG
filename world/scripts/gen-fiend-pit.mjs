@@ -110,12 +110,12 @@ for (const r of LAVA) {
 }
 
 const npcs = [
-  { id: 'fiend_w1', monsterId: 'lesser_fiend', x: 10, z: 18, wander: { x: 7, z: 15, w: 8, h: 8 }, aggroRadius: 6 },
-  { id: 'fiend_w2', monsterId: 'lesser_fiend', x: 13, z: 24, wander: { x: 7, z: 21, w: 8, h: 8 }, aggroRadius: 6 },
-  { id: 'fiend_w3', monsterId: 'lesser_fiend', x: 10, z: 31, wander: { x: 7, z: 28, w: 8, h: 7 }, aggroRadius: 6 },
-  { id: 'fiend_e1', monsterId: 'lesser_fiend', x: 30, z: 18, wander: { x: 26, z: 15, w: 8, h: 8 }, aggroRadius: 6 },
-  { id: 'fiend_e2', monsterId: 'lesser_fiend', x: 27, z: 24, wander: { x: 26, z: 21, w: 8, h: 8 }, aggroRadius: 6 },
-  { id: 'fiend_e3', monsterId: 'lesser_fiend', x: 30, z: 31, wander: { x: 26, z: 28, w: 8, h: 7 }, aggroRadius: 6 },
+  { id: 'fiend_w1', monsterId: 'lesser_fiend', x: 10, z: 18, wander: { x: 7, z: 15, w: 8, h: 8 } },
+  { id: 'fiend_w2', monsterId: 'lesser_fiend', x: 13, z: 24, wander: { x: 7, z: 21, w: 8, h: 8 } },
+  { id: 'fiend_w3', monsterId: 'lesser_fiend', x: 10, z: 31, wander: { x: 7, z: 28, w: 8, h: 7 } },
+  { id: 'fiend_e1', monsterId: 'lesser_fiend', x: 30, z: 18, wander: { x: 26, z: 15, w: 8, h: 8 } },
+  { id: 'fiend_e2', monsterId: 'lesser_fiend', x: 27, z: 24, wander: { x: 26, z: 21, w: 8, h: 8 } },
+  { id: 'fiend_e3', monsterId: 'lesser_fiend', x: 30, z: 31, wander: { x: 26, z: 28, w: 8, h: 7 } },
 ]
 
 const exits = [

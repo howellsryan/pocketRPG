@@ -77,13 +77,24 @@ describe('monster model tint', () => {
 
 describe('newly registered monster models', () => {
   // A rebuild that loses a clip leaves makeAnimator returning null — the monster
-  // still renders, frozen in bind pose, with nothing failing loudly.
-  it.each(['lesser_fiend', 'green_dragon', 'pasture_bull'])('%s animates from its GLB', async (id) => {
+  // still renders, frozen in bind pose, with nothing failing loudly. The attack
+  // clip is the one that shipped missing: the server pulses an 'attack' anim on
+  // every monster swing, and a GLB without the clip stands still while its hit
+  // splat lands on the player.
+  it.each(['lesser_fiend', 'green_dragon', 'pasture_bull'])('%s animates its idle, walk, death AND attack', async (id) => {
     stubModelFetch()
     const { animator } = await createMonsterMesh(id)
     expect(animator?.kind).toBe('gltf')
     const actions = (animator as { actions: Record<string, unknown> }).actions
-    expect(Object.keys(actions).sort()).toEqual(['die', 'idle', 'walk'])
+    expect(Object.keys(actions).sort()).toEqual(['attack', 'die', 'idle', 'walk'])
+  })
+
+  it.each(['lesser_fiend', 'green_dragon', 'pasture_bull'])('%s delays its swing so the impact frame lands on the splat', async (id) => {
+    stubModelFetch()
+    const { animator } = await createMonsterMesh(id)
+    // Derived from attackImpactSec; 0 would mean the clip fires on the tick
+    // edge and the blow visibly lands early.
+    expect((animator as { swingDelayMs?: number }).swingDelayMs).toBeGreaterThan(0)
   })
 })
 

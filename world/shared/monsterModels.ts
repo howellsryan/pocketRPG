@@ -23,6 +23,11 @@ export type MonsterModel = {
    * these Quaternius models are untextured solid colours — recolouring
    * everything would flatten horns and eyes into the hide. */
   tint?: Record<string, string>
+  /** Seconds into this model's `attack` clip at which the blow lands. The
+   * client starts the clip late by the remainder of the tick so the impact
+   * frame hits on the same beat as the damage splat. Absent → the clip starts
+   * on the swing tick with no alignment. */
+  attackImpactSec?: number
 }
 
 export const MONSTER_MODELS: Record<string, MonsterModel> = {
@@ -61,6 +66,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     url: '/models/demon.glb',
     bounds: { minX: -2.33, minY: -0.02, minZ: -1.33, maxX: 2.33, maxY: 3.1, maxZ: 0.99 },
     targetHeight: 2.0,
+    attackImpactSec: 0.5,
   },
   // The bull predates the registry and rendered through the unregistered-monster
   // fallback (createCowMesh, which scales by body LENGTH). targetHeight is that
@@ -69,6 +75,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     url: '/models/cow.glb',
     bounds: { minX: -1.12, minY: -0.07, minZ: -3.78, maxX: 1.12, maxY: 5.08, maxZ: 5.4 },
     targetHeight: 0.8976,
+    attackImpactSec: 0.8,
   },
   // One dragon build, three hides. Sized by combat level (79 / 152 / 227); the
   // GLB only flies (Flying_Idle / Fast_Flying), so they hover as they wander.
@@ -77,6 +84,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
     targetHeight: 2.2,
     hover: 0.25,
+    attackImpactSec: 0.55,
     tint: { Dragon_Main: '#3f7a35', Dragon_Secondary: '#24451f' },
   },
   red_dragon: {
@@ -84,6 +92,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
     targetHeight: 2.5,
     hover: 0.25,
+    attackImpactSec: 0.55,
     tint: { Dragon_Main: '#8f2118', Dragon_Secondary: '#3d0f0a' },
   },
   black_dragon: {
@@ -91,6 +100,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
     targetHeight: 2.8,
     hover: 0.25,
+    attackImpactSec: 0.55,
     tint: { Dragon_Main: '#26262b', Dragon_Secondary: '#111114' },
   },
   // Dungeon boss — the imported GLB replaces its creatures3d blend-shell. Ships

@@ -149,18 +149,18 @@ for (let z = 58; z >= 40; z -= 6) {
 }
 
 const npcs = [
-  { id: 'green_1', monsterId: 'green_dragon', x: 12, z: 29, wander: { x: 7, z: 25, w: 14, h: 8 }, aggroRadius: 5 },
-  { id: 'green_2', monsterId: 'green_dragon', x: 18, z: 31, wander: { x: 7, z: 25, w: 14, h: 8 }, aggroRadius: 5 },
-  { id: 'green_3', monsterId: 'green_dragon', x: 11, z: 42, wander: { x: 7, z: 38, w: 14, h: 9 }, aggroRadius: 5 },
-  { id: 'green_4', monsterId: 'green_dragon', x: 19, z: 45, wander: { x: 7, z: 38, w: 14, h: 9 }, aggroRadius: 5 },
-  { id: 'red_1', monsterId: 'red_dragon', x: 44, z: 33, wander: { x: 41, z: 29, w: 14, h: 8 }, aggroRadius: 5 },
-  { id: 'red_2', monsterId: 'red_dragon', x: 52, z: 31, wander: { x: 41, z: 29, w: 14, h: 8 }, aggroRadius: 5 },
-  { id: 'red_3', monsterId: 'red_dragon', x: 45, z: 43, wander: { x: 41, z: 40, w: 14, h: 9 }, aggroRadius: 5 },
-  { id: 'red_4', monsterId: 'red_dragon', x: 54, z: 47, wander: { x: 41, z: 40, w: 14, h: 9 }, aggroRadius: 5 },
-  { id: 'black_1', monsterId: 'black_dragon', x: 24, z: 9, wander: { x: 18, z: 6, w: 12, h: 9 }, aggroRadius: 5 },
-  { id: 'black_2', monsterId: 'black_dragon', x: 40, z: 9, wander: { x: 34, z: 6, w: 12, h: 9 }, aggroRadius: 5 },
-  { id: 'black_3', monsterId: 'black_dragon', x: 22, z: 18, wander: { x: 16, z: 15, w: 12, h: 5 }, aggroRadius: 5 },
-  { id: 'black_4', monsterId: 'black_dragon', x: 42, z: 18, wander: { x: 36, z: 15, w: 12, h: 5 }, aggroRadius: 5 },
+  { id: 'green_1', monsterId: 'green_dragon', x: 12, z: 29, wander: { x: 7, z: 25, w: 14, h: 8 } },
+  { id: 'green_2', monsterId: 'green_dragon', x: 18, z: 31, wander: { x: 7, z: 25, w: 14, h: 8 } },
+  { id: 'green_3', monsterId: 'green_dragon', x: 11, z: 42, wander: { x: 7, z: 38, w: 14, h: 9 } },
+  { id: 'green_4', monsterId: 'green_dragon', x: 19, z: 45, wander: { x: 7, z: 38, w: 14, h: 9 } },
+  { id: 'red_1', monsterId: 'red_dragon', x: 44, z: 33, wander: { x: 41, z: 29, w: 14, h: 8 } },
+  { id: 'red_2', monsterId: 'red_dragon', x: 52, z: 31, wander: { x: 41, z: 29, w: 14, h: 8 } },
+  { id: 'red_3', monsterId: 'red_dragon', x: 45, z: 43, wander: { x: 41, z: 40, w: 14, h: 9 } },
+  { id: 'red_4', monsterId: 'red_dragon', x: 54, z: 47, wander: { x: 41, z: 40, w: 14, h: 9 } },
+  { id: 'black_1', monsterId: 'black_dragon', x: 24, z: 9, wander: { x: 18, z: 6, w: 12, h: 9 } },
+  { id: 'black_2', monsterId: 'black_dragon', x: 40, z: 9, wander: { x: 34, z: 6, w: 12, h: 9 } },
+  { id: 'black_3', monsterId: 'black_dragon', x: 22, z: 18, wander: { x: 16, z: 15, w: 12, h: 5 } },
+  { id: 'black_4', monsterId: 'black_dragon', x: 42, z: 18, wander: { x: 36, z: 15, w: 12, h: 5 } },
 ]
 
 const exits = [

@@ -123,14 +123,14 @@ for (const [x, z] of [[8, 34], [12, 35], [30, 12], [7, 13], [34, 34]]) {
 
 // ── Eight bulls: two herds, one per side of the lane, each kept to its field ──
 const npcs = [
-  { id: 'bull_p1', monsterId: 'pasture_bull', x: 9, z: 21, wander: { x: 7, z: 17, w: 9, h: 6 }, aggroRadius: 4 },
-  { id: 'bull_p2', monsterId: 'pasture_bull', x: 13, z: 22, wander: { x: 7, z: 17, w: 9, h: 6 }, aggroRadius: 4 },
-  { id: 'bull_p3', monsterId: 'pasture_bull', x: 10, z: 28, wander: { x: 7, z: 25, w: 9, h: 6 }, aggroRadius: 4 },
-  { id: 'bull_p4', monsterId: 'pasture_bull', x: 14, z: 29, wander: { x: 7, z: 25, w: 9, h: 6 }, aggroRadius: 4 },
-  { id: 'bull_m1', monsterId: 'pasture_bull', x: 27, z: 28, wander: { x: 25, z: 26, w: 9, h: 7 }, aggroRadius: 4 },
-  { id: 'bull_m2', monsterId: 'pasture_bull', x: 31, z: 29, wander: { x: 25, z: 26, w: 9, h: 7 }, aggroRadius: 4 },
-  { id: 'bull_m3', monsterId: 'pasture_bull', x: 28, z: 33, wander: { x: 25, z: 31, w: 9, h: 5 }, aggroRadius: 4 },
-  { id: 'bull_m4', monsterId: 'pasture_bull', x: 32, z: 34, wander: { x: 25, z: 31, w: 9, h: 5 }, aggroRadius: 4 },
+  { id: 'bull_p1', monsterId: 'pasture_bull', x: 9, z: 21, wander: { x: 7, z: 17, w: 9, h: 6 } },
+  { id: 'bull_p2', monsterId: 'pasture_bull', x: 13, z: 22, wander: { x: 7, z: 17, w: 9, h: 6 } },
+  { id: 'bull_p3', monsterId: 'pasture_bull', x: 10, z: 28, wander: { x: 7, z: 25, w: 9, h: 6 } },
+  { id: 'bull_p4', monsterId: 'pasture_bull', x: 14, z: 29, wander: { x: 7, z: 25, w: 9, h: 6 } },
+  { id: 'bull_m1', monsterId: 'pasture_bull', x: 27, z: 28, wander: { x: 25, z: 26, w: 9, h: 7 } },
+  { id: 'bull_m2', monsterId: 'pasture_bull', x: 31, z: 29, wander: { x: 25, z: 26, w: 9, h: 7 } },
+  { id: 'bull_m3', monsterId: 'pasture_bull', x: 28, z: 33, wander: { x: 25, z: 31, w: 9, h: 5 } },
+  { id: 'bull_m4', monsterId: 'pasture_bull', x: 32, z: 34, wander: { x: 25, z: 31, w: 9, h: 5 } },
 ]
 
 // Arrival is by instance handoff; the farm gate is the way back out.

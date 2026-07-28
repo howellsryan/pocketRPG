@@ -471,14 +471,6 @@ export function emitRunIfChanged(player: TickPlayer, events: ZoneEvent[]): void 
  * resumes the fight without a fresh interact, mirroring how a real aggressive
  * monster keeps swinging once it catches up (melee at 1 tile, ranged/magic from
  * their reach). */
-function findAggroInRange(player: TickPlayer, ctx: TickContext): NpcState | undefined {
-  const collision = ctx.collision ?? []
-  for (const npc of ctx.npcs?.values() ?? []) {
-    if (npc.state === 'combat' && npc.attackerId === player.charId && withinRangeAndSight(player, npc, monsterAttackRange(npc.monsterId), collision)) return npc
-  }
-  return undefined
-}
-
 /** Re-paths a following player toward their target's current tile (stopping
  * adjacent, never onto the occupied tile) when it has moved since the last
  * path was computed. No-ops (cheaply) when the target hasn't moved — pathing
@@ -507,15 +499,10 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   const result = emptyResult()
   const before = { x: player.x, z: player.z, anim: player.anim, hp: player.hp }
 
-  if (!player.combat) {
-    const aggroNpc = findAggroInRange(player, ctx)
-    if (aggroNpc) startCombat(player, aggroNpc, result)
-  }
-
-  // Combat (attacking or being attacked) always wins over following — cancel
-  // it here rather than only at the {t:'follow'}/clearIntents call sites, so
-  // this catches every way combat can start (aggro pull, an interact/attack,
-  // this tick's own aggro check above).
+  // Combat always wins over following — cancel it here rather than only at the
+  // {t:'follow'}/clearIntents call sites, so this catches every way combat can
+  // start. Nothing starts it but the player's own attack: a monster you have
+  // not clicked never drags you into a fight.
   if (player.combat) {
     player.following = null
     player.followTargetTile = null

@@ -324,7 +324,11 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
         if (spec.noLocomotionClip) animator.gait = { target: model, baseY: model.position.y, baseRotZ: model.rotation.z }
         // Sub-tick swing delay so this monster's impact frame lands on the hit
         // splat, exactly as the combat arena aligns it (shared windup helper).
-        animator.swingDelayMs = monsterAttackWindup(getMonsterModel(monsterId!)?.attackImpactSec ?? null, TICK_DURATION).startDelayMs
+        // The world registry wins over the arena's: these GLBs are built here
+        // and several monsters may share one, so the impact frame is a property
+        // of the world model, not of the arena entry (which most lack).
+        const impactSec = spec.attackImpactSec ?? getMonsterModel(monsterId!)?.attackImpactSec ?? null
+        animator.swingDelayMs = monsterAttackWindup(impactSec, TICK_DURATION).startDelayMs
       }
       return { mesh: group, animator }
     } catch {

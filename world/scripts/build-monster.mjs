@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Builds monster GLBs from the Quaternius Ultimate Monsters Bundle the same way
 // build-cow.mjs does: keep + rename only the clips the protocol needs
-// (idle/walk/die — npc attack anims are never broadcast), drop the rest, and
+// (idle/walk/die, plus attack where the source has one — the server DOES pulse
+// an npc 'attack' anim on every swing, and a GLB without the clip just stands
+// there while its hit splat lands), drop the rest, and
 // print the static world bounds the client registry needs (Box3.setFromObject
 // is unreliable for skinned meshes, so bounds are baked as constants).
 import { NodeIO } from '@gltf-transform/core'
@@ -28,9 +30,9 @@ const BUILDS = [
   { src: 'Frog.glb', out: 'frog.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
   // The bundle ships two demons: the flying one (Demon.glb) and this ground one,
   // which carries a trident and reads as a melee fiend.
-  { src: 'Demon-LnfIziKv4o.glb', out: 'demon.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
+  { src: 'Demon-LnfIziKv4o.glb', out: 'demon.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die', Punch: 'attack' } },
   // Dragons fly; one grey-base build serves green/red/black via the registry tint.
-  { src: 'Dragon.glb', out: 'dragon.glb', clips: { Flying_Idle: 'idle', Fast_Flying: 'walk', Death: 'die' } },
+  { src: 'Dragon.glb', out: 'dragon.glb', clips: { Flying_Idle: 'idle', Fast_Flying: 'walk', Death: 'die', Headbutt: 'attack' } },
 ]
 
 await MeshoptDecoder.ready
