@@ -373,6 +373,7 @@ export function coopBossRequirementFailure(bossId, saveObject) {
     completedQuests: questIdSet(saveObject),
     bossKillCounts: bossKillCountsFrom(saveObject),
     questsData,
+    monstersData,
   })
   if (!gate.locked) return null
   return { code: 'BOSS_REQUIREMENTS_NOT_MET', message: gate.reason }

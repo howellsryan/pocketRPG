@@ -4,7 +4,7 @@ import raidsData from '../data/raids.json'
 import placeMapsData from '../data/placeMaps.json'
 import monstersData from '../data/monsters.json'
 import { getPlace } from '../engine/world.js'
-import { getAddSpec } from '../engine/bossAdds.js'
+import { getAddSpec, addDefinitionsFor, selectAddDefinition } from '../engine/bossAdds.js'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Combat art system for the mobile combat redesign.
@@ -115,6 +115,10 @@ export const MONSTER_ART = {
   "nightfang_beast": { icon: "bat", accent: "#c0453b" },
   "threefang_cerberus": { icon: "wolf_head", accent: "#c0453b" },
   "corporeal_horror": { icon: "bleeding_eye", accent: "#8b4fd6" },
+  "zaryth_the_empty_lord": { icon: "crowned_skull", accent: "#6b46c1" },
+  "zaryth_blade_sentinel": { icon: "winged_sword", accent: "#6b46c1" },
+  "zaryth_bolt_sentinel": { icon: "spectre", accent: "#6b46c1" },
+  "zaryth_rune_sentinel": { icon: "crystal_ball", accent: "#6b46c1" },
   "ashen_hydra": { icon: "hydra", accent: "#c0453b" },
   "green_dragon": { icon: "dragon_head", accent: "#3fb56b" },
   "red_dragon": { icon: "dragon_head", accent: "#d23b2f" },
@@ -340,7 +344,10 @@ export function getMonsterMaxHit(monster) {
 // Returns { add, spawnLabel } or null.
 export function getMonsterAddInfo(monster) {
   const spec = getAddSpec(monster)
-  const add = spec && monstersData[spec.monsterId]
+  const definitions = spec ? addDefinitionsFor(spec, monstersData) : null
+  // A style-rotating boss has one add per form; the panel previews the add for
+  // the form it opens in, which is the one the player meets first.
+  const add = selectAddDefinition(definitions, { currentForm: monster?.initialForm })
   if (!add) return null
   const range = spec.respawnAfterAttacks ?? spec.firstSpawnAfterAttacks
   const bounds = Array.isArray(range) ? range : (Number.isFinite(Number(range)) ? [range, range] : null)

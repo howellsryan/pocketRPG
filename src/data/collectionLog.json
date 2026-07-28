@@ -67,6 +67,20 @@
           ]
         },
         {
+          "id": "zaryth_the_empty_lord",
+          "label": "Zaryth, the Empty Lord",
+          "icon": "🕳️",
+          "items": [
+            "zaryth_vambraces",
+            "zaryth_helm",
+            "zaryth_platebody",
+            "zaryth_platelegs",
+            "zaryth_crossbow",
+            "zaryth_hilt",
+            "zaryth_godsword"
+          ]
+        },
+        {
           "id": "threefang_cerberus",
           "label": "Threefang Cerberus",
           "icon": "\ud83d\udc51",

@@ -21,6 +21,7 @@ import { questRequirementMet } from './questGates.js'
  * @param {Set<string>|{has:(id:string)=>boolean}} ctx.completedQuests
  * @param {Record<string, number>} ctx.bossKillCounts
  * @param {Array<{id:string,name:string}>} ctx.questsData
+ * @param {Record<string, {name?:string}>} [ctx.monstersData] - names prerequisite bosses
  */
 export function checkBossRequirementsPure(monster, ctx = {}) {
   const {
@@ -28,6 +29,7 @@ export function checkBossRequirementsPure(monster, ctx = {}) {
     completedQuests = new Set(),
     bossKillCounts = {},
     questsData = [],
+    monstersData = {},
   } = ctx
 
   if (!monster) return { locked: false }
@@ -48,6 +50,17 @@ export function checkBossRequirementsPure(monster, ctx = {}) {
   // Ember Tyrant kill.
   if (monster.id === 'ashen_crucible' && (!bossKillCounts['ember_tyrant'] || bossKillCounts['ember_tyrant'] < 1)) {
     return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
+  }
+
+  // Data-driven kill-count prerequisites: `killCountRequirement` maps a monster
+  // id to the kills needed before this boss opens. Names are resolved through
+  // the monster table so the reason reads as a boss name, not an id.
+  for (const [requiredId, requiredKills] of Object.entries(monster.killCountRequirement || {})) {
+    const needed = Math.max(1, Math.floor(Number(requiredKills) || 1))
+    if ((Number(bossKillCounts[requiredId]) || 0) >= needed) continue
+    const name = monstersData?.[requiredId]?.name || requiredId.replace(/_/g, ' ')
+    const times = needed === 1 ? '' : ` ${needed} times`
+    return { locked: true, reason: `Defeat ${name}${times} to challenge ${monster.name}` }
   }
 
   return { locked: false }

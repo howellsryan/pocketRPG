@@ -21,7 +21,7 @@ import { getMonsterCharmDrops, getSummoningCreature, rollSummonAttack, SUMMON_AT
 import { countItem } from './inventory.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
-import { getAddSpec, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, isAddAlive, activeTarget, isAddTarget } from './bossAdds.js'
+import { getAddSpec, addDefinitionsFor, selectAddDefinition, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, isAddAlive, activeTarget, isAddTarget } from './bossAdds.js'
 
 
 function getAvasAmmoSaveChance(equipment) {
@@ -46,7 +46,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
   // Apply initial form for multi-form bosses (e.g. Venomcoil Matriarch)
   let preparedMonster = prepareMonster(monster)
   const addSpec = getAddSpec(monster)
-  const addDefinition = addSpec && monstersData ? monstersData[addSpec.monsterId] || null : null
+  const addDefinitions = addSpec ? addDefinitionsFor(addSpec, monstersData) : null
+  const addDefinition = selectAddDefinition(addDefinitions, preparedMonster)
   return {
     active: true,
     monster: preparedMonster,
@@ -74,7 +75,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     raid: null,                    // raid state: { raidId, bosses[], currentBossIndex, monstersData }
     summon: null,                  // active summoned creature: { creatureId, ticksLeft, attackTimer }
     // Boss add (e.g. the Dread Core): a second live monster, not a form change.
-    addDefinition,                 // monster definition the boss spawns, or null
+    addDefinition,                 // monster definition the boss spawns right now, or null
+    addDefinitions,                // every add the boss can spawn, keyed by the form that summons it
     add: null,                     // the spawned add while it is alive
     addTargeted: false,            // player swings at the add instead of the boss
     addSpawnCountdown: addDefinition ? rollFirstSpawnDelay(addSpec) : null,
@@ -1148,10 +1150,12 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     state.monsterAttackTimer = monster.attackSpeed || 4
 
     // ── Add spawn ──
-    if (state.addDefinition && !state.add && typeof state.addSpawnCountdown === 'number') {
+    if ((state.addDefinitions || state.addDefinition) && !state.add && typeof state.addSpawnCountdown === 'number') {
       state.addSpawnCountdown--
       if (state.addSpawnCountdown <= 0) {
-        state.add = prepareAdd(state.addDefinition)
+        // Resolved at spawn time, not at fight start: a style-rotating boss
+        // summons the minion matching the form it is in when the timer lands.
+        state.add = prepareAdd(selectAddDefinition(state.addDefinitions, monster) || state.addDefinition)
         state.addSpawnCountdown = null
         events.push({
           type: 'addSpawned',
@@ -1655,6 +1659,42 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
       events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'pebble_shot', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'empty_bolt': {
+      // Zaryth Crossbow — guaranteed hit at 150% max hit. No accuracy roll at
+      // all, so the floor is 1: this special can never be a zero.
+      const styleBonus = getRangedStyleBonus(state.stance)
+      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      const maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * 1.5)
+      const damage = randInt(1, Math.max(1, maxHit))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'empty_bolt', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'empty_lord_cleave': {
+      // Zaryth Godsword — 150% max hit, healing for half the damage that lands.
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * 1.5)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const healAmount = Math.floor(actual / 2)
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'empty_lord_cleave', healAmount, monsterHP: monster.currentHP })
       break
     }
 

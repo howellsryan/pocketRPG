@@ -195,7 +195,15 @@ export const SLAYER_MASTERS = [
       // Every monster with boss:true in monsters.json except raid monsters
       // (RAID_MONSTER_IDS — both sub-bosses and final bosses): none of them are
       // individually assignable, only a full raid clear is.
-      ...Object.keys(monstersData).filter(id => monstersData[id]?.boss === true && !RAID_MONSTER_IDS.has(id)).map(id => ({ id, boss: true })),
+      //
+      // Also excluded: bosses gated on kill counts of OTHER bosses
+      // (`killCountRequirement`). Eligibility here is checked against slayer
+      // level and quests only, so assigning one would hand out a task the
+      // combat screen and the server both refuse to start — a dead end the
+      // player can only pay to skip.
+      ...Object.keys(monstersData)
+        .filter(id => monstersData[id]?.boss === true && !RAID_MONSTER_IDS.has(id) && !monstersData[id]?.killCountRequirement)
+        .map(id => ({ id, boss: true })),
       // Raid-completion proxy entries: each is the raid's final boss, overridden
       // to a [2,10] task range instead of the master's [5,50] bossTaskRange.
       ...Object.keys(RAID_TASK_META).map(id => ({ id, boss: true, taskRange: [2, 10] })),

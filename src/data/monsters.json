@@ -10795,5 +10795,388 @@
     "noSeedDrops": true,
     "noCharmDrops": true,
     "legacy_id": "dark_energy_core"
+  },
+  "zaryth_the_empty_lord": {
+    "id": "zaryth_the_empty_lord",
+    "name": "Zaryth, the Empty Lord",
+    "icon": "🕳️",
+    "boss": true,
+    "combatLevel": 1500,
+    "hitpoints": 3500,
+    "skipCost": 6,
+    "killCountRequirement": {
+      "warlord_grondar": 1,
+      "commander_zephyra": 1,
+      "krylth_the_defiler": 1,
+      "skyrender_kharra": 1
+    },
+    "stats": {
+      "attack": 420,
+      "strength": 420,
+      "defence": 400,
+      "magic": 440,
+      "ranged": 440
+    },
+    "attackSpeed": 3,
+    "attackStyle": "ranged",
+    "attackBonus": 280,
+    "strengthBonus": 240,
+    "defenceBonus": {
+      "stab": 180,
+      "slash": 180,
+      "crush": 180,
+      "magic": 180,
+      "ranged": 180
+    },
+    "roomWideAttacks": true,
+    "multiForm": true,
+    "randomFormEveryAttack": true,
+    "initialForm": "ranged",
+    "forms": {
+      "ranged": {
+        "displayName": "Empty Volley",
+        "icon": "🏹",
+        "attackStyle": "ranged",
+        "weakness": "stab",
+        "maxHit": 60,
+        "attackBonus": 300,
+        "strengthBonus": 260,
+        "defenceBonus": {
+          "stab": 170,
+          "slash": 190,
+          "crush": 190,
+          "magic": 200,
+          "ranged": 210
+        }
+      },
+      "magic": {
+        "displayName": "Empty Word",
+        "icon": "🔮",
+        "attackStyle": "magic",
+        "weakness": "stab",
+        "maxHit": 40,
+        "attackBonus": 320,
+        "strengthBonus": 220,
+        "defenceBonus": {
+          "stab": 170,
+          "slash": 190,
+          "crush": 190,
+          "magic": 230,
+          "ranged": 190
+        }
+      },
+      "melee": {
+        "displayName": "Empty Hand",
+        "icon": "⚔️",
+        "attackStyle": "crush",
+        "weakness": "stab",
+        "maxHit": 35,
+        "attackBonus": 280,
+        "strengthBonus": 200,
+        "defenceBonus": {
+          "stab": 170,
+          "slash": 200,
+          "crush": 200,
+          "magic": 190,
+          "ranged": 190
+        }
+      }
+    },
+    "spawnsAdd": {
+      "monsterIdByStyle": {
+        "melee": "zaryth_blade_sentinel",
+        "ranged": "zaryth_bolt_sentinel",
+        "magic": "zaryth_rune_sentinel"
+      },
+      "firstSpawnAfterAttacks": [8, 12],
+      "respawnAfterAttacks": [8, 12]
+    },
+    "dropRolls": 1,
+    "drops": [
+      {
+        "itemId": "coins",
+        "quantity": [
+          350000,
+          650000
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "zaryth_vambraces",
+        "quantity": 1,
+        "chance": 0.0078125
+      },
+      {
+        "itemId": "zaryth_helm",
+        "quantity": 1,
+        "chance": 0.00390625
+      },
+      {
+        "itemId": "zaryth_platebody",
+        "quantity": 1,
+        "chance": 0.00390625
+      },
+      {
+        "itemId": "zaryth_platelegs",
+        "quantity": 1,
+        "chance": 0.00390625
+      },
+      {
+        "itemId": "zaryth_crossbow",
+        "quantity": 1,
+        "chance": 0.00390625
+      },
+      {
+        "itemId": "zaryth_hilt",
+        "quantity": 1,
+        "chance": 0.00390625
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          400,
+          700
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          300,
+          600
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          250,
+          500
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "wrath_rune",
+        "quantity": [
+          150,
+          300
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": [
+          200,
+          400
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "manta_ray",
+        "quantity": [
+          15,
+          25
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "anglerfish",
+        "quantity": [
+          10,
+          20
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "super_restore",
+        "quantity": [
+          4,
+          8
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "lumira_brew",
+        "quantity": [
+          4,
+          8
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "prayer_potion",
+        "quantity": [
+          4,
+          8
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "ranging_potion",
+        "quantity": [
+          3,
+          6
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "onyx_dragon_bolt_e",
+        "quantity": [
+          80,
+          150
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "seraphic_arrow",
+        "quantity": [
+          80,
+          150
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          8,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          8,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "thornspire",
+        "quantity": [
+          8,
+          15
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "runeforged_ore",
+        "quantity": [
+          15,
+          30
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "adamantite_ore",
+        "quantity": [
+          30,
+          60
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "clue_scroll_master",
+        "quantity": 1,
+        "chance": 0.02
+      }
+    ]
+  },
+  "zaryth_blade_sentinel": {
+    "id": "zaryth_blade_sentinel",
+    "name": "Zaryth Blade Sentinel",
+    "icon": "⚔️",
+    "isAdd": true,
+    "summonedBy": "zaryth_the_empty_lord",
+    "combatLevel": 240,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 260,
+      "strength": 200,
+      "defence": 120,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "maxHit": 15,
+    "weakness": "crush",
+    "attackBonus": 200,
+    "strengthBonus": 120,
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 20,
+      "magic": 60,
+      "ranged": 60
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "zaryth_bolt_sentinel": {
+    "id": "zaryth_bolt_sentinel",
+    "name": "Zaryth Bolt Sentinel",
+    "icon": "🏹",
+    "isAdd": true,
+    "summonedBy": "zaryth_the_empty_lord",
+    "combatLevel": 240,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 120,
+      "magic": 1,
+      "ranged": 260
+    },
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "maxHit": 15,
+    "weakness": "stab",
+    "attackBonus": 210,
+    "strengthBonus": 120,
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 40,
+      "crush": 60,
+      "magic": 60,
+      "ranged": 40
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "zaryth_rune_sentinel": {
+    "id": "zaryth_rune_sentinel",
+    "name": "Zaryth Rune Sentinel",
+    "icon": "🔮",
+    "isAdd": true,
+    "summonedBy": "zaryth_the_empty_lord",
+    "combatLevel": 240,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 120,
+      "magic": 260,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "maxHit": 15,
+    "weakness": "ranged",
+    "attackBonus": 220,
+    "strengthBonus": 120,
+    "defenceBonus": {
+      "stab": 60,
+      "slash": 40,
+      "crush": 40,
+      "magic": 20,
+      "ranged": 60
+    },
+    "prayerDrainPerHit": 4,
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
   }
 }

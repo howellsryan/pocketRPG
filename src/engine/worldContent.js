@@ -367,7 +367,7 @@ export function activityLockReason(kind, ref, ctx = {}) {
   }
   if (kind === 'combat') {
     const check = checkBossRequirementsPure(monstersById[ref], {
-      slayerLevel: levelOf('slayer'), completedQuests, bossKillCounts, questsData,
+      slayerLevel: levelOf('slayer'), completedQuests, bossKillCounts, questsData, monstersData: monstersById,
     })
     return check.locked ? { reason: check.reason } : null
   }

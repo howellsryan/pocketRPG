@@ -135,6 +135,14 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'runeward_wraithbone_shield',
   'aegis_wraithbone_shield',
   'vigil_wraithbone_shield',
+
+  // Zaryth, the Empty Lord — drops plus the godsword the hilt builds
+  'zaryth_helm',
+  'zaryth_platebody',
+  'zaryth_platelegs',
+  'zaryth_crossbow',
+  'zaryth_hilt',
+  'zaryth_godsword',
 ])
 describe('data contracts', () => {
   it('item ids match keys and equipment slots are valid when present', () => {

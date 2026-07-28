@@ -38,7 +38,7 @@ import { addItem, removeItem, freeSlots, countItem } from '../engine/inventory.j
 import { SUMMONING_CREATURES, getSummoningCreature, createSummonState, getMonsterCharmDrops } from '../engine/summoning.js'
 import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
-import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
+import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel, SELF_HEALING_SPEC_TYPES } from '../engine/specialAttackEnergy.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, lastSaveLockCode } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
@@ -141,6 +141,12 @@ const COMBAT_CATEGORIES = [
     label: 'Corporeal Horror',
     icon: '👁️',
     ids: ['corporeal_horror'],
+  },
+  {
+    key: 'zaryth_the_empty_lord',
+    label: 'The Empty Throne',
+    icon: '🕳️',
+    ids: ['zaryth_the_empty_lord'],
   },
   {
     key: 'blighted_gauntlet',
@@ -771,7 +777,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             volley: '🌿🌿🌿 Volley',
             soul_drain: ev.prayerRestored > 0 ? `🌑 Soul Drain (+${ev.prayerRestored} Prayer)` : '🌑 Soul Drain',
             volatile_surge: '🌩️ Volatile Surge',
-            disrupt: '🌋 Disrupt'
+            disrupt: '🌋 Disrupt',
+            empty_bolt: '🕳️ Empty Bolt',
+            empty_lord_cleave: `🕳️ Empty Lord's Cleave (+${ev.healAmount || 0} HP)`
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -779,7 +787,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             type: 'special',
             time: Date.now()
           }])
-          if ((ev.specType === 'healing_blade' || ev.specType === 'toxic_siphon' || ev.specType === 'soul_leech') && ev.healAmount > 0) {
+          if (SELF_HEALING_SPEC_TYPES.has(ev.specType) && ev.healAmount > 0) {
             const maxHP = getMaxHP()
             const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
             updateHP(newHP)
@@ -1361,6 +1369,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     completedQuests,
     bossKillCounts,
     questsData,
+    monstersData,
   })
 
   const checkRaidRequirements = (raid) => checkRaidRequirementsPure(raid, { completedQuests })

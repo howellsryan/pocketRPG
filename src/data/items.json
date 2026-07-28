@@ -10140,6 +10140,196 @@
     "isGeneralStore": false,
     "isBossUnique": true
   },
+  "zaryth_helm": {
+    "id": "zaryth_helm",
+    "name": "Zaryth Helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 60,
+      "slash": 60,
+      "crush": 60,
+      "magic": -6,
+      "ranged": -6
+    },
+    "defenceBonus": {
+      "stab": 90,
+      "slash": 95,
+      "crush": 100,
+      "magic": 20,
+      "ranged": 90
+    },
+    "otherBonus": {
+      "meleeStrength": 10,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "meleeDamage": 3
+    },
+    "requirements": {
+      "defence": 90
+    },
+    "shopValue": 1000000000,
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "zaryth_platebody": {
+    "id": "zaryth_platebody",
+    "name": "Zaryth Platebody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 35,
+      "slash": 35,
+      "crush": 35,
+      "magic": -35,
+      "ranged": -18
+    },
+    "defenceBonus": {
+      "stab": 150,
+      "slash": 148,
+      "crush": 140,
+      "magic": 22,
+      "ranged": 155
+    },
+    "otherBonus": {
+      "meleeStrength": 20,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "meleeDamage": 10
+    },
+    "requirements": {
+      "defence": 90
+    },
+    "shopValue": 1000000000,
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "zaryth_platelegs": {
+    "id": "zaryth_platelegs",
+    "name": "Zaryth Platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 28,
+      "slash": 28,
+      "crush": 28,
+      "magic": -25,
+      "ranged": -13
+    },
+    "defenceBonus": {
+      "stab": 110,
+      "slash": 108,
+      "crush": 105,
+      "magic": 16,
+      "ranged": 112
+    },
+    "otherBonus": {
+      "meleeStrength": 15,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "meleeDamage": 8
+    },
+    "requirements": {
+      "defence": 90
+    },
+    "shopValue": 1000000000,
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "zaryth_crossbow": {
+    "id": "zaryth_crossbow",
+    "name": "Zaryth Crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "weaponClass": "crossbow",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 135
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 145,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 92
+    },
+    "specialAttack": {
+      "type": "empty_bolt",
+      "energyCost": 50,
+      "description": "Empty Bolt: A bolt that cannot be turned aside. Always hits, for up to 150% of your normal ranged max hit."
+    },
+    "shopValue": 750000000,
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "zaryth_hilt": {
+    "id": "zaryth_hilt",
+    "name": "Zaryth Hilt",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 500000000,
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "zaryth_godsword": {
+    "id": "zaryth_godsword",
+    "name": "Zaryth Godsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 190,
+      "crush": 150,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 240,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "meleeDamage": 5
+    },
+    "requirements": {
+      "attack": 92
+    },
+    "specialAttack": {
+      "type": "empty_lord_cleave",
+      "energyCost": 50,
+      "description": "Empty Lord's Cleave: A strike at 150% of your normal max hit that restores half the damage dealt as health."
+    },
+    "shopValue": 576000000,
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
   "ghraxis_rapier": {
     "id": "ghraxis_rapier",
     "legacy_item_id": "ghrazi_rapier",

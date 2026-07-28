@@ -69,6 +69,7 @@ export const COOP_BOSSES = {
   warlord_grondar: {},
   krylth_the_defiler: {},
   corporeal_horror: {},
+  zaryth_the_empty_lord: {},
 }
 export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
 /**
@@ -86,6 +87,34 @@ export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
  * `ceil(ticks * 0.6)`, so 8 is the longest wait that still reads "5s".
  */
 export const COOP_RESPAWN_TICKS = 8
+
+/**
+ * A boss that swings at everybody in the room rather than at one target.
+ * Data-driven so opening the mechanic to another boss is a monsters.json edit.
+ */
+export function isRoomWideAttacker(monster) {
+  return !!monster?.roomWideAttacks
+}
+
+/**
+ * Advances the ROOM's copy of a room-wide attacker's attack clock and answers
+ * whether it swings this tick. The clock cannot live on the member sessions:
+ * those are rebuilt every tick and would each run their own, so the boss would
+ * attack once per member instead of once per room. An absent timer is a session
+ * that predates the mechanic — start it at the boss's own speed rather than 0,
+ * which would make it swing the instant the room reloads.
+ */
+export function advanceRoomWideAttackTimer(boss) {
+  const speed = Math.max(1, Math.floor(Number(boss?.attackSpeed) || 4))
+  const current = Number.isFinite(Number(boss?.attackTimer)) ? Number(boss.attackTimer) : speed
+  const next = current - 1
+  if (next > 0) {
+    boss.attackTimer = next
+    return false
+  }
+  boss.attackTimer = speed
+  return true
+}
 
 export function isCoopBossId(bossId) {
   return typeof bossId === 'string' && Object.prototype.hasOwnProperty.call(COOP_BOSSES, bossId)
@@ -224,6 +253,7 @@ export function createCoopBossState(bossId, monstersData, now = Date.now()) {
       currentHP: seed.monster.currentHP,
       maxHP: seed.monster.currentHP,
       attackSpeed: seed.monster.attackSpeed || 4,
+      attackTimer: seed.monster.attackSpeed || 4,
       monster: pickMutableMonsterFields(seed.monster),
       add: null,
       addSpawnCountdown: seed.addSpawnCountdown,
@@ -969,6 +999,8 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   // attack on the same tick — the boss getting a free extra hit for every
   // player it drops.
   let bossSwungThisTick = false
+  const roomWide = isRoomWideAttacker(monstersData?.[next.bossId])
+  const roomWideSwing = roomWide && advanceRoomWideAttackTimer(next.boss)
 
   for (const id of memberIds) {
     const member = next.members[id]
@@ -979,8 +1011,12 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     const engine = hydrateCombatState(next, member, monstersData, spellsData)
     if (!engine) continue
     // Invariant 1: a non-target member's session must never resolve a boss
-    // swing, or the boss attacks once per member per tick.
-    if (!isTarget) engine.monsterAttackTimer = Math.max(2, engine.monster.attackSpeed || 4)
+    // swing, or the boss attacks once per member per tick. A room-wide attacker
+    // is the deliberate exception — the ROOM owns its clock (above), so every
+    // session resolves the same swing and each member rolls their own accuracy
+    // and protection prayer against it.
+    if (roomWide) engine.monsterAttackTimer = roomWideSwing ? 0 : Math.max(2, engine.monster.attackSpeed || 4)
+    else if (!isTarget) engine.monsterAttackTimer = Math.max(2, engine.monster.attackSpeed || 4)
 
     const hpBefore = engine.monster.currentHP
     const addHpBefore = engine.add?.currentHP ?? null
@@ -1022,11 +1058,16 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     }
 
     for (const ev of engineEvents) {
-      // Incoming from the boss — only the member it is actually facing.
-      if ((ev.type === 'monsterHit' || ev.type === 'dragonfireHit') && isTarget) {
-        member.hp = Math.max(0, member.hp - (ev.damage || 0))
-        bossSwungThisTick = true
-      } else if (ev.type === 'monsterMiss' && isTarget) {
+      // Incoming from the boss — only the member it is actually facing, unless
+      // the boss attacks the whole room. Its minions never do: they stay on the
+      // target, so a room-wide swing is the boss's alone.
+      if (ev.type === 'monsterHit' || ev.type === 'dragonfireHit') {
+        const lands = roomWide ? (ev.fromAdd ? isTarget : true) : isTarget
+        if (lands) {
+          member.hp = Math.max(0, member.hp - (ev.damage || 0))
+          if (!roomWide) bossSwungThisTick = true
+        }
+      } else if (ev.type === 'monsterMiss' && isTarget && !roomWide) {
         bossSwungThisTick = true
       // Self-inflicted (blood-forfeit bolts): costs the shooter regardless of
       // who the boss happens to be facing.
@@ -1034,6 +1075,11 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
         member.hp = Math.max(0, member.hp - ev.selfDamage)
       } else if (ev.type === 'guthanHeal' || ev.type === 'sangHeal') {
         member.hp = Math.min(member.maxHP, member.hp + (ev.healAmount || 0))
+      // Life-stealing specials (Zaryth Godsword, Healing Blade, Toxic Siphon,
+      // Soul Leech) heal in the solo engine by returning this field; the room
+      // has to apply it or the same weapon silently stops healing in a group.
+      } else if (ev.type === 'specialHit' && ev.healAmount > 0) {
+        member.hp = Math.min(member.maxHP, member.hp + ev.healAmount)
       }
       if (ev.type === 'monsterDeath') {
         kill = { bossId: next.bossId, monster: ev.monster, xpGained: { ...(ev.xpGained || {}) } }

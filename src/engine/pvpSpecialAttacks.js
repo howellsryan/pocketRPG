@@ -26,6 +26,8 @@ export const PVP_SPECIAL_ATTACK_LABELS = {
   volley: '🌿🌿🌿 Volley',
   soul_drain: '🌑 Soul Drain',
   volatile_surge: '🌩️ Volatile Surge',
+  empty_bolt: '🕳️ Empty Bolt',
+  empty_lord_cleave: "🕳️ Empty Lord's Cleave",
 }
 
 export const SUPPORTED_PVP_SPECIAL_ATTACK_TYPES = new Set(Object.keys(PVP_SPECIAL_ATTACK_LABELS))

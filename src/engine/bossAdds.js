@@ -9,8 +9,39 @@ const DEFAULT_RESPAWN = [10, 16]
 
 export function getAddSpec(monster) {
   const spec = monster?.spawnsAdd
-  if (!spec || typeof spec !== 'object' || !spec.monsterId) return null
+  if (!spec || typeof spec !== 'object') return null
+  if (!spec.monsterId && !spec.monsterIdByStyle) return null
   return spec
+}
+
+/**
+ * Every add a spec can summon, keyed by the boss form that summons it. A spec
+ * naming one `monsterId` collapses to a single `default` entry, so callers
+ * never branch on which authoring shape was used.
+ */
+export function addDefinitionsFor(spec, monstersData) {
+  if (!spec || !monstersData) return null
+  const byStyle = spec.monsterIdByStyle
+  if (byStyle && typeof byStyle === 'object') {
+    const out = {}
+    for (const [style, id] of Object.entries(byStyle)) {
+      const definition = monstersData[id]
+      if (definition) out[style] = definition
+    }
+    return Object.keys(out).length ? out : null
+  }
+  const definition = monstersData[spec.monsterId]
+  return definition ? { default: definition } : null
+}
+
+/**
+ * The add a boss summons right now. A style-rotating boss is flanked by the add
+ * matching the form it is currently in, so the minion always shares its style.
+ */
+export function selectAddDefinition(definitions, monster) {
+  if (!definitions) return null
+  const forForm = monster?.currentForm ? definitions[monster.currentForm] : null
+  return forForm || definitions.default || Object.values(definitions)[0] || null
 }
 
 function rollRange(range, fallback, random) {
