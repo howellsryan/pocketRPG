@@ -51,6 +51,7 @@ import {
   pushEvents,
   staleMemberIds,
 } from '../../functions/_lib/game/coopProjection.js'
+import { revokeOneLifeIfSet } from './oneLife'
 import type { Env } from './env'
 
 const TICK_MS = 600
@@ -98,6 +99,11 @@ export class CoopBossRoom {
    * acknowledged is filtered out by `> since` forever — the same rule that
    * keeps settlement off the tick it settles. */
   private pendingChat: AnyState[] = []
+  /** Characters whose One Life run this room has to end, drained by the tick.
+   * A member is never revived inside a session, so this fills at most once per
+   * member per fight — it is a retry queue for a failed D1 write, not a
+   * per-tick write path. */
+  private pendingOneLifeDeaths = new Set<number>()
   private chatTimes: Record<string, number[]> = {}
   private intentSeq = 0
   private tickTimer: ReturnType<typeof setInterval> | null = null
@@ -316,6 +322,7 @@ export class CoopBossRoom {
       this.pendingChat = []
       this.events = pushEvents(this.events, [...out.events, ...chat], next.tick)
       this.dirty = true
+      await this.endOneLifeRuns(out.events, next.tick || 0)
 
       // Settlement runs AFTER the tick is committed to the room's state, and
       // the room is held for its duration. Nothing can observe a half-settled
@@ -336,6 +343,36 @@ export class CoopBossRoom {
       // Every exit from the beat, including the kill path's early return: the
       // tick becomes visible only now that nothing more can be appended to it.
       if (this.state) this.publishedTick = this.state.tick || 0
+    }
+  }
+
+  /**
+   * A One Life run ends wherever the character dies. The room resolves its own
+   * combat, so the idle game's death paths never see this one and nothing else
+   * would ever revoke the flag — the same gap `WorldZone` closes for the open
+   * world (server/oneLife.ts).
+   *
+   * The room holds no copy of the flag: sessions that predate this feature
+   * carry no such field on their members, and a checkpointed copy would only
+   * be a second place for it to go stale. The guarded UPDATE is the read as
+   * well as the write, so one round trip answers "was this a One Life
+   * character" — and a death is terminal for the member (nothing revives them
+   * inside a session), so this stays one write per member per fight rather
+   * than a D1 write on an ordinary tick. A write D1 could not answer is
+   * retried on the next beat instead of losing the revert.
+   */
+  private async endOneLifeRuns(events: AnyState[], tick: number): Promise<void> {
+    for (const ev of events) {
+      if (ev?.type !== 'memberDeath') continue
+      const characterId = Number(ev.characterId)
+      if (Number.isFinite(characterId)) this.pendingOneLifeDeaths.add(characterId)
+    }
+    if (this.pendingOneLifeDeaths.size === 0) return
+    for (const characterId of [...this.pendingOneLifeDeaths]) {
+      const ended = await revokeOneLifeIfSet(this.env as never, characterId)
+      if (ended === null) continue
+      this.pendingOneLifeDeaths.delete(characterId)
+      if (ended) this.events = pushEvents(this.events, [{ type: 'oneLifeEnded', characterId, tick }], tick)
     }
   }
 

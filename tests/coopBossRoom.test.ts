@@ -497,3 +497,70 @@ describe('fight chat', () => {
     expect(JSON.parse(row.payload_json).text).toBe('on my way')
   })
 })
+
+describe('a One Life death', () => {
+  // The room resolves its own combat, so the idle game's death paths never see
+  // this death. Nothing else would ever revoke the flag — the same gap the open
+  // world had (world/server/oneLife.ts).
+  async function oneLifeRoom(characterId: number) {
+    await seedCharacter(characterId)
+    raw.prepare('UPDATE characters SET is_one_life = 1 WHERE id = ?').run(characterId)
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId, identityId: 1, bossId: BOSS, username: `player${characterId}`,
+    })
+    await callRoom(sessionId, 'poll', { characterId })
+    return { sessionId, room: rooms.get(`coop:${sessionId}`)! as any }
+  }
+
+  const oneLifeFlag = (id: number) =>
+    (raw.prepare('SELECT is_one_life FROM characters WHERE id = ?').get(id) as any).is_one_life
+
+  async function eventsSincePoll(sessionId: number, characterId: number) {
+    const res = await callRoom(sessionId, 'poll', { characterId, sinceTick: 0 })
+    return ((await res.json()) as any).events as any[]
+  }
+
+  it('ends the run and tells the member', async () => {
+    const { sessionId, room } = await oneLifeRoom(7)
+    room.state.members['7'].hp = 0
+    await room.tick()
+
+    expect(oneLifeFlag(7)).toBe(0)
+    const events = await eventsSincePoll(sessionId, 7)
+    expect(events.some((e) => e.type === 'oneLifeEnded' && e.characterId === 7)).toBe(true)
+  })
+
+  it('says nothing for a standard character, who has no run to lose', async () => {
+    const { sessionId, room } = await oneLifeRoom(7)
+    raw.prepare('UPDATE characters SET is_one_life = 0 WHERE id = 7').run()
+    room.state.members['7'].hp = 0
+    await room.tick()
+
+    const events = await eventsSincePoll(sessionId, 7)
+    expect(events.some((e) => e.type === 'oneLifeEnded')).toBe(false)
+  })
+
+  it('retries on the next beat when D1 could not answer, instead of losing the revert', async () => {
+    const { sessionId, room } = await oneLifeRoom(7)
+    const realPrepare = env.DB.prepare.bind(env.DB)
+    let failNext = true
+    ;(env.DB as any).prepare = (sql: string) => {
+      if (failNext && sql.includes('is_one_life = 0')) {
+        failNext = false
+        return { bind: () => ({ run: async () => { throw new Error('D1 unavailable') } }) }
+      }
+      return realPrepare(sql)
+    }
+
+    room.state.members['7'].hp = 0
+    await room.tick()
+    expect(oneLifeFlag(7)).toBe(1)
+    expect((await eventsSincePoll(sessionId, 7)).some((e) => e.type === 'oneLifeEnded')).toBe(false)
+
+    // The member is dead now, so there is no second memberDeath event to
+    // re-trigger it — the retry has to come from the room's own queue.
+    await room.tick()
+    expect(oneLifeFlag(7)).toBe(0)
+    expect((await eventsSincePoll(sessionId, 7)).some((e) => e.type === 'oneLifeEnded')).toBe(true)
+  })
+})
