@@ -107,7 +107,7 @@ describe('validateZone', () => {
       objects: [],
       npcs: [],
     }
-    const badKind = validateZone({ ...base, ground: [{ kind: 'lava', x: 0, z: 0, w: 1, h: 1 }] })
+    const badKind = validateZone({ ...base, ground: [{ kind: 'quicksand', x: 0, z: 0, w: 1, h: 1 }] })
     expect(badKind.valid).toBe(false)
     if (!badKind.valid) expect(badKind.errors.some((e) => e.includes('kind'))).toBe(true)
     const oob = validateZone({ ...base, ground: [{ kind: 'plaza', x: 2, z: 2, w: 5, h: 1 }] })

@@ -20,6 +20,7 @@ const CASTLE = path.join(KITS, 'Kenney', 'kenney_castle-kit', 'Models', 'GLB for
 const GRAVEYARD = path.join(KITS, 'Kenney', 'kenney_graveyard-kit_5.0', 'Models', 'GLB format')
 const BUILDER = path.join(KITS, 'kaykit', 'KayKit Medieval Builder Pack 1.0', 'Models', 'objects', 'gltf')
 const DUNGEON = path.join(KITS, 'kaykit', 'dungeon-remastered', 'Assets', 'gltf')
+const HALLOWEEN = path.join(KITS, 'kaykit', 'halloween-bits', 'Assets', 'gltf')
 const MODELS = path.join(worldDir, 'client', 'public', 'models')
 
 const BUILDS = [
@@ -59,14 +60,37 @@ const BUILDS = [
   { src: path.join(GRAVEYARD, 'column-large.glb'), out: 'props/column.glb' },
   { src: path.join(DUNGEON, 'stairs.gltf.glb'), out: 'props/dungeon_stairs.glb' },
   { src: path.join(DUNGEON, 'wall_doorway.glb'), out: 'props/dungeon_door.glb' },
+  // Cow Pasture: paddock fencing, the harvest it is grazing next to, and the
+  // hay it is fed on.
+  { src: path.join(NATURE, 'fence_simple.glb'), out: 'props/fence.glb' },
+  { src: path.join(NATURE, 'fence_gate.glb'), out: 'props/fence_gate.glb' },
+  { src: path.join(NATURE, 'crops_wheatStageB.glb'), out: 'props/wheat.glb' },
+  { src: path.join(GRAVEYARD, 'hay-bale.glb'), out: 'props/hay_bale.glb' },
+  { src: path.join(GRAVEYARD, 'hay-bale-bundled.glb'), out: 'props/hay_stack.glb' },
+  // Bare stone: the nature kit's rocks are mossy-topped, which is wrong for a
+  // crater rim and a dragon's rock spine. The stone_* series carries no grass.
+  { src: path.join(NATURE, 'stone_tallA.glb'), out: 'props/stone_spire.glb' },
+  { src: path.join(NATURE, 'stone_smallE.glb'), out: 'props/stone_slab.glb' },
+  // Fiend Pit / Dragon Roost: firelight, bones and standing stones.
+  { src: path.join(DUNGEON, 'torch_lit.gltf.glb'), out: 'props/torch.glb' },
+  { src: path.join(HALLOWEEN, 'skull.gltf'), out: 'props/skull.glb' },
+  { src: path.join(HALLOWEEN, 'bone_A.gltf'), out: 'props/bones.glb' },
+  { src: path.join(GRAVEYARD, 'pillar-obelisk.glb'), out: 'props/obelisk.glb' },
+  // The nature kit's stone is a cool blue-grey, which fights a hell pit's
+  // palette. Same mesh, scorched.
+  { src: path.join(NATURE, 'stone_tallA.glb'), out: 'props/stone_spire_ember.glb', recolor: { stone: [0.16, 0.09, 0.07] } },
 ]
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)
 fs.mkdirSync(path.join(MODELS, 'props'), { recursive: true })
 
-for (const { src, out } of BUILDS) {
+for (const { src, out, recolor } of BUILDS) {
   const doc = await io.read(src)
   await doc.transform(dedup(), prune())
+  for (const mat of recolor ? doc.getRoot().listMaterials() : []) {
+    const rgb = recolor[mat.getName()]
+    if (rgb) mat.setBaseColorFactor([...rgb, 1])
+  }
   const outPath = path.join(MODELS, out)
   await io.write(outPath, doc)
   console.log(`wrote ${outPath} (${(fs.statSync(outPath).size / 1024).toFixed(1)} KiB)`)

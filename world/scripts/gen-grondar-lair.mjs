@@ -109,7 +109,7 @@ while (placed < 12 && guard < 4000) {
 }
 
 const npcs = [
-  { id: 'grondar', monsterId: 'warlord_grondar', x: 20, z: 11, wander: { x: 14, z: 8, w: 13, h: 7 }, aggroRadius: 8 },
+  { id: 'grondar', monsterId: 'warlord_grondar', x: 20, z: 11, wander: { x: 14, z: 8, w: 13, h: 7 } },
 ]
 
 // The lair has no walk-in entrance: players arrive by instance handoff and the

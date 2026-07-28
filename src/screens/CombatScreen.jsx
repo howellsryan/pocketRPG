@@ -3110,7 +3110,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {worldJoining === coopChoice.id ? 'Setting out\u2026' : 'Fight in the open world'}
                 </div>
                 <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                  Walk into the boss's own lair in 3D, up to eight of you, and fight it where it lives. Opens in a new tab.
+                  Walk into its own lair in 3D, up to eight of you, and fight it where it lives. Opens in a new tab.
                 </div>
               </button>
             )}

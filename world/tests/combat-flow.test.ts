@@ -172,7 +172,10 @@ describe('combat via tickPlayer', () => {
     expect(bull.attackerId).toBe('2')
   })
 
-  it('resumes the fight automatically once a pursuing npc catches back up to its attacker', () => {
+  // Combat starts on a click and on nothing else. A monster that chases the
+  // player down — or simply stands next to them — must never put them back in
+  // a fight they did not ask for.
+  it('does not resume the fight when a pursuing npc catches back up to its former attacker', () => {
     const { npcs, bull } = bullAt(5, 5)
     const a = makePlayer({ charId: '1', x: 10, z: 5 })
     bull.state = 'combat'
@@ -181,15 +184,23 @@ describe('combat via tickPlayer', () => {
     bull.z = 5
 
     expect(a.combat).toBeNull()
-    const first = tickPlayer(a, ctx(1, npcs))
-    expect(a.combat).not.toBeNull() // resumed without a fresh interact
-    let landedOnBull = first.hits.some((h) => h.targetId === 'bull_1' && h.dmg > 0)
-    const isDead = (n: NpcState): boolean => n.state === 'dead'
-    for (let tick = 2; tick <= 20 && !isDead(bull) && !landedOnBull; tick++) {
+    for (let tick = 1; tick <= 20; tick++) {
       const r = tickPlayer(a, ctx(tick, npcs))
-      if (r.hits.some((h) => h.targetId === 'bull_1' && h.dmg > 0)) landedOnBull = true
+      expect(r.hits.filter((h) => h.targetId === 'bull_1')).toEqual([])
     }
-    expect(landedOnBull).toBe(true)
+    expect(a.combat).toBeNull()
+  })
+
+  it('stays out of combat standing next to an idle monster until the player attacks it', () => {
+    const { npcs, bull } = bullAt(5, 5)
+    const a = makePlayer({ charId: '1', x: 5, z: 6 })
+    for (let tick = 1; tick <= 10; tick++) tickPlayer(a, ctx(tick, npcs))
+    expect(a.combat).toBeNull()
+    expect(bull.state).toBe('idle')
+
+    a.pendingInteract = { kind: 'npc', id: 'bull_1', action: 'attack' }
+    tickPlayer(a, ctx(11, npcs))
+    expect(a.combat).not.toBeNull()
   })
 
   it('a magic weapon with a spell fights with real magic: spell XP and rune consumption', () => {

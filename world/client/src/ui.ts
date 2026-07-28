@@ -1502,6 +1502,10 @@ const NPC_EXAMINE: Record<string, string> = {
   bogling_sprite: 'A wobbling dollop of bog-magic. Mostly harmless, entirely gelatinous.',
   frostbite_imp: 'A small blue troublemaker radiating a distinctly unfriendly chill.',
   marshfen_toad: 'A toad the size of a dog. The marsh smell arrives before it does.',
+  lesser_fiend: 'A horned brute with a trident and no conversation.',
+  green_dragon: 'Moss-scaled and low-slung. The glade goes quiet around it.',
+  red_dragon: 'It hunts the hot ground, and the hot ground is its idea.',
+  black_dragon: 'The oldest brood on the shelf. Nothing else nests near it.',
 }
 
 export function npcExamine(monsterId: string): string {

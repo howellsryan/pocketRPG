@@ -8,6 +8,9 @@ import { createProps } from '../props'
 import { createAmbient } from '../ambient'
 import overworldZone from '../../../zones/overworld.json'
 import grondarLairZone from '../../../zones/grondar_lair.json'
+import cowPastureZone from '../../../zones/cow_pasture.json'
+import fiendPitZone from '../../../zones/fiend_pit.json'
+import dragonRoostZone from '../../../zones/dragon_roost.json'
 
 // Auth-free, server-free terrain preview. Renders a bundled zone JSON through
 // the REAL terrain pipeline (createTerrain + scatter + statics/props), so it
@@ -18,6 +21,9 @@ import grondarLairZone from '../../../zones/grondar_lair.json'
 const ZONES: Record<string, ZoneDef> = {
   overworld: overworldZone as unknown as ZoneDef,
   grondar_lair: grondarLairZone as unknown as ZoneDef,
+  cow_pasture: cowPastureZone as unknown as ZoneDef,
+  fiend_pit: fiendPitZone as unknown as ZoneDef,
+  dragon_roost: dragonRoostZone as unknown as ZoneDef,
 }
 
 declare global {

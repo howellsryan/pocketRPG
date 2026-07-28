@@ -26,6 +26,19 @@ const BASE_SCALE: Record<string, number> = {
   column: 2.0,
   dungeon_stairs: 0.9,
   dungeon_door: 0.8,
+  // Pasture and pit dressing (native model bounds → tile-grid units).
+  fence: 1.0,
+  fence_gate: 1.0,
+  wheat: 1.4,
+  hay_bale: 1.6,
+  hay_stack: 1.8,
+  torch: 1.6,
+  stone_spire: 1.9,
+  stone_spire_ember: 1.9,
+  stone_slab: 1.4,
+  skull: 0.32,
+  bones: 1.2,
+  obelisk: 2.6,
 }
 export async function createProps(scene: THREE.Scene, props: PropPlacement[]): Promise<void> {
   if (props.length === 0) return
