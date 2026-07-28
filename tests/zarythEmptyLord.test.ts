@@ -28,6 +28,17 @@ import { PVP_SPECIAL_ATTACK_LABELS } from '../src/engine/pvpSpecialAttacks.js'
 import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
 import { createPvpState, processPvpTick } from '../src/engine/pvpEngine.js'
 import { monsterMechanics } from '../functions/_lib/mcp/reference.js'
+import { readFileSync } from 'node:fs'
+import equipmentModels from '../src/data/equipmentModels.json'
+import { worldLairZone } from '../src/engine/worldLairs.js'
+import {
+  monsterAttackClipName,
+  selectMonsterAttackClip,
+  MONSTER_CLIP_IDLE,
+  MONSTER_CLIP_DEATH,
+  MONSTER_CLIP_ATTACK,
+  MONSTER_CLIP_ATTACK_RANGED,
+} from '../src/engine/monsterClips.js'
 
 const monstersData = monsters as Record<string, any>
 const itemsData = items as Record<string, any>
@@ -449,6 +460,65 @@ describe('room-wide attacks in a co-op session', () => {
     expect(healed.healAmount).toBeGreaterThan(0)
     const after: any = Object.values(out.stateNext.members)[0]
     expect(after.hp).toBe(Math.min(after.maxHP, 10 + healed.healAmount))
+  })
+})
+
+describe('Zaryth, the Empty Lord — 3D rig', () => {
+  const arena = (equipmentModels as any).monsters[BOSS]
+
+  /** Clip names straight out of a GLB's JSON chunk — no three.js needed. */
+  function clipNames(glbPath: string): string[] {
+    const buf = readFileSync(glbPath)
+    const json = JSON.parse(buf.subarray(20, 20 + buf.readUInt32LE(12)).toString('utf8'))
+    return (json.animations ?? []).map((a: { name: string }) => a.name)
+  }
+
+  it('is registered for the combat arena, which auto-enables it for this boss', () => {
+    expect(arena, 'no equipmentModels.monsters entry').toBeDefined()
+    expect(arena.model).toBe('monsters/zaryth_the_empty_lord.glb')
+  })
+
+  it('ships the shipped asset with every clip the arena looks up by name', () => {
+    const names = clipNames(new URL('../public/3d-samples/' + arena.model, import.meta.url).pathname)
+    expect(names).toEqual(expect.arrayContaining([
+      MONSTER_CLIP_IDLE, MONSTER_CLIP_DEATH, MONSTER_CLIP_ATTACK, MONSTER_CLIP_ATTACK_RANGED,
+    ]))
+  })
+
+  it('swings with the melee clip for every melee style', () => {
+    for (const style of ['crush', 'stab', 'slash', null, undefined]) {
+      expect(monsterAttackClipName(style as any)).toBe(MONSTER_CLIP_ATTACK)
+    }
+  })
+
+  it('swings with the one ranged clip for both ranged and magic', () => {
+    expect(monsterAttackClipName('ranged')).toBe(MONSTER_CLIP_ATTACK_RANGED)
+    expect(monsterAttackClipName('magic')).toBe(MONSTER_CLIP_ATTACK_RANGED)
+  })
+
+  it('covers all three of the boss forms with a clip the asset actually has', () => {
+    const names = clipNames(new URL('../public/3d-samples/' + arena.model, import.meta.url).pathname)
+    const clips = names.map((name) => ({ name }))
+    for (const form of Object.values(boss.forms) as any[]) {
+      const picked = selectMonsterAttackClip(clips, form.attackStyle)
+      expect(picked, `no clip for ${form.attackStyle}`).toBeTruthy()
+      expect(names).toContain(picked!.name)
+    }
+    // The whole point of the second clip: melee must not resolve to the same
+    // animation as the ranged and magic forms.
+    expect(selectMonsterAttackClip(clips, 'crush')!.name)
+      .not.toBe(selectMonsterAttackClip(clips, 'magic')!.name)
+  })
+
+  it('falls back to the melee clip for a rig that only has one attack', () => {
+    const oneClip = [{ name: MONSTER_CLIP_IDLE }, { name: MONSTER_CLIP_ATTACK }]
+    expect(selectMonsterAttackClip(oneClip, 'magic')!.name).toBe(MONSTER_CLIP_ATTACK)
+    expect(selectMonsterAttackClip([{ name: MONSTER_CLIP_IDLE }], 'crush')).toBeNull()
+    expect(selectMonsterAttackClip(null as any, 'crush')).toBeNull()
+  })
+
+  it('has an instanced open-world lair of its own', () => {
+    expect(worldLairZone(BOSS)).toBe('zaryth_throne')
   })
 })
 

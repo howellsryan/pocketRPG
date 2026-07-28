@@ -4,6 +4,7 @@ import grondarLairZone from '../zones/grondar_lair.json'
 import cowPastureZone from '../zones/cow_pasture.json'
 import fiendPitZone from '../zones/fiend_pit.json'
 import dragonRoostZone from '../zones/dragon_roost.json'
+import zarythThroneZone from '../zones/zaryth_throne.json'
 
 // Bundled zone definitions, baked into the Worker at build time. A D1 row in
 // world_zone_defs of the same id overrides these at runtime (see zoneStore.ts);
@@ -26,6 +27,7 @@ export const ZONES: Record<string, ZoneDef> = {
   cow_pasture: asZone(cowPastureZone),
   fiend_pit: asZone(fiendPitZone),
   dragon_roost: asZone(dragonRoostZone),
+  zaryth_throne: asZone(zarythThroneZone),
 }
 
 for (const zone of Object.values(ZONES)) {

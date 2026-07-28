@@ -8,7 +8,7 @@
 // several players on one npc.
 
 /** Base zone ids served as instances rather than as one shared room. */
-export const INSTANCED_ZONES = new Set(['grondar_lair', 'cow_pasture', 'fiend_pit', 'dragon_roost'])
+export const INSTANCED_ZONES = new Set(['grondar_lair', 'cow_pasture', 'fiend_pit', 'dragon_roost', 'zaryth_throne'])
 
 /** Players per instance. Matches co-op's COOP_MAX_MEMBERS — the same "a group,
  * not a raid crowd" size, and the same number the lair is dressed for. */

@@ -82,6 +82,7 @@ const sourceFiles = [
   'engine/monsterDamageRules.js',
   'engine/damageReduction.js',
   'engine/bossAdds.js',
+  'engine/monsterClips.js',
   'engine/consumables.js',
   'engine/combat.js',
   'engine/combatRequirements.js',

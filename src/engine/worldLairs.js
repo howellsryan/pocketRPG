@@ -17,6 +17,7 @@ export const WORLD_MONSTER_LAIRS = {
   green_dragon: 'dragon_roost',
   red_dragon: 'dragon_roost',
   black_dragon: 'dragon_roost',
+  zaryth_the_empty_lord: 'zaryth_throne',
 }
 
 /** The lair zone id for a monster, or null when it has no authored lair. */

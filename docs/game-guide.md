@@ -177,6 +177,8 @@ His table averages around a million coins a kill before uniques, in large rune s
 - **Zaryth Crossbow** (1/256) — the strongest crossbow in the realm. Its Empty Bolt special cannot be turned aside: it always hits, for up to 150% of your ranged max.
 - **Zaryth Hilt** (1/256) — attach it to all four other godswords at Smithing 99 to forge the **Zaryth Godsword**, the hardest-hitting two-handed weapon in the game. Its Empty Lord's Cleave strikes for up to 150% of your max hit and restores half the damage it deals. Forging consumes all four godswords, so it is a one-way trade.
 
+Zaryth is modelled in 3D, and it is the one boss that animates differently depending on how it is attacking: it lunges when it comes at you in melee, and strikes from where it stands when it switches to ranged or magic. Watching which it does tells you the style of the swing before the damage lands. It also has an instanced open-world room — the Empty Throne — where a group fights it live in its own private copy of the vault.
+
 ## Farming
 
 Plant seeds in farming patches (herbs, trees, fruit trees and vegetables) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Vegetable patches (Potato at level 1, Sweetcorn at level 9) yield 1-50 crops per harvest — a higher Farming level just weighs the roll toward a bigger harvest, it never guarantees one. Harvest everything at once with Harvest All. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops; Potato and Sweetcorn seeds are common early drops from low-combat monsters and the Master Farmer.

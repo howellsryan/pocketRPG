@@ -116,6 +116,20 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     noLocomotionClip: true,
     noShadow: true,
   },
+  // The only monster with a per-style swing: it ships attack (melee) and
+  // attack_ranged, with attack_magic copied from the latter by
+  // scripts/build-zaryth-the-empty-lord.mjs. Bounds baked from that script.
+  zaryth_the_empty_lord: {
+    url: '/models/zaryth_the_empty_lord.glb',
+    bounds: { minX: -0.528, minY: 0, minZ: -0.105, maxX: 0.466, maxY: 0.982, maxZ: 0.217 },
+    targetHeight: 3.2,
+    noLocomotionClip: true,
+    noShadow: true,
+    // Capped by the 3-tick attack cycle: the wind-up lead is ceil(impact/tick)
+    // and must stay under the cycle, so 1.2s is the latest impact frame the
+    // client can still align onto the hit tick.
+    attackImpactSec: 1.2,
+  },
 }
 
 /** Monsters that render with a bespoke model (registry above). Anything else
