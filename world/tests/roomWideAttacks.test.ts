@@ -109,7 +109,7 @@ describe('a room-wide boss in the open world', () => {
   })
 
   it('keeps its clock ticking while it is chasing or unclaimed', () => {
-    // advanceRoomWideSwing runs before the early returns for "no attacker" and
+    // advanceSharedSwing runs before the early returns for "no attacker" and
     // "out of reach", so a boss that spends a tick closing the gap resumes on
     // its own cadence instead of restarting the countdown.
     const { npcs, boss } = bossAt(ZARYTH, 10, 10)
@@ -118,7 +118,7 @@ describe('a room-wide boss in the open world', () => {
     const seen: boolean[] = []
     for (let tick = 1; tick <= 6; tick++) {
       tickNpc(boss, ctx(tick, npcs, []), { npcChanged: [], npcRemoved: [] } as never)
-      seen.push(!!boss.roomWideSwing)
+      seen.push(!!boss.sharedSwing)
     }
     // attackSpeed 3 → a swing every third tick, even with nobody claimed.
     expect(seen).toEqual([false, false, true, false, false, true])
@@ -126,10 +126,10 @@ describe('a room-wide boss in the open world', () => {
 
   it('clears the swing flag while it is dead', () => {
     const { npcs, boss } = bossAt(ZARYTH, 10, 10)
-    boss.roomWideSwing = true
+    boss.sharedSwing = true
     boss.state = 'dead'
     boss.respawnAtTick = 9999
     tickNpc(boss, ctx(1, npcs, []), { npcChanged: [], npcRemoved: [] } as never)
-    expect(boss.roomWideSwing).toBe(false)
+    expect(boss.sharedSwing).toBe(false)
   })
 })

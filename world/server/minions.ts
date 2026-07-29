@@ -8,16 +8,21 @@
 // Zaryth's sentinels simply did not exist out here.
 //
 // So the minion is a single npc instead: everyone sees the same one, it can be
-// walked around and killed, and combat.ts mirrors it onto every boss session's
-// `state.add` so the engine resolves its swings the way it does in the solo
-// fight. One record, one clock, one silhouette in the room.
+// walked around and killed, and combat.ts mirrors it onto the sessions fighting
+// its summoner (mirrorPairedAttacker) so the engine resolves its swings the way
+// it does in the solo fight. One record, one clock, one silhouette in the room.
+//
+// A boss and its minion are ONE encounter, in both directions: a player may only
+// attack one of them, but both attack the player. Turning on the sentinel does
+// not walk you out of the boss fight — the same mirror runs the other way, and
+// countsAsEngaged (npc.ts) keeps each half of the pair engaged with whoever is
+// fighting the other.
 //
 // Entirely data-driven off `spawnsAdd` in monsters.json (via bossAdds.js, the
 // same spec the solo fight and the co-op room read), so a second boss with
 // minions needs a lair and a model — not code.
 import monstersData from '../../src/data/monsters.json'
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, rollFirstSpawnDelay, rollRespawnDelay } from '../../src/engine/bossAdds.js'
-import { advanceRoomWideAttackTimer } from '../../src/engine/roomWideAttacks.js'
 import { makeNpc, type NpcState } from './npc'
 import type { TickContext, TickResult } from './tick'
 
@@ -112,11 +117,6 @@ export function stepMinions(ctx: TickContext, result: TickResult): void {
         despawn(npc, ctx, result)
         continue
       }
-      // Its swings land inside the sessions fighting the SUMMONER, so like a
-      // room-wide boss the clock belongs to the npc, not to any one session.
-      const clock = { attackSpeed: monsters[npc.monsterId]?.attackSpeed, attackTimer: npc.attackTimer }
-      npc.roomWideSwing = advanceRoomWideAttackTimer(clock)
-      npc.attackTimer = clock.attackTimer
       continue
     }
 
@@ -141,11 +141,16 @@ export function stepMinions(ctx: TickContext, result: TickResult): void {
       npc.summonCountdown = 1
       continue
     }
-    // A 1×1 wander rect is the tile it stands on, so it guards its summoner
-    // instead of drifting off; attacking it starts an ordinary fight, chase and
-    // all, and giving up returns it here.
+    // A 1×1 wander rect is the tile it stands on: it never drifts, it CHASES.
+    // countsAsEngaged hands it everyone fighting its summoner, so it picks a
+    // target and closes on them — a planted melee sentinel would otherwise swing
+    // at a player one tile beyond its reach forever. Losing them returns it here.
     const minion = makeNpc({ id: `${npc.id}__minion`, monsterId, x: tile.x, z: tile.z, wander: { x: tile.x, z: tile.z, w: 1, h: 1 } })
     minion.summonerId = npc.id
+    // Straight into the fight, and seeded so the out-of-combat heal measures
+    // from now rather than from tick 0 and resets it the moment it appears.
+    minion.state = 'combat'
+    minion.lastCombatTick = ctx.tick
     npcs.set(minion.id, minion)
     npc.minionId = minion.id
     npc.summonCountdown = null

@@ -11,7 +11,7 @@ import monstersData from '../../src/data/monsters.json'
 import spellsData from '../../src/data/spells.json'
 import prayersData from '../../src/data/prayers.json'
 import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRangeAndSight, type TickPlayer } from './tick'
-import { recordDamage, topDamageContributor, type NpcState } from './npc'
+import { recordDamage, topDamageContributor, usesSharedClock, type NpcState } from './npc'
 import { reachAgainst } from '../shared/monsterSize'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
@@ -113,8 +113,9 @@ export function emitPrayerIfChanged(player: TickPlayer, events: ZoneEvent[]): vo
 // initialisers — widen them to what magic combat actually stores there.
 type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'add' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer' | 'activePotions'> & {
   spell: unknown
-  /** The boss's minion, mirrored from its npc each tick (mirrorMinion). The
-   * engine initialises it to `null`, which infers as the `null` type. */
+  /** The other half of a boss/minion pair, mirrored from its npc each tick
+   * (mirrorPairedAttacker). The engine initialises it to `null`, which infers as
+   * the `null` type. */
   add: { id?: string; currentHP: number; attackTimer: number } | null
   runesConsumed?: Record<string, number> | null
   prayerPoints: number
@@ -262,35 +263,87 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
 }
 
 /**
- * Points this session's `state.add` at the ONE minion npc the boss has on the
- * field (minions.ts), so the engine resolves its swing exactly as it does in
- * the solo fight.
+ * The OTHER half of a summoner/minion pair — the one this player is not
+ * swinging at. A player may only attack one thing, but a boss and its minion
+ * both attack the player, so whichever of the two is the session's target, the
+ * other one is what has to reach them.
+ */
+function pairedAttacker(npc: NpcState, ctx: TickContext): NpcState | null {
+  const otherId = npc.summonerId ?? npc.minionId
+  return otherId ? ctx.npcs?.get(otherId) ?? null : null
+}
+
+/**
+ * Whether the mirrored partner's swing lands on this player — the same rule that
+ * governs the partner's own session, since it is the same swing: a room-wide
+ * attacker reaches everybody present, anything else reaches only the player it
+ * is retaliating against (countsAsEngaged is what puts a player fighting either
+ * half of the pair into the other's pool).
+ *
+ * Range is the partner's OWN reach against this player, never the session npc's.
+ * A boss and its minion stand apart, and a melee sentinel at the boss's shoulder
+ * genuinely cannot touch someone on the far side of it.
+ */
+function pairedAttackerReaches(other: NpcState, player: TickPlayer, collision: string[]): boolean {
+  const reaches = isRoomWideAttacker((monstersData as Monsters)[other.monsterId])
+    || other.attackerId === player.charId
+  if (!reaches) return false
+  return withinRangeAndSight(player, other, reachAgainst(other.monsterId, monsterAttackRange(other.monsterId)), collision)
+}
+
+/**
+ * Points this session's `state.add` at that other npc, so the engine resolves
+ * its swing exactly as it resolves a boss's add in the solo fight — accuracy,
+ * protection prayers, prayer drain and armour charges all included, because
+ * `state.add` is precisely "a second enemy hitting me on its own timer".
  *
  * Runs every tick and for every fight, ahead of processCombatTick — including
- * fights with nothing to mirror, which is what makes the npc the ONLY source of
+ * fights with nothing to mirror, which is what makes the npcs the ONLY source of
  * an add out here. (A session could otherwise seed one of its own: every other
  * caller of createCombatState passes the monsters table, which is what turns the
  * engine's own spawn on, and this one deliberately does not.)
  *
- * The minion's HP is the npc's, not the session's: the session never damages it
- * (nothing sets `addTargeted` out here — a player kills the minion by attacking
- * it as an ordinary npc, in a session of its own), so this is a read-only view
- * that goes empty the moment the npc dies or despawns.
+ * The mirrored HP is the npc's, and the view is read-only: this session never
+ * damages it (nothing sets `addTargeted` out here — the player's swings go to
+ * `state.monster`, and killing the other one means turning to face it), so it
+ * simply goes empty the moment that npc dies or despawns.
+ *
+ * One slot means one extra attacker, which is exactly a pair. A boss that
+ * fielded two minions at once would need a list here.
  */
-function mirrorMinion(combat: CombatSession, npc: NpcState, ctx: TickContext): void {
-  const minion = npc.minionId ? ctx.npcs?.get(npc.minionId) : null
-  if (!minion || minion.state === 'dead') {
+function mirrorPairedAttacker(combat: CombatSession, npc: NpcState, ctx: TickContext): void {
+  const other = pairedAttacker(npc, ctx)
+  if (!other || other.state === 'dead') {
     combat.state.add = null
     return
   }
-  const definition = (monstersData as Monsters)[minion.monsterId]
-  if (combat.state.add?.id !== minion.monsterId) combat.state.add = prepareAdd(definition)
+  const definition = (monstersData as Monsters)[other.monsterId]
+  if (combat.state.add?.id !== other.monsterId) combat.state.add = prepareAdd(definition)
   const add = combat.state.add
   if (!add) return
-  add.currentHP = minion.hp
-  // Same trick as the room-wide boss above: hold every session's copy off the
+  add.currentHP = other.hp
+  // Same trick as the shared clock below: hold every session's copy off the
   // floor and fire them all on the tick the npc's own clock says so.
-  add.attackTimer = minion.roomWideSwing ? 0 : Math.max(2, Number(definition?.attackSpeed) || 4)
+  add.attackTimer = other.sharedSwing ? 0 : Math.max(2, Number(definition?.attackSpeed) || 4)
+}
+
+/**
+ * Pre-signals a swing as a SINGLE pulse `leadTicks` before it resolves — the
+ * client edge-detects this to start the clip (with its sub-tick delay) so the
+ * impact frame lands on the hit event's splat. The hit/miss branches do NOT
+ * re-broadcast 'attack' (a second, non-adjacent pulse would restart the clip on
+ * the splat tick and desync it) — the pulse alone drives the whole swing,
+ * mirroring the combat arena's shared windup (src/utils/combatWindup.js).
+ *
+ * `countdown` is ticks until the swing, and WHICH clock that is matters: an npc
+ * on a shared clock keeps it on the npc, and its sessions' own timers are pinned
+ * to 0-or-full rather than counting down — reading a pinned timer here means the
+ * lead tick simply never comes round and the monster swings without animating.
+ */
+function signalSwing(npc: NpcState, swinging: boolean, countdown: number | undefined): void {
+  // Clear last tick's swing so a fresh one re-triggers the attack animation.
+  if (npc.anim === 'attack' || npc.anim === 'attack_ranged' || npc.anim === 'attack_magic') npc.anim = 'idle'
+  if (swinging && countdown === monsterWindupLeadTicks(npc.monsterId)) npc.anim = monsterAttackAnim(npc.monsterId)
 }
 
 function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quantity: number }[], ctx: TickContext, result: TickResult): void {
@@ -362,21 +415,24 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   if (!npc.attackerId) npc.attackerId = player.charId
   // A room-wide attacker swings at everybody present, so every engaged player's
   // session resolves the same swing and each rolls their own accuracy and
-  // protection prayer against it — the boss's clock belongs to the npc
-  // (npc.ts's advanceRoomWideSwing), not to any one session. `isTarget` still
-  // decides who its retaliation follows for chasing and threat.
+  // protection prayer against it. `isTarget` still decides who its retaliation
+  // follows for chasing and threat.
   const roomWide = isRoomWideAttacker((monstersData as Monsters)[npc.monsterId])
   const isTarget = npc.attackerId === player.charId
   // Whose session may apply this npc's attacks to its own player.
   const takesSwings = roomWide || isTarget
-  if (roomWide) {
-    // Hold every session's own timer off the floor and fire them together on
-    // the npc's tick, or each player's session would swing on its own schedule.
-    combat.state.monsterAttackTimer = npc.roomWideSwing
+  const sharedClock = usesSharedClock(npc)
+  if (sharedClock) {
+    // This npc's swing is resolved in several sessions at once, so hold every
+    // session's own timer off the floor and fire them together on the npc's own
+    // tick — otherwise each player's copy swings on a schedule of its own.
+    combat.state.monsterAttackTimer = npc.sharedSwing
       ? 0
       : Math.max(2, Number(combat.state.monster.attackSpeed) || 4)
   }
-  mirrorMinion(combat, npc, ctx)
+  mirrorPairedAttacker(combat, npc, ctx)
+  const other = pairedAttacker(npc, ctx)
+  const addLands = !!other && pairedAttackerReaches(other, player, collision)
 
   // The pack rides in as the engine's inventory so magic can check runes;
   // consumption is applied below from state.runesConsumed (live-game contract:
@@ -393,16 +449,14 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // no longer fires every tick regardless of the attack timer.
   if (player.path.length === 0) player.anim = 'idle'
   npc.state = 'combat'
-  // Clear last tick's swing so a fresh one re-triggers the attack animation.
-  if (npc.anim === 'attack' || npc.anim === 'attack_ranged' || npc.anim === 'attack_magic') npc.anim = 'idle'
-  // Pre-signal the swing as a SINGLE pulse `leadTicks` before it resolves — the
-  // client edge-detects this to start the clip (with its sub-tick delay) so the
-  // impact frame lands on the hit event's splat below. The hit/miss branches do
-  // NOT re-broadcast 'attack' (a second, non-adjacent pulse would restart the
-  // clip on the splat tick and desync it) — the pulse alone drives the whole
-  // swing, mirroring the combat arena's shared windup (src/utils/combatWindup.js).
-  if (takesSwings && inMonsterRange && combat.state.monsterAttackTimer === monsterWindupLeadTicks(npc.monsterId)) {
-    npc.anim = monsterAttackAnim(npc.monsterId)
+  signalSwing(npc, takesSwings && inMonsterRange, combat.state.monsterAttackTimer)
+  // The paired attacker has to be signalled from here as well: it may have no
+  // retaliation target of its own (a summoned minion stands guard until somebody
+  // turns on it), and then NO session would ever animate the swings it is
+  // landing on this player.
+  if (other) {
+    signalSwing(other, true, other.attackTimer)
+    result.npcChanged.push(other.id)
   }
   npc.lastCombatTick = ctx.tick
   result.npcChanged.push(npc.id)
@@ -422,7 +476,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
     }
   }
 
-  for (const ev of events as { type: string; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string; itemId?: string; qty?: number }[]) {
+  for (const ev of events as { type: string; fromAdd?: boolean; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string; itemId?: string; qty?: number }[]) {
     if (ev.type === 'playerHit') {
       if (!playerLands) continue
       player.anim = attackAnimFor(combat.state.combatType as string)
@@ -471,11 +525,11 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       // can't hit a player kiting at magic range until it closes the gap. The
       // swing anim was already led by the pre-signal above; don't re-broadcast
       // it here (that would restart the clip on the splat tick).
-      if (!takesSwings || !inMonsterRange) continue
+      if (!(ev.fromAdd ? addLands : takesSwings && inMonsterRange)) continue
       player.hp = Math.max(0, player.hp - (ev.damage ?? 0))
       result.hits.push({ targetId: player.charId, dmg: ev.damage ?? 0 })
     } else if (ev.type === 'monsterMiss') {
-      if (!takesSwings || !inMonsterRange) continue
+      if (!(ev.fromAdd ? addLands : takesSwings && inMonsterRange)) continue
       result.hits.push({ targetId: player.charId, dmg: 0 })
     } else if (ev.type === 'xp' && ev.xpSkills) {
       if (!playerLands) continue

@@ -19,7 +19,7 @@ import { hasMaterials, maxCraftable } from './crafting'
 import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, emitSpecIfChanged, FULL_SPECIAL_ENERGY } from './combat'
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
-import { npcsFromZone, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { countsAsEngaged, npcsFromZone, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { stepMinions } from './minions'
 import { collisionWithMonsters } from '../shared/monsterSize'
 import { computeAoi, type AoiEntity } from './aoi'
@@ -1332,7 +1332,9 @@ export class WorldZone extends Server<Env> {
     for (const npc of npcs.values()) {
       if (npc.state !== 'combat') continue
       const engaged: { charId: string; x: number; z: number }[] = []
-      for (const p of this.players.values()) if (p.combat?.npcId === npc.id) engaged.push({ charId: p.charId, x: p.x, z: p.z })
+      for (const p of this.players.values()) {
+        if (countsAsEngaged(npc, p.combat?.npcId)) engaged.push({ charId: p.charId, x: p.x, z: p.z })
+      }
       reselectAttacker(npc, engaged, this.zone.collision)
     }
 

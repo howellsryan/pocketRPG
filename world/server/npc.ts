@@ -8,6 +8,7 @@ import { monsterAttackRange, withinRangeAndSight, type TickContext, type TickRes
 import { reachAgainst } from '../shared/monsterSize'
 import type { Tile } from './pathfind'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer } from '../../src/engine/roomWideAttacks.js'
+import { getAddSpec } from '../../src/engine/bossAdds.js'
 
 type Monsters = Record<string, { name?: string; hitpoints?: number; boss?: boolean; attackSpeed?: number; roomWideAttacks?: boolean }>
 
@@ -30,16 +31,15 @@ export type NpcState = {
    * re-claimed by a surviving attacker the next tick. */
   attackerId: string | null
   lastCombatTick: number
-  /** Shared attack clock for an npc whose swings are resolved INSIDE other
-   * players' combat sessions — a roomWideAttacks boss, and a summoned minion
-   * mirrored onto every session fighting its summoner. Each player runs their
-   * own session, so a per-session timer would swing once per player; the clock
-   * therefore belongs to the npc and is ticked once per tick (tickNpc for the
-   * boss, stepMinions for the minion) before any session reads it. Undefined
-   * for every other monster, which keeps its per-session timer. */
+  /** Shared attack clock, for an npc whose swings are resolved inside MORE THAN
+   * ONE combat session (usesSharedClock). Each player runs their own session, so
+   * a per-session timer would swing once per player instead of once per npc; the
+   * clock therefore belongs to the npc and is ticked once a tick (tickNpc, or
+   * stepMinions for a minion) before any session reads it. Undefined for every
+   * other monster, which keeps its per-session timer. */
   attackTimer?: number
   /** True on exactly the tick the clock above fires. */
-  roomWideSwing?: boolean
+  sharedSwing?: boolean
   /** Set on a SUMMONED minion: the npc that summoned it. Such an npc is removed
    * when it dies instead of respawning, and leaves the field with its summoner. */
   summonerId?: string
@@ -143,6 +143,26 @@ export function reselectAttacker(
   let best = pool.find((p) => p.charId === npc.attackerId) ?? pool[0]
   for (const p of pool) if (threat(p.charId) > threat(best.charId)) best = p
   npc.attackerId = best.charId
+}
+
+/**
+ * Whether a player whose own fight is against `fightingNpcId` counts as engaged
+ * with this npc, for retaliation and for staying in combat.
+ *
+ * A boss and its minion are ONE encounter, so fighting either is fighting both,
+ * and each answer fixes a different failure:
+ *
+ * - the summoner, because turning on the sentinel emptied its engaged list — it
+ *   released its attacker, healed back to full and dropped out of combat, taking
+ *   the sentinel with it, while the player still stood in front of it;
+ * - the minion, because otherwise it claims nobody, and a melee sentinel that
+ *   never picks a target never walks anywhere: it stands at the boss's shoulder
+ *   swinging at a player one tile beyond its reach.
+ */
+export function countsAsEngaged(npc: NpcState, fightingNpcId: string | undefined): boolean {
+  if (!fightingNpcId) return false
+  if (fightingNpcId === npc.id) return true
+  return fightingNpcId === npc.minionId || fightingNpcId === npc.summonerId
 }
 
 /** A fresh npc record at full health. Shared by the zone's authored spawns and
@@ -263,21 +283,40 @@ function giveUpPursuit(npc: NpcState): void {
 
 /** Advances one npc: respawn timer, out-of-combat heal/pursuit, or wander.
  * Mutates the npc and records changes/removals/respawn on the result. */
-/** Advances the shared clock for a room-wide attacker and records whether it
- * swings this tick, for the player sessions that run after every npc. */
-function advanceRoomWideSwing(npc: NpcState): void {
+/**
+ * True when this npc's swings are resolved in more than one player's session, so
+ * its attack timer has to live on the npc rather than in any of them. Three
+ * kinds qualify, all for the same reason:
+ *
+ * - a room-wide attacker, which swings at everyone present;
+ * - a SUMMONER, whose swing also has to reach a player who has turned to fight
+ *   its minion (combat.ts mirrorPairedAttacker);
+ * - a summoned MINION, whose swing reaches everyone fighting its summoner.
+ *
+ * Derived from the data, never from whether `sharedSwing` happens to be set: a
+ * stale flag left on an ordinary monster would pin its session to a clock
+ * nothing advances, and it would never attack again.
+ */
+export function usesSharedClock(npc: NpcState): boolean {
+  if (npc.summonerId) return true
   const monster = (monstersData as Monsters)[npc.monsterId]
-  if (!isRoomWideAttacker(monster)) return
+  return isRoomWideAttacker(monster) || !!getAddSpec(monster)
+}
+
+/** Advances that clock and records whether it swings this tick, for the player
+ * sessions that run after every npc. */
+export function advanceSharedSwing(npc: NpcState): void {
+  if (!usesSharedClock(npc)) return
   // The clock's speed comes from the monster data, not the npc record — the
   // helper's own default (4) would slow Zaryth's 3-tick cycle.
-  const clock = { attackSpeed: monster.attackSpeed, attackTimer: npc.attackTimer }
-  npc.roomWideSwing = advanceRoomWideAttackTimer(clock)
+  const clock = { attackSpeed: (monstersData as Monsters)[npc.monsterId]?.attackSpeed, attackTimer: npc.attackTimer }
+  npc.sharedSwing = advanceRoomWideAttackTimer(clock)
   npc.attackTimer = clock.attackTimer
 }
 
 export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): void {
   if (npc.state === 'dead') {
-    npc.roomWideSwing = false
+    npc.sharedSwing = false
     if (npc.removeAtTick && ctx.tick === npc.removeAtTick) result.npcRemoved.push(npc.id)
     // A summoned minion is not a fixture of the zone: it leaves the field for
     // good and its summoner rolls a replacement (stepMinions), so it must never
@@ -297,10 +336,10 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
   }
 
   if (npc.state === 'combat') {
-    // Before the early returns below: a room-wide boss keeps swinging at the
-    // whole room even on a tick it is chasing, out of reach, or has no claimed
-    // attacker, exactly as it would against the one player it was facing.
-    advanceRoomWideSwing(npc)
+    // Before the early returns below: an npc on a shared clock keeps swinging at
+    // everyone it reaches even on a tick it is chasing, out of reach, or has no
+    // claimed attacker, exactly as it would against the one player it faced.
+    advanceSharedSwing(npc)
     if (!npc.attackerId) {
       if (ctx.tick - npc.lastCombatTick >= OUT_OF_COMBAT_HEAL_TICKS) {
         npc.state = 'idle'
