@@ -20,6 +20,7 @@ import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfC
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { npcsFromZone, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { stepMinions } from './minions'
 import { collisionWithMonsters } from '../shared/monsterSize'
 import { computeAoi, type AoiEntity } from './aoi'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
@@ -1338,6 +1339,9 @@ export class WorldZone extends Server<Env> {
     // NPCs first (wander/respawn/heal) so player combat this tick reads fresh state.
     const npcResult = emptyResult()
     for (const npc of npcs.values()) tickNpc(npc, ctx, npcResult)
+    // Between the npcs and the players: a minion summoned this tick has to be on
+    // the field before the sessions that mirror it onto their own state.add run.
+    stepMinions(ctx, npcResult)
     for (const id of npcResult.npcChanged) npcChanged.add(id)
     for (const id of npcResult.npcRemoved) npcRemoved.add(id)
 

@@ -130,6 +130,26 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     // client can still align onto the hit tick.
     attackImpactSec: 1.2,
   },
+  // The sentinels Zaryth summons mid-fight (minions.ts). One KayKit skeleton rig
+  // in three kits, armed to match the style each is summoned for — built by
+  // world/scripts/build-skeleton-sentinels.mjs, bounds baked from its output.
+  // Shorter than the boss on purpose: a minion that reads as its equal in the
+  // silhouette is a second boss, not an add.
+  zaryth_blade_sentinel: {
+    url: '/models/skeleton_warrior.glb',
+    bounds: { minX: -1.169, minY: 0, minZ: -0.758, maxX: 1.319, maxY: 2.59, maxZ: 1.168 },
+    targetHeight: 1.8,
+  },
+  zaryth_bolt_sentinel: {
+    url: '/models/skeleton_rogue.glb',
+    bounds: { minX: -1.439, minY: 0, minZ: -0.582, maxX: 0.971, maxY: 2.308, maxZ: 0.571 },
+    targetHeight: 1.8,
+  },
+  zaryth_rune_sentinel: {
+    url: '/models/skeleton_mage.glb',
+    bounds: { minX: -1.023, minY: 0, minZ: -0.848, maxX: 0.969, maxY: 2.63, maxZ: 1.255 },
+    targetHeight: 1.8,
+  },
 }
 
 /** Monsters that render with a bespoke model (registry above). Anything else

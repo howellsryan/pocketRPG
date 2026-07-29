@@ -19,6 +19,7 @@ import { spawnDrops } from './loot'
 import { removeItems } from './mining'
 import { isBossMonster } from './bossKills'
 import { isRoomWideAttacker } from '../../src/engine/roomWideAttacks.js'
+import { prepareAdd } from '../../src/engine/bossAdds.js'
 import { getMonsterModel } from '../../src/utils/equipModels.js'
 import { monsterAttackWindup } from '../../src/utils/combatWindup.js'
 import { resolveSpecialEnergyCost } from '../../src/engine/specialAttackEnergy.js'
@@ -110,8 +111,11 @@ export function emitPrayerIfChanged(player: TickPlayer, events: ZoneEvent[]): vo
 
 // The engine's inferred state types `spell`/`runesConsumed` from their `null`
 // initialisers — widen them to what magic combat actually stores there.
-type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer' | 'activePotions'> & {
+type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'add' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer' | 'activePotions'> & {
   spell: unknown
+  /** The boss's minion, mirrored from its npc each tick (mirrorMinion). The
+   * engine initialises it to `null`, which infers as the `null` type. */
+  add: { id?: string; currentHP: number; attackTimer: number } | null
   runesConsumed?: Record<string, number> | null
   prayerPoints: number
   maxPrayerPoints: number
@@ -257,6 +261,38 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
   if (result) emitSpecIfChanged(player, result.events)
 }
 
+/**
+ * Points this session's `state.add` at the ONE minion npc the boss has on the
+ * field (minions.ts), so the engine resolves its swing exactly as it does in
+ * the solo fight.
+ *
+ * Runs every tick and for every fight, ahead of processCombatTick — including
+ * fights with nothing to mirror, which is what makes the npc the ONLY source of
+ * an add out here. (A session could otherwise seed one of its own: every other
+ * caller of createCombatState passes the monsters table, which is what turns the
+ * engine's own spawn on, and this one deliberately does not.)
+ *
+ * The minion's HP is the npc's, not the session's: the session never damages it
+ * (nothing sets `addTargeted` out here — a player kills the minion by attacking
+ * it as an ordinary npc, in a session of its own), so this is a read-only view
+ * that goes empty the moment the npc dies or despawns.
+ */
+function mirrorMinion(combat: CombatSession, npc: NpcState, ctx: TickContext): void {
+  const minion = npc.minionId ? ctx.npcs?.get(npc.minionId) : null
+  if (!minion || minion.state === 'dead') {
+    combat.state.add = null
+    return
+  }
+  const definition = (monstersData as Monsters)[minion.monsterId]
+  if (combat.state.add?.id !== minion.monsterId) combat.state.add = prepareAdd(definition)
+  const add = combat.state.add
+  if (!add) return
+  add.currentHP = minion.hp
+  // Same trick as the room-wide boss above: hold every session's copy off the
+  // floor and fire them all on the tick the npc's own clock says so.
+  add.attackTimer = minion.roomWideSwing ? 0 : Math.max(2, Number(definition?.attackSpeed) || 4)
+}
+
 function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quantity: number }[], ctx: TickContext, result: TickResult): void {
   npc.state = 'dead'
   npc.anim = 'die'
@@ -340,6 +376,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       ? 0
       : Math.max(2, Number(combat.state.monster.attackSpeed) || 4)
   }
+  mirrorMinion(combat, npc, ctx)
 
   // The pack rides in as the engine's inventory so magic can check runes;
   // consumption is applied below from state.runesConsumed (live-game contract:

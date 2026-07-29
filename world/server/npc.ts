@@ -30,14 +30,24 @@ export type NpcState = {
    * re-claimed by a surviving attacker the next tick. */
   attackerId: string | null
   lastCombatTick: number
-  /** Shared attack clock for a roomWideAttacks boss. Its swing hits everybody
-   * present, so the clock has to belong to the NPC: each player runs their own
-   * combat session, and per-session timers would swing once per player. Ticked
-   * once per tick by tickNpc, before any player session reads it. Undefined for
-   * every other monster, which keeps its per-session timer. */
+  /** Shared attack clock for an npc whose swings are resolved INSIDE other
+   * players' combat sessions — a roomWideAttacks boss, and a summoned minion
+   * mirrored onto every session fighting its summoner. Each player runs their
+   * own session, so a per-session timer would swing once per player; the clock
+   * therefore belongs to the npc and is ticked once per tick (tickNpc for the
+   * boss, stepMinions for the minion) before any session reads it. Undefined
+   * for every other monster, which keeps its per-session timer. */
   attackTimer?: number
   /** True on exactly the tick the clock above fires. */
   roomWideSwing?: boolean
+  /** Set on a SUMMONED minion: the npc that summoned it. Such an npc is removed
+   * when it dies instead of respawning, and leaves the field with its summoner. */
+  summonerId?: string
+  /** Set on a SUMMONER: the id of its live minion, or null when it has none. */
+  minionId?: string | null
+  /** Ticks until this summoner's next minion appears. Null while one is alive,
+   * and while the summoner is out of combat — a boss only summons mid-fight. */
+  summonCountdown?: number | null
   /** Damage per attacker for loot attribution; `tick` = when that total last
    * increased (tie-break: first to reach the total). */
   damageByChar: Map<string, { dmg: number; tick: number }>
@@ -135,33 +145,38 @@ export function reselectAttacker(
   npc.attackerId = best.charId
 }
 
+/** A fresh npc record at full health. Shared by the zone's authored spawns and
+ * by minions summoned mid-fight (minions.ts), so a summoned npc is the same
+ * kind of thing as a placed one and every other pass handles it unchanged. */
+export function makeNpc(def: ZoneNpcDef): NpcState {
+  const monster = (monstersData as Monsters)[def.monsterId]
+  const maxHp = monster?.hitpoints ?? 1
+  return {
+    id: def.id,
+    monsterId: def.monsterId,
+    x: def.x,
+    z: def.z,
+    hp: maxHp,
+    maxHp,
+    state: 'idle',
+    home: { x: def.x, z: def.z },
+    wander: def.wander,
+    wanderCooldown: randInt(WANDER_MIN_TICKS, WANDER_MAX_TICKS),
+    respawnAtTick: 0,
+    removeAtTick: 0,
+    anim: 'idle',
+    attackerId: null,
+    lastCombatTick: 0,
+    damageByChar: new Map(),
+    chasePath: [],
+    chaseGoal: null,
+    lastThreatSent: null,
+  }
+}
+
 export function npcsFromZone(npcs: ZoneNpcDef[]): Map<string, NpcState> {
   const map = new Map<string, NpcState>()
-  for (const def of npcs) {
-    const monster = (monstersData as Monsters)[def.monsterId]
-    const maxHp = monster?.hitpoints ?? 1
-    map.set(def.id, {
-      id: def.id,
-      monsterId: def.monsterId,
-      x: def.x,
-      z: def.z,
-      hp: maxHp,
-      maxHp,
-      state: 'idle',
-      home: { x: def.x, z: def.z },
-      wander: def.wander,
-      wanderCooldown: randInt(WANDER_MIN_TICKS, WANDER_MAX_TICKS),
-      respawnAtTick: 0,
-      removeAtTick: 0,
-      anim: 'idle',
-      attackerId: null,
-      lastCombatTick: 0,
-      damageByChar: new Map(),
-      chasePath: [],
-      chaseGoal: null,
-      lastThreatSent: null,
-    })
-  }
+  for (const def of npcs) map.set(def.id, makeNpc(def))
   return map
 }
 
@@ -264,6 +279,10 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
   if (npc.state === 'dead') {
     npc.roomWideSwing = false
     if (npc.removeAtTick && ctx.tick === npc.removeAtTick) result.npcRemoved.push(npc.id)
+    // A summoned minion is not a fixture of the zone: it leaves the field for
+    // good and its summoner rolls a replacement (stepMinions), so it must never
+    // respawn on the spot the way an authored spawn does.
+    if (npc.summonerId) return
     if (ctx.tick >= npc.respawnAtTick) {
       npc.state = 'idle'
       npc.anim = 'idle'
