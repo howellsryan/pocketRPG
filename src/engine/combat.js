@@ -21,6 +21,7 @@ import { getMonsterCharmDrops, getSummoningCreature, rollSummonAttack, SUMMON_AT
 import { countItem } from './inventory.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
+import { isMultiForm, applyForm, advanceSharedForm, randomFormSwitchThreshold } from './bossForms.js'
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
 
@@ -83,6 +84,9 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     addTargetIndex: null,          // index into adds the player swings at; null = the boss
     maxActiveAdds: maxActiveAdds(addSpec),
     addSpawnCountdown: addDefinition ? rollFirstSpawnDelay(addSpec) : null,
+    // Set by a caller that owns the boss record and rolls its form once per
+    // swing for every session at once (co-op, the open world) — see bossForms.js.
+    formPinned: false,
     addsSpawned: 0,                // lifetime count, so the variant selection can cycle
     addsDefeated: 0
   }
@@ -107,18 +111,12 @@ export function setCombatTarget(combatState, target) {
  */
 function prepareMonster(monster) {
   let preparedMonster = { ...monster, currentHP: monster.hitpoints }
-  if (monster.multiForm && monster.forms) {
+  if (isMultiForm(monster)) {
     const formKey = monster.initialForm || Object.keys(monster.forms)[0]
-    const form = monster.forms[formKey]
+    const form = applyForm(preparedMonster, formKey)
     if (form) {
-      preparedMonster.currentForm = formKey
       preparedMonster.formAttackCount = 0
       preparedMonster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
-      preparedMonster.attackStyle = form.attackStyle
-      preparedMonster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0
-      preparedMonster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0
-      preparedMonster.defenceBonus = { ...form.defenceBonus }
-      preparedMonster.formMaxHit = form.maxHit
       // Verzik phased boss: use first form's phaseHP as starting HP
       if (monster.verzikPhased && form.phaseHP) {
         preparedMonster.hitpoints = form.phaseHP
@@ -152,27 +150,6 @@ export function createRaidCombatState(raidData, monstersData, combatType = 'mele
  * Pick a random number of attacks (within formSwitchMin..formSwitchMax)
  * that a multi-form monster will use before switching forms.
  */
-function randomFormSwitchThreshold(monster) {
-  const min = monster.formSwitchMin || 1
-  const max = Math.max(min, monster.formSwitchMax || 5)
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-/**
- * Pick the next form. If formCycleOrder is defined, cycles in order;
- * otherwise picks a random form (including possibly the current one).
- */
-function pickNextForm(monster) {
-  const keys = Object.keys(monster.forms || {})
-  if (keys.length <= 1) return monster.currentForm
-  if (monster.formCycleOrder && Array.isArray(monster.formCycleOrder)) {
-    const cycle = monster.formCycleOrder
-    const idx = cycle.indexOf(monster.currentForm)
-    return cycle[(idx + 1) % cycle.length]
-  }
-  return keys[Math.floor(Math.random() * keys.length)]
-}
-
 /**
  * If a multi-form boss has an enrage threshold and its HP just dropped below it,
  * switch to the enraged form once and emit a bossEnrage event. No-op otherwise.
@@ -1191,36 +1168,16 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
 
     // ── Multi-form switch check (e.g. Venomcoil Matriarch) ──
-    if (monster.multiForm && monster.forms) {
-      monster.formAttackCount = (monster.formAttackCount || 0) + 1
-      if (monster.formAttackCount >= (monster.formSwitchThreshold || 3)) {
-        const previousForm = monster.currentForm
-        const nextKey = pickNextForm(monster)
-        const nextForm = monster.forms[nextKey]
-        if (nextForm) {
-          monster.currentForm = nextKey
-          monster.attackStyle = nextForm.attackStyle
-          monster.attackBonus = nextForm.attackBonus ?? monster.attackBonus
-          monster.strengthBonus = nextForm.strengthBonus ?? monster.strengthBonus
-          monster.defenceBonus = { ...nextForm.defenceBonus }
-          monster.formMaxHit = nextForm.maxHit
-          monster.formAttackCount = 0
-          // For per-attack randomization, keep threshold at 1; otherwise randomize
-          monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
-          // Delay next attack by one cycle after a form change so the player can adapt
-          state.monsterAttackTimer = (monster.attackSpeed || 4)
-          events.push({
-            type: 'formChange',
-            previousForm,
-            currentForm: nextKey,
-            displayName: nextForm.displayName || nextKey,
-            icon: nextForm.icon || '',
-            attackStyle: nextForm.attackStyle,
-            weakness: nextForm.weakness,
-            immunity: nextForm.immunity,
-            monsterName: monster.name
-          })
-        }
+    // Skipped when the form is PINNED: co-op and the open world roll it once on
+    // the shared boss record and copy it onto every session, so a session doing
+    // its own would give each player a differently-formed boss off one health
+    // bar (src/engine/bossForms.js).
+    if (!state.formPinned) {
+      const change = advanceSharedForm(monster)
+      if (change) {
+        // Delay next attack by one cycle after a form change so the player can adapt
+        state.monsterAttackTimer = (monster.attackSpeed || 4)
+        events.push(change)
       }
     }
   }

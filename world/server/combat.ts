@@ -11,7 +11,7 @@ import monstersData from '../../src/data/monsters.json'
 import spellsData from '../../src/data/spells.json'
 import prayersData from '../../src/data/prayers.json'
 import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRangeAndSight, type TickPlayer } from './tick'
-import { recordDamage, topDamageContributor, usesSharedClock, type NpcState } from './npc'
+import { ensureForm, recordDamage, sharedMonsterState, topDamageContributor, usesSharedClock, type NpcState } from './npc'
 import { reachAgainst } from '../shared/monsterSize'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
@@ -20,6 +20,7 @@ import { removeItems } from './mining'
 import { isBossMonster } from './bossKills'
 import { isRoomWideAttacker } from '../../src/engine/roomWideAttacks.js'
 import { prepareAdd } from '../../src/engine/bossAdds.js'
+import { isMultiForm, pinFormToSession } from '../../src/engine/bossForms.js'
 import { getMonsterModel } from '../../src/utils/equipModels.js'
 import { monsterAttackWindup } from '../../src/utils/combatWindup.js'
 import { resolveSpecialEnergyCost } from '../../src/engine/specialAttackEnergy.js'
@@ -111,13 +112,15 @@ export function emitPrayerIfChanged(player: TickPlayer, events: ZoneEvent[]): vo
 
 // The engine's inferred state types `spell`/`runesConsumed` from their `null`
 // initialisers — widen them to what magic combat actually stores there.
-type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'adds' | 'addTargetIndex' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer' | 'activePotions'> & {
+type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'adds' | 'addTargetIndex' | 'formPinned' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer' | 'activePotions'> & {
   spell: unknown
   /** Everything else in this encounter attacking this player, mirrored from
    * their npcs each tick (mirrorOtherAttackers). The engine initialises the list
    * empty, which infers as never[]. */
   adds: { instanceId: string; currentHP: number; attackTimer: number }[]
   addTargetIndex: number | null
+  /** The room owns this boss's form; this session only wears it (bossForms.js). */
+  formPinned: boolean
   runesConsumed?: Record<string, number> | null
   prayerPoints: number
   maxPrayerPoints: number
@@ -303,7 +306,8 @@ function otherAttackerReaches(other: NpcState, player: TickPlayer, collision: st
   const reaches = isRoomWideAttacker((monstersData as Monsters)[other.monsterId])
     || other.attackerId === player.charId
   if (!reaches) return false
-  return withinRangeAndSight(player, other, reachAgainst(other.monsterId, monsterAttackRange(other.monsterId)), collision)
+  const reach = reachAgainst(other.monsterId, monsterAttackRange(other.monsterId, other.currentForm))
+  return withinRangeAndSight(player, other, reach, collision)
 }
 
 /**
@@ -365,7 +369,7 @@ function mirrorOtherAttackers(combat: CombatSession, others: NpcState[]): void {
 function signalSwing(npc: NpcState, swinging: boolean, countdown: number | undefined): void {
   // Clear last tick's swing so a fresh one re-triggers the attack animation.
   if (npc.anim === 'attack' || npc.anim === 'attack_ranged' || npc.anim === 'attack_magic') npc.anim = 'idle'
-  if (swinging && countdown === monsterWindupLeadTicks(npc.monsterId)) npc.anim = monsterAttackAnim(npc.monsterId)
+  if (swinging && countdown === monsterWindupLeadTicks(npc.monsterId)) npc.anim = monsterAttackAnim(npc.monsterId, npc.currentForm)
 }
 
 function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quantity: number }[], ctx: TickContext, result: TickResult): void {
@@ -410,7 +414,10 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // Both reaches are widened by the monster's body (a 3×3 dragon is fought from
   // the edge of its footprint, not from its centre tile).
   const playerRange = reachAgainst(npc.monsterId, rangeForCombatType(combat.state.combatType as string))
-  const monsterRange = reachAgainst(npc.monsterId, monsterAttackRange(npc.monsterId))
+  // Reach follows the FORM: a boss that lunges in melee and shoots at range has
+  // one reach per form, and reading its top-level style gave it the starting
+  // form's reach for the whole fight.
+  const monsterRange = reachAgainst(npc.monsterId, monsterAttackRange(npc.monsterId, npc.currentForm))
   const collision = ctx.collision ?? []
   // Ranged/magic need line of sight to land (both directions) — a wall between
   // the two blocks the shot, so a player can't kite a boss from behind a pillar
@@ -443,6 +450,18 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   const isTarget = npc.attackerId === player.charId
   // Whose session may apply this npc's attacks to its own player.
   const takesSwings = roomWide || isTarget
+  // The room owns the form (npc.ts advanceSharedSwing); this session wears it.
+  // Rolling it per session gave every player a differently-formed boss off one
+  // health bar — their own max hit to take and their own defences to roll
+  // against, decided by nothing but which session ticked.
+  combat.state.formPinned = isMultiForm(combat.state.monster)
+  if (combat.state.formPinned) {
+    // On the tick a fight starts the npc has not been through advanceSharedSwing
+    // yet, and a session pinned to a form it has not chosen would fight the
+    // starting form while the npc reported none.
+    ensureForm(npc)
+    pinFormToSession(combat.state.monster, sharedMonsterState(npc))
+  }
   const sharedClock = usesSharedClock(npc)
   if (sharedClock) {
     // This npc's swing is resolved in several sessions at once, so hold every

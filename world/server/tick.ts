@@ -15,7 +15,7 @@ import type { LootEntity } from './loot'
 import { hasLineOfSight } from './los'
 import monstersData from '../../src/data/monsters.json'
 
-type MonsterStyles = Record<string, { attackStyle?: string } | undefined>
+type MonsterStyles = Record<string, { attackStyle?: string; forms?: Record<string, { attackStyle?: string } | undefined> } | undefined>
 const monsterStyles = monstersData as unknown as MonsterStyles
 
 export type TickAnim = EntityDiff['anim']
@@ -230,17 +230,30 @@ export function rangeForCombatType(type: string): number {
   return type === 'magic' ? MAGIC_RANGE : type === 'ranged' ? RANGED_RANGE : MELEE_RANGE
 }
 
+/**
+ * The style a monster is fighting with. `form` is the FORM it is currently in
+ * (npc.currentForm) — a multi-form boss's top-level attackStyle is only its
+ * starting one, so reading that alone left Zaryth permanently ranged out here:
+ * always the shoot clip, always ranged reach, and the melee and magic clips its
+ * rig ships dead on arrival.
+ */
+export function monsterAttackStyle(monsterId: string, form?: string | null): string | undefined {
+  const monster = monsterStyles[monsterId]
+  const formStyle = form ? monster?.forms?.[form]?.attackStyle : null
+  return formStyle ?? monster?.attackStyle
+}
+
 /** A monster's attack reach from its attackStyle — magic/ranged strike from
  * afar; every melee style (stab/slash/crush/melee/unset) is 1 tile. */
-export function monsterAttackRange(monsterId: string): number {
-  const style = monsterStyles[monsterId]?.attackStyle
+export function monsterAttackRange(monsterId: string, form?: string | null): number {
+  const style = monsterAttackStyle(monsterId, form)
   return style === 'magic' ? MAGIC_RANGE : style === 'ranged' ? RANGED_RANGE : MELEE_RANGE
 }
 
 /** A monster's attack animation from its attackStyle — magic/ranged foes play a
  * distinct cast/shoot animation; everything else swings. */
-export function monsterAttackAnim(monsterId: string): 'attack' | 'attack_ranged' | 'attack_magic' {
-  const style = monsterStyles[monsterId]?.attackStyle
+export function monsterAttackAnim(monsterId: string, form?: string | null): 'attack' | 'attack_ranged' | 'attack_magic' {
+  const style = monsterAttackStyle(monsterId, form)
   return style === 'magic' ? 'attack_magic' : style === 'ranged' ? 'attack_ranged' : 'attack'
 }
 

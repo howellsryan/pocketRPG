@@ -9,6 +9,7 @@ import { reachAgainst } from '../shared/monsterSize'
 import type { Tile } from './pathfind'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer } from '../../src/engine/roomWideAttacks.js'
 import { getAddSpec } from '../../src/engine/bossAdds.js'
+import { advanceSharedForm, applyForm, isMultiForm } from '../../src/engine/bossForms.js'
 
 type Monsters = Record<string, { name?: string; hitpoints?: number; boss?: boolean; attackSpeed?: number; roomWideAttacks?: boolean }>
 
@@ -40,6 +41,14 @@ export type NpcState = {
   attackTimer?: number
   /** True on exactly the tick the clock above fires. */
   sharedSwing?: boolean
+  /** The form a multi-form boss is currently in, and how many swings it has
+   * held it for. A per-swing decision, so it belongs to the npc for the same
+   * reason its clock does: left to the sessions, eight players fought eight
+   * differently-formed bosses off one health bar. Advanced by advanceSharedForm
+   * (bossForms.js) once a tick, and pinned onto every session (combat.ts). */
+  currentForm?: string
+  formAttackCount?: number
+  formSwitchThreshold?: number
   /** Set on a SUMMONED minion: the npc that summoned it. Such an npc is removed
    * when it dies instead of respawning, and leaves the field with its summoner. */
   summonerId?: string
@@ -142,7 +151,7 @@ export function reselectAttacker(
     npc.attackerId = null
     return
   }
-  const range = monsterAttackRange(npc.monsterId)
+  const range = monsterAttackRange(npc.monsterId, npc.currentForm)
   const inReach = engaged.filter((p) => withinRangeAndSight(npc, p, reachAgainst(npc.monsterId, range), collision))
   const pool = inReach.length > 0 ? inReach : engaged
   const threat = (charId: string): number => npc.damageByChar.get(charId)?.dmg ?? 0
@@ -310,6 +319,47 @@ export function usesSharedClock(npc: NpcState): boolean {
   return isRoomWideAttacker(monster) || !!getAddSpec(monster)
 }
 
+/**
+ * The npc's shared monster record: the boss data with whatever this npc has
+ * since decided about itself written over it. Sessions are pinned to this, and
+ * nothing but this pass may change it.
+ */
+export function sharedMonsterState(npc: NpcState): Record<string, unknown> {
+  const monster = { ...((monstersData as unknown as Record<string, Record<string, unknown>>)[npc.monsterId] ?? {}) }
+  if (npc.currentForm) applyForm(monster, npc.currentForm)
+  monster.formAttackCount = npc.formAttackCount ?? 0
+  monster.formSwitchThreshold = npc.formSwitchThreshold ?? (monster.randomFormEveryAttack ? 1 : 3)
+  return monster
+}
+
+/**
+ * Settles a multi-form boss into its authored starting form. Called every combat
+ * tick rather than on the first swing: a session pinned to a form the npc has
+ * not chosen yet would fight the starting form while the npc reported none, and
+ * the two would disagree for the opening exchange.
+ */
+export function ensureForm(npc: NpcState): void {
+  if (npc.currentForm) return
+  const monster = sharedMonsterState(npc)
+  if (!isMultiForm(monster)) return
+  npc.currentForm = (monster.initialForm as string) || Object.keys(monster.forms as object)[0]
+  npc.formAttackCount = 0
+  npc.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : 3
+}
+
+/**
+ * Rolls this npc's form for the swing it just took, mirroring solo: the boss
+ * swings with the form it is in, then switches. Only on a tick it swung.
+ */
+function advanceSharedFormFor(npc: NpcState): void {
+  const monster = sharedMonsterState(npc)
+  if (!isMultiForm(monster)) return
+  advanceSharedForm(monster)
+  npc.currentForm = monster.currentForm as string
+  npc.formAttackCount = monster.formAttackCount as number
+  npc.formSwitchThreshold = monster.formSwitchThreshold as number
+}
+
 /** Advances that clock and records whether it swings this tick, for the player
  * sessions that run after every npc. */
 export function advanceSharedSwing(npc: NpcState): void {
@@ -319,6 +369,8 @@ export function advanceSharedSwing(npc: NpcState): void {
   const clock = { attackSpeed: (monstersData as Monsters)[npc.monsterId]?.attackSpeed, attackTimer: npc.attackTimer }
   npc.sharedSwing = advanceRoomWideAttackTimer(clock)
   npc.attackTimer = clock.attackTimer
+  ensureForm(npc)
+  if (npc.sharedSwing) advanceSharedFormFor(npc)
 }
 
 export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): void {
@@ -367,7 +419,7 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
     // down to regain reach+sight — leashed to a radius around home so it can't
     // trek across the whole zone.
     const target = ctx.players?.get(npc.attackerId)
-    if (!target || withinRangeAndSight(npc, target, reachAgainst(npc.monsterId, monsterAttackRange(npc.monsterId)), ctx.collision ?? [])) return
+    if (!target || withinRangeAndSight(npc, target, reachAgainst(npc.monsterId, monsterAttackRange(npc.monsterId, npc.currentForm)), ctx.collision ?? [])) return
     if (chebyshev(npc, npc.home) >= PURSUE_LEASH_TILES) {
       giveUpPursuit(npc)
       result.npcChanged.push(npc.id)

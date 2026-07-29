@@ -25,6 +25,7 @@ import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers } from './roomWideAttacks.js'
 import { bossAddsOf } from './bossAdds.js'
+import { advanceSharedForm, isMultiForm, pinFormToSession } from './bossForms.js'
 import {
   COOP_RAID_ADVANCE_TICKS,
   coopRaidData,
@@ -274,6 +275,16 @@ export function createCoopRaidState(raidId, monstersData, { hostCharacterId = nu
       completions: 0,
     },
   }
+}
+
+/**
+ * The room's boss as a WHOLE monster: the authored data with whatever the room
+ * has since decided about it written over the top. `boss.monster` alone is only
+ * the mutable subset, so it carries `currentForm` but not `forms` — enough to
+ * pin a session, not enough to roll the next form off.
+ */
+function sharedMonsterOf(state, monstersData) {
+  return { ...(monstersData?.[state.bossId] || {}), ...(state.boss?.monster || {}) }
 }
 
 function pickMutableMonsterFields(monster) {
@@ -619,6 +630,13 @@ function dehydrateCombatState(engine, member) {
   member.combat.prayerDrainAccumulator = engine.prayerDrainAccumulator
   member.combat.activePotions = { ...(engine.activePotions || {}) }
   member.combat.addTargetIndex = engine.addTargetIndex ?? null
+}
+
+/** An event that means the boss itself took a swing — not one of its minions. */
+function isBossSwing(ev) {
+  if (!ev || ev.fromAdd) return false
+  return ev.type === 'monsterHit' || ev.type === 'monsterMiss'
+    || ev.type === 'dragonfireHit' || ev.type === 'dragonfireBlocked'
 }
 
 function playerStatsFor(member) {
@@ -979,6 +997,17 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   const roomWide = isRoomWideAttacker(monstersData?.[next.bossId])
   const roomWideSwing = roomWide && advanceRoomWideAttackTimer(next.boss)
   const roomWideAddSwings = roomWide ? advanceAddAttackTimers(next.boss) : []
+  // A form change is a per-SWING decision, so the ROOM owns it: every session is
+  // pinned below and the single roll happens after the loop, mirroring solo,
+  // where the boss swings with the form it is in and then switches. Left to the
+  // sessions, each member fought a differently-formed boss off one health bar —
+  // their own max hit, their own defences to roll against, and a HUD showing
+  // whichever member ticked last, so there was no prayer to read off the screen.
+  const formPinned = isMultiForm(sharedMonsterOf(next, monstersData))
+  // Whether the boss actually swung this tick, which is what a form change
+  // counts. A room-wide boss has the room's clock; any other only swings in its
+  // target's session.
+  let bossSwung = roomWide && roomWideSwing
 
   for (const id of memberIds) {
     const member = next.members[id]
@@ -995,6 +1024,8 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     // and protection prayer against it.
     if (roomWide) engine.monsterAttackTimer = roomWideSwing ? 0 : Math.max(2, engine.monster.attackSpeed || 4)
     else if (!isTarget) engine.monsterAttackTimer = Math.max(2, engine.monster.attackSpeed || 4)
+    // The room owns the form; this session only wears it.
+    engine.formPinned = formPinned
     // Its minions run off the room's clock for the same reason (see
     // advanceAddAttackTimer) — one swing resolved, landing on everybody.
     if (roomWide) {
@@ -1011,6 +1042,9 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
 
     dehydrateCombatState(combatState, member)
     applyConsumptionEvents(member, engineEvents, combatState, itemsData)
+    // A non-room-wide boss only swings inside its target's session, so that is
+    // the only place the room can learn it swung at all.
+    if (isTarget && !roomWide && engineEvents.some(isBossSwing)) bossSwung = true
 
     // Attribution is the boss's HP delta across this member's tick, so every
     // damage source (specials, summons, bolt procs) counts without this having
@@ -1132,6 +1166,17 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   if (next.raid && next.phase === 'active' && memberCount(next) > 0 && livingMembers(next).length === 0) {
     events.push({ type: 'raidWiped', raidId: next.raid.raidId, bossId: next.bossId })
     returnPartyToLobby(next, monstersData, events, 'wipe')
+  }
+
+  // After every session, so they all swung with the form the room was in and the
+  // change takes effect on the next one — the order solo already has.
+  if (formPinned && bossSwung) {
+    const shared = sharedMonsterOf(next, monstersData)
+    const change = advanceSharedForm(shared)
+    if (change) {
+      Object.assign(next.boss.monster, pickMutableMonsterFields(shared))
+      events.push(change)
+    }
   }
 
   return finishTick(next, events, kill)

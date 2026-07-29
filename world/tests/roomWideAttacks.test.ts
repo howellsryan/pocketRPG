@@ -124,6 +124,37 @@ describe('a room-wide boss in the open world', () => {
     expect(seen).toEqual([false, false, true, false, false, true])
   })
 
+  it('rotates its form once for the room, and swings with the form it is in', () => {
+    // A multi-form boss's style decides its clip, its reach and what it hits
+    // for. Rolled inside the sessions, eight players fought eight differently
+    // formed bosses off one health bar; read off the top-level attackStyle,
+    // Zaryth was permanently ranged out here and the melee and magic clips its
+    // rig ships never played at all.
+    const { npcs, boss } = bossAt(ZARYTH, 10, 10)
+    const monster = (monstersData as never as Record<string, { multiForm?: boolean; forms?: Record<string, unknown> }>)[ZARYTH]
+    expect(monster.multiForm, 'this boss does not rotate').toBe(true)
+
+    const players = [makePlayer('1', 10, 11), makePlayer('2', 9, 10)]
+    const seen = new Set<string>()
+    const anims = new Set<string>()
+    for (let tick = 1; tick <= 60; tick++) {
+      const c = ctx(tick, npcs, players)
+      for (const npc of npcs.values()) tickNpc(npc, c, { npcChanged: [], npcRemoved: [] } as never)
+      for (const p of players) { p.hp = p.maxHp; tickPlayer(p, c) }
+      if (boss.currentForm) seen.add(boss.currentForm)
+      if (boss.anim.startsWith('attack')) anims.add(boss.anim)
+      // One form for the room: both sessions swing with whatever the npc is in.
+      for (const p of players) {
+        const form = (p.combat?.state as { monster?: { currentForm?: string } })?.monster?.currentForm
+        if (form) expect(form, `player ${p.charId} is fighting a different form`).toBe(boss.currentForm)
+      }
+    }
+    expect(seen.size, 'it never left its starting form').toBeGreaterThan(1)
+    expect(Object.keys(monster.forms ?? {})).toEqual(expect.arrayContaining([...seen]))
+    // And the clip follows the form, rather than the starting style forever.
+    expect(anims.size, `only ever played ${[...anims]}`).toBeGreaterThan(1)
+  })
+
   it('clears the swing flag while it is dead', () => {
     const { npcs, boss } = bossAt(ZARYTH, 10, 10)
     boss.sharedSwing = true

@@ -81,6 +81,7 @@ const sourceFiles = [
   'engine/prayerDrain.js',
   'engine/monsterDamageRules.js',
   'engine/damageReduction.js',
+  'engine/bossForms.js',
   'engine/bossAdds.js',
   'engine/monsterClips.js',
   'engine/monsterMaxHit.js',

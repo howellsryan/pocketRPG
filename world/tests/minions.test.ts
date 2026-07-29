@@ -354,9 +354,6 @@ describe('a boss that summons minions in the open world', () => {
     expect(monsterAttackRange(minion.monsterId), 'this sentinel is not the melee one').toBe(1)
 
     let taken = 0
-    // Shorter than the shortest wait for the NEXT summon (8 attacks x 3 ticks),
-    // so the stack stays at one and the ranged sentinel that follows it — which
-    // reaches five tiles — cannot muddy the measurement.
     for (let i = 0; i < 20; i++) {
       const boss = npcs.get('boss_1')!
       tick = runTicks(1, npcs, players, tick, () => {
@@ -368,6 +365,9 @@ describe('a boss that summons minions in the open world', () => {
         minion.hp = minion.maxHp
         minion.sharedSwing = true
         boss.sharedSwing = false
+        // Hold the stack at one: the RANGED sentinel that follows reaches five
+        // tiles and would be measured as this melee one landing a blow.
+        boss.summonCountdown = 999
       })
       expect(minion.attackerId, 'it let go of its target, so reach is not what is being tested').toBe('1')
       expect(minionsIn(npcs), 'a second sentinel joined the measurement').toHaveLength(1)

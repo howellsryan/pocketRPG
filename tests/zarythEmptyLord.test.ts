@@ -499,6 +499,44 @@ describe('room-wide attacks in a co-op session', () => {
     expect(struck.length).toBeGreaterThan(1)
   })
 
+  it('changes form ONCE a swing, not once per member', () => {
+    // Every member's session used to run the rotation and write back over the
+    // shared record, so one swing produced one form change per living member —
+    // each member hit by a different form's max hit, each rolling against a
+    // different form's defences, and the HUD showing whichever ticked last.
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    let state = joined(BOSS, [1, 2, 3, 4])
+    expect((monstersData as any)[BOSS].multiForm, 'this boss does not rotate').toBe(true)
+
+    const changesPerTick: number[] = []
+    const formsSeen: string[] = []
+    for (let i = 0; i < 12; i++) {
+      const out = processCoopTick(state, [], deps, Date.now())
+      state = out.stateNext
+      const changes = out.events.filter((e: any) => e.type === 'formChange')
+      if (changes.length) {
+        changesPerTick.push(changes.length)
+        formsSeen.push(...changes.map((c: any) => c.currentForm))
+      }
+    }
+    expect(changesPerTick.length, 'it never changed form at all').toBeGreaterThan(0)
+    for (const n of changesPerTick) expect(n, 'one swing produced several form changes').toBe(1)
+    // And what it changed to is what the room is now in — one boss, one form.
+    expect(state.boss.monster.currentForm).toBe(formsSeen[formsSeen.length - 1])
+  })
+
+  it('hits every member with the SAME form on one swing', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    let state = joined(BOSS, [1, 2, 3, 4])
+    state.boss.attackTimer = 1
+    const out = processCoopTick(state, [], deps, Date.now())
+    const hits = out.events.filter((e: any) => e.type === 'monsterHit' && !e.fromAdd)
+    expect(hits.length, 'the room-wide swing did not reach everybody').toBeGreaterThan(1)
+    // The engine names the attacker on every swing event; a room fighting one
+    // boss can only ever see one name on a tick.
+    expect(new Set(hits.map((h: any) => h.monsterName)).size).toBe(1)
+  })
+
   it('leaves a normal boss\'s minion on its target alone', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     let state = joined('corporeal_horror', [1, 2, 3])
