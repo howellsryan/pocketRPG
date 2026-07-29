@@ -31,6 +31,25 @@ describe('being in a form', () => {
     expect(monster.currentForm).toBe('ranged')
   })
 
+  it('inherits the boss\'s own defences for a form that authors none', () => {
+    // attackBonus and strengthBonus have always fallen back to the monster's
+    // own; defenceBonus was spread unguarded, so a form authored without one
+    // replaced the boss's defences with {} — every bonus reads 0 through the
+    // lookup, and the whole room suddenly hits it as if it were unarmoured.
+    // Every shipped form carries defences, so this is the guard on the next one.
+    const monster: Record<string, any> = {
+      multiForm: true,
+      attackBonus: 100,
+      strengthBonus: 90,
+      defenceBonus: { stab: 70, slash: 70, crush: 70, magic: 70, ranged: 70 },
+      forms: { bare: { attackStyle: 'crush', maxHit: 20 } },
+    }
+    applyForm(monster, 'bare')
+    expect(monster.defenceBonus).toEqual({ stab: 70, slash: 70, crush: 70, magic: 70, ranged: 70 })
+    expect(monster.attackBonus).toBe(100)
+    expect(monster.strengthBonus).toBe(90)
+  })
+
   it('is only claimed by a boss that actually rotates', () => {
     expect(isMultiForm(zaryth())).toBe(true)
     expect(isMultiForm((monstersData as Record<string, unknown>)['warlord_grondar'])).toBe(false)

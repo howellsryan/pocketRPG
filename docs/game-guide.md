@@ -173,7 +173,7 @@ Fight him as a group and he attacks **everybody at once**. There is no safe back
 His table averages around a million coins a kill before uniques, in large rune stacks, food, potions, onyx dragon bolts (e), seraphic arrows, herbs, ore and master clue scrolls. The uniques are the best melee gear in the game:
 
 - **Zaryth Helm, Platebody and Platelegs** (1/256 each) — best in slot for melee accuracy, defence and damage.
-- **Zaryth Vambraces** (1/128) — the ranged gloves, also found in the Vaults.
+- **Zaryth Vambraces** (1/128) — the best ranged gloves in the realm, and the only Zaryth unique you can also pull from the Vaults of Xyren.
 - **Zaryth Crossbow** (1/256) — the strongest crossbow in the realm. Its Empty Bolt special cannot be turned aside: it always hits, for up to 150% of your ranged max.
 - **Zaryth Hilt** (1/256) — Zaryth never drops the godsword itself, only this. Attach it to all four other godswords at Smithing 99 to forge the **Zaryth Godsword**, the hardest-hitting two-handed weapon in the game. Its Empty Lord's Cleave strikes for up to 150% of your max hit and restores half the damage it deals. Forging consumes all four godswords, so it is a one-way trade.
 

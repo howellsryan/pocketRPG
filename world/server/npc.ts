@@ -9,7 +9,7 @@ import { reachAgainst } from '../shared/monsterSize'
 import type { Tile } from './pathfind'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer } from '../../src/engine/roomWideAttacks.js'
 import { getAddSpec } from '../../src/engine/bossAdds.js'
-import { advanceSharedForm, applyForm, isMultiForm } from '../../src/engine/bossForms.js'
+import { advanceSharedForm, applyForm, isMultiForm, randomFormSwitchThreshold } from '../../src/engine/bossForms.js'
 
 type Monsters = Record<string, { name?: string; hitpoints?: number; boss?: boolean; attackSpeed?: number; roomWideAttacks?: boolean }>
 
@@ -328,6 +328,9 @@ export function sharedMonsterState(npc: NpcState): Record<string, unknown> {
   const monster = { ...((monstersData as unknown as Record<string, Record<string, unknown>>)[npc.monsterId] ?? {}) }
   if (npc.currentForm) applyForm(monster, npc.currentForm)
   monster.formAttackCount = npc.formAttackCount ?? 0
+  // ensureForm owns the opening roll and runs before anything reads this, so
+  // the fallback stays a plain number — this function is called all over the
+  // tick and must not consume randomness of its own.
   monster.formSwitchThreshold = npc.formSwitchThreshold ?? (monster.randomFormEveryAttack ? 1 : 3)
   return monster
 }
@@ -344,7 +347,10 @@ export function ensureForm(npc: NpcState): void {
   if (!isMultiForm(monster)) return
   npc.currentForm = (monster.initialForm as string) || Object.keys(monster.forms as object)[0]
   npc.formAttackCount = 0
-  npc.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : 3
+  // Rolled from the authored range, the same as the solo fight (prepareMonster).
+  // A flat number here gave a boss with a formSwitchMin/Max a different opening
+  // cadence out in the world than the one the player learned everywhere else.
+  npc.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
 }
 
 /**
