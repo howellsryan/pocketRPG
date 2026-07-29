@@ -113,6 +113,16 @@ export type EntityDiff = {
    * absent means no target — the client must clear any previously-stored one,
    * not merge/patch. */
   targetId?: string
+  /** NPC entities only: the form a multi-form boss is currently in — the form it
+   * will swing with NEXT, since the roll lands a wind-up ahead of the blow
+   * (npc.ts advanceSharedSwing). The client tints the model by it, so the style
+   * to pray against is readable off the boss itself. Snapshot, not a merge:
+   * absent means no form. */
+  form?: string
+  /** Player entities only: the damage style their active protection prayer
+   * blocks, drawn as an overhead icon. Snapshot, not a merge — absent means no
+   * protection prayer, and must actually clear the icon. */
+  overhead?: 'melee' | 'ranged' | 'magic'
 }
 
 export type StaticObject = {

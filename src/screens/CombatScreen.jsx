@@ -3308,6 +3308,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       attackSignal={arenaSignal}
       windupSignal={arenaWindup}
       monsterAttackImpactSec={arenaModel ? arenaModel.attackImpactSec : null}
+      monsterAttackMaxSec={arenaModel ? arenaModel.attackMaxSec : null}
       monsterAttackStyle={combat.monster.attackStyle}
       monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
       playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}

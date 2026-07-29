@@ -55,7 +55,7 @@ Eating food during combat heals you but shares a cooldown, so spamming food dela
 
 ## Prayer
 
-Prayers give combat bonuses but drain a prayer pool while active. Your pool's maximum equals your Prayer level, starts each session full, and persists across auto-fight kills. Each prayer drains the pool over time — stronger prayers drain faster — and when the pool hits zero all prayers switch off. Prayer potions restore 20 prayer points and super restores 22, in both live and idle combat. In PvP, protection prayers are disabled (v1), so only offensive prayers drain there.
+Prayers give combat bonuses but drain a prayer pool while active. In the open world the protection prayer you have on shows as an icon over your head, and over everyone else's — you can read what an opponent is praying against before you swing. Your pool's maximum equals your Prayer level, starts each session full, and persists across auto-fight kills. Each prayer drains the pool over time — stronger prayers drain faster — and when the pool hits zero all prayers switch off. Prayer potions restore 20 prayer points and super restores 22, in both live and idle combat. In PvP, protection prayers are disabled (v1), so only offensive prayers drain there.
 
 ## Dragonfire
 
@@ -114,6 +114,8 @@ Minigames are timed grinds for specific unique rewards — for example running V
 ## Raids and bosses
 
 Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward tables: guaranteed loot plus a chance at rare uniques. Bosses are tougher single monsters with their own drop tables and kill counts. Boss and raid uniques are granted by the server when you complete the kill, and every kill is recorded — check the Collection Log and Leaderboard. You can spend credits to skip to a boss kill or pay a raid's skip cost.
+
+In the open world a boss you have woken hunts you across its whole lair. Backing out of its reach no longer sends it home to heal, and its summoned minions stay on the field and follow it, so stepping away is a breather rather than a reset — the way out is the way you came in.
 
 ## Group boss fights
 
@@ -177,7 +179,7 @@ His table averages around a million coins a kill before uniques, in large rune s
 - **Zaryth Crossbow** (1/256) — the strongest crossbow in the realm. Its Empty Bolt special cannot be turned aside: it always hits, for up to 150% of your ranged max.
 - **Zaryth Hilt** (1/256) — Zaryth never drops the godsword itself, only this. Attach it to all four other godswords at Smithing 99 to forge the **Zaryth Godsword**, the hardest-hitting two-handed weapon in the game. Its Empty Lord's Cleave strikes for up to 150% of your max hit and restores half the damage it deals. Forging consumes all four godswords, so it is a one-way trade.
 
-Zaryth is modelled in 3D, and it is the one boss that animates differently depending on how it is attacking: it lunges when it comes at you in melee, and strikes from where it stands when it switches to ranged or magic. Watching which it does tells you the style of the swing before the damage lands. It also has an instanced open-world room — the Empty Throne — where a group fights it live in its own private copy of the vault.
+Zaryth is modelled in 3D, and it is the one boss that animates differently depending on how it is attacking: it lunges when it comes at you in melee, and strikes from where it stands when it switches to ranged or magic. Watching which it does tells you the style of the swing before the damage lands. In the open world it also burns the colour of the phase it is about to swing with — red for melee, green for ranged, blue for magic — so you can set the prayer from across the room. It has an instanced open-world room there, the Empty Throne, where a group fights it live in its own private copy of the vault.
 
 ## Farming
 

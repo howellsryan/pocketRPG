@@ -13,6 +13,7 @@ type PrayerDef = {
   name: string
   level: number
   bonusType: string
+  style?: string
 }
 const prayers = prayersData as unknown as Record<string, PrayerDef>
 
@@ -37,6 +38,19 @@ export function seedPrayer(prayerLevel: number): PrayerSession {
     activeProtectionPrayer: null,
     activeCombatPrayer: null,
   }
+}
+
+export type OverheadStyle = 'melee' | 'ranged' | 'magic'
+
+/** The damage style a protection prayer blocks, for the overhead icon other
+ * players read off your head. Taken from the prayer's own `style` field rather
+ * than its id, so a new protection prayer needs no code here; anything that is
+ * not a protection prayer (or is off) has no overhead. */
+export function protectionOverhead(prayerId: string | null): OverheadStyle | null {
+  const prayer = prayerId ? prayers[prayerId] : null
+  if (!prayer || prayer.bonusType !== 'protection') return null
+  const style = prayer.style
+  return style === 'melee' || style === 'ranged' || style === 'magic' ? style : null
 }
 
 export type PrayerCategory = 'protection' | 'combat'

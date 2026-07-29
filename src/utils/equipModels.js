@@ -259,6 +259,11 @@ export function getMonsterModel(monsterId) {
     // arena leads the swing so this frame hits the engine's splat tick. Absent
     // → the arena falls back to the clip's end. See CombatArena3D wind-up.
     attackImpactSec: typeof m.attackImpactSec === 'number' ? m.attackImpactSec : null,
+    // Seconds of the 'Attack' clip that are actually the swing. Some source rigs
+    // (Zaryth's) end their attack by dropping the body to the floor and holding
+    // it there, which reads as the boss dying every time it hits you — this cuts
+    // the clip at the follow-through. Absent → play the clip whole.
+    attackMaxSec: typeof m.attackMaxSec === 'number' ? m.attackMaxSec : null,
   }
 }
 

@@ -389,6 +389,15 @@ ${SCROLL_CSS}
   font-family: sans-serif; font-size: 13px; color: #ffe850; text-shadow: 0 1px 2px #000;
   max-width: 60vw; text-align: center; overflow-wrap: anywhere;
 }
+/* Overhead protection prayer — the style a player is praying against, readable
+   off their head the way the boss's phase is readable off its body. */
+.overhead-prayer {
+  position: absolute; transform: translate(-50%, -100%); pointer-events: none;
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: #12100cd9; border: 1px solid #6b5a34;
+  font-size: 15px; line-height: 1; text-shadow: 0 1px 2px #000;
+}
+.overhead-prayer svg { display: block; }
 #xp-drops {
   position: fixed; left: 50%; top: 38%; z-index: 10; pointer-events: none;
   font-family: sans-serif; font-weight: bold; color: #ffe066; text-shadow: 0 1px 3px #000;
@@ -1583,6 +1592,43 @@ export function updateNameplate(id: string, screenX: number, screenY: number, na
 
 export function removeNameplate(id: string): void {
   removeTracked(nameplates, id)
+}
+
+// Overhead protection-prayer icons. The crest is the one the prayer panel draws
+// for that style (PRAYER_SKILL_ICON), so the icon over a head and the button
+// that turned it on are the same picture; the emoji is the fallback for a client
+// whose icon data hasn't loaded, matching prayers.json.
+const OVERHEAD_PRAYER_ART: Record<string, { icon: string; accent: string; fallback: string }> = {
+  melee: { icon: 'combat_level', accent: '#e0736a', fallback: '⚔️' },
+  ranged: { icon: 'high_shot', accent: '#7fce87', fallback: '🏹' },
+  magic: { icon: 'pointy_hat', accent: '#8ba9ee', fallback: '🔮' },
+}
+
+const overheadPrayers = new Map<string, HTMLElement>()
+
+export function updateOverheadPrayer(id: string, screenX: number, screenY: number, style: string): void {
+  const art = OVERHEAD_PRAYER_ART[style]
+  if (!art) return removeOverheadPrayer(id)
+  const el = trackedLabel(overheadPrayers, id, 'overhead-prayer')
+  if (!el) return
+  if (el.getAttribute('data-style') !== style) {
+    // The attribute is only claimed once the real crest is in: leaving it unset
+    // retries next frame, so an icon set that finished loading after the player
+    // walked in isn't stuck on the emoji for the whole session.
+    const markup = uiIconMarkup(art.icon, 20, art.accent)
+    if (markup) {
+      el.innerHTML = markup
+      el.setAttribute('data-style', style)
+    } else {
+      el.textContent = art.fallback
+    }
+  }
+  el.style.left = `${screenX}px`
+  el.style.top = `${screenY}px`
+}
+
+export function removeOverheadPrayer(id: string): void {
+  removeTracked(overheadPrayers, id)
 }
 
 const overheadChats = new Map<string, HTMLElement>()

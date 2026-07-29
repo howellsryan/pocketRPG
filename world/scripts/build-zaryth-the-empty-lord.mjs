@@ -18,6 +18,7 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
 import { prune, dedup, resample, getBounds } from '@gltf-transform/functions'
 import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer'
 import path from 'node:path'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
 const worldDir = fileURLToPath(new URL('..', import.meta.url))
@@ -40,6 +41,18 @@ const ALIAS = [{ from: 'attack_ranged', as: 'attack_magic' }]
 // world-wide linger being stretched for one monster. Keyframes only — LINEAR
 // and STEP samplers both survive a slice; CUBICSPLINE would not, so it throws.
 const DIE_MAX_SEC = 3.4
+
+// The melee attack is trimmed for a different reason: the source clip rears up,
+// strikes, and then COLLAPSES to the floor over its last two seconds and holds
+// there — a knock-down tail with no recovery. Played every swing (and clamped on
+// its final frame) it read as the boss dying mid-fight, which is exactly what it
+// looks like. Cut at the follow-through instead, and the crossfade carries it
+// back to idle. The number is the registry's (equipmentModels.json
+// `attackMaxSec`), so the combat arena — which loads the untrimmed source and
+// clamps its clip at playback — cuts at the same frame.
+const ATTACK_MAX_SEC = Number(
+  createRequire(import.meta.url)('../../src/data/equipmentModels.json').monsters?.zaryth_the_empty_lord?.attackMaxSec
+) || 0
 
 /**
  * Trims one clip to `maxSec` by giving each of its samplers a FRESH pair of
@@ -156,6 +169,7 @@ await doc.transform(resample(), dedup(), prune())
 // Trim last: resample() reads the untouched samplers, and dedup() decides which
 // accessors are shared — trimClip has to know it is working against shared data.
 trimClip(doc, keep.get('die'), DIE_MAX_SEC)
+if (ATTACK_MAX_SEC > 0) trimClip(doc, keep.get('attack'), ATTACK_MAX_SEC)
 // Re-share what is still identical and drop the accessors the trim orphaned.
 await doc.transform(dedup(), prune())
 assertSamplersIntact(doc)
