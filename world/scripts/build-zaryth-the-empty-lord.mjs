@@ -41,30 +41,81 @@ const ALIAS = [{ from: 'attack_ranged', as: 'attack_magic' }]
 // and STEP samplers both survive a slice; CUBICSPLINE would not, so it throws.
 const DIE_MAX_SEC = 3.4
 
-function trimClip(anim, maxSec) {
-  // Samplers may share one input accessor, so keep counts are worked out from
-  // the untrimmed times first and each accessor is sliced exactly once.
-  const keepFor = new Map()
+/**
+ * Trims one clip to `maxSec` by giving each of its samplers a FRESH pair of
+ * accessors sized to match.
+ *
+ * Never mutate an accessor in place here. dedup() merges byte-identical
+ * accessors, so by this point one array is shared by dozens of samplers — and
+ * across clips, since every clip animates the same rig. Slicing in place cut
+ * data that other samplers still pointed at, leaving times and values with
+ * different lengths: 107 of `die`'s 123 samplers, plus one in every other clip.
+ * THREE throws building a KeyframeTrack from that, which took the whole world
+ * client down the moment the model loaded. A later dedup() re-shares whatever
+ * is genuinely identical, so unsharing here costs nothing in the output.
+ */
+function trimClip(doc, anim, maxSec) {
+  const buffer = doc.getRoot().listBuffers()[0]
   for (const sampler of anim.listSamplers()) {
+    // LINEAR and STEP both survive a slice; CUBICSPLINE stores tangents either
+    // side of each value and would need those rebuilt.
     if (sampler.getInterpolation() === 'CUBICSPLINE') throw new Error('cannot trim a CUBICSPLINE sampler')
     const input = sampler.getInput()
-    if (keepFor.has(input)) continue
-    const times = Array.from(input.getArray())
-    keepFor.set(input, Math.max(1, times.filter((t) => t <= maxSec).length))
-  }
-  const done = new Set()
-  for (const sampler of anim.listSamplers()) {
-    const input = sampler.getInput()
     const output = sampler.getOutput()
-    const keep = keepFor.get(input)
-    if (keep >= input.getCount()) continue
-    if (!done.has(output)) {
-      output.setArray(output.getArray().slice(0, keep * output.getElementSize()))
-      done.add(output)
+    const times = input.getArray()
+    const values = output.getArray()
+    const size = output.getElementSize()
+    let keep = 0
+    while (keep < times.length && times[keep] <= maxSec) keep += 1
+    if (keep >= times.length) continue
+
+    // Dropping the later keyframes is not enough on its own: resample() reduces
+    // an unchanging track to two keyframes spanning the WHOLE clip, and a
+    // track's last time is what gives the clip its duration. So the cut always
+    // ends on a keyframe pinned at maxSec, holding the pose the rig is in at
+    // that instant — which is what actually shortens the clip.
+    const step = sampler.getInterpolation() === 'STEP'
+    const prev = Math.max(0, keep - 1)
+    const t0 = times[prev]
+    const t1 = times[keep]
+    const f = step || t1 === t0 ? 0 : (maxSec - t0) / (t1 - t0)
+    const edge = new Float32Array(size)
+    for (let c = 0; c < size; c++) {
+      const a = values[prev * size + c]
+      const b = values[keep * size + c]
+      edge[c] = a + (b - a) * f
     }
-    if (!done.has(input)) {
-      input.setArray(input.getArray().slice(0, keep))
-      done.add(input)
+    // Rotations are quaternions: componentwise blending shortens them, so
+    // renormalise or the bone arrives at the cut visibly scaled.
+    if (size === 4) {
+      const len = Math.hypot(edge[0], edge[1], edge[2], edge[3])
+      if (len > 0) for (let c = 0; c < 4; c++) edge[c] /= len
+    }
+
+    const newTimes = new Float32Array(keep + 1)
+    newTimes.set(times.slice(0, keep))
+    newTimes[keep] = maxSec
+    const newValues = new Float32Array((keep + 1) * size)
+    newValues.set(values.slice(0, keep * size))
+    newValues.set(edge, keep * size)
+
+    sampler
+      .setInput(doc.createAccessor().setType('SCALAR').setArray(newTimes).setBuffer(buffer))
+      .setOutput(doc.createAccessor().setType(output.getType()).setArray(newValues).setBuffer(buffer))
+  }
+}
+
+/** Every sampler must have one value per keyframe time. Asserted on the way out
+ * because a mismatch is invisible in the file size and the bounds log, and only
+ * shows up as a crash in the client. */
+function assertSamplersIntact(doc) {
+  for (const anim of doc.getRoot().listAnimations()) {
+    for (const sampler of anim.listSamplers()) {
+      const times = sampler.getInput().getCount()
+      const values = sampler.getOutput().getCount()
+      if (times !== values) {
+        throw new Error(`clip '${anim.getName()}': ${times} keyframe times vs ${values} values`)
+      }
     }
   }
 }
@@ -102,9 +153,12 @@ for (const { from, as } of ALIAS) {
 
 await doc.transform(resample(), dedup(), prune())
 
-// Trim last: resample() reads the untouched samplers, and dedup() may merge
-// accessors this would otherwise slice out from under another clip.
-trimClip(keep.get('die'), DIE_MAX_SEC)
+// Trim last: resample() reads the untouched samplers, and dedup() decides which
+// accessors are shared — trimClip has to know it is working against shared data.
+trimClip(doc, keep.get('die'), DIE_MAX_SEC)
+// Re-share what is still identical and drop the accessors the trim orphaned.
+await doc.transform(dedup(), prune())
+assertSamplersIntact(doc)
 
 await io.write(OUT, doc)
 

@@ -23,6 +23,7 @@ import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
+import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimer } from './roomWideAttacks.js'
 import {
   COOP_RAID_ADVANCE_TICKS,
   coopRaidData,
@@ -72,6 +73,8 @@ export const COOP_BOSSES = {
   zaryth_the_empty_lord: {},
 }
 export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
+// Re-exported: the open world runs the same mechanic off the same module.
+export { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimer }
 /**
  * The wait between kills, for every co-op boss: 8 ticks, the HUD's 5 seconds.
  *
@@ -87,66 +90,6 @@ export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
  * `ceil(ticks * 0.6)`, so 8 is the longest wait that still reads "5s".
  */
 export const COOP_RESPAWN_TICKS = 8
-
-/**
- * A boss that swings at everybody in the room rather than at one target.
- * Data-driven so opening the mechanic to another boss is a monsters.json edit.
- */
-export function isRoomWideAttacker(monster) {
-  return !!monster?.roomWideAttacks
-}
-
-/**
- * Advances the ROOM's copy of a room-wide attacker's attack clock and answers
- * whether it swings this tick. The clock cannot live on the member sessions:
- * those are rebuilt every tick and would each run their own, so the boss would
- * attack once per member instead of once per room. An absent timer is a session
- * that predates the mechanic — start it at the boss's own speed rather than 0,
- * which would make it swing the instant the room reloads.
- */
-export function advanceRoomWideAttackTimer(boss) {
-  const speed = Math.max(1, Math.floor(Number(boss?.attackSpeed) || 4))
-  const current = Number.isFinite(Number(boss?.attackTimer)) ? Number(boss.attackTimer) : speed
-  const next = current - 1
-  if (next > 0) {
-    boss.attackTimer = next
-    return false
-  }
-  boss.attackTimer = speed
-  return true
-}
-
-/**
- * The same room-owned clock for a room-wide attacker's MINION. The add object is
- * copied into every member's session each tick, timer and all, so without this
- * each session runs the add's countdown itself and swings on the same tick —
- * which was harmless only while an add's hit landed on its target alone. Now
- * that a room-wide boss's minions strike the whole room too, N sessions
- * resolving N swings would multiply the damage by the size of the party.
- *
- * Returns false when there is no add, so a room between spawns never swings.
- * The clock resets whenever the add is absent, so a fresh minion always gets a
- * full wind-up instead of inheriting the dead one's countdown.
- */
-export function advanceAddAttackTimer(boss) {
-  const add = boss?.add
-  if (!add) {
-    if (boss) boss.addAttackTimer = null
-    return false
-  }
-  const speed = Math.max(1, Math.floor(Number(add.attackSpeed) || 4))
-  // `null` is the cleared clock, and Number(null) is a finite 0 — reading it as
-  // a countdown would swing a just-spawned minion on its first tick.
-  const stored = boss.addAttackTimer
-  const current = stored == null || !Number.isFinite(Number(stored)) ? speed : Number(stored)
-  const next = current - 1
-  if (next > 0) {
-    boss.addAttackTimer = next
-    return false
-  }
-  boss.addAttackTimer = speed
-  return true
-}
 
 export function isCoopBossId(bossId) {
   return typeof bossId === 'string' && Object.prototype.hasOwnProperty.call(COOP_BOSSES, bossId)

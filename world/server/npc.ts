@@ -7,8 +7,9 @@ import type { ZoneNpcDef } from '../shared/zone'
 import { monsterAttackRange, withinRangeAndSight, type TickContext, type TickResult } from './tick'
 import { reachAgainst } from '../shared/monsterSize'
 import type { Tile } from './pathfind'
+import { isRoomWideAttacker, advanceRoomWideAttackTimer } from '../../src/engine/roomWideAttacks.js'
 
-type Monsters = Record<string, { name?: string; hitpoints?: number; boss?: boolean }>
+type Monsters = Record<string, { name?: string; hitpoints?: number; boss?: boolean; attackSpeed?: number; roomWideAttacks?: boolean }>
 
 export type NpcState = {
   id: string
@@ -29,6 +30,14 @@ export type NpcState = {
    * re-claimed by a surviving attacker the next tick. */
   attackerId: string | null
   lastCombatTick: number
+  /** Shared attack clock for a roomWideAttacks boss. Its swing hits everybody
+   * present, so the clock has to belong to the NPC: each player runs their own
+   * combat session, and per-session timers would swing once per player. Ticked
+   * once per tick by tickNpc, before any player session reads it. Undefined for
+   * every other monster, which keeps its per-session timer. */
+  attackTimer?: number
+  /** True on exactly the tick the clock above fires. */
+  roomWideSwing?: boolean
   /** Damage per attacker for loot attribution; `tick` = when that total last
    * increased (tie-break: first to reach the total). */
   damageByChar: Map<string, { dmg: number; tick: number }>
@@ -239,8 +248,21 @@ function giveUpPursuit(npc: NpcState): void {
 
 /** Advances one npc: respawn timer, out-of-combat heal/pursuit, or wander.
  * Mutates the npc and records changes/removals/respawn on the result. */
+/** Advances the shared clock for a room-wide attacker and records whether it
+ * swings this tick, for the player sessions that run after every npc. */
+function advanceRoomWideSwing(npc: NpcState): void {
+  const monster = (monstersData as Monsters)[npc.monsterId]
+  if (!isRoomWideAttacker(monster)) return
+  // The clock's speed comes from the monster data, not the npc record — the
+  // helper's own default (4) would slow Zaryth's 3-tick cycle.
+  const clock = { attackSpeed: monster.attackSpeed, attackTimer: npc.attackTimer }
+  npc.roomWideSwing = advanceRoomWideAttackTimer(clock)
+  npc.attackTimer = clock.attackTimer
+}
+
 export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): void {
   if (npc.state === 'dead') {
+    npc.roomWideSwing = false
     if (npc.removeAtTick && ctx.tick === npc.removeAtTick) result.npcRemoved.push(npc.id)
     if (ctx.tick >= npc.respawnAtTick) {
       npc.state = 'idle'
@@ -256,6 +278,10 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
   }
 
   if (npc.state === 'combat') {
+    // Before the early returns below: a room-wide boss keeps swinging at the
+    // whole room even on a tick it is chasing, out of reach, or has no claimed
+    // attacker, exactly as it would against the one player it was facing.
+    advanceRoomWideSwing(npc)
     if (!npc.attackerId) {
       if (ctx.tick - npc.lastCombatTick >= OUT_OF_COMBAT_HEAL_TICKS) {
         npc.state = 'idle'

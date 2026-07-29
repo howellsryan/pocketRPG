@@ -18,6 +18,7 @@ import type { ZoneEvent } from '../shared/protocol'
 import { spawnDrops } from './loot'
 import { removeItems } from './mining'
 import { isBossMonster } from './bossKills'
+import { isRoomWideAttacker } from '../../src/engine/roomWideAttacks.js'
 import { getMonsterModel } from '../../src/utils/equipModels.js'
 import { monsterAttackWindup } from '../../src/utils/combatWindup.js'
 import { resolveSpecialEnergyCost } from '../../src/engine/specialAttackEnergy.js'
@@ -323,7 +324,22 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // other sessions discard them or the npc would swing once per attacker.
   combat.state.monster.currentHP = npc.hp
   if (!npc.attackerId) npc.attackerId = player.charId
+  // A room-wide attacker swings at everybody present, so every engaged player's
+  // session resolves the same swing and each rolls their own accuracy and
+  // protection prayer against it — the boss's clock belongs to the npc
+  // (npc.ts's advanceRoomWideSwing), not to any one session. `isTarget` still
+  // decides who its retaliation follows for chasing and threat.
+  const roomWide = isRoomWideAttacker((monstersData as Monsters)[npc.monsterId])
   const isTarget = npc.attackerId === player.charId
+  // Whose session may apply this npc's attacks to its own player.
+  const takesSwings = roomWide || isTarget
+  if (roomWide) {
+    // Hold every session's own timer off the floor and fire them together on
+    // the npc's tick, or each player's session would swing on its own schedule.
+    combat.state.monsterAttackTimer = npc.roomWideSwing
+      ? 0
+      : Math.max(2, Number(combat.state.monster.attackSpeed) || 4)
+  }
 
   // The pack rides in as the engine's inventory so magic can check runes;
   // consumption is applied below from state.runesConsumed (live-game contract:
@@ -348,7 +364,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // NOT re-broadcast 'attack' (a second, non-adjacent pulse would restart the
   // clip on the splat tick and desync it) — the pulse alone drives the whole
   // swing, mirroring the combat arena's shared windup (src/utils/combatWindup.js).
-  if (isTarget && inMonsterRange && combat.state.monsterAttackTimer === monsterWindupLeadTicks(npc.monsterId)) {
+  if (takesSwings && inMonsterRange && combat.state.monsterAttackTimer === monsterWindupLeadTicks(npc.monsterId)) {
     npc.anim = monsterAttackAnim(npc.monsterId)
   }
   npc.lastCombatTick = ctx.tick
@@ -418,11 +434,11 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       // can't hit a player kiting at magic range until it closes the gap. The
       // swing anim was already led by the pre-signal above; don't re-broadcast
       // it here (that would restart the clip on the splat tick).
-      if (!isTarget || !inMonsterRange) continue
+      if (!takesSwings || !inMonsterRange) continue
       player.hp = Math.max(0, player.hp - (ev.damage ?? 0))
       result.hits.push({ targetId: player.charId, dmg: ev.damage ?? 0 })
     } else if (ev.type === 'monsterMiss') {
-      if (!isTarget || !inMonsterRange) continue
+      if (!takesSwings || !inMonsterRange) continue
       result.hits.push({ targetId: player.charId, dmg: 0 })
     } else if (ev.type === 'xp' && ev.xpSkills) {
       if (!playerLands) continue
