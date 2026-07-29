@@ -32,9 +32,9 @@ const KIND_ICON_KEY = { quest: 'quest_scroll_blue', minigame: 'minigame_scroll_r
  * requirements and rewards.
  */
 export default function ActivityPickerModal({ kind, refs, label, onClose, onActivate, readOnly = false }) {
-  const { stats, completedQuests, bossKillCounts } = useGame()
+  const { stats, completedQuests, bossKillCounts, killCountsLoaded } = useGame()
   const [infoQuestId, setInfoQuestId] = useState(null)
-  const lockCtx = { stats, completedQuests, bossKillCounts }
+  const lockCtx = { stats, completedQuests, bossKillCounts, bossKillCountsLoaded: killCountsLoaded }
   const rowsReadOnly = readOnly && kind !== 'quest'
 
   // Ascending by level (unmapped/no-level entries sort last, stable otherwise) so

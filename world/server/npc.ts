@@ -43,11 +43,17 @@ export type NpcState = {
   /** Set on a SUMMONED minion: the npc that summoned it. Such an npc is removed
    * when it dies instead of respawning, and leaves the field with its summoner. */
   summonerId?: string
-  /** Set on a SUMMONER: the id of its live minion, or null when it has none. */
-  minionId?: string | null
-  /** Ticks until this summoner's next minion appears. Null while one is alive,
-   * and while the summoner is out of combat — a boss only summons mid-fight. */
+  /** Set on a SUMMONER: the ids of its live minions, in spawn order. A boss
+   * fields up to `spawnsAdd.maxActive` at once, so leaving them alive costs
+   * something — the stack grows and the incoming damage grows with it. */
+  minionIds?: string[]
+  /** Ticks until this summoner's next minion appears. Null while its stack is
+   * full, and while it is out of combat — a boss only summons mid-fight. */
   summonCountdown?: number | null
+  /** Lifetime summons, so the variant selection can cycle and each minion gets
+   * an id of its own. Never reset — reusing an id would have the client treat a
+   * fresh minion as the one it just watched die. */
+  summonsMade?: number
   /** Damage per attacker for loot attribution; `tick` = when that total last
    * increased (tie-break: first to reach the total). */
   damageByChar: Map<string, { dmg: number; tick: number }>
@@ -162,7 +168,8 @@ export function reselectAttacker(
 export function countsAsEngaged(npc: NpcState, fightingNpcId: string | undefined): boolean {
   if (!fightingNpcId) return false
   if (fightingNpcId === npc.id) return true
-  return fightingNpcId === npc.minionId || fightingNpcId === npc.summonerId
+  if (fightingNpcId === npc.summonerId) return true
+  return !!npc.minionIds?.includes(fightingNpcId)
 }
 
 /** A fresh npc record at full health. Shared by the zone's authored spawns and
@@ -334,6 +341,10 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
     }
     return
   }
+
+  // Out of combat it is not swinging at anybody, and a `true` left over from the
+  // last fight would be read as a swing the instant somebody re-engages.
+  if (npc.state !== 'combat') npc.sharedSwing = false
 
   if (npc.state === 'combat') {
     // Before the early returns below: an npc on a shared clock keeps swinging at

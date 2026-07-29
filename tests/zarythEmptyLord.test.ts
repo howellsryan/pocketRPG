@@ -15,7 +15,7 @@ import {
   processCoopTick,
   isRoomWideAttacker,
   advanceRoomWideAttackTimer,
-  advanceAddAttackTimer,
+  advanceAddAttackTimers,
 } from '../src/engine/coopBossEngine.js'
 import {
   getAddSpec,
@@ -451,23 +451,26 @@ describe('room-wide attacks in a co-op session', () => {
     expect(damaged.length).toBeLessThanOrEqual(1)
   })
 
-  it('runs its minions off the room clock, so one swing is resolved per tick', () => {
-    const withAdd: any = { add: { attackSpeed: 3 } }
-    expect([1, 2, 3, 4, 5, 6].map(() => advanceAddAttackTimer(withAdd)))
-      .toEqual([false, false, true, false, false, true])
+  it('runs each of its minions off the room clock, so one swing each is resolved per tick', () => {
+    // Every minion keeps its own countdown, and they need not be in step: the
+    // second here is summoned a tick after the first.
+    const boss: any = { adds: [{ attackSpeed: 3 }, { attackSpeed: 3, attackTimer: 2 }] }
+    const swings = [1, 2, 3, 4, 5, 6].map(() => advanceAddAttackTimers(boss))
+    expect(swings.map((s) => s[0])).toEqual([false, false, true, false, false, true])
+    expect(swings.map((s) => s[1])).toEqual([false, true, false, false, true, false])
   })
 
-  it('never swings a minion the room does not have, and rewinds the clock for the next one', () => {
-    const boss: any = { add: { attackSpeed: 3 } }
-    advanceAddAttackTimer(boss)
-    expect(boss.addAttackTimer).toBe(2)
-    boss.add = null
-    expect(advanceAddAttackTimer(boss)).toBe(false)
-    // A fresh minion gets a full wind-up rather than the dead one's countdown.
-    expect(boss.addAttackTimer).toBeNull()
-    boss.add = { attackSpeed: 3 }
-    expect(advanceAddAttackTimer(boss)).toBe(false)
-    expect(boss.addAttackTimer).toBe(2)
+  it('never swings a minion the room does not have, and gives a fresh one a full wind-up', () => {
+    expect(advanceAddAttackTimers({ adds: [] } as any)).toEqual([])
+    expect(advanceAddAttackTimers({} as any)).toEqual([])
+    // The clock rides the minion itself, so a replacement cannot inherit the
+    // countdown of the one it replaced.
+    const boss: any = { adds: [{ attackSpeed: 3 }] }
+    advanceAddAttackTimers(boss)
+    expect(boss.adds[0].attackTimer).toBe(2)
+    boss.adds = [{ attackSpeed: 3 }]
+    expect(advanceAddAttackTimers(boss)).toEqual([false])
+    expect(boss.adds[0].attackTimer).toBe(2)
   })
 
   it('lands its minion on the whole room, one roll each and no more', () => {
@@ -478,8 +481,7 @@ describe('room-wide attacks in a co-op session', () => {
     let state = joined(BOSS, [1, 2, 3])
     // A live minion, with the boss's own clock held off so every point of
     // damage below is the minion's.
-    state.boss.add = { ...monstersData.zaryth_bolt_sentinel, currentHP: 150, attackTimer: 1 }
-    state.boss.addAttackTimer = 1
+    state.boss.adds = [{ ...monstersData.zaryth_bolt_sentinel, instanceId: 'a#0', currentHP: 150, attackTimer: 1 }]
     state.boss.attackTimer = 999
     const before = Object.fromEntries(Object.values(state.members).map((m: any) => [m.characterId, m.hp]))
     const out = processCoopTick(state, [], deps, Date.now())

@@ -2,7 +2,7 @@ import { requireAuth, json } from '../_lib/auth.js'
 import { signJWT } from '../_lib/jwt.js'
 import { assertNotInActiveMatch } from '../_lib/pvp.js'
 import { assertNotInCoopSession } from '../_lib/game/coopBoss.js'
-import { bossEntryFailure, loadBossKillCounts } from '../_lib/game/bossEntry.js'
+import { bossEntryFailure, bossHasEntryGate, loadBossKillCounts } from '../_lib/game/bossEntry.js'
 import { loadCharacterWithSave } from '../_lib/game/save.js'
 import { worldLairMonster } from '../../src/engine/worldLairs.js'
 
@@ -53,7 +53,7 @@ export async function onRequestPost({ request, env }) {
   // screen — §20: a client-only gate is no gate. Kill counts come from the
   // kill_counts table; they are not in the save (bossEntry.js).
   const lairMonsterId = worldLairMonster(zone)
-  if (lairMonsterId) {
+  if (lairMonsterId && bossHasEntryGate(lairMonsterId)) {
     const { saveObject } = await loadCharacterWithSave(env, row.id, auth.identity.id)
     const gate = bossEntryFailure(lairMonsterId, saveObject, await loadBossKillCounts(env, row.id))
     if (gate) return json({ error: gate.reason, code: 'BOSS_REQUIREMENTS_NOT_MET' }, 403)

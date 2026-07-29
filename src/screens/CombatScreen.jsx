@@ -27,7 +27,7 @@ import { prayerSkill } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
-import { isAddAlive } from '../engine/bossAdds.js'
+import { liveAdds, targetedAdd } from '../engine/bossAdds.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { checkBossRequirementsPure, checkRaidRequirementsPure } from '../engine/combatRequirements.js'
@@ -3241,10 +3241,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {arenaClosed ? '🎥 3D' : '📊 Bars'}
     </button>
   )
-  // ── Boss add (e.g. the Dread Core) ──
-  // A second live enemy, not a phase: it attacks alongside the boss until it is
-  // killed, so the player needs its own HP bar and a way to swing at it.
-  const activeAdd = isAddAlive(combat) ? combat.add : null
+  // ── Boss adds (e.g. the Dread Core, Zaryth's sentinels) ──
+  // Live enemies, not a phase: they attack alongside the boss until killed, so
+  // the player needs a way to swing at each and to see the one they are on.
+  // A boss may field several — the picker grows a slot each, but only ONE HP bar
+  // is drawn (a stack of four would push the fight itself off a phone screen),
+  // and it follows the enemy the player is actually hitting.
+  const addsOnField = liveAdds(combat)
+  const activeAdd = targetedAdd(combat) || addsOnField[0] || null
+  const onBoss = !targetedAdd(combat)
   const switchTarget = (which) => {
     if (!combatRef.current) return
     const next = setCombatTarget(combatRef.current, which)
@@ -3264,22 +3269,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Target picker — same brass "on" treatment as the quick-prayer tiles, so
           the enemy you are hitting reads at a glance mid-fight. */}
       <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
-        <button
-          class={'cb-slot' + (combat.addTargeted ? '' : ' is-active')}
-          onClick={() => switchTarget('boss')}
-        >
+        <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => switchTarget('boss')}>
           <span class="cb-slot__name">{combat.monster.name}</span>
-          <span class="cb-slot__tag">{combat.addTargeted ? 'Attack' : 'Attacking'}</span>
-          {!combat.addTargeted && <span class="cb-slot__ring" />}
+          <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
+          {onBoss && <span class="cb-slot__ring" />}
         </button>
-        <button
-          class={'cb-slot' + (combat.addTargeted ? ' is-active' : '')}
-          onClick={() => switchTarget('add')}
-        >
-          <span class="cb-slot__name">{activeAdd.name}</span>
-          <span class="cb-slot__tag">{combat.addTargeted ? 'Attacking' : 'Attack'}</span>
-          {combat.addTargeted && <span class="cb-slot__ring" />}
-        </button>
+        {combat.adds.map((add, index) => {
+          if (!add || add.currentHP <= 0) return null
+          const on = add === activeAdd && !onBoss
+          return (
+            <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => switchTarget(index)}>
+              <span class="cb-slot__name">{add.name}</span>
+              <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
+              {on && <span class="cb-slot__ring" />}
+            </button>
+          )
+        })}
       </div>
     </div>
   )

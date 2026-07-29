@@ -61,14 +61,6 @@ export function questGatesDisabled() {
 }
 
 /**
- * The single funnel for "does the player meet this quest requirement". Accepts
- * whatever shape the caller holds the completed quests in — Set, array, or the
- * plain object a save blob deserialises to.
- *
- * @param {Set<string>|string[]|Record<string, boolean>|null|undefined} completedQuests
- * @param {string|null|undefined} questId the required quest, falsy when ungated
- */
-/**
  * The completed-quest set held in a SAVE PAYLOAD, as a Set.
  *
  * Its home is `settings.completedQuests` — the top level is where three server
@@ -92,6 +84,14 @@ export function completedQuestsFromSave(saveObject) {
   return new Set()
 }
 
+/**
+ * The single funnel for "does the player meet this quest requirement". Accepts
+ * whatever shape the caller holds the completed quests in — Set, array, or the
+ * plain object a save blob deserialises to.
+ *
+ * @param {Set<string>|string[]|Record<string, boolean>|null|undefined} completedQuests
+ * @param {string|null|undefined} questId the required quest, falsy when ungated
+ */
 export function questRequirementMet(completedQuests, questId) {
   if (!questId) return true
   if (questGatesDisabled()) return true

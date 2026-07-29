@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { bossEntryFailure, completedQuestIds, loadBossKillCounts } from '../functions/_lib/game/bossEntry.js'
+import { bossEntryFailure, bossHasEntryGate, completedQuestIds, loadBossKillCounts } from '../functions/_lib/game/bossEntry.js'
 import { completedQuestsFromSave } from '../src/engine/questGates.js'
 import { worldLairMonster, worldLairZone, WORLD_MONSTER_LAIRS } from '../src/engine/worldLairs.js'
 import { createCoopMember } from '../src/engine/coopBossEngine.js'
 import itemsData from '../src/data/items.json'
+import monstersData from '../src/data/monsters.json'
 
 /**
  * The server-side boss gate reads a player's progression out of two places, and
@@ -161,5 +162,30 @@ describe('a co-op member carries the quests they actually completed', () => {
       now: 0,
     })
     expect(member.completedQuests).toEqual(['dragon_slayer'])
+  })
+})
+
+describe('skipping the gate work for a lair that has no gate', () => {
+  it('answers false only for a monster nothing stands in the way of', () => {
+    // Every world lair pays a save read and a kill_counts query to prove its
+    // gate — but most of them gate nothing at all (the cow pasture, the fiend
+    // pit, the dragon roost), and two D1 round-trips to learn that is waste.
+    expect(bossHasEntryGate('zaryth_the_empty_lord'), 'Zaryth gates on four kill counts').toBe(true)
+    // Six of the seven shipped lairs gate nothing — Grondar included.
+    expect(bossHasEntryGate('warlord_grondar')).toBe(false)
+    expect(bossHasEntryGate('pasture_bull')).toBe(false)
+    // An unknown id is never waved through — the caller still has to ask.
+    expect(bossHasEntryGate('no_such_monster')).toBe(true)
+  })
+
+  it('never skips a lair whose monster the gate would actually refuse', () => {
+    // Derived, not enumerated: any lair monster carrying a requirement must be
+    // answered `true`, so adding a gate to an existing lair cannot silently
+    // route around the check.
+    for (const monsterId of Object.keys(WORLD_MONSTER_LAIRS)) {
+      const monster = (monstersData as Record<string, Record<string, unknown>>)[monsterId]
+      const gated = !!(monster.questRequirement || monster.slayerRequirement || monster.killCountRequirement)
+      expect(bossHasEntryGate(monsterId), `${monsterId}`).toBe(gated)
+    }
   })
 })

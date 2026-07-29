@@ -36,28 +36,14 @@ export function advanceRoomWideAttackTimer(boss) {
 }
 
 /**
- * The same clock for the boss's MINION, which strikes the room alongside it —
- * a minion is the boss's reach, not a separate duellist.
+ * The same clock for each of the boss's MINIONS, which strike the room alongside
+ * it — a minion is the boss's reach, not a separate duellist.
  *
- * Returns false when there is no minion, and clears the clock so the next one
- * to spawn gets a full wind-up instead of inheriting the dead one's countdown.
+ * Each add carries its own `attackTimer`, so the clock rides the add itself and
+ * dies with it: a replacement gets a full wind-up rather than inheriting the
+ * countdown of the one it replaced. Returns one flag per add, in list order.
  */
-export function advanceAddAttackTimer(boss) {
-  const add = boss?.add
-  if (!add) {
-    if (boss) boss.addAttackTimer = null
-    return false
-  }
-  const speed = Math.max(1, Math.floor(Number(add.attackSpeed) || 4))
-  // `null` is the cleared clock, and Number(null) is a finite 0 — reading it as
-  // a countdown would swing a just-spawned minion on its first tick.
-  const stored = boss.addAttackTimer
-  const current = stored == null || !Number.isFinite(Number(stored)) ? speed : Number(stored)
-  const next = current - 1
-  if (next > 0) {
-    boss.addAttackTimer = next
-    return false
-  }
-  boss.addAttackTimer = speed
-  return true
+export function advanceAddAttackTimers(boss) {
+  const adds = Array.isArray(boss?.adds) ? boss.adds : []
+  return adds.map((add) => (add ? advanceRoomWideAttackTimer(add) : false))
 }

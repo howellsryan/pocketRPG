@@ -28,6 +28,7 @@ export function checkBossRequirementsPure(monster, ctx = {}) {
     slayerLevel = 0,
     completedQuests = new Set(),
     bossKillCounts = {},
+    bossKillCountsLoaded = true,
     questsData = [],
     monstersData = {},
   } = ctx
@@ -55,7 +56,13 @@ export function checkBossRequirementsPure(monster, ctx = {}) {
   // Data-driven kill-count prerequisites: `killCountRequirement` maps a monster
   // id to the kills needed before this boss opens. Names are resolved through
   // the monster table so the reason reads as a boss name, not an id.
-  for (const [requiredId, requiredKills] of Object.entries(monster.killCountRequirement || {})) {
+  //
+  // Kill counts live in D1, not the save (§14), so on the client they arrive a
+  // fetch AFTER the rest of the state. Judging them before they land locks a
+  // boss the player has long since earned — pass `bossKillCountsLoaded: false`
+  // while that fetch is in flight and this gate holds its tongue. The server
+  // never passes it, because there the counts are read before the check.
+  for (const [requiredId, requiredKills] of (bossKillCountsLoaded ? Object.entries(monster.killCountRequirement || {}) : [])) {
     const needed = Math.max(1, Math.floor(Number(requiredKills) || 1))
     if ((Number(bossKillCounts[requiredId]) || 0) >= needed) continue
     const name = monstersData?.[requiredId]?.name || requiredId.replace(/_/g, ' ')

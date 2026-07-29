@@ -21,7 +21,7 @@ import { getMonsterCharmDrops, getSummoningCreature, rollSummonAttack, SUMMON_AT
 import { countItem } from './inventory.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
-import { getAddSpec, addDefinitionsFor, selectAddDefinition, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, isAddAlive, activeTarget, isAddTarget } from './bossAdds.js'
+import { getAddSpec, addDefinitionsFor, selectAddDefinition, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
 
 
@@ -75,24 +75,31 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     doubleKillCount: 0,            // tracks how many times a requiresDoubleKill boss has been defeated
     raid: null,                    // raid state: { raidId, bosses[], currentBossIndex, monstersData }
     summon: null,                  // active summoned creature: { creatureId, ticksLeft, attackTimer }
-    // Boss add (e.g. the Dread Core): a second live monster, not a form change.
+    // Boss adds (e.g. the Dread Core): live monsters alongside the boss, not a
+    // form change. A LIST — a boss may field up to maxActiveAdds of them at once.
     addDefinition,                 // monster definition the boss spawns right now, or null
     addDefinitions,                // every add the boss can spawn, keyed by the form that summons it
-    add: null,                     // the spawned add while it is alive
-    addTargeted: false,            // player swings at the add instead of the boss
+    adds: [],                      // the spawned adds still standing, in spawn order
+    addTargetIndex: null,          // index into adds the player swings at; null = the boss
+    maxActiveAdds: maxActiveAdds(addSpec),
     addSpawnCountdown: addDefinition ? rollFirstSpawnDelay(addSpec) : null,
+    addsSpawned: 0,                // lifetime count, so the variant selection can cycle
     addsDefeated: 0
   }
 }
 
 /**
- * Point the player's attacks at the boss or its add. Returns a new state; a
- * request to target a dead or absent add falls back to the boss.
+ * Point the player's attacks at the boss or at one of its adds. Returns a new
+ * state; a request to target a dead or absent add falls back to the boss.
  */
 export function setCombatTarget(combatState, target) {
   if (!combatState) return combatState
-  const wantsAdd = target === 'add'
-  return { ...combatState, addTargeted: wantsAdd && isAddAlive(combatState) }
+  const adds = Array.isArray(combatState.adds) ? combatState.adds : []
+  // 'add' with no index means the front of the stack, which is what a
+  // single-add boss has always meant.
+  const index = typeof target === 'number' ? target : target === 'add' ? adds.findIndex((a) => a?.currentHP > 0) : -1
+  const alive = index >= 0 && adds[index]?.currentHP > 0
+  return { ...combatState, addTargetIndex: alive ? index : null }
 }
 
 /**
@@ -281,9 +288,15 @@ function resolveEnemySwing(attacker, attackStyle, state, boostedPlayerStats, pla
 function resolveTargetDeath(state, target, events, isOnTask = false) {
   if (isAddTarget(state, target)) {
     target.currentHP = 0
-    state.add = null
-    state.addTargeted = false
+    const index = addIndexOf(state, target)
+    state.adds = state.adds.filter((add) => add !== target)
+    // The list shifted under the selection: drop back to the boss rather than
+    // silently re-pointing the player at whichever add slid into the slot.
+    if (state.addTargetIndex === index) state.addTargetIndex = null
+    else if (typeof state.addTargetIndex === 'number' && state.addTargetIndex > index) state.addTargetIndex -= 1
     state.addsDefeated = (state.addsDefeated || 0) + 1
+    // A killed add always restarts the wait, even from a full field — that is
+    // what makes clearing them a treadmill rather than a one-off.
     state.addSpawnCountdown = rollRespawnDelay(getAddSpec(state.monster))
     events.push({ type: 'addDefeated', monsterName: target.name, bossName: state.monster?.name })
     return false
@@ -415,9 +428,9 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
 
   // True death (non-raid)
   state.active = false
-  // The boss dying takes its add off the field with it.
-  state.add = null
-  state.addTargeted = false
+  // The boss dying takes its adds off the field with it.
+  state.adds = []
+  state.addTargetIndex = null
   state.specialAttackEnergy = 100
   state.loot = rollDrops(monster, isOnTask)
   events.push({
@@ -1064,22 +1077,34 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
   }
 
-  // ── Add Attack ──
-  // The add fights on its own timer alongside the boss, so a tick can carry a
-  // hit from each. Two monsterHit events in one tick apply cumulatively —
-  // the screen subtracts each event's damage rather than reading playerHP.
-  if (state.active && isAddAlive(state)) {
-    const add = state.add
-    add.attackTimer = (add.attackTimer || 0) - 1
-    if (add.attackTimer <= 0) {
+  // ── Add Attacks ──
+  // Every add fights on its own timer alongside the boss, so one tick can carry
+  // a hit from each of them and from the boss. Several monsterHit events in one
+  // tick apply cumulatively — the screen subtracts each event's damage rather
+  // than reading playerHP.
+  if (state.active) {
+    let addDamageLanded = false
+    const adds = Array.isArray(state.adds) ? state.adds : []
+    for (let addIndex = 0; addIndex < adds.length; addIndex++) {
+      const add = adds[addIndex]
+      if (!add || add.currentHP <= 0) continue
+      add.attackTimer = (add.attackTimer || 0) - 1
+      if (add.attackTimer > 0) continue
       add.attackTimer = Math.max(1, Math.floor(add.attackSpeed || 4))
+      // `addIndex` rides the event because several adds can swing on one tick
+      // and a caller may have to gate them separately — the open world checks
+      // each minion's own reach to the player it is mirrored onto.
       const addDamage = resolveEnemySwing(
-        add, add.attackStyle, state, boostedPlayerStats, playerStats, bonuses, prayersData, events, { fromAdd: true }
+        add, add.attackStyle, state, boostedPlayerStats, playerStats, bonuses, prayersData, events, { fromAdd: true, addIndex }
       )
-      if (addDamage > 0) {
-        const armourSlots = chargedScaleArmourSlots(equipment, itemsData)
-        if (armourSlots.length) events.push({ type: 'consumeArmourCharge', slots: armourSlots, qty: 1 })
-      }
+      if (addDamage > 0) addDamageLanded = true
+    }
+    // One charge per TICK the wearer was hit, not one per attacker — the armour
+    // burns a charge for taking a hit, and three minions landing together is
+    // still one exchange.
+    if (addDamageLanded) {
+      const armourSlots = chargedScaleArmourSlots(equipment, itemsData)
+      if (armourSlots.length) events.push({ type: 'consumeArmourCharge', slots: armourSlots, qty: 1 })
     }
   }
 
@@ -1136,19 +1161,31 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     state.monsterAttackTimer = monster.attackSpeed || 4
 
     // ── Add spawn ──
-    if ((state.addDefinitions || state.addDefinition) && !state.add && typeof state.addSpawnCountdown === 'number') {
+    const canSummon = (state.addDefinitions || state.addDefinition)
+      && liveAdds(state).length < (state.maxActiveAdds || 1)
+    if (canSummon && typeof state.addSpawnCountdown === 'number') {
       state.addSpawnCountdown--
       if (state.addSpawnCountdown <= 0) {
         // Resolved at spawn time, not at fight start: a style-rotating boss
         // summons the minion matching the form it is in when the timer lands.
-        state.add = prepareAdd(selectAddDefinition(state.addDefinitions, monster) || state.addDefinition)
-        state.addSpawnCountdown = null
+        state.addsSpawned = (state.addsSpawned || 0) + 1
+        const spawned = prepareAdd(
+          selectAddDefinition(state.addDefinitions, monster, state.addsSpawned - 1) || state.addDefinition,
+          state.addsSpawned,
+        )
+        if (!Array.isArray(state.adds)) state.adds = []
+        state.adds.push(spawned)
+        // Straight into the next wait: leaving one alive is what lets the stack
+        // grow, so the countdown restarts even while the field is not empty.
+        state.addSpawnCountdown = liveAdds(state).length < (state.maxActiveAdds || 1)
+          ? rollRespawnDelay(getAddSpec(state.monster))
+          : null
         events.push({
           type: 'addSpawned',
-          monsterName: state.add.name,
+          monsterName: spawned.name,
           bossName: monster.name,
-          hitpoints: state.add.hitpoints,
-          icon: state.add.icon || ''
+          hitpoints: spawned.hitpoints,
+          icon: spawned.icon || ''
         })
       }
     }
@@ -1363,9 +1400,15 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
   // Specials land on whichever enemy the player has targeted, so a queued spec
   // is not silently redirected to the boss when the add is selected.
   const source = activeTarget(combatState)
-  const targetsAdd = isAddTarget(combatState, source)
+  const addIndex = addIndexOf(combatState, source)
+  const targetsAdd = addIndex >= 0
   const monster = { ...source, defenceBonus: { ...source.defenceBonus }, stats: { ...source.stats } }
-  const state = { ...combatState, ...(targetsAdd ? { add: monster } : { monster }) }
+  // The clone has to sit in the list, not beside it: isAddTarget is identity-
+  // based, so an add resolved off a copy the list does not hold would be read as
+  // the boss and its death would end the fight.
+  const state = targetsAdd
+    ? { ...combatState, adds: combatState.adds.map((add, i) => (i === addIndex ? monster : add)) }
+    : { ...combatState, monster }
   const events = []
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const weaponStyle = getMeleeAttackStyle(equipment, itemsData)
@@ -1973,7 +2016,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
   // Only update the target if it's still alive — death handling may have
   // replaced it (raid advancement) or cleared it (an add despawning).
   if (monster.currentHP > 0) {
-    if (targetsAdd) state.add = monster
+    if (targetsAdd) state.adds[addIndex] = monster
     else state.monster = monster
   }
   return { combatState: state, events }

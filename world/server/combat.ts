@@ -111,12 +111,13 @@ export function emitPrayerIfChanged(player: TickPlayer, events: ZoneEvent[]): vo
 
 // The engine's inferred state types `spell`/`runesConsumed` from their `null`
 // initialisers — widen them to what magic combat actually stores there.
-type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'add' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer' | 'activePotions'> & {
+type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'adds' | 'addTargetIndex' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer' | 'activePotions'> & {
   spell: unknown
-  /** The other half of a boss/minion pair, mirrored from its npc each tick
-   * (mirrorPairedAttacker). The engine initialises it to `null`, which infers as
-   * the `null` type. */
-  add: { id?: string; currentHP: number; attackTimer: number } | null
+  /** Everything else in this encounter attacking this player, mirrored from
+   * their npcs each tick (mirrorOtherAttackers). The engine initialises the list
+   * empty, which infers as never[]. */
+  adds: { instanceId: string; currentHP: number; attackTimer: number }[]
+  addTargetIndex: number | null
   runesConsumed?: Record<string, number> | null
   prayerPoints: number
   maxPrayerPoints: number
@@ -263,14 +264,28 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
 }
 
 /**
- * The OTHER half of a summoner/minion pair — the one this player is not
- * swinging at. A player may only attack one thing, but a boss and its minion
- * both attack the player, so whichever of the two is the session's target, the
- * other one is what has to reach them.
+ * Everything ELSE in this encounter — the npcs attacking this player that they
+ * are not swinging at. A player may attack one thing; any number of things
+ * attack the player.
+ *
+ * Fighting the boss, that is its whole stack of minions. Fighting one minion, it
+ * is the boss AND its siblings: they were summoned against you, and turning to
+ * face one of them cannot switch the rest off.
  */
-function pairedAttacker(npc: NpcState, ctx: TickContext): NpcState | null {
-  const otherId = npc.summonerId ?? npc.minionId
-  return otherId ? ctx.npcs?.get(otherId) ?? null : null
+function otherAttackers(npc: NpcState, ctx: TickContext): NpcState[] {
+  const npcs = ctx.npcs
+  if (!npcs) return []
+  const summoner = npc.summonerId ? npcs.get(npc.summonerId) : null
+  const family = summoner ? [summoner, ...(summoner.minionIds ?? [])] : (npc.minionIds ?? [])
+  const out: NpcState[] = []
+  for (const entry of family) {
+    const other = typeof entry === 'string' ? npcs.get(entry) : entry
+    // A monster the data does not know cannot be mirrored, and dropping it here
+    // rather than mid-map is what keeps this list index-aligned with the mirror
+    // and with the per-attacker reach checks.
+    if (other && other !== npc && other.state !== 'dead' && (monstersData as Monsters)[other.monsterId]) out.push(other)
+  }
+  return out
 }
 
 /**
@@ -284,7 +299,7 @@ function pairedAttacker(npc: NpcState, ctx: TickContext): NpcState | null {
  * A boss and its minion stand apart, and a melee sentinel at the boss's shoulder
  * genuinely cannot touch someone on the far side of it.
  */
-function pairedAttackerReaches(other: NpcState, player: TickPlayer, collision: string[]): boolean {
+function otherAttackerReaches(other: NpcState, player: TickPlayer, collision: string[]): boolean {
   const reaches = isRoomWideAttacker((monstersData as Monsters)[other.monsterId])
     || other.attackerId === player.charId
   if (!reaches) return false
@@ -311,20 +326,27 @@ function pairedAttackerReaches(other: NpcState, player: TickPlayer, collision: s
  * One slot means one extra attacker, which is exactly a pair. A boss that
  * fielded two minions at once would need a list here.
  */
-function mirrorPairedAttacker(combat: CombatSession, npc: NpcState, ctx: TickContext): void {
-  const other = pairedAttacker(npc, ctx)
-  if (!other || other.state === 'dead') {
-    combat.state.add = null
-    return
+function mirrorOtherAttackers(combat: CombatSession, others: NpcState[]): void {
+  const byNpc = new Map((combat.state.adds ?? []).map((add) => [add.instanceId, add]))
+  const mirrored: EngineState['adds'] = []
+  for (const other of others) {
+    const definition = (monstersData as Monsters)[other.monsterId]
+    // Keyed by the NPC's id, so the list reshaping (one dies, another spawns)
+    // never hands a session the wrong monster's mirror.
+    // otherAttackers only yields npcs the data knows, so prepareAdd never nulls.
+    const add = (byNpc.get(other.id) ?? prepareAdd(definition, other.id))!
+    // Identify the mirror by the NPC it mirrors, so next tick's lookup finds it.
+    add.instanceId = other.id
+    add.currentHP = other.hp
+    // Same trick as the shared clock below: hold every session's copy off the
+    // floor and fire them all on the tick the npc's own clock says so.
+    add.attackTimer = other.sharedSwing ? 0 : Math.max(2, Number(definition?.attackSpeed) || 4)
+    mirrored.push(add)
   }
-  const definition = (monstersData as Monsters)[other.monsterId]
-  if (combat.state.add?.id !== other.monsterId) combat.state.add = prepareAdd(definition)
-  const add = combat.state.add
-  if (!add) return
-  add.currentHP = other.hp
-  // Same trick as the shared clock below: hold every session's copy off the
-  // floor and fire them all on the tick the npc's own clock says so.
-  add.attackTimer = other.sharedSwing ? 0 : Math.max(2, Number(definition?.attackSpeed) || 4)
+  combat.state.adds = mirrored
+  // Nothing out here ever selects one of them: the player's swings go to
+  // state.monster, and killing one means turning to face it as an ordinary npc.
+  combat.state.addTargetIndex = null
 }
 
 /**
@@ -430,9 +452,11 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       ? 0
       : Math.max(2, Number(combat.state.monster.attackSpeed) || 4)
   }
-  mirrorPairedAttacker(combat, npc, ctx)
-  const other = pairedAttacker(npc, ctx)
-  const addLands = !!other && pairedAttackerReaches(other, player, collision)
+  // Everything else in this encounter that is attacking this player, and which
+  // of them can actually reach them this tick.
+  const others = otherAttackers(npc, ctx)
+  mirrorOtherAttackers(combat, others)
+  const addReaches = others.map((other) => otherAttackerReaches(other, player, collision))
 
   // The pack rides in as the engine's inventory so magic can check runes;
   // consumption is applied below from state.runesConsumed (live-game contract:
@@ -449,12 +473,14 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // no longer fires every tick regardless of the attack timer.
   if (player.path.length === 0) player.anim = 'idle'
   npc.state = 'combat'
-  signalSwing(npc, takesSwings && inMonsterRange, combat.state.monsterAttackTimer)
+  // The clock a shared-clock npc actually counts down on is its OWN: its
+  // sessions' timers are pinned to 0-or-full and never pass through the lead.
+  signalSwing(npc, takesSwings && inMonsterRange, sharedClock ? npc.attackTimer : combat.state.monsterAttackTimer)
   // The paired attacker has to be signalled from here as well: it may have no
   // retaliation target of its own (a summoned minion stands guard until somebody
   // turns on it), and then NO session would ever animate the swings it is
   // landing on this player.
-  if (other) {
+  for (const other of others) {
     signalSwing(other, true, other.attackTimer)
     result.npcChanged.push(other.id)
   }
@@ -476,7 +502,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
     }
   }
 
-  for (const ev of events as { type: string; fromAdd?: boolean; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string; itemId?: string; qty?: number }[]) {
+  for (const ev of events as { type: string; fromAdd?: boolean; addIndex?: number; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string; itemId?: string; qty?: number }[]) {
     if (ev.type === 'playerHit') {
       if (!playerLands) continue
       player.anim = attackAnimFor(combat.state.combatType as string)
@@ -525,11 +551,11 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       // can't hit a player kiting at magic range until it closes the gap. The
       // swing anim was already led by the pre-signal above; don't re-broadcast
       // it here (that would restart the clip on the splat tick).
-      if (!(ev.fromAdd ? addLands : takesSwings && inMonsterRange)) continue
+      if (!(ev.fromAdd ? addReaches[ev.addIndex ?? -1] : takesSwings && inMonsterRange)) continue
       player.hp = Math.max(0, player.hp - (ev.damage ?? 0))
       result.hits.push({ targetId: player.charId, dmg: ev.damage ?? 0 })
     } else if (ev.type === 'monsterMiss') {
-      if (!(ev.fromAdd ? addLands : takesSwings && inMonsterRange)) continue
+      if (!(ev.fromAdd ? addReaches[ev.addIndex ?? -1] : takesSwings && inMonsterRange)) continue
       result.hits.push({ targetId: player.charId, dmg: 0 })
     } else if (ev.type === 'xp' && ev.xpSkills) {
       if (!playerLands) continue

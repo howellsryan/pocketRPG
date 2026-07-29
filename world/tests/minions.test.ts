@@ -4,8 +4,9 @@
 // asserted is what a zone does.
 import { describe, expect, it } from 'vitest'
 import { countsAsEngaged, tickNpc, npcsFromZone, reselectAttacker, type NpcState } from '../server/npc'
-import { stepMinions, minionMonsterId, summonSpec } from '../server/minions'
+import { stepMinions, maxMinions, minionMonsterId, summonSpec } from '../server/minions'
 import { monsterAttackRange, tickPlayer, type TickContext, type TickPlayer } from '../server/tick'
+import { monsterWindupLeadTicks } from '../server/combat'
 import { emptyInventory } from '../server/mining'
 import { findPathAdjacent } from '../server/pathfind'
 import { MONSTER_MODELS } from '../shared/monsterModels'
@@ -98,15 +99,18 @@ function damageOver(
   swings: { boss: boolean; minion: boolean },
 ): number[] {
   const boss = npcs.get('boss_1')!
-  const minion = minionsIn(npcs)[0]
   const taken = players.map(() => 0)
   for (let i = 0; i < count; i++) {
-    // The sentinel must outlive the measurement, or it despawns partway and the
-    // rest of the ticks silently contribute nothing.
-    minion.hp = minion.maxHp
     runTicks(1, npcs, players, tick + i, () => {
       boss.sharedSwing = swings.boss
-      minion.sharedSwing = swings.minion
+      // EVERY sentinel on the field, not just the first — the boss keeps
+      // summoning, and one left swinging would be counted as the boss's.
+      for (const minion of minionsIn(npcs)) {
+        // They must outlive the measurement, or one despawns partway and the
+        // rest of the ticks silently contribute nothing.
+        minion.hp = minion.maxHp
+        minion.sharedSwing = swings.minion
+      }
     })
     players.forEach((p, n) => { taken[n] += p.maxHp - p.hp })
   }
@@ -153,22 +157,25 @@ describe('a boss that summons minions in the open world', () => {
     runTicks(LONGEST_SUMMON_TICKS + 2, npcs, players)
 
     const minions = minionsIn(npcs)
-    expect(minions).toHaveLength(1)
+    expect(minions.length).toBeGreaterThanOrEqual(1)
     const [minion] = minions
     expect(minion.summonerId).toBe('boss_1')
-    expect(boss.minionId).toBe(minion.id)
+    expect(boss.minionIds).toContain(minion.id)
     expect(minion.monsterId).toMatch(/^zaryth_\w+_sentinel$/)
     expect(Math.max(Math.abs(minion.x - boss.x), Math.abs(minion.z - boss.z))).toBeLessThanOrEqual(3)
     expect(minion.hp).toBe(minion.maxHp)
   })
 
-  it('summons ONE for the whole room, not one per player', () => {
+  it('summons for the whole ROOM, not once per player', () => {
     // The trap this exists for: the engine spawns its add inside a combat
-    // session, and out here that is one session per player.
-    const { npcs } = bossAt(ZARYTH, 10, 10)
-    const players = [makePlayer('1', 10, 11), makePlayer('2', 9, 10), makePlayer('3', 11, 10)]
-    runTicks(LONGEST_SUMMON_TICKS + 2, npcs, players)
-    expect(minionsIn(npcs)).toHaveLength(1)
+    // session, and out here that is one session per player. A room of three sees
+    // the same stack a solo player does.
+    const solo = bossAt(ZARYTH, 10, 10)
+    runTicks(LONGEST_SUMMON_TICKS + 2, solo.npcs, [makePlayer('1', 10, 11)])
+
+    const group = bossAt(ZARYTH, 10, 10)
+    runTicks(LONGEST_SUMMON_TICKS + 2, group.npcs, [makePlayer('1', 10, 11), makePlayer('2', 9, 10), makePlayer('3', 11, 10)])
+    expect(minionsIn(group.npcs).length).toBe(minionsIn(solo.npcs).length)
   })
 
   it('mirrors that one minion onto every session, so it still swings at them', () => {
@@ -178,9 +185,10 @@ describe('a boss that summons minions in the open world', () => {
     const [minion] = minionsIn(npcs)
 
     for (const p of players) {
-      const add = (p.combat?.state as { add?: { id?: string; currentHP?: number } }).add
-      expect(add?.id, `player ${p.charId} is not seeing the minion`).toBe(minion.monsterId)
-      expect(add?.currentHP).toBe(minion.hp)
+      const adds = (p.combat?.state as { adds?: { instanceId?: string; currentHP?: number }[] }).adds ?? []
+      const mirror = adds.find((add) => add.instanceId === minion.id)
+      expect(mirror, `player ${p.charId} is not seeing the minion`).toBeTruthy()
+      expect(mirror?.currentHP).toBe(minion.hp)
     }
   })
 
@@ -191,7 +199,7 @@ describe('a boss that summons minions in the open world', () => {
     const players = [makePlayer('1', 10, 11)]
     runTicks(5, npcs, players)
     expect(minionsIn(npcs), 'too early for the npc to have appeared').toHaveLength(0)
-    expect((players[0].combat?.state as { add?: unknown }).add).toBeNull()
+    expect((players[0].combat?.state as { adds?: unknown[] }).adds).toHaveLength(0)
   })
 
   it('never respawns a summoned minion on the spot, the way an authored spawn returns', () => {
@@ -225,7 +233,7 @@ describe('a boss that summons minions in the open world', () => {
       seen.push(!!minion.sharedSwing)
     }
     expect(seen.filter(Boolean)).toHaveLength(2)
-    expect(boss.minionId).toBe(minion.id)
+    expect(boss.minionIds).toContain(minion.id)
   })
 
   it('actually hurts the players fighting the boss, once per swing', () => {
@@ -297,17 +305,17 @@ describe('a boss that summons minions in the open world', () => {
     expect(boss.state, 'the boss dropped out of the fight').toBe('combat')
     expect(boss.hp, 'the boss healed while its sentinel was being killed').toBeLessThanOrEqual(wounded)
     expect(boss.attackerId).toBe('1')
-    expect(minionsIn(npcs), 'the sentinel vanished mid-fight').toHaveLength(1)
+    expect(minionsIn(npcs).length, 'its sentinels vanished mid-fight').toBeGreaterThan(0)
   })
 
   it('counts either half of the pair as engagement with the other, and nothing else', () => {
     const { boss } = bossAt(ZARYTH, 10, 10)
-    boss.minionId = 'boss_1__minion'
+    boss.minionIds = ['boss_1__minion']
     expect(countsAsEngaged(boss, 'boss_1')).toBe(true)
     expect(countsAsEngaged(boss, 'boss_1__minion')).toBe(true)
     expect(countsAsEngaged(boss, 'some_other_npc')).toBe(false)
     expect(countsAsEngaged(boss, undefined)).toBe(false)
-    boss.minionId = null
+    boss.minionIds = []
     expect(countsAsEngaged(boss, 'boss_1__minion')).toBe(false)
 
     const { boss: minion } = bossAt('zaryth_blade_sentinel', 12, 10)
@@ -346,7 +354,10 @@ describe('a boss that summons minions in the open world', () => {
     expect(monsterAttackRange(minion.monsterId), 'this sentinel is not the melee one').toBe(1)
 
     let taken = 0
-    for (let i = 0; i < 40; i++) {
+    // Shorter than the shortest wait for the NEXT summon (8 attacks x 3 ticks),
+    // so the stack stays at one and the ranged sentinel that follows it — which
+    // reaches five tiles — cannot muddy the measurement.
+    for (let i = 0; i < 20; i++) {
       const boss = npcs.get('boss_1')!
       tick = runTicks(1, npcs, players, tick, () => {
         // Pinned four tiles off the player and swinging every tick. Close enough
@@ -359,9 +370,95 @@ describe('a boss that summons minions in the open world', () => {
         boss.sharedSwing = false
       })
       expect(minion.attackerId, 'it let go of its target, so reach is not what is being tested').toBe('1')
+      expect(minionsIn(npcs), 'a second sentinel joined the measurement').toHaveLength(1)
       taken += players[0].maxHp - players[0].hp
     }
     expect(taken, 'a melee sentinel four tiles away landed a blow').toBe(0)
+  })
+
+  it('stacks them up to its cap while the fight runs, if they are left alive', () => {
+    // The point of the cap: leaving them alive is a CHOICE with a cost. The
+    // stack grows and the incoming damage grows with it.
+    const cap = maxMinions(ZARYTH)
+    expect(cap, 'a boss that fields only one proves nothing here').toBeGreaterThan(1)
+    const { npcs, boss } = bossAt(ZARYTH, 10, 10)
+    const players = [makePlayer('1', 10, 11)]
+    runTicks(LONGEST_SUMMON_TICKS * (cap + 2), npcs, players)
+
+    expect(minionsIn(npcs)).toHaveLength(cap)
+    expect(boss.minionIds).toHaveLength(cap)
+    expect(new Set(minionsIn(npcs).map((m) => m.id)).size, 'two of them share an id').toBe(cap)
+  })
+
+  it('stops at the cap however long the fight runs', () => {
+    const { npcs, boss } = bossAt(ZARYTH, 10, 10)
+    const players = [makePlayer('1', 10, 11)]
+    runTicks(LONGEST_SUMMON_TICKS * (maxMinions(ZARYTH) + 6), npcs, players)
+    expect(minionsIn(npcs)).toHaveLength(maxMinions(ZARYTH))
+    expect(boss.summonCountdown, 'a full stack must not be counting down to another').toBeNull()
+  })
+
+  it('sends a mixed group, not four copies of one sentinel', () => {
+    // A style-keyed spec cycles. Reading it without a spawn count is what made
+    // only the first-listed sentinel ever reach the field, leaving two authored
+    // models unreachable.
+    const styles = [0, 1, 2, 3].map((n) => minionMonsterId(ZARYTH, n))
+    expect(new Set(styles.slice(0, 3)).size).toBe(3)
+    expect(styles[3], 'the cycle should wrap').toBe(styles[0])
+
+    const { npcs } = bossAt(ZARYTH, 10, 10)
+    runTicks(LONGEST_SUMMON_TICKS * (maxMinions(ZARYTH) + 2), npcs, [makePlayer('1', 10, 11)])
+    expect(new Set(minionsIn(npcs).map((m) => m.monsterId)).size).toBeGreaterThan(1)
+  })
+
+  it('summons nothing at all while it is out of combat', () => {
+    // A boss standing alone in its lair must not quietly build a stack for the
+    // next player through the door.
+    const { npcs, boss } = bossAt(ZARYTH, 10, 10)
+    runTicks(LONGEST_SUMMON_TICKS * 3, npcs, [])
+    expect(boss.state).not.toBe('combat')
+    expect(minionsIn(npcs)).toHaveLength(0)
+    expect(boss.summonCountdown).toBeNull()
+  })
+
+  it('hits harder with a full stack than with one', () => {
+    const one = bossAt(ZARYTH, 10, 10)
+    const onePlayers = [makePlayer('1', 10, 11)]
+    let tick = runTicks(LONGEST_SUMMON_TICKS + 2, one.npcs, onePlayers)
+    expect(minionsIn(one.npcs)).toHaveLength(1)
+    const fromOne = total(damageOver(40, one.npcs, onePlayers, tick, { boss: false, minion: true }))
+
+    const many = bossAt(ZARYTH, 10, 10)
+    const manyPlayers = [makePlayer('1', 10, 11)]
+    tick = runTicks(LONGEST_SUMMON_TICKS * (maxMinions(ZARYTH) + 2), many.npcs, manyPlayers)
+    expect(minionsIn(many.npcs)).toHaveLength(maxMinions(ZARYTH))
+    const fromMany = total(damageOver(40, many.npcs, manyPlayers, tick, { boss: false, minion: true }))
+
+    expect(fromMany, 'a stack of sentinels hit no harder than one').toBeGreaterThan(fromOne)
+  })
+
+  it('animates a sentinel the player has turned to fight', () => {
+    // The clock a shared-clock npc counts down on is its OWN. Its sessions' own
+    // timers are pinned to 0-or-full and never pass through the wind-up lead, so
+    // reading one here leaves the monster swinging with no clip at all — which
+    // is silent, and only shows up as a monster that stands still while it hits
+    // you. Zaryth hid it: its pinned value happens to equal its own lead.
+    const { npcs } = bossAt(ZARYTH, 10, 10)
+    const players = [makePlayer('1', 10, 11)]
+    let tick = runTicks(LONGEST_SUMMON_TICKS + 2, npcs, players)
+    const [minion] = minionsIn(npcs)
+    turnOn(players[0], minion.id)
+    tick = runTicks(6, npcs, players, tick)
+    expect(players[0].combat?.npcId).toBe(minion.id)
+    expect(monsterWindupLeadTicks(minion.monsterId))
+      .not.toBe(Math.max(2, monsterAttackSpeed(minion.monsterId)) - 1)
+
+    let swung = false
+    for (let i = 0; i < 12; i++) {
+      tick = runTicks(1, npcs, players, tick)
+      if (minion.anim.startsWith('attack')) swung = true
+    }
+    expect(swung, 'the sentinel dealt its damage without ever playing a swing').toBe(true)
   })
 
   it('takes it off the field with the boss', () => {
@@ -379,7 +476,7 @@ describe('a boss that summons minions in the open world', () => {
 
     expect(minionsIn(npcs)).toHaveLength(0)
     expect(removed).toHaveLength(1)
-    expect(boss.minionId).toBeNull()
+    expect(boss.minionIds).toHaveLength(0)
   })
 
   it('removes a killed one instead of respawning it, and summons a replacement', () => {
@@ -396,7 +493,7 @@ describe('a boss that summons minions in the open world', () => {
     tick = runTicks(7, npcs, players, tick)
 
     expect(npcs.has(minion.id), 'the corpse is still on the field').toBe(false)
-    expect(boss.minionId).toBeNull()
+    expect(boss.minionIds).toHaveLength(0)
     expect(boss.summonCountdown).toBeGreaterThan(0)
     // A replacement follows on the boss's own schedule — it does not simply
     // pop back up where the old one stood.
@@ -409,7 +506,7 @@ describe('a boss that summons minions in the open world', () => {
     const players = [makePlayer('1', 10, 11)]
     runTicks(LONGEST_SUMMON_TICKS + 2, npcs, players)
     expect(minionsIn(npcs)).toHaveLength(0)
-    expect((players[0].combat?.state as { add?: unknown }).add).toBeNull()
+    expect((players[0].combat?.state as { adds?: unknown[] }).adds).toHaveLength(0)
   })
 
   it('forgets its countdown when the fight ends, so the next one starts afresh', () => {
@@ -421,6 +518,6 @@ describe('a boss that summons minions in the open world', () => {
     boss.state = 'idle'
     stepMinions(ctx(99, npcs, []), { npcChanged: [], npcRemoved: [] } as never)
     expect(boss.summonCountdown).toBeNull()
-    expect(boss.minionId).toBeNull()
+    expect(boss.minionIds).toHaveLength(0)
   })
 })

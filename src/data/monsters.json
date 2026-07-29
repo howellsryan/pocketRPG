@@ -10888,6 +10888,7 @@
         "ranged": "zaryth_bolt_sentinel",
         "magic": "zaryth_rune_sentinel"
       },
+      "maxActive": 4,
       "firstSpawnAfterAttacks": [8, 12],
       "respawnAfterAttacks": [8, 12]
     },

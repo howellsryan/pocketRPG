@@ -57,6 +57,18 @@ export function slayerLevelOf(saveObject) {
  *
  * Returns null when the player may enter, or the lock reason.
  */
+/**
+ * True when this monster has ANY entry requirement at all. Lets a caller skip
+ * the save read and the kill-count query for an ungated one — most world lairs
+ * (the cow pasture, the fiend pit, the dragon roost) gate nothing, and paying
+ * two D1 round-trips to prove it on every entry is waste.
+ */
+export function bossHasEntryGate(bossId) {
+  const monster = monstersData?.[bossId]
+  if (!monster) return true
+  return !!(monster.questRequirement || monster.slayerRequirement || monster.killCountRequirement)
+}
+
 export function bossEntryFailure(bossId, saveObject, bossKillCounts = {}) {
   const monster = monstersData?.[bossId]
   if (!monster) return { reason: 'Boss is not available' }

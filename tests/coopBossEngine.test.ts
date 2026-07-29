@@ -708,7 +708,7 @@ describe('coopIntentEcho — the client-side preview of a tap', () => {
     { type: 'toggle_prayer', prayerId: 'protection_from_melee' },
     { type: 'toggle_prayer', prayerId: 'piety' },
     { type: 'queue_special' },
-    { type: 'target_add', value: true },
+    { type: 'target_add', value: 0 },
     { type: 'change_combat_spell', spellId: 'fire_surge' },
   ]
 
@@ -718,7 +718,7 @@ describe('coopIntentEcho — the client-side preview of a tap', () => {
     for (const action of ACTIONS) {
       const state = joinedState([1])
       // A real add: target_add only takes when one is actually on the field.
-      state.boss.add = prepareAdd(monstersData[monstersData[BOSS].spawnsAdd.monsterId])
+      state.boss.adds = [prepareAdd(monstersData[monstersData[BOSS].spawnsAdd.monsterId])]
       // Compared during the respawn wait, where intents still apply but no
       // combat resolves — otherwise the same tick that queues a special also
       // spends it, and the echo would be blamed for the engine agreeing.

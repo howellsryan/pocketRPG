@@ -4,7 +4,7 @@
 // `spawnsAdd` + `isAdd` in monsters.json, so a new boss needs data, not code.
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createCombatState, processCombatTick, setCombatTarget } from '../src/engine/combat.js'
-import { isAddAlive, activeTarget, getAddSpec, prepareAdd, rollFirstSpawnDelay, rollRespawnDelay } from '../src/engine/bossAdds.js'
+import { isAddAlive, activeTarget, liveAdds, getAddSpec, prepareAdd, rollFirstSpawnDelay, rollRespawnDelay } from '../src/engine/bossAdds.js'
 import { splatsFromCombatEvents } from '../src/utils/hitSplats.js'
 import monsters from '../src/data/monsters.json'
 
@@ -69,7 +69,7 @@ function runTicks(state: any, ticks: number, opts: any = {}) {
 describe('Dread Core — spawning', () => {
   it('spawns as a live second monster with its own hitpoints', () => {
     const state = createCombatState(BOSS_WITH_ADD, 'melee', 'aggressive', null, monstersWithAdd)
-    expect(state.add).toBeNull()
+    expect(liveAdds(state)).toHaveLength(0)
     const out = runTicks(state, 30)
     const spawned = out.events.filter((e: any) => e.type === 'addSpawned')
     expect(spawned.length).toBeGreaterThan(0)
@@ -112,7 +112,7 @@ describe('Dread Core — targeting', () => {
     expect(isAddAlive(state)).toBe(true)
     const bossHPBefore = state.monster.currentHP
     state = setCombatTarget(state, 'add')
-    expect(activeTarget(state)).toBe(state.add)
+    expect(activeTarget(state)).toBe(liveAdds(state)[0])
     const equipment: any = { weapon: { itemId: 'test_sword' } }
     const out = processCombatTick(state, { ...maxedStats, currentHP: 100000 }, equipment, itemsData)
     // The boss can only have lost HP to the player, and the player hit the add.
@@ -122,7 +122,7 @@ describe('Dread Core — targeting', () => {
   it('falls back to the boss when the add is gone', () => {
     const state = createCombatState(BOSS_WITH_ADD, 'melee', 'aggressive', null, monstersWithAdd)
     const targeted = setCombatTarget(state, 'add')
-    expect(targeted.addTargeted).toBe(false)
+    expect(targeted.addTargetIndex).toBeNull()
     expect(activeTarget(targeted)).toBe(state.monster)
   })
 })
@@ -154,7 +154,7 @@ describe('Dread Core — killing it', () => {
     const { state: after, events } = runTicks(state, 20, { targetAdd: false })
     expect(events.some((e: any) => e.type === 'monsterDeath')).toBe(true)
     expect(after.active).toBe(false)
-    expect(after.add).toBeNull()
+    expect(liveAdds(after)).toHaveLength(0)
   })
 })
 
