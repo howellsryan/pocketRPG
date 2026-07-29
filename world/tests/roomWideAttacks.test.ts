@@ -4,8 +4,9 @@
 // room needed: a clock owned by the NPC, and every engaged session allowed to
 // apply the swing to its own player.
 import { describe, expect, it } from 'vitest'
-import { tickNpc, npcsFromZone, type NpcState } from '../server/npc'
+import { ensureForm, tickNpc, npcsFromZone, type NpcState } from '../server/npc'
 import { tickPlayer, type TickContext, type TickPlayer } from '../server/tick'
+import { monsterWindupLeadTicks, startCombat, stepCombat } from '../server/combat'
 import { emptyInventory } from '../server/mining'
 import { findPathAdjacent } from '../server/pathfind'
 import monstersData from '../../src/data/monsters.json'
@@ -153,6 +154,64 @@ describe('a room-wide boss in the open world', () => {
     expect(Object.keys(monster.forms ?? {})).toEqual(expect.arrayContaining([...seen]))
     // And the clip follows the form, rather than the starting style forever.
     expect(anims.size, `only ever played ${[...anims]}`).toBeGreaterThan(1)
+  })
+
+  it('keeps animating its swing when one of the players it reaches is out of range', () => {
+    // Every engaged player's session signals the npc, and each call clears the
+    // anim before re-setting it — so gating the signal on that one player's
+    // reach let whichever session happened to run LAST wipe the clip for the
+    // whole room. One player stepping out of range and the boss swung silently
+    // at everybody still standing in front of it.
+    // A player outside BOTH reaches drops the fight, so the case needs the one
+    // asymmetry that keeps someone engaged and untouchable: a bow outranging
+    // the form the boss is in. Pinned to melee, Zaryth reaches a single tile.
+    const { npcs, boss } = bossAt(ZARYTH, 10, 10)
+    const melee = makePlayer('1', 10, 11)
+    const archer = makePlayer('2', 10, 14)
+    archer.stats.ranged = { xp: 100000, level: 40 }
+    // Arrows included: running dry ends the fight, and a disengaged session
+    // never reaches the signal at all.
+    archer.equipment = {
+      weapon: { itemId: 'shortbow', quantity: 1 },
+      ammo: { itemId: 'bronze_arrow', quantity: 5000 },
+    } as never
+    startCombat(melee, boss)
+    startCombat(archer, boss)
+    for (const p of [melee, archer]) (p.combat as { passive?: boolean }).passive = false
+
+    boss.state = 'combat'
+    boss.attackerId = melee.charId
+    boss.currentForm = 'melee'
+    // Parked exactly on the lead tick, which is the one tick the signal fires.
+    boss.attackTimer = monsterWindupLeadTicks(ZARYTH)
+    const c = ctx(5, npcs, [melee, archer])
+    const result = { events: [], hits: [], kills: [], npcChanged: [], npcRemoved: [], xp: [] } as never
+
+    stepCombat(melee, c, result)
+    expect(boss.anim, 'the adjacent player never led the swing').toBe('attack')
+    stepCombat(archer, c, result)
+    expect(archer.combat, 'the archer disengaged, so this proves nothing').toBeTruthy()
+    expect(boss.anim, 'the archer\'s session wiped the swing clip for the room').toBe('attack')
+  })
+
+  it('opens on the same form cadence the solo fight rolls', () => {
+    // The opening threshold was a hardcoded 3, so a boss with an authored
+    // formSwitchMin/Max held its first form for a different number of swings
+    // out here than it does everywhere else the player has learned it.
+    // Warden of Arasmus authors 3..3, so its opening threshold can only be 3;
+    // Nylocas authors 3..5, so a 3 that never moves is the bug.
+    const fixed = { id: 'n', monsterId: 'warden_of_arasmus' } as unknown as NpcState
+    ensureForm(fixed)
+    expect(fixed.formSwitchThreshold).toBe(3)
+
+    const seen = new Set<number>()
+    for (let i = 0; i < 200; i++) {
+      const npc = { id: 'n', monsterId: 'nylocas_vasilias' } as unknown as NpcState
+      ensureForm(npc)
+      seen.add(npc.formSwitchThreshold!)
+    }
+    expect([...seen].sort(), 'the opening threshold is not rolled from the authored range')
+      .toEqual([3, 4, 5])
   })
 
   it('clears the swing flag while it is dead', () => {

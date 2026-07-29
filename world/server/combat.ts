@@ -323,12 +323,12 @@ function otherAttackerReaches(other: NpcState, player: TickPlayer, collision: st
  * engine's own spawn on, and this one deliberately does not.)
  *
  * The mirrored HP is the npc's, and the view is read-only: this session never
- * damages it (nothing sets `addTargeted` out here — the player's swings go to
- * `state.monster`, and killing the other one means turning to face it), so it
- * simply goes empty the moment that npc dies or despawns.
+ * damages it (nothing sets a target index out here — the player's swings go to
+ * `state.monster`, and killing one of them means turning to face it), so a
+ * mirror simply drops off the list the moment its npc dies or despawns.
  *
- * One slot means one extra attacker, which is exactly a pair. A boss that
- * fielded two minions at once would need a list here.
+ * It is a LIST: a boss fields up to `spawnsAdd.maxActive` minions at once, and
+ * a player who turns on one of them is mirrored the boss AND its siblings.
  */
 function mirrorOtherAttackers(combat: CombatSession, others: NpcState[]): void {
   const byNpc = new Map((combat.state.adds ?? []).map((add) => [add.instanceId, add]))
@@ -342,6 +342,15 @@ function mirrorOtherAttackers(combat: CombatSession, others: NpcState[]): void {
     // Identify the mirror by the NPC it mirrors, so next tick's lookup finds it.
     add.instanceId = other.id
     add.currentHP = other.hp
+    // A mirror wears the form its npc is in, exactly as the session's own
+    // monster does (pinFormToSession in stepCombat). Left un-formed it fell back
+    // to the raw monsters.json row — no `formMaxHit`, so the max hit was DERIVED
+    // from the boss's stats, and its style was the top-level one for every
+    // swing. Zaryth hit a player who had turned on a sentinel for up to 212
+    // instead of its ranged form's 60, and did it as ranged whatever form the
+    // room could see, so there was no protection prayer that answered it.
+    ensureForm(other)
+    pinFormToSession(add, other)
     // Same trick as the shared clock below: hold every session's copy off the
     // floor and fire them all on the tick the npc's own clock says so.
     add.attackTimer = other.sharedSwing ? 0 : Math.max(2, Number(definition?.attackSpeed) || 4)
@@ -494,7 +503,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   npc.state = 'combat'
   // The clock a shared-clock npc actually counts down on is its OWN: its
   // sessions' timers are pinned to 0-or-full and never pass through the lead.
-  signalSwing(npc, takesSwings && inMonsterRange, sharedClock ? npc.attackTimer : combat.state.monsterAttackTimer)
+  // Its swing is a property of the NPC too, not of this session, so it is
+  // signalled unconditionally — every engaged player runs this and each call
+  // clears the anim before re-setting it, so gating on one player's reach let
+  // whichever session happened to run last wipe the clip for the whole room.
+  // The mirrored attackers below are already signalled this way.
+  signalSwing(npc, sharedClock || (takesSwings && inMonsterRange), sharedClock ? npc.attackTimer : combat.state.monsterAttackTimer)
   // The paired attacker has to be signalled from here as well: it may have no
   // retaliation target of its own (a summoned minion stands guard until somebody
   // turns on it), and then NO session would ever animate the swings it is

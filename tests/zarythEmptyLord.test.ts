@@ -233,6 +233,23 @@ describe('Zaryth gear', () => {
     }
   })
 
+  it('makes the vambraces best in slot for ranged, which its drop rate promises', () => {
+    // The commonest unique off the hardest boss in the game, and it used to be
+    // strictly worse than a 5m pair of Gloves of Slaughter — 18 accuracy and 2
+    // ranged strength against 20 and 10. A boss whose whole table is the reward
+    // for four other bosses cannot hand out a downgrade as its likeliest prize.
+    const gloves = itemsData.zaryth_vambraces
+    const rivals = Object.values(itemsData).filter((i: any) => i.slot === 'gloves' && i.id !== gloves.id)
+    const best = (pick: (i: any) => number) => Math.max(...rivals.map((i: any) => pick(i) || 0))
+    expect(gloves.attackBonus.ranged, 'ranged accuracy').toBeGreaterThan(best((i) => i.attackBonus?.ranged))
+    expect(gloves.otherBonus.rangedStrength, 'ranged strength').toBeGreaterThan(best((i) => i.otherBonus?.rangedStrength))
+    // Specialist, not all-round: the melee/magic gloves keep their own slots.
+    expect(gloves.attackBonus.magic, 'magic accuracy should be a penalty').toBeLessThan(0)
+    expect(gloves.otherBonus.meleeStrength).toBe(0)
+    // It is also the rarest thing the Vaults hands out, so the raid moves with it.
+    expect(gloves.isBossUnique).toBe(true)
+  })
+
   it('prices the armour at 1b a piece, the crossbow at 750m and the hilt at 500m', () => {
     for (const id of ARMOUR) expect(itemsData[id].shopValue).toBe(1_000_000_000)
     expect(itemsData.zaryth_crossbow.shopValue).toBe(750_000_000)
@@ -548,6 +565,96 @@ describe('room-wide attacks in a co-op session', () => {
 
   it('is playable as a group', () => {
     expect(Object.prototype.hasOwnProperty.call(COOP_BOSSES, BOSS)).toBe(true)
+  })
+
+  it('actually swings its minions, tick after tick, while the room is alive', () => {
+    // The room owns each minion's clock, but the target member's session write-
+    // back used to copy its whole add list back — attackTimer included, and that
+    // copy is PINNED to full on a tick the room is not swinging. The countdown
+    // was overwritten with the pinned value every tick, so it oscillated between
+    // full and full-minus-one and never reached zero: the sentinels stood there
+    // for the entire fight and hit nobody. It only started ticking once the last
+    // member died and no session was left to write back.
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const state: any = joined(BOSS, [1, 2])
+    const sentinel = monstersData.zaryth_bolt_sentinel
+    state.boss.adds = [{ ...sentinel, instanceId: 'sentinel#1', currentHP: 150, attackTimer: sentinel.attackSpeed }]
+    state.boss.addSpawnCountdown = null
+    state.boss.attackTimer = 9999   // the boss itself held off, so every hit below is the minion's
+
+    let cur = state
+    let minionHits = 0
+    const timers: number[] = []
+    for (let i = 0; i < 12; i++) {
+      const out = processCoopTick(cur, [], deps, Date.now())
+      cur = out.stateNext
+      // The members must stay standing, or this stops measuring the live room.
+      for (const m of Object.values(cur.members) as any[]) { m.hp = m.maxHP; m.status = 'alive' }
+      cur.boss.adds[0].currentHP = 150
+      timers.push(cur.boss.adds[0].attackTimer)
+      minionHits += out.events.filter((e: any) => e.fromAdd && e.type === 'monsterHit').length
+    }
+    expect(minionHits, `the sentinel never swung — room clock read ${timers.join(' ')}`).toBeGreaterThan(0)
+    // Over 12 ticks at speed 4 it owes the two members ~3 swings each, so this
+    // also catches a clock that fires once and then re-sticks.
+    expect(minionHits).toBeGreaterThanOrEqual(4)
+  })
+
+  it('lets a member the boss is not facing finish a minion off', () => {
+    // The non-target merge matched the session's add list against the room's BY
+    // POSITION, and the engine splices a killed add out of its own list — so on
+    // exactly the tick that matters every add behind it shifted a slot. The kill
+    // was invisible (the corpse is simply absent from the list), the survivors
+    // were compared against the wrong add's health, and the wait never restarted
+    // because it is parked at null while the field is at its cap. The room told
+    // every client the sentinel had died and it went on swinging at full health.
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const state: any = joined(BOSS, [1, 2])
+    const sentinel = (id: string, hp: number) => ({
+      ...monstersData.zaryth_blade_sentinel, instanceId: id, currentHP: hp, attackTimer: 4,
+    })
+    // A full field, so the summon countdown is parked exactly as it is in play.
+    state.boss.adds = [sentinel('a#1', 150), sentinel('a#2', 1), sentinel('a#3', 150), sentinel('a#4', 150)]
+    state.boss.addsSpawned = 4
+    state.boss.addSpawnCountdown = null
+    state.boss.addsDefeated = 0
+
+    // Member 2 is not the boss's target, and swings at the wounded sentinel.
+    state.targetCharId = '1'
+    state.members['2'].combat.addTargetIndex = 1
+    state.members['2'].combat.playerAttackTimer = 0
+
+    const out = processCoopTick(state, [], deps, Date.now())
+    const after = out.stateNext.boss
+
+    expect(after.adds.map((a: any) => a.instanceId), 'the sentinel it killed is still standing')
+      .toEqual(['a#1', 'a#3', 'a#4'])
+    expect(after.addsDefeated, 'the kill was not counted').toBe(1)
+    expect(after.addSpawnCountdown, 'a full field never summons again after this')
+      .toBeGreaterThan(0)
+    // The survivors keep their own health — the shifted comparison used to write
+    // one add's health onto another's.
+    for (const add of after.adds) expect(add.currentHP).toBe(150)
+    // And the room said so, once.
+    expect(out.events.filter((e: any) => e.type === 'addDefeated')).toHaveLength(1)
+  })
+
+  it('leaves a minion nobody touched exactly where it was', () => {
+    // The other side of the merge: a non-target member who kills nothing must
+    // not remove, revive or reshuffle anything.
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const state: any = joined(BOSS, [1, 2])
+    state.boss.adds = [
+      { ...monstersData.zaryth_blade_sentinel, instanceId: 'a#1', currentHP: 150, attackTimer: 4 },
+      { ...monstersData.zaryth_rune_sentinel, instanceId: 'a#2', currentHP: 150, attackTimer: 4 },
+    ]
+    state.boss.addsSpawned = 2
+    state.boss.addSpawnCountdown = 5
+    state.targetCharId = '1'
+
+    const out = processCoopTick(state, [], deps, Date.now())
+    expect(out.stateNext.boss.adds.map((a: any) => a.instanceId)).toEqual(['a#1', 'a#2'])
+    expect(out.stateNext.boss.addsDefeated).toBeFalsy()
   })
 
   it('restores HP to the member whose life-stealing special landed', () => {

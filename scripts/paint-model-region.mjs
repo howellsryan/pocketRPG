@@ -16,8 +16,11 @@
 // shading and ambient occlusion survive the repaint and the region still reads
 // as a surface rather than a flat hole.
 //
-// Editing the file in place is intended and safe to repeat: the same box paints
-// the same texels to the same colour, so a re-run is a no-op.
+// Editing the file in place is intended, but a re-run is NOT a no-op: the shade
+// is taken from whatever the texel currently holds, so a second pass over an
+// already-painted region reads its own output and shifts the colour again — and
+// the whole atlas is re-encoded to lossy WebP each time, which costs quality on
+// texels the box never touched. Re-run from the original model, not the output.
 
 import { NodeIO } from '@gltf-transform/core'
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions'

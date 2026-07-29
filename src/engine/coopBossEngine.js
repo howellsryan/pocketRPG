@@ -24,7 +24,7 @@ import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumabl
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers } from './roomWideAttacks.js'
-import { bossAddsOf } from './bossAdds.js'
+import { bossAddsOf, getAddSpec, rollRespawnDelay } from './bossAdds.js'
 import { advanceSharedForm, isMultiForm, pinFormToSession } from './bossForms.js'
 import {
   COOP_RAID_ADVANCE_TICKS,
@@ -997,6 +997,15 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   const roomWide = isRoomWideAttacker(monstersData?.[next.bossId])
   const roomWideSwing = roomWide && advanceRoomWideAttackTimer(next.boss)
   const roomWideAddSwings = roomWide ? advanceAddAttackTimers(next.boss) : []
+  // The room's minion clocks, taken straight after they were advanced. A
+  // session's copy of an add is PINNED to 0-or-full and then run down by the
+  // engine, so writing the session's copy back over the room's would overwrite
+  // the countdown with the pinned value every single tick — the clock then
+  // oscillates between full and full-minus-one, never reaches zero, and the
+  // minions stand there swinging at nobody for the whole fight.
+  const roomAddTimers = roomWide
+    ? new Map(bossAddsOf(next.boss).map((add) => [add.instanceId, add.attackTimer]))
+    : null
   // A form change is a per-SWING decision, so the ROOM owns it: every session is
   // pinned below and the single roll happens after the loop, mirroring solo,
   // where the boss swings with the form it is in and then switches. Left to the
@@ -1066,25 +1075,50 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     // Invariant 2: only the target advances the add's spawn countdown, but any
     // member's damage to a live add sticks.
     if (isTarget) {
-      next.boss.adds = (combatState.adds || []).map((add) => ({ ...add }))
+      next.boss.adds = (combatState.adds || []).map((add) => ({
+        ...add,
+        // The room owns a room-wide boss's minion clocks (roomAddTimers) — an
+        // add the session did not have yet keeps its own full wind-up.
+        ...(roomAddTimers?.has(add.instanceId) ? { attackTimer: roomAddTimers.get(add.instanceId) } : {}),
+      }))
       next.boss.addSpawnCountdown = combatState.addSpawnCountdown
       next.boss.addsSpawned = combatState.addsSpawned
       next.boss.addsDefeated = combatState.addsDefeated
     } else {
-      // A non-target member neither spawns nor despawns adds — the target owns
-      // the list — but the damage they dealt to one still sticks. Matched by
-      // IDENTITY of position in the list they were handed at the top of this
-      // tick, so a list the target has since reshaped cannot cross the wires.
-      const dealtTo = new Map()
-      ;(combatState.adds || []).forEach((add, i) => {
-        const before = addHpBefore[i]
-        if (before != null && add.currentHP < before) dealtTo.set(engine.adds[i]?.instanceId, add.currentHP)
-      })
+      // A non-target member neither spawns adds nor advances the wait — the
+      // target owns both — but everything they did to an add on the field
+      // sticks, including finishing it off.
+      //
+      // Matched by `instanceId` on BOTH sides, never by list position: the
+      // engine splices a killed add out of its own list, so on exactly the tick
+      // that matters every add behind it shifts down a slot. Read by index, the
+      // kill was invisible (the corpse is simply absent) and the survivors'
+      // health was compared against the wrong add's — so a member the boss did
+      // not happen to be facing could never clear a sentinel, and the room told
+      // every client it had died while it went on swinging.
+      const before = new Map(engine.adds.map((add, i) => [add.instanceId, addHpBefore[i]]))
+      const after = new Map((combatState.adds || []).map((add) => [add.instanceId, add.currentHP]))
+      let killedOne = false
+      const survivors = []
       for (const add of bossAddsOf(next.boss)) {
-        const hp = dealtTo.get(add.instanceId)
-        if (hp != null) add.currentHP = Math.min(add.currentHP, hp)
+        const hp = after.get(add.instanceId)
+        if (hp == null) {
+          // Absent from a list it started the tick in = this member killed it.
+          if (!before.has(add.instanceId)) { survivors.push(add); continue }
+          killedOne = true
+          next.boss.addsDefeated = (next.boss.addsDefeated || 0) + 1
+          continue
+        }
+        add.currentHP = Math.min(add.currentHP, hp)
+        if (add.currentHP > 0) survivors.push(add)
+        else killedOne = true
       }
-      next.boss.adds = bossAddsOf(next.boss).filter((add) => add.currentHP > 0)
+      next.boss.adds = survivors
+      // A kill always restarts the wait, from a full field as much as an empty
+      // one — the countdown is parked at null while the field is at its cap, so
+      // without this a boss at its cap never summons again for the rest of the
+      // fight.
+      if (killedOne) next.boss.addSpawnCountdown = rollRespawnDelay(getAddSpec(monstersData?.[next.bossId]))
     }
 
     for (const ev of engineEvents) {

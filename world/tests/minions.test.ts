@@ -376,6 +376,43 @@ describe('a boss that summons minions in the open world', () => {
     expect(taken, 'a melee sentinel four tiles away landed a blow').toBe(0)
   })
 
+  it('mirrors the boss onto its sentinel\'s attacker wearing the form it is in', () => {
+    // The mirror was built straight off the monsters.json row and never pinned
+    // to the boss's form, so it carried no formMaxHit and monsterMaxHit fell
+    // through to its DERIVED branch: Zaryth's 440 ranged and 240 strength bonus
+    // came out at 213 against a player who had turned to fight a sentinel,
+    // where its hardest authored form hits 60. Its style was the top-level one
+    // for every swing too, so the protection prayer the room could read off the
+    // boss was the wrong one two forms in three.
+    const worstForm = Math.max(...Object.values(
+      (monstersData as Record<string, any>)[ZARYTH].forms as Record<string, { maxHit: number }>,
+    ).map((f) => f.maxHit))
+    expect(worstForm, 'this boss no longer authors a per-form max hit').toBe(60)
+
+    const { npcs, boss } = bossAt(ZARYTH, 10, 10)
+    const players = [makePlayer('1', 10, 11)]
+    let tick = runTicks(LONGEST_SUMMON_TICKS + 2, npcs, players)
+    const [minion] = minionsIn(npcs)
+    turnOn(players[0], minion.id)
+    tick = runTicks(4, npcs, players, tick)
+    expect(players[0].combat?.npcId, 'the player never turned on the sentinel').toBe(minion.id)
+
+    let worstHit = 0
+    let landed = 0
+    for (let i = 0; i < 300; i++) {
+      runTicks(1, npcs, players, tick + i, () => {
+        boss.sharedSwing = true                    // the boss swings every measured tick
+        for (const m of minionsIn(npcs)) { m.hp = m.maxHp; m.sharedSwing = false }
+      })
+      const taken = players[0].maxHp - players[0].hp
+      if (taken > 0) landed++
+      worstHit = Math.max(worstHit, taken)
+    }
+    expect(landed, 'the mirrored boss never landed a blow, so this measures nothing').toBeGreaterThan(0)
+    expect(worstHit, `the mirrored boss hit for ${worstHit}, past its hardest form's ${worstForm}`)
+      .toBeLessThanOrEqual(worstForm)
+  })
+
   it('stacks them up to its cap while the fight runs, if they are left alive', () => {
     // The point of the cap: leaving them alive is a CHOICE with a cost. The
     // stack grows and the incoming damage grows with it.

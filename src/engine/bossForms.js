@@ -41,7 +41,10 @@ export function applyForm(monster, formKey) {
   monster.attackStyle = form.attackStyle
   monster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0
   monster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0
-  monster.defenceBonus = { ...form.defenceBonus }
+  // Falls back like the two above it: a form authored without defences must
+  // inherit the boss's own, never zero them — that would be a form the whole
+  // room suddenly hits through, from a field nobody thought to write.
+  monster.defenceBonus = { ...(form.defenceBonus ?? monster.defenceBonus ?? {}) }
   monster.formMaxHit = form.maxHit
   // Authored per form, and only ever a hint to the player — but a hint that
   // names the form before last is worse than none.
