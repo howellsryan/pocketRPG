@@ -199,7 +199,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward tables: guaranteed loot plus a chance at rare uniques. Bosses are tougher single monsters with their own drop tables and kill counts. Boss and raid uniques are granted by the server when you complete the kill, and every kill is recorded — check the Collection Log and Leaderboard. You can spend credits to skip to a boss kill or pay a raid's skip cost. In the open world a boss you have woken hunts you across its whole lair. Backing out of its reach no longer sends it home to heal, and its summoned minions stay on the field and follow it, so stepping away is a breather rather than a reset — the way out is the way you came in."
+  "text": "Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward tables: guaranteed loot plus a chance at rare uniques. Bosses are tougher single monsters with their own drop tables and kill counts. Boss and raid uniques are granted by the server when you complete the kill, and every kill is recorded — check the Collection Log and Leaderboard. You can spend credits to skip to a boss kill or pay a raid's skip cost. In the open world a boss you have woken hunts you across its whole lair. Backing out of its reach no longer sends it home to heal, its summoned minions stay on the field and follow it, and if it catches up it swings again on its own — stepping back buys distance, not a reset. The way out is the way you came in."
  },
  {
   "id": "guide_group_boss_fights",
