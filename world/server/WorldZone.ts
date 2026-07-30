@@ -1335,7 +1335,9 @@ export class WorldZone extends Server<Env> {
       for (const p of this.players.values()) {
         if (countsAsEngaged(npc, p.combat?.npcId)) engaged.push({ charId: p.charId, x: p.x, z: p.z })
       }
-      reselectAttacker(npc, engaged, this.zone.collision)
+      // `positions` is every player in the zone: a boss keeps hunting a quarry
+      // who has walked out of the fight, and only lets go when they leave.
+      reselectAttacker(npc, engaged, this.zone.collision, positions, npcs)
     }
 
     // NPCs first (wander/respawn/heal) so player combat this tick reads fresh state.

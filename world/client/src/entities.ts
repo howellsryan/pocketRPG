@@ -5,7 +5,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
 import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
-import { MONSTER_MODELS } from '../../shared/monsterModels'
+import { MONSTER_MODELS, FORM_TINT_MIX, FORM_TINT_EMISSIVE, formTintColor } from '../../shared/monsterModels'
 import { footprintRadius } from '../../shared/monsterSize'
 import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
 // Shared per-item placement registry — the SAME resolver the combat arena /
@@ -105,6 +105,12 @@ export type Entity = {
    * Snapshot semantics — set unconditionally from each diff, never merged, so
    * combat-end (diff omits it) actually clears a stale facing target. */
   targetId: string | null
+  /** Multi-form boss's current phase (server-owned), null for everything else.
+   * Drives the model's phase tint. */
+  form: string | null
+  /** The damage style this player's protection prayer blocks, drawn as an
+   * overhead icon; null when none is on. Snapshot, like targetId. */
+  overhead: 'melee' | 'ranged' | 'magic' | null
   /** Which clip the current movement segment plays — derived once per segment
    * from its planar length so a 2-tile running step never plays the walk clip
    * sped up. */
@@ -300,6 +306,68 @@ function applyMonsterTint(model: THREE.Object3D, tint: Record<string, string> | 
   })
 }
 
+/** Every clip a monster GLB may be driven by. A rig that ships a clip missing
+ * from this list simply never plays it: bound to idle/walk/attack/die only,
+ * Zaryth's per-style swings fell back to its melee `attack` for every form, so
+ * the shoot and cast animations its rig was built with were dead on arrival —
+ * and the melee lunge (which ends by dropping the body to the floor) played on
+ * every swing instead, reading as the boss collapsing mid-fight. Exported so
+ * that invariant is checked against the shipped assets. */
+export const MONSTER_ANIM_CLIPS: readonly AnimName[] = ['idle', 'walk', 'attack', 'attack_ranged', 'attack_magic', 'die']
+
+/** Per-instance record of a phase-tintable model's materials and the colours it
+ * was built with, parked on the entity group. Kept because a tint is a BLEND
+ * against those originals — re-tinting off the already-tinted colour would drift
+ * further from the model's own palette every phase change. */
+type FormTintState = {
+  materials: THREE.MeshStandardMaterial[]
+  base: THREE.Color[]
+  baseEmissive: (THREE.Color | null)[]
+  current: string | null
+}
+
+/** Clones every material of a phase-tinting model once, so recolouring this
+ * boss can't repaint the cached template (loadTemplate hands back a shared GLTF
+ * and cloneSkeleton keeps its materials — the trap applyMonsterTint documents). */
+export function prepareFormTint(group: THREE.Object3D, model: THREE.Object3D): void {
+  const materials: THREE.MeshStandardMaterial[] = []
+  const base: THREE.Color[] = []
+  const baseEmissive: (THREE.Color | null)[] = []
+  model.traverse((o) => {
+    if (!(o instanceof THREE.Mesh) || !o.material) return
+    const one = (m: THREE.Material): THREE.Material => {
+      const mm = m.clone() as THREE.MeshStandardMaterial
+      if (!mm.color) return mm
+      materials.push(mm)
+      base.push(mm.color.clone())
+      baseEmissive.push(mm.emissive ? mm.emissive.clone() : null)
+      return mm
+    }
+    o.material = Array.isArray(o.material) ? o.material.map(one) : one(o.material)
+  })
+  group.userData.formTint = { materials, base, baseEmissive, current: null } satisfies FormTintState
+}
+
+/** Paints the model with its current phase colour, blended over the colours it
+ * shipped with (FORM_TINT_MIX). `hex` null returns it to those originals. */
+export function applyFormTint(mesh: THREE.Object3D, hex: string | null): void {
+  const state = mesh.userData.formTint as FormTintState | undefined
+  if (!state || state.current === hex) return
+  state.current = hex
+  const tint = hex ? new THREE.Color(hex) : null
+  for (let i = 0; i < state.materials.length; i++) {
+    const material = state.materials[i]
+    material.color.copy(state.base[i])
+    if (tint) material.color.lerp(tint, FORM_TINT_MIX)
+    // A matching emissive lift is what carries the phase at distance, where the
+    // lair's own light leaves a diffuse-only tint reading as plain shadow.
+    const emissive = state.baseEmissive[i]
+    if (!emissive || !material.emissive) continue
+    if (tint) material.emissive.copy(tint).multiplyScalar(FORM_TINT_EMISSIVE)
+    else material.emissive.copy(emissive)
+  }
+}
+
 /** Loads the registered model for a monster (centred, floored — or hovering,
  * for flyers — and scaled to its target height). Unregistered monsters get the
  * cow path (the Phase 2 default); any load failure gets the box placeholder. */
@@ -318,12 +386,13 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       model.position.set(-(b.minX + b.maxX) / 2, -b.minY + (spec.hover ?? 0), -(b.minZ + b.maxZ) / 2)
       const group = new THREE.Group()
       group.add(model)
+      if (spec.formTint) prepareFormTint(group, model)
       group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
       // A large monster's box spans its whole body, or the tap that looks like
       // it landed on the dragon lands on the ground beside its centre tile.
       const bodyTiles = 2 * footprintRadius(monsterId) + 1
       addPickProxy(group, spec.targetHeight + (spec.hover ?? 0), bodyTiles > 1 ? bodyTiles : undefined)
-      const animator = makeAnimator(model, gltf, ['idle', 'walk', 'attack', 'die'])
+      const animator = makeAnimator(model, gltf, MONSTER_ANIM_CLIPS)
       if (animator?.kind === 'gltf') {
         if (spec.noLocomotionClip) animator.gait = { target: model, baseY: model.position.y, baseRotZ: model.rotation.z }
         // Sub-tick swing delay so this monster's impact frame lands on the hit
@@ -767,6 +836,8 @@ export function createEntity(id: string, x: number, z: number, mesh: THREE.Objec
     targetYaw: mesh.rotation.y,
     animator,
     targetId: null,
+    form: null,
+    overhead: null,
     segmentAnim: 'walk',
   }
 }
@@ -818,6 +889,14 @@ export function applyEntityDiff(entity: Entity, diff: EntityDiff): void {
   // must actually clear facing — patch-merging like hp/name would leave the
   // entity facing a stale, possibly-respawned target forever.
   entity.targetId = diff.targetId ?? null
+  // Phase tint: snapshot like targetId, so a boss that has no form (or has
+  // respawned out of one) actually loses the colour instead of keeping it.
+  const form = diff.form ?? null
+  if (form !== entity.form) {
+    entity.form = form
+    applyFormTint(entity.mesh, formTintColor(entity.monsterId, form))
+  }
+  entity.overhead = diff.overhead ?? null
   entity.queue.push({ x: diff.x, z: diff.z })
   if (shouldSnap(entity.queue.length)) {
     const latest = entity.queue[entity.queue.length - 1]

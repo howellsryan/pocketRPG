@@ -28,6 +28,27 @@ export type MonsterModel = {
    * frame hits on the same beat as the damage splat. Absent → the clip starts
    * on the swing tick with no alignment. */
   attackImpactSec?: number
+  /** Multi-form boss only: form key → the colour its whole body takes while it
+   * is in that phase, so the style you must pray against is readable off the
+   * boss instead of off a form name in the HUD. Unlike `tint` above (a fixed
+   * per-material recolour picked at load) this changes live, blended over the
+   * model's own colours — see applyFormTint in entities.ts. */
+  formTint?: Record<string, string>
+}
+
+/** How far a form's colour overrides the model's own (0 = untinted, 1 = flat
+ * colour). High enough to read across a lair at a glance, low enough to leave
+ * the horns, eyes and armour of the silhouette distinguishable. */
+export const FORM_TINT_MIX = 0.62
+/** Emissive lift applied in the phase colour on top of that blend, so the phase
+ * still reads in the unlit half of a lair. Low: this is a hint, not a lamp. */
+export const FORM_TINT_EMISSIVE = 0.22
+
+/** The colour for the phase this npc is in, or null when its model doesn't
+ * phase-tint. Pure lookup, shared by the client and its tests. */
+export function formTintColor(monsterId: string | undefined, form: string | null | undefined): string | null {
+  if (!monsterId || !form) return null
+  return MONSTER_MODELS[monsterId]?.formTint?.[form] ?? null
 }
 
 export const MONSTER_MODELS: Record<string, MonsterModel> = {
@@ -129,6 +150,10 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     // and must stay under the cycle, so 1.2s is the latest impact frame the
     // client can still align onto the hit tick.
     attackImpactSec: 1.2,
+    // It rerolls its style every swing, so the phase has to be readable at a
+    // glance from across the throne room: red to pray melee, green ranged,
+    // blue magic — the same three hues as the overhead prayer icons.
+    formTint: { melee: '#d63b2c', ranged: '#35a94b', magic: '#3f74e0' },
   },
   // The sentinels Zaryth summons mid-fight (minions.ts). One KayKit skeleton rig
   // in three kits, armed to match the style each is summoned for — built by

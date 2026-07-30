@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest'
 import { resolveGltfAnim } from '../client/src/motion'
 import { NPC_REMOVE_AFTER_DEATH_TICKS } from '../server/combat'
 import { MONSTER_MODELS } from '../shared/monsterModels'
+import { getMonsterModel } from '../../src/utils/equipModels.js'
 
 const TICK_MS = 600
 
@@ -76,6 +77,27 @@ function samplerCounts(glbPath: string): Array<{ clip: string; times: number; va
   }
   return out
 }
+
+describe('the melee attack clip stops at the swing', () => {
+  // Zaryth's source attack clip rears up, strikes, and then COLLAPSES to the
+  // floor over its last two seconds and holds there — a knock-down tail with no
+  // recovery. Clamped on its final frame and replayed every swing, the boss
+  // looked like it was dying every time it hit you. The build script trims it to
+  // the registry's `attackMaxSec`; the combat arena clamps the untrimmed source
+  // to the same number, so both render the same swing.
+  it('ships Zaryth\'s world attack clip trimmed to the registry cap', () => {
+    const cap = getMonsterModel('zaryth_the_empty_lord')?.attackMaxSec
+    expect(cap).toBeGreaterThan(0)
+    const url = MONSTER_MODELS.zaryth_the_empty_lord.url
+    const path = fileURLToPath(new URL(`../client/public${url}`, import.meta.url))
+    const duration = clipDurationSec(path, 'attack')
+    expect(duration).toBeGreaterThan(0)
+    expect(duration).toBeLessThanOrEqual(cap as number)
+    // The strike itself must survive the cut, or the trim would have removed the
+    // very frame the wind-up is aligned to.
+    expect(duration).toBeGreaterThanOrEqual(getMonsterModel('zaryth_the_empty_lord')!.attackImpactSec as number)
+  })
+})
 
 describe('shipped monster rigs are structurally sound', () => {
   // Zaryth's world GLB shipped with 107 of its die clip's 123 samplers holding

@@ -13,6 +13,10 @@ import { advanceSharedForm, applyForm, isMultiForm, randomFormSwitchThreshold } 
 
 type Monsters = Record<string, { name?: string; hitpoints?: number; boss?: boolean; attackSpeed?: number; roomWideAttacks?: boolean }>
 
+function monsterOf(npc: NpcState): Monsters[string] | undefined {
+  return (monstersData as Monsters)[npc.monsterId]
+}
+
 export type NpcState = {
   id: string
   monsterId: string
@@ -49,6 +53,12 @@ export type NpcState = {
   currentForm?: string
   formAttackCount?: number
   formSwitchThreshold?: number
+  /** Set on the tick a swing lands, spent on the next one: the form is rolled
+   * for the swing AHEAD rather than the one just taken, so the wind-up clip, the
+   * model's phase tint and the damage all describe the same style. Rolled on the
+   * swing tick instead, the boss animated (and tinted) the form it had just
+   * finished using and hit with a different one. */
+  formAdvancePending?: boolean
   /** Set on a SUMMONED minion: the npc that summoned it. Such an npc is removed
    * when it dies instead of respawning, and leaves the field with its summoner. */
   summonerId?: string
@@ -66,6 +76,12 @@ export type NpcState = {
   /** Damage per attacker for loot attribution; `tick` = when that total last
    * increased (tie-break: first to reach the total). */
   damageByChar: Map<string, { dmg: number; tick: number }>
+  /** Consecutive ticks this npc has wanted to close on its quarry and been
+   * unable to take a step. A boss holds its target across a disengage now, so
+   * without this a quarry standing somewhere it cannot be pathed to (across
+   * water, on the wrong side of a cliff) left the boss in combat for good:
+   * never healing, and stacking minions nobody was fighting. */
+  chaseStalledTicks?: number
   /** Cached A* chase route toward its attacker and the target tile it was
    * planned for. Recomputed when the target moves or the route runs out — so the
    * npc rounds obstacles instead of wedging on them (the old greedy step). */
@@ -105,6 +121,35 @@ const OUT_OF_COMBAT_HEAL_TICKS = 17
 /** How far (Chebyshev tiles from home) an aggressive npc will chase its
  * attacker before giving up and returning to its post. */
 const PURSUE_LEASH_TILES = 10
+/** The same, for a BOSS and the minions fighting alongside it. A boss owns its
+ * whole lair (Zaryth's is 40×40, its throne 25 tiles from the door), and a leash
+ * it can be walked out of is a free reset: the boss healed to full and its
+ * sentinels despawned with it, so backing off beat clearing the adds. Roaming
+ * this far means the only way out of the fight is the way you came in. */
+const BOSS_PURSUE_LEASH_TILES = 24
+/** Ticks of being unable to take a single step toward a quarry before a pursuer
+ * gives up (30s). Only a pursuer that cannot MOVE stalls — one standing over a
+ * player who won't fight it is not stuck, it is waiting, and waiting is the
+ * whole point. */
+const CHASE_STALL_GIVE_UP_TICKS = 50
+
+/** True for a boss, or for a minion summoned by one — a boss and its minions are
+ * one encounter, so they pursue on the same terms. */
+export function isBossFamily(npc: NpcState, npcs?: Map<string, NpcState>): boolean {
+  if (monsterOf(npc)?.boss) return true
+  const summoner = npc.summonerId ? npcs?.get(npc.summonerId) : null
+  return !!(summoner && monsterOf(summoner)?.boss)
+}
+
+/** A summoned minion has NO leash of its own: it is summoned into a fight that is
+ * already moving, from a tile that is nothing to it, and its summoner's leash
+ * already bounds the whole encounter (stepMinions clears it away the moment that
+ * fight ends). Measured from its own spawn tile it gave up the instant the boss
+ * it guards out-ranged it, and stood idle in the middle of a live fight. */
+function pursueLeashTiles(npc: NpcState, npcs?: Map<string, NpcState>): number {
+  if (npc.summonerId) return Infinity
+  return isBossFamily(npc, npcs) ? BOSS_PURSUE_LEASH_TILES : PURSUE_LEASH_TILES
+}
 
 export function recordDamage(npc: NpcState, charId: string, dmg: number, tick: number): void {
   if (dmg <= 0) return
@@ -145,9 +190,29 @@ export function reselectAttacker(
   npc: NpcState,
   engaged: { charId: string; x: number; z: number }[],
   collision: string[],
+  present?: Map<string, { x: number; z: number }>,
+  npcs?: Map<string, NpcState>,
 ): void {
   if (npc.state !== 'combat') return
   if (engaged.length === 0) {
+    // Any npc keeps its quarry. `engaged` is built from players whose own
+    // session is still fighting, and stepCombat ends that session the instant
+    // they are beyond both reaches — so releasing here handed anyone who backed
+    // off a free reset: an unclaimed npc heals to full (OUT_OF_COMBAT_HEAL_TICKS)
+    // and a boss's minions despawn with it. It hunts instead, until it breaks
+    // leash (tickNpc — a boss's is longer, pursueLeashTiles) or the player
+    // leaves the zone (WorldZone.releaseAggro). A sentinel INHERITS its
+    // summoner's quarry, never having had one of its own: nobody counts as
+    // engaged with a minion until they turn on it, so left to claim its own it
+    // healed out of the fight and stood idle while the boss it guards hunted on
+    // alone. `present` gates this on the quarry still being IN THE ZONE — a
+    // teleport/logout must still release the claim outright.
+    const summoner = npc.summonerId ? npcs?.get(npc.summonerId) : null
+    const quarry = npc.attackerId ?? summoner?.attackerId ?? null
+    if (quarry && present?.has(quarry)) {
+      npc.attackerId = quarry
+      return
+    }
     npc.attackerId = null
     return
   }
@@ -280,6 +345,7 @@ function chaseTowards(npc: NpcState, target: { x: number; z: number }, ctx: Tick
 function clearChase(npc: NpcState): void {
   npc.chasePath = []
   npc.chaseGoal = null
+  npc.chaseStalledTicks = 0
 }
 
 /** Gives up the chase: same reset as an out-of-combat heal (return to full,
@@ -370,13 +436,21 @@ function advanceSharedFormFor(npc: NpcState): void {
  * sessions that run after every npc. */
 export function advanceSharedSwing(npc: NpcState): void {
   if (!usesSharedClock(npc)) return
+  ensureForm(npc)
+  // Spend last swing's roll BEFORE this tick's clock: the form has to be settled
+  // for the swing that is coming, because the wind-up animation is pre-signalled
+  // a couple of ticks ahead of the blow (combat.ts signalSwing) and the client
+  // tints the model from the same field.
+  if (npc.formAdvancePending) {
+    npc.formAdvancePending = false
+    advanceSharedFormFor(npc)
+  }
   // The clock's speed comes from the monster data, not the npc record — the
   // helper's own default (4) would slow Zaryth's 3-tick cycle.
   const clock = { attackSpeed: (monstersData as Monsters)[npc.monsterId]?.attackSpeed, attackTimer: npc.attackTimer }
   npc.sharedSwing = advanceRoomWideAttackTimer(clock)
   npc.attackTimer = clock.attackTimer
-  ensureForm(npc)
-  if (npc.sharedSwing) advanceSharedFormFor(npc)
+  if (npc.sharedSwing) npc.formAdvancePending = true
 }
 
 export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): void {
@@ -394,6 +468,12 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
       npc.x = npc.home.x
       npc.z = npc.home.z
       npc.wanderCooldown = randInt(WANDER_MIN_TICKS, WANDER_MAX_TICKS)
+      // A fresh boss starts in its authored opening form (ensureForm re-seeds
+      // it), rather than wearing whatever phase it happened to die in.
+      npc.currentForm = undefined
+      npc.formAttackCount = 0
+      npc.formSwitchThreshold = undefined
+      npc.formAdvancePending = false
       clearChase(npc)
       result.npcChanged.push(npc.id)
     }
@@ -402,13 +482,21 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
 
   // Out of combat it is not swinging at anybody, and a `true` left over from the
   // last fight would be read as a swing the instant somebody re-engages.
-  if (npc.state !== 'combat') npc.sharedSwing = false
+  if (npc.state !== 'combat') {
+    npc.sharedSwing = false
+    npc.formAdvancePending = false
+  }
 
   if (npc.state === 'combat') {
     // Before the early returns below: an npc on a shared clock keeps swinging at
     // everyone it reaches even on a tick it is chasing, out of reach, or has no
     // claimed attacker, exactly as it would against the one player it faced.
+    const formBefore = npc.currentForm
     advanceSharedSwing(npc)
+    // The form is a broadcast field (toNpcDiff) — a boss standing still while it
+    // rotates changes nothing else about its diff, so without this the client
+    // keeps the tint of a phase the boss has already left.
+    if (npc.currentForm !== formBefore) result.npcChanged.push(npc.id)
     if (!npc.attackerId) {
       if (ctx.tick - npc.lastCombatTick >= OUT_OF_COMBAT_HEAL_TICKS) {
         npc.state = 'idle'
@@ -425,13 +513,25 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
     // down to regain reach+sight — leashed to a radius around home so it can't
     // trek across the whole zone.
     const target = ctx.players?.get(npc.attackerId)
-    if (!target || withinRangeAndSight(npc, target, reachAgainst(npc.monsterId, monsterAttackRange(npc.monsterId, npc.currentForm)), ctx.collision ?? [])) return
-    if (chebyshev(npc, npc.home) >= PURSUE_LEASH_TILES) {
+    if (!target || withinRangeAndSight(npc, target, reachAgainst(npc.monsterId, monsterAttackRange(npc.monsterId, npc.currentForm)), ctx.collision ?? [])) {
+      npc.chaseStalledTicks = 0
+      return
+    }
+    if (chebyshev(npc, npc.home) >= pursueLeashTiles(npc, ctx.npcs)) {
       giveUpPursuit(npc)
       result.npcChanged.push(npc.id)
       return
     }
-    if (chaseTowards(npc, target, ctx)) result.npcChanged.push(npc.id)
+    if (chaseTowards(npc, target, ctx)) {
+      npc.chaseStalledTicks = 0
+      result.npcChanged.push(npc.id)
+      return
+    }
+    npc.chaseStalledTicks = (npc.chaseStalledTicks ?? 0) + 1
+    if (npc.chaseStalledTicks >= CHASE_STALL_GIVE_UP_TICKS) {
+      giveUpPursuit(npc)
+      result.npcChanged.push(npc.id)
+    }
     return
   }
 
@@ -446,5 +546,9 @@ export function toNpcDiff(npc: NpcState): EntityDiff {
   const diff: EntityDiff = { id: npc.id, kind: 'npc', x: npc.x, z: npc.z, anim: npc.anim, monsterId: npc.monsterId, hp: npc.hp, maxHp: npc.maxHp }
   if (name) diff.name = name
   if (npc.state === 'combat' && npc.attackerId) diff.targetId = npc.attackerId
+  // The phase the client tints by. Carried out of combat too (a respawn is what
+  // clears it), so a boss between swings doesn't flicker back to an untinted
+  // hide the moment it stops attacking.
+  if (npc.currentForm) diff.form = npc.currentForm
   return diff
 }

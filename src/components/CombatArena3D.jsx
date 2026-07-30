@@ -72,6 +72,7 @@ function CombatArena3D({
   attackSignal = null,
   windupSignal = null,
   monsterAttackImpactSec = null,
+  monsterAttackMaxSec = null,
   monsterAttackStyle = null,
   monsterHP,
   playerHP,
@@ -326,6 +327,11 @@ function CombatArena3D({
         for (const style of ['melee', 'ranged']) {
           const clip = selectMonsterAttackClip(mAnims, style)
           if (!clip || st.monsterAttackActions[clip.name]) continue
+          // Registry cap (attackMaxSec): a rig whose attack clip ends by
+          // collapsing to the floor is cut at the follow-through, or every swing
+          // reads as the monster dropping dead. Min, so it's idempotent on the
+          // cached clip this mixer shares with the next fight.
+          if (monsterAttackMaxSec > 0) clip.duration = Math.min(clip.duration, monsterAttackMaxSec)
           const action = st.monsterMixer.clipAction(clip)
           action.setLoop(THREE.LoopOnce, 1)
           action.clampWhenFinished = true // hold the end frame; crossfade below (no bind-pose snap)

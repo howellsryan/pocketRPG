@@ -267,6 +267,43 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
 }
 
 /**
+ * Re-opens the fight for a player that any npc still holding them as its
+ * attacker has chased back into its reach — trash, dragon or boss alike.
+ *
+ * An npc's swings are only ever resolved inside a player's own combat session,
+ * and stepCombat ends that session the moment the player is beyond both
+ * reaches. Every npc now keeps its quarry across a disengage (npc.ts
+ * reselectAttacker) instead of releasing them, so without this it would jog
+ * alongside its target forever, visibly hunting them, and never land a blow —
+ * aggro with no teeth.
+ *
+ * This does NOT reopen the door to unprovoked fights: it only fires for an npc
+ * whose `attackerId` is already this player, which is set by nothing but
+ * startCombat — a monster the player never clicked never acquires one, so
+ * standing next to an idle bull still starts nothing on its own (§
+ * combat-flow.test.ts "stays out of combat standing next to an idle monster").
+ *
+ * The resumed session is ACTIVE, not passive: the whole point of resuming is
+ * that whatever caught its quarry can hit them, mirroring the real fight —
+ * unlike the disengage from walking away, which stays passive on purpose so the
+ * player's own swings need a fresh click.
+ */
+export function resumeAggro(player: TickPlayer, ctx: TickContext): void {
+  if (player.combat) return
+  const collision = ctx.collision ?? []
+  for (const npc of ctx.npcs?.values() ?? []) {
+    if (npc.attackerId !== player.charId || npc.state !== 'combat') continue
+    const reach = reachAgainst(npc.monsterId, monsterAttackRange(npc.monsterId, npc.currentForm))
+    if (!withinRangeAndSight(npc, player, reach, collision)) continue
+    // No `result`: a refusal (a magic weapon with no spell selected) is the
+    // player's own business and must not re-announce itself every tick the
+    // npc stays in reach.
+    startCombat(player, npc)
+    return
+  }
+}
+
+/**
  * Everything ELSE in this encounter — the npcs attacking this player that they
  * are not swinging at. A player may attack one thing; any number of things
  * attack the player.

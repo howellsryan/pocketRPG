@@ -9,10 +9,11 @@ import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { combatLevelFromLevels } from '../../src/engine/combatLevel.js'
-import { startCombat, stepCombat, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
+import { startCombat, stepCombat, resumeAggro, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
 import type { NpcState } from './npc'
 import type { LootEntity } from './loot'
 import { hasLineOfSight } from './los'
+import { protectionOverhead } from '../shared/prayer'
 import monstersData from '../../src/data/monsters.json'
 
 type MonsterStyles = Record<string, { attackStyle?: string; forms?: Record<string, { attackStyle?: string } | undefined> } | undefined>
@@ -104,6 +105,11 @@ export type TickPlayer = {
    * when this changes, so a stationary target doesn't cost a pathfind every
    * tick while the follower is still en route. */
   followTargetTile: { x: number; z: number } | null
+  /** Overhead protection-prayer style last put on the wire. Prayers toggle
+   * BETWEEN ticks (a client message), so the tick's own before/after snapshot
+   * can't see the change — this is what makes the entity diff go out, the same
+   * way lastHpSent/lastPrayerSent gate their echoes. */
+  lastOverheadSent?: 'melee' | 'ranged' | 'magic' | null
 }
 
 // Running: 2 tiles/tick, ~100 energy drained over ~1 min of continuous running;
@@ -549,6 +555,12 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
     startInteract(player, ctx, result)
   }
 
+  // An npc that chased its quarry back into reach re-opens the fight itself —
+  // npc.ts keeps ANY npc's target across a disengage now, so without this it
+  // would catch up and just stand there. Before the combat branch, so an npc
+  // that closed the gap this tick can land its swing on this same tick.
+  resumeAggro(player, ctx)
+
   // Combat ticks whether or not the player is moving: a ranged/magic monster
   // keeps attacking a fleeing player, and a kiting player keeps attacking back.
   // stepCombat gates each side by its own reach and ends the fight once the
@@ -574,7 +586,10 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
     emitSpecIfChanged(player, result.events)
   }
 
-  result.entChanged = player.x !== before.x || player.z !== before.z || player.anim !== before.anim || player.hp !== before.hp
+  const overhead = protectionOverhead(player.activeProtectionPrayer)
+  const overheadChanged = overhead !== (player.lastOverheadSent ?? null)
+  if (overheadChanged) player.lastOverheadSent = overhead
+  result.entChanged = overheadChanged || player.x !== before.x || player.z !== before.z || player.anim !== before.anim || player.hp !== before.hp
   return result
 }
 
@@ -597,6 +612,10 @@ export function toEntityDiff(player: TickPlayer): EntityDiff {
     gear: player.gear, hp: player.hp, maxHp: player.maxHp,
   }
   if (player.combat) diff.targetId = player.combat.npcId
+  // Overhead protection prayer, for everyone who can see this player. Absent
+  // means none — the client clears the icon rather than merging.
+  const overhead = protectionOverhead(player.activeProtectionPrayer)
+  if (overhead) diff.overhead = overhead
   return diff
 }
 
