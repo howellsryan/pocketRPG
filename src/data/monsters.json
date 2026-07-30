@@ -10817,7 +10817,7 @@
       "magic": 440,
       "ranged": 440
     },
-    "attackSpeed": 3,
+    "attackSpeed": 6,
     "attackStyle": "ranged",
     "attackBonus": 280,
     "strengthBonus": 240,

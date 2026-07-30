@@ -39,7 +39,7 @@ import { beginWorldSession, refreshWorldSession, endWorldSession, expireWorldSes
 import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { zoneSpawnSummary, type ZoneDef, type ZoneExitDef } from '../shared/zone'
-import { baseRoomZone, isInstancedRoom, MAX_PLAYERS_PER_INSTANCE } from '../shared/instances'
+import { baseRoomZone, instanceDeathEjectTarget, isInstancedRoom, MAX_PLAYERS_PER_INSTANCE } from '../shared/instances'
 import { ZONES } from './zones'
 import { endOneLifeRun, flipOneLifeOff } from './oneLife'
 import { loadStoredZone } from './zoneStore'
@@ -1509,12 +1509,19 @@ export class WorldZone extends Server<Env> {
     // Item 10: a zone can require dying to be a real trip back out (e.g. the
     // dungeon respawns at Varrick's entrance, not its own spawn ~40 tiles from
     // the bosses) — cross-zone, so it's the same DB update + reconnect the
-    // walk-onto-an-exit transition uses, not a same-zone teleport. Instanced
-    // rooms deliberately omit it: a boss room is closed, so death returns you
-    // to its own entrance rather than ejecting you into the overworld.
+    // walk-onto-an-exit transition uses, not a same-zone teleport.
     const deathRespawn = this.zone.deathRespawn
     if (deathRespawn) {
       void this.respawnAcrossZone(player, deathRespawn)
+      return
+    }
+    // An instanced boss lair is closed, but dying no longer respawns you back
+    // in front of the boss to keep swinging — it ends this player's part of
+    // the fight. Ejects them out of the room entirely and hands the client a
+    // choice screen (a fresh instance of the same lair, or the idle game)
+    // instead of silently reopening the fight.
+    if (isInstancedRoom(this.name)) {
+      void this.ejectFromInstanceDeath(player)
       return
     }
     const spawn = this.zone.spawn
@@ -1544,6 +1551,35 @@ export class WorldZone extends Server<Env> {
     send(player.conn, { t: 'dead', respawn: { x: target.x, z: target.z } })
     send(player.conn, { t: 'transition', zone: target.zone, x: target.x, z: target.z })
     player.conn.close(1000, 'death')
+  }
+
+  /** A death in an instanced boss lair ends the player's part of that fight —
+   * they leave the room entirely rather than respawning back in front of the
+   * boss. Checkpoints them at the lair's own exit (so a stray reconnect lands
+   * safely in the overworld, never stuck in a closed room) and releases the
+   * world-session save lock like an explicit logout: unlike a same-app zone
+   * transition, the player isn't continuing a session inside this world app —
+   * whatever they pick on the choice screen re-enters through a fresh
+   * `/api/world-token` handoff. Closes with 1008 (not 1000) so partysocket's
+   * own reconnect-on-close never re-opens this room out from under the
+   * overlay the client is about to show. */
+  private async ejectFromInstanceDeath(player: Player): Promise<void> {
+    const charId = player.charId
+    this.players.delete(charId)
+    this.dirty.delete(charId)
+    this.pendingLeaves.add(charId)
+    this.releaseAggro(charId)
+    this.maybeStopTicking()
+    player.hp = player.maxHp
+    const target = instanceDeathEjectTarget(this.zone, overworldZone.spawn)
+    await this.flush(player, 'disconnect')
+    await this.env.DB.prepare(
+      `INSERT INTO world_positions (character_id, zone_id, x, z, updated_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(character_id) DO UPDATE SET zone_id = excluded.zone_id, x = excluded.x, z = excluded.z, updated_at = excluded.updated_at`
+    ).bind(Number(charId), target.zone, target.x, target.z, Date.now()).run()
+    await endWorldSession(this.env, Number(charId), player.sessionId)
+    send(player.conn, { t: 'instanceDeath', zone: baseRoomZone(this.name), zoneName: this.zone.name })
+    player.conn.close(1008, 'instance_death')
   }
 
   /** Resolves a walked-over loot pickup: adds it to the pack, records it as a

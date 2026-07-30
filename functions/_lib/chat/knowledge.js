@@ -111,7 +111,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Dying in PvE is forgiving: the fight ends, your hitpoints are restored to full, and you keep all your items and loot — nothing is dropped or lost. If you would die during idle combat or offline catch-up, the simulation stops at that point and you keep everything earned up to it; restock food and check your gear before restarting. One-life (hardcore) characters are the exception: death permanently revokes the one-life badge — an Ironman one-life character becomes a standard Ironman, and a non-Ironman one-life character becomes a standard account. The character itself, its level and all its items are untouched."
+  "text": "Dying in PvE is forgiving: the fight ends, your hitpoints are restored to full, and you keep all your items and loot — nothing is dropped or lost. If you would die during idle combat or offline catch-up, the simulation stops at that point and you keep everything earned up to it; restock food and check your gear before restarting. One-life (hardcore) characters are the exception: death permanently revokes the one-life badge — an Ironman one-life character becomes a standard Ironman, and a non-Ironman one-life character becomes a standard account. The character itself, its level and all its items are untouched. Dying in one of the open world's instanced boss lairs works differently: it ends your part of that fight. You're shown a choice — return to the boss in a fresh copy of the lair, or head back to the idle game — instead of respawning back in front of it able to keep swinging."
  },
  {
   "id": "guide_inventory_and_banking",

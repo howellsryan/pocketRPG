@@ -174,9 +174,9 @@ describe('boss leash', () => {
     const { npcs, npc } = npcAt(ZARYTH, 20, 11)
     engaged(npc)
 
-    // Long enough for the first summon (8-12 boss attacks at 3 ticks each) plus
+    // Long enough for the first summon (8-12 boss attacks at 6 ticks each) plus
     // a long chase; the player stays inside the boss's leash the whole time.
-    for (let tick = 1; tick <= 60; tick++) tickDisengaged(npcs, { x: 20, z: 24 }, tick)
+    for (let tick = 1; tick <= 90; tick++) tickDisengaged(npcs, { x: 20, z: 24 }, tick)
 
     const minions = [...npcs.values()].filter((n) => n.summonerId === 'n1')
     expect(minions.length).toBeGreaterThan(0)

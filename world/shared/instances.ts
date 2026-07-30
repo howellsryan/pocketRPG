@@ -70,3 +70,18 @@ export async function chooseInstanceRoom(
   }
   return instanceRoom(zoneId, 1)
 }
+
+/** Where an instanced-lair death ejects the player: the room's own way out —
+ * every instanced lair authors exactly one exit, straight back to the
+ * overworld (world-design.md, enforced by instances.test.ts). Falls back to
+ * the overworld's own spawn so an eject is never left with nowhere to land,
+ * even if a lair were ever authored with no exit. Pure: the caller supplies
+ * the overworld spawn rather than this module reaching for `overworld.json`. */
+export function instanceDeathEjectTarget(
+  zone: { exits?: Array<{ toZone: string; toX: number; toZ: number }> },
+  overworldSpawn: { x: number; z: number }
+): { zone: string; x: number; z: number } {
+  const exit = zone.exits?.[0]
+  if (exit) return { zone: exit.toZone, x: exit.toX, z: exit.toZ }
+  return { zone: 'overworld', x: overworldSpawn.x, z: overworldSpawn.z }
+}
