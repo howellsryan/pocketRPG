@@ -168,10 +168,21 @@ export function isRoomWideFamily(npc: NpcState, npcs?: Map<string, NpcState>): b
  * already moving, from a tile that is nothing to it, and its summoner's leash
  * already bounds the whole encounter (stepMinions clears it away the moment that
  * fight ends). Measured from its own spawn tile it gave up the instant the boss
- * it guards out-ranged it, and stood idle in the middle of a live fight. */
-function pursueLeashTiles(npc: NpcState, npcs?: Map<string, NpcState>): number {
+ * it guards out-ranged it, and stood idle in the middle of a live fight.
+ *
+ * A boss in its own INSTANCED LAIR has none either: the room is the leash. No
+ * radius measured from the throne can bound a room the boss does not own outright
+ * — Zaryth's throne sits 25 tiles from the door of a 40×40 lair and 28 from the
+ * far corner, so a 24-tile leash meant backing toward the way in snapped the boss
+ * home at full health, mid-fight, for free. The room already bounds the chase
+ * physically and leaving it releases aggro outright (WorldZone.releaseAggro), so
+ * the only ways out of a lair fight are the door, the floor, and the kill. Only
+ * a boss gets this: the pasture and the fiend pit are instanced too, and their
+ * trash keeps the post it is authored to police. */
+function pursueLeashTiles(npc: NpcState, npcs?: Map<string, NpcState>, lair?: boolean): number {
   if (npc.summonerId) return Infinity
-  return isBossFamily(npc, npcs) ? BOSS_PURSUE_LEASH_TILES : PURSUE_LEASH_TILES
+  if (!isBossFamily(npc, npcs)) return PURSUE_LEASH_TILES
+  return lair ? Infinity : BOSS_PURSUE_LEASH_TILES
 }
 
 export function recordDamage(npc: NpcState, charId: string, dmg: number, tick: number): void {
@@ -526,10 +537,12 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
     if (npc.currentForm !== formBefore) result.npcChanged.push(npc.id)
     if (!npc.attackerId) {
       if (ctx.tick - npc.lastCombatTick >= OUT_OF_COMBAT_HEAL_TICKS) {
-        npc.state = 'idle'
-        npc.hp = npc.maxHp
-        npc.damageByChar.clear()
-        clearChase(npc)
+        // Returns to its post, not just to full health. A leash used to guarantee
+        // that (giveUpPursuit snaps home), but a boss with the run of its lair
+        // ends its fights wherever the chase left it — outside the wander rect it
+        // polices, where `wander` can take no step at all, so the next party
+        // through the door would find it parked in a corner for good.
+        giveUpPursuit(npc)
         result.npcChanged.push(npc.id)
       }
       return
@@ -544,7 +557,7 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
       npc.chaseStalledTicks = 0
       return
     }
-    if (chebyshev(npc, npc.home) >= pursueLeashTiles(npc, ctx.npcs)) {
+    if (chebyshev(npc, npc.home) >= pursueLeashTiles(npc, ctx.npcs, ctx.lair)) {
       giveUpPursuit(npc)
       result.npcChanged.push(npc.id)
       return

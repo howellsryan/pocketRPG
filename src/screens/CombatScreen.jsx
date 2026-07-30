@@ -3293,6 +3293,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const heroSpec = getCharacterModel() || {}
   const arenaPanel = showArena && (
     <CombatArena3D
+      monsterId={combat.monster.id}
       monsterName={combat.monster.name}
       monsterPath={arenaModel ? arenaModel.path : null}
       monsterProc={arenaProc}

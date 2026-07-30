@@ -52,7 +52,7 @@ afterEach(() => vi.clearAllMocks())
 
 describe('stepCombat monster attack windup lead', () => {
   it('pre-signals a no-impact monster one tick before the hit, and the resolve tick does not re-broadcast the swing', () => {
-    const { npcs, npc } = npcAt('pasture_bull', 5, 5) // no attackImpactSec => 1-tick lead
+    const { npcs, npc } = npcAt('field_chicken', 5, 5) // no attackImpactSec in either registry => 1-tick lead
     const player = makePlayer()
     startCombat(player, npc)
     expect(player.combat).not.toBeNull()
@@ -75,6 +75,31 @@ describe('stepCombat monster attack windup lead', () => {
     stepCombat(player, ctx(2, npcs), r2)
     expect(npc.anim).toBe('idle')
     expect(r2.hits.some((h) => h.targetId === player.charId && h.dmg === 5)).toBe(true)
+  })
+
+  it('leads by an impact the WORLD registry alone carries, which the client is already delaying by', () => {
+    // The lead and the client's sub-tick delay are two halves of one number, and
+    // most world models (the bull, the dragons) carry their impact only in
+    // world/shared/monsterModels.ts. Read from the arena registry alone the
+    // server led the bull by the no-metadata fallback of one tick while the
+    // client held the clip back 400ms into it, so the blow landed after its splat.
+    const { npcs, npc } = npcAt('pasture_bull', 5, 5) // 0.8s impact => 2-tick lead
+    const player = makePlayer()
+    startCombat(player, npc)
+
+    mockedProcessCombatTick.mockReturnValueOnce({
+      combatState: { ...player.combat!.state, monsterAttackTimer: 1 },
+      events: [],
+    } as never)
+    stepCombat(player, ctx(1, npcs), emptyResult())
+    expect(npc.anim).toBe('idle')
+
+    mockedProcessCombatTick.mockReturnValueOnce({
+      combatState: { ...player.combat!.state, monsterAttackTimer: 2 },
+      events: [],
+    } as never)
+    stepCombat(player, ctx(2, npcs), emptyResult())
+    expect(npc.anim).toBe('attack')
   })
 
   it('leads a mid-clip-impact boss (Grondar, 2.25s) by four ticks, not one', () => {

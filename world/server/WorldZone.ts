@@ -1314,6 +1314,7 @@ export class WorldZone extends Server<Env> {
       // on ctx.collision for line of sight and for npc chase steps.
       pathAdjacent: (from, to) => findPathAdjacent(collisionWithMonsters(this.zone.collision, npcs.values(), from), from, to),
       players: positions,
+      lair: isInstancedRoom(this.name),
     }
 
     const rockChanges = respawnedRocks(rocks, this.tickCount)

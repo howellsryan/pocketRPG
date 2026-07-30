@@ -1835,8 +1835,7 @@
       "model": "monsters/zaryth_the_empty_lord.glb",
       "height": 3,
       "rotationDeg": [0, -90, 0],
-      "attackImpactSec": 1.2,
-      "attackMaxSec": 1.5
+      "attackImpactSec": 2.1
     }
   }
 }

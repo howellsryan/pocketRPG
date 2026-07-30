@@ -9,6 +9,7 @@ import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { combatLevelFromLevels } from '../../src/engine/combatLevel.js'
+import { MONSTER_CLIP_ATTACK_RANGED, monsterAttackClipName } from '../../src/engine/monsterClips.js'
 import { startCombat, stepCombat, resumeAggro, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
 import type { NpcState } from './npc'
 import type { LootEntity } from './loot'
@@ -135,6 +136,11 @@ export type TickContext = {
    * aggressive npc chase its attacker (npc.ts) without needing the full
    * player record. */
   players?: Map<string, { x: number; z: number }>
+  /** This room is one instance of a boss lair, so a boss here has the run of it
+   * (npc.ts pursueLeashTiles). Not a property of the zone DEF: the same def is
+   * served as many rooms, and it is the private room, not the geography, that
+   * makes an unbounded chase fair. */
+  lair?: boolean
 }
 
 export type TickResult = {
@@ -257,10 +263,14 @@ export function monsterAttackRange(monsterId: string, form?: string | null): num
 }
 
 /** A monster's attack animation from its attackStyle — magic/ranged foes play a
- * distinct cast/shoot animation; everything else swings. */
+ * distinct cast/shoot animation; everything else swings. The melee branch defers
+ * to the shared clip table (src/engine/monsterClips.js), which is where a rig
+ * whose own melee clip is unusable is sent to its ranged one instead — the arena
+ * reads the same table, so both render paths swing alike. */
 export function monsterAttackAnim(monsterId: string, form?: string | null): 'attack' | 'attack_ranged' | 'attack_magic' {
   const style = monsterAttackStyle(monsterId, form)
-  return style === 'magic' ? 'attack_magic' : style === 'ranged' ? 'attack_ranged' : 'attack'
+  if (style === 'magic') return 'attack_magic'
+  return monsterAttackClipName(style, monsterId) === MONSTER_CLIP_ATTACK_RANGED ? 'attack_ranged' : 'attack'
 }
 
 export function withinRange(a: { x: number; z: number }, b: { x: number; z: number }, range: number): boolean {
