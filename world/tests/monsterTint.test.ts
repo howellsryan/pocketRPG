@@ -171,6 +171,19 @@ describe('every clip a shipped rig carries is one the animator binds', () => {
       expect(MONSTER_ANIM_CLIPS, `clip '${clip.name}'`).toContain(clip.name)
     }
   })
+
+  // The flag's two halves are set in different files — the registry entry and
+  // the model's build script — so they drift silently in both directions: left
+  // on after a walk is built, the boss skates in its idle pose anyway (the alias
+  // wins); left off with no walk clip, it skates WITHOUT even the procedural
+  // gait that flag buys.
+  it.each(Object.entries(MONSTER_MODELS))('%s declares noLocomotionClip iff its GLB ships no walk', (_id, spec) => {
+    const glb = fs.readFileSync(path.join(MODELS, path.basename(spec.url)))
+    const json = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)).toString('utf8'))
+    const clips = ((json.animations ?? []) as { name: string }[]).map((c) => c.name)
+
+    expect(!clips.includes('walk')).toBe(!!spec.noLocomotionClip)
+  })
 })
 
 describe('pasture_bull registry entry', () => {

@@ -139,12 +139,15 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
   },
   // The only monster with a per-style swing: it ships attack (melee) and
   // attack_ranged, with attack_magic copied from the latter by
-  // scripts/build-zaryth-the-empty-lord.mjs. Bounds baked from that script.
+  // scripts/build-zaryth-the-empty-lord.mjs. Its walk is retargeted onto this
+  // rig from the Quaternius UAL by that same script — the source ships no
+  // locomotion clip, and the idle-alias + procedural bob every other clipless
+  // boss falls back to read as a statue skating across its own throne room.
+  // Bounds baked from that script.
   zaryth_the_empty_lord: {
     url: '/models/zaryth_the_empty_lord.glb',
     bounds: { minX: -0.528, minY: 0, minZ: -0.105, maxX: 0.466, maxY: 0.982, maxZ: 0.217 },
     targetHeight: 3.2,
-    noLocomotionClip: true,
     noShadow: true,
     // Capped by the 6-tick attack cycle: the wind-up lead is ceil(impact/tick)
     // and must stay under the cycle, so 1.2s (a 2-tick lead) clears it with

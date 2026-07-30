@@ -1323,6 +1323,7 @@ export class WorldZone extends Server<Env> {
     const eventsByChar = new Map<string, ZoneEvent[]>()
     // Player ents deduped by id (last write wins — e.g. a death-tick respawn).
     const playerEnts = new Map<string, EntityDiff>()
+    const deaths: Player[] = []
 
     // Presence edges queued since the last tick. A leave only broadcasts if
     // the player is really gone (a same-tick rejoin keeps them present).
@@ -1418,7 +1419,18 @@ export class WorldZone extends Server<Env> {
         }
       }
       if (result.events.length > 0) eventsByChar.set(player.charId, result.events)
-      if (result.died) this.respawnPlayer(player, playerEnts)
+      // Settled after this tick's diff goes out (below), never here: every death
+      // path either heals the player to full or removes them from `this.players`
+      // — and broadcastDiffs only delivers to players still in that map. Settled
+      // inline, the killing blow's own splat and the emptied bar were dropped on
+      // the floor for the one client that had to see them.
+      if (result.died) {
+        // Ends here rather than in respawnPlayer: its message goes onto
+        // pendingEvents, which is drained into this tick's frame further down —
+        // and a death that ejects the player never gets another frame at all.
+        endOneLifeRun(player, (id) => flipOneLifeOff(this.env, id))
+        deaths.push(player)
+      }
     }
 
     // Damage-contribution readout for every boss fight this tick — gated on an
@@ -1435,12 +1447,18 @@ export class WorldZone extends Server<Env> {
     }
 
     // Loot pickups resolve after movement (the player may have just arrived).
-    for (const player of this.players.values()) this.tryTakeLoot(player, eventsByChar)
+    // A player who died this tick is skipped by both of the loops here: their
+    // death is settled below and would otherwise race a zone transition for the
+    // same player — a corpse takes no loot and walks through no doorway.
+    for (const player of this.players.values()) {
+      if (!deaths.includes(player)) this.tryTakeLoot(player, eventsByChar)
+    }
 
     // Zone exits: standing on an exit tile (even mid-path) leaves this zone.
     const exits = this.zone.exits ?? []
     if (exits.length > 0) {
       for (const player of [...this.players.values()]) {
+        if (deaths.includes(player)) continue
         const exit = exits.find((e) => e.x === player.x && e.z === player.z)
         if (exit) void this.transitionPlayer(player, exit)
       }
@@ -1465,6 +1483,9 @@ export class WorldZone extends Server<Env> {
     }
     this.pendingInvEcho.clear()
     for (const player of this.players.values()) {
+      // A death carries its own 0 (stepCombat) — take the reading without
+      // echoing it twice, so the respawn's full bar still counts as a change.
+      if (deaths.includes(player)) player.lastHpSent = 0
       if (player.hp === player.lastHpSent) continue
       player.lastHpSent = player.hp
       const events = eventsByChar.get(player.charId) ?? []
@@ -1480,6 +1501,9 @@ export class WorldZone extends Server<Env> {
     }
     const ents = [...playerEnts.values(), ...npcEnts]
     this.broadcastDiffs(ents, rockChanges, [...npcRemoved, ...playersRemoved], hits, [...chatEvents, ...broadcastEvents], eventsByChar)
+
+    // The death frame is out; now respawn (or eject) them.
+    for (const player of deaths) this.respawnPlayer(player)
 
     if (this.tickCount % HP_REGEN_EVERY_TICKS === 0) {
       for (const player of this.players.values()) if (player.hp < player.maxHp) player.hp += 1
@@ -1520,8 +1544,9 @@ export class WorldZone extends Server<Env> {
     player.conn.close(1000, 'transition')
   }
 
-  private respawnPlayer(player: Player, playerEnts: Map<string, EntityDiff>): void {
-    endOneLifeRun(player, (id) => flipOneLifeOff(this.env, id))
+  /** Runs after the death tick's diff has been broadcast, so the client has
+   * already seen the killing blow and an empty bar. */
+  private respawnPlayer(player: Player): void {
     // Item 10: a zone can require dying to be a real trip back out (e.g. the
     // dungeon respawns at Varrick's entrance, not its own spawn ~40 tiles from
     // the bosses) — cross-zone, so it's the same DB update + reconnect the
@@ -1549,7 +1574,9 @@ export class WorldZone extends Server<Env> {
     player.anim = 'idle'
     send(player.conn, { t: 'dead', respawn: { x: spawn.x, z: spawn.z } })
     this.dirty.add(player.charId)
-    playerEnts.set(player.charId, toEntityDiff(player))
+    // This tick's ents are already sent, so the respawned pose rides the next
+    // one — the same queue a joining player's first ent goes out on.
+    this.pendingJoins.add(player.charId)
   }
 
   private async respawnAcrossZone(player: Player, target: { zone: string; x: number; z: number }): Promise<void> {
