@@ -13,6 +13,21 @@
 // them as one. The rig ships one clip for both, so `attack_magic` is a copy of
 // `attack_ranged` rather than a missing action that would fall back to idle
 // mid-cast.
+//
+// The source has no locomotion clip at all, and aliasing walk to idle left the
+// boss sliding across its throne room in a standing pose. WALK_SRC is the
+// Quaternius UAL `Walk_Loop` retargeted onto this rig's own bones and stripped
+// to keyframes (no mesh), regenerated with:
+//
+//   node scripts/retarget-animations.mjs \
+//     --target public/3d-samples/monsters/zaryth_the_empty_lord.glb \
+//     --source "assets/open-world/Quaternius/Universal Animation Library[Standard] (1)/Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb" \
+//     --clips Walk_Loop --rename '{"Walk_Loop":"walk"}' --out <tmp>.glb
+//
+// then dropping the meshes/materials from the result. It is a separate file
+// rather than a clip baked into the arena source because that source is the
+// combat arena's model too, and re-exporting a Tripo asset through the
+// retargeter to gain one clip drifts the mesh it shares with the arena.
 import { NodeIO } from '@gltf-transform/core'
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
 import { prune, dedup, resample, getBounds } from '@gltf-transform/functions'
@@ -24,9 +39,9 @@ import { fileURLToPath } from 'node:url'
 const worldDir = fileURLToPath(new URL('..', import.meta.url))
 const repoRoot = path.join(worldDir, '..')
 const SRC = path.join(repoRoot, 'public', '3d-samples', 'monsters', 'zaryth_the_empty_lord.glb')
+const WALK_SRC = path.join(repoRoot, 'assets', 'open-world', 'retargeted', 'zaryth_the_empty_lord_walk.glb')
 const OUT = path.join(worldDir, 'client', 'public', 'models', 'zaryth_the_empty_lord.glb')
 
-// No locomotion clip — makeAnimator aliases walk to idle (noLocomotionClip).
 const CLIPS = [
   { clip: 'Idle', as: 'idle' },
   { clip: 'Attack', as: 'attack' },
@@ -118,6 +133,62 @@ function trimClip(doc, anim, maxSec) {
   }
 }
 
+/**
+ * Copies one clip out of another document onto THIS rig, matching channels to
+ * bones by NAME — the retargeted file carries the same skeleton, so a name that
+ * doesn't resolve means the rig changed underneath it and the walk would come
+ * out missing a limb rather than failing.
+ */
+function importClip(doc, srcDoc, name) {
+  const srcAnim = srcDoc.getRoot().listAnimations().find((a) => a.getName() === name)
+  if (!srcAnim) throw new Error(`clip '${name}' not found in ${WALK_SRC}`)
+  const byName = new Map(doc.getRoot().listNodes().map((n) => [n.getName(), n]))
+  const buffer = doc.getRoot().listBuffers()[0]
+  const anim = doc.createAnimation(name)
+  for (const channel of srcAnim.listChannels()) {
+    const target = byName.get(channel.getTargetNode().getName())
+    if (!target) throw new Error(`clip '${name}' animates '${channel.getTargetNode().getName()}', absent from ${SRC}`)
+    const src = channel.getSampler()
+    const sampler = doc.createAnimationSampler()
+      .setInterpolation(src.getInterpolation())
+      .setInput(doc.createAccessor().setType('SCALAR').setArray(src.getInput().getArray().slice()).setBuffer(buffer))
+      .setOutput(doc.createAccessor().setType(src.getOutput().getType()).setArray(src.getOutput().getArray().slice()).setBuffer(buffer))
+    anim.addSampler(sampler)
+    anim.addChannel(doc.createAnimationChannel().setTargetNode(target).setTargetPath(channel.getTargetPath()).setSampler(sampler))
+  }
+  return anim
+}
+
+/**
+ * Holds every bone the other clips animate, but this one doesn't, at its REST
+ * transform for the clip's whole duration.
+ *
+ * three.js only writes the bones a clip has tracks for, so an imported clip that
+ * covers 22 of 43 bones inherits the other 21 from whatever played last — the
+ * retargeter maps the skeleton proper and leaves the twist bones (and Root /
+ * Pelvis) alone, so a walk crossfaded out of an attack kept that attack's hunch
+ * baked into the spine and hips. Two keyframes per track: the cost is bytes, and
+ * it makes the clip self-contained from any starting pose.
+ */
+function pinRestPose(doc, anim, others) {
+  const buffer = doc.getRoot().listBuffers()[0]
+  const animated = new Set(anim.listChannels().map((c) => c.getTargetNode()))
+  const end = Math.max(...anim.listSamplers().map((s) => s.getInput().getMax([0])[0]))
+  const elsewhere = new Set()
+  for (const other of others) for (const channel of other.listChannels()) elsewhere.add(channel.getTargetNode())
+  for (const node of elsewhere) {
+    if (animated.has(node)) continue
+    for (const [path, value] of [['translation', node.getTranslation()], ['rotation', node.getRotation()], ['scale', node.getScale()]]) {
+      const sampler = doc.createAnimationSampler()
+        .setInterpolation('LINEAR')
+        .setInput(doc.createAccessor().setType('SCALAR').setArray(new Float32Array([0, end])).setBuffer(buffer))
+        .setOutput(doc.createAccessor().setType(path === 'rotation' ? 'VEC4' : 'VEC3').setArray(new Float32Array([...value, ...value])).setBuffer(buffer))
+      anim.addSampler(sampler)
+      anim.addChannel(doc.createAnimationChannel().setTargetNode(node).setTargetPath(path).setSampler(sampler))
+    }
+  }
+}
+
 /** Every sampler must have one value per keyframe time. Asserted on the way out
  * because a mismatch is invisible in the file size and the bounds log, and only
  * shows up as a crash in the client. */
@@ -163,6 +234,9 @@ for (const { from, as } of ALIAS) {
   copy.setName(as)
   keep.set(as, copy)
 }
+const walk = importClip(doc, await io.read(WALK_SRC), 'walk')
+pinRestPose(doc, walk, [...keep.values()])
+keep.set('walk', walk)
 
 await doc.transform(resample(), dedup(), prune())
 

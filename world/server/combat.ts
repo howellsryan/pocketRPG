@@ -656,6 +656,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
     player.combat = null
     if (npc.attackerId === player.charId) npc.attackerId = null
     result.died = true
+    // The bar has to empty on the tick that killed them. The zone's ordinary hp
+    // echo can't do it: the respawn heals to full before that loop runs, and a
+    // death that takes the player out of the zone skips it entirely — so the
+    // last reading the client ever got was the tick BEFORE the killing blow,
+    // and you died with health to spare.
+    result.events.push({ e: 'hp', hp: 0, maxHp: player.maxHp })
     endCombatSpecial(player, result)
     return
   }
