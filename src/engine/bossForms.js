@@ -96,6 +96,24 @@ export function advanceSharedForm(monster, random = Math.random) {
 }
 
 /**
+ * The value a boss's attack clock restarts at when it changes form — one cycle
+ * of the form it has just moved INTO, so the player gets a beat to answer the
+ * new style before it swings again.
+ *
+ * Read after `applyForm`, and shared by all three runtimes because each owns a
+ * different clock: solo restarts `state.monsterAttackTimer`, co-op restarts the
+ * room's `boss.attackTimer` (and its members' pinned copies), the world restarts
+ * `npc.attackTimer`. Today every form inherits the boss's own `attackSpeed`, so
+ * this is the same number the clock already held and the restart changes
+ * nothing anywhere — which is exactly why it has to be one expression in one
+ * place. Left inline in the solo fight, the first form to carry a cadence of its
+ * own would have slowed the boss for a solo player and for nobody else.
+ */
+export function formChangeAttackTimer(monster) {
+  return monster?.attackSpeed || 4
+}
+
+/**
  * Copies the shared record's form onto a session's own monster, so every
  * session swings with the form the room is in. Returns whether anything moved.
  */

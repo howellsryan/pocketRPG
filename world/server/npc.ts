@@ -9,7 +9,7 @@ import { reachAgainst } from '../shared/monsterSize'
 import type { Tile } from './pathfind'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer } from '../../src/engine/roomWideAttacks.js'
 import { getAddSpec } from '../../src/engine/bossAdds.js'
-import { advanceSharedForm, applyForm, isMultiForm, randomFormSwitchThreshold } from '../../src/engine/bossForms.js'
+import { advanceSharedForm, applyForm, formChangeAttackTimer, isMultiForm, randomFormSwitchThreshold } from '../../src/engine/bossForms.js'
 
 type Monsters = Record<string, { name?: string; hitpoints?: number; boss?: boolean; attackSpeed?: number; roomWideAttacks?: boolean }>
 
@@ -139,6 +139,29 @@ export function isBossFamily(npc: NpcState, npcs?: Map<string, NpcState>): boole
   if (monsterOf(npc)?.boss) return true
   const summoner = npc.summonerId ? npcs?.get(npc.summonerId) : null
   return !!(summoner && monsterOf(summoner)?.boss)
+}
+
+/**
+ * True for a room-wide attacker, or for a minion summoned by one.
+ *
+ * A boss's minions are its REACH, not separate duellists, so they strike
+ * everyone it strikes — which is what co-op already does (coopBossEngine's
+ * `roomWide` branch applies `fromAdd` hits to every member, not just the target).
+ * Out here the same answer was reached only by the summoner itself, so a
+ * sentinel could hit exactly one player: whoever `reselectAttacker` had picked,
+ * inherited from the boss. Everybody else in the throne room stood inside a
+ * ranged sentinel's line of fire and took nothing from it.
+ *
+ * The world still bounds this by GEOMETRY where co-op cannot — each mirrored
+ * attacker is checked against its OWN reach and line of sight (combat.ts
+ * otherAttackerReaches), so this widens who a sentinel may hit, never how far.
+ * An ordinary boss's adds (the Dread Core) are untouched: the flag is read off
+ * the summoner's data, so opening the mechanic stays a monsters.json edit.
+ */
+export function isRoomWideFamily(npc: NpcState, npcs?: Map<string, NpcState>): boolean {
+  if (isRoomWideAttacker(monsterOf(npc))) return true
+  const summoner = npc.summonerId ? npcs?.get(npc.summonerId) : null
+  return !!summoner && isRoomWideAttacker(monsterOf(summoner))
 }
 
 /** A summoned minion has NO leash of its own: it is summoned into a fight that is
@@ -426,10 +449,14 @@ export function ensureForm(npc: NpcState): void {
 function advanceSharedFormFor(npc: NpcState): void {
   const monster = sharedMonsterState(npc)
   if (!isMultiForm(monster)) return
-  advanceSharedForm(monster)
+  const change = advanceSharedForm(monster)
   npc.currentForm = monster.currentForm as string
   npc.formAttackCount = monster.formAttackCount as number
   npc.formSwitchThreshold = monster.formSwitchThreshold as number
+  // The beat solo gives the player to answer the new style, on the clock the
+  // world owns. Set before the clock is advanced below, so the restart counts
+  // from this tick rather than being spent on it.
+  if (change) npc.attackTimer = formChangeAttackTimer(monster)
 }
 
 /** Advances that clock and records whether it swings this tick, for the player

@@ -271,8 +271,9 @@ describe('a boss that summons minions in the open world', () => {
   })
 
   it('is still hit by the sentinel while the player is fighting the boss', () => {
-    // The other direction of the same pair, so neither can regress alone. Unlike
-    // the boss it is not room-wide: it picks one of them and closes on them.
+    // The other direction of the same pair, so neither can regress alone. It
+    // still picks one of them to chase (attackerId), which is what this pins —
+    // who it can HIT is the room-wide test below.
     const { npcs } = bossAt(ZARYTH, 10, 10)
     const players = [makePlayer('1', 10, 11), makePlayer('2', 9, 10)]
     const tick = runTicks(LONGEST_SUMMON_TICKS + 2, npcs, players)
@@ -283,6 +284,60 @@ describe('a boss that summons minions in the open world', () => {
 
     const fromMinion = damageOver(60, npcs, players, tick, { boss: false, minion: true })
     expect(fromMinion[chased], 'the sentinel never reached the player it chose').toBeGreaterThan(0)
+  })
+
+  it("strikes the whole room, like the boss whose reach it is", () => {
+    // A room-wide boss's minions are room-wide too — co-op has always resolved
+    // them that way (coopBossEngine applies `fromAdd` hits to every member on a
+    // room-wide boss, not just its target). Out here the answer was read off the
+    // sentinel alone, which carries no roomWideAttacks flag of its own, so it
+    // fell back to "only the player I am retaliating against": one victim, while
+    // everyone else stood inside a ranged sentinel's line of fire untouched.
+    const { npcs } = bossAt(ZARYTH, 10, 10)
+    // Ranged/magic reach is 5+, so all three are inside a bolt or rune
+    // sentinel's range but only one can be adjacent to a blade sentinel.
+    const players = [makePlayer('1', 10, 11), makePlayer('2', 9, 10), makePlayer('3', 11, 12)]
+    // Long enough for the stack to grow past the first summon: the variant
+    // CYCLES on spawn count and the blade sentinel is always first, so one
+    // summon's worth of ticks can only ever field a melee one.
+    const tick = runTicks(LONGEST_SUMMON_TICKS * 3 + 2, npcs, players)
+    for (const p of players) expect(p.combat?.npcId).toBe('boss_1')
+
+    // Keep only the sentinels that can actually reach across the room, so this
+    // asserts the predicate rather than the geometry — a melee sentinel not
+    // touching a player two tiles away is correct, not a regression.
+    for (const minion of minionsIn(npcs)) {
+      if (monsterAttackRange(minion.monsterId) <= 1) npcs.delete(minion.id)
+    }
+    const reaching = minionsIn(npcs)
+    expect(reaching.length, 'no ranged sentinel was summoned, so this proves nothing').toBeGreaterThan(0)
+    const claimed = new Set(reaching.map((m) => m.attackerId))
+
+    const fromMinion = damageOver(60, npcs, players, tick, { boss: false, minion: true })
+    players.forEach((p, n) => {
+      expect(fromMinion[n], `${p.charId} took nothing from a sentinel in range of them`).toBeGreaterThan(0)
+    })
+    // The point of the test: at least one of them was never the sentinel's own
+    // retaliation target, and got hit anyway.
+    expect(players.some((p) => !claimed.has(p.charId)), 'every player happened to be claimed').toBe(true)
+  })
+
+  it("does not make an ORDINARY boss's add room-wide", () => {
+    // The flag is read off the SUMMONER's data, so opening the mechanic to
+    // another boss stays a monsters.json edit. The Corporeal Horror is not
+    // room-wide, so its Dread Core keeps hitting only who it is facing.
+    const { npcs } = bossAt('corporeal_horror', 10, 10)
+    const players = [makePlayer('1', 10, 11), makePlayer('2', 9, 10), makePlayer('3', 11, 12)]
+    const tick = runTicks(LONGEST_SUMMON_TICKS + 2, npcs, players)
+    const adds = minionsIn(npcs)
+    expect(adds.length, 'the horror summoned nothing, so this proves nothing').toBeGreaterThan(0)
+    const claimed = new Set(adds.map((a) => a.attackerId))
+
+    const fromAdd = damageOver(60, npcs, players, tick, { boss: false, minion: true })
+    players.forEach((p, n) => {
+      if (claimed.has(p.charId)) return
+      expect(fromAdd[n], `${p.charId} was hit by an add that is not facing them`).toBe(0)
+    })
   })
 
   it('does not let go of a player who is killing its sentinel', () => {

@@ -25,7 +25,7 @@ import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers } from './roomWideAttacks.js'
 import { bossAddsOf, getAddSpec, rollRespawnDelay } from './bossAdds.js'
-import { advanceSharedForm, isMultiForm, pinFormToSession } from './bossForms.js'
+import { advanceSharedForm, formChangeAttackTimer, isMultiForm, pinFormToSession } from './bossForms.js'
 import {
   COOP_RAID_ADVANCE_TICKS,
   coopRaidData,
@@ -1209,6 +1209,13 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     const change = advanceSharedForm(shared)
     if (change) {
       Object.assign(next.boss.monster, pickMutableMonsterFields(shared))
+      // Same beat solo gives the player to answer the new style. The room owns
+      // this boss's clock, so BOTH copies restart: the shared one a room-wide
+      // boss swings off, and each member's session timer, which is the clock a
+      // boss that faces one player at a time actually counts down.
+      const restart = formChangeAttackTimer(shared)
+      next.boss.attackTimer = restart
+      for (const member of Object.values(next.members)) member.combat.monsterAttackTimer = restart
       events.push(change)
     }
   }
