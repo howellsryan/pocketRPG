@@ -1,9 +1,10 @@
-// A boss now keeps its quarry across a disengage (npc.ts reselectAttacker) and
-// chases them the full pursuit leash (bossPursuit.test.ts). None of that means
-// anything if it can never land a blow once it catches up: swings are resolved
-// inside a player's own combat session, and a disengaged player has none —
-// without resumeBossAggro the boss would jog alongside its target forever,
-// visibly hunting, hitting nothing.
+// Any npc keeps its quarry across a disengage now (npc.ts reselectAttacker),
+// trash and dragons included, not just bosses — chasing them the full pursuit
+// leash (bossPursuit.test.ts covers the boss-specific extended leash). None of
+// that means anything if the pursuer can never land a blow once it catches up:
+// swings are resolved inside a player's own combat session, and a disengaged
+// player has none — without resumeAggro every pursuer would jog alongside its
+// target forever, visibly hunting, hitting nothing.
 import { describe, expect, it } from 'vitest'
 import { tickNpc, npcsFromZone, reselectAttacker, type NpcState } from '../server/npc'
 import { tickPlayer, type TickContext, type TickPlayer } from '../server/tick'
@@ -13,6 +14,7 @@ import { findPathAdjacent } from '../server/pathfind'
 const COLLISION = Array.from({ length: 32 }, () => '.'.repeat(32))
 const GRONDAR = 'warlord_grondar'
 const BULL = 'pasture_bull'
+const DRAGON = 'green_dragon'
 
 function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
   return {
@@ -51,9 +53,16 @@ function tick(npcs: Map<string, NpcState>, player: TickPlayer, atTick: number): 
   return tickPlayer(player, c)
 }
 
-describe('a pursuing boss can land a hit once it catches up', () => {
+describe.each([
+  // Distance kept within each monster's own pursuit leash (npc.ts:
+  // pursueLeashTiles — 24 for a boss, 10 for everything else) so the chase
+  // actually closes the gap instead of breaking off short of the player.
+  ['a boss', GRONDAR, 15],
+  ['ordinary trash', BULL, 8],
+  ['a dragon', DRAGON, 8],
+])('a pursuing npc can land a hit once it catches up (%s)', (_label, monsterId, distance) => {
   it('opens a fresh combat session and hits the player it chased down', () => {
-    const { npcs, npc } = npcAt(GRONDAR, 5, 20)
+    const { npcs, npc } = npcAt(monsterId, 5, 5 + distance)
     npc.state = 'combat'
     npc.attackerId = '1'
     npc.lastCombatTick = 0
@@ -66,22 +75,34 @@ describe('a pursuing boss can land a hit once it catches up', () => {
     }
 
     expect(hitLanded).toBe(true)
-    // The resumed session is ACTIVE, not passive — the boss caught its quarry,
-    // this is the real fight, not the "walked away" disengage.
+    // The resumed session is ACTIVE, not passive — the pursuer caught its
+    // quarry, this is the real fight, not the "walked away" disengage.
     expect(player.combat?.passive).not.toBe(true)
   })
+})
 
-  it('never resumes on its own for an ordinary monster the player walked away from', () => {
-    // The disengage rule (combat-flow.test.ts) holds for anything that isn't
-    // boss family: a bull that happens to catch up to a player standing still
-    // must not restart the fight unasked.
+describe('resuming does not reopen unprovoked fights', () => {
+  it('never starts a fight for an npc that never claimed this player (idle proximity)', () => {
+    // No attackerId set — this is what actually gates resumeAggro, not monster
+    // type. An idle bull standing next to a player must not start anything.
     const { npcs, npc } = npcAt(BULL, 5, 6)
-    npc.state = 'combat'
-    npc.attackerId = '1'
-    npc.lastCombatTick = 0
+    npc.state = 'idle'
     const player = makePlayer({ x: 5, z: 5 })
 
-    for (let t = 1; t <= 20; t++) tick(npcs, player, t)
+    for (let t = 1; t <= 10; t++) tick(npcs, player, t)
+
+    expect(player.combat).toBeNull()
+    expect(npc.attackerId).toBeNull()
+  })
+
+  it('never resumes for a claim held by a DIFFERENT player', () => {
+    const { npcs, npc } = npcAt(BULL, 5, 5)
+    npc.state = 'combat'
+    npc.attackerId = 'someone-else'
+    npc.lastCombatTick = 0
+    const player = makePlayer({ x: 5, z: 6 })
+
+    for (let t = 1; t <= 10; t++) tick(npcs, player, t)
 
     expect(player.combat).toBeNull()
   })

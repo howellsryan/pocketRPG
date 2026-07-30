@@ -31,7 +31,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Combat is tick-based. Your max hit and accuracy come from your effective levels and equipment bonuses: melee max hit is floor(0.5 + effectiveStrength × (strengthBonus + 64) / 640), and hit chance compares your attack roll against the target's defence roll. Choose a combat style before fighting: Accurate (+3 effective Attack), Aggressive (+3 effective Strength), Defensive (+3 effective Defence), or Controlled (+1 to Attack, Strength and Defence). Auto-fight keeps killing the same monster, banking loot as you go."
+  "text": "Combat is tick-based. Your max hit and accuracy come from your effective levels and equipment bonuses: melee max hit is floor(0.5 + effectiveStrength × (strengthBonus + 64) / 640), and hit chance compares your attack roll against the target's defence roll. Choose a combat style before fighting: Accurate (+3 effective Attack), Aggressive (+3 effective Strength), Defensive (+3 effective Defence), or Controlled (+1 to Attack, Strength and Defence). Auto-fight keeps killing the same monster, banking loot as you go. In the open world, any monster you have engaged keeps chasing you if you back away instead of resetting on the spot — and if it catches up, it starts swinging again on its own. Stepping back buys distance, not a free reset; only leaving its reach for good, or leaving the area, actually ends the fight. Walking away yourself still stops your own attacks until you tap Attack again — only the monster's swings resume automatically."
  },
  {
   "id": "guide_combat_level",
@@ -199,7 +199,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward tables: guaranteed loot plus a chance at rare uniques. Bosses are tougher single monsters with their own drop tables and kill counts. Boss and raid uniques are granted by the server when you complete the kill, and every kill is recorded — check the Collection Log and Leaderboard. You can spend credits to skip to a boss kill or pay a raid's skip cost. In the open world a boss you have woken hunts you across its whole lair. Backing out of its reach no longer sends it home to heal, its summoned minions stay on the field and follow it, and if it catches up it swings again on its own — stepping back buys distance, not a reset. The way out is the way you came in."
+  "text": "Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward tables: guaranteed loot plus a chance at rare uniques. Bosses are tougher single monsters with their own drop tables and kill counts. Boss and raid uniques are granted by the server when you complete the kill, and every kill is recorded — check the Collection Log and Leaderboard. You can spend credits to skip to a boss kill or pay a raid's skip cost. A boss hunts you across its whole lair, further than any other monster will follow, and any minions it has summoned stay on the field with it. The way out of a boss fight is the way you came in."
  },
  {
   "id": "guide_group_boss_fights",

@@ -9,7 +9,7 @@ import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { combatLevelFromLevels } from '../../src/engine/combatLevel.js'
-import { startCombat, stepCombat, resumeBossAggro, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
+import { startCombat, stepCombat, resumeAggro, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
 import type { NpcState } from './npc'
 import type { LootEntity } from './loot'
 import { hasLineOfSight } from './los'
@@ -555,12 +555,11 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
     startInteract(player, ctx, result)
   }
 
-  // A boss that chased its quarry back into reach re-opens the fight itself
-  // (boss family only — npc.ts keeps a boss's target across a disengage, so
-  // without this it would catch up and just stand there). Before the combat
-  // branch, so a boss that closed the gap this tick can land its swing on this
-  // same tick.
-  resumeBossAggro(player, ctx)
+  // An npc that chased its quarry back into reach re-opens the fight itself —
+  // npc.ts keeps ANY npc's target across a disengage now, so without this it
+  // would catch up and just stand there. Before the combat branch, so an npc
+  // that closed the gap this tick can land its swing on this same tick.
+  resumeAggro(player, ctx)
 
   // Combat ticks whether or not the player is moving: a ranged/magic monster
   // keeps attacking a fleeing player, and a kiting player keeps attacking back.

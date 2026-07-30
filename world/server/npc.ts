@@ -195,20 +195,21 @@ export function reselectAttacker(
 ): void {
   if (npc.state !== 'combat') return
   if (engaged.length === 0) {
-    // A BOSS keeps its quarry. `engaged` is built from players whose own session
-    // is still fighting, and stepCombat ends that session the instant they are
-    // beyond both reaches — so releasing here handed anyone who backed off a
-    // free reset: the boss forgot them on the spot, healed to full and its
-    // minions despawned with it. It hunts instead, until it breaks leash
-    // (tickNpc) or the player leaves the zone (WorldZone.releaseAggro).
-    // Everything else still lets go — being chased across the map by a chicken
-    // is not a fight. A sentinel INHERITS its summoner's quarry, never having
-    // had one of its own: nobody counts as engaged with a minion until they turn
-    // on it, so left to claim its own it healed out of the fight and stood idle
-    // while the boss it was summoned to guard hunted on alone.
+    // Any npc keeps its quarry. `engaged` is built from players whose own
+    // session is still fighting, and stepCombat ends that session the instant
+    // they are beyond both reaches — so releasing here handed anyone who backed
+    // off a free reset: an unclaimed npc heals to full (OUT_OF_COMBAT_HEAL_TICKS)
+    // and a boss's minions despawn with it. It hunts instead, until it breaks
+    // leash (tickNpc — a boss's is longer, pursueLeashTiles) or the player
+    // leaves the zone (WorldZone.releaseAggro). A sentinel INHERITS its
+    // summoner's quarry, never having had one of its own: nobody counts as
+    // engaged with a minion until they turn on it, so left to claim its own it
+    // healed out of the fight and stood idle while the boss it guards hunted on
+    // alone. `present` gates this on the quarry still being IN THE ZONE — a
+    // teleport/logout must still release the claim outright.
     const summoner = npc.summonerId ? npcs?.get(npc.summonerId) : null
     const quarry = npc.attackerId ?? summoner?.attackerId ?? null
-    if (quarry && isBossFamily(npc, npcs) && present?.has(quarry)) {
+    if (quarry && present?.has(quarry)) {
       npc.attackerId = quarry
       return
     }

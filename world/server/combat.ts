@@ -11,7 +11,7 @@ import monstersData from '../../src/data/monsters.json'
 import spellsData from '../../src/data/spells.json'
 import prayersData from '../../src/data/prayers.json'
 import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRangeAndSight, type TickPlayer } from './tick'
-import { ensureForm, isBossFamily, recordDamage, sharedMonsterState, topDamageContributor, usesSharedClock, type NpcState } from './npc'
+import { ensureForm, recordDamage, sharedMonsterState, topDamageContributor, usesSharedClock, type NpcState } from './npc'
 import { reachAgainst } from '../shared/monsterSize'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
@@ -267,36 +267,37 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
 }
 
 /**
- * Re-opens the fight for a player a BOSS has chased back into its reach.
+ * Re-opens the fight for a player that any npc still holding them as its
+ * attacker has chased back into its reach — trash, dragon or boss alike.
  *
  * An npc's swings are only ever resolved inside a player's own combat session,
  * and stepCombat ends that session the moment the player is beyond both
- * reaches. A boss now keeps its quarry across a disengage (npc.ts
+ * reaches. Every npc now keeps its quarry across a disengage (npc.ts
  * reselectAttacker) instead of releasing them, so without this it would jog
  * alongside its target forever, visibly hunting them, and never land a blow —
  * aggro with no teeth.
  *
- * Boss family only (isBossFamily): an ordinary monster that happens to catch up
- * to a player who walked away must NOT restart the fight on its own — that is
- * the disengage rule (§ combat-flow.test.ts "combat starts on a click and on
- * nothing else"), which still holds for everything that isn't a boss or its
- * minions, because those release their quarry on the same tick they lose it.
+ * This does NOT reopen the door to unprovoked fights: it only fires for an npc
+ * whose `attackerId` is already this player, which is set by nothing but
+ * startCombat — a monster the player never clicked never acquires one, so
+ * standing next to an idle bull still starts nothing on its own (§
+ * combat-flow.test.ts "stays out of combat standing next to an idle monster").
  *
  * The resumed session is ACTIVE, not passive: the whole point of resuming is
- * that a boss which caught its quarry can hit them, mirroring the real fight —
+ * that whatever caught its quarry can hit them, mirroring the real fight —
  * unlike the disengage from walking away, which stays passive on purpose so the
  * player's own swings need a fresh click.
  */
-export function resumeBossAggro(player: TickPlayer, ctx: TickContext): void {
+export function resumeAggro(player: TickPlayer, ctx: TickContext): void {
   if (player.combat) return
   const collision = ctx.collision ?? []
   for (const npc of ctx.npcs?.values() ?? []) {
-    if (npc.attackerId !== player.charId || npc.state !== 'combat' || !isBossFamily(npc, ctx.npcs)) continue
+    if (npc.attackerId !== player.charId || npc.state !== 'combat') continue
     const reach = reachAgainst(npc.monsterId, monsterAttackRange(npc.monsterId, npc.currentForm))
     if (!withinRangeAndSight(npc, player, reach, collision)) continue
     // No `result`: a refusal (a magic weapon with no spell selected) is the
     // player's own business and must not re-announce itself every tick the
-    // boss stays in reach.
+    // npc stays in reach.
     startCombat(player, npc)
     return
   }

@@ -1,8 +1,15 @@
-// A boss must not be resettable by backing off. Before this, walking beyond its
-// reach ended the player's session (combat.ts), which emptied the boss's engaged
-// list, which released its attacker on the very next tick — so it stopped where
-// it stood, healed to full 17 ticks later and took its sentinels with it.
-// Clearing the adds was therefore a treadmill you could step off for free.
+// No npc — boss, dragon or bull — is resettable by backing off. Before this,
+// walking beyond an npc's reach ended the player's session (combat.ts), which
+// emptied its engaged list, which released its attacker on the very next tick —
+// so it stopped where it stood, healed to full 17 ticks later, and a boss took
+// its sentinels with it. Clearing a boss's adds was therefore a treadmill you
+// could step off for free, and trash you'd half-killed reset the instant you
+// stepped back to eat.
+//
+// Bosses still get a longer leash than everything else (pursueLeashTiles, 24
+// tiles vs 10) — that distinction is about how far an npc will travel from its
+// post, tuned to a boss's much bigger lair, and is unrelated to whether it
+// keeps its quarry at all.
 //
 // Drives the DO's real per-tick order: retarget, every npc, the minion pass.
 import { describe, expect, it } from 'vitest'
@@ -15,6 +22,7 @@ const SIZE = 64
 const COLLISION = Array.from({ length: SIZE }, () => '.'.repeat(SIZE))
 const ZARYTH = 'zaryth_the_empty_lord'
 const BULL = 'pasture_bull'
+const DRAGON = 'green_dragon'
 
 /** A 1×1 wander rect: this file measures where a chase leaves an npc, and idle
  * wandering afterwards would drift the answer by a tile. */
@@ -36,7 +44,7 @@ function ctx(tick: number, npcs: Map<string, NpcState>, players: Map<string, { x
 
 /**
  * One zone tick with NOBODY engaged — the state a disengaged player leaves
- * behind (their session ended, so nothing counts as engaged with the boss) while
+ * behind (their session ended, so nothing counts as engaged with the npc) while
  * they are still standing in the zone.
  */
 function tickDisengaged(npcs: Map<string, NpcState>, at: { x: number; z: number }, tick: number): void {
@@ -47,39 +55,43 @@ function tickDisengaged(npcs: Map<string, NpcState>, at: { x: number; z: number 
     if (npc.state !== 'combat') continue
     // Deliberately empty: countsAsEngaged reads the player's own combat session,
     // and a disengaged player has none — which is precisely the state that used
-    // to release the boss.
+    // to release the npc.
     reselectAttacker(npc, [], COLLISION, players, npcs)
   }
   for (const npc of [...npcs.values()]) tickNpc(npc, c, result)
   stepMinions(c, result)
 }
 
-/** A boss mid-fight with this player, as startCombat leaves it. */
+/** An npc mid-fight with this player, as startCombat leaves it. */
 function engaged(npc: NpcState, charId = '1'): void {
   npc.state = 'combat'
   npc.attackerId = charId
   npc.lastCombatTick = 0
 }
 
-describe('a boss keeps its quarry', () => {
+describe.each([
+  ['a boss', ZARYTH, 19],
+  ['ordinary trash', BULL, 8],
+  ['a dragon', DRAGON, 8],
+])('an npc keeps its quarry (%s)', (_label, monsterId, distanceWithinLeash) => {
   it('hunts a player who walked out of the fight instead of releasing them', () => {
-    const { npcs, npc } = npcAt(ZARYTH, 20, 11)
+    const { npcs, npc } = npcAt(monsterId, 20, 11)
     engaged(npc)
     npc.hp = 100
 
-    for (let tick = 1; tick <= 40; tick++) tickDisengaged(npcs, { x: 20, z: 30 }, tick)
+    for (let tick = 1; tick <= 40; tick++) tickDisengaged(npcs, { x: 20, z: 11 + distanceWithinLeash }, tick)
 
     expect(npc.attackerId).toBe('1')
     expect(npc.state).toBe('combat')
     // The out-of-combat heal is 17 ticks: it never came round, so the damage
     // done before the player backed off still stands.
     expect(npc.hp).toBe(100)
-    // And it walked toward them rather than standing on its throne.
+    // And it walked toward them rather than standing on its post.
     expect(npc.z).toBeGreaterThan(11)
   })
 
   it('lets go when that player leaves the zone', () => {
-    const { npcs, npc } = npcAt(ZARYTH, 20, 11)
+    const { npcs, npc } = npcAt(monsterId, 20, 11)
     engaged(npc)
 
     // Nobody in `present` — WorldZone.releaseAggro covers the explicit paths,
@@ -89,14 +101,21 @@ describe('a boss keeps its quarry', () => {
 
     expect(npc.attackerId).toBeNull()
   })
+})
 
-  it('does not turn ordinary monsters into stalkers', () => {
-    const { npcs, npc } = npcAt(BULL, 5, 5)
+describe('ordinary monster leash', () => {
+  it('gives up well short of the distance a boss will still chase', () => {
+    const { npcs, npc } = npcAt(BULL, 20, 11)
     engaged(npc)
+    npc.hp = 100
 
-    reselectAttacker(npc, [], COLLISION, new Map([['1', { x: 20, z: 20 }]]), npcs)
+    // Far enough that the 10-tile trash leash breaks well before the boss's 24.
+    for (let tick = 1; tick <= 60; tick++) tickDisengaged(npcs, { x: 20, z: 40 }, tick)
 
     expect(npc.attackerId).toBeNull()
+    expect(npc.state).toBe('idle')
+    expect(npc.hp).toBe(npc.maxHp)
+    expect({ x: npc.x, z: npc.z }).toEqual({ x: 20, z: 11 })
   })
 })
 
@@ -105,7 +124,7 @@ describe('boss leash', () => {
     const { npcs, npc } = npcAt(ZARYTH, 20, 11)
     engaged(npc)
 
-    // 15 tiles from home — beyond the 10-tile leash every other npc keeps.
+    // 15 tiles from home — beyond the 10-tile leash every non-boss npc keeps.
     for (let tick = 1; tick <= 30; tick++) tickDisengaged(npcs, { x: 20, z: 26 }, tick)
 
     expect(npc.attackerId).toBe('1')
@@ -127,7 +146,7 @@ describe('boss leash', () => {
   })
 
   it('gives up on a quarry it cannot path to, rather than staying in combat for good', () => {
-    // A boss holds its target across a disengage now, so a player standing
+    // A boss holds its target across a disengage, so a player standing
     // somewhere unreachable (across water, wrong side of a cliff) would leave it
     // in combat forever: never healing, stacking minions nobody is fighting.
     const walled = COLLISION.map((row, z) => (z === 20 ? '#'.repeat(SIZE) : row))
