@@ -11,14 +11,13 @@ import monstersData from '../../src/data/monsters.json'
 import spellsData from '../../src/data/spells.json'
 import prayersData from '../../src/data/prayers.json'
 import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRangeAndSight, type TickPlayer } from './tick'
-import { ensureForm, recordDamage, sharedMonsterState, topDamageContributor, usesSharedClock, type NpcState } from './npc'
+import { ensureForm, isRoomWideFamily, recordDamage, sharedMonsterState, topDamageContributor, usesSharedClock, type NpcState } from './npc'
 import { reachAgainst } from '../shared/monsterSize'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
 import { spawnDrops } from './loot'
 import { removeItems } from './mining'
 import { isBossMonster } from './bossKills'
-import { isRoomWideAttacker } from '../../src/engine/roomWideAttacks.js'
 import { prepareAdd } from '../../src/engine/bossAdds.js'
 import { isMultiForm, pinFormToSession } from '../../src/engine/bossForms.js'
 import { getMonsterModel } from '../../src/utils/equipModels.js'
@@ -335,12 +334,18 @@ function otherAttackers(npc: NpcState, ctx: TickContext): NpcState[] {
  * is retaliating against (countsAsEngaged is what puts a player fighting either
  * half of the pair into the other's pool).
  *
+ * A room-wide boss's MINIONS count as room-wide too (isRoomWideFamily) — they
+ * are its reach, and co-op has always resolved them that way. Read off the
+ * minion alone, a sentinel could only ever hit the one player the boss had
+ * claimed.
+ *
  * Range is the partner's OWN reach against this player, never the session npc's.
  * A boss and its minion stand apart, and a melee sentinel at the boss's shoulder
- * genuinely cannot touch someone on the far side of it.
+ * genuinely cannot touch someone on the far side of it — being room-wide widens
+ * who it may hit, never how far it can strike.
  */
-function otherAttackerReaches(other: NpcState, player: TickPlayer, collision: string[]): boolean {
-  const reaches = isRoomWideAttacker((monstersData as Monsters)[other.monsterId])
+function otherAttackerReaches(other: NpcState, player: TickPlayer, collision: string[], npcs?: Map<string, NpcState>): boolean {
+  const reaches = isRoomWideFamily(other, npcs)
     || other.attackerId === player.charId
   if (!reaches) return false
   const reach = reachAgainst(other.monsterId, monsterAttackRange(other.monsterId, other.currentForm))
@@ -492,7 +497,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // session resolves the same swing and each rolls their own accuracy and
   // protection prayer against it. `isTarget` still decides who its retaliation
   // follows for chasing and threat.
-  const roomWide = isRoomWideAttacker((monstersData as Monsters)[npc.monsterId])
+  //
+  // Its minions inherit that (isRoomWideFamily), so a sentinel hits everyone who
+  // turned on it and not just the one the boss had claimed — the same answer the
+  // mirror gives when the sentinel is the OTHER attacker, which is what stops
+  // the two paths disagreeing about the same swing.
+  const roomWide = isRoomWideFamily(npc, ctx.npcs)
   const isTarget = npc.attackerId === player.charId
   // Whose session may apply this npc's attacks to its own player.
   const takesSwings = roomWide || isTarget
@@ -521,7 +531,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // of them can actually reach them this tick.
   const others = otherAttackers(npc, ctx)
   mirrorOtherAttackers(combat, others)
-  const addReaches = others.map((other) => otherAttackerReaches(other, player, collision))
+  const addReaches = others.map((other) => otherAttackerReaches(other, player, collision, ctx.npcs))
 
   // The pack rides in as the engine's inventory so magic can check runes;
   // consumption is applied below from state.runesConsumed (live-game contract:

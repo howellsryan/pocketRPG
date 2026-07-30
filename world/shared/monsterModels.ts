@@ -146,9 +146,9 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     targetHeight: 3.2,
     noLocomotionClip: true,
     noShadow: true,
-    // Capped by the 3-tick attack cycle: the wind-up lead is ceil(impact/tick)
-    // and must stay under the cycle, so 1.2s is the latest impact frame the
-    // client can still align onto the hit tick.
+    // Capped by the 6-tick attack cycle: the wind-up lead is ceil(impact/tick)
+    // and must stay under the cycle, so 1.2s (a 2-tick lead) clears it with
+    // room to spare — the ceiling is what the alignment needs, not the value.
     attackImpactSec: 1.2,
     // It rerolls its style every swing, so the phase has to be readable at a
     // glance from across the throne room: red to pray melee, green ranged,

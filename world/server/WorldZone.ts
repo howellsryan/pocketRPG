@@ -21,6 +21,7 @@ import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { countsAsEngaged, npcsFromZone, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { stepMinions } from './minions'
+import { lairEntryFailure } from './lairEntry'
 import { collisionWithMonsters } from '../shared/monsterSize'
 import { computeAoi, type AoiEntity } from './aoi'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
@@ -511,8 +512,10 @@ export class WorldZone extends Server<Env> {
     let bankView: Tally = {}
     let completedQuests = new Set<string>()
     let stance: CombatStance = 'accurate'
+    let saveForGate: unknown = null
     try {
       const { saveObject } = await loadCharacterWithSave(this.env, row.id, payload.sub)
+      saveForGate = saveObject
       stats = sessionStatsFromSave(saveObject)
       seeded = sessionInventoryFromSave(saveObject)
       equipment = (saveObject.equipment ?? {}) as Record<string, unknown>
@@ -524,6 +527,19 @@ export class WorldZone extends Server<Env> {
       stance = combatStanceFromSave(saveObject)
     } catch {
       connection.close(1008, 'character_not_found')
+      return
+    }
+
+    // The lair's own entry requirements, at the door rather than only at the
+    // endpoint that mints the handoff. A room name is a URL path segment and
+    // the session token names no zone, so this socket is a door of its own —
+    // and the world grants this boss's collection log and kill counts (§14).
+    // After the reconnect branch above on purpose: a player already holding a
+    // slot passed this on the way in, and re-judging it would drop them out of
+    // a fight they are winning.
+    const lairLock = await lairEntryFailure(this.env, this.name, saveForGate, row.id)
+    if (lairLock) {
+      connection.close(1008, 'boss_locked')
       return
     }
 

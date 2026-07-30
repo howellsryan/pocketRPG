@@ -21,7 +21,7 @@ import { getMonsterCharmDrops, getSummoningCreature, rollSummonAttack, SUMMON_AT
 import { countItem } from './inventory.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
-import { isMultiForm, applyForm, advanceSharedForm, randomFormSwitchThreshold } from './bossForms.js'
+import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, randomFormSwitchThreshold } from './bossForms.js'
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
 
@@ -1176,7 +1176,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const change = advanceSharedForm(monster)
       if (change) {
         // Delay next attack by one cycle after a form change so the player can adapt
-        state.monsterAttackTimer = (monster.attackSpeed || 4)
+        state.monsterAttackTimer = formChangeAttackTimer(monster)
         events.push(change)
       }
     }

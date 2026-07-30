@@ -2,7 +2,7 @@
 // to agree on when it happens. These pin the shared-record contract that co-op
 // and the open world both lean on.
 import { describe, it, expect } from 'vitest'
-import { applyForm, advanceSharedForm, isMultiForm, pickNextForm, pinFormToSession } from '../src/engine/bossForms.js'
+import { applyForm, advanceSharedForm, formChangeAttackTimer, isMultiForm, pickNextForm, pinFormToSession } from '../src/engine/bossForms.js'
 import monstersData from '../src/data/monsters.json'
 
 const ZARYTH = 'zaryth_the_empty_lord'
@@ -128,5 +128,39 @@ describe('pinning a session to the room', () => {
     expect(pinFormToSession(session, { currentForm: 'magic' })).toBe(false)
     expect(pinFormToSession(session, {})).toBe(false)
     expect(pinFormToSession({ name: 'Grondar' }, { currentForm: 'magic' })).toBe(false)
+  })
+})
+
+describe('the clock a form change restarts', () => {
+  it('is one cycle of the form the boss has just moved INTO', () => {
+    // Read after applyForm, never before: a form that carries its own cadence
+    // must set the beat the player is about to face, not the one just left.
+    const monster = zaryth()
+    applyForm(monster, 'melee')
+    expect(formChangeAttackTimer(monster)).toBe(monster.attackSpeed)
+
+    const paced = { attackSpeed: 5, forms: { a: { attackSpeed: 2 } }, multiForm: true }
+    applyForm(paced, 'a')
+    expect(formChangeAttackTimer(paced)).toBe(paced.attackSpeed)
+  })
+
+  it('falls back to 4 for a monster carrying no speed at all', () => {
+    expect(formChangeAttackTimer({})).toBe(4)
+    expect(formChangeAttackTimer(null)).toBe(4)
+  })
+
+  it('is the SAME expression all three runtimes restart their own clock with', () => {
+    // Solo restarts state.monsterAttackTimer, co-op restarts the room's
+    // boss.attackTimer plus every member's pinned copy, the world restarts
+    // npc.attackTimer. Today every form inherits the boss's attackSpeed, so all
+    // three land on the same number and the restart is a no-op everywhere —
+    // which is the point: the day a form carries a cadence of its own, none of
+    // them can quietly disagree. This pins that they read one function.
+    const monster = zaryth()
+    const solo = formChangeAttackTimer(monster)
+    const coop = formChangeAttackTimer(monster)
+    const world = formChangeAttackTimer(monster)
+    expect(new Set([solo, coop, world]).size).toBe(1)
+    expect(solo).toBe(monster.attackSpeed)
   })
 })
