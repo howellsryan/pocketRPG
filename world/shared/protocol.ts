@@ -212,6 +212,12 @@ export type ServerMessage =
       events?: ZoneEvent[]
     }
   | { t: 'dead'; respawn: { x: number; z: number } }
+  /** Died in an instanced boss lair (§ world-design.md): the room is closed, so
+   * death ejects the player out of it entirely instead of respawning them back
+   * in front of the boss. The socket is closed right after (code 1008, reason
+   * 'instance_death') — the client shows a choice screen rather than
+   * reconnecting, so it must not auto-reload like `transition` does. */
+  | { t: 'instanceDeath'; zone: string; zoneName: string }
   /** Player stepped on an exit tile; save + position are already durable.
    * The client reconnects to the target zone's DO (full reload). */
   | { t: 'transition'; zone: string; x: number; z: number }

@@ -1935,3 +1935,39 @@ export function showLoginRequired(pocketRpgUrl: string): void {
   }
   showOverlay()
 }
+
+/** Death in an instanced boss lair (§ world-design.md): the fight is over for
+ * this player, so instead of the usual in-place respawn, they get a choice.
+ * Both actions navigate the tab (never `window.opener`/postMessage) so this
+ * works whether or not the tab was actually opened from PocketRPG — a
+ * bookmarked or reloaded world tab has no opener at all. */
+export function showDeathChoiceOverlay(opts: { zoneName: string; returnHref: string; idleHref: string }): void {
+  const el = appEl()
+  if (el) {
+    el.textContent = ''
+    const h = document.createElement('h2')
+    h.textContent = 'You have died'
+    h.style.cssText = 'margin:0 0 0.5rem;'
+    const p = document.createElement('p')
+    p.textContent = `${opts.zoneName} got the better of you this time.`
+    p.style.cssText = 'margin:0 0 1.5rem;'
+    const row = document.createElement('div')
+    row.style.cssText = 'display:flex;flex-direction:column;gap:0.75rem;align-items:stretch;width:min(320px,80vw);'
+    const btnStyle =
+      'padding:0.75rem 1rem;font-size:1rem;border-radius:6px;border:1px solid #665;background:#332;color:#eee;cursor:pointer;'
+    const returnBtn = document.createElement('a')
+    returnBtn.href = opts.returnHref
+    returnBtn.textContent = `Return to ${opts.zoneName}`
+    returnBtn.style.cssText = btnStyle + 'background:#4a3a1a;border-color:#ffe066;color:#ffe066;text-decoration:none;'
+    const idleBtn = document.createElement('a')
+    idleBtn.href = opts.idleHref
+    idleBtn.textContent = 'Return to the idle game'
+    idleBtn.style.cssText = btnStyle + 'text-decoration:none;'
+    row.appendChild(returnBtn)
+    row.appendChild(idleBtn)
+    el.appendChild(h)
+    el.appendChild(p)
+    el.appendChild(row)
+  }
+  showOverlay()
+}

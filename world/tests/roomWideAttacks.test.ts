@@ -117,12 +117,12 @@ describe('a room-wide boss in the open world', () => {
     boss.state = 'combat'
     boss.attackerId = null
     const seen: boolean[] = []
-    for (let tick = 1; tick <= 6; tick++) {
+    for (let tick = 1; tick <= 12; tick++) {
       tickNpc(boss, ctx(tick, npcs, []), { npcChanged: [], npcRemoved: [] } as never)
       seen.push(!!boss.sharedSwing)
     }
-    // attackSpeed 3 → a swing every third tick, even with nobody claimed.
-    expect(seen).toEqual([false, false, true, false, false, true])
+    // attackSpeed 6 → a swing every sixth tick, even with nobody claimed.
+    expect(seen).toEqual([false, false, false, false, false, true, false, false, false, false, false, true])
   })
 
   it('rotates its form once for the room, and swings with the form it is in', () => {

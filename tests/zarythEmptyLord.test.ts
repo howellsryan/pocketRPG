@@ -65,8 +65,8 @@ describe('Zaryth — monster data', () => {
     expect(boss.hitpoints).toBeGreaterThan(Math.max(...others.map((m: any) => m.hitpoints || 0)))
   })
 
-  it('attacks every 3 ticks and rotates its style on every attack', () => {
-    expect(boss.attackSpeed).toBe(3)
+  it('attacks every 6 ticks and rotates its style on every attack', () => {
+    expect(boss.attackSpeed).toBe(6)
     expect(boss.multiForm).toBe(true)
     expect(boss.randomFormEveryAttack).toBe(true)
     expect(Object.keys(boss.forms).sort()).toEqual(['magic', 'melee', 'ranged'])
@@ -454,7 +454,7 @@ describe('room-wide attacks in a co-op session', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     let state = joined(BOSS, [1, 2, 3])
     const startHP = Object.values(state.members).map((m: any) => m.hp)
-    for (let i = 0; i < 3; i++) state = processCoopTick(state, [], deps, Date.now()).stateNext
+    for (let i = 0; i < 6; i++) state = processCoopTick(state, [], deps, Date.now()).stateNext
     const damaged = Object.values(state.members).filter((m: any, i) => m.hp < startHP[i])
     expect(damaged).toHaveLength(3)
   })

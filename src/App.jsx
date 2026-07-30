@@ -81,6 +81,7 @@ import { hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
 import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
 import GameIcon from './components/GameIcon.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
+import { openWorld } from './utils/helpers.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
 import { fetchKillCounts } from './cloud/killCounts.js'
@@ -408,6 +409,11 @@ function GameApp() {
   // Set on mount if Stripe redirected back with a payment query/path — drives the
   // post-checkout thank-you toast + credits refresh once the game is ready.
   const paymentReturnRef = useRef(false)
+  // Instanced-lair death choice screen sent the player back here to re-enter
+  // the same boss (world/client's showDeathChoiceOverlay "Return to <boss>").
+  // Fires openWorld once cloudPhase is ready; cleared immediately after so a
+  // later re-render (or a fresh manual visit to the idle game) never refires it.
+  const resumeWorldZoneRef = useRef(null)
   const pvpReconnectBusyRef = useRef(false)
   const prevPvpPhaseRef = useRef(pvp.phase)
   const isInPvpMatch = pvp.phase === 'in_match'
@@ -744,8 +750,39 @@ function GameApp() {
         history.replaceState(null, '', cleanPath + (url.searchParams.toString() ? `?${url.searchParams}` : '') + url.hash)
       }
     } catch { /* non-fatal */ }
+
+    // Detect the open-world death screen's "Return to <boss>" hand-off
+    // (?enterWorld=<zone>). Stashed in sessionStorage so it survives a login
+    // redirect the same way ?oauth= does; strip it from the URL either way.
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const fromUrl = params.get('enterWorld')
+      if (fromUrl && /^[a-z][a-z0-9_]{0,31}$/.test(fromUrl)) {
+        sessionStorage.setItem('pocketrpg_enter_world', fromUrl)
+        resumeWorldZoneRef.current = fromUrl
+        params.delete('enterWorld')
+        const qs = params.toString()
+        history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash)
+      } else {
+        const stashed = sessionStorage.getItem('pocketrpg_enter_world')
+        if (stashed) resumeWorldZoneRef.current = stashed
+      }
+    } catch { /* non-fatal */ }
     initCloudAndSave()
   }, [])
+
+  // Once cloud auth + character are ready, complete the hand-off: open a
+  // fresh world tab for the boss lair the player died in, same as the combat
+  // picker's "fight in the open world" (openWorld re-runs the entry-gate
+  // check server-side, so a boss requirement that changed meanwhile is still
+  // enforced). Cleared immediately so this never refires.
+  useEffect(() => {
+    if (cloudPhase !== 'ready' || !resumeWorldZoneRef.current) return
+    const zone = resumeWorldZoneRef.current
+    resumeWorldZoneRef.current = null
+    try { sessionStorage.removeItem('pocketrpg_enter_world') } catch { /* non-fatal */ }
+    openWorld(api, zone).catch(() => addToast('Could not reach the world.', 'error'))
+  }, [cloudPhase])
 
   // Boot watchdog: if the boot sequence can't reach a usable state within 5s,
   // surface the existing error screen instead of leaving the user stranded on a

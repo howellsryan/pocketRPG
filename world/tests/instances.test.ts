@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
   baseRoomZone,
   chooseInstanceRoom,
+  instanceDeathEjectTarget,
   instanceRoom,
   INSTANCED_ZONES,
   isInstancedRoom,
@@ -83,11 +84,22 @@ describe.each([...INSTANCED_ZONES])('instanced lair %s', (zoneId) => {
     for (const exit of zone.exits ?? []) expect(seen.has(`${exit.x},${exit.z}`), `${zoneId} ${exit.id}`).toBe(true)
   })
 
-  it('keeps a death inside the instance', () => {
-    // An instanced room is closed: dying returns you to its own entrance. A
-    // `deathRespawn` would eject the party into the overworld and close the
-    // socket, which is the trip out they didn't ask for.
+  it('authors no zone-level deathRespawn', () => {
+    // An instanced lair's death handling is server logic (WorldZone's
+    // isInstancedRoom branch → instanceDeathEjectTarget), not zone-authored
+    // config — a `deathRespawn` field here would be a second, conflicting
+    // definition of where a death sends the player.
     expect(zone.deathRespawn).toBeUndefined()
+  })
+
+  it('ejects a death out through the lair\'s own exit, never back to its own spawn', () => {
+    // Reversal of the room's old "dying respawns you in front of the boss"
+    // behaviour: death now ends this player's part of the fight and hands
+    // them a choice screen (return to a fresh instance, or the idle game),
+    // so the eject target must be the way OUT, not another lap at the spawn.
+    const target = instanceDeathEjectTarget(zone, { x: 999, z: 999 })
+    expect(target.zone).toBe('overworld')
+    expect(target).toEqual({ zone: zone.exits![0].toZone, x: zone.exits![0].toX, z: zone.exits![0].toZ })
   })
 
   it('puts a bank chest within reach of the tile you arrive and respawn on', () => {
@@ -239,5 +251,16 @@ describe('chooseInstanceRoom', () => {
 
   it('passes a non-instanced zone straight through', async () => {
     expect(await chooseInstanceRoom('overworld', reader({}))).toBe('overworld')
+  })
+})
+
+describe('instanceDeathEjectTarget', () => {
+  it('ejects through the zone\'s own exit when one is authored', () => {
+    const zone = { exits: [{ toZone: 'overworld', toX: 280, toZ: 56 }] }
+    expect(instanceDeathEjectTarget(zone, { x: 1, z: 1 })).toEqual({ zone: 'overworld', x: 280, z: 56 })
+  })
+
+  it('falls back to the overworld spawn if a lair is ever authored with no exit', () => {
+    expect(instanceDeathEjectTarget({}, { x: 12, z: 34 })).toEqual({ zone: 'overworld', x: 12, z: 34 })
   })
 })

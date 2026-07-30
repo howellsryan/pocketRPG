@@ -71,6 +71,8 @@ Your hitpoints regenerate naturally at +1 HP every 60 seconds, in and out of com
 
 Dying in PvE is forgiving: the fight ends, your hitpoints are restored to full, and you keep all your items and loot — nothing is dropped or lost. If you would die during idle combat or offline catch-up, the simulation stops at that point and you keep everything earned up to it; restock food and check your gear before restarting. One-life (hardcore) characters are the exception: death permanently revokes the one-life badge — an Ironman one-life character becomes a standard Ironman, and a non-Ironman one-life character becomes a standard account. The character itself, its level and all its items are untouched.
 
+Dying in one of the open world's instanced boss lairs works differently: it ends your part of that fight. You're shown a choice — return to the boss in a fresh copy of the lair, or head back to the idle game — instead of respawning back in front of it able to keep swinging.
+
 ## Inventory and banking
 
 Your inventory holds a hard maximum of 28 slots, and you can drag items to rearrange it. Your bank stores everything else. While doing idle activities, loot is banked automatically when your inventory fills; the auto-bank delay scales with your Agility level, from 5 minutes at Agility 1 down to just 10 seconds at Agility 99 — a strong reason to train Agility. On mobile, the Bank button opens a hub with both the Bank and the Trading Post; on desktop each has its own entry in the navigation rail.

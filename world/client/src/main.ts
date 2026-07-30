@@ -1,11 +1,11 @@
 import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
-import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, removeOverheadPrayer, updateOverheadPrayer, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
+import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, removeOverheadPrayer, updateOverheadPrayer, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showDeathChoiceOverlay, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { openWorldMap, type WorldMapData } from './worldMap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
-import { connect, isInstanceFullClose, onMessage, send } from './net'
+import { connect, isInstanceDeathClose, isInstanceFullClose, onMessage, send } from './net'
 import { createAwayWatch } from './away'
 import { sendLeaveBeacon } from './leaveBeacon'
 import { createCamera, createLights, createRenderer, createScene, FOG_FAR, tileToWorld, updateCamera, updateShadowLight } from './scene'
@@ -360,6 +360,10 @@ function enterWorld(session: WorldSession): void {
       window.location.reload()
       return
     }
+    // Expected close after a death in an instanced lair — the `instanceDeath`
+    // message already put up the choice screen, so this must not be treated
+    // as a rejected session (clearing it would strand the player mid-choice).
+    if (isInstanceDeathClose(event as CloseEvent)) return
     if ((event as CloseEvent).code === 1008) {
       clearStoredSession()
       hideConnBanner()
@@ -892,6 +896,17 @@ function enterWorld(session: WorldSession): void {
         self.moving = false
       }
       pushMessage('Oh dear, you are dead! You wake back at the entrance.')
+      return
+    }
+
+    if (message.t === 'instanceDeath') {
+      // The room already ejected us (socket closes right after this message) —
+      // show the choice instead of the ordinary in-place respawn toast above.
+      showDeathChoiceOverlay({
+        zoneName: message.zoneName,
+        returnHref: `${pocketRpgUrl()}/?enterWorld=${encodeURIComponent(message.zone)}`,
+        idleHref: pocketRpgUrl(),
+      })
       return
     }
 

@@ -15,8 +15,8 @@ import monstersData from '../../src/data/monsters.json'
 const COLLISION = Array.from({ length: 24 }, () => '.'.repeat(24))
 const ZARYTH = 'zaryth_the_empty_lord'
 const GRONDAR = 'warlord_grondar'
-// The longest wait the spec can roll: 12 boss attacks at 3 ticks each.
-const LONGEST_SUMMON_TICKS = 36
+// The longest wait the spec can roll: 12 boss attacks at 6 ticks each.
+const LONGEST_SUMMON_TICKS = 72
 // Every sentinel hits for the same ceiling, whichever style is summoned.
 const MINION_MAX_HIT = 15
 
