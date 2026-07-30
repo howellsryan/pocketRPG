@@ -124,8 +124,12 @@ describe('boss leash', () => {
     const { npcs, npc } = npcAt(ZARYTH, 20, 11)
     engaged(npc)
 
-    // 15 tiles from home — beyond the 10-tile leash every non-boss npc keeps.
-    for (let tick = 1; tick <= 30; tick++) tickDisengaged(npcs, { x: 20, z: 26 }, tick)
+    // 20 tiles from home — beyond the 10-tile leash every non-boss npc keeps,
+    // and far enough that the boss clears that leash whichever form it is
+    // wearing when it comes into reach: it stops at its CURRENT form's range
+    // (magic 7 is the longest), so a quarry 15 tiles out could legitimately be
+    // engaged from 8 tiles down the road.
+    for (let tick = 1; tick <= 30; tick++) tickDisengaged(npcs, { x: 20, z: 31 }, tick)
 
     expect(npc.attackerId).toBe('1')
     expect(Math.abs(npc.z - 11)).toBeGreaterThan(10)
