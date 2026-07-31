@@ -35,9 +35,9 @@ function emptyResult(): TickResult {
   return { npcChanged: [], npcRemoved: [] } as unknown as TickResult
 }
 
-function ctx(tick: number, npcs: Map<string, NpcState>, players: Map<string, { x: number; z: number }>): TickContext {
+function ctx(tick: number, npcs: Map<string, NpcState>, players: Map<string, { x: number; z: number }>, lair = false): TickContext {
   return {
-    tick, rocks: new Map(), npcs, collision: COLLISION, players,
+    tick, rocks: new Map(), npcs, collision: COLLISION, players, lair,
     pathAdjacent: (from, to) => findPathAdjacent(COLLISION, from, to),
   } as TickContext
 }
@@ -47,9 +47,9 @@ function ctx(tick: number, npcs: Map<string, NpcState>, players: Map<string, { x
  * behind (their session ended, so nothing counts as engaged with the npc) while
  * they are still standing in the zone.
  */
-function tickDisengaged(npcs: Map<string, NpcState>, at: { x: number; z: number }, tick: number): void {
+function tickDisengaged(npcs: Map<string, NpcState>, at: { x: number; z: number }, tick: number, lair = false): void {
   const players = new Map([['1', at]])
-  const c = ctx(tick, npcs, players)
+  const c = ctx(tick, npcs, players, lair)
   const result = emptyResult()
   for (const npc of npcs.values()) {
     if (npc.state !== 'combat') continue
@@ -184,5 +184,64 @@ describe('boss leash', () => {
     // onto it would give up the moment the boss out-ranged it and stand idle in
     // the middle of a live fight.
     for (const minion of minions) expect(minion.state).toBe('combat')
+  })
+})
+
+// A boss's lair is a private instance with one door, so the room is the leash:
+// no radius measured from the throne can bound it. Zaryth's throne sits 25 tiles
+// from the way in and 28 from the far corner of a 40x40 room, so the 24-tile
+// leash above made retreating toward the door a free reset — full health, adds
+// despawned — in the middle of a fight the player was winning.
+describe('a boss in its own instanced lair', () => {
+  it('never breaks leash, however far across the room the fight goes', () => {
+    const { npcs, npc } = npcAt(ZARYTH, 20, 11)
+    engaged(npc)
+    npc.hp = 100
+
+    // Past the door and then some: 49 tiles out, twice the leash it keeps in the
+    // open world, chased for long enough to reach it several times over.
+    for (let tick = 1; tick <= 120; tick++) tickDisengaged(npcs, { x: 20, z: 60 }, tick, true)
+
+    expect(npc.attackerId).toBe('1')
+    expect(npc.state).toBe('combat')
+    expect(npc.hp, 'the boss healed mid-fight').toBe(100)
+  })
+
+  it('leaves the trash sharing that instance on its own post', () => {
+    // The pasture and the fiend pit are instanced too. The run of the room is a
+    // boss's privilege, not a property of the room.
+    const { npcs, npc } = npcAt(BULL, 20, 11)
+    engaged(npc)
+    npc.hp = 100
+
+    for (let tick = 1; tick <= 60; tick++) tickDisengaged(npcs, { x: 20, z: 40 }, tick, true)
+
+    expect(npc.attackerId).toBeNull()
+    expect(npc.state).toBe('idle')
+    expect({ x: npc.x, z: npc.z }).toEqual({ x: 20, z: 11 })
+  })
+
+  it('walks back to its throne once there is nobody left to fight', () => {
+    // With no leash to snap it home, a boss ends its fights wherever the chase
+    // left it — outside the wander rect it polices, where it can take no step at
+    // all — and the next party through the door would find it parked in a corner.
+    const { npcs, npc } = npcAt(ZARYTH, 20, 11)
+    engaged(npc)
+    npc.hp = 100
+
+    for (let tick = 1; tick <= 60; tick++) tickDisengaged(npcs, { x: 20, z: 45 }, tick, true)
+    expect(npc.z, 'the boss never left its throne, so this proves nothing').toBeGreaterThan(20)
+
+    // The quarry leaves the zone: nobody is present, so the claim is released.
+    const empty = new Map<string, { x: number; z: number }>()
+    for (let tick = 61; tick <= 100; tick++) {
+      const c = ctx(tick, npcs, empty, true)
+      reselectAttacker(npc, [], COLLISION, empty, npcs)
+      for (const n of [...npcs.values()]) tickNpc(n, c, emptyResult())
+    }
+
+    expect(npc.state).toBe('idle')
+    expect(npc.hp).toBe(npc.maxHp)
+    expect({ x: npc.x, z: npc.z }).toEqual({ x: 20, z: 11 })
   })
 })

@@ -149,10 +149,13 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     bounds: { minX: -0.528, minY: 0, minZ: -0.105, maxX: 0.466, maxY: 0.982, maxZ: 0.217 },
     targetHeight: 3.2,
     noShadow: true,
-    // Capped by the 6-tick attack cycle: the wind-up lead is ceil(impact/tick)
-    // and must stay under the cycle, so 1.2s (a 2-tick lead) clears it with
-    // room to spare — the ceiling is what the alignment needs, not the value.
-    attackImpactSec: 1.2,
+    // Every style swings with the AttackRanged clip (src/engine/monsterClips.js),
+    // which rears back to a raised claw at 2.0s and brings it down at 2.1 — the
+    // frame the splat has to land on. The old 1.2 was the melee clip's impact,
+    // and against this one it fired the splat mid-wind-up, most of a second
+    // before the blow arrived. Capped by the 6-tick attack cycle: the lead is
+    // ceil(impact/tick) = 4 ticks, and the countdown only passes through 5…1.
+    attackImpactSec: 2.1,
     // It rerolls its style every swing, so the phase has to be readable at a
     // glance from across the throne room: red to pray melee, green ranged,
     // blue magic — the same three hues as the overhead prayer icons.

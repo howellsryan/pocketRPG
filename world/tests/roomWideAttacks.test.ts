@@ -5,7 +5,7 @@
 // apply the swing to its own player.
 import { describe, expect, it } from 'vitest'
 import { ensureForm, tickNpc, npcsFromZone, type NpcState } from '../server/npc'
-import { tickPlayer, type TickContext, type TickPlayer } from '../server/tick'
+import { monsterAttackAnim, tickPlayer, type TickContext, type TickPlayer } from '../server/tick'
 import { monsterWindupLeadTicks, startCombat, stepCombat } from '../server/combat'
 import { emptyInventory } from '../server/mining'
 import { findPathAdjacent } from '../server/pathfind'
@@ -137,13 +137,13 @@ describe('a room-wide boss in the open world', () => {
 
     const players = [makePlayer('1', 10, 11), makePlayer('2', 9, 10)]
     const seen = new Set<string>()
-    const anims = new Set<string>()
+    const animByForm = new Map<string, string>()
     for (let tick = 1; tick <= 60; tick++) {
       const c = ctx(tick, npcs, players)
       for (const npc of npcs.values()) tickNpc(npc, c, { npcChanged: [], npcRemoved: [] } as never)
       for (const p of players) { p.hp = p.maxHp; tickPlayer(p, c) }
       if (boss.currentForm) seen.add(boss.currentForm)
-      if (boss.anim.startsWith('attack')) anims.add(boss.anim)
+      if (boss.anim.startsWith('attack') && boss.currentForm) animByForm.set(boss.currentForm, boss.anim)
       // One form for the room: both sessions swing with whatever the npc is in.
       for (const p of players) {
         const form = (p.combat?.state as { monster?: { currentForm?: string } })?.monster?.currentForm
@@ -153,7 +153,13 @@ describe('a room-wide boss in the open world', () => {
     expect(seen.size, 'it never left its starting form').toBeGreaterThan(1)
     expect(Object.keys(monster.forms ?? {})).toEqual(expect.arrayContaining([...seen]))
     // And the clip follows the form, rather than the starting style forever.
-    expect(anims.size, `only ever played ${[...anims]}`).toBeGreaterThan(1)
+    // Asserted per form rather than by counting distinct clips: melee and ranged
+    // deliberately share one (src/engine/monsterClips.js), so a run that happens
+    // to roll only those two is correct and would fail a count.
+    expect(animByForm.size, 'no swing was ever animated').toBeGreaterThan(0)
+    for (const [form, anim] of animByForm) {
+      expect(anim, `the ${form} form played the wrong clip`).toBe(monsterAttackAnim(ZARYTH, form))
+    }
   })
 
   it('keeps animating its swing when one of the players it reaches is out of range', () => {
@@ -188,10 +194,11 @@ describe('a room-wide boss in the open world', () => {
     const result = { events: [], hits: [], kills: [], npcChanged: [], npcRemoved: [], xp: [] } as never
 
     stepCombat(melee, c, result)
-    expect(boss.anim, 'the adjacent player never led the swing').toBe('attack')
+    // Its melee form swings with the ranged clip too (src/engine/monsterClips.js).
+    expect(boss.anim, 'the adjacent player never led the swing').toBe('attack_ranged')
     stepCombat(archer, c, result)
     expect(archer.combat, 'the archer disengaged, so this proves nothing').toBeTruthy()
-    expect(boss.anim, 'the archer\'s session wiped the swing clip for the room').toBe('attack')
+    expect(boss.anim, 'the archer\'s session wiped the swing clip for the room').toBe('attack_ranged')
   })
 
   it('opens on the same form cadence the solo fight rolls', () => {

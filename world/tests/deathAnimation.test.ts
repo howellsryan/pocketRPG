@@ -11,7 +11,6 @@ import { describe, expect, it } from 'vitest'
 import { resolveGltfAnim } from '../client/src/motion'
 import { NPC_REMOVE_AFTER_DEATH_TICKS } from '../server/combat'
 import { MONSTER_MODELS } from '../shared/monsterModels'
-import { getMonsterModel } from '../../src/utils/equipModels.js'
 
 const TICK_MS = 600
 
@@ -78,24 +77,25 @@ function samplerCounts(glbPath: string): Array<{ clip: string; times: number; va
   return out
 }
 
-describe('the melee attack clip stops at the swing', () => {
-  // Zaryth's source attack clip rears up, strikes, and then COLLAPSES to the
-  // floor over its last two seconds and holds there — a knock-down tail with no
-  // recovery. Clamped on its final frame and replayed every swing, the boss
-  // looked like it was dying every time it hit you. The build script trims it to
-  // the registry's `attackMaxSec`; the combat arena clamps the untrimmed source
-  // to the same number, so both render the same swing.
-  it('ships Zaryth\'s world attack clip trimmed to the registry cap', () => {
-    const cap = getMonsterModel('zaryth_the_empty_lord')?.attackMaxSec
-    expect(cap).toBeGreaterThan(0)
+describe('every one of Zaryth\'s styles swings with the same clip', () => {
+  // Its own melee clip rears up, strikes, and then COLLAPSES to the floor over
+  // its last two seconds and holds there — a knock-down tail with no recovery,
+  // and trimmed at the follow-through it read as a slow reach. It rerolls its
+  // style every swing, so that was a third of everything you ever saw it do.
+  // The build script therefore ships `attack` as a copy of `attack_ranged`, and
+  // the shared clip table (src/engine/monsterClips.js) sends the arena's melee
+  // style to the same clip, so both render paths swing alike.
+  it('ships Zaryth\'s melee clip as a copy of its ranged one', () => {
     const url = MONSTER_MODELS.zaryth_the_empty_lord.url
     const path = fileURLToPath(new URL(`../client/public${url}`, import.meta.url))
-    const duration = clipDurationSec(path, 'attack')
-    expect(duration).toBeGreaterThan(0)
-    expect(duration).toBeLessThanOrEqual(cap as number)
-    // The strike itself must survive the cut, or the trim would have removed the
-    // very frame the wind-up is aligned to.
-    expect(duration).toBeGreaterThanOrEqual(getMonsterModel('zaryth_the_empty_lord')!.attackImpactSec as number)
+    const melee = clipDurationSec(path, 'attack')
+    expect(melee).toBeGreaterThan(0)
+    expect(melee).toBe(clipDurationSec(path, 'attack_ranged'))
+    // The strike the wind-up is aligned to has to fall inside the clip that
+    // actually plays, or the splat is aimed at a frame that never arrives.
+    const impact = MONSTER_MODELS.zaryth_the_empty_lord.attackImpactSec as number
+    expect(impact).toBeGreaterThan(0)
+    expect(melee).toBeGreaterThanOrEqual(impact)
   })
 })
 

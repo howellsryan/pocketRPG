@@ -46,10 +46,10 @@ function stopMonsterAttackActions(st) {
   for (const action of Object.values(st.monsterAttackActions || {})) action.stop()
 }
 
-function selectMonsterAttackAction(st, attackStyle) {
+function selectMonsterAttackAction(st, attackStyle, monsterId) {
   const actions = st.monsterAttackActions
   if (!actions) return
-  const next = actions[monsterAttackClipName(attackStyle)] || actions.Attack || Object.values(actions)[0] || null
+  const next = actions[monsterAttackClipName(attackStyle, monsterId)] || actions.Attack || Object.values(actions)[0] || null
   if (!next || next === st.monsterAttackAction) return
   // Mid-swing the running clip keeps the body; swapping under it snaps the rig.
   if (st.monsterAttackAction && st.monsterAttackAction.isRunning()) return
@@ -57,6 +57,7 @@ function selectMonsterAttackAction(st, attackStyle) {
 }
 
 function CombatArena3D({
+  monsterId = null,
   monsterName,
   monsterPath,
   monsterProc = null,
@@ -325,7 +326,7 @@ function CombatArena3D({
         // monster is about to attack with (selectMonsterAttackAction).
         st.monsterAttackActions = {}
         for (const style of ['melee', 'ranged']) {
-          const clip = selectMonsterAttackClip(mAnims, style)
+          const clip = selectMonsterAttackClip(mAnims, style, monsterId)
           if (!clip || st.monsterAttackActions[clip.name]) continue
           // Registry cap (attackMaxSec): a rig whose attack clip ends by
           // collapsing to the floor is cut at the follow-through, or every swing
@@ -338,7 +339,7 @@ function CombatArena3D({
           st.monsterAttackActions[clip.name] = action
         }
         if (Object.keys(st.monsterAttackActions).length) {
-          selectMonsterAttackAction(st, monsterAttackStyleRef.current)
+          selectMonsterAttackAction(st, monsterAttackStyleRef.current, monsterId)
           st.monsterMixer.addEventListener('finished', (e) => {
             if (st.disposed || !Object.values(st.monsterAttackActions).includes(e.action)) return
             e.action.fadeOut(0.25)
@@ -618,7 +619,7 @@ function CombatArena3D({
       } else if (st.monsterAttackAction) {
         if (st.monsterLedAttack) reactDelay = 0
         else {
-          selectMonsterAttackAction(st, monsterAttackStyleRef.current)
+          selectMonsterAttackAction(st, monsterAttackStyleRef.current, monsterId)
           st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
           st.monsterAttackAction.reset().fadeIn(0.1).play()
         }
@@ -666,7 +667,7 @@ function CombatArena3D({
     const st = stateRef.current
     if (!windupSignal || !st || st.disposed || !st.monsterAttackAction) return
     if (st.monsterSwingScheduled || (st.monsterFallCur || 0) > 0.02) return
-    selectMonsterAttackAction(st, monsterAttackStyleRef.current)
+    selectMonsterAttackAction(st, monsterAttackStyleRef.current, monsterId)
     const ticks = windupSignal.ticks || 0
     if (ticks < 1) return
     const clip = st.monsterAttackAction.getClip()

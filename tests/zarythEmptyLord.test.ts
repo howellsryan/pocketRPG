@@ -704,9 +704,9 @@ describe('Zaryth — 3D rig', () => {
     ]))
   })
 
-  it('swings with the melee clip for every melee style', () => {
+  it('swings with the melee clip for every melee style, on a rig whose melee clip works', () => {
     for (const style of ['crush', 'stab', 'slash', null, undefined]) {
-      expect(monsterAttackClipName(style as any)).toBe(MONSTER_CLIP_ATTACK)
+      expect(monsterAttackClipName(style as any, 'warlord_grondar')).toBe(MONSTER_CLIP_ATTACK)
     }
   })
 
@@ -715,18 +715,34 @@ describe('Zaryth — 3D rig', () => {
     expect(monsterAttackClipName('magic')).toBe(MONSTER_CLIP_ATTACK_RANGED)
   })
 
+  it('swings with that same ranged clip in MELEE form, because its own melee clip collapses', () => {
+    // Zaryth's melee clip rears up, strikes, and then drops to the floor with no
+    // recovery; trimmed at the follow-through it reads as a slow reach. It
+    // rerolls its style every swing, so that was a third of everything the boss
+    // ever did on screen. Both render paths read this one table.
+    for (const style of ['crush', 'stab', 'slash']) {
+      expect(monsterAttackClipName(style, BOSS)).toBe(MONSTER_CLIP_ATTACK_RANGED)
+    }
+  })
+
   it('covers all three of the boss forms with a clip the asset actually has', () => {
     const names = clipNames(new URL('../public/3d-samples/' + arena.model, import.meta.url).pathname)
     const clips = names.map((name) => ({ name }))
     for (const form of Object.values(boss.forms) as any[]) {
-      const picked = selectMonsterAttackClip(clips, form.attackStyle)
+      const picked = selectMonsterAttackClip(clips, form.attackStyle, BOSS)
       expect(picked, `no clip for ${form.attackStyle}`).toBeTruthy()
       expect(names).toContain(picked!.name)
     }
-    // The whole point of the second clip: melee must not resolve to the same
-    // animation as the ranged and magic forms.
-    expect(selectMonsterAttackClip(clips, 'crush')!.name)
-      .not.toBe(selectMonsterAttackClip(clips, 'magic')!.name)
+    // Every form resolves to the one clip that reads as a strike from where it
+    // stands — including melee, which is the whole point of the override.
+    expect(selectMonsterAttackClip(clips, 'crush', BOSS)!.name)
+      .toBe(selectMonsterAttackClip(clips, 'magic', BOSS)!.name)
+  })
+
+  it('keeps the two-clip split for a rig that is not on the override list', () => {
+    const clips = [{ name: MONSTER_CLIP_ATTACK }, { name: MONSTER_CLIP_ATTACK_RANGED }]
+    expect(selectMonsterAttackClip(clips, 'crush', 'warlord_grondar')!.name)
+      .not.toBe(selectMonsterAttackClip(clips, 'magic', 'warlord_grondar')!.name)
   })
 
   it('falls back to the melee clip for a rig that only has one attack', () => {

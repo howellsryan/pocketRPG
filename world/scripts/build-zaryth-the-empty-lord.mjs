@@ -8,11 +8,16 @@
 // so simplifying it would only cost silhouette on a boss the camera sits close
 // to.
 //
-// Zaryth swings with a different clip depending on the style it is attacking
-// with, and the world protocol splits ranged from magic where the arena treats
-// them as one. The rig ships one clip for both, so `attack_magic` is a copy of
+// Zaryth swings with ONE clip for every style. The world protocol splits ranged
+// from magic where the arena treats them as one, so `attack_magic` is a copy of
 // `attack_ranged` rather than a missing action that would fall back to idle
-// mid-cast.
+// mid-cast — and `attack` is a copy of it too. The rig's own melee clip rears
+// up, strikes, and then collapses to the floor with no recovery: trimmed at the
+// follow-through it read as a slow reach, untrimmed as the boss dying mid-fight,
+// and this boss rerolls its style every swing, so it was a third of everything
+// you ever saw it do. The runtime side of that call is the shared clip table
+// (src/engine/monsterClips.js), which sends the arena's melee style to the same
+// clip; this drops the unused one out of the world's GLB.
 //
 // The source has no locomotion clip at all, and aliasing walk to idle left the
 // boss sliding across its throne room in a standing pose. WALK_SRC is the
@@ -33,7 +38,6 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
 import { prune, dedup, resample, getBounds } from '@gltf-transform/functions'
 import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer'
 import path from 'node:path'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
 const worldDir = fileURLToPath(new URL('..', import.meta.url))
@@ -44,11 +48,13 @@ const OUT = path.join(worldDir, 'client', 'public', 'models', 'zaryth_the_empty_
 
 const CLIPS = [
   { clip: 'Idle', as: 'idle' },
-  { clip: 'Attack', as: 'attack' },
   { clip: 'AttackRanged', as: 'attack_ranged' },
   { clip: 'Death', as: 'die' },
 ]
-const ALIAS = [{ from: 'attack_ranged', as: 'attack_magic' }]
+const ALIAS = [
+  { from: 'attack_ranged', as: 'attack_magic' },
+  { from: 'attack_ranged', as: 'attack' },
+]
 
 // The corpse is removed NPC_REMOVE_AFTER_DEATH_TICKS after death (3.6s), so a
 // longer die clip is simply cut off mid-fall. This source collapses by ~3.0s
@@ -56,18 +62,6 @@ const ALIAS = [{ from: 'attack_ranged', as: 'attack_magic' }]
 // world-wide linger being stretched for one monster. Keyframes only — LINEAR
 // and STEP samplers both survive a slice; CUBICSPLINE would not, so it throws.
 const DIE_MAX_SEC = 3.4
-
-// The melee attack is trimmed for a different reason: the source clip rears up,
-// strikes, and then COLLAPSES to the floor over its last two seconds and holds
-// there — a knock-down tail with no recovery. Played every swing (and clamped on
-// its final frame) it read as the boss dying mid-fight, which is exactly what it
-// looks like. Cut at the follow-through instead, and the crossfade carries it
-// back to idle. The number is the registry's (equipmentModels.json
-// `attackMaxSec`), so the combat arena — which loads the untrimmed source and
-// clamps its clip at playback — cuts at the same frame.
-const ATTACK_MAX_SEC = Number(
-  createRequire(import.meta.url)('../../src/data/equipmentModels.json').monsters?.zaryth_the_empty_lord?.attackMaxSec
-) || 0
 
 /**
  * Trims one clip to `maxSec` by giving each of its samplers a FRESH pair of
@@ -243,7 +237,6 @@ await doc.transform(resample(), dedup(), prune())
 // Trim last: resample() reads the untouched samplers, and dedup() decides which
 // accessors are shared — trimClip has to know it is working against shared data.
 trimClip(doc, keep.get('die'), DIE_MAX_SEC)
-if (ATTACK_MAX_SEC > 0) trimClip(doc, keep.get('attack'), ATTACK_MAX_SEC)
 // Re-share what is still identical and drop the accessors the trim orphaned.
 await doc.transform(dedup(), prune())
 assertSamplersIntact(doc)

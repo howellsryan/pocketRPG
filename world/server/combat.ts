@@ -21,6 +21,7 @@ import { isBossMonster } from './bossKills'
 import { prepareAdd } from '../../src/engine/bossAdds.js'
 import { isMultiForm, pinFormToSession } from '../../src/engine/bossForms.js'
 import { getMonsterModel } from '../../src/utils/equipModels.js'
+import { MONSTER_MODELS } from '../shared/monsterModels'
 import { monsterAttackWindup } from '../../src/utils/combatWindup.js'
 import { resolveSpecialEnergyCost } from '../../src/engine/specialAttackEnergy.js'
 import { TICK_DURATION } from '../../src/utils/constants.js'
@@ -60,13 +61,18 @@ function specialEnergyCost(player: TickPlayer): number {
  * single 'attack' pulse, so the client can pre-start (and sub-tick-delay) the
  * clip and have its IMPACT frame coincide with the hit event/splat — the same
  * alignment the combat arena does, driven by the SHARED src/utils/combatWindup.js
- * off the clip's `attackImpactSec` (src/data/equipmentModels.json). Monsters
- * with no impact metadata keep the coarse 1-tick lead. Memoised per monsterId. */
+ * off the clip's `attackImpactSec`. Monsters with no impact metadata keep the
+ * coarse 1-tick lead. Memoised per monsterId.
+ *
+ * Resolved world-registry-first, exactly as the client resolves the sub-tick
+ * delay it pairs with (entities.ts createMonsterMesh). The two are halves of one
+ * number: read from different registries they can disagree, and a lead that does
+ * not match its delay misses the splat by as much as a whole tick. */
 const windupLeadCache = new Map<string, number>()
 export function monsterWindupLeadTicks(monsterId: string): number {
   let lead = windupLeadCache.get(monsterId)
   if (lead === undefined) {
-    const impactSec = getMonsterModel(monsterId)?.attackImpactSec ?? null
+    const impactSec = MONSTER_MODELS[monsterId]?.attackImpactSec ?? getMonsterModel(monsterId)?.attackImpactSec ?? null
     lead = monsterAttackWindup(impactSec, TICK_DURATION).leadTicks
     windupLeadCache.set(monsterId, lead)
   }

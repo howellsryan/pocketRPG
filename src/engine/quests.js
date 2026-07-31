@@ -142,6 +142,20 @@ export function simulateIdleQuest(task, elapsedMs) {
 }
 
 /**
+ * Filter a quest list by a free-text query, matching quest name or complexity
+ * tier. Blank/whitespace queries return the list untouched.
+ */
+export function filterQuestsBySearch(quests, query) {
+  const q = String(query ?? '').trim().toLowerCase()
+  if (!q) return quests
+  return quests.filter(quest => {
+    const name = String(quest?.name ?? '').toLowerCase()
+    const complexity = String(quest?.complexity ?? '').toLowerCase()
+    return name.includes(q) || complexity.includes(q)
+  })
+}
+
+/**
  * Format a duration in seconds to "1h 15m" / "45m" / "30s".
  */
 export function formatQuestDuration(totalSeconds) {
