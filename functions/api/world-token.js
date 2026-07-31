@@ -2,6 +2,9 @@ import { requireAuth, json } from '../_lib/auth.js'
 import { signJWT } from '../_lib/jwt.js'
 import { assertNotInActiveMatch } from '../_lib/pvp.js'
 import { assertNotInCoopSession } from '../_lib/game/coopBoss.js'
+import { bossEntryFailure, bossHasEntryGate, loadBossKillCounts } from '../_lib/game/bossEntry.js'
+import { loadCharacterWithSave } from '../_lib/game/save.js'
+import { worldLairMonster } from '../../src/engine/worldLairs.js'
 
 const HANDOFF_EXPIRES_SECONDS = 60
 
@@ -44,6 +47,17 @@ export async function onRequestPost({ request, env }) {
   // co-op lock at all.
   const coopLock = await assertNotInCoopSession(env, row.id)
   if (coopLock) return coopLock
+
+  // A lair is a boss fight whose loot the world Worker grants server-side, so
+  // its entry requirements are enforced here as well as in the client's combat
+  // screen — §20: a client-only gate is no gate. Kill counts come from the
+  // kill_counts table; they are not in the save (bossEntry.js).
+  const lairMonsterId = worldLairMonster(zone)
+  if (lairMonsterId && bossHasEntryGate(lairMonsterId)) {
+    const { saveObject } = await loadCharacterWithSave(env, row.id, auth.identity.id)
+    const gate = bossEntryFailure(lairMonsterId, saveObject, await loadBossKillCounts(env, row.id))
+    if (gate) return json({ error: gate.reason, code: 'BOSS_REQUIREMENTS_NOT_MET' }, 403)
+  }
 
   const handoff = await signJWT(
     { sub: auth.identity.id, character_id: row.id, scope: 'world_handoff', ...(zone ? { world_zone: zone } : {}) },

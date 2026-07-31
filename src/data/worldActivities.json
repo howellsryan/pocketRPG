@@ -1718,6 +1718,10 @@
     },
     {
       "kind": "combat",
+      "ref": "zaryth_the_empty_lord"
+    },
+    {
+      "kind": "combat",
       "ref": "threefang_cerberus"
     },
     {

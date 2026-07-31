@@ -8,8 +8,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import * as THREE from 'three'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createCowMesh, createMonsterMesh, loadTemplate } from '../client/src/entities'
-import { MONSTER_MODELS } from '../shared/monsterModels'
+import { MONSTER_ANIM_CLIPS, applyFormTint, createCowMesh, createMonsterMesh, loadTemplate, prepareFormTint } from '../client/src/entities'
+import { MONSTER_MODELS, formTintColor } from '../shared/monsterModels'
 
 const MODELS = path.join(__dirname, '../client/public/models')
 
@@ -95,6 +95,94 @@ describe('newly registered monster models', () => {
     // Derived from attackImpactSec; 0 would mean the clip fires on the tick
     // edge and the blow visibly lands early.
     expect((animator as { swingDelayMs?: number }).swingDelayMs).toBeGreaterThan(0)
+  })
+})
+
+describe('a multi-form boss wears its phase', () => {
+  const ZARYTH = 'zaryth_the_empty_lord'
+  const forms = MONSTER_MODELS[ZARYTH].formTint!
+
+  /** A stand-in for a loaded model: two meshes sharing ONE material, the way a
+   * cached GLTF's clones do — which is the whole reason the tint has to clone
+   * before it paints. Zaryth's own GLB is textured, so it can't be parsed in
+   * this Node harness (the loader reaches for ImageBitmap); the clip and asset
+   * invariants for it are structural instead. */
+  function fakeModel(): { group: THREE.Object3D; model: THREE.Object3D; shared: THREE.MeshStandardMaterial } {
+    const shared = new THREE.MeshStandardMaterial({ color: '#8899aa' })
+    shared.name = 'Body'
+    const model = new THREE.Group()
+    model.add(new THREE.Mesh(new THREE.BoxGeometry(), shared))
+    model.add(new THREE.Mesh(new THREE.BoxGeometry(), shared))
+    const group = new THREE.Group()
+    group.add(model)
+    return { group, model, shared }
+  }
+
+  it('paints a different colour per phase and puts the original back on the way out', () => {
+    const { group, model, shared } = fakeModel()
+    prepareFormTint(group, model)
+    const untinted = materialColors(group)
+
+    const seen = new Set<string>()
+    for (const form of Object.keys(forms)) {
+      applyFormTint(group, formTintColor(ZARYTH, form))
+      const painted = materialColors(group)
+      expect(painted).not.toEqual(untinted)
+      seen.add(JSON.stringify(painted))
+    }
+    expect(seen.size).toBe(Object.keys(forms).length)
+
+    // A respawned boss is its own colour again — the ORIGINAL, not the last
+    // phase blended over one more time.
+    applyFormTint(group, null)
+    expect(materialColors(group)).toEqual(untinted)
+    // And the material every other clone of this model shares was never touched.
+    expect(`#${shared.color.getHexString()}`).toBe('#8899aa')
+  })
+
+  it('leaves a phase tint on one boss alone', () => {
+    const a = fakeModel()
+    const b = fakeModel()
+    prepareFormTint(a.group, a.model)
+    prepareFormTint(b.group, b.model)
+
+    applyFormTint(a.group, formTintColor(ZARYTH, 'melee'))
+
+    expect(materialColors(b.group)).not.toEqual(materialColors(a.group))
+  })
+
+  it('has no colour for a form it does not tint, or a monster that does not phase', () => {
+    expect(formTintColor(ZARYTH, 'not_a_form')).toBeNull()
+    expect(formTintColor(ZARYTH, null)).toBeNull()
+    expect(formTintColor('green_dragon', 'melee')).toBeNull()
+  })
+})
+
+describe('every clip a shipped rig carries is one the animator binds', () => {
+  // The bug this pins: Zaryth's GLB ships attack_ranged and attack_magic and the
+  // monster animator asked for neither, so both fell back to the melee swing —
+  // invisible from the asset side, invisible from the code side, only visible
+  // where the two meet. Structural over every registered model, so a rebuild
+  // that adds a clip nothing plays fails here.
+  it.each(Object.entries(MONSTER_MODELS))('%s ships no clip the animator ignores', (_id, spec) => {
+    const glb = fs.readFileSync(path.join(MODELS, path.basename(spec.url)))
+    const json = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)).toString('utf8'))
+    for (const clip of (json.animations ?? []) as { name: string }[]) {
+      expect(MONSTER_ANIM_CLIPS, `clip '${clip.name}'`).toContain(clip.name)
+    }
+  })
+
+  // The flag's two halves are set in different files — the registry entry and
+  // the model's build script — so they drift silently in both directions: left
+  // on after a walk is built, the boss skates in its idle pose anyway (the alias
+  // wins); left off with no walk clip, it skates WITHOUT even the procedural
+  // gait that flag buys.
+  it.each(Object.entries(MONSTER_MODELS))('%s declares noLocomotionClip iff its GLB ships no walk', (_id, spec) => {
+    const glb = fs.readFileSync(path.join(MODELS, path.basename(spec.url)))
+    const json = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)).toString('utf8'))
+    const clips = ((json.animations ?? []) as { name: string }[]).map((c) => c.name)
+
+    expect(!clips.includes('walk')).toBe(!!spec.noLocomotionClip)
   })
 })
 

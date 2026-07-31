@@ -9,13 +9,15 @@ import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { combatLevelFromLevels } from '../../src/engine/combatLevel.js'
-import { startCombat, stepCombat, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
+import { MONSTER_CLIP_ATTACK_RANGED, monsterAttackClipName } from '../../src/engine/monsterClips.js'
+import { startCombat, stepCombat, resumeAggro, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
 import type { NpcState } from './npc'
 import type { LootEntity } from './loot'
 import { hasLineOfSight } from './los'
+import { protectionOverhead } from '../shared/prayer'
 import monstersData from '../../src/data/monsters.json'
 
-type MonsterStyles = Record<string, { attackStyle?: string } | undefined>
+type MonsterStyles = Record<string, { attackStyle?: string; forms?: Record<string, { attackStyle?: string } | undefined> } | undefined>
 const monsterStyles = monstersData as unknown as MonsterStyles
 
 export type TickAnim = EntityDiff['anim']
@@ -104,6 +106,11 @@ export type TickPlayer = {
    * when this changes, so a stationary target doesn't cost a pathfind every
    * tick while the follower is still en route. */
   followTargetTile: { x: number; z: number } | null
+  /** Overhead protection-prayer style last put on the wire. Prayers toggle
+   * BETWEEN ticks (a client message), so the tick's own before/after snapshot
+   * can't see the change — this is what makes the entity diff go out, the same
+   * way lastHpSent/lastPrayerSent gate their echoes. */
+  lastOverheadSent?: 'melee' | 'ranged' | 'magic' | null
 }
 
 // Running: 2 tiles/tick, ~100 energy drained over ~1 min of continuous running;
@@ -129,6 +136,11 @@ export type TickContext = {
    * aggressive npc chase its attacker (npc.ts) without needing the full
    * player record. */
   players?: Map<string, { x: number; z: number }>
+  /** This room is one instance of a boss lair, so a boss here has the run of it
+   * (npc.ts pursueLeashTiles). Not a property of the zone DEF: the same def is
+   * served as many rooms, and it is the private room, not the geography, that
+   * makes an unbounded chase fair. */
+  lair?: boolean
 }
 
 export type TickResult = {
@@ -230,18 +242,35 @@ export function rangeForCombatType(type: string): number {
   return type === 'magic' ? MAGIC_RANGE : type === 'ranged' ? RANGED_RANGE : MELEE_RANGE
 }
 
+/**
+ * The style a monster is fighting with. `form` is the FORM it is currently in
+ * (npc.currentForm) — a multi-form boss's top-level attackStyle is only its
+ * starting one, so reading that alone left Zaryth permanently ranged out here:
+ * always the shoot clip, always ranged reach, and the melee and magic clips its
+ * rig ships dead on arrival.
+ */
+export function monsterAttackStyle(monsterId: string, form?: string | null): string | undefined {
+  const monster = monsterStyles[monsterId]
+  const formStyle = form ? monster?.forms?.[form]?.attackStyle : null
+  return formStyle ?? monster?.attackStyle
+}
+
 /** A monster's attack reach from its attackStyle — magic/ranged strike from
  * afar; every melee style (stab/slash/crush/melee/unset) is 1 tile. */
-export function monsterAttackRange(monsterId: string): number {
-  const style = monsterStyles[monsterId]?.attackStyle
+export function monsterAttackRange(monsterId: string, form?: string | null): number {
+  const style = monsterAttackStyle(monsterId, form)
   return style === 'magic' ? MAGIC_RANGE : style === 'ranged' ? RANGED_RANGE : MELEE_RANGE
 }
 
 /** A monster's attack animation from its attackStyle — magic/ranged foes play a
- * distinct cast/shoot animation; everything else swings. */
-export function monsterAttackAnim(monsterId: string): 'attack' | 'attack_ranged' | 'attack_magic' {
-  const style = monsterStyles[monsterId]?.attackStyle
-  return style === 'magic' ? 'attack_magic' : style === 'ranged' ? 'attack_ranged' : 'attack'
+ * distinct cast/shoot animation; everything else swings. The melee branch defers
+ * to the shared clip table (src/engine/monsterClips.js), which is where a rig
+ * whose own melee clip is unusable is sent to its ranged one instead — the arena
+ * reads the same table, so both render paths swing alike. */
+export function monsterAttackAnim(monsterId: string, form?: string | null): 'attack' | 'attack_ranged' | 'attack_magic' {
+  const style = monsterAttackStyle(monsterId, form)
+  if (style === 'magic') return 'attack_magic'
+  return monsterAttackClipName(style, monsterId) === MONSTER_CLIP_ATTACK_RANGED ? 'attack_ranged' : 'attack'
 }
 
 export function withinRange(a: { x: number; z: number }, b: { x: number; z: number }, range: number): boolean {
@@ -536,6 +565,12 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
     startInteract(player, ctx, result)
   }
 
+  // An npc that chased its quarry back into reach re-opens the fight itself —
+  // npc.ts keeps ANY npc's target across a disengage now, so without this it
+  // would catch up and just stand there. Before the combat branch, so an npc
+  // that closed the gap this tick can land its swing on this same tick.
+  resumeAggro(player, ctx)
+
   // Combat ticks whether or not the player is moving: a ranged/magic monster
   // keeps attacking a fleeing player, and a kiting player keeps attacking back.
   // stepCombat gates each side by its own reach and ends the fight once the
@@ -561,7 +596,10 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
     emitSpecIfChanged(player, result.events)
   }
 
-  result.entChanged = player.x !== before.x || player.z !== before.z || player.anim !== before.anim || player.hp !== before.hp
+  const overhead = protectionOverhead(player.activeProtectionPrayer)
+  const overheadChanged = overhead !== (player.lastOverheadSent ?? null)
+  if (overheadChanged) player.lastOverheadSent = overhead
+  result.entChanged = overheadChanged || player.x !== before.x || player.z !== before.z || player.anim !== before.anim || player.hp !== before.hp
   return result
 }
 
@@ -584,6 +622,10 @@ export function toEntityDiff(player: TickPlayer): EntityDiff {
     gear: player.gear, hp: player.hp, maxHp: player.maxHp,
   }
   if (player.combat) diff.targetId = player.combat.npcId
+  // Overhead protection prayer, for everyone who can see this player. Absent
+  // means none — the client clears the icon rather than merging.
+  const overhead = protectionOverhead(player.activeProtectionPrayer)
+  if (overhead) diff.overhead = overhead
   return diff
 }
 

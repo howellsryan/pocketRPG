@@ -1281,6 +1281,21 @@
         }
       },
       {
+        "id": "make_zaryth_godsword",
+        "name": "Attach Zaryth hilt",
+        "level": 99,
+        "ticks": 100,
+        "xp": 0,
+        "product": "zaryth_godsword",
+        "materials": {
+          "zaryth_hilt": 1,
+          "grondar_godsword": 1,
+          "zephyra_godsword": 1,
+          "lumira_godsword": 1,
+          "krylth_godsword": 1
+        }
+      },
+      {
         "id": "make_dragonfire_shield",
         "name": "Attach dragon visage",
         "level": 90,

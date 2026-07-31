@@ -21,13 +21,16 @@ import { questRequirementMet } from './questGates.js'
  * @param {Set<string>|{has:(id:string)=>boolean}} ctx.completedQuests
  * @param {Record<string, number>} ctx.bossKillCounts
  * @param {Array<{id:string,name:string}>} ctx.questsData
+ * @param {Record<string, {name?:string}>} [ctx.monstersData] - names prerequisite bosses
  */
 export function checkBossRequirementsPure(monster, ctx = {}) {
   const {
     slayerLevel = 0,
     completedQuests = new Set(),
     bossKillCounts = {},
+    bossKillCountsLoaded = true,
     questsData = [],
+    monstersData = {},
   } = ctx
 
   if (!monster) return { locked: false }
@@ -48,6 +51,23 @@ export function checkBossRequirementsPure(monster, ctx = {}) {
   // Ember Tyrant kill.
   if (monster.id === 'ashen_crucible' && (!bossKillCounts['ember_tyrant'] || bossKillCounts['ember_tyrant'] < 1)) {
     return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
+  }
+
+  // Data-driven kill-count prerequisites: `killCountRequirement` maps a monster
+  // id to the kills needed before this boss opens. Names are resolved through
+  // the monster table so the reason reads as a boss name, not an id.
+  //
+  // Kill counts live in D1, not the save (§14), so on the client they arrive a
+  // fetch AFTER the rest of the state. Judging them before they land locks a
+  // boss the player has long since earned — pass `bossKillCountsLoaded: false`
+  // while that fetch is in flight and this gate holds its tongue. The server
+  // never passes it, because there the counts are read before the check.
+  for (const [requiredId, requiredKills] of (bossKillCountsLoaded ? Object.entries(monster.killCountRequirement || {}) : [])) {
+    const needed = Math.max(1, Math.floor(Number(requiredKills) || 1))
+    if ((Number(bossKillCounts[requiredId]) || 0) >= needed) continue
+    const name = monstersData?.[requiredId]?.name || requiredId.replace(/_/g, ' ')
+    const times = needed === 1 ? '' : ` ${needed} times`
+    return { locked: true, reason: `Defeat ${name}${times} to challenge ${monster.name}` }
   }
 
   return { locked: false }

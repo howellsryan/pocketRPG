@@ -57,3 +57,72 @@ describe('corpse linger covers the death clip', () => {
     }
   })
 })
+
+/** Every sampler in the GLB, as { clip, times, values } counts. Read straight
+ * from the JSON chunk so this checks the SHIPPED bytes, not what a build script
+ * believed it wrote. */
+function samplerCounts(glbPath: string): Array<{ clip: string; times: number; values: number }> {
+  const buf = readFileSync(glbPath)
+  const json = JSON.parse(buf.subarray(20, 20 + buf.readUInt32LE(12)).toString('utf8'))
+  const out: Array<{ clip: string; times: number; values: number }> = []
+  for (const clip of json.animations ?? []) {
+    for (const sampler of clip.samplers) {
+      out.push({
+        clip: clip.name,
+        times: json.accessors[sampler.input]?.count ?? -1,
+        values: json.accessors[sampler.output]?.count ?? -1,
+      })
+    }
+  }
+  return out
+}
+
+describe('every one of Zaryth\'s styles swings with the same clip', () => {
+  // Its own melee clip rears up, strikes, and then COLLAPSES to the floor over
+  // its last two seconds and holds there — a knock-down tail with no recovery,
+  // and trimmed at the follow-through it read as a slow reach. It rerolls its
+  // style every swing, so that was a third of everything you ever saw it do.
+  // The build script therefore ships `attack` as a copy of `attack_ranged`, and
+  // the shared clip table (src/engine/monsterClips.js) sends the arena's melee
+  // style to the same clip, so both render paths swing alike.
+  it('ships Zaryth\'s melee clip as a copy of its ranged one', () => {
+    const url = MONSTER_MODELS.zaryth_the_empty_lord.url
+    const path = fileURLToPath(new URL(`../client/public${url}`, import.meta.url))
+    const melee = clipDurationSec(path, 'attack')
+    expect(melee).toBeGreaterThan(0)
+    expect(melee).toBe(clipDurationSec(path, 'attack_ranged'))
+    // The strike the wind-up is aligned to has to fall inside the clip that
+    // actually plays, or the splat is aimed at a frame that never arrives.
+    const impact = MONSTER_MODELS.zaryth_the_empty_lord.attackImpactSec as number
+    expect(impact).toBeGreaterThan(0)
+    expect(melee).toBeGreaterThanOrEqual(impact)
+  })
+})
+
+describe('shipped monster rigs are structurally sound', () => {
+  // Zaryth's world GLB shipped with 107 of its die clip's 123 samplers holding
+  // more values than keyframe times, plus one broken sampler in every OTHER
+  // clip. A build step had sliced accessors in place, and dedup() had already
+  // merged those arrays across samplers and across clips, so the cut landed on
+  // data other tracks still pointed at. THREE throws building a KeyframeTrack
+  // from a mismatched pair, which took the entire world client down as soon as
+  // the model loaded — the boss was unplayable in the open world.
+  //
+  // Structural over every registered model: a build script that corrupts an
+  // asset fails here rather than in a player's browser.
+  it('gives every sampler one value per keyframe time', () => {
+    for (const [monsterId, spec] of Object.entries(MONSTER_MODELS)) {
+      const path = fileURLToPath(new URL(`../client/public${spec.url}`, import.meta.url))
+      const broken = samplerCounts(path).filter((s) => s.times !== s.values)
+      expect(broken, `${monsterId} has ${broken.length} corrupt samplers`).toEqual([])
+    }
+  })
+
+  it('ships a rig with animation data at all', () => {
+    // Guards the check above from passing vacuously on an empty animation list.
+    for (const [monsterId, spec] of Object.entries(MONSTER_MODELS)) {
+      const path = fileURLToPath(new URL(`../client/public${spec.url}`, import.meta.url))
+      expect(samplerCounts(path).length, `${monsterId} ships no animation samplers`).toBeGreaterThan(0)
+    }
+  })
+})

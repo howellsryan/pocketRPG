@@ -16,7 +16,6 @@ import monstersData from '../../../src/data/monsters.json' assert { type: 'json'
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import prayersData from '../../../src/data/prayers.json' assert { type: 'json' }
 import spellsData from '../../../src/data/spells.json' assert { type: 'json' }
-import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import { MAX_XP } from '../../../src/utils/constants.js'
 import {
   COOP_BOSS_IDS,
@@ -28,8 +27,8 @@ import {
   memberCount,
   removeCoopMember,
 } from '../../../src/engine/coopBossEngine.js'
-import { checkBossRequirementsPure } from '../../../src/engine/combatRequirements.js'
-import { getLevelFromXP } from '../../../src/engine/experience.js'
+import { bossEntryFailure, loadBossKillCounts } from './bossEntry.js'
+import { monsterMaxHitRange } from '../../../src/engine/monsterMaxHit.js'
 import { rollMonsterRewardsById } from './monsterRewards.js'
 import { rollRaidRewardsById } from './raidRewards.js'
 import { settleActionCompletion } from './actionCompletion.js'
@@ -69,7 +68,9 @@ export function coopBossSummary(bossId) {
     name: monster.name,
     combatLevel: monster.combatLevel,
     hitpoints: monster.hitpoints,
-    maxHit: monster.maxHit,
+    // Resolved, not the raw field: a boss that rotates style authors its max
+    // hit per form and has none of its own, so the raw read reported null.
+    maxHit: monsterMaxHitRange(monster).max,
     questRequirement: monster.questRequirement ?? null,
     slayerRequirement: monster.slayerRequirement ?? null,
     maxMembers: COOP_MAX_MEMBERS,
@@ -336,45 +337,23 @@ function toOpenSession(row) {
   }
 }
 
-function questIdSet(saveObject) {
-  const completed = saveObject?.completedQuests
-  if (Array.isArray(completed)) return new Set(completed)
-  if (completed && typeof completed === 'object') {
-    return new Set(Object.keys(completed).filter((q) => completed[q]))
-  }
-  return new Set()
-}
-
-function slayerLevelOf(saveObject) {
-  const slayer = saveObject?.stats?.slayer
-  if (typeof slayer === 'number') return Math.max(1, Math.floor(slayer))
-  const level = Number(slayer?.level)
-  if (Number.isFinite(level) && level > 0) return Math.floor(level)
-  return getLevelFromXP(Number(slayer?.xp) || 0)
-}
-
-function bossKillCountsFrom(saveObject) {
-  const counts = saveObject?.bossKillCounts
-  return counts && typeof counts === 'object' ? counts : {}
-}
-
 /**
  * The full boss gate, server-side. The client runs the same check to grey the
  * button out, but the server grants this boss's drop table (§14) — so the
  * Slayer level and the kill-count prerequisites have to be enforced here too,
  * not just the quest. A crafted POST otherwise walked straight into a boss the
  * player had not unlocked and collected its uniques.
+ *
+ * `bossKillCounts` comes from the kill_counts table, never the save (see
+ * bossEntry.js) — reading it from the blob is what locked players out of a
+ * kill-count-gated boss they had every kill for.
  */
-export function coopBossRequirementFailure(bossId, saveObject) {
-  const monster = monstersData?.[bossId]
-  if (!monster) return { code: 'INVALID_COOP_BOSS', message: 'Boss is not available co-operatively' }
-  const gate = checkBossRequirementsPure({ ...monster, id: bossId }, {
-    slayerLevel: slayerLevelOf(saveObject),
-    completedQuests: questIdSet(saveObject),
-    bossKillCounts: bossKillCountsFrom(saveObject),
-    questsData,
-  })
-  if (!gate.locked) return null
+export function coopBossRequirementFailure(bossId, saveObject, bossKillCounts = {}) {
+  if (!monstersData?.[bossId]) {
+    return { code: 'INVALID_COOP_BOSS', message: 'Boss is not available co-operatively' }
+  }
+  const gate = bossEntryFailure(bossId, saveObject, bossKillCounts)
+  if (!gate) return null
   return { code: 'BOSS_REQUIREMENTS_NOT_MET', message: gate.reason }
 }
 
@@ -408,7 +387,7 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
   }
 
   const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
-  const gate = coopBossRequirementFailure(bossId, saveObject)
+  const gate = coopBossRequirementFailure(bossId, saveObject, await loadBossKillCounts(env, characterId))
   if (gate) throw new GameApiError(gate.code, gate.message, 403)
 
   const monster = monstersData[bossId]

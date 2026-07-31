@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { buildSavePayloadFromSnapshot, applySavePayload, buildSavePayloadFromState } from '../src/db/saveload.js'
 import * as dbModule from '../src/db/database.js'
+import * as storesModule from '../src/db/stores.js'
 
 describe('save payload snapshot', () => {
   it('includes durable settings and normalizes sets', () => {
@@ -103,6 +104,45 @@ describe('save payload snapshot', () => {
       { username: 'Tester' }, {}, [], {}, {}, null, null, {}, [], [], 'accurate', []
     )
     expect(payload.settings.unlockedFeatures).toEqual([])
+  })
+
+  it('carries kill counts across the wipe, because the payload cannot', async () => {
+    // The two halves of this are a trap for each other: the payload strips kill
+    // counts (asserted above) because they are server-authoritative, and
+    // applySavePayload wipes IDB before writing. Together that deleted them on
+    // every save pull — so leaving a co-op fight or dying re-locked a
+    // kill-count-gated boss the player had already unlocked.
+    const stored: Record<string, unknown> = {}
+    vi.spyOn(storesModule, 'getSetting').mockImplementation(async (key: string) =>
+      ({ bossKillCounts: { warlord_grondar: 4 }, raidKillCounts: { vaults: 2 } } as any)[key])
+    vi.spyOn(dbModule, 'clearAllStores').mockResolvedValue(undefined as any)
+    vi.spyOn(dbModule, 'getDB').mockResolvedValue({
+      put: vi.fn(),
+      transaction: vi.fn(() => ({
+        store: { put: (val: any, key: string) => { stored[key] = val } },
+        done: Promise.resolve(),
+      })),
+    } as any)
+
+    await applySavePayload({ stats: {}, inventory: [], bank: {}, equipment: {}, settings: {} })
+
+    expect(stored.bossKillCounts).toEqual({ key: 'bossKillCounts', value: { warlord_grondar: 4 } })
+    expect(stored.raidKillCounts).toEqual({ key: 'raidKillCounts', value: { vaults: 2 } })
+  })
+
+  it('writes nothing extra when there are no kill counts to carry', async () => {
+    const stored: Record<string, unknown> = {}
+    vi.spyOn(storesModule, 'getSetting').mockResolvedValue(undefined as any)
+    vi.spyOn(dbModule, 'clearAllStores').mockResolvedValue(undefined as any)
+    vi.spyOn(dbModule, 'getDB').mockResolvedValue({
+      put: vi.fn(),
+      transaction: vi.fn(() => ({
+        store: { put: (val: any, key: string) => { stored[key] = val } },
+        done: Promise.resolve(),
+      })),
+    } as any)
+    await applySavePayload({ stats: {}, inventory: [], bank: {}, equipment: {}, settings: {} })
+    expect(Object.keys(stored)).toEqual([])
   })
 
   it('does not restore local idle mirrors by default', async () => {

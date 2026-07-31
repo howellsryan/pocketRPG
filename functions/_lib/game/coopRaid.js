@@ -20,6 +20,7 @@ import {
 } from '../../../src/engine/coopBossEngine.js'
 import { COOP_RAID_IDS, coopRaidData, coopRaidSummary, isCoopRaidId } from '../../../src/engine/coopRaidEngine.js'
 import { checkRaidRequirementsPure } from '../../../src/engine/combatRequirements.js'
+import { completedQuestIds } from './bossEntry.js'
 import { loadCharacterWithSave, writeSave } from './save.js'
 import { GameApiError } from './errors.js'
 import { callCoopRoom, coopRoomSupportsRaids, coopRoomsAvailable } from './coopRoom.js'
@@ -41,15 +42,6 @@ export function coopRaidCatalogue() {
   return COOP_RAID_IDS.map((raidId) => coopRaidSummary(raidId, monstersData)).filter(Boolean)
 }
 
-function questIdSet(saveObject) {
-  const completed = saveObject?.completedQuests
-  if (Array.isArray(completed)) return new Set(completed)
-  if (completed && typeof completed === 'object') {
-    return new Set(Object.keys(completed).filter((q) => completed[q]))
-  }
-  return new Set()
-}
-
 /**
  * The raid gate, server-side. The server grants this raid's reward table, so a
  * client-only gate is no gate — the same reasoning as
@@ -59,7 +51,7 @@ function questIdSet(saveObject) {
 export function coopRaidRequirementFailure(raidId, saveObject) {
   const raid = raidsData?.[raidId]
   if (!raid || !isCoopRaidId(raidId)) return { code: 'INVALID_COOP_RAID', message: 'That raid cannot be run as a party' }
-  const gate = checkRaidRequirementsPure(raid, { completedQuests: questIdSet(saveObject) })
+  const gate = checkRaidRequirementsPure(raid, { completedQuests: completedQuestIds(saveObject) })
   if (!gate.locked) return null
   return { code: 'RAID_REQUIREMENTS_NOT_MET', message: gate.reason }
 }

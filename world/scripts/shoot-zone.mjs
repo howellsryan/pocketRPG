@@ -12,6 +12,7 @@ import { spawn, execFileSync } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { existsSync } from 'node:fs'
 import { chromium } from 'playwright'
 
 const worldDir = fileURLToPath(new URL('..', import.meta.url))
@@ -52,7 +53,11 @@ await new Promise((resolve, reject) => {
   })
 })
 
-const browser = await chromium.launch()
+// Cloud sessions ship a pre-installed Chromium and block the post-install
+// browser download, so fall back to it rather than failing the visual gate.
+const executablePath = process.env.PLAYWRIGHT_CHROMIUM
+  || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined)
+const browser = await chromium.launch({ executablePath })
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 })
   for (const zone of ZONES) {

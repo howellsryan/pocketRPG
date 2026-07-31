@@ -21,7 +21,9 @@ import { getMonsterCharmDrops, getSummoningCreature, rollSummonAttack, SUMMON_AT
 import { countItem } from './inventory.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
-import { getAddSpec, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, isAddAlive, activeTarget, isAddTarget } from './bossAdds.js'
+import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, randomFormSwitchThreshold } from './bossForms.js'
+import { getAddSpec, addDefinitionsFor, selectAddDefinition, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
+import { monsterMaxHit } from './monsterMaxHit.js'
 
 
 function getAvasAmmoSaveChance(equipment) {
@@ -46,7 +48,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
   // Apply initial form for multi-form bosses (e.g. Venomcoil Matriarch)
   let preparedMonster = prepareMonster(monster)
   const addSpec = getAddSpec(monster)
-  const addDefinition = addSpec && monstersData ? monstersData[addSpec.monsterId] || null : null
+  const addDefinitions = addSpec ? addDefinitionsFor(addSpec, monstersData) : null
+  const addDefinition = selectAddDefinition(addDefinitions, preparedMonster)
   return {
     active: true,
     monster: preparedMonster,
@@ -73,23 +76,34 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     doubleKillCount: 0,            // tracks how many times a requiresDoubleKill boss has been defeated
     raid: null,                    // raid state: { raidId, bosses[], currentBossIndex, monstersData }
     summon: null,                  // active summoned creature: { creatureId, ticksLeft, attackTimer }
-    // Boss add (e.g. the Dread Core): a second live monster, not a form change.
-    addDefinition,                 // monster definition the boss spawns, or null
-    add: null,                     // the spawned add while it is alive
-    addTargeted: false,            // player swings at the add instead of the boss
+    // Boss adds (e.g. the Dread Core): live monsters alongside the boss, not a
+    // form change. A LIST — a boss may field up to maxActiveAdds of them at once.
+    addDefinition,                 // monster definition the boss spawns right now, or null
+    addDefinitions,                // every add the boss can spawn, keyed by the form that summons it
+    adds: [],                      // the spawned adds still standing, in spawn order
+    addTargetIndex: null,          // index into adds the player swings at; null = the boss
+    maxActiveAdds: maxActiveAdds(addSpec),
     addSpawnCountdown: addDefinition ? rollFirstSpawnDelay(addSpec) : null,
+    // Set by a caller that owns the boss record and rolls its form once per
+    // swing for every session at once (co-op, the open world) — see bossForms.js.
+    formPinned: false,
+    addsSpawned: 0,                // lifetime count, so the variant selection can cycle
     addsDefeated: 0
   }
 }
 
 /**
- * Point the player's attacks at the boss or its add. Returns a new state; a
- * request to target a dead or absent add falls back to the boss.
+ * Point the player's attacks at the boss or at one of its adds. Returns a new
+ * state; a request to target a dead or absent add falls back to the boss.
  */
 export function setCombatTarget(combatState, target) {
   if (!combatState) return combatState
-  const wantsAdd = target === 'add'
-  return { ...combatState, addTargeted: wantsAdd && isAddAlive(combatState) }
+  const adds = Array.isArray(combatState.adds) ? combatState.adds : []
+  // 'add' with no index means the front of the stack, which is what a
+  // single-add boss has always meant.
+  const index = typeof target === 'number' ? target : target === 'add' ? adds.findIndex((a) => a?.currentHP > 0) : -1
+  const alive = index >= 0 && adds[index]?.currentHP > 0
+  return { ...combatState, addTargetIndex: alive ? index : null }
 }
 
 /**
@@ -97,18 +111,12 @@ export function setCombatTarget(combatState, target) {
  */
 function prepareMonster(monster) {
   let preparedMonster = { ...monster, currentHP: monster.hitpoints }
-  if (monster.multiForm && monster.forms) {
+  if (isMultiForm(monster)) {
     const formKey = monster.initialForm || Object.keys(monster.forms)[0]
-    const form = monster.forms[formKey]
+    const form = applyForm(preparedMonster, formKey)
     if (form) {
-      preparedMonster.currentForm = formKey
       preparedMonster.formAttackCount = 0
       preparedMonster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
-      preparedMonster.attackStyle = form.attackStyle
-      preparedMonster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0
-      preparedMonster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0
-      preparedMonster.defenceBonus = { ...form.defenceBonus }
-      preparedMonster.formMaxHit = form.maxHit
       // Verzik phased boss: use first form's phaseHP as starting HP
       if (monster.verzikPhased && form.phaseHP) {
         preparedMonster.hitpoints = form.phaseHP
@@ -142,27 +150,6 @@ export function createRaidCombatState(raidData, monstersData, combatType = 'mele
  * Pick a random number of attacks (within formSwitchMin..formSwitchMax)
  * that a multi-form monster will use before switching forms.
  */
-function randomFormSwitchThreshold(monster) {
-  const min = monster.formSwitchMin || 1
-  const max = Math.max(min, monster.formSwitchMax || 5)
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-/**
- * Pick the next form. If formCycleOrder is defined, cycles in order;
- * otherwise picks a random form (including possibly the current one).
- */
-function pickNextForm(monster) {
-  const keys = Object.keys(monster.forms || {})
-  if (keys.length <= 1) return monster.currentForm
-  if (monster.formCycleOrder && Array.isArray(monster.formCycleOrder)) {
-    const cycle = monster.formCycleOrder
-    const idx = cycle.indexOf(monster.currentForm)
-    return cycle[(idx + 1) % cycle.length]
-  }
-  return keys[Math.floor(Math.random() * keys.length)]
-}
-
 /**
  * If a multi-form boss has an enrage threshold and its HP just dropped below it,
  * switch to the enraged form once and emit a bossEnrage event. No-op otherwise.
@@ -220,26 +207,11 @@ function resolveEnemySwing(attacker, attackStyle, state, boostedPlayerStats, pla
   const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8
   const defRoll = effDef * ((bonuses.defenceBonus[attackStyle] || bonuses.defenceBonus.crush || 0) + 64)
   const acc = hitChance(monsterAtkRoll, defRoll)
-  // Max hit precedence:
-  //  1. per-form maxHit (multi-form bosses)
-  //  2. derived from the offensive stat that matches the attack style —
-  //     ranged attacks scale with Ranged, magic with Magic, melee with Strength.
-  //     This is the single source of truth for non-multi-form monsters.
-  let monsterMaxHit
-  if (attacker.formMaxHit != null) {
-    monsterMaxHit = attacker.formMaxHit
-  } else if (attacker.maxHit != null) {
-    monsterMaxHit = attacker.maxHit
-  } else {
-    const damageStat = attackStyle === 'ranged'
-      ? attacker.stats.ranged
-      : attackStyle === 'magic'
-        ? attacker.stats.magic
-        : attacker.stats.strength
-    const stat = (damageStat == null) ? attacker.stats.strength : damageStat
-    monsterMaxHit = Math.floor(0.5 + (stat + 8) * ((attacker.strengthBonus || 0) + 64) / 640)
-  }
-  let damage = rollDamage(acc, monsterMaxHit)
+  // Per-form maxHit, then the monster's own, then derived from the stat that
+  // matches the attack style — monsterMaxHit.js owns that precedence so the
+  // info surfaces quote the same number this rolls.
+  const monsterMax = monsterMaxHit(attacker, attackStyle)
+  let damage = rollDamage(acc, monsterMax)
 
   // Apply protection prayer damage reduction if active and matches attack style
   if (state.activeProtectionPrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activeProtectionPrayer]) {
@@ -293,9 +265,15 @@ function resolveEnemySwing(attacker, attackStyle, state, boostedPlayerStats, pla
 function resolveTargetDeath(state, target, events, isOnTask = false) {
   if (isAddTarget(state, target)) {
     target.currentHP = 0
-    state.add = null
-    state.addTargeted = false
+    const index = addIndexOf(state, target)
+    state.adds = state.adds.filter((add) => add !== target)
+    // The list shifted under the selection: drop back to the boss rather than
+    // silently re-pointing the player at whichever add slid into the slot.
+    if (state.addTargetIndex === index) state.addTargetIndex = null
+    else if (typeof state.addTargetIndex === 'number' && state.addTargetIndex > index) state.addTargetIndex -= 1
     state.addsDefeated = (state.addsDefeated || 0) + 1
+    // A killed add always restarts the wait, even from a full field — that is
+    // what makes clearing them a treadmill rather than a one-off.
     state.addSpawnCountdown = rollRespawnDelay(getAddSpec(state.monster))
     events.push({ type: 'addDefeated', monsterName: target.name, bossName: state.monster?.name })
     return false
@@ -427,9 +405,9 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
 
   // True death (non-raid)
   state.active = false
-  // The boss dying takes its add off the field with it.
-  state.add = null
-  state.addTargeted = false
+  // The boss dying takes its adds off the field with it.
+  state.adds = []
+  state.addTargetIndex = null
   state.specialAttackEnergy = 100
   state.loot = rollDrops(monster, isOnTask)
   events.push({
@@ -1076,22 +1054,34 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
   }
 
-  // ── Add Attack ──
-  // The add fights on its own timer alongside the boss, so a tick can carry a
-  // hit from each. Two monsterHit events in one tick apply cumulatively —
-  // the screen subtracts each event's damage rather than reading playerHP.
-  if (state.active && isAddAlive(state)) {
-    const add = state.add
-    add.attackTimer = (add.attackTimer || 0) - 1
-    if (add.attackTimer <= 0) {
+  // ── Add Attacks ──
+  // Every add fights on its own timer alongside the boss, so one tick can carry
+  // a hit from each of them and from the boss. Several monsterHit events in one
+  // tick apply cumulatively — the screen subtracts each event's damage rather
+  // than reading playerHP.
+  if (state.active) {
+    let addDamageLanded = false
+    const adds = Array.isArray(state.adds) ? state.adds : []
+    for (let addIndex = 0; addIndex < adds.length; addIndex++) {
+      const add = adds[addIndex]
+      if (!add || add.currentHP <= 0) continue
+      add.attackTimer = (add.attackTimer || 0) - 1
+      if (add.attackTimer > 0) continue
       add.attackTimer = Math.max(1, Math.floor(add.attackSpeed || 4))
+      // `addIndex` rides the event because several adds can swing on one tick
+      // and a caller may have to gate them separately — the open world checks
+      // each minion's own reach to the player it is mirrored onto.
       const addDamage = resolveEnemySwing(
-        add, add.attackStyle, state, boostedPlayerStats, playerStats, bonuses, prayersData, events, { fromAdd: true }
+        add, add.attackStyle, state, boostedPlayerStats, playerStats, bonuses, prayersData, events, { fromAdd: true, addIndex }
       )
-      if (addDamage > 0) {
-        const armourSlots = chargedScaleArmourSlots(equipment, itemsData)
-        if (armourSlots.length) events.push({ type: 'consumeArmourCharge', slots: armourSlots, qty: 1 })
-      }
+      if (addDamage > 0) addDamageLanded = true
+    }
+    // One charge per TICK the wearer was hit, not one per attacker — the armour
+    // burns a charge for taking a hit, and three minions landing together is
+    // still one exchange.
+    if (addDamageLanded) {
+      const armourSlots = chargedScaleArmourSlots(equipment, itemsData)
+      if (armourSlots.length) events.push({ type: 'consumeArmourCharge', slots: armourSlots, qty: 1 })
     }
   }
 
@@ -1148,52 +1138,46 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     state.monsterAttackTimer = monster.attackSpeed || 4
 
     // ── Add spawn ──
-    if (state.addDefinition && !state.add && typeof state.addSpawnCountdown === 'number') {
+    const canSummon = (state.addDefinitions || state.addDefinition)
+      && liveAdds(state).length < (state.maxActiveAdds || 1)
+    if (canSummon && typeof state.addSpawnCountdown === 'number') {
       state.addSpawnCountdown--
       if (state.addSpawnCountdown <= 0) {
-        state.add = prepareAdd(state.addDefinition)
-        state.addSpawnCountdown = null
+        // Resolved at spawn time, not at fight start: a style-rotating boss
+        // summons the minion matching the form it is in when the timer lands.
+        state.addsSpawned = (state.addsSpawned || 0) + 1
+        const spawned = prepareAdd(
+          selectAddDefinition(state.addDefinitions, monster, state.addsSpawned - 1) || state.addDefinition,
+          state.addsSpawned,
+        )
+        if (!Array.isArray(state.adds)) state.adds = []
+        state.adds.push(spawned)
+        // Straight into the next wait: leaving one alive is what lets the stack
+        // grow, so the countdown restarts even while the field is not empty.
+        state.addSpawnCountdown = liveAdds(state).length < (state.maxActiveAdds || 1)
+          ? rollRespawnDelay(getAddSpec(state.monster))
+          : null
         events.push({
           type: 'addSpawned',
-          monsterName: state.add.name,
+          monsterName: spawned.name,
           bossName: monster.name,
-          hitpoints: state.add.hitpoints,
-          icon: state.add.icon || ''
+          hitpoints: spawned.hitpoints,
+          icon: spawned.icon || ''
         })
       }
     }
 
     // ── Multi-form switch check (e.g. Venomcoil Matriarch) ──
-    if (monster.multiForm && monster.forms) {
-      monster.formAttackCount = (monster.formAttackCount || 0) + 1
-      if (monster.formAttackCount >= (monster.formSwitchThreshold || 3)) {
-        const previousForm = monster.currentForm
-        const nextKey = pickNextForm(monster)
-        const nextForm = monster.forms[nextKey]
-        if (nextForm) {
-          monster.currentForm = nextKey
-          monster.attackStyle = nextForm.attackStyle
-          monster.attackBonus = nextForm.attackBonus ?? monster.attackBonus
-          monster.strengthBonus = nextForm.strengthBonus ?? monster.strengthBonus
-          monster.defenceBonus = { ...nextForm.defenceBonus }
-          monster.formMaxHit = nextForm.maxHit
-          monster.formAttackCount = 0
-          // For per-attack randomization, keep threshold at 1; otherwise randomize
-          monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
-          // Delay next attack by one cycle after a form change so the player can adapt
-          state.monsterAttackTimer = (monster.attackSpeed || 4)
-          events.push({
-            type: 'formChange',
-            previousForm,
-            currentForm: nextKey,
-            displayName: nextForm.displayName || nextKey,
-            icon: nextForm.icon || '',
-            attackStyle: nextForm.attackStyle,
-            weakness: nextForm.weakness,
-            immunity: nextForm.immunity,
-            monsterName: monster.name
-          })
-        }
+    // Skipped when the form is PINNED: co-op and the open world roll it once on
+    // the shared boss record and copy it onto every session, so a session doing
+    // its own would give each player a differently-formed boss off one health
+    // bar (src/engine/bossForms.js).
+    if (!state.formPinned) {
+      const change = advanceSharedForm(monster)
+      if (change) {
+        // Delay next attack by one cycle after a form change so the player can adapt
+        state.monsterAttackTimer = formChangeAttackTimer(monster)
+        events.push(change)
       }
     }
   }
@@ -1373,9 +1357,15 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
   // Specials land on whichever enemy the player has targeted, so a queued spec
   // is not silently redirected to the boss when the add is selected.
   const source = activeTarget(combatState)
-  const targetsAdd = isAddTarget(combatState, source)
+  const addIndex = addIndexOf(combatState, source)
+  const targetsAdd = addIndex >= 0
   const monster = { ...source, defenceBonus: { ...source.defenceBonus }, stats: { ...source.stats } }
-  const state = { ...combatState, ...(targetsAdd ? { add: monster } : { monster }) }
+  // The clone has to sit in the list, not beside it: isAddTarget is identity-
+  // based, so an add resolved off a copy the list does not hold would be read as
+  // the boss and its death would end the fight.
+  const state = targetsAdd
+    ? { ...combatState, adds: combatState.adds.map((add, i) => (i === addIndex ? monster : add)) }
+    : { ...combatState, monster }
   const events = []
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const weaponStyle = getMeleeAttackStyle(equipment, itemsData)
@@ -1655,6 +1645,42 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
       events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'pebble_shot', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'empty_bolt': {
+      // Zaryth Crossbow — guaranteed hit at 150% max hit. No accuracy roll at
+      // all, so the floor is 1: this special can never be a zero.
+      const styleBonus = getRangedStyleBonus(state.stance)
+      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      const maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * 1.5)
+      const damage = randInt(1, Math.max(1, maxHit))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'empty_bolt', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'empty_lord_cleave': {
+      // Zaryth Godsword — 150% max hit, healing for half the damage that lands.
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * 1.5)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const healAmount = Math.floor(actual / 2)
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'empty_lord_cleave', healAmount, monsterHP: monster.currentHP })
       break
     }
 
@@ -1947,7 +1973,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
   // Only update the target if it's still alive — death handling may have
   // replaced it (raid advancement) or cleared it (an add despawning).
   if (monster.currentHP > 0) {
-    if (targetsAdd) state.add = monster
+    if (targetsAdd) state.adds[addIndex] = monster
     else state.monster = monster
   }
   return { combatState: state, events }

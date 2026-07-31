@@ -61,6 +61,30 @@ export function questGatesDisabled() {
 }
 
 /**
+ * The completed-quest set held in a SAVE PAYLOAD, as a Set.
+ *
+ * Its home is `settings.completedQuests` — the top level is where three server
+ * paths mistakenly looked for it, each of which then gated on an empty set and
+ * failed open (co-op boss and raid entry) or closed (equipping gated gear
+ * inside a fight). Anything reading quests off a save goes through here so
+ * there is one answer to "where does it live". The top-level fallback covers
+ * save shapes that predate the split; it is a fallback, not the path.
+ *
+ * This reports COMPLETION, so it deliberately does not consult the preview
+ * bypass — `questRequirementMet` is the only thing that may (§4).
+ */
+export function completedQuestsFromSave(saveObject) {
+  const fromSettings = saveObject?.settings?.completedQuests
+  const completed = fromSettings !== undefined ? fromSettings : saveObject?.completedQuests
+  if (completed instanceof Set) return new Set(completed)
+  if (Array.isArray(completed)) return new Set(completed.filter((q) => typeof q === 'string'))
+  if (completed && typeof completed === 'object') {
+    return new Set(Object.keys(completed).filter((q) => completed[q]))
+  }
+  return new Set()
+}
+
+/**
  * The single funnel for "does the player meet this quest requirement". Accepts
  * whatever shape the caller holds the completed quests in — Set, array, or the
  * plain object a save blob deserialises to.

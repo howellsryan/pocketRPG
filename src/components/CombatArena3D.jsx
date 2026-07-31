@@ -7,6 +7,7 @@ import { createProcCreature } from '../3d/rigs.js'
 import { mountArenaBiome } from '../3d/biomes.js'
 import { TICK_DURATION } from '../utils/constants.js'
 import { resolveWindupTick } from '../utils/combatWindup.js'
+import { selectMonsterAttackClip, monsterAttackClipName } from '../engine/monsterClips.js'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
@@ -38,7 +39,25 @@ const LOAD_TIMEOUT_MS = 12000    // release the combat hold even if loading drag
 const MONSTER_FALL_ANGLE = Math.PI * 0.42
 const MONSTER_FALL_RATE = 3.2
 
+// Points `st.monsterAttackAction` at the clip for the style the monster is
+// about to swing with. A rig with one attack clip resolves to it for every
+// style, so this is a no-op there.
+function stopMonsterAttackActions(st) {
+  for (const action of Object.values(st.monsterAttackActions || {})) action.stop()
+}
+
+function selectMonsterAttackAction(st, attackStyle, monsterId) {
+  const actions = st.monsterAttackActions
+  if (!actions) return
+  const next = actions[monsterAttackClipName(attackStyle, monsterId)] || actions.Attack || Object.values(actions)[0] || null
+  if (!next || next === st.monsterAttackAction) return
+  // Mid-swing the running clip keeps the body; swapping under it snaps the rig.
+  if (st.monsterAttackAction && st.monsterAttackAction.isRunning()) return
+  st.monsterAttackAction = next
+}
+
 function CombatArena3D({
+  monsterId = null,
   monsterName,
   monsterPath,
   monsterProc = null,
@@ -54,6 +73,8 @@ function CombatArena3D({
   attackSignal = null,
   windupSignal = null,
   monsterAttackImpactSec = null,
+  monsterAttackMaxSec = null,
+  monsterAttackStyle = null,
   monsterHP,
   playerHP,
   monsterSplats,
@@ -82,6 +103,11 @@ function CombatArena3D({
   const monsterProcRef = useRef(monsterProc)
   const biomeRef = useRef(biome)
   biomeRef.current = biome
+  // The style of the monster's NEXT swing. A rigged monster's swing is led by
+  // the wind-up a tick early, and a style-rotating boss has already picked the
+  // upcoming form by then, so reading it there selects the right clip.
+  const monsterAttackStyleRef = useRef(monsterAttackStyle)
+  monsterAttackStyleRef.current = monsterAttackStyle
 
   useEffect(() => {
     if ((!characterPath && !heroProcRef.current) || (!monsterPath && !monsterProc) || !canRender3D()) { setFailed(true); return }
@@ -295,13 +321,27 @@ function CombatArena3D({
         const idleClip = mAnims.find((c) => c.name === 'Idle') || mAnims[0]
         st.monsterIdleAction = st.monsterMixer.clipAction(idleClip)
         st.monsterIdleAction.play()
-        const attackClip = mAnims.find((c) => c.name === 'Attack')
-        if (attackClip) {
-          st.monsterAttackAction = st.monsterMixer.clipAction(attackClip)
-          st.monsterAttackAction.setLoop(THREE.LoopOnce, 1)
-          st.monsterAttackAction.clampWhenFinished = true // hold the end frame; crossfade below (no bind-pose snap)
+        // A rig may carry a second attack clip for ranged/magic swings. Both are
+        // prepared here and the live one is chosen per swing from the style the
+        // monster is about to attack with (selectMonsterAttackAction).
+        st.monsterAttackActions = {}
+        for (const style of ['melee', 'ranged']) {
+          const clip = selectMonsterAttackClip(mAnims, style, monsterId)
+          if (!clip || st.monsterAttackActions[clip.name]) continue
+          // Registry cap (attackMaxSec): a rig whose attack clip ends by
+          // collapsing to the floor is cut at the follow-through, or every swing
+          // reads as the monster dropping dead. Min, so it's idempotent on the
+          // cached clip this mixer shares with the next fight.
+          if (monsterAttackMaxSec > 0) clip.duration = Math.min(clip.duration, monsterAttackMaxSec)
+          const action = st.monsterMixer.clipAction(clip)
+          action.setLoop(THREE.LoopOnce, 1)
+          action.clampWhenFinished = true // hold the end frame; crossfade below (no bind-pose snap)
+          st.monsterAttackActions[clip.name] = action
+        }
+        if (Object.keys(st.monsterAttackActions).length) {
+          selectMonsterAttackAction(st, monsterAttackStyleRef.current, monsterId)
           st.monsterMixer.addEventListener('finished', (e) => {
-            if (st.disposed || e.action !== st.monsterAttackAction) return
+            if (st.disposed || !Object.values(st.monsterAttackActions).includes(e.action)) return
             e.action.fadeOut(0.25)
             st.monsterIdleAction.enabled = true
             st.monsterIdleAction.fadeIn(0.25).play()
@@ -458,7 +498,7 @@ function CombatArena3D({
       if (st.monsterDeathAction) {
         // A real baked death clip takes over entirely — no coded topple.
         if (dead) {
-          st.monsterAttackAction && st.monsterAttackAction.stop()
+          stopMonsterAttackActions(st)
           st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
           st.monsterDeathAction.reset().fadeIn(0.1).play()
         } else {
@@ -467,7 +507,7 @@ function CombatArena3D({
         }
       } else {
         st.monsterFallTarget = dead ? 1 : 0
-        if (dead) st.monsterAttackAction && st.monsterAttackAction.stop()
+        if (dead) stopMonsterAttackActions(st)
       }
     }
     wasDeadRef.current = dead
@@ -579,6 +619,7 @@ function CombatArena3D({
       } else if (st.monsterAttackAction) {
         if (st.monsterLedAttack) reactDelay = 0
         else {
+          selectMonsterAttackAction(st, monsterAttackStyleRef.current, monsterId)
           st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
           st.monsterAttackAction.reset().fadeIn(0.1).play()
         }
@@ -626,6 +667,7 @@ function CombatArena3D({
     const st = stateRef.current
     if (!windupSignal || !st || st.disposed || !st.monsterAttackAction) return
     if (st.monsterSwingScheduled || (st.monsterFallCur || 0) > 0.02) return
+    selectMonsterAttackAction(st, monsterAttackStyleRef.current, monsterId)
     const ticks = windupSignal.ticks || 0
     if (ticks < 1) return
     const clip = st.monsterAttackAction.getClip()

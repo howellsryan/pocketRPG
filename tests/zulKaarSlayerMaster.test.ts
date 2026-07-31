@@ -44,9 +44,13 @@ describe('Zul-Kaar slayer master', () => {
     expect(place.name).toBe(zulKaar.location)
   })
 
-  it('every non-raid boss:true monster appears in the pool directly', () => {
+  // Bosses gated on other bosses' kill counts are deliberately absent: this
+  // pool's eligibility check reads slayer level and quests only, so assigning
+  // one would hand out a task the combat gate refuses to start.
+  it('every non-raid boss:true monster without a kill-count gate appears in the pool directly', () => {
     const pooledIds = new Set(zulKaar.monsterPool.map(getEntryId))
-    const allBossIds = Object.keys(monsters).filter(id => monsters[id]?.boss === true && !raidMonsterIds.has(id))
+    const allBossIds = Object.keys(monsters).filter(id =>
+      monsters[id]?.boss === true && !raidMonsterIds.has(id) && !(monsters[id] as any)?.killCountRequirement)
     const missing = allBossIds.filter(id => !pooledIds.has(id))
     expect(missing, `boss ids missing from zul_kaar pool: ${missing.join(', ')}`).toEqual([])
   })

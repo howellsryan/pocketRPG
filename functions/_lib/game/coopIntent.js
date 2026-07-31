@@ -43,8 +43,12 @@ export function validateCoopAction(action) {
       if (prayerIds.length !== new Set(action.prayerIds).size) return { error: 'invalid_prayer' }
       return { action: { type: 'set_quick_prayers', prayerIds } }
     }
-    case 'target_add':
-      return { action: { type: 'target_add', value: !!action.value } }
+    case 'target_add': {
+      // An add INDEX, or false for the boss. A boss may field several at once,
+      // so a bare boolean can no longer say which one.
+      const index = Math.floor(Number(action.value))
+      return { action: { type: 'target_add', value: Number.isSafeInteger(index) && index >= 0 ? index : false } }
+    }
     case 'chat': {
       // The one action carrying free text to other players, and the room
       // broadcasts what it is handed — so it is sanitised here as well as in the

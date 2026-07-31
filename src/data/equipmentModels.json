@@ -1830,6 +1830,12 @@
       "height": 2.6,
       "rotationDeg": [0, -90, 0],
       "attackImpactSec": 2.25
+    },
+    "zaryth_the_empty_lord": {
+      "model": "monsters/zaryth_the_empty_lord.glb",
+      "height": 3,
+      "rotationDeg": [0, -90, 0],
+      "attackImpactSec": 2.1
     }
   }
 }

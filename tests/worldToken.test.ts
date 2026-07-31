@@ -19,9 +19,24 @@ function makeRequest({ characterId = '42', auth = '', body = undefined as unknow
   })
 }
 
-function mockEnv({ characterRow = { id: 42 } as any } = {}) {
+function mockEnv({
+  characterRow = { id: 42 } as any,
+  killCounts = [] as Array<{ source_id: string; kill_count: number }>,
+  save = {} as Record<string, unknown>,
+} = {}) {
   const characterFirst = vi.fn().mockResolvedValue(characterRow)
-  const prepare = vi.fn((_sql: string) => ({ bind: vi.fn(() => ({ first: characterFirst })) }))
+  // The lair gate reads kill_counts and the character's save; everything else
+  // this endpoint touches resolves through the same character row.
+  const saveFirst = vi.fn().mockResolvedValue({
+    id: 42, owner_id: 'identity-1', save_data: JSON.stringify(save), save_revision: 1,
+  })
+  const prepare = vi.fn((sql: string) => ({
+    bind: vi.fn(() => ({
+      first: sql.includes('save_revision') ? saveFirst : characterFirst,
+      all: vi.fn().mockResolvedValue({ results: killCounts }),
+      run: vi.fn().mockResolvedValue({}),
+    })),
+  }))
   return { DB: { prepare }, JWT_SECRET: TEST_SECRET }
 }
 
@@ -51,6 +66,36 @@ describe('POST /api/world-token', () => {
     expect(payload).toMatchObject({ sub: 'identity-1', character_id: 42, scope: 'world_handoff' })
     expect(payload.exp - payload.iat).toBe(60)
     expect(payload.world_zone).toBeUndefined()
+  })
+
+  it('refuses a boss lair the character has not unlocked', async () => {
+    // The world Worker grants this boss's drop table on a kill, so the client's
+    // combat-screen check is not a gate (§20). Zaryth's throne needs all four
+    // generals; a handoff with none of them on record must not be signed.
+    const env = mockEnv({ characterRow: { id: 42 }, killCounts: [] })
+    const auth = await makeAuthHeader('identity-1')
+    const res = await onRequestPost({ request: makeRequest({ auth, body: { zone: 'zaryth_throne' } }), env } as any)
+    expect(res.status).toBe(403)
+    const body = await res.json()
+    expect(body.code).toBe('BOSS_REQUIREMENTS_NOT_MET')
+    expect(body.error).toContain('Zaryth')
+  })
+
+  it('signs the handoff once the lair\'s kill-count gate is satisfied', async () => {
+    const env = mockEnv({
+      characterRow: { id: 42 },
+      killCounts: [
+        { source_id: 'warlord_grondar', kill_count: 1 },
+        { source_id: 'commander_zephyra', kill_count: 1 },
+        { source_id: 'krylth_the_defiler', kill_count: 1 },
+        { source_id: 'skyrender_kharra', kill_count: 1 },
+      ],
+    })
+    const auth = await makeAuthHeader('identity-1')
+    const res = await onRequestPost({ request: makeRequest({ auth, body: { zone: 'zaryth_throne' } }), env } as any)
+    expect(res.status).toBe(200)
+    const payload = await verifyJWT((await res.json()).handoff, TEST_SECRET)
+    expect(payload.world_zone).toBe('zaryth_throne')
   })
 
   it('carries a requested entry zone through as a claim', async () => {

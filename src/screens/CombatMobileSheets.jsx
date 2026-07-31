@@ -11,7 +11,7 @@ import {
   getStyleArt,
   getMonsterWeakness,
   getMonsterAttackStyles,
-  getMonsterMaxHit,
+  getMonsterMaxHitLabel,
   getMonsterLocationLabel,
   getMonsterAddInfo,
 } from '../utils/combatArt.js'
@@ -147,7 +147,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
   const art = getMonsterArt(monster, categoryKey)
   const attackStyles = getMonsterAttackStyles(monster)
   const weakness = getMonsterWeakness(monster)
-  const maxHit = getMonsterMaxHit(monster)
+  const maxHit = getMonsterMaxHitLabel(monster)
   const uniques = loggedUniques('monsters', monster.id)
   const addInfo = getMonsterAddInfo(monster)
   const regularDrops = [

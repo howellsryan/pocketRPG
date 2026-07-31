@@ -212,11 +212,20 @@ describe('boss requirements are enforced server-side', () => {
   })
 
   it('refuses a boss gated behind a kill count the player has not reached', () => {
-    expect(coopBossRequirementFailure('ashen_crucible', baseSave())?.code).toBe('BOSS_REQUIREMENTS_NOT_MET')
+    expect(coopBossRequirementFailure('ashen_crucible', baseSave(), {})?.code).toBe('BOSS_REQUIREMENTS_NOT_MET')
   })
 
   it('allows the boss once the kill-count prerequisite is met', () => {
-    expect(coopBossRequirementFailure('ashen_crucible', baseSave({ bossKillCounts: { ember_tyrant: 1 } }))).toBeNull()
+    expect(coopBossRequirementFailure('ashen_crucible', baseSave(), { ember_tyrant: 1 })).toBeNull()
+  })
+
+  it('ignores kill counts carried on the save blob', () => {
+    // saveload.js strips bossKillCounts from every save on the way out — they
+    // are server-authoritative in kill_counts. A gate that reads them off the
+    // save sees {} forever, which locked players out of a boss they had every
+    // kill for. Passing them here must NOT satisfy the gate.
+    const save = baseSave({ bossKillCounts: { ember_tyrant: 99 } } as never)
+    expect(coopBossRequirementFailure('ashen_crucible', save, {})?.code).toBe('BOSS_REQUIREMENTS_NOT_MET')
   })
 
   it('refuses the join outright, leaving no lock behind', async () => {

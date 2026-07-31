@@ -18,6 +18,14 @@ export function isInstanceFullClose(event: { code: number; reason?: string }): b
   return event.code === 1008 && event.reason === 'instance_full'
 }
 
+/** A 1008 close from dying in an instanced boss lair (WorldZone's
+ * ejectFromInstanceDeath) — expected and deliberate, not a rejected session.
+ * The `instanceDeath` message that preceded it already put up the death
+ * choice screen, so this must not be treated as a logout either. */
+export function isInstanceDeathClose(event: { code: number; reason?: string }): boolean {
+  return event.code === 1008 && event.reason === 'instance_death'
+}
+
 export function connect(host: string, room: string): PartySocket {
   return new PartySocket({ host, party: 'world-zone', room, shouldReconnectOnClose })
 }

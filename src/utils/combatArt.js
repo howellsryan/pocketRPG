@@ -1,10 +1,10 @@
-import { meleeMaxHit, rangedMaxHit, magicMaxHit } from '../engine/formulas.js'
+import { monsterMaxHit, monsterMaxHitLabel } from '../engine/monsterMaxHit.js'
 import { skillEmblemMask, skillArtTreatment } from './skillArt.js'
 import raidsData from '../data/raids.json'
 import placeMapsData from '../data/placeMaps.json'
 import monstersData from '../data/monsters.json'
 import { getPlace } from '../engine/world.js'
-import { getAddSpec } from '../engine/bossAdds.js'
+import { getAddSpec, addDefinitionsFor, selectAddDefinition } from '../engine/bossAdds.js'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Combat art system for the mobile combat redesign.
@@ -15,7 +15,8 @@ import { getAddSpec } from '../engine/bossAdds.js'
 //
 // Also derives the info-sheet stats the prototype showed but the data does not
 // store: a monster's weakness (from its lowest defence bonus) and its max hit
-// (from the engine's max-hit helpers, keyed off attack style).
+// (from engine/monsterMaxHit.js — the same resolution the fight uses, so the
+// sheet cannot quote a number the boss never rolls).
 //
 // Monster-location lookup reads placeMapsData, a chunk-only global (build_single.cjs
 // injects it lazily, only inside the game chunk) — this file must stay listed in
@@ -115,6 +116,10 @@ export const MONSTER_ART = {
   "nightfang_beast": { icon: "bat", accent: "#c0453b" },
   "threefang_cerberus": { icon: "wolf_head", accent: "#c0453b" },
   "corporeal_horror": { icon: "bleeding_eye", accent: "#8b4fd6" },
+  "zaryth_the_empty_lord": { icon: "zaryth_the_empty_lord", accent: "#8f4fe0" },
+  "zaryth_blade_sentinel": { icon: "winged_sword", accent: "#6b46c1" },
+  "zaryth_bolt_sentinel": { icon: "spectre", accent: "#6b46c1" },
+  "zaryth_rune_sentinel": { icon: "crystal_ball", accent: "#6b46c1" },
   "ashen_hydra": { icon: "hydra", accent: "#c0453b" },
   "green_dragon": { icon: "dragon_head", accent: "#3fb56b" },
   "red_dragon": { icon: "dragon_head", accent: "#d23b2f" },
@@ -321,17 +326,15 @@ export function getMonsterAttackStyles(monster) {
 // plain "Max Hit" figure in the info sheet.
 export function getMonsterMaxHit(monster) {
   if (!monster || !monster.stats) return 0
-  const style = monster.attackStyle
-  if (style === 'ranged') {
-    return rangedMaxHit(monster.stats.ranged || 1, monster.strengthBonus || 0)
-  }
-  if (style === 'magic') {
-    // Magic monsters carry no spell object; approximate the spell base damage
-    // from their magic level so the helper yields a sensible figure.
-    return magicMaxHit(monster.stats.magic || 1)
-  }
-  // stab / slash / crush / melee / undefined → melee
-  return meleeMaxHit(monster.stats.strength || 1, monster.strengthBonus || 0)
+  return monsterMaxHit(monster)
+}
+
+/** Max hit for display: a span for a boss that rotates style, one number
+ * otherwise. The stat row quoted a single derived figure before, which is how a
+ * boss whose hardest form hits 60 advertised 209. */
+export function getMonsterMaxHitLabel(monster) {
+  if (!monster || !monster.stats) return '0'
+  return monsterMaxHitLabel(monster)
 }
 
 // A boss's mid-fight add (`spawnsAdd`), resolved for the info surfaces. The add
@@ -340,7 +343,10 @@ export function getMonsterMaxHit(monster) {
 // Returns { add, spawnLabel } or null.
 export function getMonsterAddInfo(monster) {
   const spec = getAddSpec(monster)
-  const add = spec && monstersData[spec.monsterId]
+  const definitions = spec ? addDefinitionsFor(spec, monstersData) : null
+  // A style-rotating boss has one add per form; the panel previews the add for
+  // the form it opens in, which is the one the player meets first.
+  const add = selectAddDefinition(definitions, { currentForm: monster?.initialForm })
   if (!add) return null
   const range = spec.respawnAfterAttacks ?? spec.firstSpawnAfterAttacks
   const bounds = Array.isArray(range) ? range : (Number.isFinite(Number(range)) ? [range, range] : null)

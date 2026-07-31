@@ -356,10 +356,12 @@ export function describeActivity(kind, ref) {
  * eligibility. Returns `{ reason, completed? }` — `completed: true` marks a
  * quest that is done rather than locked.
  *
- * `ctx`: { stats, completedQuests, bossKillCounts } from the live game state.
+ * `ctx`: { stats, completedQuests, bossKillCounts, bossKillCountsLoaded } from
+ * the live game state. Kill counts arrive a fetch after the rest of it, so the
+ * flag is what stops a boss reading as locked until they land.
  */
 export function activityLockReason(kind, ref, ctx = {}) {
-  const { stats = {}, completedQuests = new Set(), bossKillCounts = {} } = ctx
+  const { stats = {}, completedQuests = new Set(), bossKillCounts = {}, bossKillCountsLoaded = true } = ctx
   const levelOf = (skill) => getLevelFromXP(stats?.[skill]?.xp || 0)
   const req = activityLevelRequirement(kind, ref)
   if (req && levelOf(req.skill) < req.level) {
@@ -367,7 +369,7 @@ export function activityLockReason(kind, ref, ctx = {}) {
   }
   if (kind === 'combat') {
     const check = checkBossRequirementsPure(monstersById[ref], {
-      slayerLevel: levelOf('slayer'), completedQuests, bossKillCounts, questsData,
+      slayerLevel: levelOf('slayer'), completedQuests, bossKillCounts, bossKillCountsLoaded, questsData, monstersData: monstersById,
     })
     return check.locked ? { reason: check.reason } : null
   }

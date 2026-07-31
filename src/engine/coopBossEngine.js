@@ -22,7 +22,10 @@ import { resolveSlayerTaskKill } from './slayerTasks.js'
 import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
-import { questRequirementMet } from './questGates.js'
+import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
+import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers } from './roomWideAttacks.js'
+import { bossAddsOf, getAddSpec, rollRespawnDelay } from './bossAdds.js'
+import { advanceSharedForm, formChangeAttackTimer, isMultiForm, pinFormToSession } from './bossForms.js'
 import {
   COOP_RAID_ADVANCE_TICKS,
   coopRaidData,
@@ -69,8 +72,11 @@ export const COOP_BOSSES = {
   warlord_grondar: {},
   krylth_the_defiler: {},
   corporeal_horror: {},
+  zaryth_the_empty_lord: {},
 }
 export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
+// Re-exported: the open world runs the same mechanic off the same module.
+export { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers }
 /**
  * The wait between kills, for every co-op boss: 8 ticks, the HUD's 5 seconds.
  *
@@ -103,6 +109,9 @@ const COMBAT_STAT_KEYS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged'
 const MUTABLE_MONSTER_FIELDS = [
   'currentForm', 'formAttackCount', 'formSwitchThreshold', 'attackStyle',
   'attackBonus', 'strengthBonus', 'defenceBonus', 'formMaxHit', 'hitpoints',
+  // A form may change what the boss is weak to, and the room's copy has to move
+  // with it or every member keeps rolling against the form before last's.
+  'weakness',
 ]
 
 function levelFrom(statValue) {
@@ -153,14 +162,6 @@ export function describeCoopActionRefusal(event) {
   return 'Could not do that'
 }
 
-function questIdList(completedQuests) {
-  if (Array.isArray(completedQuests)) return completedQuests.filter((q) => typeof q === 'string')
-  if (completedQuests && typeof completedQuests === 'object') {
-    return Object.keys(completedQuests).filter((q) => completedQuests[q])
-  }
-  return []
-}
-
 /** Mirrors checkEquipRequirements, but against the level map the session
  * carries rather than an xp-keyed stats blob. Fails CLOSED: a member whose
  * session predates `levels` cannot equip anything gated, rather than being
@@ -204,7 +205,7 @@ export function cloneCoopState(state) {
   }
   return {
     ...state,
-    boss: { ...state.boss, add: state.boss?.add ? { ...state.boss.add } : null, monster: { ...(state.boss?.monster || {}) } },
+    boss: { ...state.boss, adds: bossAddsOf(state.boss).map((add) => ({ ...add })), monster: { ...(state.boss?.monster || {}) } },
     ...(state.raid ? { raid: { ...state.raid, bosses: [...(state.raid.bosses || [])] } } : {}),
     members,
     recentEvents: Array.isArray(state.recentEvents) ? [...state.recentEvents] : [],
@@ -224,6 +225,7 @@ export function createCoopBossState(bossId, monstersData, now = Date.now()) {
       currentHP: seed.monster.currentHP,
       maxHP: seed.monster.currentHP,
       attackSpeed: seed.monster.attackSpeed || 4,
+      attackTimer: seed.monster.attackSpeed || 4,
       monster: pickMutableMonsterFields(seed.monster),
       add: null,
       addSpawnCountdown: seed.addSpawnCountdown,
@@ -273,6 +275,16 @@ export function createCoopRaidState(raidId, monstersData, { hostCharacterId = nu
       completions: 0,
     },
   }
+}
+
+/**
+ * The room's boss as a WHOLE monster: the authored data with whatever the room
+ * has since decided about it written over the top. `boss.monster` alone is only
+ * the mutable subset, so it carries `currentForm` but not `forms` — enough to
+ * pin a session, not enough to roll the next form off.
+ */
+function sharedMonsterOf(state, monstersData) {
+  return { ...(monstersData?.[state.bossId] || {}), ...(state.boss?.monster || {}) }
 }
 
 function pickMutableMonsterFields(monster) {
@@ -359,7 +371,7 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     maxHP,
     stats,
     levels: allStatLevels(savePayload),
-    completedQuests: questIdList(savePayload?.completedQuests),
+    completedQuests: [...completedQuestsFromSave(savePayload)],
     equipment,
     inventory,
     status: 'alive',
@@ -400,7 +412,7 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
       maxPrayerPoints: stats.prayer,
       prayerDrainAccumulator: 0,
       activePotions: {},
-      addTargeted: false,
+      addTargetIndex: null,
     },
   }
 }
@@ -594,10 +606,12 @@ function hydrateCombatState(state, member, monstersData, spellsData) {
   engine.maxPrayerPoints = member.combat.maxPrayerPoints
   engine.prayerDrainAccumulator = member.combat.prayerDrainAccumulator
   engine.activePotions = { ...(member.combat.activePotions || {}) }
-  engine.add = state.boss.add ? { ...state.boss.add } : null
+  engine.adds = bossAddsOf(state.boss).map((add) => ({ ...add }))
   engine.addSpawnCountdown = state.boss.addSpawnCountdown
+  engine.addsSpawned = state.boss.addsSpawned || 0
   engine.addsDefeated = state.boss.addsDefeated
-  engine.addTargeted = !!member.combat.addTargeted && !!engine.add
+  const wanted = member.combat.addTargetIndex
+  engine.addTargetIndex = typeof wanted === 'number' && engine.adds[wanted]?.currentHP > 0 ? wanted : null
   return engine
 }
 
@@ -615,7 +629,14 @@ function dehydrateCombatState(engine, member) {
   member.combat.maxPrayerPoints = engine.maxPrayerPoints
   member.combat.prayerDrainAccumulator = engine.prayerDrainAccumulator
   member.combat.activePotions = { ...(engine.activePotions || {}) }
-  member.combat.addTargeted = !!engine.addTargeted
+  member.combat.addTargetIndex = engine.addTargetIndex ?? null
+}
+
+/** An event that means the boss itself took a swing — not one of its minions. */
+function isBossSwing(ev) {
+  if (!ev || ev.fromAdd) return false
+  return ev.type === 'monsterHit' || ev.type === 'monsterMiss'
+    || ev.type === 'dragonfireHit' || ev.type === 'dragonfireBlocked'
 }
 
 function playerStatsFor(member) {
@@ -682,7 +703,7 @@ export function coopIntentEcho(combat, action, prayersData) {
     case 'queue_special':
       return { specialAttackQueued: !combat.specialAttackQueued }
     case 'target_add':
-      return { addTargeted: !!action.value }
+      return { addTargetIndex: typeof action.value === 'number' ? action.value : action.value ? 0 : null }
     case 'change_combat_spell':
       return { spellId: action.spellId ?? null }
     default:
@@ -755,9 +776,13 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
         ? action.prayerIds.filter((id) => typeof id === 'string')
         : []
       return
-    case 'target_add':
-      member.combat.addTargeted = !!action.value && !!state.boss.add
+    case 'target_add': {
+      // `value` is an add INDEX; false/null means back to the boss.
+      const index = typeof action.value === 'number' ? action.value : action.value ? 0 : -1
+      const add = index >= 0 ? bossAddsOf(state.boss)[index] : null
+      member.combat.addTargetIndex = add && add.currentHP > 0 ? index : null
       return
+    }
     case 'toggle_prayer': {
       // The prayer's own type decides its slot, exactly as the solo screen does
       // it. Taking the slot from the caller meant every protection prayer landed
@@ -969,6 +994,29 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   // attack on the same tick — the boss getting a free extra hit for every
   // player it drops.
   let bossSwungThisTick = false
+  const roomWide = isRoomWideAttacker(monstersData?.[next.bossId])
+  const roomWideSwing = roomWide && advanceRoomWideAttackTimer(next.boss)
+  const roomWideAddSwings = roomWide ? advanceAddAttackTimers(next.boss) : []
+  // The room's minion clocks, taken straight after they were advanced. A
+  // session's copy of an add is PINNED to 0-or-full and then run down by the
+  // engine, so writing the session's copy back over the room's would overwrite
+  // the countdown with the pinned value every single tick — the clock then
+  // oscillates between full and full-minus-one, never reaches zero, and the
+  // minions stand there swinging at nobody for the whole fight.
+  const roomAddTimers = roomWide
+    ? new Map(bossAddsOf(next.boss).map((add) => [add.instanceId, add.attackTimer]))
+    : null
+  // A form change is a per-SWING decision, so the ROOM owns it: every session is
+  // pinned below and the single roll happens after the loop, mirroring solo,
+  // where the boss swings with the form it is in and then switches. Left to the
+  // sessions, each member fought a differently-formed boss off one health bar —
+  // their own max hit, their own defences to roll against, and a HUD showing
+  // whichever member ticked last, so there was no prayer to read off the screen.
+  const formPinned = isMultiForm(sharedMonsterOf(next, monstersData))
+  // Whether the boss actually swung this tick, which is what a form change
+  // counts. A room-wide boss has the room's clock; any other only swings in its
+  // target's session.
+  let bossSwung = roomWide && roomWideSwing
 
   for (const id of memberIds) {
     const member = next.members[id]
@@ -979,17 +1027,33 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     const engine = hydrateCombatState(next, member, monstersData, spellsData)
     if (!engine) continue
     // Invariant 1: a non-target member's session must never resolve a boss
-    // swing, or the boss attacks once per member per tick.
-    if (!isTarget) engine.monsterAttackTimer = Math.max(2, engine.monster.attackSpeed || 4)
+    // swing, or the boss attacks once per member per tick. A room-wide attacker
+    // is the deliberate exception — the ROOM owns its clock (above), so every
+    // session resolves the same swing and each member rolls their own accuracy
+    // and protection prayer against it.
+    if (roomWide) engine.monsterAttackTimer = roomWideSwing ? 0 : Math.max(2, engine.monster.attackSpeed || 4)
+    else if (!isTarget) engine.monsterAttackTimer = Math.max(2, engine.monster.attackSpeed || 4)
+    // The room owns the form; this session only wears it.
+    engine.formPinned = formPinned
+    // Its minions run off the room's clock for the same reason (see
+    // advanceAddAttackTimer) — one swing resolved, landing on everybody.
+    if (roomWide) {
+      engine.adds.forEach((add, i) => {
+        add.attackTimer = roomWideAddSwings[i] ? 0 : Math.max(2, add.attackSpeed || 4)
+      })
+    }
 
     const hpBefore = engine.monster.currentHP
-    const addHpBefore = engine.add?.currentHP ?? null
+    const addHpBefore = engine.adds.map((add) => add.currentHP)
     const { combatState, events: engineEvents } = processCombatTick(
       engine, playerStatsFor(member), member.equipment, itemsData, prayersData, member.inventory, null,
     )
 
     dehydrateCombatState(combatState, member)
     applyConsumptionEvents(member, engineEvents, combatState, itemsData)
+    // A non-room-wide boss only swings inside its target's session, so that is
+    // the only place the room can learn it swung at all.
+    if (isTarget && !roomWide && engineEvents.some(isBossSwing)) bossSwung = true
 
     // Attribution is the boss's HP delta across this member's tick, so every
     // damage source (specials, summons, bolt procs) counts without this having
@@ -1011,22 +1075,63 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     // Invariant 2: only the target advances the add's spawn countdown, but any
     // member's damage to a live add sticks.
     if (isTarget) {
-      next.boss.add = combatState.add ? { ...combatState.add } : null
+      next.boss.adds = (combatState.adds || []).map((add) => ({
+        ...add,
+        // The room owns a room-wide boss's minion clocks (roomAddTimers) — an
+        // add the session did not have yet keeps its own full wind-up.
+        ...(roomAddTimers?.has(add.instanceId) ? { attackTimer: roomAddTimers.get(add.instanceId) } : {}),
+      }))
       next.boss.addSpawnCountdown = combatState.addSpawnCountdown
+      next.boss.addsSpawned = combatState.addsSpawned
       next.boss.addsDefeated = combatState.addsDefeated
-    } else if (next.boss.add && combatState.add && addHpBefore !== null) {
-      next.boss.add.currentHP = Math.min(next.boss.add.currentHP, combatState.add.currentHP)
-    } else if (next.boss.add && !combatState.add) {
-      next.boss.add = null
-      next.boss.addsDefeated = combatState.addsDefeated
+    } else {
+      // A non-target member neither spawns adds nor advances the wait — the
+      // target owns both — but everything they did to an add on the field
+      // sticks, including finishing it off.
+      //
+      // Matched by `instanceId` on BOTH sides, never by list position: the
+      // engine splices a killed add out of its own list, so on exactly the tick
+      // that matters every add behind it shifts down a slot. Read by index, the
+      // kill was invisible (the corpse is simply absent) and the survivors'
+      // health was compared against the wrong add's — so a member the boss did
+      // not happen to be facing could never clear a sentinel, and the room told
+      // every client it had died while it went on swinging.
+      const before = new Map(engine.adds.map((add, i) => [add.instanceId, addHpBefore[i]]))
+      const after = new Map((combatState.adds || []).map((add) => [add.instanceId, add.currentHP]))
+      let killedOne = false
+      const survivors = []
+      for (const add of bossAddsOf(next.boss)) {
+        const hp = after.get(add.instanceId)
+        if (hp == null) {
+          // Absent from a list it started the tick in = this member killed it.
+          if (!before.has(add.instanceId)) { survivors.push(add); continue }
+          killedOne = true
+          next.boss.addsDefeated = (next.boss.addsDefeated || 0) + 1
+          continue
+        }
+        add.currentHP = Math.min(add.currentHP, hp)
+        if (add.currentHP > 0) survivors.push(add)
+        else killedOne = true
+      }
+      next.boss.adds = survivors
+      // A kill always restarts the wait, from a full field as much as an empty
+      // one — the countdown is parked at null while the field is at its cap, so
+      // without this a boss at its cap never summons again for the rest of the
+      // fight.
+      if (killedOne) next.boss.addSpawnCountdown = rollRespawnDelay(getAddSpec(monstersData?.[next.bossId]))
     }
 
     for (const ev of engineEvents) {
-      // Incoming from the boss — only the member it is actually facing.
-      if ((ev.type === 'monsterHit' || ev.type === 'dragonfireHit') && isTarget) {
-        member.hp = Math.max(0, member.hp - (ev.damage || 0))
-        bossSwungThisTick = true
-      } else if (ev.type === 'monsterMiss' && isTarget) {
+      // Incoming from the boss — only the member it is actually facing, unless
+      // the boss attacks the whole room, in which case its minions do too: they
+      // are its reach, not separate duellists. Only the target's session
+      // resolves either swing, so one event still means one swing at everybody.
+      if (ev.type === 'monsterHit' || ev.type === 'dragonfireHit') {
+        if (roomWide || isTarget) {
+          member.hp = Math.max(0, member.hp - (ev.damage || 0))
+          if (!roomWide) bossSwungThisTick = true
+        }
+      } else if (ev.type === 'monsterMiss' && isTarget && !roomWide) {
         bossSwungThisTick = true
       // Self-inflicted (blood-forfeit bolts): costs the shooter regardless of
       // who the boss happens to be facing.
@@ -1034,6 +1139,11 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
         member.hp = Math.max(0, member.hp - ev.selfDamage)
       } else if (ev.type === 'guthanHeal' || ev.type === 'sangHeal') {
         member.hp = Math.min(member.maxHP, member.hp + (ev.healAmount || 0))
+      // Life-stealing specials (Zaryth Godsword, Healing Blade, Toxic Siphon,
+      // Soul Leech) heal in the solo engine by returning this field; the room
+      // has to apply it or the same weapon silently stops healing in a group.
+      } else if (ev.type === 'specialHit' && ev.healAmount > 0) {
+        member.hp = Math.min(member.maxHP, member.hp + ev.healAmount)
       }
       if (ev.type === 'monsterDeath') {
         kill = { bossId: next.bossId, monster: ev.monster, xpGained: { ...(ev.xpGained || {}) } }
@@ -1092,6 +1202,24 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     returnPartyToLobby(next, monstersData, events, 'wipe')
   }
 
+  // After every session, so they all swung with the form the room was in and the
+  // change takes effect on the next one — the order solo already has.
+  if (formPinned && bossSwung) {
+    const shared = sharedMonsterOf(next, monstersData)
+    const change = advanceSharedForm(shared)
+    if (change) {
+      Object.assign(next.boss.monster, pickMutableMonsterFields(shared))
+      // Same beat solo gives the player to answer the new style. The room owns
+      // this boss's clock, so BOTH copies restart: the shared one a room-wide
+      // boss swings off, and each member's session timer, which is the clock a
+      // boss that faces one player at a time actually counts down.
+      const restart = formChangeAttackTimer(shared)
+      next.boss.attackTimer = restart
+      for (const member of Object.values(next.members)) member.combat.monsterAttackTimer = restart
+      events.push(change)
+    }
+  }
+
   return finishTick(next, events, kill)
 }
 
@@ -1110,7 +1238,7 @@ function startCoopRaid(state, monstersData, events) {
     member.ready = false
     member.combat.playerAttackTimer = 0
     member.combat.monsterAttackTimer = state.boss.attackSpeed || 4
-    member.combat.addTargeted = false
+    member.combat.addTargetIndex = null
   }
   reselectTarget(state)
   events.push({
@@ -1201,7 +1329,7 @@ function advanceRaidBoss(state, monstersData, events) {
     // of the whole raid (coopLootBasisHP), not of the boss in front of them.
     member.combat.playerAttackTimer = 0
     member.combat.monsterAttackTimer = state.boss.attackSpeed || 4
-    member.combat.addTargeted = false
+    member.combat.addTargetIndex = null
   }
   reselectTarget(state)
   events.push({
@@ -1244,7 +1372,7 @@ function returnPartyToLobby(state, monstersData, events, reason) {
     // they say so again — a roster still reading "Ready" from the last run is
     // worse than no signal at all.
     member.ready = false
-    member.combat.addTargeted = false
+    member.combat.addTargetIndex = null
   }
   events.push({ type: 'raidEnded', raidId: raid.raidId, reason })
 }
@@ -1270,7 +1398,7 @@ function respawnBoss(state, monstersData, events) {
     member.damageTick = 0
     member.combat.playerAttackTimer = 0
     member.combat.monsterAttackTimer = 0
-    member.combat.addTargeted = false
+    member.combat.addTargetIndex = null
   }
   events.push({ type: 'bossRespawned', bossId: state.bossId })
 }

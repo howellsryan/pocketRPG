@@ -1,6 +1,6 @@
 import { getDB, clearAllStores } from './database.js'
 import { INVENTORY_SIZE } from '../utils/constants.js'
-import { LOCAL_WRITE_MARKER_KEY } from './stores.js'
+import { LOCAL_WRITE_MARKER_KEY, getSetting } from './stores.js'
 
 const SAVE_VERSION = 1
 
@@ -53,12 +53,44 @@ export function buildSavePayloadFromSnapshot(snapshot) {
   }
 }
 
+/** Settings that live ONLY in the server's own tables and are deliberately
+ * stripped from the save blob, so a payload can never carry them back. They
+ * have to survive applySavePayload's wipe or the pull silently deletes them. */
+export const SERVER_OWNED_SETTINGS = ['bossKillCounts', 'raidKillCounts']
+
+async function readPreservedSettings() {
+  const out = {}
+  for (const key of SERVER_OWNED_SETTINGS) {
+    try {
+      const value = await getSetting(key)
+      if (value != null) out[key] = value
+    } catch { /* a missing store on a fresh DB is not an error */ }
+  }
+  return out
+}
+
+async function writePreservedSettings(db, preserved) {
+  const keys = Object.keys(preserved)
+  if (!keys.length) return
+  const tx = db.transaction('settings', 'readwrite')
+  for (const key of keys) tx.store.put({ key, value: preserved[key] }, key)
+  await tx.done
+}
+
 // Wipe IDB and apply a decoded save payload. Shared by localStorage-backup
 // restore and cloud-save pull.
 export async function applySavePayload(data, options = {}) {
   const { restoreLocalIdleMirrors = false } = options
+  // Kill counts are stripped from every save payload on the way out
+  // (normaliseSaveSettings) because they are server-authoritative. That makes
+  // their absence here mean "untouched", never "zero" — the same rule as
+  // banked charges (§4). Without carrying them across the wipe, every save
+  // pull erased them: leaving a co-op fight or dying re-locked the boss the
+  // player had just been fighting, because its kill-count gate read {}.
+  const preserved = await readPreservedSettings()
   await clearAllStores()
   const db = await getDB()
+  await writePreservedSettings(db, preserved)
 
   if (data.player) await db.put('player', data.player, 'profile')
 

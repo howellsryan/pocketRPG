@@ -72,7 +72,10 @@ const play = (name) => {
 }
 if (currentName) play(currentName)
 const render = () => renderer.render(scene, camera)
-window.__play = (name) => { play(name); mixer.update(0); render() }
+// Switching clips rewinds the sample clock too: __setTime only ever advances
+// the mixer forward, so a clock left at the previous clip's last sample pinned
+// every frame of the next clip to t=0.
+window.__play = (name) => { play(name); clockT = 0; mixer.update(0); render() }
 window.__setTime = (t) => { const dt = Math.max(0, t - clockT); clockT = t; mixer.update(dt); render() }
 mixer.update(0)
 render()

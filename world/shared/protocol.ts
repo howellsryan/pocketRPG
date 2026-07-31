@@ -113,6 +113,16 @@ export type EntityDiff = {
    * absent means no target — the client must clear any previously-stored one,
    * not merge/patch. */
   targetId?: string
+  /** NPC entities only: the form a multi-form boss is currently in — the form it
+   * will swing with NEXT, since the roll lands a wind-up ahead of the blow
+   * (npc.ts advanceSharedSwing). The client tints the model by it, so the style
+   * to pray against is readable off the boss itself. Snapshot, not a merge:
+   * absent means no form. */
+  form?: string
+  /** Player entities only: the damage style their active protection prayer
+   * blocks, drawn as an overhead icon. Snapshot, not a merge — absent means no
+   * protection prayer, and must actually clear the icon. */
+  overhead?: 'melee' | 'ranged' | 'magic'
 }
 
 export type StaticObject = {
@@ -202,6 +212,12 @@ export type ServerMessage =
       events?: ZoneEvent[]
     }
   | { t: 'dead'; respawn: { x: number; z: number } }
+  /** Died in an instanced boss lair (§ world-design.md): the room is closed, so
+   * death ejects the player out of it entirely instead of respawning them back
+   * in front of the boss. The socket is closed right after (code 1008, reason
+   * 'instance_death') — the client shows a choice screen rather than
+   * reconnecting, so it must not auto-reload like `transition` does. */
+  | { t: 'instanceDeath'; zone: string; zoneName: string }
   /** Player stepped on an exit tile; save + position are already durable.
    * The client reconnects to the target zone's DO (full reload). */
   | { t: 'transition'; zone: string; x: number; z: number }

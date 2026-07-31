@@ -103,7 +103,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   const {
     worldLocation, updateWorldLocation, activeTask, setActiveTask, addToast, requestActivityStart,
     inventory, bank, equipment, stats, itemsData, updateInventory, updateBankDirect, grantXP,
-    completedQuests, bossKillCounts, questQueue, removeFromQuestQueue,
+    completedQuests, bossKillCounts, killCountsLoaded, questQueue, removeFromQuestQueue,
     unlockedMinigameItems,
   } = useGame()
   const world = getWorld()
@@ -193,7 +193,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     // slayer/quest gates, quest eligibility) — without this the hub row would
     // start (or travel to + auto-start) content above the player's level.
     // Rows render disabled off the same check; this backstops direct calls.
-    const lock = activityLockReason(kind, ref, { stats, completedQuests, bossKillCounts })
+    const lock = activityLockReason(kind, ref, { stats, completedQuests, bossKillCounts, bossKillCountsLoaded: killCountsLoaded })
     if (lock) {
       addToast(`${lock.reason}.`, lock.completed ? 'info' : 'error')
       return

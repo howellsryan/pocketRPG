@@ -237,9 +237,12 @@ describe('dungeoneering: best-in-slot guarantees', () => {
     }
   })
 
-  it('chaotic_crossbow leads every other crossbow on ranged strength', () => {
+  // Boss uniques are deliberately outside this ladder: chaotic is the top of
+  // what Dungeoneering itself rewards, not the ceiling of the whole game. The
+  // Zaryth Crossbow, off the hardest boss in the game, is meant to beat it.
+  it('chaotic_crossbow leads every other non-boss-unique crossbow on ranged strength', () => {
     const item = itemsData.chaotic_crossbow
-    for (const other of competitors((it) => isWeapon(it) && styleIs(it, 'ranged') && /crossbow/.test(it.id))) {
+    for (const other of competitors((it) => isWeapon(it) && styleIs(it, 'ranged') && /crossbow/.test(it.id) && !it.isBossUnique)) {
       expect(item.otherBonus.rangedStrength, `chaotic_crossbow rstr vs ${other.id}`)
         .toBeGreaterThanOrEqual(other.otherBonus?.rangedStrength ?? 0)
     }

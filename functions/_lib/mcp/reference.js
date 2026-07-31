@@ -108,7 +108,10 @@ export function monsterMechanics(monster) {
   // the add has to be killed separately. Clients get its full stat block so they
   // can decide whether to switch targets.
   const spec = monster.spawnsAdd
-  const addDefinition = spec?.monsterId ? monstersData[spec.monsterId] : null
+  // A style-rotating boss names one add per form; the reference describes the
+  // first, and the note below tells the client the rest exist.
+  const addIds = spec?.monsterIdByStyle ? Object.values(spec.monsterIdByStyle) : (spec?.monsterId ? [spec.monsterId] : [])
+  const addDefinition = addIds.length ? monstersData[addIds[0]] || null : null
   let add = null
   if (addDefinition) {
     add = {
@@ -126,6 +129,10 @@ export function monsterMechanics(monster) {
     notes.push(`Spawns a ${add.name} (${add.hitpoints} HP) mid-fight. It is a separate monster, not a phase — ${monster.name} keeps attacking while it is up, so you take hits from both until you kill it.`)
     notes.push(`${add.name} attacks with ${add.attackStyle} for up to ${add.maxHit}${add.prayerDrainPerHit ? `, and every landed hit burns ${add.prayerDrainPerHit} prayer points` : ''}. It drops nothing and does not count as a kill.`)
     notes.push(`Killing a ${add.name} only clears it; ${monster.name} spawns another after a few more of its own attacks.`)
+    if (addIds.length > 1) {
+      const names = addIds.map((id) => monstersData[id]?.name || id).join(', ')
+      notes.push(`Which minion appears depends on the style ${monster.name} is using when it summons one: ${names}.`)
+    }
   }
 
   if (!notes.length && !forms && !add) return null

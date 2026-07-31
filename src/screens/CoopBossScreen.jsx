@@ -25,6 +25,7 @@ import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { canAffordSpecialAttack } from '../engine/specialAttackEnergy.js'
+import { bossAddsOf } from '../engine/bossAdds.js'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import monstersData from '../data/monsters.json'
@@ -82,7 +83,12 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const monster = monstersData?.[state?.bossId] || null
   const bossName = monster?.name || 'Boss'
   const memberCount = state ? Object.keys(state.members || {}).length : 0
-  const activeAdd = boss?.add && boss.add.currentHP > 0 ? boss.add : null
+  // A boss may field several at once. Only ONE HP bar is drawn — a stack of
+  // four would push the fight itself off a phone screen — and it follows the one
+  // this member is actually hitting.
+  const addsOnField = bossAddsOf(boss).filter((add) => add && add.currentHP > 0)
+  const onBoss = typeof combatState?.addTargetIndex !== 'number'
+  const activeAdd = (!onBoss && bossAddsOf(boss)[combatState.addTargetIndex]) || addsOnField[0] || null
   // A raid party runs in this same screen: the lobby replaces the HUD until the
   // host sets off, and the fight after that is the co-op boss fight with a run
   // counter on it. Keeping both here is what makes the group raid feel like the
@@ -416,22 +422,22 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
               <HitSplatLayer splats={addSplats} />
             </div>
             <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
-              <button
-                class={'cb-slot' + (combatState?.addTargeted ? '' : ' is-active')}
-                onClick={() => send({ type: 'target_add', value: false })}
-              >
+              <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => send({ type: 'target_add', value: false })}>
                 <span class="cb-slot__name">{bossName}</span>
-                <span class="cb-slot__tag">{combatState?.addTargeted ? 'Attack' : 'Attacking'}</span>
-                {!combatState?.addTargeted && <span class="cb-slot__ring" />}
+                <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
+                {onBoss && <span class="cb-slot__ring" />}
               </button>
-              <button
-                class={'cb-slot' + (combatState?.addTargeted ? ' is-active' : '')}
-                onClick={() => send({ type: 'target_add', value: true })}
-              >
-                <span class="cb-slot__name">{activeAdd.name}</span>
-                <span class="cb-slot__tag">{combatState?.addTargeted ? 'Attacking' : 'Attack'}</span>
-                {combatState?.addTargeted && <span class="cb-slot__ring" />}
-              </button>
+              {bossAddsOf(boss).map((add, index) => {
+                if (!add || add.currentHP <= 0) return null
+                const on = !onBoss && index === combatState.addTargetIndex
+                return (
+                  <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => send({ type: 'target_add', value: index })}>
+                    <span class="cb-slot__name">{add.name}</span>
+                    <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
+                    {on && <span class="cb-slot__ring" />}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}

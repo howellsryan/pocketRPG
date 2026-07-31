@@ -172,23 +172,31 @@ describe('combat via tickPlayer', () => {
     expect(bull.attackerId).toBe('2')
   })
 
-  // Combat starts on a click and on nothing else. A monster that chases the
-  // player down — or simply stands next to them — must never put them back in
-  // a fight they did not ask for.
-  it('does not resume the fight when a pursuing npc catches back up to its former attacker', () => {
+  // A monster that already has this player as its retaliation target — a fight
+  // the player themself started — resumes and lands hits once it closes the
+  // gap. This is not "a monster restarting a fight unasked": npc.ts now keeps
+  // ANY npc's quarry across a disengage (trash, dragon or boss alike), so a
+  // caught-up pursuer that could never swing back would be aggro with no teeth.
+  it('resumes the fight and lands hits once a pursuing npc catches back up to its former attacker', () => {
     const { npcs, bull } = bullAt(5, 5)
-    const a = makePlayer({ charId: '1', x: 10, z: 5 })
+    const a = makePlayer({ charId: '1', x: 10, z: 5, hp: 400, maxHp: 400 })
     bull.state = 'combat'
     bull.attackerId = '1'
+    bull.lastCombatTick = 0
     bull.x = 9 // adjacent to the player again, as if npc.ts's chase just closed the gap
     bull.z = 5
 
     expect(a.combat).toBeNull()
-    for (let tick = 1; tick <= 20; tick++) {
+    let landed = false
+    for (let tick = 1; tick <= 20 && !landed; tick++) {
       const r = tickPlayer(a, ctx(tick, npcs))
-      expect(r.hits.filter((h) => h.targetId === 'bull_1')).toEqual([])
+      if (r.hits.some((h) => h.targetId === '1')) landed = true
     }
-    expect(a.combat).toBeNull()
+    expect(landed).toBe(true)
+    expect(a.combat).not.toBeNull()
+    // Caught, not walked-away-from: the resumed session is active, so the
+    // player's own next swing lands too, not just the monster's.
+    expect(a.combat!.passive).not.toBe(true)
   })
 
   it('stays out of combat standing next to an idle monster until the player attacks it', () => {

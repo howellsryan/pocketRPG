@@ -27,7 +27,7 @@ import { prayerSkill } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
-import { isAddAlive } from '../engine/bossAdds.js'
+import { liveAdds, targetedAdd } from '../engine/bossAdds.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { checkBossRequirementsPure, checkRaidRequirementsPure } from '../engine/combatRequirements.js'
@@ -38,7 +38,7 @@ import { addItem, removeItem, freeSlots, countItem } from '../engine/inventory.j
 import { SUMMONING_CREATURES, getSummoningCreature, createSummonState, getMonsterCharmDrops } from '../engine/summoning.js'
 import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
-import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
+import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel, SELF_HEALING_SPEC_TYPES } from '../engine/specialAttackEnergy.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, lastSaveLockCode } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
@@ -141,6 +141,12 @@ const COMBAT_CATEGORIES = [
     label: 'Corporeal Horror',
     icon: '👁️',
     ids: ['corporeal_horror'],
+  },
+  {
+    key: 'zaryth_the_empty_lord',
+    label: 'The Empty Throne',
+    icon: '🕳️',
+    ids: ['zaryth_the_empty_lord'],
   },
   {
     key: 'blighted_gauntlet',
@@ -602,14 +608,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
   }, [activeCombatSpell, equipment])
 
-  // Auto-start fight from home shortcut
+  // Auto-start fight from home shortcut. Waits for kill counts for the same
+  // reason the render below does: this effect runs even while that loader is on
+  // screen (hooks run before the early return), so without the guard it opened
+  // the boss gate against an empty count map and refused a boss the player had
+  // long since unlocked.
   useEffect(() => {
-    if (initialMonsterId && !hasAutoStarted.current && !combat) {
+    if (initialMonsterId && killCountsLoaded && !hasAutoStarted.current && !combat) {
       hasAutoStarted.current = true
       const monster = monstersData[initialMonsterId]
       if (monster) startFight(monster)
     }
-  }, [initialMonsterId])
+  }, [initialMonsterId, killCountsLoaded])
 
   useEffect(() => {
     if (initialRaidId && !hasAutoStarted.current && !combat) {
@@ -771,7 +781,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             volley: '🌿🌿🌿 Volley',
             soul_drain: ev.prayerRestored > 0 ? `🌑 Soul Drain (+${ev.prayerRestored} Prayer)` : '🌑 Soul Drain',
             volatile_surge: '🌩️ Volatile Surge',
-            disrupt: '🌋 Disrupt'
+            disrupt: '🌋 Disrupt',
+            empty_bolt: '🕳️ Empty Bolt',
+            empty_lord_cleave: `🕳️ Empty Lord's Cleave (+${ev.healAmount || 0} HP)`
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -779,7 +791,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             type: 'special',
             time: Date.now()
           }])
-          if ((ev.specType === 'healing_blade' || ev.specType === 'toxic_siphon' || ev.specType === 'soul_leech') && ev.healAmount > 0) {
+          if (SELF_HEALING_SPEC_TYPES.has(ev.specType) && ev.healAmount > 0) {
             const maxHP = getMaxHP()
             const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
             updateHP(newHP)
@@ -1361,6 +1373,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     completedQuests,
     bossKillCounts,
     questsData,
+    monstersData,
   })
 
   const checkRaidRequirements = (raid) => checkRaidRequirementsPure(raid, { completedQuests })
@@ -3228,10 +3241,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {arenaClosed ? '🎥 3D' : '📊 Bars'}
     </button>
   )
-  // ── Boss add (e.g. the Dread Core) ──
-  // A second live enemy, not a phase: it attacks alongside the boss until it is
-  // killed, so the player needs its own HP bar and a way to swing at it.
-  const activeAdd = isAddAlive(combat) ? combat.add : null
+  // ── Boss adds (e.g. the Dread Core, Zaryth's sentinels) ──
+  // Live enemies, not a phase: they attack alongside the boss until killed, so
+  // the player needs a way to swing at each and to see the one they are on.
+  // A boss may field several — the picker grows a slot each, but only ONE HP bar
+  // is drawn (a stack of four would push the fight itself off a phone screen),
+  // and it follows the enemy the player is actually hitting.
+  const addsOnField = liveAdds(combat)
+  const activeAdd = targetedAdd(combat) || addsOnField[0] || null
+  const onBoss = !targetedAdd(combat)
   const switchTarget = (which) => {
     if (!combatRef.current) return
     const next = setCombatTarget(combatRef.current, which)
@@ -3251,22 +3269,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Target picker — same brass "on" treatment as the quick-prayer tiles, so
           the enemy you are hitting reads at a glance mid-fight. */}
       <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
-        <button
-          class={'cb-slot' + (combat.addTargeted ? '' : ' is-active')}
-          onClick={() => switchTarget('boss')}
-        >
+        <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => switchTarget('boss')}>
           <span class="cb-slot__name">{combat.monster.name}</span>
-          <span class="cb-slot__tag">{combat.addTargeted ? 'Attack' : 'Attacking'}</span>
-          {!combat.addTargeted && <span class="cb-slot__ring" />}
+          <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
+          {onBoss && <span class="cb-slot__ring" />}
         </button>
-        <button
-          class={'cb-slot' + (combat.addTargeted ? ' is-active' : '')}
-          onClick={() => switchTarget('add')}
-        >
-          <span class="cb-slot__name">{activeAdd.name}</span>
-          <span class="cb-slot__tag">{combat.addTargeted ? 'Attacking' : 'Attack'}</span>
-          {combat.addTargeted && <span class="cb-slot__ring" />}
-        </button>
+        {combat.adds.map((add, index) => {
+          if (!add || add.currentHP <= 0) return null
+          const on = add === activeAdd && !onBoss
+          return (
+            <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => switchTarget(index)}>
+              <span class="cb-slot__name">{add.name}</span>
+              <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
+              {on && <span class="cb-slot__ring" />}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
@@ -3275,6 +3293,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const heroSpec = getCharacterModel() || {}
   const arenaPanel = showArena && (
     <CombatArena3D
+      monsterId={combat.monster.id}
       monsterName={combat.monster.name}
       monsterPath={arenaModel ? arenaModel.path : null}
       monsterProc={arenaProc}
@@ -3290,6 +3309,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       attackSignal={arenaSignal}
       windupSignal={arenaWindup}
       monsterAttackImpactSec={arenaModel ? arenaModel.attackImpactSec : null}
+      monsterAttackMaxSec={arenaModel ? arenaModel.attackMaxSec : null}
+      monsterAttackStyle={combat.monster.attackStyle}
       monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
       playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}
       monsterSplats={monsterSplats}
