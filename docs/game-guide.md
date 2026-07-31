@@ -229,6 +229,8 @@ Out there, anyone within 10 combat levels of you can attack you, and you can att
 
 **If you die in the Wilderness you drop everything** — your whole inventory and every item you are wearing — on the ground for your killer. Bank what you cannot afford to lose. Untradeable items are the one exception, and not a kind one: they are destroyed rather than dropped, and your killer gets their shop value in coins instead. A one-life run ends there like it ends anywhere else.
 
+You cannot log out of a fight, and closing the tab is not a fight plan. Anywhere in the open world, leaving is refused while you are in combat — the Log out button tells you so, and if you close the tab or lose connection your character stays standing there, unable to fight back and perfectly killable, until the fight has been over for ten seconds. Run, eat, or die like everyone else.
+
 Outlaws roam the wastes when the map is quiet, so there is always something to fight. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not.
 
 Ironman characters can fight in the Wilderness and keep every outlaw drop, but can never pick up loot dropped by another player.

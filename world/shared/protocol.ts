@@ -109,6 +109,11 @@ export type ZoneEvent =
   /** Zone-wide kill feed for a player kill — the Wilderness equivalent of the
    * boss `kill` event. `bot` marks a kill on one of the roaming bots. */
   | { e: 'pvpKill'; killer: string; victim: string; bot?: boolean }
+  /** The Log out button was refused because the player is in a fight. Carries
+   * the reason as the chat line AND is the client's signal to cancel the reload
+   * it is holding — one message, so the two can never disagree. The refusal is
+   * server-side regardless: ignoring this event does not get anyone out. */
+  | { e: 'logoutRefused'; text: string }
 
 export type EntityDiff = {
   id: string

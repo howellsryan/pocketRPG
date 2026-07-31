@@ -53,6 +53,7 @@ import {
   type BotState,
 } from './pvpBots'
 import { collectDeathDrops, recordPvpBotKill, recordPvpKill } from './pvpDeath'
+import { COMBAT_LINGER_MAX_TICKS, LOGOUT_BLOCKED_MESSAGE, isFighting, lingerExpired, logoutBlocked, nextCombatBlockUntil } from './combatLogout'
 import { sessionCombatLevel } from './tick'
 import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
@@ -163,6 +164,12 @@ type Player = TickPlayer & {
   /** The undrained levels above, so a fight can put back what its specials
    * took. Nothing else restores them, and this session outlives every fight. */
   baseLevels: Record<string, number>
+  /** No exit from the world until this tick — see server/combatLogout.ts.
+   * Refreshed every tick the player is fighting, PvE or PvP. */
+  combatBlockUntilTick: number
+  /** Ceiling on a linger that only exists because the player left mid-fight;
+   * 0 when this linger is the ordinary dropped-socket kind. */
+  combatLingerDeadline: number
   combatLevel: number
   /** Answered YES at the line. `pvpCrossed` records that the consent was spent,
    * so walking back into the camp arms the prompt again for the next trip —
@@ -445,6 +452,15 @@ export class WorldZone extends Server<Env> {
     // (handleHello carry-over) clears the linger; otherwise the tick loop
     // removes + flushes them once it expires. Combat/aggro is released now so
     // a frozen player can't hold a monster.
+    //
+    // Unless they were fighting: a dropped socket is the easiest combat log of
+    // all (pull the plug), so that case keeps the fight and the aggro and runs
+    // the same deferred exit a closing tab gets.
+    if (logoutBlocked(player.combatBlockUntilTick, this.tickCount)) {
+      this.beginCombatLinger(player)
+      this.ensureTicking()
+      return
+    }
     this.releaseAggro(charId)
     player.path = []
     this.clearIntents(player)
@@ -562,6 +578,15 @@ export class WorldZone extends Server<Env> {
       existing.conn = connection
       existing.lastMsgTimes = []
       existing.lingerUntilTick = null
+      // Coming back cancels the deferred exit and un-freezes them: a combat
+      // linger leaves the duel PASSIVE, and a player who reconnected into the
+      // middle of one has to be able to swing back. (The PvE session is cleared
+      // above, as it has been for every reconnect — but the Wilderness lock is
+      // NOT, so a fight survives the loser reloading.) `combatBlockUntilTick` is
+      // deliberately left alone: they are still in the fight, so the clock
+      // governing their next logout attempt keeps running.
+      existing.combatLingerDeadline = 0
+      existing.pvpPassive = false
       connection.setState({ charId: liveCharId })
       void beginWorldSession(this.env, row.id, existing.sessionId)
       this.sendWelcome(existing)
@@ -696,6 +721,8 @@ export class WorldZone extends Server<Env> {
       pvpChaseTile: null,
       pvpPassive: false,
       lastPvpStateSent: null,
+      combatBlockUntilTick: 0,
+      combatLingerDeadline: 0,
       isBot: false,
     }
     // One line per login so `wrangler tail` can answer "does the world think
@@ -883,6 +910,13 @@ export class WorldZone extends Server<Env> {
         if (this.isPvp && message.yes) player.pvpConsent = true
         break
       case 'logout':
+        // Answered, never silently ignored: a Log out button that does nothing
+        // reads as a broken game, and the client is holding its reload on this
+        // reply. The text is the chat line AND the client's cancel signal.
+        if (logoutBlocked(player.combatBlockUntilTick, this.tickCount)) {
+          player.pendingEvents.push({ e: 'logoutRefused', text: LOGOUT_BLOCKED_MESSAGE })
+          break
+        }
         void this.depart(player, 'logout')
         break
       case 'leave':
@@ -898,12 +932,56 @@ export class WorldZone extends Server<Env> {
    * that dropped by accident, and sitting on the save lock for a minute after a
    * deliberate exit is what leaves the idle game unable to save when the player
    * switches straight back to it. Flushes, checkpoints, releases the lock, then
-   * closes. `logout` also tells the client, which clears its stored session. */
+   * closes. `logout` also tells the client, which clears its stored session.
+   *
+   * The ONE thing that defers it is an active fight: closing the tab must not
+   * be a better escape than running, so a departing fighter is frozen in place
+   * instead (beginCombatLinger) and really leaves when the fight has been over
+   * for COMBAT_LOGOUT_BLOCK_TICKS. Every exit funnels through here — the button,
+   * the `leave` frame and the out-of-band beacon — so that is one check, not
+   * three that can drift apart. */
   private async depart(player: Player, reason: 'logout' | 'leave'): Promise<void> {
+    if (logoutBlocked(player.combatBlockUntilTick, this.tickCount)) {
+      this.beginCombatLinger(player)
+      player.conn.close(1000, reason)
+      return
+    }
     const conn = player.conn
     await this.removeAndFlush(player)
     if (reason === 'logout') send(conn, { t: 'error', code: 'logged_out', msg: 'You have left the world.' })
     conn.close(1000, reason)
+  }
+
+  /**
+   * Freezes a player who tried to leave mid-fight. They stay in the world,
+   * visible, targetable and losable — but PASSIVE, on both combat paths: a
+   * character nobody is driving must not go on winning fights, it must only go
+   * on being in them.
+   *
+   * Aggro and the PvP lock are deliberately NOT released (the ordinary socket
+   * close does release aggro), because releasing them is what would end the
+   * fight and let the block lapse in the very next tick.
+   */
+  private beginCombatLinger(player: Player): void {
+    player.path = []
+    this.clearIntents(player, true)
+    player.anim = 'idle'
+    player.running = false
+    if (player.combat) player.combat.passive = true
+    player.pvpPassive = true
+    const floor = this.tickCount + LINGER_TICKS
+    player.lingerUntilTick = player.lingerUntilTick === null ? floor : Math.min(player.lingerUntilTick, floor)
+    // Re-entrant on purpose: `depart` closes the socket, which lands straight
+    // back here through onClose, and the exit beacon can arrive after both. Only
+    // the first pass arms the ceiling and pays for the D1 write.
+    if (player.combatLingerDeadline === 0) {
+      player.combatLingerDeadline = this.tickCount + COMBAT_LINGER_MAX_TICKS
+      // The lock's own fallback expiry has to cover the ceiling, not the
+      // ordinary linger: armed short, the save would unlock while the body is
+      // still standing on the field.
+      void expireWorldSessionAfter(this.env, Number(player.charId), player.sessionId, COMBAT_LINGER_MAX_TICKS * 600 + 5_000)
+    }
+    this.ensureTicking()
   }
 
   /** Takes an equipped item off, returning it to the pack (reverse of equip):
@@ -1390,11 +1468,16 @@ export class WorldZone extends Server<Env> {
     player.pendingInteract = intent
   }
 
-  /** Every fighter in this room by id — real players (excluding the frozen) and
-   * roaming bots, which are attacked through exactly the same path. */
+  /** Every fighter in this room by id — real players and roaming bots, which
+   * are attacked through exactly the same path.
+   *
+   * A LINGERING player counts. Everyone can see them standing there (their ent
+   * still rides every diff), and a body you can see but cannot hit is the whole
+   * combat-log exploit: pull the plug at 5 HP and walk away with the lot. They
+   * are passive, so they land nothing back — see beginCombatLinger. */
   private pvpFighter(id: string): PvpFighter | null {
     const player = this.players.get(id)
-    if (player) return player.lingerUntilTick === null ? player : null
+    if (player) return player
     const bot = this.bots.get(id)
     return bot && bot.state === 'alive' ? bot : null
   }
@@ -1466,10 +1549,12 @@ export class WorldZone extends Server<Env> {
     return null
   }
 
-  /** Every fighter the duel loop should consider this tick. */
+  /** Every fighter the duel loop should consider this tick — lingering players
+   * included, so a fight survives the loser closing their browser (see
+   * pvpFighter). */
   private pvpFighters(): PvpFighter[] {
     const out: PvpFighter[] = []
-    for (const player of this.players.values()) if (player.lingerUntilTick === null) out.push(player)
+    for (const player of this.players.values()) out.push(player)
     for (const bot of this.bots.values()) if (bot.state === 'alive') out.push(bot)
     return out
   }
@@ -1804,7 +1889,8 @@ export class WorldZone extends Server<Env> {
     // them for real, flush their pack/XP, and broadcast the leave. Done first
     // so the tick below never processes an already-gone player.
     for (const player of [...this.players.values()]) {
-      if (player.lingerUntilTick !== null && this.tickCount >= player.lingerUntilTick) {
+      if (player.lingerUntilTick === null) continue
+      if (lingerExpired(this.tickCount, player.lingerUntilTick, player.combatBlockUntilTick, player.combatLingerDeadline)) {
         void this.removeAndFlush(player)
       }
     }
@@ -1955,6 +2041,20 @@ export class WorldZone extends Server<Env> {
     // the loot / exit loops below, both of which skip anyone who died.
     this.tickPvp(deaths, playerEnts, hits, eventsByChar, broadcastEvents, botChanged, botRemoved)
 
+    // Who is in a fight, after everything that could start or end one this tick.
+    // One pass, one set: `attackerId` is the npc's side of a fight the player's
+    // own session may already have dropped (they walked out of reach), and that
+    // still counts — walking away from a dragon is not leaving combat.
+    const npcAttackerIds = new Set<string>()
+    for (const npc of npcs.values()) if (npc.attackerId) npcAttackerIds.add(npc.attackerId)
+    for (const player of this.players.values()) {
+      player.combatBlockUntilTick = nextCombatBlockUntil(
+        player.combatBlockUntilTick,
+        this.tickCount,
+        isFighting(player, this.tickCount, npcAttackerIds),
+      )
+    }
+
     // Damage-contribution readout for every boss fight this tick — gated on an
     // actual change so it doesn't spam once the fight goes quiet (item 11).
     const playerNames = new Map<string, string>()
@@ -2048,7 +2148,10 @@ export class WorldZone extends Server<Env> {
         // Keep the world-session lock fresh (TTL self-heals a dead DO). Skip
         // lingering players — a backgrounded tab shouldn't hold the idle game
         // out; if they never reconnect, linger expiry ends the session anyway.
-        if (player.lingerUntilTick === null) void refreshWorldSession(this.env, Number(player.charId), player.sessionId)
+        // A combat linger is the exception: that body is still in a fight it
+        // can lose, so the world must keep owning its save until it is settled.
+        const held = player.lingerUntilTick === null || logoutBlocked(player.combatBlockUntilTick, this.tickCount)
+        if (held) void refreshWorldSession(this.env, Number(player.charId), player.sessionId)
       }
     }
   }
