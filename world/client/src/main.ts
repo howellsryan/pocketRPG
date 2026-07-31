@@ -739,11 +739,17 @@ function enterWorld(session: WorldSession): void {
             if (pick.kind !== 'player') return
             const other = others.get(pick.id)
             const level = other?.combatLevel ?? pick.monsterLevel
-            pick.attackable = selfInDanger
+            const attackable = selfInDanger
               && !!other?.pvp
               && level != null
               && Math.abs(level - playerCombatLevel) <= PVP_LEVEL_BRACKET
+            // The ACTION is the decoration: it makes the player a left-click
+            // target, gives them a hover line, and supplies the menu's Attack
+            // row — all three from one decision, so they cannot disagree.
+            pick.actions = attackable ? [{ label: 'Attack', action: 'attack' }] : []
+            pick.attackable = attackable
             pick.bot = !!other?.bot
+            if (level != null) pick.monsterLevel = level
           },
           // Wheel zoom, arrow-key orbit/zoom, and middle-drag orbit all live in
           // cam (cameraControls.ts) — pinch is the one gesture input.ts already

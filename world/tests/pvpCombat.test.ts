@@ -3,6 +3,7 @@ import {
   beginPvpFight,
   endPvpFight,
   pvpAttackRange,
+  pvpApproachPlan,
   refuseAttack,
   stepPvpFight,
   tickPvpBuffs,
@@ -227,5 +228,70 @@ describe('protection prayers', () => {
     for (let i = 0; i < 200; i++) stepPvpFight(a, b, ctx(100 + i), result)
     // A melee scimitar against protect-from-magic must still be landing real hits.
     expect(result.swings.some((s) => s.attackerId === 'a' && s.damage > 0)).toBe(true)
+  })
+})
+
+describe('disengaging by walking away', () => {
+  it('stops the walker landing anything while their opponent keeps swinging', () => {
+    // Both in reach, but the walker has disengaged: every swing this tick must
+    // belong to the one who stayed. Regression — a ranged fighter used to keep
+    // firing at a player they were running away from.
+    const runner = fighter({ charId: 'a', combatantId: 1, x: 10, pvpPassive: true })
+    const chaser = fighter({ charId: 'b', combatantId: 2, x: 11 })
+    beginPvpFight(runner, chaser, 100)
+    const result = out()
+    for (let i = 0; i < 30; i++) stepPvpFight(runner, chaser, ctx(100 + i), result)
+    expect(result.swings.length).toBeGreaterThan(0)
+    expect(result.swings.every((s) => s.attackerId === 'b')).toBe(true)
+  })
+
+  it('holds true at range, where the disengaged fighter could still reach', () => {
+    const runner = fighter({
+      charId: 'a', combatantId: 1, x: 10, pvpPassive: true,
+      equipment: { weapon: { itemId: 'trident_of_venom' } },
+    })
+    const chaser = fighter({ charId: 'b', combatantId: 2, x: 15, equipment: { weapon: { itemId: 'trident_of_venom' } } })
+    beginPvpFight(runner, chaser, 100)
+    const result = out()
+    for (let i = 0; i < 30; i++) stepPvpFight(runner, chaser, ctx(100 + i), result)
+    expect(result.swings.some((s) => s.attackerId === 'b')).toBe(true)
+    expect(result.swings.some((s) => s.attackerId === 'a')).toBe(false)
+  })
+
+  it('clears on release, so the next fight starts live', () => {
+    const a = fighter({ charId: 'a', combatantId: 1, pvpPassive: true })
+    const b = fighter({ charId: 'b', combatantId: 2, x: 11 })
+    beginPvpFight(a, b, 100)
+    endPvpFight(a, b)
+    expect(a.pvpPassive).toBe(false)
+  })
+})
+
+describe('pvpApproachPlan', () => {
+  const at = (x: number, z = 0) => ({ x, z })
+
+  it('arrives once inside the attacker’s own reach', () => {
+    expect(pvpApproachPlan(at(10), at(15), 5, null, 3).kind).toBe('arrived')
+    expect(pvpApproachPlan(at(10), at(11), 1, null, 3).kind).toBe('arrived')
+  })
+
+  it('re-paths when the target has moved off the tile the path was built for', () => {
+    // The bug: a bow-armed bot holds at its own range and drifts, so the path
+    // computed at the click walked to a tile it had already left.
+    expect(pvpApproachPlan(at(0), at(20), 5, { x: 22, z: 0 }, 6).kind).toBe('repath')
+  })
+
+  it('holds a live path while the target stands still', () => {
+    expect(pvpApproachPlan(at(0), at(20), 5, { x: 20, z: 0 }, 6).kind).toBe('hold')
+  })
+
+  it('re-paths when the path has run out without arriving', () => {
+    // Otherwise the chase stalls forever one tile short and the attack intent
+    // hangs, which reads in-game as "the attack simply does nothing".
+    expect(pvpApproachPlan(at(0), at(20), 5, { x: 20, z: 0 }, 0).kind).toBe('repath')
+  })
+
+  it('re-paths when there is no chase tile at all (a fresh click)', () => {
+    expect(pvpApproachPlan(at(0), at(20), 5, null, 4).kind).toBe('repath')
   })
 })

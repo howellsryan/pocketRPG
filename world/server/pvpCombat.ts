@@ -67,6 +67,11 @@ export type PvpFighter = {
   /** Who they are locked with, and until when. */
   pvpOpponentId: string | null
   pvpLockUntilTick: number
+  /** This fighter walked away: they are still IN the fight (their opponent can
+   * still reach and hit them, and single combat still holds) but they land
+   * nothing until they click Attack again. Mirrors CombatSession.passive in
+   * PvE. Bots are never passive — walking is how they close the gap. */
+  pvpPassive?: boolean
   isBot: boolean
   anim: string
 }
@@ -95,6 +100,40 @@ export type PvpTickOutput = {
   swings: PvpSwingOutcome[]
   /** charIds whose HP reached 0 this tick, paired with their killer. */
   deaths: { victimId: string; killerId: string }[]
+}
+
+export type ApproachPlan =
+  /** Already close enough — stop walking and let the fight start. */
+  | { kind: 'arrived' }
+  /** Keep the current path; the target has not moved since it was computed. */
+  | { kind: 'hold' }
+  /** Re-path: the target moved, or we have run out of path without arriving. */
+  | { kind: 'repath' }
+
+/**
+ * What an attacker chasing `target` should do this tick.
+ *
+ * Pure, because the alternative — deciding it inline in the Durable Object —
+ * is untestable, and this is precisely the decision that was wrong: one path
+ * computed at the click walked the attacker to the tile their target had
+ * already left, and the fight never started. Bots hold at their own weapon's
+ * range and players run, so a stale path is the normal case, not the edge one.
+ *
+ * `chaseTile` is the target tile the live path was computed for (null when
+ * there isn't one). Holding while the target is stationary is what keeps this
+ * from costing a pathfind every tick for every chaser.
+ */
+export function pvpApproachPlan(
+  attacker: { x: number; z: number },
+  target: { x: number; z: number },
+  range: number,
+  chaseTile: { x: number; z: number } | null,
+  pathLength: number,
+): ApproachPlan {
+  if (Math.max(Math.abs(attacker.x - target.x), Math.abs(attacker.z - target.z)) <= range) return { kind: 'arrived' }
+  if (pathLength === 0) return { kind: 'repath' }
+  if (!chaseTile || chaseTile.x !== target.x || chaseTile.z !== target.z) return { kind: 'repath' }
+  return { kind: 'hold' }
 }
 
 /** A fighter's own attack reach in tiles, from the weapon they hold. */
@@ -147,11 +186,13 @@ export function endPvpFight(fighter: PvpFighter, other: PvpFighter | null): void
   fighter.pvpLockUntilTick = 0
   fighter.pvpAttackTimer = 0
   fighter.specialAttackQueued = false
+  fighter.pvpPassive = false
   if (other && other.pvpOpponentId === fighter.charId) {
     other.pvpOpponentId = null
     other.pvpLockUntilTick = 0
     other.pvpAttackTimer = 0
     other.specialAttackQueued = false
+    other.pvpPassive = false
   }
 }
 
@@ -246,6 +287,10 @@ function swingOnce(
   out: PvpTickOutput,
 ): void {
   if (attacker.hp <= 0 || defender.hp <= 0) return
+  // Disengaged: they walked away from this fight, so nothing of theirs lands
+  // until a fresh Attack click. The fight itself survives — their opponent is
+  // still swinging at them, which is the whole reason running is a gamble.
+  if (attacker.pvpPassive) return
   if (attacker.pvpAttackTimer > 0) return
   if (!withinRangeAndSight(attacker, defender, pvpAttackRange(attacker), collision)) return
 

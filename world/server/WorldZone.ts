@@ -45,7 +45,7 @@ import { ZONES } from './zones'
 import { endOneLifeRun, flipOneLifeOff } from './oneLife'
 import { isPvpZone, isDangerTile, pvpRefusalMessage, crossesIntoDanger, PVP_LINE_Z } from '../shared/pvpArea'
 import {
-  beginPvpFight, endPvpFight, pvpAttackAnim, pvpAttackRange, refuseAttack, stepPvpFight,
+  beginPvpFight, endPvpFight, pvpApproachPlan, pvpAttackAnim, pvpAttackRange, refuseAttack, stepPvpFight,
   type PvpFighter, type PvpTickOutput,
 } from './pvpCombat'
 import {
@@ -175,6 +175,14 @@ type Player = TickPlayer & {
   /** An Attack click on a player, awaiting arrival — the PvP twin of
    * pendingInteract, which only ever carries npcs. */
   pvpPendingTargetId: string | null
+  /** Target tile the chase path was last computed for, so a stationary target
+   * costs no pathfind per tick (mirrors followTargetTile). */
+  pvpChaseTile: { x: number; z: number } | null
+  /** The player walked away from this fight. The lock survives — whoever is
+   * chasing them keeps swinging and nobody else may jump in — but their OWN
+   * swings stop until they click Attack again. The PvP twin of
+   * CombatSession.passive. */
+  pvpPassive: boolean
   /** Gates the {e:'pvpState'} echo. */
   lastPvpStateSent: string | null
   /** Always false for a real account; the field exists so a Player satisfies
@@ -681,6 +689,8 @@ export class WorldZone extends Server<Env> {
       pvpAttackTimer: 0,
       specialAttackQueued: false,
       pvpPendingTargetId: null,
+      pvpChaseTile: null,
+      pvpPassive: false,
       lastPvpStateSent: null,
       isBot: false,
     }
@@ -781,6 +791,12 @@ export class WorldZone extends Server<Env> {
         // monster is out of reach too.
         this.clearIntents(player, true)
         if (player.combat) player.combat.passive = true
+        // Walking away is disengaging in the Wilderness too: the lock survives
+        // (so whoever is chasing you keeps swinging, and nobody else may jump
+        // in) but YOUR swings stop until you click Attack again. Without this a
+        // ranged or magic fighter kept firing at a target they were running
+        // away from, which is not a decision anyone made.
+        player.pvpPassive = true
         break
       }
       case 'cancel':
@@ -1283,6 +1299,7 @@ export class WorldZone extends Server<Env> {
     player.following = null
     player.followTargetTile = null
     player.pvpPendingTargetId = null
+    player.pvpChaseTile = null
   }
 
   private handleInteract(player: Player, message: Extract<ClientMessage, { t: 'interact' }>): void {
@@ -1395,16 +1412,38 @@ export class WorldZone extends Server<Env> {
       player.pendingEvents.push({ e: 'msg', text: pvpRefusalMessage(refusal, target.name) })
       return
     }
-    const range = pvpAttackRange(player)
-    if (withinRange({ x: player.x, z: player.z }, target, range)) {
-      player.path = []
-    } else {
-      const path = findPathAdjacent(this.zone.collision, { x: player.x, z: player.z }, target)
-      if (!path) return
-      player.path = cutPathToRange(path.slice(1), target, range)
-    }
     this.clearIntents(player)
     player.pvpPendingTargetId = target.charId
+    // A fresh Attack click is the ONLY thing that re-engages after walking away
+    // (see pvpPassive), mirroring how a PvE fight needs a new click.
+    player.pvpPassive = false
+    player.pvpChaseTile = null
+    this.stepPvpApproach(player, target)
+  }
+
+  /**
+   * Walks the player toward their attack target, re-pathing whenever the target
+   * has moved. Called at the click AND every tick until the fight starts.
+   *
+   * One path computed at click time is not enough out here: bots hold at their
+   * own weapon's range and players run, so a stale path walks you to an empty
+   * tile and leaves the intent hanging forever — which is exactly what made a
+   * ranged or magic attack look like it simply did nothing. Guarded on the
+   * target's tile changing, the same way updateFollow avoids a pathfind per
+   * tick for a stationary target.
+   */
+  private stepPvpApproach(player: Player, target: PvpFighter): void {
+    const range = pvpAttackRange(player)
+    const plan = pvpApproachPlan(player, target, range, player.pvpChaseTile, player.path.length)
+    if (plan.kind === 'arrived') {
+      player.path = []
+      player.pvpChaseTile = null
+      return
+    }
+    if (plan.kind === 'hold') return
+    player.pvpChaseTile = { x: target.x, z: target.z }
+    const path = findPathAdjacent(this.zone.collision, { x: player.x, z: player.z }, target)
+    player.path = path ? cutPathToRange(path.slice(1), target, range) : []
   }
 
   // ── The Wilderness ────────────────────────────────────────────────────────
@@ -1587,7 +1626,12 @@ export class WorldZone extends Server<Env> {
         player.pvpPendingTargetId = null
         continue
       }
-      if (!withinRangeAndSight(player, target, pvpAttackRange(player), this.zone.collision)) continue
+      if (!withinRangeAndSight(player, target, pvpAttackRange(player), this.zone.collision)) {
+        // Still closing. Re-path onto wherever they have moved to, or the walk
+        // ends at a tile they left several ticks ago.
+        this.stepPvpApproach(player, target)
+        continue
+      }
       const refusal = refuseAttack(this.name, player, target, this.tickCount)
       if (refusal) {
         player.pvpPendingTargetId = null
@@ -1595,6 +1639,8 @@ export class WorldZone extends Server<Env> {
         continue
       }
       player.pvpPendingTargetId = null
+      player.pvpChaseTile = null
+      player.pvpPassive = false
       beginPvpFight(player, target, this.tickCount)
     }
 

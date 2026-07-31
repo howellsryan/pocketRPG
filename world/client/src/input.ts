@@ -73,7 +73,13 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
     raycaster.setFromCamera(pointer, camera)
   }
 
-  /** Unique pickables under the cursor, near-to-far (ray order preserved). */
+  /** Unique pickables under the cursor, near-to-far (ray order preserved).
+   *
+   * Decoration happens HERE rather than at each call site: hover, left-click
+   * and the context menu all resolve picks through this one function, and a
+   * rule applied to only some of them is a menu that offers an action the
+   * left-click does not (which is exactly how Attack ended up right-click
+   * only). */
   function resolvePicks(): Pickable[] {
     const hits = raycaster.intersectObjects(h.getPickables(), true)
     const out: Pickable[] = []
@@ -82,6 +88,7 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
       const pick = pickTargetOf(hit.object)
       if (pick && !seen.has(pick)) {
         seen.add(pick)
+        h.decoratePickable?.(pick)
         out.push(pick)
       }
     }
@@ -108,7 +115,6 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
   function openMenu(clientX: number, clientY: number): void {
     setPointer({ clientX, clientY })
     const picks = resolvePicks()
-    for (const pick of picks) h.decoratePickable?.(pick)
     const tile = tileUnderPointer()
     const rows = buildMenu(picks, h.getPlayerCombatLevel())
     const dispatch: MenuDispatch = (row) => {
