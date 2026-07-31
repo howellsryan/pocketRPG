@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { makeD1 } from './helpers/d1'
+import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 
 // Real schema, real SQL; only the JWT verify is stubbed. Identity 7 owns
 // character 42 — identity 999 owns nothing, which is what the ownership test
@@ -56,6 +57,13 @@ describe('hard mode state is the server’s', () => {
     expect(await isHardModeEnabled(env, 42, 'monsters', HARD_BOSS)).toBe(false)
   })
 
+  it('recognises a raid as a hard-mode target', async () => {
+    const raidId = Object.keys(raidsData as Record<string, any>).find((id) => (raidsData as any)[id].hardMode)!
+    await setHardModeTarget(env, 42, 'raids', raidId, true)
+    expect(await isHardModeEnabled(env, 42, 'raids', raidId)).toBe(true)
+    expect(await listHardModeTargets(env, 42)).toEqual([{ sourceType: 'raids', sourceId: raidId }])
+  })
+
   it('refuses a target that has no authored hard mode', async () => {
     await setHardModeTarget(env, 42, 'monsters', 'field_chicken', true)
     expect(await isHardModeEnabled(env, 42, 'monsters', 'field_chicken')).toBe(false)
@@ -74,6 +82,14 @@ describe('/api/hard-mode', () => {
 
     const listed = await hardModeGet({ request: request(null, 'GET'), env } as any)
     expect(await listed.json()).toEqual({ entries: [{ sourceType: 'monsters', sourceId: HARD_BOSS }] })
+  })
+
+  it('refuses a malformed request', async () => {
+    const res = await hardModePost({ request: request({ enabled: true }), env } as any)
+    expect(res.status).toBe(400)
+    expect((await res.json()).code).toBe('INVALID_HARD_MODE_TARGET')
+    const wrongType = await hardModePost({ request: request({ sourceType: 'clues', sourceId: 'x', enabled: true }), env } as any)
+    expect(wrongType.status).toBe(400)
   })
 
   it('refuses a character the caller does not own', async () => {
@@ -178,5 +194,62 @@ describe('skipping a hard fight', () => {
       env,
     } as any)
     expect((await res.json()).cost).toBe(1)
+  })
+})
+
+// End to end through the endpoints a solo kill actually goes through: the same
+// nonce claim, the same save write, the real drop tables.
+describe('a solo kill claims hard-mode rates from D1', () => {
+  async function seedSave(id = 42) {
+    const inventory = new Array(28).fill(null)
+    const json = JSON.stringify({ inventory, bank: {}, stats: {}, settings: {} })
+    const blob = await gzipJsonString(json)
+    env.DB.prepare('INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision) VALUES (?, ?, ?, 0, 1)')
+      .bind(id, blob, json).run()
+  }
+
+  function completion(handler: any, sourceId: string, nonce: string) {
+    return handler({
+      request: new Request('https://example.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+        body: JSON.stringify({ sourceId, actionNonce: nonce }),
+      }),
+      env,
+    })
+  }
+
+  it('grants a hard boss’s doubled roll and an ordinary one otherwise', async () => {
+    await seedSave()
+    const { onRequestPost: completeMonster } = await import('../functions/api/actions/monster/complete.js')
+    const drop = anyMonsters[HARD_BOSS].drops.find((d: any) => d.chance > 0 && d.chance < 0.5)
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(drop.chance * 1.5)
+    try {
+      const normal = await (await completion(completeMonster, HARD_BOSS, 'kill-1')).json()
+      expect(normal.granted.some((g: any) => g.itemId === drop.itemId)).toBe(false)
+
+      await setHardModeTarget(env, 42, 'monsters', HARD_BOSS, true)
+      const hard = await (await completion(completeMonster, HARD_BOSS, 'kill-2')).json()
+      expect(hard.granted.some((g: any) => g.itemId === drop.itemId)).toBe(true)
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  it('grants a hard raid’s doubled roll', async () => {
+    await seedSave()
+    const { onRequestPost: completeRaid } = await import('../functions/api/actions/raid/complete.js')
+    const raids = raidsData as Record<string, any>
+    const raidId = Object.keys(raids).find((id) => raids[id]?.rewards?.unique?.chance > 0)!
+    const chance = raids[raidId].rewards.unique.chance
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(chance * 1.5)
+    try {
+      const normal = await (await completion(completeRaid, raidId, 'raid-1')).json()
+      await setHardModeTarget(env, 42, 'raids', raidId, true)
+      const hard = await (await completion(completeRaid, raidId, 'raid-2')).json()
+      expect(hard.granted.length).toBeGreaterThan(normal.granted.length)
+    } finally {
+      spy.mockRestore()
+    }
   })
 })

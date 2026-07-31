@@ -59,6 +59,12 @@ describe('hard mode scaling', () => {
     expect(hard.forms.two.defenceBonus.magic).toBe(600)
   })
 
+  it('leaves a malformed form entry alone rather than throwing', () => {
+    const hard = scaleMonsterForHardMode({ id: 'x', hitpoints: 10, forms: { broken: null, also: 'nonsense' } } as any)
+    expect(hard.forms.broken).toBeNull()
+    expect(hard.forms.also).toBe('nonsense')
+  })
+
   it('raises the max hit a fight actually reports', () => {
     const boss = anyMonsters.deepmaw_kraken
     const hard = scaleMonsterForHardMode(boss)
