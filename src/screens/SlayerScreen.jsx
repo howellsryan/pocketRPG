@@ -132,7 +132,7 @@ function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, onClose }
             <h2 class="cb-sheet__name">{master.name}</h2>
             <div class="cb-sheet__sub">{master.location}</div>
           </div>
-          <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} /></button>
+          <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="var(--text-soft)" size={16} /></button>
         </div>
         <div class="cb-sheet__scroll">
           <p class="cb-idledesc" style={{ margin: '0 2px 8px' }}>

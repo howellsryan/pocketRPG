@@ -165,7 +165,7 @@ export default function CharacterUnlockScreen({ onBack }) {
           return (
             <GildedComplete key={unlock.id} complete={owned} className="rounded-xl">
               <div
-                class={`flex items-center justify-between p-3 rounded-xl border ${owned ? 'bg-[var(--fm-parch-hi)] border-[var(--color-hp-green)]' : 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'}`}
+                class={`flex items-center justify-between p-3 rounded-xl border ${owned ? 'bg-[var(--surface-raised)] border-[var(--color-hp-green)]' : 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'}`}
               >
                 <div class="flex items-center gap-3 min-w-0">
                   <GameIcon iconKey={unlock.iconKey || 'death_skull'} size={36} color="#c0453b" class="flex-shrink-0" />
@@ -282,7 +282,7 @@ export default function CharacterUnlockScreen({ onBack }) {
               key={unlockable.id}
               class={`p-3 rounded-xl border ${
                 alreadyDone
-                  ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)]'
+                  ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)]'
                   : available
                     ? 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'
                     : 'bg-[var(--color-void)] border-[var(--color-void-border)] opacity-40'
@@ -322,7 +322,7 @@ export default function CharacterUnlockScreen({ onBack }) {
         {(() => {
           const unlocked = constructionLevel >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
           return (
-            <div class={`p-3 rounded-xl border ${unlocked ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)]' : 'bg-[var(--color-void)] border-[var(--color-void-border)] opacity-40'}`}>
+            <div class={`p-3 rounded-xl border ${unlocked ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)]' : 'bg-[var(--color-void)] border-[var(--color-void-border)] opacity-40'}`}>
               <div class="flex items-start justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-1.5 mb-0.5">
@@ -333,7 +333,7 @@ export default function CharacterUnlockScreen({ onBack }) {
                     Lv 80 required · Gathered resources auto-bank when your inventory fills during idle/offline catch-up and skip simulations. Active gathering still stops when your inventory is full.
                   </div>
                 </div>
-                <span class={`text-xs font-semibold shrink-0 pt-0.5 ${unlocked ? 'text-green-400' : 'text-[var(--fm-ink-faint)]'}`}>
+                <span class={`text-xs font-semibold shrink-0 pt-0.5 ${unlocked ? 'text-green-400' : 'text-[var(--text-faint)]'}`}>
                   {unlocked ? '✓ Unlocked' : 'Lv 80'}
                 </span>
               </div>

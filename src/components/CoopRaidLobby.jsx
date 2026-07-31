@@ -38,7 +38,7 @@ function MemberKitModal({ member, itemsData, onClose }) {
       <div class="cb-prayhead">
         <h3>{member.username || 'Raider'}{level ? ` · Combat ${level}` : ''}</h3>
         <button onClick={onClose} class="cb-x" aria-label="Close">
-          <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
+          <GameIcon iconKey="cancel" color="var(--text-soft)" size={16} />
         </button>
       </div>
       <div class="max-h-96 overflow-y-auto">
