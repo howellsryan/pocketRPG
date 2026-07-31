@@ -10,6 +10,7 @@ import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questId
 import { simulateKingdom, normaliseKingdomState, DEFAULT_KINGDOM, mergeLoot, applyKingdomWindow } from '../engine/kingdomEngine.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
+import { applyTheme, normalizeThemePreference, readStoredThemePreference, storeThemePreference, watchSystemTheme, DEFAULT_THEME_PREFERENCE } from '../utils/theme.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { api, getToken, getCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
@@ -71,6 +72,7 @@ export function GameProvider({ children }) {
   const [autoBankExcludedItems, setAutoBankExcludedItemsState] = useState(new Set())
   const [showInfoToasts, setShowInfoToastsState] = useState(false)
   const [backgroundCombat, setBackgroundCombatState] = useState(false)
+  const [theme, setThemeState] = useState(() => readStoredThemePreference() || DEFAULT_THEME_PREFERENCE)
   // Live snapshot of the running fight, published by CombatScreen each tick so the
   // desktop combat indicator can render the monster's HP as a progress bar while
   // the fight ticks on another screen. Null when no fight is in progress.
@@ -169,6 +171,13 @@ export function GameProvider({ children }) {
   useEffect(() => { stateRef.current.player = player }, [player])
   useEffect(() => { stateRef.current.bankConfig = bankConfig }, [bankConfig])
   useEffect(() => { showInfoToastsRef.current = showInfoToasts }, [showInfoToasts])
+  // Re-stamp on every change (the <head> stanza only covers first paint), and
+  // while the preference is 'system', follow the OS without storing anything.
+  useEffect(() => {
+    applyTheme(theme)
+    if (theme !== 'system') return undefined
+    return watchSystemTheme(() => applyTheme('system'))
+  }, [theme])
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
   useEffect(() => { slayerPointsRef.current = normalisePointCurrency(slayerPoints) }, [slayerPoints])
   useEffect(() => { dungeoneeringTokensRef.current = dungeoneeringTokens }, [dungeoneeringTokens])
@@ -177,7 +186,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -185,7 +194,7 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
-      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers')
+      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -665,6 +674,14 @@ export function GameProvider({ children }) {
     setAutoBankExcludedItemsState(autoBankExcludedItemIdsSet)
     setShowInfoToastsState(savedShowInfoToasts === true) // default false
     setBackgroundCombatState(savedBackgroundCombat === true) // default false
+    // Cross-device convenience only: a locally stored choice always wins, so
+    // the save mirror can never override what this device is already showing.
+    if (!readStoredThemePreference() && savedTheme) {
+      const mirrored = normalizeThemePreference(savedTheme)
+      setThemeState(mirrored)
+      storeThemePreference(mirrored)
+      applyTheme(mirrored)
+    }
     const loadedWorldLocation = normaliseLocation(savedWorldLocation) // un-migrated saves → start place
     worldLocationRef.current = loadedWorldLocation
     setWorldLocationState(loadedWorldLocation)
@@ -931,6 +948,16 @@ export function GameProvider({ children }) {
   const updateBackgroundCombat = useCallback((enabled) => {
     setBackgroundCombatState(enabled)
     saveSetting('backgroundCombat', enabled)
+  }, [])
+
+  // localStorage first: the save is locked during PvP/co-op/world sessions, so
+  // a theme changed mid-fight must not depend on the save push landing.
+  const updateTheme = useCallback((preference) => {
+    const next = normalizeThemePreference(preference)
+    setThemeState(next)
+    storeThemePreference(next)
+    applyTheme(next)
+    saveSetting('theme', next)
   }, [])
 
   // CombatScreen publishes its live fight snapshot here (or null on stop/unmount)
@@ -1335,6 +1362,7 @@ export function GameProvider({ children }) {
       bankConfig,
       showInfoToasts,
       backgroundCombat,
+      theme,
       equipmentPresets,
       quickPrayers,
       homeShortcuts,
@@ -1603,7 +1631,7 @@ export function GameProvider({ children }) {
     // task and immediately need to branch on it in the same tick (e.g. a
     // travel confirm that then navigates) should use this, not `activeTask`.
     getActiveTask: () => activeTaskInternalRef.current,
-    activeTask, autoBankLoot, autoBankExcludedItems, toggleAutoBankExclusion, bankConfig, showInfoToasts, updateShowInfoToasts,
+    activeTask, autoBankLoot, autoBankExcludedItems, toggleAutoBankExclusion, bankConfig, showInfoToasts, updateShowInfoToasts, theme, updateTheme,
     backgroundCombat, updateBackgroundCombat, combatStatus, publishCombatStatus,
     equipmentPresets, updateEquipmentPresets,
     quickPrayers, updateQuickPrayers,

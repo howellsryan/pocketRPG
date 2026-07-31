@@ -90,7 +90,7 @@ export default function ActivityIndicator({ onNavigate }) {
     >
       <style>{`@keyframes pocketrpg-activity-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }`}</style>
       <svg width={size} height={size} class="absolute inset-0 -rotate-90" aria-hidden="true">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--fm-rule)" stroke-width={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--hairline)" stroke-width={stroke} />
         {hasProgress && (
           <circle
             cx={size / 2}

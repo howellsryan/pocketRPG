@@ -519,7 +519,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
         <GameIcon item={item} size={48} class="shrink-0" />
         <div class="flex-1 min-w-0">
           <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item.name}</div>
-          <div class="text-[10px] text-[var(--fm-ink-faint)] mt-1">
+          <div class="text-[10px] text-[var(--text-faint)] mt-1">
             {orderBook ? 'Order book' : 'General store'}
             {owned > 0 && <span class="ml-2">· You have {owned}</span>}
           </div>
@@ -546,7 +546,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
         <GameIcon item={item} size={48} class="shrink-0" />
         <div class="flex-1 min-w-0">
           <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item.name}</div>
-          <div class="text-[10px] text-[var(--fm-ink-faint)] mt-1">
+          <div class="text-[10px] text-[var(--text-faint)] mt-1">
             Shardglass store
             {owned > 0 && <span class="ml-2">· You have {owned}</span>}
           </div>
@@ -605,7 +605,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
               <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
                 {offer.offer_type === 'buy' ? 'Buy' : 'Sell'} {item?.name || offer.item_id}
               </div>
-              <div class="text-[10px] text-[var(--fm-ink-faint)]">
+              <div class="text-[10px] text-[var(--text-faint)]">
                 {executedUnitPrice.toLocaleString()} gp · {filled}/{offer.quantity_total} filled
               </div>
               {isReady && (
@@ -646,12 +646,12 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
             <div class="h-2" />
           </>
         )}
-        <div class="text-[11px] text-[var(--fm-ink-faint)] mb-1">Slots: {slotsUsed}/{MAX_SLOTS} active</div>
+        <div class="text-[11px] text-[var(--text-faint)] mb-1">Slots: {slotsUsed}/{MAX_SLOTS} active</div>
         {Array.from({ length: MAX_SLOTS }).map((_, idx) => {
           const offer = activeOffers[idx]
           if (!offer) {
             return (
-              <Panel key={`empty-${idx}`} className="text-center text-[12px] text-[var(--fm-ink-faint)] py-4">
+              <Panel key={`empty-${idx}`} className="text-center text-[12px] text-[var(--text-faint)] py-4">
                 Empty slot
               </Panel>
             )
@@ -675,11 +675,11 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
           >
             <span class="text-[var(--color-gold)] text-[14px]">‹</span>
             <span class="text-[13px] font-semibold text-[var(--color-parchment)]">{activeStoreSection}</span>
-            <span class="ml-auto text-[11px] text-[var(--fm-ink-faint)]">{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
+            <span class="ml-auto text-[11px] text-[var(--text-faint)]">{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
           </button>
           <div class="flex-1 overflow-y-auto px-4 pt-3 pb-20 md:pb-4">
             {rows.length === 0 ? (
-              <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">No items in this section.</div>
+              <div class="py-10 px-4 text-center text-[var(--text-faint)] text-[12px]">No items in this section.</div>
             ) : (
               <div class="flex flex-col gap-2">
                 {rows.map((row) => (activeStoreSection === 'Shardglass'
@@ -704,7 +704,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
               class="w-full flex items-center justify-between px-4 py-4 rounded-lg border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-left"
             >
               <span class="text-[14px] font-semibold text-[var(--color-parchment)]">{section}</span>
-              <span class="text-[11px] text-[var(--fm-ink-faint)] flex items-center gap-2">
+              <span class="text-[11px] text-[var(--text-faint)] flex items-center gap-2">
                 <span>{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
                 <span class="text-[var(--color-gold)] text-[14px]">›</span>
               </span>
@@ -725,7 +725,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
           <GameIcon item={item} size={48} class="shrink-0" />
           <div class="flex-1 min-w-0">
             <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item?.name || listing.item_id}</div>
-            <div class="text-[10px] text-[var(--fm-ink-faint)] mt-1">
+            <div class="text-[10px] text-[var(--text-faint)] mt-1">
               {listing.buyOfferCount > 0 && <span>Buyers: {listing.buyOfferCount}</span>}
               {listing.buyOfferCount > 0 && listing.sellOfferCount > 0 && <span class="mx-1">·</span>}
               {listing.sellOfferCount > 0 && <span>Sellers: {listing.sellOfferCount}</span>}
@@ -751,9 +751,9 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     return (
       <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4">
         {!listingsLoaded ? (
-          <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">Loading listings…</div>
+          <div class="py-10 px-4 text-center text-[var(--text-faint)] text-[12px]">Loading listings…</div>
         ) : activeListings.length === 0 ? (
-          <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">No active listings.</div>
+          <div class="py-10 px-4 text-center text-[var(--text-faint)] text-[12px]">No active listings.</div>
         ) : (
           <>
             <div class="flex flex-col gap-2 pt-3">
@@ -769,7 +769,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
                 >
                   ‹ Prev
                 </Button>
-                <span class="text-[11px] text-[var(--fm-ink-faint)]">
+                <span class="text-[11px] text-[var(--text-faint)]">
                   {safePage + 1} / {totalPages}
                 </span>
                 <Button
@@ -795,12 +795,12 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     const shardName = itemsData[SHARDGLASS_SHARD_ID]?.name || 'Shardglass Shards'
     return (
       <div class="space-y-3">
-        <Panel className="text-[11px] text-[var(--fm-ink-faint)] space-y-1">
+        <Panel className="text-[11px] text-[var(--text-faint)] space-y-1">
           <div class="flex justify-between"><span>Price</span><span class="text-[var(--color-gold)] font-[var(--font-mono)]">{unitCost.toLocaleString()} shards each</span></div>
           <div class="flex justify-between"><span>You own</span><span class="font-[var(--font-mono)]">{shardsOwned.toLocaleString()} shards</span></div>
         </Panel>
         <div class="flex flex-col gap-2">
-          <div class="text-[12px] text-[var(--fm-ink-faint)]">Quantity</div>
+          <div class="text-[12px] text-[var(--text-faint)]">Quantity</div>
           <div class="flex gap-2 items-center">
             <Button variant="secondary" size="md" onClick={() => setQty(Math.max(1, qty - 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">−</Button>
             <input
@@ -814,7 +814,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
           </div>
         </div>
         <Panel className="text-[12px] flex justify-between">
-          <span class="text-[var(--fm-ink-faint)]">Total cost</span>
+          <span class="text-[var(--text-faint)]">Total cost</span>
           <span class={`font-[var(--font-mono)] font-bold ${canAfford ? 'text-[var(--color-gold)]' : 'text-[var(--fm-blood)]'}`}>{totalCost.toLocaleString()} shards</span>
         </Panel>
         {!canAfford && (
@@ -837,7 +837,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     const isBuy = pendingAction === 'buy'
     const summary = orderBook
       ? (
-        <div class="text-[11px] text-[var(--fm-ink-faint)] space-y-1">
+        <div class="text-[11px] text-[var(--text-faint)] space-y-1">
           <div>Best sell: {m.bestSell ? `${m.bestSell.price.toLocaleString()} gp × ${m.bestSell.quantity}` : '—'}</div>
           <div>Best buy: {m.bestBuy ? `${m.bestBuy.price.toLocaleString()} gp × ${m.bestBuy.quantity}` : '—'}</div>
           <div>Total listed: {m.totalListedQuantity || 0}</div>
@@ -868,7 +868,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
         )}
         {orderBook && (
           <div class="flex flex-col gap-2">
-            <div class="text-[12px] text-[var(--fm-ink-faint)]">Price per item (gp)</div>
+            <div class="text-[12px] text-[var(--text-faint)]">Price per item (gp)</div>
             <input
               type="number"
               min="1"
@@ -879,7 +879,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
           </div>
         )}
         <div class="flex flex-col gap-2">
-          <div class="text-[12px] text-[var(--fm-ink-faint)]">Quantity</div>
+          <div class="text-[12px] text-[var(--text-faint)]">Quantity</div>
           <div class="flex gap-2 items-center">
             <Button variant="secondary" size="md" onClick={() => setQty(Math.max(1, qty - 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">−</Button>
             <input
@@ -892,11 +892,11 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
             <Button variant="secondary" size="md" onClick={() => setQty(qty + 1)} className="w-8 h-8 p-0 flex items-center justify-center text-base">+</Button>
           </div>
           {!isBuy && (
-            <button class="text-[10px] text-[var(--fm-ink-faint)] underline self-start" onClick={() => setQty(Math.max(1, ownedQty))}>Use max ({ownedQty})</button>
+            <button class="text-[10px] text-[var(--text-faint)] underline self-start" onClick={() => setQty(Math.max(1, ownedQty))}>Use max ({ownedQty})</button>
           )}
         </div>
         <Panel className="text-[12px] flex justify-between">
-          <span class="text-[var(--fm-ink-faint)]">Total {isBuy ? 'cost' : 'payout'}</span>
+          <span class="text-[var(--text-faint)]">Total {isBuy ? 'cost' : 'payout'}</span>
           <span class="text-[var(--color-gold)] font-[var(--font-mono)] font-bold">
             {orderBook
               ? `≤ ${(bidPrice * qty).toLocaleString()} gp`
@@ -906,7 +906,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
           </span>
         </Panel>
         {!orderBook && isBuy && (
-          <div class="text-[10px] text-[var(--fm-ink-faint)] -mt-1">
+          <div class="text-[10px] text-[var(--text-faint)] -mt-1">
             This item is sold at its shop value.
           </div>
         )}
@@ -988,18 +988,18 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
           />
         )}
         {mode === 'listings' && (
-          <div class="text-[11px] text-[var(--fm-ink-faint)]">Browse all active market listings</div>
+          <div class="text-[11px] text-[var(--text-faint)]">Browse all active market listings</div>
         )}
       </div>
 
       {mode === 'market' ? (
         <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4">
           {!searchTerm.trim() ? (
-            <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">
+            <div class="py-10 px-4 text-center text-[var(--text-faint)] text-[12px]">
               Search by item name to view market prices and listings.
             </div>
           ) : searchResults.length === 0 ? (
-            <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">No items match "{searchTerm}".</div>
+            <div class="py-10 px-4 text-center text-[var(--text-faint)] text-[12px]">No items match "{searchTerm}".</div>
           ) : (
             <div class="flex flex-col gap-2 pt-3">
               {searchResults.map(renderListRow)}

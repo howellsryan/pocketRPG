@@ -452,7 +452,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
                     title={tele.ok ? `Consumes ${formatRuneCost(tele.runes, itemsData)} · +${tele.xp} Magic XP` : tele.reason}
                   >
                     <span class="wm-travelbar-tele__lead">
-                      <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--fm-ink-faint)'} size={16} /> Teleport ahead
+                      <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--text-faint)'} size={16} /> Teleport ahead
                     </span>
                     {/* The cost used to live in a title attribute, which a phone
                         never shows. */}
@@ -575,7 +575,7 @@ function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTrave
               title={tele.ok ? `Teleport — instant, +${tele.xp} Magic XP` : tele.reason}
             >
               <span class="wm-tele-btn__lead">
-                <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--fm-ink-faint)'} size={16} /> Teleport · Magic {place.teleport.level}
+                <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--text-faint)'} size={16} /> Teleport · Magic {place.teleport.level}
               </span>
               {/* Runes stay on screen when the cast is refused: the reason says
                   what is wrong, the icons say what it would take. */}

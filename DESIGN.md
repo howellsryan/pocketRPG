@@ -59,6 +59,21 @@ What's in the kit:
 
 **State & meaning.** `--fm-blood` `#7f1d1d` / base blood family (damage, danger) · `--fm-verdigris` `#2f6b5e` / emerald family (success, XP `--color-xp-bar` `#3cb043`) · `--fm-woad` `#2c4a73` / mana family (magic) · `--fm-royal` `#5b3a86` (rare/prestige). HP traffic-lights: `--color-hp-green/yellow/red`.
 
+### 3.1 Two Themes, One Palette
+
+The game ships **light** (parchment) and **dark** (iron), chosen in Settings and stamped as `data-theme` on `<html>`. Three layers, and only the middle one flips:
+
+1. **Raw palette (`:root`) — FROZEN.** `--fm-parch`, `--fm-ink`, `--fm-iron`, `--fm-brass`… are *literal colour names*. Never theme them: `--fm-btn-ink: var(--fm-parch)` is light text on an iron button, so re-pointing `--fm-parch` for dark renders dark-on-dark. The iron skin under every `.forge-shell` override is no longer dead code — it **is** the dark theme, so do not delete a base-skin rule as unused.
+2. **Semantic layer — flips.** `--surface-page/-panel/-card/-raised/-sunken/-warm/-tex/-face/-inset/-vignette/-hover/-zebra/-blend`, `--text-strong/-soft/-faint`, `--hairline`, `--accent`, `--accent-bright`, `--accent-metal`, and the `--btn-surface-*` set. Declared once per theme; `tests/theme.test.ts` fails the build if the two sides drift.
+3. **Consumers.** Screens and components read layer 2 only — in CSS *and* in JSX.
+
+Rules:
+- *The Card Lifts Rule.* `--surface-card` is the same vellum as the page in light (cards are separated by a rule and an inset) but a genuine value step in dark, because a hairline on iron is too weak to read.
+- *The Accent Has Two Registers Rule.* `--accent` is the deep ember (stat values on parchment); `--accent-bright` is the plain ember. They differ in light and converge in dark. `--fm-ember-deep` reads **1.8:1** on iron and `--fm-ink-faint` **4.2:1** — neither may be used as text there.
+- *The Texture Multiplies Rule.* `parchment.webp` *is* the vellum tone so it can sit opaque; `iron.webp` is a mid-brown and would erase whatever surface it covers, so dark blends it (`--surface-blend: multiply`). Any rule pairing `--surface-tex` with a colour needs `background-blend-mode: var(--surface-blend)`.
+- *The Always-Dark Exception.* Panels that are dark in **both** themes — the combat log, royal raid tags, the ember chat badge, `.clog-sheet.is-done`, `.fm-btn--iron`, `.fm-on-iron` — keep literal parchment text. They are allowlisted in `tests/theme.test.ts`; that list may shrink, never grow.
+- The pre-login landing/auth screens and the admin portal stay light-only and off the semantic layer.
+
 **Game-data tints.** Equipment-tier (`--tier-*`) and potion (`--potion-*`) variables color item icons — they are data encodings, not brand colors; never repurpose them for chrome.
 
 Color rules:

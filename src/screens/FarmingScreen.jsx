@@ -132,7 +132,7 @@ export default function FarmingScreen({ initialLocationId, onBack }) {
                 {cropGroups[type].filter(x => x.ownedQuantity > 0).map(({ crop }) => {
                   const selected = plantSelections[type] === crop.id
                   return (
-                    <button key={crop.id} onClick={() => setPlantSelections(prev => ({ ...prev, [type]: selected ? null : crop.id }))} class={`w-full p-2 rounded border text-left flex items-center justify-between ${selected ? 'border-[var(--color-gold)] bg-[var(--fm-parch-hi)]' : 'border-[var(--color-void-border)] bg-[var(--color-void-light)]'}`}>
+                    <button key={crop.id} onClick={() => setPlantSelections(prev => ({ ...prev, [type]: selected ? null : crop.id }))} class={`w-full p-2 rounded border text-left flex items-center justify-between ${selected ? 'border-[var(--color-gold)] bg-[var(--surface-raised)]' : 'border-[var(--color-void-border)] bg-[var(--color-void-light)]'}`}>
                       <span class="text-xs text-[var(--color-parchment)] flex items-center gap-2"><GameIcon item={itemsData[crop.id] || crop} size={20} /> {crop.name}</span>
                       <span class={`text-sm ${selected ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)] opacity-30'}`}>{selected ? '✓' : '○'}</span>
                     </button>

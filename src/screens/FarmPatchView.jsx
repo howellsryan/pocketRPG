@@ -129,7 +129,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack, backLa
                     onClick={() => handlePlantCrop(crop.id)}
                     class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left active:bg-[var(--color-void-light)] ${
                       canPlant
-                        ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]'
+                        ? 'bg-[var(--surface-raised)] border-[var(--color-gold)]'
                         : 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'
                     }`}
                   >
@@ -196,7 +196,7 @@ function PatchCard({ patchData, onClick }) {
     <button
       onClick={onClick}
       class={`w-full p-3 rounded-xl border transition-colors text-left active:bg-[var(--color-void-light)] ${
-        ready ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]' : 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'
+        ready ? 'bg-[var(--surface-raised)] border-[var(--color-gold)]' : 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'
       }`}
     >
       <div class="flex items-center justify-between">
