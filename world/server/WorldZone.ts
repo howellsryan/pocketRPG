@@ -16,7 +16,7 @@ import {
 } from './tick'
 import { STATIONS, recipeFor, stationTypeForVerb, isStationType } from '../shared/recipes'
 import { hasMaterials, maxCraftable } from './crafting'
-import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, emitSpecIfChanged, FULL_SPECIAL_ENERGY } from './combat'
+import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, emitSpecIfChanged, FULL_SPECIAL_ENERGY, NPC_REMOVE_AFTER_DEATH_TICKS } from './combat'
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { countsAsEngaged, npcsFromZone, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
@@ -43,16 +43,27 @@ import { zoneSpawnSummary, type ZoneDef, type ZoneExitDef } from '../shared/zone
 import { baseRoomZone, instanceDeathEjectTarget, isInstancedRoom, MAX_PLAYERS_PER_INSTANCE } from '../shared/instances'
 import { ZONES } from './zones'
 import { endOneLifeRun, flipOneLifeOff } from './oneLife'
+import { isPvpZone, isDangerTile, pvpRefusalMessage, crossesIntoDanger, PVP_LINE_Z } from '../shared/pvpArea'
+import {
+  beginPvpFight, endPvpFight, pvpAttackAnim, pvpAttackRange, refuseAttack, stepPvpFight,
+  type PvpFighter, type PvpTickOutput,
+} from './pvpCombat'
+import {
+  botsToSpawn, driveBotCombat, roamBot, rollBotDrops, toBotDiff, BOT_RESPAWN_TICKS,
+  type BotState,
+} from './pvpBots'
+import { collectDeathDrops, recordPvpBotKill, recordPvpKill } from './pvpDeath'
+import { sessionCombatLevel } from './tick'
 import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
 import { BURY_XP, healAmount, primaryInvAction, resolveEatTiming, resolveDrink } from '../shared/itemActions'
-import { checkEquipRequirements, equipItem, placeUnequippedItems } from '../../src/engine/equipment.js'
+import { checkEquipRequirements, equipItem, placeUnequippedItems, getAttackSpeed } from '../../src/engine/equipment.js'
 import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
 import { applyEat, applyCombo } from '../../src/engine/combat.js'
 import { isComboConsumable } from '../../src/engine/consumables.js'
 import itemsData from '../../src/data/items.json'
 import { commitFlush, consumeUnits, depositUnits, drainForFlush, emptyPools, mintUnits, restoreFlush, withdrawUnits, type ItemPools, type Tally } from './sessionItems'
-import { grantSessionXp, cutPathToRange, withinRange } from './tick'
+import { grantSessionXp, cutPathToRange, withinRange, withinRangeAndSight } from './tick'
 import type { BankSlot, ClientMessage, CombatStance, EntityDiff, LootItem, ServerMessage, StaticObject, ZoneEvent } from '../shared/protocol'
 import { parseClientMessage } from '../shared/protocol'
 import type { Env } from './env'
@@ -140,6 +151,35 @@ type Player = TickPlayer & {
    * frozen) until this tick, then is really removed + flushed. Cleared on
    * reconnect. Null = connected. Backgrounding a tab must not kick you instantly. */
   lingerUntilTick: number | null
+
+  // ── The Wilderness (world/shared/pvpArea.ts). Inert in every other zone. ──
+  /** This character's id as a NUMBER, for the shared PvP engine's combatant
+   * map — bots take negative ones so the two can never collide. */
+  combatantId: number
+  /** Skill LEVELS, mirrored from `stats` at hello. The duel reads levels only,
+   * and a defence-draining special writes back HERE rather than into `stats`:
+   * the drain is session-local and must never reach the save. */
+  levels: Record<string, number>
+  combatLevel: number
+  /** Answered YES at the line. `pvpCrossed` records that the consent was spent,
+   * so walking back into the camp arms the prompt again for the next trip —
+   * clearing consent on "is in the camp" alone would cancel it in the same tick
+   * it was given, since YES is answered from the safe side of the gate. */
+  pvpConsent: boolean
+  pvpCrossed: boolean
+  /** Single combat: who this player is locked with, and until when. */
+  pvpOpponentId: string | null
+  pvpLockUntilTick: number
+  pvpAttackTimer: number
+  specialAttackQueued: boolean
+  /** An Attack click on a player, awaiting arrival — the PvP twin of
+   * pendingInteract, which only ever carries npcs. */
+  pvpPendingTargetId: string | null
+  /** Gates the {e:'pvpState'} echo. */
+  lastPvpStateSent: string | null
+  /** Always false for a real account; the field exists so a Player satisfies
+   * PvpFighter alongside a bot. */
+  isBot: boolean
 }
 
 function lootViewer(player: Player): LootViewer {
@@ -203,6 +243,14 @@ export class WorldZone extends Server<Env> {
   npcs: Map<string, NpcState> | null = null
   stations: Map<string, StationState> | null = null
   loot = new Map<string, LootEntity>()
+  /** Wilderness bots (server/pvpBots.ts). Empty in every other zone, and
+   * emptied the moment the last player leaves this one — the tick loop stops on
+   * an empty room, so a bot that outlived its audience would be a room that
+   * never idles out. */
+  bots = new Map<string, BotState>()
+  /** Bots are held off until this tick after one dies, so a kill is not
+   * instantly replaced by an identical opponent standing on the corpse. */
+  botSpawnAfterTick = 0
   /** Presence edges + chat queued between ticks; drained by tick(). */
   pendingJoins = new Set<string>()
   pendingLeaves = new Set<string>()
@@ -221,11 +269,19 @@ export class WorldZone extends Server<Env> {
     return this.loadedZone ?? ZONES[baseRoomZone(this.name)] ?? (overworldZone as unknown as ZoneDef)
   }
 
-  /** Live occupancy, for the instance assigner (server/instances.ts). Called as
+  /** Live occupancy, for the instance assigner (server/instances.ts) and for
+   * the idle game's "N in the Wilderness" readout (server/index.ts). Called as
    * a Durable Object RPC, so it must stay serializable and side-effect free.
    * Lingering players still hold their slot — they are in-world, just frozen. */
   playerCount(): number {
     return this.players.size
+  }
+
+  /** Is this room the Wilderness? The zone is deliberately not instanced (two
+   * players who cannot find each other are not in a PvP zone), so the room name
+   * is the authored zone id. */
+  private get isPvp(): boolean {
+    return isPvpZone(this.name)
   }
 
   /** Departs a character on behalf of the exit beacon (server/leave.ts), which
@@ -398,6 +454,7 @@ export class WorldZone extends Server<Env> {
   private async removeAndFlush(player: Player): Promise<void> {
     const charId = player.charId
     this.releaseAggro(charId)
+    this.releasePvp(player)
     this.players.delete(charId)
     this.dirty.delete(charId)
     this.pendingLeaves.add(charId)
@@ -484,6 +541,12 @@ export class WorldZone extends Server<Env> {
       existing.crafting = null
       existing.combat = null
       existing.pendingLoot = null
+      existing.pvpPendingTargetId = null
+      // A reconnect is a FRESH page: it knows nothing about which side of the
+      // Wilderness line it is on, and {e:'pvpState'} only fires on change. Left
+      // stamped, the echo never came and the client offered no Attack rows
+      // until the player happened to walk back across the line.
+      existing.lastPvpStateSent = null
       existing.anim = 'idle'
       existing.conn = connection
       existing.lastMsgTimes = []
@@ -608,6 +671,18 @@ export class WorldZone extends Server<Env> {
       following: null,
       followTargetTile: null,
       lingerUntilTick: null,
+      combatantId: row.id,
+      levels: Object.fromEntries(Object.entries(stats).map(([skill, entry]) => [skill, entry.level])),
+      combatLevel: sessionCombatLevel(stats),
+      pvpConsent: false,
+      pvpCrossed: false,
+      pvpOpponentId: null,
+      pvpLockUntilTick: 0,
+      pvpAttackTimer: 0,
+      specialAttackQueued: false,
+      pvpPendingTargetId: null,
+      lastPvpStateSent: null,
+      isBot: false,
     }
     // One line per login so `wrangler tail` can answer "does the world think
     // this character is an Ironman?" without a D1 query — the floor-loot rule
@@ -678,9 +753,10 @@ export class WorldZone extends Server<Env> {
     const npcEnts = [...this.ensureNpcs().values()]
       .filter((n) => n.state !== 'dead')
       .map((n) => toNpcDiff(n))
-    const otherEnts = [...this.players.values()]
-      .filter((p) => p.charId !== player.charId)
-      .map((p) => toEntityDiff(p))
+    const otherEnts = [
+      ...[...this.players.values()].filter((p) => p.charId !== player.charId).map((p) => toEntityDiff(p, { pvpZone: this.isPvp })),
+      ...[...this.bots.values()].filter((b) => b.state === 'alive').map((b) => toBotDiff(b)),
+    ]
     const visibleLoot = visibleLootFor(this.loot.values(), lootViewer(player), this.tickCount)
     player.lootView = new Set(visibleLoot.map((l) => l.id))
     // AOI zones send the whole snapshot at join, then the first tick prunes
@@ -764,6 +840,7 @@ export class WorldZone extends Server<Env> {
         // next fight this player starts. A second tap while still queued (not
         // yet fired) cancels it, so the client can toggle the button off.
         if (player.combat) player.combat.state.specialAttackQueued = !player.combat.state.specialAttackQueued
+        else if (this.isPvp) player.specialAttackQueued = !player.specialAttackQueued
         else player.pendingSpecial = !player.pendingSpecial
         emitSpecIfChanged(player, player.pendingEvents)
         break
@@ -779,6 +856,11 @@ export class WorldZone extends Server<Env> {
         break
       case 'follow':
         this.handleFollow(player, message.targetId)
+        break
+      case 'pvpConsent':
+        // Arms the crossing. NO needs no branch: the step that raised the
+        // prompt already dropped the path, so the character is standing still.
+        if (this.isPvp && message.yes) player.pvpConsent = true
         break
       case 'logout':
         void this.depart(player, 'logout')
@@ -944,6 +1026,12 @@ export class WorldZone extends Server<Env> {
       // a normal food delays the next attack (applyEat), a combo food doesn't
       // (applyCombo). Keeps the world's DPS-vs-heal trade-off honest.
       if (player.combat) player.combat.state = (combo ? applyCombo : applyEat)(player.combat.state)
+      // Same trade in a duel: normal food costs you the swing you were about to
+      // land, a combo item does not (§4). Without this the Wilderness would be
+      // the one fight in the game where eating is free.
+      if (this.isPvp && !combo) {
+        player.pvpAttackTimer = Math.max(player.pvpAttackTimer, getAttackSpeed(player.equipment, itemsData) + 1)
+      }
       player.pendingEvents.push({ e: 'msg', text: `You eat the ${itemNameOf(itemId).toLowerCase()}.` })
       this.pendingInvEcho.add(player.charId)
       this.scheduleDirtyFlush(player)
@@ -1194,6 +1282,7 @@ export class WorldZone extends Server<Env> {
     player.pendingLoot = null
     player.following = null
     player.followTargetTile = null
+    player.pvpPendingTargetId = null
   }
 
   private handleInteract(player: Player, message: Extract<ClientMessage, { t: 'interact' }>): void {
@@ -1226,6 +1315,9 @@ export class WorldZone extends Server<Env> {
       if (!rock) return
       target = rock
       intent = { kind: 'rock', id: rock.id, action: message.action }
+    } else if (message.kind === 'player' && message.action === 'attack') {
+      this.handleAttackPlayer(player, message.id)
+      return
     } else if (message.kind === 'npc' && message.action === 'attack') {
       const npc = this.ensureNpcs().get(message.id)
       if (!npc || npc.state === 'dead') return
@@ -1276,6 +1368,368 @@ export class WorldZone extends Server<Env> {
     player.pendingInteract = intent
   }
 
+  /** Every fighter in this room by id — real players (excluding the frozen) and
+   * roaming bots, which are attacked through exactly the same path. */
+  private pvpFighter(id: string): PvpFighter | null {
+    const player = this.players.get(id)
+    if (player) return player.lingerUntilTick === null ? player : null
+    const bot = this.bots.get(id)
+    return bot && bot.state === 'alive' ? bot : null
+  }
+
+  /**
+   * An Attack click on another player (or a bot). Refusals are answered
+   * immediately with the reason — an attack that silently does nothing is
+   * indistinguishable from a broken game — and an allowed click only sets an
+   * INTENT plus an approach path. The single-combat lock is taken when the
+   * first swing is actually in reach (tickPvp), never here: locking on the
+   * click would let a player reserve a victim from across the zone and then
+   * never turn up.
+   */
+  private handleAttackPlayer(player: Player, targetId: string): void {
+    if (!this.isPvp) return
+    const target = this.pvpFighter(targetId)
+    if (!target) return
+    const refusal = refuseAttack(this.name, player, target, this.tickCount)
+    if (refusal) {
+      player.pendingEvents.push({ e: 'msg', text: pvpRefusalMessage(refusal, target.name) })
+      return
+    }
+    const range = pvpAttackRange(player)
+    if (withinRange({ x: player.x, z: player.z }, target, range)) {
+      player.path = []
+    } else {
+      const path = findPathAdjacent(this.zone.collision, { x: player.x, z: player.z }, target)
+      if (!path) return
+      player.path = cutPathToRange(path.slice(1), target, range)
+    }
+    this.clearIntents(player)
+    player.pvpPendingTargetId = target.charId
+  }
+
+  // ── The Wilderness ────────────────────────────────────────────────────────
+
+  /** A random walkable tile north of the line, for a bot spawn or roam target.
+   * Rejection-samples rather than building an index: the danger half is mostly
+   * open ground, so this lands on the first or second try. */
+  private randomDangerTile(): { x: number; z: number } | null {
+    const collision = this.zone.collision
+    for (let attempt = 0; attempt < 40; attempt++) {
+      const x = Math.floor(Math.random() * this.zone.width)
+      const z = Math.floor(Math.random() * PVP_LINE_Z)
+      if (collision[z]?.[x] === '.') return { x, z }
+    }
+    return null
+  }
+
+  /** Every fighter the duel loop should consider this tick. */
+  private pvpFighters(): PvpFighter[] {
+    const out: PvpFighter[] = []
+    for (const player of this.players.values()) if (player.lingerUntilTick === null) out.push(player)
+    for (const bot of this.bots.values()) if (bot.state === 'alive') out.push(bot)
+    return out
+  }
+
+  /** Keeps the bot roster matched to who is actually out there, and empties it
+   * when nobody is. Spawns are held for BOT_RESPAWN_TICKS after a kill. */
+  private tickBotRoster(botChanged: Set<string>, botRemoved: Set<string>): void {
+    for (const bot of [...this.bots.values()]) {
+      if (bot.state === 'dead' && this.tickCount >= bot.removeAtTick) {
+        this.bots.delete(bot.charId)
+        botRemoved.add(bot.charId)
+      }
+    }
+    const dangerLevels: number[] = []
+    for (const player of this.players.values()) {
+      if (player.lingerUntilTick === null && isDangerTile(player)) dangerLevels.push(player.combatLevel)
+    }
+    if (dangerLevels.length === 0) {
+      // Nobody north of the line: let the roster go. The tick loop stops on an
+      // empty room, so bots must never be the reason it keeps running.
+      for (const bot of this.bots.values()) botRemoved.add(bot.charId)
+      this.bots.clear()
+      return
+    }
+    if (this.tickCount < this.botSpawnAfterTick) return
+    for (const bot of botsToSpawn(this.bots.values(), {
+      tick: this.tickCount,
+      dangerPlayerLevels: dangerLevels,
+      randomDangerTile: () => this.randomDangerTile(),
+    })) {
+      this.bots.set(bot.charId, bot)
+      botChanged.add(bot.charId)
+    }
+  }
+
+  /** Drains a swing's rune / ammo cost out of the attacker's real pack. Players
+   * additionally drain the provenance pools and flag a durability flush — a
+   * consumed save-backed rune that only left the session pack would resurrect on
+   * the next DO eviction. */
+  private consumePvpSwingCost(fighter: PvpFighter, swing: { runesConsumed: Record<string, number> | null; ammoConsumed: { itemId: string; qty: number } | null }): void {
+    const player = fighter.isBot ? null : this.players.get(fighter.charId)
+    if (swing.runesConsumed) {
+      for (const [runeId, qty] of Object.entries(swing.runesConsumed)) {
+        const n = Math.max(0, Math.floor(Number(qty) || 0))
+        if (n > 0 && removeItems(fighter.inventory, runeId, n) && player) {
+          consumeUnits(player.pools, runeId, n)
+        }
+      }
+      if (player) {
+        this.pendingInvEcho.add(player.charId)
+        this.scheduleDirtyFlush(player)
+      }
+    }
+    if (swing.ammoConsumed) {
+      const equipment = fighter.equipment as { ammo?: { itemId?: string; quantity?: number } | null }
+      const ammo = equipment.ammo
+      if (ammo && ammo.itemId === swing.ammoConsumed.itemId) {
+        const left = Math.max(0, (Math.floor(Number(ammo.quantity)) || 0) - swing.ammoConsumed.qty)
+        fighter.equipment = { ...fighter.equipment, ammo: left > 0 ? { ...ammo, quantity: left } : null }
+        if (player) {
+          player.equipmentDirty = true
+          this.scheduleDirtyFlush(player)
+        }
+      }
+    }
+  }
+
+  /**
+   * Everything a Wilderness death costs, settled at the death tile before the
+   * respawn moves the corpse: the whole pack and every worn item hit the floor
+   * owned by the killer, the session is emptied, and the loss is flushed
+   * immediately so it is durable before anyone walks over the pile.
+   *
+   * The pack drains the provenance pools; the worn gear does not. Equipment
+   * leaves the save through the emptied snapshot (`equipmentDirty`) — draining
+   * it here as well would take the same units off the save twice.
+   */
+  private dropEverythingOnDeath(player: Player, killerCharId: string): void {
+    const { drops, fromPack } = collectDeathDrops(player.inventory, player.equipment)
+    for (const stack of fromPack) consumeUnits(player.pools, stack.itemId, stack.quantity)
+    player.inventory = new Array(28).fill(null)
+    player.equipment = {}
+    player.gear = gearFromEquipment(player.equipment)
+    player.equipmentDirty = true
+    for (const loot of spawnDrops(drops, player.x, player.z, killerCharId, this.tickCount, PLAYER_DROP_OWNER_TICKS, { fromPlayer: true })) {
+      this.loot.set(loot.id, loot)
+    }
+    this.pendingInvEcho.add(player.charId)
+    player.pendingEvents.push({ e: 'equip', equipment: equipmentMap(player.equipment) })
+    // Not debounced: a death is the one mutation that must not be lost to an
+    // eviction, and the killer may be standing on the pile already.
+    player.flushAtTick = null
+    void this.flush(player, 'timer')
+  }
+
+  /** Releases both sides of whatever `fighter` was locked in. */
+  private releasePvp(fighter: PvpFighter): void {
+    const other = fighter.pvpOpponentId ? this.pvpFighter(fighter.pvpOpponentId) : null
+    endPvpFight(fighter, other)
+  }
+
+  /**
+   * One tick of the Wilderness: consent bookkeeping, the bot roster, the
+   * single-combat locks, every live duel, and the deaths they cause.
+   *
+   * Runs AFTER the per-player tick (so movement this tick is already applied and
+   * a duel resolves against final positions) and BEFORE the loot / exit loops,
+   * which both skip a player who died this tick.
+   */
+  private tickPvp(
+    deaths: Player[],
+    playerEnts: Map<string, EntityDiff>,
+    hits: { targetId: string; dmg: number }[],
+    eventsByChar: Map<string, ZoneEvent[]>,
+    broadcastEvents: ZoneEvent[],
+    botChanged: Set<string>,
+    botRemoved: Set<string>,
+  ): void {
+    if (!this.isPvp) {
+      if (this.bots.size > 0) this.bots.clear()
+      return
+    }
+
+    // Consent is spent by the crossing and re-armed by the walk home, so the
+    // prompt appears on every trip north rather than once per session.
+    for (const player of this.players.values()) {
+      if (isDangerTile(player)) player.pvpCrossed = true
+      else if (player.pvpCrossed) {
+        player.pvpCrossed = false
+        player.pvpConsent = false
+      }
+    }
+
+    this.tickBotRoster(botChanged, botRemoved)
+
+    const fighters = new Map(this.pvpFighters().map((f) => [f.charId, f]))
+
+    // Release a lock whose other half has gone, lapsed, or stepped back into
+    // the camp. Safety is absolute: reaching the camp ends the fight.
+    for (const fighter of fighters.values()) {
+      if (!fighter.pvpOpponentId) continue
+      const other = fighters.get(fighter.pvpOpponentId)
+      const stale = !other
+        || other.pvpOpponentId !== fighter.charId
+        || fighter.pvpLockUntilTick <= this.tickCount
+        || !isDangerTile(fighter)
+        || !isDangerTile(other)
+      if (stale) endPvpFight(fighter, other ?? null)
+    }
+
+    // An approach that has arrived becomes a real fight. Re-judged here rather
+    // than trusted from the click: levels, positions and everyone else's locks
+    // have all had time to move since.
+    for (const player of this.players.values()) {
+      const targetId = player.pvpPendingTargetId
+      if (!targetId) continue
+      const target = fighters.get(targetId)
+      if (!target || player.lingerUntilTick !== null) {
+        player.pvpPendingTargetId = null
+        continue
+      }
+      if (!withinRangeAndSight(player, target, pvpAttackRange(player), this.zone.collision)) continue
+      const refusal = refuseAttack(this.name, player, target, this.tickCount)
+      if (refusal) {
+        player.pvpPendingTargetId = null
+        player.pendingEvents.push({ e: 'msg', text: pvpRefusalMessage(refusal, target.name) })
+        continue
+      }
+      player.pvpPendingTargetId = null
+      beginPvpFight(player, target, this.tickCount)
+    }
+
+    // Bots: fight whoever turned on them, otherwise amble.
+    for (const bot of this.bots.values()) {
+      if (bot.state !== 'alive') continue
+      const opponent = bot.pvpOpponentId ? fighters.get(bot.pvpOpponentId) : null
+      if (opponent) {
+        driveBotCombat(bot, opponent, pvpAttackRange(bot), (from, to) => findPath(this.zone.collision, from, to))
+      } else {
+        roamBot(bot, (from, to) => findPath(this.zone.collision, from, to), () => this.randomDangerTile())
+      }
+      botChanged.add(bot.charId)
+    }
+
+    // Every live duel, once. Ordered by the lower charId so a pair resolves the
+    // same way whichever of the two the map yields first.
+    const out: PvpTickOutput = { swings: [], deaths: [] }
+    const stepped = new Set<string>()
+    for (const fighter of fighters.values()) {
+      const other = fighter.pvpOpponentId ? fighters.get(fighter.pvpOpponentId) : null
+      if (!other || other.pvpOpponentId !== fighter.charId) continue
+      const key = fighter.charId < other.charId ? `${fighter.charId}|${other.charId}` : `${other.charId}|${fighter.charId}`
+      if (stepped.has(key)) continue
+      stepped.add(key)
+      stepPvpFight(fighter, other, { tick: this.tickCount, collision: this.zone.collision }, out)
+    }
+
+    for (const swing of out.swings) {
+      const attacker = fighters.get(swing.attackerId)
+      const defender = fighters.get(swing.defenderId)
+      if (!attacker || !defender) continue
+      if (swing.refusal) {
+        const player = this.players.get(attacker.charId)
+        if (player) player.pendingEvents.push({ e: 'msg', text: swing.refusal })
+        continue
+      }
+      attacker.anim = pvpAttackAnim(attacker, swing.special)
+      this.consumePvpSwingCost(attacker, swing)
+      for (const dmg of swing.splats) hits.push({ targetId: defender.charId, dmg })
+      if (swing.special) {
+        const player = this.players.get(attacker.charId)
+        if (player) emitSpecIfChanged(player, player.pendingEvents)
+      }
+      this.markPvpEnt(attacker, playerEnts, botChanged)
+      this.markPvpEnt(defender, playerEnts, botChanged)
+    }
+
+    for (const fighter of fighters.values()) {
+      const player = this.players.get(fighter.charId)
+      if (player) emitPrayerIfChanged(player, player.pendingEvents)
+    }
+
+    for (const death of out.deaths) {
+      this.settlePvpDeath(death.victimId, death.killerId, fighters, deaths, eventsByChar, broadcastEvents, botChanged)
+    }
+
+    for (const player of this.players.values()) this.emitPvpStateIfChanged(player, fighters)
+  }
+
+  private markPvpEnt(fighter: PvpFighter, playerEnts: Map<string, EntityDiff>, botChanged: Set<string>): void {
+    const player = this.players.get(fighter.charId)
+    if (player) {
+      playerEnts.set(player.charId, toEntityDiff(player, { pvpZone: true }))
+      this.dirty.add(player.charId)
+      return
+    }
+    botChanged.add(fighter.charId)
+  }
+
+  /** Settles one Wilderness death — a player's or a bot's. */
+  private settlePvpDeath(
+    victimId: string,
+    killerId: string,
+    fighters: Map<string, PvpFighter>,
+    deaths: Player[],
+    eventsByChar: Map<string, ZoneEvent[]>,
+    broadcastEvents: ZoneEvent[],
+    botChanged: Set<string>,
+  ): void {
+    const victim = fighters.get(victimId)
+    const killer = fighters.get(killerId)
+    if (!victim) return
+    const killerName = killer?.name ?? 'Someone'
+    this.releasePvp(victim)
+    if (killer) this.releasePvp(killer)
+
+    const bot = this.bots.get(victimId)
+    if (bot) {
+      bot.state = 'dead'
+      bot.hp = 0
+      bot.anim = 'die'
+      bot.removeAtTick = this.tickCount + NPC_REMOVE_AFTER_DEATH_TICKS
+      this.botSpawnAfterTick = this.tickCount + BOT_RESPAWN_TICKS
+      botChanged.add(bot.charId)
+      // The dedicated drop table, rolled server-side — a bot's gear is never
+      // stripped, and this is the only source of Zesta uniques in the game.
+      const drops = rollBotDrops()
+      for (const loot of spawnDrops(drops, bot.x, bot.z, killerId, this.tickCount)) this.loot.set(loot.id, loot)
+      if (killer && !killer.isBot) void recordPvpBotKill(this.env, killerId, bot.templateId, drops)
+      broadcastEvents.push({ e: 'pvpKill', killer: killerName, victim: bot.name, bot: true })
+      return
+    }
+
+    const player = this.players.get(victimId)
+    if (!player) return
+    this.dropEverythingOnDeath(player, killerId)
+    // One-life ends here rather than in respawnPlayer, for the same reason a PvE
+    // death does: the message rides pendingEvents, which drains into THIS tick's
+    // frame — the last frame a dying player is guaranteed to receive.
+    endOneLifeRun(player, (id) => flipOneLifeOff(this.env, id))
+    const events = eventsByChar.get(player.charId) ?? []
+    events.push({ e: 'hp', hp: 0, maxHp: player.maxHp })
+    eventsByChar.set(player.charId, events)
+    deaths.push(player)
+    if (killer && !killer.isBot) void recordPvpKill(this.env, killerId, victimId)
+    broadcastEvents.push({ e: 'pvpKill', killer: killerName, victim: player.name })
+  }
+
+  /** {e:'pvpState'} on change only — which side of the line the player is on and
+   * who they are locked with. Drives the HUD banner and the client's menu. */
+  private emitPvpStateIfChanged(player: Player, fighters: Map<string, PvpFighter>): void {
+    const opponent = player.pvpOpponentId ? fighters.get(player.pvpOpponentId) ?? null : null
+    const inDanger = isDangerTile(player)
+    const key = `${inDanger ? 1 : 0}|${opponent?.charId ?? ''}`
+    if (key === player.lastPvpStateSent) return
+    player.lastPvpStateSent = key
+    player.pendingEvents.push({
+      e: 'pvpState',
+      inDanger,
+      opponentId: opponent?.charId ?? null,
+      opponentName: opponent?.name ?? null,
+    })
+  }
+
   private ensureTicking(): void {
     if (this.tickTimer) return
     this.tickTimer = setInterval(() => this.tick(), TICK_MS)
@@ -1285,6 +1739,10 @@ export class WorldZone extends Server<Env> {
     if (this.players.size === 0 && this.tickTimer) {
       clearInterval(this.tickTimer)
       this.tickTimer = null
+      // The roster dies with the room. A bot held across an idle period would
+      // be a stale opponent standing in an empty zone waiting for an eviction.
+      this.bots.clear()
+      this.botSpawnAfterTick = 0
     }
   }
 
@@ -1315,11 +1773,18 @@ export class WorldZone extends Server<Env> {
       pathAdjacent: (from, to) => findPathAdjacent(collisionWithMonsters(this.zone.collision, npcs.values(), from), from, to),
       players: positions,
       lair: isInstancedRoom(this.name),
+      // The Wilderness line. One gate for every path source there is or will be
+      // (tick.ts takeSteps) — a walk, a follow, an approach path.
+      blockStep: this.isPvp
+        ? (player, to) => !(player as Player).pvpConsent && crossesIntoDanger(player, to)
+        : undefined,
     }
 
     const rockChanges = respawnedRocks(rocks, this.tickCount)
     const npcChanged = new Set<string>()
     const npcRemoved = new Set<string>()
+    const botChanged = new Set<string>()
+    const botRemoved = new Set<string>()
     const hits: { targetId: string; dmg: number }[] = []
     const eventsByChar = new Map<string, ZoneEvent[]>()
     // Player ents deduped by id (last write wins — e.g. a death-tick respawn).
@@ -1330,11 +1795,11 @@ export class WorldZone extends Server<Env> {
     // the player is really gone (a same-tick rejoin keeps them present).
     for (const id of this.pendingJoins) {
       const joined = this.players.get(id)
-      if (joined) playerEnts.set(id, toEntityDiff(joined))
+      if (joined) playerEnts.set(id, toEntityDiff(joined, { pvpZone: this.isPvp }))
     }
     this.pendingJoins.clear()
     if (this.tickCount % PRESENCE_KEYFRAME_TICKS === 0) {
-      for (const p of this.players.values()) playerEnts.set(p.charId, toEntityDiff(p))
+      for (const p of this.players.values()) playerEnts.set(p.charId, toEntityDiff(p, { pvpZone: this.isPvp }))
     }
     const playersRemoved = [...this.pendingLeaves].filter((id) => !this.players.has(id))
     this.pendingLeaves.clear()
@@ -1371,7 +1836,7 @@ export class WorldZone extends Server<Env> {
       const result = tickPlayer(player, ctx)
       if (result.entChanged) {
         this.dirty.add(player.charId)
-        playerEnts.set(player.charId, toEntityDiff(player))
+        playerEnts.set(player.charId, toEntityDiff(player, { pvpZone: this.isPvp }))
       }
       rockChanges.push(...result.rockChanges)
       for (const id of result.npcChanged) npcChanged.add(id)
@@ -1433,6 +1898,11 @@ export class WorldZone extends Server<Env> {
         deaths.push(player)
       }
     }
+
+    // The Wilderness: duels, bots and the deaths they cause. After the player
+    // loop so a fight resolves against this tick's final positions, and before
+    // the loot / exit loops below, both of which skip anyone who died.
+    this.tickPvp(deaths, playerEnts, hits, eventsByChar, broadcastEvents, botChanged, botRemoved)
 
     // Damage-contribution readout for every boss fight this tick — gated on an
     // actual change so it doesn't spam once the fight goes quiet (item 11).
@@ -1500,8 +1970,13 @@ export class WorldZone extends Server<Env> {
       const npc = npcs.get(id)
       if (npc && !npcRemoved.has(id)) npcEnts.push(toNpcDiff(npc))
     }
-    const ents = [...playerEnts.values(), ...npcEnts]
-    this.broadcastDiffs(ents, rockChanges, [...npcRemoved, ...playersRemoved], hits, [...chatEvents, ...broadcastEvents], eventsByChar)
+    const botEnts: EntityDiff[] = []
+    for (const id of botChanged) {
+      const bot = this.bots.get(id)
+      if (bot && !botRemoved.has(id)) botEnts.push(toBotDiff(bot))
+    }
+    const ents = [...playerEnts.values(), ...npcEnts, ...botEnts]
+    this.broadcastDiffs(ents, rockChanges, [...npcRemoved, ...playersRemoved, ...botRemoved], hits, [...chatEvents, ...broadcastEvents], eventsByChar)
 
     // The death frame is out; now respawn (or eject) them.
     for (const player of deaths) this.respawnPlayer(player)
@@ -1675,6 +2150,7 @@ export class WorldZone extends Server<Env> {
       const removedSet = new Set(removed)
       for (const p of this.players.values()) if (!removedSet.has(p.charId)) aoiEntities.push({ id: p.charId, x: p.x, z: p.z })
       for (const n of this.ensureNpcs().values()) if (n.state !== 'dead' && !removedSet.has(n.id)) aoiEntities.push({ id: n.id, x: n.x, z: n.z })
+      for (const b of this.bots.values()) if (b.state === 'alive' && !removedSet.has(b.charId)) aoiEntities.push({ id: b.charId, x: b.x, z: b.z })
       changedById = new Map(ents.map((e) => [e.id, e]))
     }
     for (const player of this.players.values()) {
@@ -1695,7 +2171,9 @@ export class WorldZone extends Server<Env> {
           player.x, player.z, player.charId, aoiRadius, aoiEntities, changedById,
           (id) => {
             const p = this.players.get(id)
-            if (p) return toEntityDiff(p)
+            if (p) return toEntityDiff(p, { pvpZone: this.isPvp })
+            const b = this.bots.get(id)
+            if (b) return toBotDiff(b)
             const n = this.npcs?.get(id)
             return n ? toNpcDiff(n) : null
           },

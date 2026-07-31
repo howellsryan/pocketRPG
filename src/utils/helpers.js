@@ -177,3 +177,24 @@ export function chatActionCostLine(cost) {
   }
   return `Costs ${fee} credit${fee === 1 ? '' : 's'}`
 }
+
+/**
+ * How many players are in the Wilderness right now, for the PvP card's live
+ * headcount. Served by the world Worker (not Pages, which has no WorldZone
+ * binding) and fetched straight from the world origin under CORS.
+ *
+ * Resolves null on any failure — an unreachable count must never be the reason
+ * a player can't see the entry card, so callers hide the number rather than
+ * showing an error.
+ */
+export async function fetchWildernessCount() {
+  try {
+    const res = await fetch(`${worldOrigin()}/api/world/pvp-count`)
+    if (!res.ok) return null
+    const body = await res.json()
+    const count = Number(body?.count)
+    return Number.isFinite(count) && count >= 0 ? Math.floor(count) : null
+  } catch {
+    return null
+  }
+}

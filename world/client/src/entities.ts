@@ -115,6 +115,14 @@ export type Entity = {
    * from its planar length so a 2-tile running step never plays the walk clip
    * sped up. */
   segmentAnim: 'walk' | 'run'
+  /** Player entities in the Wilderness: this one is north of the line, so it
+   * can be attacked (subject to the bracket). Snapshot, like targetId — walking
+   * back into the camp has to actually take the Attack row away. */
+  pvp: boolean
+  /** A roaming Wilderness bot rather than a real account. */
+  bot: boolean
+  /** Server-reported combat level, for the ±10 bracket the menu applies. */
+  combatLevel: number | null
 }
 
 /** Skinned characters animate far from their bind-pose bounds, so three.js can
@@ -838,6 +846,9 @@ export function createEntity(id: string, x: number, z: number, mesh: THREE.Objec
     targetId: null,
     form: null,
     overhead: null,
+    pvp: false,
+    bot: false,
+    combatLevel: null,
     segmentAnim: 'walk',
   }
 }
@@ -897,6 +908,9 @@ export function applyEntityDiff(entity: Entity, diff: EntityDiff): void {
     applyFormTint(entity.mesh, formTintColor(entity.monsterId, form))
   }
   entity.overhead = diff.overhead ?? null
+  entity.pvp = diff.pvp === true
+  if (diff.bot) entity.bot = true
+  if (diff.combatLevel != null) entity.combatLevel = diff.combatLevel
   entity.queue.push({ x: diff.x, z: diff.z })
   if (shouldSnap(entity.queue.length)) {
     const latest = entity.queue[entity.queue.length - 1]

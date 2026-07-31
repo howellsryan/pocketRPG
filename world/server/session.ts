@@ -2,6 +2,7 @@ import { signJWT, verifyJWT } from '../../functions/_lib/jwt.js'
 import { isCharacterInActiveMatch } from './pvpLock'
 import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import { isInstancedRoom, isInstancedZone } from '../shared/instances'
+import { isPvpZone } from '../shared/pvpArea'
 import { assignInstanceRoom } from './instances'
 import type { Env } from './env'
 
@@ -71,6 +72,12 @@ export async function handleWorldSession(request: Request, env: Env): Promise<Re
   if (requested && isInstancedZone(requested)) {
     const zone = await assignInstanceRoom(env, requested)
     return jsonResponse({ token, character: { id: row.id, name: row.username }, zone })
+  }
+  // The Wilderness is the other named entry target, and the one non-instanced
+  // one: it is a single shared room on purpose (players who cannot find each
+  // other are not in a PvP zone), so there is no instance to assign.
+  if (requested && isPvpZone(requested)) {
+    return jsonResponse({ token, character: { id: row.id, name: row.username }, zone: requested })
   }
 
   // Otherwise the character's current zone, so a fresh device connects to the

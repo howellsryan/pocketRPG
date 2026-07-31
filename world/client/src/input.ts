@@ -48,6 +48,12 @@ export type InputHandlers = {
   /** Current picks-live set (npcs/loot move + come and go), resolved per event. */
   getPickables: () => THREE.Object3D[]
   getPlayerCombatLevel: () => number
+  /** Last chance to set fields on a pickable before the menu is built. Exists
+   * for rules that depend on the world's CURRENT state rather than on the
+   * entity — the Wilderness attack rule reads both players' positions, so
+   * baking it into the pickable at mesh creation would go stale the moment
+   * either of them moved. */
+  decoratePickable?: (pick: Pickable) => void
   /** Two-finger pinch: ratio of this move's finger distance over the last —
    * >1 fingers spreading (zoom in), <1 pinching in (zoom out). */
   onPinchZoom: (ratio: number) => void
@@ -102,6 +108,7 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
   function openMenu(clientX: number, clientY: number): void {
     setPointer({ clientX, clientY })
     const picks = resolvePicks()
+    for (const pick of picks) h.decoratePickable?.(pick)
     const tile = tileUnderPointer()
     const rows = buildMenu(picks, h.getPlayerCombatLevel())
     const dispatch: MenuDispatch = (row) => {

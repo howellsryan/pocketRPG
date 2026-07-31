@@ -20,6 +20,14 @@ export type Pickable = {
   /** Combat level for npc/player menu colour-coding. */
   monsterLevel?: number
   examine?: string
+  /** Player pickables in the Wilderness: this player may be attacked from where
+   * we are standing (both sides north of the line, inside the ±10 bracket). The
+   * server re-checks everything — this only decides whether the row is offered,
+   * so a menu never advertises an attack that will be refused. */
+  attackable?: boolean
+  /** A roaming Wilderness bot. Offered Attack like anyone else, never Follow —
+   * there is nothing behind it to follow. */
+  bot?: boolean
 }
 
 // Hover picks the highest-priority thing under the cursor; the context menu
@@ -89,14 +97,28 @@ export function buildMenu(pickables: Pickable[], playerCombatLevel: number): Men
     // so it gets its own row shape instead of running through `actions`.
     const favourable = pick.monsterLevel == null ? undefined : playerCombatLevel >= pick.monsterLevel
     if (pick.kind === 'player') {
-      rows.push({
-        text: `Follow ${pick.name}`,
-        followTargetId: pick.id,
-        targetName: pick.name,
-        targetKind: pick.kind,
-        monsterLevel: pick.monsterLevel,
-        levelFavourable: favourable,
-      })
+      // Attack leads when it is on the table: in the Wilderness that is the
+      // reason you clicked, and burying it under Follow costs a fight.
+      if (pick.attackable) {
+        rows.push({
+          text: `Attack ${pick.name}`,
+          interact: { kind: 'player', id: pick.id, action: 'attack' },
+          targetName: pick.name,
+          targetKind: pick.kind,
+          monsterLevel: pick.monsterLevel,
+          levelFavourable: favourable,
+        })
+      }
+      if (!pick.bot) {
+        rows.push({
+          text: `Follow ${pick.name}`,
+          followTargetId: pick.id,
+          targetName: pick.name,
+          targetKind: pick.kind,
+          monsterLevel: pick.monsterLevel,
+          levelFavourable: favourable,
+        })
+      }
       continue
     }
     for (const action of pick.actions) {

@@ -39,7 +39,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Your combat level summarises your fighting power for quests and PvP matchmaking. It is 0.25 × (Defence + Hitpoints + half your Prayer level) plus 0.325 × your best attack contribution — Attack + Strength for melee, or 1.5 × Ranged, or 1.5 × Magic — rounded down, with a minimum of 3. Training any combat skill (including Prayer and Hitpoints) raises it."
+  "text": "Your combat level summarises your fighting power for quests and for the Wilderness's ±10 attack bracket. It is 0.25 × (Defence + Hitpoints + half your Prayer level) plus 0.325 × your best attack contribution — Attack + Strength for melee, or 1.5 × Ranged, or 1.5 × Magic — rounded down, with a minimum of 3. Training any combat skill (including Prayer and Hitpoints) raises it."
  },
  {
   "id": "guide_equipment_and_gear",
@@ -87,7 +87,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Prayers give combat bonuses but drain a prayer pool while active. In the open world the protection prayer you have on shows as an icon over your head, and over everyone else's — you can read what an opponent is praying against before you swing. Your pool's maximum equals your Prayer level, starts each session full, and persists across auto-fight kills. Each prayer drains the pool over time — stronger prayers drain faster — and when the pool hits zero all prayers switch off. Prayer potions restore 20 prayer points and super restores 22, in both live and idle combat. In PvP, protection prayers are disabled (v1), so only offensive prayers drain there."
+  "text": "Prayers give combat bonuses but drain a prayer pool while active. In the open world the protection prayer you have on shows as an icon over your head, and over everyone else's — you can read what an opponent is praying against before you swing. Your pool's maximum equals your Prayer level, starts each session full, and persists across auto-fight kills. Each prayer drains the pool over time — stronger prayers drain faster — and when the pool hits zero all prayers switch off. Prayer potions restore 20 prayer points and super restores 22, in both live and idle combat. Protection prayers work in the Wilderness, so a PvP fight drains your pool exactly as a boss fight does."
  },
  {
   "id": "guide_dragonfire",
@@ -306,12 +306,12 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "The General Store sells a fixed catalogue of basics at fixed prices. Everything else trades on the Trading Post, a player-to-player order book: list items to sell, place buy offers, instant-sell into existing offers, and collect your coins or items when offers fill. Ironman characters cannot trade with other players. The store's Slayer section sells slayer gear (Slayer Helmet, Slayer Defender, Gloves of Slaughter and the like) for coins at its shop value — but only after you've unlocked that piece once with slayer points on the Character Unlocks screen. Until then the row stays locked. This section is open to every account type, Ironman included."
  },
  {
-  "id": "guide_pvp",
-  "title": "PvP",
+  "id": "guide_pvp_the_wilderness",
+  "title": "PvP — the Wilderness",
   "tags": [
    "guide"
   ],
-  "text": "PvP matches are run entirely on the server: matchmaking pairs you with an opponent (or a practice bot), and the fight plays out tick by tick with the same combat rules as PvE — same tick speed, special attacks and combo eating. Protection prayers are disabled in PvP (v1). Your save is locked during an active match, and wins earn PvP rank progress shown on the leaderboard."
+  "text": "PvP happens in one place: the Wilderness, an open-world area you enter from the Combat screen. There is no lobby and no matchmaking. You arrive in a walled border camp with a bank chest, where nothing can touch you. North through the gates is open PvP, and the game stops you at the line and asks you to confirm before you cross. Out there, anyone within 10 combat levels of you can attack you, and you can attack them. It is single combat: one fight at a time, and nobody can jump in on a fight already under way. Eating, potions, prayers (protection prayers included), special attacks and spells all work exactly as they do anywhere else in the open world. **If you die in the Wilderness you drop everything** — your whole inventory and every item you are wearing — on the ground for your killer. Bank what you cannot afford to lose. A one-life run ends there like it ends anywhere else. Outlaws roam the wastes when the map is quiet, so there is always something to fight. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not. Ironman characters can fight in the Wilderness and keep every outlaw drop, but can never pick up loot dropped by another player."
  },
  {
   "id": "guide_collection_log",
@@ -335,7 +335,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "When creating a character you can pick special modes. Ironman characters are self-sufficient: no Trading Post trading with other players, and in the open world they can only pick up loot they earned themselves — another player's kill drops and dropped items never become visible to them. Fighting alongside others is fine, boss lairs included: a kill's drop belongs to whoever dealt the most damage, so an Ironman who leads the damage keeps the drop no matter how many people helped. One-life characters are hardcore — dying loses the one-life badge for good, reverting the character to a standard account (or a standard Ironman, if it was also an Ironman). Both modes are badges of honour on the leaderboard."
+  "text": "When creating a character you can pick special modes. Ironman characters are self-sufficient: no Trading Post trading with other players, and in the open world they can only pick up loot they earned themselves — another player's kill drops and dropped items never become visible to them. That extends to the Wilderness: an Ironman can fight there and keep every outlaw drop, but the pile a defeated player leaves behind stays on the ground. Fighting alongside others is fine, boss lairs included: a kill's drop belongs to whoever dealt the most damage, so an Ironman who leads the damage keeps the drop no matter how many people helped. One-life characters are hardcore — dying loses the one-life badge for good, reverting the character to a standard account (or a standard Ironman, if it was also an Ironman). Both modes are badges of honour on the leaderboard."
  },
  {
   "id": "guide_account_characters_and_saving",

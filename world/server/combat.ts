@@ -84,7 +84,13 @@ export function monsterWindupLeadTicks(monsterId: string): number {
  * arms/cancels a special, even on a tick where energy itself doesn't move. */
 export function emitSpecIfChanged(player: TickPlayer, events: ZoneEvent[]): void {
   const rounded = Math.round(player.specialEnergy)
-  const queued = player.combat ? !!(player.combat.state as EngineState).specialAttackQueued : player.pendingSpecial
+  // Out of a PvE fight the armed flag can live in either of two places: the
+  // Wilderness duel keeps its own (`specialAttackQueued`, read by pvpCombat's
+  // combatant view), and everywhere else it is the pending arm-for-next-fight.
+  // Reading only the latter left the Wilderness spec button unlit while armed.
+  const queued = player.combat
+    ? !!(player.combat.state as EngineState).specialAttackQueued
+    : (player.specialAttackQueued ?? false) || player.pendingSpecial
   if (rounded === player.lastSpecSent && queued === player.lastSpecQueuedSent) return
   player.lastSpecSent = rounded
   player.lastSpecQueuedSent = queued

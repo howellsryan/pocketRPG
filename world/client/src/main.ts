@@ -1,5 +1,6 @@
 import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
-import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, removeOverheadPrayer, updateOverheadPrayer, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showDeathChoiceOverlay, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
+import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, removeOverheadPrayer, updateOverheadPrayer, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showDeathChoiceOverlay, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showPvpCrossingPrompt, setPvpBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
+import { PVP_LEVEL_BRACKET } from '../../shared/pvpArea'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { openWorldMap, type WorldMapData } from './worldMap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
@@ -64,10 +65,19 @@ function buildNpcPickable(diff: EntityDiff): Pickable {
 
 /** Other players are menu-only (item 10): no `actions`, so topPick/hoverText
  * skip them (HOVER_PRIORITY has no 'player' entry) and a left-click through a
- * crowd still walks — buildMenu gives player pickables their own "Follow"
- * row instead of running them through the normal actions list. */
+ * crowd still walks — buildMenu gives player pickables their own "Follow" and
+ * (in the Wilderness) "Attack" rows instead of running them through the normal
+ * actions list. Attack is deliberately NOT a left-click default: hitting a
+ * stranger because they walked under your finger is not a fight anyone chose. */
 function buildPlayerPickable(diff: EntityDiff): Pickable {
-  return { kind: 'player', id: diff.id, name: diff.name ?? 'Adventurer', actions: [], monsterLevel: diff.combatLevel }
+  return {
+    kind: 'player',
+    id: diff.id,
+    name: diff.name ?? 'Adventurer',
+    actions: [],
+    monsterLevel: diff.combatLevel,
+    ...(diff.bot ? { bot: true } : {}),
+  }
 }
 
 function enterWorld(session: WorldSession): void {
@@ -109,6 +119,11 @@ function enterWorld(session: WorldSession): void {
   let lastBossFrame: { npcId: string; hp: number; maxHp: number } | null = null
   let lastThreatContributors: { charId: string; name: string; dmg: number }[] | null = null
   let playerCombatLevel = 3
+  /** Whether SELF is north of the Wilderness line. Server-reported
+   * ({e:'pvpState'}) rather than derived from our own tile: the line is the
+   * server's rule, and a client that decided it locally would offer attacks the
+   * server then refuses. */
+  let selfInDanger = false
   let minimap: Minimap | null = null
   let exitMarkers: ExitMarker[] = []
   // Local run state so the toggle button sends the opposite; server {e:'run'}
@@ -218,6 +233,14 @@ function enterWorld(session: WorldSession): void {
     else if (event.e === 'spec') setSpecialEnergy(event.energy, event.queued)
     else if (event.e === 'prayer') setPrayerState(event.points, event.max, event.protection, event.combat)
     else if (event.e === 'kill') pushKillFeed(event.monster, event.killer)
+    else if (event.e === 'pvpPrompt') {
+      showPvpCrossingPrompt(() => send(socket, { t: 'pvpConsent', yes: true }))
+    }
+    else if (event.e === 'pvpState') {
+      selfInDanger = event.inDanger
+      setPvpBanner(event.inDanger, event.opponentName)
+    }
+    else if (event.e === 'pvpKill') pushKillFeed(event.victim, event.killer)
     else if (event.e === 'uniqueDrop') showUniqueBanner(event.monster, event.player, event.item, event.epic)
     else if (event.e === 'threat') threatByNpc.set(event.npcId, event.contributors)
     else if (event.e === 'equip') {
@@ -692,10 +715,6 @@ function enterWorld(session: WorldSession): void {
               }
               return
             }
-            // Unreachable in practice — players have no `actions` (empty
-            // array in buildPlayerPickable), so topPick/defaultInteract never
-            // select one; this is here to satisfy the type narrowing below.
-            if (interact.kind === 'player') return
             send(socket, { t: 'interact', kind: interact.kind, id: interact.id, action: interact.action })
           },
           onFollow: (targetId) => {
@@ -714,6 +733,18 @@ function enterWorld(session: WorldSession): void {
             ...[...others.values()].map((e) => pickProxyOf(e.mesh)),
           ],
           getPlayerCombatLevel: () => playerCombatLevel,
+          // Recomputed per menu, not stored on the pickable: whether an attack
+          // is on the table depends on where BOTH of us are standing right now.
+          decoratePickable: (pick) => {
+            if (pick.kind !== 'player') return
+            const other = others.get(pick.id)
+            const level = other?.combatLevel ?? pick.monsterLevel
+            pick.attackable = selfInDanger
+              && !!other?.pvp
+              && level != null
+              && Math.abs(level - playerCombatLevel) <= PVP_LEVEL_BRACKET
+            pick.bot = !!other?.bot
+          },
           // Wheel zoom, arrow-key orbit/zoom, and middle-drag orbit all live in
           // cam (cameraControls.ts) — pinch is the one gesture input.ts already
           // owns (two-finger touch), forwarded into the same state.

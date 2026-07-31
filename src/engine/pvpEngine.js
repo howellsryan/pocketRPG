@@ -112,7 +112,12 @@ function attachSpecialMetadata(attacker, weapon, spec, energyBefore, energyAfter
   return { ...swing, damage: totalDamage, special: true, specType: spec.type || 'special', energyCost: Math.max(0, Number(spec.energyCost) || 0), hits, totalDamage, specialAttack: buildPvpSpecialAttackMeta({ attacker, weapon, spec, energyBefore, energyAfter, hits, totalDamage, extra }) }
 }
 
-function resolveSwing(attacker, defender, itemsData, events) {
+/** Exported for the open-world Wilderness (world/server/pvpCombat.ts), which
+ * resolves its duels one swing at a time against live world sessions rather
+ * than through processPvpTick's paired state. Same maths, same specials, same
+ * protection prayers — a second PvP combat model would drift from this one
+ * within a release. */
+export function resolveSwing(attacker, defender, itemsData, events) {
   const ammoBlocked = rangedAmmoBlockedSwing(attacker, itemsData)
   if (ammoBlocked) return ammoBlocked
   // Magic resolves through the shared rune / powered-staff path. Staves carry
@@ -164,7 +169,11 @@ function resolveSwing(attacker, defender, itemsData, events) {
 }
 
 function terminalResult(next, winnerId, loserId, reason, events) { return { stateNext: next, events, terminal: { winner: winnerId, loser: loserId, reason } } }
-function applyIntent(combatant, intentAction, itemsData, events) { if (!intentAction || typeof intentAction !== 'object') return; if (intentAction.type === 'change_stance') { if (VALID_STANCES.has(intentAction.stance)) combatant.stance = intentAction.stance; return } if (intentAction.type === 'change_combat_spell') { if (!intentAction.spellId) { combatant.spell = null; return } const spell = spellsData?.[intentAction.spellId]; combatant.spell = spell ? { ...spell } : null; return } if (intentAction.type === 'queue_special') { combatant.specialAttackQueued = !combatant.specialAttackQueued; return }
+/** Exported for the Wilderness bots, which drive their own combatant with the
+ * intents computeBotIntents produces. The protection-prayer refusal below is
+ * load-bearing out there: it is what keeps a roaming bot from praying against
+ * the style you picked to fight it with. */
+export function applyIntent(combatant, intentAction, itemsData, events) { if (!intentAction || typeof intentAction !== 'object') return; if (intentAction.type === 'change_stance') { if (VALID_STANCES.has(intentAction.stance)) combatant.stance = intentAction.stance; return } if (intentAction.type === 'change_combat_spell') { if (!intentAction.spellId) { combatant.spell = null; return } const spell = spellsData?.[intentAction.spellId]; combatant.spell = spell ? { ...spell } : null; return } if (intentAction.type === 'queue_special') { combatant.specialAttackQueued = !combatant.specialAttackQueued; return }
 if (intentAction.type === 'toggle_prayer') { const prayer = prayersData?.[intentAction.prayerId]; const isProtectionPrayer = prayer?.bonusType === 'protection' || PVP_ENGINE_PROTECTION_PRAYER_IDS.has(intentAction.prayerId); if (typeof intentAction.prayerId === 'string' && prayer && !isProtectionPrayer) { const turningOn = combatant.activeCombatPrayer !== intentAction.prayerId; if (turningOn && (combatant.prayerPoints || 0) <= 0) return; combatant.activeCombatPrayer = turningOn ? intentAction.prayerId : null } return }
 if (intentAction.type === 'equip') { const i = intentAction.inventorySlot; if (typeof i !== 'number' || i < 0 || i >= combatant.inventory.length) return; const slot = combatant.inventory[i]; if (!slot) return; const item = itemsData?.[slot.itemId]; if (!item?.slot) return; const newEquip = { ...combatant.equipment }; const result = equipItem(newEquip, item, itemsData, slot); if (!result?.equipped) return; const newInv = [...combatant.inventory]; newInv[i] = null; const placed = placeUnequippedItems(result.unequipped, newInv, itemsData); if (!placed.ok) return; combatant.equipment = newEquip; combatant.inventory = placed.inventory; if (item.slot === 'weapon') combatant.combatType = getCombatType(combatant.equipment, itemsData); return }
 if (intentAction.type === 'unequip') { const eqSlot = intentAction.equipmentSlot; if (!eqSlot) return; const removed = unequipSlot(combatant.equipment, eqSlot); if (!removed) return; addItem(combatant.inventory, removed.itemId, removed.quantity || 1, !!itemsData?.[removed.itemId]?.stackable); return }
