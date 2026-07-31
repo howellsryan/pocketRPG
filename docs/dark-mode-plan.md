@@ -1,6 +1,6 @@
 # Dark Mode — Implementation Plan (idle game only)
 
-Status: plan, not built. Scope is `src/**` (the idle game). The open-world companion (`world/**`), the admin portal (`functions/_lib/admin/portalPage.js`) and the marketing landing/auth screens are explicitly out of scope — see §7.
+Status: **implemented**. This document is the design record; `DESIGN.md` §3.1 is the maintained reference and `tests/theme.test.ts` the guard. Where the build diverged from this plan, §12 records why. Scope is `src/**` (the idle game). The open-world companion (`world/**`), the admin portal (`functions/_lib/admin/portalPage.js`) and the marketing landing/auth screens are explicitly out of scope — see §7.
 
 ## 1. The finding that shapes everything
 
@@ -162,3 +162,14 @@ Manual QA is the real gate here — all 40 screens in both themes, plus the four
 ## 11. Documentation
 
 DESIGN.md gains a §3.1 "Two Themes, One Palette" covering the layer-1-is-frozen rule and the semantic token list, and §2's Two-Skin Trap gets a line: the iron skin is no longer dead code — it is the dark theme, so a base-skin rule is now load-bearing and must not be deleted as unused.
+
+## 12. What changed during the build
+
+Four things the plan did not anticipate, all found by the visual gate rather than by reading code:
+
+- **Cards needed their own token.** `--surface-panel` was not enough: in light a card is the *same* vellum as the page, separated only by a rule and an inset. That hairline is too weak on iron, so `--surface-card` gives dark a genuine value step while light keeps the shipped colour exactly.
+- **The texture had to blend.** `parchment.webp` *is* the vellum tone, so it can sit opaque. `iron.webp` is a mid-brown and erased whatever surface it covered — every panel collapsed to one flat colour. Dark multiplies it (`--surface-blend`).
+- **The accent has two registers.** Sites that were `--fm-ember-deep` and sites that were `--fm-ember` cannot share one token: they differ in light. Hence `--accent` (deep) and `--accent-bright` (plain), which converge in dark.
+- **Opacity is not a hierarchy on iron.** Faded text works on parchment because it is *darker* than the surface; on iron a faded light text sinks into it. Four labels measured 1.9–4.2:1. Dark drops the fade and lets the solid faint tone carry the hierarchy; light keeps its opacity untouched.
+
+The plan's §9 test list also grew: the guards now cover JSX as well as CSS, and the `<head>` stanza is checked against the module it duplicates. All four were mutation-tested.

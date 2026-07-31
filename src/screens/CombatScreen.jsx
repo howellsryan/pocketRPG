@@ -276,7 +276,7 @@ function MonsterPhaseStats({ monster }) {
               <span>Attack Bonus <span class="font-[var(--font-mono)]">{form.attackBonus ?? 0}</span></span>
               <span>Strength Bonus <span class="font-[var(--font-mono)]">{form.strengthBonus ?? 0}</span></span>
             </div>
-            <div class="grid grid-cols-5 gap-1 text-[9px] text-[var(--color-parchment)] pt-1 border-t border-[var(--fm-rule)]">
+            <div class="grid grid-cols-5 gap-1 text-[9px] text-[var(--color-parchment)] pt-1 border-t border-[var(--hairline)]">
               {DEFENCE_STYLES.map(style => (
                 <div key={style} class="text-center">
                   <div class="opacity-50 capitalize">{style}</div>
@@ -318,7 +318,7 @@ function MonsterAddStats({ monster }) {
           <span>HP <span class="font-[var(--font-mono)]">{add.hitpoints}</span></span>
           <span>Attack Bonus <span class="font-[var(--font-mono)]">{add.attackBonus ?? 0}</span></span>
         </div>
-        <div class="grid grid-cols-5 gap-1 text-[9px] text-[var(--color-parchment)] pt-1 border-t border-[var(--fm-rule)]">
+        <div class="grid grid-cols-5 gap-1 text-[9px] text-[var(--color-parchment)] pt-1 border-t border-[var(--hairline)]">
           {DEFENCE_STYLES.map(style => (
             <div key={style} class="text-center">
               <div class="opacity-50 capitalize">{style}</div>
@@ -2692,7 +2692,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         disabled={isLocked}
                         title={isLocked && bossReq.locked ? bossReq.reason : ''}
                         class={`flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
-                          ${isOnTask ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold-dim)]' :
+                          ${isOnTask ? 'bg-[var(--surface-raised)] border-[var(--color-gold-dim)]' :
                             isLocked ? 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-50' :
                             'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--color-void-lighter)]'}`}
                       >
@@ -3021,7 +3021,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     )
                   })}
                   {selectedRaidInfo.rewards.unique && (
-                    <div class="bg-[var(--fm-parch-hi)] border border-[var(--color-gold-dim)] rounded-lg p-2 mt-1">
+                    <div class="bg-[var(--surface-raised)] border border-[var(--color-gold-dim)] rounded-lg p-2 mt-1">
                       <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-1">
                         ✨ Unique Drop ({(selectedRaidInfo.rewards.unique.chance * 100).toFixed(1)}% chance)
                       </div>
@@ -3410,7 +3410,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       {/* Slayer task indicator */}
       {doesSlayerTaskMatchMonster(slayerTask?.monsterId, combat.monster.id) && (
-        <div class="mb-2 bg-[var(--fm-parch-hi)] border border-[var(--color-gold-dim)] rounded-lg px-3 py-1.5 flex items-center justify-between">
+        <div class="mb-2 bg-[var(--surface-raised)] border border-[var(--color-gold-dim)] rounded-lg px-3 py-1.5 flex items-center justify-between">
           <span class="text-[10px] text-yellow-400 font-semibold">💀 Slayer Task</span>
           <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">
             {slayerTask.monstersRemaining} / {slayerTask.totalCount} remaining
@@ -3548,7 +3548,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         isActive
                           ? 'cb-prayon'
                           : canUse
-                            ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
+                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
                             : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >
@@ -3572,7 +3572,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         isActive
                           ? 'cb-prayon'
                           : canUse
-                            ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
+                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
                             : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >
@@ -3811,7 +3811,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
               {/* Slayer task indicator */}
               {doesSlayerTaskMatchMonster(slayerTask?.monsterId, m.id) && (
-                <div class="mb-2 bg-[var(--fm-parch-hi)] border border-[var(--color-gold-dim)] rounded-lg px-3 py-1.5 flex items-center justify-between">
+                <div class="mb-2 bg-[var(--surface-raised)] border border-[var(--color-gold-dim)] rounded-lg px-3 py-1.5 flex items-center justify-between">
                   <span class="text-[10px] text-yellow-400 font-semibold">💀 Slayer Task</span>
                   <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">{slayerTask.monstersRemaining} / {slayerTask.totalCount} remaining</span>
                 </div>
@@ -3876,7 +3876,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="cb-prayhead">
             <h3>Prayers</h3>
             <button onClick={() => setShowPrayerModal(false)} class="cb-x" aria-label="Close">
-              <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
+              <GameIcon iconKey="cancel" color="var(--text-soft)" size={16} />
             </button>
           </div>
 
@@ -3980,7 +3980,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   <button
                     key={slot.itemId}
                     onClick={() => handlePotion(slot.itemId)}
-                    class="w-full p-3 rounded-lg border bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)] transition-colors"
+                    class="w-full p-3 rounded-lg border bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)] transition-colors"
                   >
                     <div class="flex items-center justify-between">
                       <div class="text-left flex-1">
@@ -4017,7 +4017,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="cb-prayhead">
             <h3>Spells</h3>
             <button onClick={() => setShowSpellModal(false)} class="cb-x" aria-label="Close">
-              <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
+              <GameIcon iconKey="cancel" color="var(--text-soft)" size={16} />
             </button>
           </div>
           <div class="max-h-96 overflow-y-auto">
@@ -4040,7 +4040,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="cb-prayhead">
             <h3>Summon a Creature</h3>
             <button onClick={() => setShowSummonModal(false)} class="cb-x" aria-label="Close">
-              <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
+              <GameIcon iconKey="cancel" color="var(--text-soft)" size={16} />
             </button>
           </div>
           <div class="max-h-96 overflow-y-auto flex flex-col gap-2">
@@ -4129,8 +4129,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         onClick={() => handleEquipItem(slot.itemId)}
                         class={`p-1.5 rounded-lg border transition-colors flex flex-col items-center ${
                           equipped
-                            ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald-light)]'
-                            : 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
+                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald-light)]'
+                            : 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
                         }`}
                       >
                         <GameIcon item={item} iconKey={item?.iconId} size={22} />

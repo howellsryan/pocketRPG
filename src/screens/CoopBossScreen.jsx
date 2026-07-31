@@ -514,7 +514,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           <div class="cb-prayhead">
             <h3>Spells</h3>
             <button onClick={() => setShowSpellModal(false)} class="cb-x" aria-label="Close">
-              <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
+              <GameIcon iconKey="cancel" color="var(--text-soft)" size={16} />
             </button>
           </div>
           <div class="max-h-96 overflow-y-auto">

@@ -918,9 +918,9 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                       title={`${prayer.name} · Lv ${prayer.level}${prayer.description ? `\n${prayer.description}` : ''}`}
                       class={`px-1 py-1 rounded-md border text-center transition-colors ${
                         active
-                          ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]'
+                          ? 'bg-[var(--surface-raised)] border-[var(--color-gold)]'
                           : canUse
-                            ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
+                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
                             : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >

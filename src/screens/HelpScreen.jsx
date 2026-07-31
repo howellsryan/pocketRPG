@@ -5,9 +5,10 @@ import { useGame } from '../state/gameState.jsx'
 import { SETTINGS_NAV_LINKS } from '../components/navTabs.js'
 import { api } from '../cloud/api.js'
 import { openWorld, worldBetaEnabled } from '../utils/helpers.js'
+import { THEME_OPTIONS } from '../utils/theme.js'
 
 export default function HelpScreen({ onNavigate, onShowIntroTour }) {
-  const { showInfoToasts, updateShowInfoToasts, backgroundCombat, updateBackgroundCombat } = useGame()
+  const { showInfoToasts, updateShowInfoToasts, backgroundCombat, updateBackgroundCombat, theme, updateTheme } = useGame()
 
   async function handleEnterWorld() {
     try {
@@ -26,6 +27,26 @@ export default function HelpScreen({ onNavigate, onShowIntroTour }) {
         </h1>
       </div>
       <div class="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+        <Card className="p-4">
+          <div class="min-w-0">
+            <div class="text-sm font-semibold text-[var(--color-parchment)]">Theme</div>
+            <div class="text-xs text-[var(--color-parchment)] opacity-50 mt-0.5">Parchment by day, iron by night. System follows your device.</div>
+          </div>
+          <div class="flex gap-2 mt-3" role="group" aria-label="Theme">
+            {THEME_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                aria-pressed={theme === opt.id}
+                onClick={() => updateTheme(opt.id)}
+                class={`fm-toggle flex-1${theme === opt.id ? ' is-on' : ''}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </Card>
+
         <Card className="p-4">
           <div class="flex items-center justify-between gap-3">
             <div class="min-w-0">

@@ -12,6 +12,7 @@ function readSrc(rel) { return fs.readFileSync(path.join(SRC, rel), 'utf-8'); }
 
 // Source file order (from dist_tmp, already transpiled)
 const sourceFiles = [
+  'utils/theme.js',
   'utils/constants.js',
   'utils/combatWindup.js',
   'utils/helpers.js',
@@ -772,6 +773,7 @@ const html = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#e6d8b6">
 <title>PocketRPG</title>
 <meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
 <!-- LCP image: the hero Warlord Grondar poster is rendered by JS, so preload
@@ -788,6 +790,11 @@ ${fontPreloadTags.trim()}
 <style>
 ${css}
 </style>
+<!-- Theme stamp. Must run in <head>, before #app-splash paints — the scripts
+     at the top of <body> are already too late and would flash the wrong
+     material. Mirrors resolveTheme() in src/utils/theme.js; the default is
+     'light' so existing players keep the parchment they installed. -->
+<script>(function(){try{var p=localStorage.getItem('pocketrpg_theme');if(p!=='light'&&p!=='dark'&&p!=='system')p='light';var t=p==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='dark'?'#14110d':'#e6d8b6')}catch(e){document.documentElement.setAttribute('data-theme','light')}})()</script>
 </head>
 <body>
 <script>if(navigator.standalone){document.documentElement.classList.add('pwa-standalone');var s=document.createElement('style');s.textContent='.pwa-standalone .overflow-y-auto{padding-bottom:env(safe-area-inset-bottom)}';document.head.appendChild(s)}</script>
