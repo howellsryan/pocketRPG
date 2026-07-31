@@ -50,6 +50,49 @@ describe('collectDeathDrops', () => {
   it('drops nothing for a player carrying and wearing nothing', () => {
     expect(collectDeathDrops(pack(), {}).drops).toEqual([])
   })
+
+  it('converts a carried untradeable to its coin value instead of putting it on the floor', () => {
+    const { drops } = collectDeathDrops(pack({ itemId: 'slayer_helmet', quantity: 1 }), {})
+    expect(drops).toEqual([{ itemId: 'coins', quantity: 1_000_000 }])
+  })
+
+  it('converts a WORN untradeable too — the rule is the item, not the slot', () => {
+    const { drops } = collectDeathDrops(pack(), { head: { itemId: 'slayer_helmet' } })
+    expect(drops).toEqual([{ itemId: 'coins', quantity: 1_000_000 }])
+  })
+
+  it('folds converted value into the coins the player was already carrying', () => {
+    const { drops } = collectDeathDrops(
+      pack({ itemId: 'coins', quantity: 500 }, { itemId: 'zesta_longsword', quantity: 1 }),
+      {},
+    )
+    expect(drops).toEqual([{ itemId: 'coins', quantity: 120_500 }])
+  })
+
+  it('destroys a worthless untradeable rather than dropping a zero-coin pile', () => {
+    const { drops } = collectDeathDrops(pack({ itemId: 'fire_cape', quantity: 1 }), {})
+    expect(drops).toEqual([])
+  })
+
+  it('leaves tradeable gear alone while converting the untradeables beside it', () => {
+    const { drops } = collectDeathDrops(
+      pack({ itemId: 'shark', quantity: 3 }),
+      { weapon: { itemId: 'dragon_scimitar' }, head: { itemId: 'slayer_helmet' } },
+    )
+    expect(drops).toEqual(expect.arrayContaining([
+      { itemId: 'shark', quantity: 3 },
+      { itemId: 'dragon_scimitar', quantity: 1 },
+      { itemId: 'coins', quantity: 1_000_000 },
+    ]))
+    expect(drops).toHaveLength(3)
+  })
+
+  it('still drains the pools by the REAL item id of a converted untradeable', () => {
+    // fromPack feeds consumeUnits. Converting it here would remove coins the
+    // player never had and leave the helmet sitting in the save.
+    const { fromPack } = collectDeathDrops(pack({ itemId: 'slayer_helmet', quantity: 1 }), {})
+    expect(fromPack).toEqual([{ itemId: 'slayer_helmet', quantity: 1 }])
+  })
 })
 
 describe('death drops against the provenance pools', () => {

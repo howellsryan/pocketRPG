@@ -21,6 +21,17 @@ const CORS = {
 
 export async function handlePvpCount(request: Request, env: Env): Promise<Response> {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS })
+  // Edge cache FIRST, and not merely as an optimisation: this route is public
+  // and unauthenticated, and getServerByName WAKES the Wilderness DO. Without a
+  // hit here, anyone can spin that up on demand at whatever rate they like —
+  // and the honest traffic alone is a combat screen polling every 15s on every
+  // open phone. `Cache-Control` on the response only instructs each browser
+  // separately; this is the shared one.
+  const cache = (caches as unknown as { default: Cache }).default
+  const cacheKey = new Request(new URL(request.url).toString(), { method: 'GET' })
+  const cached = await cache.match(cacheKey).catch(() => undefined)
+  if (cached) return cached
+
   let count = 0
   try {
     const stub = await getServerByName<Env, WorldZone>(
@@ -34,7 +45,9 @@ export async function handlePvpCount(request: Request, env: Env): Promise<Respon
     // entering the Wilderness.
     console.error('[World][pvp-count] unavailable', String(err))
   }
-  return new Response(JSON.stringify({ zone: PVP_ZONE_ID, count }), {
+  const response = new Response(JSON.stringify({ zone: PVP_ZONE_ID, count }), {
     headers: { 'Content-Type': 'application/json', ...CORS },
   })
+  await cache.put(cacheKey, response.clone()).catch(() => {})
+  return response
 }

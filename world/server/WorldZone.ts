@@ -24,7 +24,7 @@ import { stepMinions } from './minions'
 import { lairEntryFailure } from './lairEntry'
 import { collisionWithMonsters } from '../shared/monsterSize'
 import { computeAoi, type AoiEntity } from './aoi'
-import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
+import { KILL_DROP_OWNER_TICKS, PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
 import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
@@ -160,6 +160,9 @@ type Player = TickPlayer & {
    * and a defence-draining special writes back HERE rather than into `stats`:
    * the drain is session-local and must never reach the save. */
   levels: Record<string, number>
+  /** The undrained levels above, so a fight can put back what its specials
+   * took. Nothing else restores them, and this session outlives every fight. */
+  baseLevels: Record<string, number>
   combatLevel: number
   /** Answered YES at the line. `pvpCrossed` records that the consent was spent,
    * so walking back into the camp arms the prompt again for the next trip —
@@ -681,6 +684,7 @@ export class WorldZone extends Server<Env> {
       lingerUntilTick: null,
       combatantId: row.id,
       levels: Object.fromEntries(Object.entries(stats).map(([skill, entry]) => [skill, entry.level])),
+      baseLevels: Object.fromEntries(Object.entries(stats).map(([skill, entry]) => [skill, entry.level])),
       combatLevel: sessionCombatLevel(stats),
       pvpConsent: false,
       pvpCrossed: false,
@@ -973,8 +977,9 @@ export class WorldZone extends Server<Env> {
       const qty = slot.quantity
       player.inventory[message.slot] = null
       consumeUnits(player.pools, itemId, qty)
-      const [loot] = spawnDrops([{ itemId, quantity: qty }], player.x, player.z, player.charId, this.tickCount, PLAYER_DROP_OWNER_TICKS)
-      if (loot) this.loot.set(loot.id, loot)
+      for (const loot of spawnDrops([{ itemId, quantity: qty }], player.x, player.z, player.charId, this.tickCount, PLAYER_DROP_OWNER_TICKS)) {
+        this.loot.set(loot.id, loot)
+      }
       this.pendingInvEcho.add(player.charId)
       this.scheduleDirtyFlush(player)
       return
@@ -1549,7 +1554,7 @@ export class WorldZone extends Server<Env> {
     player.equipment = {}
     player.gear = gearFromEquipment(player.equipment)
     player.equipmentDirty = true
-    for (const loot of spawnDrops(drops, player.x, player.z, killerCharId, this.tickCount, PLAYER_DROP_OWNER_TICKS, { fromPlayer: true })) {
+    for (const loot of spawnDrops(drops, player.x, player.z, killerCharId, this.tickCount, KILL_DROP_OWNER_TICKS, { fromPlayer: true })) {
       this.loot.set(loot.id, loot)
     }
     this.pendingInvEcho.add(player.charId)

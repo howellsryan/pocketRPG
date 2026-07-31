@@ -47,8 +47,12 @@ export type PvpFighter = {
   z: number
   hp: number
   maxHp: number
-  /** Levels only — the duel never reads XP. */
+  /** Levels only — the duel never reads XP. Mutable: draining specials write
+   * here, and `endPvpFight` restores from `baseLevels`. */
   levels: Record<string, number>
+  /** The undrained levels this fighter arrived with. Never written after
+   * creation — it is the only record of what a drain has to be put back to. */
+  baseLevels: Record<string, number>
   combatLevel: number
   equipment: Record<string, unknown>
   inventory: InvSlot[]
@@ -180,6 +184,22 @@ export function refreshPvpLock(a: PvpFighter, b: PvpFighter, tick: number): void
   b.pvpLockUntilTick = until
 }
 
+/**
+ * Undoes the stat drains a fight's specials applied.
+ *
+ * `syncDefenderBack` writes a drained defence straight onto the fighter's live
+ * levels, and nothing else in the world ever puts it back — so without this a
+ * single dragon-dagger spec left a player permanently weaker for the rest of
+ * their world session, across every later fight. The duel system has no such
+ * problem: its combatants die with the match. `baseLevels` is the snapshot
+ * taken when the fighter joined, so this restores rather than heals.
+ */
+function restoreDrainedLevels(fighter: PvpFighter): void {
+  for (const [skill, level] of Object.entries(fighter.baseLevels)) {
+    if ((fighter.levels[skill] ?? level) < level) fighter.levels[skill] = level
+  }
+}
+
 /** Releases a fighter from whatever they were locked in. Idempotent. */
 export function endPvpFight(fighter: PvpFighter, other: PvpFighter | null): void {
   fighter.pvpOpponentId = null
@@ -187,12 +207,14 @@ export function endPvpFight(fighter: PvpFighter, other: PvpFighter | null): void
   fighter.pvpAttackTimer = 0
   fighter.specialAttackQueued = false
   fighter.pvpPassive = false
+  restoreDrainedLevels(fighter)
   if (other && other.pvpOpponentId === fighter.charId) {
     other.pvpOpponentId = null
     other.pvpLockUntilTick = 0
     other.pvpAttackTimer = 0
     other.specialAttackQueued = false
     other.pvpPassive = false
+    restoreDrainedLevels(other)
   }
 }
 

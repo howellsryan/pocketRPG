@@ -63,12 +63,12 @@ function buildNpcPickable(diff: EntityDiff): Pickable {
   }
 }
 
-/** Other players are menu-only (item 10): no `actions`, so topPick/hoverText
- * skip them (HOVER_PRIORITY has no 'player' entry) and a left-click through a
- * crowd still walks — buildMenu gives player pickables their own "Follow" and
- * (in the Wilderness) "Attack" rows instead of running them through the normal
- * actions list. Attack is deliberately NOT a left-click default: hitting a
- * stranger because they walked under your finger is not a fight anyone chose. */
+/** Built with NO actions, which is the safe default: topPick skips an
+ * action-less pickable entirely, so outside the Wilderness a left-click through
+ * a crowd still walks and Follow stays a menu row. `decoratePickable` is the
+ * only thing that ever puts an Attack action on one — and because that single
+ * decision feeds hover, left-click and the menu alike, the three can never
+ * disagree about whether this player may be attacked from where we stand. */
 function buildPlayerPickable(diff: EntityDiff): Pickable {
   return {
     kind: 'player',

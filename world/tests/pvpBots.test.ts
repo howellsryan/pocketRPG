@@ -23,6 +23,7 @@ function opponent(over: Partial<PvpFighter> = {}): PvpFighter {
     charId: 'p1', combatantId: 7, name: 'Player', x: 21, z: PVP_LINE_Z - 10,
     hp: 99, maxHp: 99,
     levels: { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, hitpoints: 99, prayer: 99 },
+    baseLevels: { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, hitpoints: 99, prayer: 99 },
     combatLevel: 99, equipment: { weapon: { itemId: 'dragon_scimitar' } },
     inventory: new Array<InvSlot>(28).fill(null), stance: 'aggressive', spell: null,
     prayerPoints: 99, maxPrayerPoints: 99, prayerDrainAccumulator: 0,

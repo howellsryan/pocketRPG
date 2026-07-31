@@ -25,6 +25,7 @@ function fighter(over: Partial<PvpFighter> = {}): PvpFighter {
     hp: 99,
     maxHp: 99,
     levels: { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, hitpoints: 99, prayer: 99 },
+    baseLevels: { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, hitpoints: 99, prayer: 99 },
     combatLevel: 99,
     equipment: { weapon: { itemId: 'dragon_scimitar' } },
     inventory: new Array<InvSlot>(28).fill(null),
@@ -141,6 +142,28 @@ describe('the single-combat lock', () => {
     beginPvpFight(a, b, 100)
     endPvpFight(a, b)
     expect(a.specialAttackQueued).toBe(false)
+  })
+
+  it('puts back the defence a draining special took, on both sides', () => {
+    // Nothing else in the world restores it: without this a single spec left a
+    // player weaker for the whole session, across every later fight.
+    const a = fighter({ charId: 'a', combatantId: 1 })
+    const b = fighter({ charId: 'b', combatantId: 2, x: 11 })
+    beginPvpFight(a, b, 100)
+    a.levels.defence = 60
+    b.levels.defence = 71
+    endPvpFight(a, b)
+    expect(a.levels.defence).toBe(99)
+    expect(b.levels.defence).toBe(99)
+  })
+
+  it('never restores a level ABOVE what the fighter arrived with', () => {
+    const a = fighter({ charId: 'a', combatantId: 1 })
+    const b = fighter({ charId: 'b', combatantId: 2, x: 11 })
+    a.levels.strength = 118
+    beginPvpFight(a, b, 100)
+    endPvpFight(a, b)
+    expect(a.levels.strength).toBe(118)
   })
 })
 

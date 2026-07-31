@@ -227,7 +227,7 @@ PvP happens in one place: the Wilderness, an open-world area you enter from the 
 
 Out there, anyone within 10 combat levels of you can attack you, and you can attack them. It is single combat: one fight at a time, and nobody can jump in on a fight already under way. Eating, potions, prayers (protection prayers included), special attacks and spells all work exactly as they do anywhere else in the open world.
 
-**If you die in the Wilderness you drop everything** — your whole inventory and every item you are wearing — on the ground for your killer. Bank what you cannot afford to lose. A one-life run ends there like it ends anywhere else.
+**If you die in the Wilderness you drop everything** — your whole inventory and every item you are wearing — on the ground for your killer. Bank what you cannot afford to lose. Untradeable items are the one exception, and not a kind one: they are destroyed rather than dropped, and your killer gets their shop value in coins instead. A one-life run ends there like it ends anywhere else.
 
 Outlaws roam the wastes when the map is quiet, so there is always something to fight. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not.
 

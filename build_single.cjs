@@ -15,6 +15,9 @@ const sourceFiles = [
   'utils/theme.js',
   'utils/constants.js',
   'utils/combatWindup.js',
+  // Ahead of helpers.js, which calls into it (openWorld) — dependency-free by
+  // design so it can sit this early.
+  'cloud/worldHandoff.js',
   'utils/helpers.js',
   'utils/complexityColors.js',
   'utils/completion.js',

@@ -5,8 +5,12 @@
 // — banking before you cross is the decision the area is built around.
 import { auditLog } from '../../functions/_lib/game/audit.js'
 import { persistPvpBotCollectionLog } from '../../functions/_lib/collectionLog.js'
+import { isPvpCoinReplacementItem, getPvpCoinReplacementValue } from '../../src/engine/lootTransfer.js'
+import itemsData from '../../src/data/items.json'
 import type { InvSlot } from '../shared/protocol'
 import type { Env } from './env'
+
+const COINS_ID = 'coins'
 
 export type DroppedStack = { itemId: string; quantity: number }
 
@@ -20,12 +24,40 @@ export type DeathDrops = {
   fromPack: DroppedStack[]
 }
 
+/** An untradeable never reaches the floor — it is destroyed with its owner and
+ * the killer gets its coin value instead. Same rule, same numbers and the same
+ * minigame-unlock special case as the duel settlement
+ * (src/engine/lootTransfer.js): an account-bound item may not change hands in
+ * the Wilderness any more than it may on the Trading Post.
+ *
+ * A worthless untradeable (no shopValue) converts to nothing and is simply
+ * lost, which is what the duel path has always done. */
+function toFloorStacks(tally: Map<string, number>): DroppedStack[] {
+  const out: DroppedStack[] = []
+  let coins = 0
+  for (const [itemId, quantity] of tally) {
+    if (itemId === COINS_ID) { coins += quantity; continue }
+    if (isPvpCoinReplacementItem(itemId, itemsData)) {
+      coins += getPvpCoinReplacementValue({ itemId, quantity }, itemsData)
+      continue
+    }
+    out.push({ itemId, quantity })
+  }
+  if (coins > 0) out.push({ itemId: COINS_ID, quantity: coins })
+  return out
+}
+
 /**
  * Everything a killed player leaves behind. Pure: the caller owns spawning the
  * loot entities and clearing the session.
  *
  * Stacks are merged by itemId so 3 slots of 100 coins land as one 300-coin pile
  * rather than three piles the killer has to walk over one at a time.
+ *
+ * `drops` is what hits the floor (untradeables already converted to coins);
+ * `fromPack` is what the player actually carried, item ids intact — the pools
+ * are drained by real item id, so converting there would take coins the player
+ * never had off the save and leave the untradeable in it.
  */
 export function collectDeathDrops(inventory: InvSlot[], equipment: Record<string, unknown>): DeathDrops {
   const packTally = new Map<string, number>()
@@ -47,10 +79,10 @@ export function collectDeathDrops(inventory: InvSlot[], equipment: Record<string
     total.set(itemId, (total.get(itemId) ?? 0) + qty)
   }
 
-  const toList = (tally: Map<string, number>): DroppedStack[] =>
-    [...tally.entries()].map(([itemId, quantity]) => ({ itemId, quantity }))
-
-  return { drops: toList(total), fromPack: toList(packTally) }
+  return {
+    drops: toFloorStacks(total),
+    fromPack: [...packTally.entries()].map(([itemId, quantity]) => ({ itemId, quantity })),
+  }
 }
 
 /**

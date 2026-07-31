@@ -114,6 +114,7 @@ export function createBot(template: BotTemplate, tile: Tile): BotState {
     hp: maxHp,
     maxHp,
     levels,
+    baseLevels: { ...template.stats },
     combatLevel: botTemplateCombatLevel(template.id),
     equipment,
     inventory: inventoryFrom(template),

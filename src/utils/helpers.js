@@ -1,4 +1,5 @@
 import { combatLevelFromLevels } from '../engine/combatLevel.js'
+import { markWorldHandoff } from '../cloud/worldHandoff.js'
 
 /**
  * Random integer between min and max (inclusive)
@@ -155,6 +156,10 @@ export function worldBossLairsEnabled() {
  */
 export async function openWorld(api, zone) {
   const { handoff } = await api.requestWorldHandoff(zone)
+  // From here the world is the save's writer, and this tab's own IndexedDB
+  // writes must stop outranking the cloud copy on the next boot — see
+  // cloud/worldHandoff.js for why that costs a Wilderness loot pile otherwise.
+  markWorldHandoff()
   window.open(`${worldOrigin()}/#handoff=${handoff}`, '_blank')
 }
 
