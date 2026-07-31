@@ -222,7 +222,7 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
             <input
               type="text"
               value={input}
-              maxLength={500}
+              maxLength={1000}
               placeholder="Ask about PocketRPG…"
               onInput={(e) => setInput(e.currentTarget.value)}
               onKeyDown={(e) => {

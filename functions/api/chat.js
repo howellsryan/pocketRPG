@@ -43,7 +43,9 @@ import {
   SECONDARY_WRITE_NOTE,
 } from '../_lib/chat/actions.js'
 import {
+  CHAT_CONTEXT_CHUNKS,
   CHAT_MODEL,
+  CHAT_OPENAI_MAX_OUTPUT_TOKENS,
   CHAT_OPENAI_MODEL,
   CHAT_FALLBACK_MODEL,
   CHAT_OPENAI_REASONING_EFFORT,
@@ -206,7 +208,10 @@ export function openaiChatBinding(env) {
         reasoning: { effort: CHAT_OPENAI_REASONING_EFFORT },
       }
       if (tools) body.tools = toResponsesTools(tools)
-      if (max_tokens !== undefined) body.max_output_tokens = max_tokens
+      // Deliberately not the payload's max_tokens: that caps the visible answer
+      // for every provider, while max_output_tokens also has to fund this
+      // model's reasoning (see CHAT_OPENAI_MAX_OUTPUT_TOKENS).
+      if (max_tokens !== undefined) body.max_output_tokens = CHAT_OPENAI_MAX_OUTPUT_TOKENS
       const res = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: {
@@ -791,9 +796,7 @@ export async function onRequestPost({ request, env }) {
     })
   }
 
-  // 6 chunks: guide sections average ~68 tokens, so wider retrieval is nearly
-  // free and lifts answer quality more than any other input.
-  const hits = searchKnowledge(question, getIndex(), 6)
+  const hits = searchKnowledge(question, getIndex(), CHAT_CONTEXT_CHUNKS)
   const chunks = hits.map((h) => h.chunk)
   const sources = chunks.map((c) => ({ id: c.id, title: c.title }))
 

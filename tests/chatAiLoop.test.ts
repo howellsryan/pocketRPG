@@ -5,6 +5,7 @@ import {
   CHAT_MODEL,
   CHAT_OPENAI_MODEL,
   CHAT_FALLBACK_MODEL,
+  CHAT_OPENAI_MAX_OUTPUT_TOKENS,
   CHAT_OPENAI_REASONING_EFFORT,
   ALWAYS_ON_TOOL_NAMES,
   SEARCH_TOOL_NAME,
@@ -330,7 +331,9 @@ describe('chatAttempts / geminiChatBinding', () => {
     expect(init.headers.Authorization).toBe('Bearer test-key')
     const body = JSON.parse(init.body)
     expect(body.model).toBe('gpt-5.6-luna')
-    expect(body.max_output_tokens).toBe(5000)
+    // Not the payload's 5000-token answer cap: max_output_tokens also funds
+    // this model's reasoning, and starving it returns an empty answer.
+    expect(body.max_output_tokens).toBe(CHAT_OPENAI_MAX_OUTPUT_TOKENS)
     expect(body.temperature).toBeUndefined()
     expect(body.reasoning).toEqual({ effort: CHAT_OPENAI_REASONING_EFFORT })
     expect(body.input).toHaveLength(2)
