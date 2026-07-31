@@ -48,7 +48,7 @@ import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
 import { SCREENS, isWorldMapEnabled } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
-import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
+import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks, holdTicks, releaseTicks, SKIP_CONFIRM_HOLD } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSave, applyCloudSave, checkCloudNewer, isLocalWriteNewerThanCloud, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
@@ -2186,9 +2186,9 @@ function GameApp() {
       setCredits(result?.credits_remaining ?? credits)
       // Arm the completion wait BEFORE the kill so we can't miss the tick.
       const settled = awaitCombatCompletion()
-      // The costly-skip confirm path keeps ticks paused during the charge —
-      // resume so the armed kill can actually fire.
-      resumeTicks()
+      // The costly-skip confirm path holds ticks during the charge — release
+      // so the armed kill can actually fire.
+      releaseTicks(SKIP_CONFIRM_HOLD)
       const armed = killHandler()
       if (armed === false) resolveCombatCompletion() // nothing will fire — release the wait now
       await settled
@@ -2208,22 +2208,23 @@ function GameApp() {
   const confirmBossSkip = async () => {
     const pending = skipConfirm
     setSkipConfirm(null)
-    if (!pending) { resumeTicks(); return }
-    if (isSkippingRef.current) { resumeTicks(); return }
+    if (!pending) { releaseTicks(SKIP_CONFIRM_HOLD); return }
+    if (isSkippingRef.current) { releaseTicks(SKIP_CONFIRM_HOLD); return }
     isSkippingRef.current = true
     try {
-      // Stay paused during the credit charge; executeBossSkip arms the kill
-      // (monster HP → 0) so the first tick after resume fires the death.
+      // Stay held during the credit charge; executeBossSkip arms the kill
+      // (monster HP → 0) so the first tick after release fires the death.
       await executeBossSkip(pending.bossId)
     } finally {
       isSkippingRef.current = false
-      resumeTicks()
+      // Idempotent — also the release for a charge that threw (e.g. a 402).
+      releaseTicks(SKIP_CONFIRM_HOLD)
     }
   }
 
   const cancelBossSkip = () => {
     setSkipConfirm(null)
-    resumeTicks()
+    releaseTicks(SKIP_CONFIRM_HOLD)
   }
 
   // Apply one completed action's rewards from a background-runner sim result.
@@ -2521,10 +2522,14 @@ function GameApp() {
         isSkippingRef.current = false
         return
       }
-      // Costly skips pause combat and require explicit confirmation before charging.
+      // Costly skips freeze combat and require explicit confirmation before
+      // charging. A HOLD, not pauseTicks: the loot modal's "Skip" reaches here
+      // in the same call stack as its own setLootModal(null), so its effect
+      // cleanup resumeTicks() lands after us and would restart the boss under
+      // the open prompt — the player then dies while deciding.
       const cost = Math.max(1, Math.floor(Number(monster?.skipCost) || 1))
       if (cost > 1) {
-        pauseTicks()
+        holdTicks(SKIP_CONFIRM_HOLD)
         setSkipConfirm({ bossId: monster?.id, monsterName: monster?.name || 'this boss', cost })
         isSkippingRef.current = false
         return
