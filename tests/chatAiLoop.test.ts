@@ -318,7 +318,7 @@ describe('chatAttempts / geminiChatBinding', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
     const binding = openaiChatBinding({ OPENAI_API_KEY: 'test-key' } as any)
-    const res = await binding.run('gpt-5.4-mini', {
+    const res = await binding.run('gpt-5.6-luna', {
       messages: baseMessages(),
       max_tokens: 5000,
       temperature: 0.6,
@@ -329,7 +329,7 @@ describe('chatAttempts / geminiChatBinding', () => {
     expect(url).toBe('https://api.openai.com/v1/responses')
     expect(init.headers.Authorization).toBe('Bearer test-key')
     const body = JSON.parse(init.body)
-    expect(body.model).toBe('gpt-5.4-mini')
+    expect(body.model).toBe('gpt-5.6-luna')
     expect(body.max_output_tokens).toBe(5000)
     expect(body.temperature).toBeUndefined()
     expect(body.reasoning).toEqual({ effort: CHAT_OPENAI_REASONING_EFFORT })
@@ -348,7 +348,7 @@ describe('chatAttempts / geminiChatBinding', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
     const binding = openaiChatBinding({ OPENAI_API_KEY: 'test-key' } as any)
-    const res = await binding.run('gpt-5.4-mini', { messages: baseMessages(), tools: [SEARCH_TOOLS_DEF] })
+    const res = await binding.run('gpt-5.6-luna', { messages: baseMessages(), tools: [SEARCH_TOOLS_DEF] })
     const body = JSON.parse(fetchMock.mock.calls[0][1].body)
     expect(body.tools).toEqual([
       { type: 'function', name: SEARCH_TOOLS_DEF.function.name, description: SEARCH_TOOLS_DEF.function.description, parameters: SEARCH_TOOLS_DEF.function.parameters },

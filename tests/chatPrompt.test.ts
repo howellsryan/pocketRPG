@@ -77,7 +77,7 @@ describe('chat tool surface', () => {
   })
 
   it('pins an explicit OpenAI reasoning effort rather than the API default', () => {
-    expect(['minimal', 'low', 'medium', 'high']).toContain(CHAT_OPENAI_REASONING_EFFORT)
+    expect(['none', 'low', 'medium', 'high', 'xhigh', 'max']).toContain(CHAT_OPENAI_REASONING_EFFORT)
   })
 })
 
