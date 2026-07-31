@@ -12,6 +12,7 @@ import {
   processQuestTick,
   simulateIdleQuest,
   formatQuestDuration,
+  filterQuestsBySearch,
 } from '../src/engine/quests.js'
 import { getXPForLevel } from '../src/engine/experience.js'
 import { TICK_DURATION } from '../src/utils/constants.js'
@@ -180,5 +181,35 @@ describe('formatQuestDuration', () => {
     expect(formatQuestDuration(45 * 60 + 30)).toBe('45m 30s')
     expect(formatQuestDuration(30 * 60)).toBe('30m')
     expect(formatQuestDuration(30)).toBe('30s')
+  })
+})
+
+describe('filterQuestsBySearch', () => {
+  it('returns the list untouched for a blank or whitespace query', () => {
+    expect(filterQuestsBySearch(QUESTS, '')).toBe(QUESTS)
+    expect(filterQuestsBySearch(QUESTS, '   ')).toBe(QUESTS)
+    expect(filterQuestsBySearch(QUESTS, undefined)).toBe(QUESTS)
+  })
+
+  it('matches quest names case-insensitively on any substring', () => {
+    expect(filterQuestsBySearch(QUESTS, 'NOVICE A').map(q => q.id)).toEqual(['novice_a'])
+    expect(filterQuestsBySearch(QUESTS, 'ced b').map(q => q.id)).toEqual(['exp_b'])
+  })
+
+  it('matches the complexity tier so a player can search "grandmaster"', () => {
+    expect(filterQuestsBySearch(QUESTS, 'grandmaster').map(q => q.id)).toEqual(['gm_c'])
+  })
+
+  it('trims surrounding whitespace before matching', () => {
+    expect(filterQuestsBySearch(QUESTS, '  weird  ').map(q => q.id)).toEqual(['unknown_complexity'])
+  })
+
+  it('returns an empty list when nothing matches', () => {
+    expect(filterQuestsBySearch(QUESTS, 'dragon slayer')).toEqual([])
+  })
+
+  it('tolerates quests missing a name or complexity', () => {
+    const ragged = [{ id: 'bare' }, { id: 'named', name: 'Bare Bones' }] as typeof QUESTS
+    expect(filterQuestsBySearch(ragged, 'bare').map(q => q.id)).toEqual(['named'])
   })
 })

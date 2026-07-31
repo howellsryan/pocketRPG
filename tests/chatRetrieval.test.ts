@@ -36,6 +36,31 @@ describe('chat retrieval', () => {
     expect(topIds('where do I fight the kraken', 6)[0]).toBe('monster_deepmaw_kraken')
   })
 
+  it('answers "how do I train X" with X, for skills that have no skill_ chunk', () => {
+    // Slayer has no entry in skills.json, so the only chunk about it is the
+    // guide section. The 17 "Skill training options: …" chunks all match
+    // "train" and used to bury it at rank 19 — the helper then told the player
+    // slayer was not in the game.
+    expect(topIds('How do I train slayer?', 8)).toContain('guide_slayer')
+    expect(topIds('how do I train construction?', 8)).toContain('guide_construction')
+    expect(topIds('how do I train summoning?', 8)).toContain('guide_summoning')
+  })
+
+  it('still prefers the skill chunk for skills that do have one', () => {
+    expect(topIds('how do I train mining?', 8)[0]).toBe('skill_mining')
+    expect(topIds('how do I train herblore?', 8)[0]).toBe('skill_herblore')
+  })
+
+  it('ranks a chunk the query is wholly about over one sharing a generic word', () => {
+    const hits = searchKnowledge('How do I train slayer?', index, 8)
+    const rank = (id: string) => hits.findIndex((h) => h.chunk.id === id)
+    expect(rank('guide_slayer')).toBeGreaterThanOrEqual(0)
+    // Every skill chunk matches "train" and none of them is about slayer.
+    for (const h of hits) {
+      if (h.chunk.id.startsWith('skill_')) expect(rank('guide_slayer')).toBeLessThan(rank(h.chunk.id))
+    }
+  })
+
   it('drops the weak tail: every hit scores within range of the best hit', () => {
     for (const q of ['how do I get dragon boots?', 'best food to cook', 'prayer potion restore']) {
       const hits = searchKnowledge(q, index, 6)

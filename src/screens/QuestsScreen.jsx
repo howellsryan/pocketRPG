@@ -13,7 +13,7 @@ import { isQuestComplete } from '../utils/completion.js'
 import GameIcon from '../components/GameIcon.jsx'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import {
-  checkQuestEligibility,
+  checkQuestEligibility, filterQuestsBySearch,
   getQuestPointsEarned, formatQuestDuration,
 } from '../engine/quests.js'
 import { QUEST_QUEUE_MAX, SCREENS } from '../utils/constants.js'
@@ -33,6 +33,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
   } = useGame()
 
   const [hideCompleted, setHideCompleted] = useState(false)
+  const [search, setSearch] = useState('')
   const [selectedQuest, setSelectedQuest] = useState(null)
   const [showQueue, setShowQueue] = useState(false)
   // "Back" collapses the active-quest view to the list without abandoning it —
@@ -108,9 +109,11 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
     return a.name.localeCompare(b.name)
   })
 
-  const visibleQuests = hideCompleted
+  const listedQuests = hideCompleted
     ? sortedQuests.filter(q => !completedQuests.has(q.id))
     : sortedQuests
+  const searching = search.trim().length > 0
+  const visibleQuests = filterQuestsBySearch(listedQuests, search)
 
   const totalQp = getQuestPointsEarned(completedQuests, questsData)
   const completedCount = completedQuests.size
@@ -187,6 +190,15 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
             {completedCount}/{questsData.length} · {totalQp} QP
           </span>
         </div>
+
+        <input
+          type="search"
+          value={search}
+          onInput={(e) => setSearch(e.currentTarget.value)}
+          placeholder="Search quests…"
+          aria-label="Search quests by name or complexity"
+          class="w-full min-h-[44px] px-3 mb-2 rounded-xl bg-[var(--color-void-light)] border border-[var(--color-void-border)] text-[14px] text-[var(--color-parchment)] placeholder:text-[var(--color-parchment)] placeholder:opacity-40 focus:outline-none focus:border-[var(--color-gold)]"
+        />
 
         <div class="flex gap-2 justify-between items-center">
           <div class="flex gap-2">
@@ -293,7 +305,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
 
             {visibleQuests.length === 0 && (
               <div class="py-10 text-center text-[var(--fm-ink-faint)] text-[12px]">
-                No quests to show.
+                {searching ? `No quests match “${search.trim()}”.` : 'No quests to show.'}
               </div>
             )}
         </div>

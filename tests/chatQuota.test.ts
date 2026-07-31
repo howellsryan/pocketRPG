@@ -20,7 +20,9 @@ import {
   usageMilliNeurons,
 } from '../functions/_lib/chat/quota.js'
 import {
+  CHAT_CONTEXT_CHUNKS,
   CHAT_MAX_ANSWER_TOKENS,
+  CHAT_OPENAI_MAX_OUTPUT_TOKENS,
   CHAT_MAX_HISTORY_CHARS,
   CHAT_MAX_HISTORY_MESSAGES,
   CHAT_MAX_QUESTION_CHARS,
@@ -166,7 +168,7 @@ describe('chat quotas', () => {
     const toolDefsChars = JSON.stringify(chatToolDefs()).length
     const biggestChunksChars = KNOWLEDGE_CHUNKS.map((c) => c.text.length + c.title.length + 16)
       .sort((a, b) => b - a)
-      .slice(0, 6)
+      .slice(0, CHAT_CONTEXT_CHUNKS)
       .reduce((a, b) => a + b, 0)
     // Fixed input re-sent on every call: system prompt, history, question +
     // retrieved chunks, tool schemas, plus framing slack.
@@ -178,22 +180,31 @@ describe('chat quotas', () => {
       toolDefsChars +
       1_000
     // Each tool round appends 3 clipped tool results and an assistant message
-    // (content can approach the answer-token budget) to the transcript.
-    const roundGrowthChars = 3 * CHAT_MAX_TOOL_RESULT_CHARS + CHAT_MAX_ANSWER_TOKENS * 4 + 1_000
+    // (content can approach the per-call output budget) to the transcript.
     // Worst case is CHAT_MAX_TOOL_ROUNDS tool calls plus the final no-tools
     // call; round r's growth is re-sent by every later call.
     const calls = CHAT_MAX_TOOL_ROUNDS + 1
-    const inputChars = calls * baseChars + ((calls * (calls - 1)) / 2) * roundGrowthChars
-    const inputTokens = inputChars / CHARS_PER_TOKEN
-    const outputTokens = calls * CHAT_MAX_ANSWER_TOKENS
-    const worstMilli = Math.ceil(
-      inputTokens * MILLI_NEURONS_PER_INPUT_TOKEN + outputTokens * MILLI_NEURONS_PER_OUTPUT_TOKEN,
-    )
-    const worstTokens = Math.ceil(inputTokens + outputTokens)
-    expect(CHAT_MESSAGE_RESERVE_MILLI).toBeGreaterThanOrEqual(worstMilli)
-    expect(CHAT_OPENAI_MESSAGE_RESERVE_TOKENS).toBeGreaterThanOrEqual(worstTokens)
-    // Gemini meters the same token profile as OpenAI.
-    expect(CHAT_GEMINI_MESSAGE_RESERVE_TOKENS).toBeGreaterThanOrEqual(worstTokens)
+    // Per-call output budget differs by provider: OpenAI's max_output_tokens
+    // funds reasoning as well as the answer, so its worst case is far larger
+    // than the shared visible-answer cap the other pools meter.
+    const worstCase = (perCallOutputTokens: number) => {
+      const roundGrowthChars = 3 * CHAT_MAX_TOOL_RESULT_CHARS + perCallOutputTokens * 4 + 1_000
+      const inputChars = calls * baseChars + ((calls * (calls - 1)) / 2) * roundGrowthChars
+      const inputTokens = inputChars / CHARS_PER_TOKEN
+      const outputTokens = calls * perCallOutputTokens
+      return {
+        tokens: Math.ceil(inputTokens + outputTokens),
+        milli: Math.ceil(
+          inputTokens * MILLI_NEURONS_PER_INPUT_TOKEN + outputTokens * MILLI_NEURONS_PER_OUTPUT_TOKEN,
+        ),
+      }
+    }
+    const shared = worstCase(CHAT_MAX_ANSWER_TOKENS)
+    const openai = worstCase(CHAT_OPENAI_MAX_OUTPUT_TOKENS)
+    expect(CHAT_MESSAGE_RESERVE_MILLI).toBeGreaterThanOrEqual(shared.milli)
+    expect(CHAT_OPENAI_MESSAGE_RESERVE_TOKENS).toBeGreaterThanOrEqual(openai.tokens)
+    // Gemini takes the shared answer cap, not OpenAI's reasoning headroom.
+    expect(CHAT_GEMINI_MESSAGE_RESERVE_TOKENS).toBeGreaterThanOrEqual(shared.tokens)
   })
 
   it('budget invariants keep the chatbot inside its allocations', () => {
