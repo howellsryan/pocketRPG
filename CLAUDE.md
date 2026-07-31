@@ -77,6 +77,7 @@ Full authoring checklist (items, drops, specials, collection log, monsters) → 
 - Min tap target **44×44px**. Prefer Tailwind utilities + `:root` CSS variables.
 - Avoid inline `style={{}}` unless truly dynamic per render. No Tailwind `/N` opacity modifiers — use solid CSS variable colors.
 - Reuse `src/components/` before new wrappers. New shared component → register in `build_single.cjs` `sourceFiles`; in-game screens also go in `GAME_CHUNK_FILES` (§12).
+- **Themes**: the game ships light (parchment) + dark (iron) via `data-theme` on `<html>`. Screens read the **semantic layer** (`--surface-*`, `--text-*`, `--hairline`, `--accent*`), never the raw `--fm-*` palette, which is frozen because names like `--fm-parch` are load-bearing in both themes at once. Preference is `light|dark|system` in `src/utils/theme.js`; **localStorage is the authority** (the save is locked during PvP/co-op/world, so a mid-fight change would revert) and `settings.theme` is only a cross-device mirror. First paint is stamped by a `<head>` stanza in `build_single.cjs`. Full rules + the always-dark allowlist: `DESIGN.md` §3.1, guarded by `tests/theme.test.ts`.
 - **Read `DESIGN.md` before writing any CSS** (§18) — screens are skinned twice (`.cb-*` iron base + `.forge-shell` parchment override), so a neighbouring rule is never a colour template. Build new surfaces from existing screen classes + `fm-*` kit primitives; a new class of your own carries layout only. `DESIGN.md` §2, the Two-Skin Trap.
 
 ## 10) PvP

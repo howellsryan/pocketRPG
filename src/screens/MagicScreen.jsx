@@ -382,7 +382,7 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
                 <button
                   key={`${idx}-${slot.itemId}`}
                   onClick={() => handleAlchemyPick(slot)}
-                  class="w-full p-3 rounded-lg border bg-[var(--color-void-light)] border-[var(--color-emerald)] active:bg-[var(--fm-parch-hi)] transition-colors text-left"
+                  class="w-full p-3 rounded-lg border bg-[var(--color-void-light)] border-[var(--color-emerald)] active:bg-[var(--surface-raised)] transition-colors text-left"
                 >
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 flex-1">

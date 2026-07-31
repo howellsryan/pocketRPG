@@ -1,0 +1,861 @@
+<title>PocketRPG — Dark Mode</title>
+
+<style>
+/*__FONT_FACES__*/
+
+/* ═══ Layer 1 — raw palette. Literal colour names. NEVER themed. ═══ */
+:root {
+  --fm-parch: #e9dcbd; --fm-parch-hi: #f3ead0; --fm-parch-lo: #d8c69e; --fm-vellum: #e6d8b6;
+  --fm-ink: #2b2114; --fm-ink-soft: #5a4a32; --fm-ink-faint: #8a7553; --fm-rule-c: #b6a079;
+  --fm-iron: #1c1a18; --fm-soot: #14110d;
+  --fm-brass: #b08842; --fm-brass-hi: #e6c878; --fm-brass-lo: #6e521f;
+  --fm-ember: #c2410c; --fm-ember-hi: #f0742a; --fm-ember-deep: #7c2708;
+  --fm-blood: #7f1d1d; --fm-verdigris: #2f6b5e; --fm-woad: #2c4a73; --fm-royal: #5b3a86;
+  --tier-dragon: #d23b2f; --tier-adamant: #3aa55f; --tier-mithril: #3550c4;
+  --tier-runeforged: #b7e4ff; --tier-cryptbound: #1f1f1f; --tier-gold: #f39c12;
+  --hp-green: #27ae60; --hp-red: #c0392b; --xp-bar: #3cb043;
+
+  --tex-parch: url('/*__TEX_PARCH__*/');
+  --tex-iron: url('/*__TEX_IRON__*/');
+  --orn-corner: url('/*__ORN_CORNER__*/');
+
+  --display: 'Grenze Gotisch', 'Cinzel', Georgia, serif;
+  --body: 'Spectral', Georgia, serif;
+  --num: 'Spline Sans Mono', ui-monospace, monospace;
+  --fell: 'IM Fell English', 'Spectral', Georgia, serif;
+  --r-sharp: 2px; --r-sm: 4px; --r-frame: 7px;
+  --ease: cubic-bezier(0.2, 0.9, 0.3, 1); --dur: 0.16s;
+}
+
+/* ═══ Layer 2 — semantic surfaces. This is the whole theme. ═══ */
+:root, [data-theme="light"] {
+  --surface-page: var(--fm-vellum);
+  --surface-panel: var(--fm-parch);
+  --surface-raised: var(--fm-parch-hi);
+  --surface-sunken: var(--fm-parch-lo);
+  --surface-tex: var(--tex-parch);
+  --tex-size: 600px;
+  --tex-blend: normal;
+  --text-strong: var(--fm-ink);
+  --text-soft: var(--fm-ink-soft);
+  --text-faint: var(--fm-ink-faint);
+  --rule: var(--fm-rule-c);
+  --rule-soft: #cdb894;
+  --accent: var(--fm-ember-deep);
+  --accent-metal: var(--fm-brass-lo);
+  --panel-inset: inset 0 0 0 1px rgba(120,84,32,0.22), inset 0 2px 10px rgba(120,84,32,0.14);
+  --btn-face: linear-gradient(180deg, #f0e4c4 0%, #e2d2ab 100%);
+  --btn-ink: var(--fm-ink);
+  --btn-relief: inset 0 1px 0 rgba(255,250,232,0.75), inset 0 -1px 0 rgba(140,112,64,0.24);
+  --scrim: rgba(43,33,20,0.55);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --surface-page: var(--fm-soot); --surface-panel: var(--fm-iron);
+    --surface-raised: #262220; --surface-sunken: #100e0b;
+    --surface-tex: var(--tex-iron); --tex-size: 280px; --tex-blend: multiply;
+    --text-strong: var(--fm-parch); --text-soft: var(--fm-rule-c); --text-faint: #9d8862;
+    --rule: #3a332b; --rule-soft: #2b2620;
+    --accent: var(--fm-ember-hi); --accent-metal: var(--fm-brass-hi);
+    --panel-inset: inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 2px 10px rgba(0,0,0,0.5);
+    --btn-face: linear-gradient(180deg, #262220 0%, #1a1714 100%);
+    --btn-ink: var(--fm-parch);
+    --btn-relief: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.5);
+    --scrim: rgba(0,0,0,0.7);
+  }
+}
+
+[data-theme="dark"] {
+  --surface-page: var(--fm-soot); --surface-panel: var(--fm-iron);
+  --surface-raised: #262220; --surface-sunken: #100e0b;
+  --surface-tex: var(--tex-iron); --tex-size: 280px; --tex-blend: multiply;
+  --text-strong: var(--fm-parch); --text-soft: var(--fm-rule-c); --text-faint: #9d8862;
+  --rule: #3a332b; --rule-soft: #2b2620;
+  --accent: var(--fm-ember-hi); --accent-metal: var(--fm-brass-hi);
+  --panel-inset: inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 2px 10px rgba(0,0,0,0.5);
+  --btn-face: linear-gradient(180deg, #262220 0%, #1a1714 100%);
+  --btn-ink: var(--fm-parch);
+  --btn-relief: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.5);
+  --scrim: rgba(0,0,0,0.7);
+}
+
+/* ═══ Document ═══ */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background-color: var(--surface-page);
+  background-image: var(--surface-tex);
+  background-size: var(--tex-size);
+  background-blend-mode: var(--tex-blend);
+  color: var(--text-soft);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.6;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px 96px; }
+.narrow { max-width: 66ch; }
+h1, h2, h3 { font-family: var(--display); color: var(--text-strong); text-wrap: balance; margin: 0; line-height: 1.02; font-weight: 700; }
+p { margin: 0 0 1em; }
+p:last-child { margin-bottom: 0; }
+a { color: var(--accent); }
+strong { color: var(--text-strong); font-weight: 600; }
+code, .num { font-family: var(--num); font-variant-numeric: tabular-nums; }
+code { font-size: 0.86em; color: var(--text-strong); background: var(--surface-sunken); padding: 1px 5px; border-radius: var(--r-sharp); }
+
+.eyebrow {
+  font-family: var(--body); font-size: 11px; font-weight: 600; letter-spacing: 0.34em;
+  text-transform: uppercase; color: var(--text-faint); margin: 0 0 14px;
+}
+.lore { font-family: var(--fell); font-style: italic; color: var(--text-soft); font-size: 17px; }
+
+/* ═══ Masthead ═══ */
+.mast { padding: 72px 0 40px; border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.mast h1 { font-size: clamp(52px, 11vw, 108px); font-weight: 900; letter-spacing: -0.005em; }
+.mast .lore { margin: 20px 0 0; max-width: 54ch; }
+.mast-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 32px; }
+
+/* Theme switch — the one ember control on the page. */
+.switch { display: flex; flex-direction: column; gap: 9px; align-items: flex-start; }
+.switch__label { font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: var(--text-faint); }
+.seg { display: flex; gap: 0; border: 1px solid var(--rule); border-radius: var(--r-sm); overflow: hidden; background: var(--surface-sunken); }
+.seg button {
+  font-family: var(--body); font-size: 13px; font-weight: 600; letter-spacing: 0.06em;
+  min-height: 44px; padding: 0 20px; border: 0; cursor: pointer;
+  background: var(--btn-face); color: var(--btn-ink); box-shadow: var(--btn-relief);
+  border-right: 1px solid var(--rule);
+  transition: filter var(--dur) var(--ease);
+}
+.seg button:last-child { border-right: 0; }
+.seg button:hover { filter: brightness(1.06); }
+.seg button:active { transform: translateY(1px); }
+.seg button[aria-pressed="true"] {
+  background: linear-gradient(180deg, #c39a4e 0%, #ab8038 62%, #96702e 100%);
+  color: #2a1e0c; box-shadow: inset 0 1px 0 rgba(255,238,196,0.45), inset 0 -1px 0 rgba(58,40,12,0.4);
+}
+.seg button:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: -3px; }
+
+/* ═══ Sections ═══ */
+section { padding-top: 68px; }
+.sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+.sec-head h2 { font-size: clamp(26px, 3.4vw, 36px); }
+.sec-head__n { font-family: var(--num); font-size: 12px; font-weight: 700; color: var(--accent-metal); letter-spacing: 0.1em; }
+.sec-sub { margin-bottom: 30px; }
+
+/* ═══ Ledger ═══ */
+.ledger-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: var(--r-sm); background: var(--surface-panel); box-shadow: var(--panel-inset); }
+table.ledger { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 480px; }
+.ledger th {
+  text-align: left; font-family: var(--body); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-faint);
+  padding: 11px 16px; border-bottom: 2px solid var(--rule); white-space: nowrap;
+}
+.ledger td { padding: 10px 16px; border-bottom: 1px solid var(--rule-soft); color: var(--text-soft); vertical-align: middle; }
+.ledger tr:last-child td { border-bottom: 0; }
+.ledger tr:nth-child(even) td { background: var(--surface-raised); }
+.ledger td.k { color: var(--text-strong); font-weight: 600; }
+.ledger td.v { font-family: var(--num); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.sw { display: inline-block; width: 26px; height: 26px; border-radius: var(--r-sharp); border: 1px solid var(--rule); vertical-align: middle; margin-right: 9px; }
+.swpair { display: flex; align-items: center; gap: 0; }
+.swpair .sw { margin-right: 0; border-radius: 0; }
+.swpair .sw:first-child { border-radius: var(--r-sharp) 0 0 var(--r-sharp); }
+.swpair .sw:last-child { border-radius: 0 var(--r-sharp) var(--r-sharp) 0; border-left: 0; }
+
+.verdict { font-family: var(--body); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-sharp); white-space: nowrap; }
+.verdict--pass { background: var(--fm-verdigris); color: #dff0ea; }
+.verdict--fail { background: var(--fm-blood); color: #f3d9d9; }
+
+/* ═══ Iron frame + phone mock ═══ */
+.mocks { display: flex; gap: 28px; overflow-x: auto; padding: 6px 0 22px; scroll-snap-type: x proximity; }
+.mockcol { flex: 0 0 auto; scroll-snap-align: start; display: flex; flex-direction: column; gap: 12px; }
+.mockcol__cap { font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-faint); padding-left: 4px; }
+
+.frame {
+  position: relative; width: 316px; padding: 10px; border-radius: var(--r-frame);
+  background-color: #1b1916; background-image: var(--tex-iron); background-size: 280px;
+  border: 1px solid #000;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.5), 0 28px 46px -26px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+.frame::before {
+  content: ''; position: absolute; inset: 1px; border-radius: calc(var(--r-frame) - 1px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -10px 22px -14px rgba(0,0,0,0.9);
+  pointer-events: none;
+}
+.rivet {
+  position: absolute; width: 11px; height: 11px; border-radius: 50%; z-index: 3;
+  background: radial-gradient(circle at 38% 32%, var(--fm-brass-hi), var(--fm-brass) 48%, var(--fm-brass-lo) 100%);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.7), inset 0 -1px 1px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,240,200,0.5);
+}
+.rivet.tl { top: 8px; left: 8px; } .rivet.tr { top: 8px; right: 8px; }
+.rivet.bl { bottom: 8px; left: 8px; } .rivet.br { bottom: 8px; right: 8px; }
+
+.screen {
+  position: relative; height: 552px; overflow: hidden; border-radius: var(--r-sm);
+  background-color: var(--surface-page); background-image: var(--surface-tex); background-size: var(--tex-size);
+  color: var(--text-soft); display: flex; flex-direction: column;
+  box-shadow: var(--panel-inset);
+}
+
+/* Persistent chrome */
+.topbar {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 0 11px; height: 44px; border-bottom: 1px solid var(--rule);
+  background-color: var(--surface-raised); background-image: var(--surface-tex); background-size: var(--tex-size);
+}
+.brand { font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--text-strong); letter-spacing: 0.02em; }
+.pill {
+  display: inline-flex; align-items: center; gap: 4px; font-family: var(--num); font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 999px; border: 1px solid var(--rule);
+  background: var(--surface-panel); color: var(--text-soft);
+}
+.pill--gold { color: var(--accent-metal); }
+.scr-body { flex: 1; overflow: hidden; padding: 13px 11px; display: flex; flex-direction: column; gap: 10px; }
+.navbar {
+  flex: 0 0 auto; display: flex; border-top: 1px solid var(--rule); height: 52px;
+  background-color: var(--surface-raised); background-image: var(--surface-tex); background-size: var(--tex-size);
+}
+.navbar div {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font-size: 9px; font-weight: 600; letter-spacing: 0.05em; color: var(--text-faint);
+}
+.navbar div span { font-size: 15px; line-height: 1; filter: saturate(0.85); }
+.navbar div.on { color: var(--accent-metal); box-shadow: inset 0 2px 0 var(--accent-metal); }
+
+/* Screen title */
+.scr-h1 { font-family: var(--display); font-size: 21px; font-weight: 700; color: var(--text-strong); line-height: 1; }
+.scr-h1 + .scr-sub { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+.backlink { font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: 0.04em; }
+.rulehead { display: flex; align-items: center; gap: 9px; margin: 3px 0 1px; }
+.rulehead::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--rule), transparent); }
+.rulehead span { font-size: 10px; font-weight: 600; letter-spacing: 0.26em; text-transform: uppercase; color: var(--text-faint); }
+
+/* Panels inside a screen */
+.panel {
+  border-radius: var(--r-sm); border: 1px solid var(--rule);
+  background-color: var(--surface-panel); background-image: var(--surface-tex); background-size: cover;
+  box-shadow: var(--panel-inset); padding: 11px;
+}
+
+/* Home */
+.welcome { display: flex; align-items: center; gap: 11px; }
+.crest {
+  width: 42px; height: 42px; flex: 0 0 auto; border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, var(--fm-brass-hi), var(--fm-brass) 52%, var(--fm-brass-lo) 100%);
+  box-shadow: inset 0 -1px 2px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,240,200,0.5);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 19px; font-weight: 900; color: #2a1e0c;
+}
+.welcome__n { font-family: var(--display); font-size: 17px; font-weight: 700; color: var(--text-strong); line-height: 1.1; }
+.welcome__s { font-size: 11px; color: var(--text-faint); }
+.statrow { display: flex; gap: 7px; margin-top: 9px; }
+.statbox { flex: 1; border-radius: var(--r-sharp); border: 1px solid var(--rule); background: var(--surface-raised); padding: 6px 7px; text-align: center; }
+.statbox__k { font-size: 8px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-faint); }
+.statbox__v { font-family: var(--num); font-size: 15px; font-weight: 700; color: var(--accent); line-height: 1.2; }
+
+.skillgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.skill {
+  border-radius: var(--r-sm); border: 1px solid var(--rule);
+  background-color: var(--surface-panel); background-image: var(--surface-tex); background-size: cover;
+  box-shadow: var(--panel-inset); padding: 8px 7px 7px; text-align: center;
+}
+.skill__i { font-size: 17px; line-height: 1; }
+.skill__n { font-size: 9px; font-weight: 600; color: var(--text-soft); margin-top: 3px; letter-spacing: 0.03em; }
+.skill__l { font-family: var(--num); font-size: 13px; font-weight: 700; color: var(--text-strong); line-height: 1.2; }
+.bar { height: 4px; border-radius: 999px; background: var(--surface-sunken); box-shadow: inset 0 1px 2px rgba(0,0,0,0.25); overflow: hidden; margin-top: 5px; }
+.bar i { display: block; height: 100%; background: var(--xp-bar); }
+
+/* Combat */
+.area { border-radius: var(--r-sm); border: 1px solid var(--rule); background-color: var(--surface-panel); background-image: var(--surface-tex); background-size: cover; box-shadow: var(--panel-inset); overflow: hidden; }
+.area__h { display: flex; align-items: center; gap: 9px; padding: 10px 11px; }
+.area__i { font-size: 19px; line-height: 1; }
+.area__n { font-family: var(--display); font-size: 15px; font-weight: 700; color: var(--text-strong); line-height: 1.15; }
+.area__b { font-size: 10px; color: var(--text-faint); }
+.area__c { margin-left: auto; font-family: var(--num); font-size: 10px; font-weight: 700; color: var(--accent); }
+.mon { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-top: 1px solid var(--rule-soft); }
+.mon__i { font-size: 15px; }
+.mon__n { font-size: 12px; font-weight: 600; color: var(--text-strong); }
+.mon__s { font-family: var(--num); font-size: 9.5px; color: var(--text-faint); }
+.mon__kc { margin-left: auto; font-family: var(--num); font-size: 10px; font-weight: 700; color: var(--accent); }
+.mon--task { border-left: 3px solid var(--accent-metal); }
+
+/* Fight HUD */
+.hpwrap { display: flex; flex-direction: column; gap: 3px; }
+.hplabel { display: flex; justify-content: space-between; font-family: var(--num); font-size: 10px; font-weight: 700; color: var(--text-soft); }
+.hp { height: 13px; border-radius: var(--r-sharp); background: var(--surface-sunken); box-shadow: inset 0 1px 3px rgba(0,0,0,0.35); overflow: hidden; }
+.hp i { display: block; height: 100%; }
+.hp i.g { background: var(--hp-green); } .hp i.r { background: var(--hp-red); }
+.qa { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.qa button {
+  min-height: 44px; border-radius: var(--r-sm); border: 1px solid var(--rule);
+  background: var(--btn-face); color: var(--btn-ink); box-shadow: var(--btn-relief);
+  font-family: var(--body); font-size: 9px; font-weight: 600; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.qa button span { font-size: 14px; line-height: 1; }
+.splat {
+  position: absolute; right: 22px; top: 68px; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--fm-blood); color: #fff; display: flex; align-items: center; justify-content: center;
+  font-family: var(--num); font-size: 13px; font-weight: 700;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5); border: 1px solid rgba(0,0,0,0.5);
+}
+
+/* Bank grid */
+.bankgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.slot {
+  position: relative; aspect-ratio: 1; border-radius: var(--r-sharp);
+  border: 1px solid var(--rule); background: var(--surface-raised);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.16);
+  display: flex; align-items: center; justify-content: center;
+}
+.slot__g { width: 21px; height: 21px; border-radius: 3px; box-shadow: inset 0 -2px 3px rgba(0,0,0,0.35), inset 0 1px 1px rgba(255,255,255,0.28); }
+.slot__q { position: absolute; top: 2px; left: 3px; font-family: var(--num); font-size: 8.5px; font-weight: 700; color: var(--tier-gold); text-shadow: 0 1px 1px rgba(0,0,0,0.6); }
+.slot--empty { background: var(--surface-sunken); border-style: dashed; border-color: var(--rule-soft); }
+
+/* Modal */
+.modal-scrim { position: absolute; inset: 0; background: var(--scrim); display: flex; align-items: flex-end; justify-content: center; padding: 12px; }
+.modal {
+  width: 100%; border-radius: var(--r-frame); border: 1px solid var(--rule);
+  background-color: var(--surface-panel); background-image: var(--surface-tex); background-size: cover;
+  box-shadow: 0 -8px 30px -10px rgba(0,0,0,0.6), var(--panel-inset); overflow: hidden;
+}
+.modal__h { padding: 11px 13px; border-bottom: 1px solid var(--rule); }
+.modal__t { font-family: var(--display); font-size: 16px; font-weight: 700; color: var(--text-strong); line-height: 1.1; }
+.modal__s { font-size: 10px; color: var(--text-faint); }
+.modal__b { padding: 11px 13px; display: flex; flex-direction: column; gap: 7px; }
+.drop { display: flex; align-items: center; gap: 9px; font-size: 12px; }
+.drop__g { width: 19px; height: 19px; border-radius: 3px; flex: 0 0 auto; box-shadow: inset 0 -2px 3px rgba(0,0,0,0.35); }
+.drop__n { color: var(--text-strong); font-weight: 600; }
+.drop__q { margin-left: auto; font-family: var(--num); font-size: 11px; font-weight: 700; color: var(--text-soft); }
+.drop--rare { border-radius: var(--r-sharp); background: rgba(91,58,134,0.16); border: 1px solid var(--fm-royal); padding: 5px 7px; margin: 0 -7px; }
+.drop--rare .drop__n { color: var(--fm-royal); }
+[data-theme="dark"] .drop--rare .drop__n { color: #b18ee8; }
+.modal__f { padding: 0 13px 13px; }
+.btn-ember {
+  width: 100%; min-height: 44px; border: 1px solid #5e1d05; border-radius: var(--r-sm); cursor: pointer;
+  background: linear-gradient(178deg, #f0742a 0%, #c2410c 52%, #8a2d06 100%); color: #fff5ec;
+  font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: 0.03em;
+  box-shadow: inset 0 1px 0 rgba(255,220,180,0.35), inset 0 -1px 0 rgba(0,0,0,0.35);
+}
+.btn-ember:active { transform: translateY(1px); }
+
+.tag { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 2px 7px; border-radius: var(--r-sharp); }
+.tag--verd { background: var(--fm-verdigris); color: #dff0ea; }
+.tag--brass { background: var(--fm-brass); color: #2a1e0c; }
+
+/* ═══ Side-by-side ═══ */
+.sbs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+.sbs > div { min-width: 0; }
+.sbs-cap { font-size: 11px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 10px; }
+
+/* ═══ Callouts ═══ */
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 16px; }
+.note {
+  border: 1px solid var(--rule); border-radius: var(--r-sm); padding: 16px 18px;
+  background: var(--surface-panel); box-shadow: var(--panel-inset);
+}
+.note--warn { border-left: 3px solid var(--fm-blood); }
+.note--wide { grid-column: 1 / -1; border-left: 3px solid var(--fm-verdigris); }
+.note h3 { font-size: 16px; margin-bottom: 6px; }
+.note p { font-size: 14px; margin-bottom: 0; }
+.note p + p { margin-top: 8px; }
+
+.demo-line { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--rule-soft); font-size: 14px; }
+.demo-line:last-child { border-bottom: 0; }
+.demo-line b { font-family: var(--num); font-size: 15px; font-weight: 700; }
+
+.phases { list-style: none; padding: 0; margin: 0; counter-reset: ph; }
+.phases li {
+  counter-increment: ph; position: relative; padding: 14px 0 14px 52px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.phases li:last-child { border-bottom: 0; }
+.phases li::before {
+  content: counter(ph, decimal-leading-zero); position: absolute; left: 0; top: 15px;
+  font-family: var(--num); font-size: 12px; font-weight: 700; color: var(--accent-metal); letter-spacing: 0.08em;
+}
+.phases b { display: block; font-family: var(--display); font-size: 17px; font-weight: 700; color: var(--text-strong); line-height: 1.2; }
+.phases span { font-size: 14px; }
+
+footer { margin-top: 76px; padding-top: 22px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--text-faint); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+@media (max-width: 640px) {
+  .mast { padding-top: 44px; }
+  .mast-row { gap: 24px; }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <div class="mast-row">
+      <div>
+        <p class="eyebrow">PocketRPG · Implementation Plan</p>
+        <h1>Dark Mode</h1>
+        <p class="lore">The iron skin was never removed. It has been sitting under the parchment since the Forgemark pilot, waiting to be asked for.</p>
+      </div>
+      <div class="switch">
+        <span class="switch__label" id="sw-label">Theme</span>
+        <div class="seg" role="group" aria-labelledby="sw-label">
+          <button type="button" data-set="light" aria-pressed="false">Light</button>
+          <button type="button" data-set="dark" aria-pressed="false">Dark</button>
+          <button type="button" data-set="system" aria-pressed="false">System</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head"><span class="sec-head__n">01</span><h2>Every screen is already painted twice</h2></div>
+    <div class="narrow sec-sub">
+      <p>DESIGN.md §2 calls it the Two-Skin Trap: each screen-prefixed class is defined once as the pre-Forgemark iron skin, then again as a <code>.forge-shell</code> parchment override. The game runs light because 30 of 40 screens opt into that override.</p>
+      <p>Dark mode is not new art direction. It is making the override layer conditional and repairing the iron skin where it has rotted from disuse.</p>
+    </div>
+    <div class="ledger-wrap">
+      <table class="ledger">
+        <thead><tr><th>What the stylesheet contains</th><th style="text-align:right">Count</th><th>Consequence</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Combat-screen rules (<code>.cb-*</code>)</td><td class="v">318</td><td>The iron skin is nearly complete</td></tr>
+          <tr><td class="k">Parchment overrides (<code>.forge-shell&nbsp;…</code>)</td><td class="v">45</td><td>The entire light theme</td></tr>
+          <tr><td class="k">…of those carrying a literal hex</td><td class="v">6</td><td>All the same <code>#e6d8b6</code> vellum fill</td></tr>
+          <tr><td class="k">Screens wrapping in <code>.forge-shell</code></td><td class="v">30 / 40</td><td>Ten screens are already dark</td></tr>
+          <tr><td class="k">Literal hex outside <code>:root</code></td><td class="v">286</td><td>Mostly base iron skin — reusable, not debt</td></tr>
+          <tr><td class="k">Literal hex in JSX</td><td class="v">472</td><td>175 are SVG artwork in <code>PlaceArt.jsx</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-head__n">02</span><h2>One semantic layer, twelve tokens</h2></div>
+    <div class="narrow sec-sub">
+      <p>The raw palette never flips. <code>--fm-ink</code> means <em>the dark brown ink colour</em> — it is also the text on a brass button face, so inverting it produces cream on cream. Components stop reading the palette and read these instead.</p>
+    </div>
+    <div class="ledger-wrap">
+      <table class="ledger">
+        <thead><tr><th>Semantic token</th><th>Light</th><th>Dark</th><th style="text-align:right">On iron</th><th>WCAG AA</th></tr></thead>
+        <tbody>
+          <tr><td class="k">--surface-page</td><td><span class="swpair"><span class="sw" style="background:#e6d8b6"></span><span class="sw" style="background:#14110d"></span></span></td><td class="v">vellum → soot</td><td class="v">—</td><td>—</td></tr>
+          <tr><td class="k">--surface-panel</td><td><span class="swpair"><span class="sw" style="background:#e9dcbd"></span><span class="sw" style="background:#1c1a18"></span></span></td><td class="v">parch → iron</td><td class="v">—</td><td>—</td></tr>
+          <tr><td class="k">--text-strong</td><td><span class="swpair"><span class="sw" style="background:#2b2114"></span><span class="sw" style="background:#e9dcbd"></span></span></td><td class="v">ink → parch</td><td class="v">12.8:1</td><td><span class="verdict verdict--pass">Pass</span></td></tr>
+          <tr><td class="k">--text-soft</td><td><span class="swpair"><span class="sw" style="background:#5a4a32"></span><span class="sw" style="background:#b6a079"></span></span></td><td class="v">ink-soft → rule</td><td class="v">6.9:1</td><td><span class="verdict verdict--pass">Pass</span></td></tr>
+          <tr><td class="k">--text-faint</td><td><span class="swpair"><span class="sw" style="background:#8a7553"></span><span class="sw" style="background:#9d8862"></span></span></td><td class="v">ink-faint → <b>new</b></td><td class="v">5.2:1</td><td><span class="verdict verdict--pass">Pass</span></td></tr>
+          <tr><td class="k">--accent</td><td><span class="swpair"><span class="sw" style="background:#7c2708"></span><span class="sw" style="background:#f0742a"></span></span></td><td class="v">ember-deep → ember-hi</td><td class="v">6.0:1</td><td><span class="verdict verdict--pass">Pass</span></td></tr>
+          <tr><td class="k">--accent-metal</td><td><span class="swpair"><span class="sw" style="background:#6e521f"></span><span class="sw" style="background:#e6c878"></span></span></td><td class="v">brass-lo → brass-hi</td><td class="v">10.4:1</td><td><span class="verdict verdict--pass">Pass</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="notes" style="margin-top:22px">
+      <div class="note">
+        <h3>Nine of twelve are free</h3>
+        <p>Only <code>--text-faint</code>, <code>--rule</code> and <code>--surface-raised</code> need new values on dark. Everything else is an existing token re-pointed — the palette carries enough mid-tone that inversion is a swap of the two extremes.</p>
+      </div>
+      <div class="note">
+        <h3>The button system costs nothing</h3>
+        <p>Scoping the parchment button block to light is the whole change. Under dark, <code>.forge-shell</code> and <code>.fm-parch</code> inherit the iron button tokens that already sit at <code>:root</code>. Zero new declarations for every button, toggle and tile in the game.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-head__n">03</span><h2>The screens</h2></div>
+    <div class="narrow sec-sub"><p>Live mocks — they follow the switch at the top of this page. Scroll sideways.</p></div>
+
+    <div class="mocks">
+
+      <div class="mockcol">
+        <span class="mockcol__cap">Home</span>
+        <div class="frame">
+          <span class="rivet tl"></span><span class="rivet tr"></span><span class="rivet bl"></span><span class="rivet br"></span>
+          <div class="screen">
+            <div class="topbar">
+              <span class="brand">PocketRPG</span>
+              <span style="display:flex;gap:5px">
+                <span class="pill">📋 3/5</span>
+                <span class="pill pill--gold">◆ 124</span>
+              </span>
+            </div>
+            <div class="scr-body">
+              <div class="panel">
+                <div class="welcome">
+                  <div class="crest">H</div>
+                  <div>
+                    <div class="welcome__n">Hewgild</div>
+                    <div class="welcome__s">Combat 87 · Ironbound</div>
+                  </div>
+                  <span class="tag tag--verd" style="margin-left:auto">Idle</span>
+                </div>
+                <div class="statrow">
+                  <div class="statbox"><div class="statbox__k">Total</div><div class="statbox__v">1,284</div></div>
+                  <div class="statbox"><div class="statbox__k">Coins</div><div class="statbox__v">4.2m</div></div>
+                  <div class="statbox"><div class="statbox__k">Slayer</div><div class="statbox__v">318</div></div>
+                </div>
+              </div>
+              <div class="rulehead"><span>Skills</span></div>
+              <div class="skillgrid">
+                <div class="skill"><div class="skill__i">⚔️</div><div class="skill__n">Attack</div><div class="skill__l">82</div><div class="bar"><i style="width:64%"></i></div></div>
+                <div class="skill"><div class="skill__i">⛏️</div><div class="skill__n">Mining</div><div class="skill__l">71</div><div class="bar"><i style="width:38%"></i></div></div>
+                <div class="skill"><div class="skill__i">🎣</div><div class="skill__n">Fishing</div><div class="skill__l">66</div><div class="bar"><i style="width:81%"></i></div></div>
+                <div class="skill"><div class="skill__i">🪓</div><div class="skill__n">Woodcut</div><div class="skill__l">74</div><div class="bar"><i style="width:22%"></i></div></div>
+                <div class="skill"><div class="skill__i">🌿</div><div class="skill__n">Farming</div><div class="skill__l">58</div><div class="bar"><i style="width:47%"></i></div></div>
+                <div class="skill"><div class="skill__i">💀</div><div class="skill__n">Slayer</div><div class="skill__l">79</div><div class="bar"><i style="width:12%"></i></div></div>
+              </div>
+            </div>
+            <div class="navbar">
+              <div class="on"><span>🏠</span>Home</div>
+              <div><span>⚔️</span>Combat</div>
+              <div><span>🎒</span>Bag</div>
+              <div><span>🗺️</span>World</div>
+              <div><span>⚙️</span>Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockcol">
+        <span class="mockcol__cap">Combat — area list</span>
+        <div class="frame">
+          <span class="rivet tl"></span><span class="rivet tr"></span><span class="rivet bl"></span><span class="rivet br"></span>
+          <div class="screen">
+            <div class="topbar">
+              <span class="brand">PocketRPG</span>
+              <span class="pill pill--gold">◆ 124</span>
+            </div>
+            <div class="scr-body">
+              <div>
+                <div class="backlink">‹ Back</div>
+                <div class="scr-h1" style="margin-top:4px">Combat</div>
+                <div class="scr-sub">Slayer task · 41 Ember Giant remaining</div>
+              </div>
+              <div class="area">
+                <div class="area__h">
+                  <span class="area__i">🌾</span>
+                  <span><span class="area__n">Lumbright Fields</span><br><span class="area__b">4 monsters · levels 1–13</span></span>
+                  <span class="area__c">2,481</span>
+                </div>
+                <div class="mon"><span class="mon__i">🐔</span><span><span class="mon__n">Field Chicken</span><br><span class="mon__s">Lvl 1 · 3 HP</span></span><span class="mon__kc">1,204</span></div>
+                <div class="mon"><span class="mon__i">👺</span><span><span class="mon__n">Cave Goblin</span><br><span class="mon__s">Lvl 5 · 5 HP</span></span><span class="mon__kc">890</span></div>
+                <div class="mon"><span class="mon__i">🐂</span><span><span class="mon__n">Pasture Bull</span><br><span class="mon__s">Lvl 8 · 8 HP</span></span><span class="mon__kc">387</span></div>
+              </div>
+              <div class="area">
+                <div class="area__h">
+                  <span class="area__i">🌋</span>
+                  <span><span class="area__n">Ember Pits</span><br><span class="area__b">3 monsters · levels 82–124</span></span>
+                  <span class="area__c">96</span>
+                </div>
+                <div class="mon mon--task"><span class="mon__i">🔥</span><span><span class="mon__n">Ember Giant</span><br><span class="mon__s">Lvl 86 · 111 HP</span></span><span class="mon__kc">59</span></div>
+                <div class="mon"><span class="mon__i">😈</span><span><span class="mon__n">Nether Demon</span><br><span class="mon__s">Lvl 124 · 150 HP</span></span><span class="mon__kc">37</span></div>
+              </div>
+            </div>
+            <div class="navbar">
+              <div><span>🏠</span>Home</div>
+              <div class="on"><span>⚔️</span>Combat</div>
+              <div><span>🎒</span>Bag</div>
+              <div><span>🗺️</span>World</div>
+              <div><span>⚙️</span>Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockcol">
+        <span class="mockcol__cap">Combat — fight HUD</span>
+        <div class="frame">
+          <span class="rivet tl"></span><span class="rivet tr"></span><span class="rivet bl"></span><span class="rivet br"></span>
+          <div class="screen">
+            <div class="topbar">
+              <span class="brand">PocketRPG</span>
+              <span class="pill">⚡ 70</span>
+            </div>
+            <div class="scr-body">
+              <div>
+                <div class="backlink">‹ Flee</div>
+                <div class="scr-h1" style="margin-top:4px">Ember Giant</div>
+                <div class="scr-sub">Level 86 · Slayer task</div>
+              </div>
+              <div class="panel" style="display:flex;flex-direction:column;gap:9px">
+                <div class="hpwrap">
+                  <div class="hplabel"><span>Ember Giant</span><span>43 / 111</span></div>
+                  <div class="hp"><i class="r" style="width:39%"></i></div>
+                </div>
+                <div class="hpwrap">
+                  <div class="hplabel"><span>Hewgild</span><span>78 / 92</span></div>
+                  <div class="hp"><i class="g" style="width:85%"></i></div>
+                </div>
+                <div class="hpwrap">
+                  <div class="hplabel"><span>Prayer</span><span>44 / 79</span></div>
+                  <div class="hp"><i style="width:56%;background:var(--fm-woad)"></i></div>
+                </div>
+              </div>
+              <div class="rulehead"><span>Quick actions</span></div>
+              <div class="qa">
+                <button type="button"><span>🍖</span>Shark</button>
+                <button type="button"><span>🧪</span>Super</button>
+                <button type="button"><span>🙏</span>Prayer</button>
+                <button type="button"><span>⚡</span>Special</button>
+              </div>
+              <div class="panel" style="padding:8px 10px">
+                <div style="font-size:10.5px;line-height:1.65;font-family:var(--num);color:var(--text-faint)">
+                  <div>You hit <b style="color:var(--accent)">27</b> — Ember Giant.</div>
+                  <div>Ember Giant hits <b style="color:var(--hp-red)">14</b> — you.</div>
+                  <div>You hit <b style="color:var(--accent)">31</b> — Ember Giant.</div>
+                </div>
+              </div>
+            </div>
+            <div class="splat">14</div>
+            <div class="navbar">
+              <div><span>🏠</span>Home</div>
+              <div class="on"><span>⚔️</span>Combat</div>
+              <div><span>🎒</span>Bag</div>
+              <div><span>🗺️</span>World</div>
+              <div><span>⚙️</span>Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockcol">
+        <span class="mockcol__cap">Bank</span>
+        <div class="frame">
+          <span class="rivet tl"></span><span class="rivet tr"></span><span class="rivet bl"></span><span class="rivet br"></span>
+          <div class="screen">
+            <div class="topbar">
+              <span class="brand">PocketRPG</span>
+              <span class="pill pill--gold">◆ 124</span>
+            </div>
+            <div class="scr-body">
+              <div>
+                <div class="backlink">‹ Back</div>
+                <div class="scr-h1" style="margin-top:4px">Bank — Varrick</div>
+                <div class="scr-sub">412 of 800 slots used</div>
+              </div>
+              <div class="rulehead"><span>Equipment</span></div>
+              <div class="panel" style="padding:9px">
+                <div class="bankgrid">
+                  <div class="slot"><span class="slot__q">1</span><span class="slot__g" style="background:var(--tier-dragon)"></span></div>
+                  <div class="slot"><span class="slot__q">1</span><span class="slot__g" style="background:var(--tier-adamant)"></span></div>
+                  <div class="slot"><span class="slot__q">2</span><span class="slot__g" style="background:var(--tier-mithril)"></span></div>
+                  <div class="slot"><span class="slot__q">1</span><span class="slot__g" style="background:var(--tier-runeforged)"></span></div>
+                  <div class="slot"><span class="slot__q">1</span><span class="slot__g" style="background:var(--tier-cryptbound)"></span></div>
+                  <div class="slot"><span class="slot__q">4</span><span class="slot__g" style="background:var(--fm-royal)"></span></div>
+                  <div class="slot"><span class="slot__q">6</span><span class="slot__g" style="background:var(--tier-gold)"></span></div>
+                  <div class="slot slot--empty"></div>
+                </div>
+              </div>
+              <div class="rulehead"><span>Supplies</span></div>
+              <div class="panel" style="padding:9px">
+                <div class="bankgrid">
+                  <div class="slot"><span class="slot__q">184</span><span class="slot__g" style="background:#4a7fb5"></span></div>
+                  <div class="slot"><span class="slot__q">96</span><span class="slot__g" style="background:#8fd96f"></span></div>
+                  <div class="slot"><span class="slot__q">31</span><span class="slot__g" style="background:#9b59b6"></span></div>
+                  <div class="slot"><span class="slot__q">2k</span><span class="slot__g" style="background:#c2410c"></span></div>
+                  <div class="slot slot--empty"></div>
+                  <div class="slot slot--empty"></div>
+                  <div class="slot slot--empty"></div>
+                  <div class="slot slot--empty"></div>
+                </div>
+              </div>
+            </div>
+            <div class="navbar">
+              <div><span>🏠</span>Home</div>
+              <div><span>⚔️</span>Combat</div>
+              <div class="on"><span>🎒</span>Bag</div>
+              <div><span>🗺️</span>World</div>
+              <div><span>⚙️</span>Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockcol">
+        <span class="mockcol__cap">Loot modal</span>
+        <div class="frame">
+          <span class="rivet tl"></span><span class="rivet tr"></span><span class="rivet bl"></span><span class="rivet br"></span>
+          <div class="screen">
+            <div class="topbar">
+              <span class="brand">PocketRPG</span>
+              <span class="pill pill--gold">◆ 124</span>
+            </div>
+            <div class="scr-body" style="filter:blur(0.4px)">
+              <div class="scr-h1">Ember Pits</div>
+              <div class="area"><div class="area__h"><span class="area__i">🔥</span><span><span class="area__n">Ember Giant</span><br><span class="area__b">Lvl 86 · 111 HP</span></span><span class="area__c">60</span></div></div>
+            </div>
+            <div class="modal-scrim">
+              <div class="modal">
+                <div class="modal__h">
+                  <div class="modal__t">Ember Giant defeated</div>
+                  <div class="modal__s">Kill 60 · 1,428 XP · Slayer 1/42</div>
+                </div>
+                <div class="modal__b">
+                  <div class="drop"><span class="drop__g" style="background:var(--tier-gold)"></span><span class="drop__n">Coins</span><span class="drop__q">14,208</span></div>
+                  <div class="drop"><span class="drop__g" style="background:var(--tier-adamant)"></span><span class="drop__n">Adamant Bar</span><span class="drop__q">3</span></div>
+                  <div class="drop"><span class="drop__g" style="background:#8fd96f"></span><span class="drop__n">Grimy Torstol</span><span class="drop__q">7</span></div>
+                  <div class="drop drop--rare"><span class="drop__g" style="background:var(--fm-royal)"></span><span class="drop__n">Emberforged Hilt</span><span class="drop__q">1</span></div>
+                </div>
+                <div class="modal__f"><button type="button" class="btn-ember">Continue</button></div>
+              </div>
+            </div>
+            <div class="navbar">
+              <div><span>🏠</span>Home</div>
+              <div class="on"><span>⚔️</span>Combat</div>
+              <div><span>🎒</span>Bag</div>
+              <div><span>🗺️</span>World</div>
+              <div><span>⚙️</span>Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-head__n">04</span><h2>Both at once</h2></div>
+    <div class="narrow sec-sub"><p>The same markup, the same classes. Only layer 2 differs — these two frames ignore the switch above.</p></div>
+    <div class="sbs">
+      <div data-theme="light">
+        <div class="sbs-cap">Light — vellum &amp; ink</div>
+        <div class="frame">
+          <span class="rivet tl"></span><span class="rivet tr"></span><span class="rivet bl"></span><span class="rivet br"></span>
+          <div class="screen" style="height:404px">
+            <div class="topbar"><span class="brand">PocketRPG</span><span class="pill pill--gold">◆ 124</span></div>
+            <div class="scr-body">
+              <div class="scr-h1">Stats</div>
+              <div class="panel" style="padding:0;overflow:hidden">
+                <table class="ledger" style="min-width:0;font-size:12px">
+                  <thead><tr><th style="padding:8px 11px">Skill</th><th style="padding:8px 11px;text-align:right">Lvl</th><th style="padding:8px 11px;text-align:right">XP</th></tr></thead>
+                  <tbody>
+                    <tr><td class="k" style="padding:7px 11px">Attack</td><td class="v" style="padding:7px 11px">82</td><td class="v" style="padding:7px 11px">2,192,818</td></tr>
+                    <tr><td class="k" style="padding:7px 11px">Strength</td><td class="v" style="padding:7px 11px">85</td><td class="v" style="padding:7px 11px">3,258,594</td></tr>
+                    <tr><td class="k" style="padding:7px 11px">Defence</td><td class="v" style="padding:7px 11px">78</td><td class="v" style="padding:7px 11px">1,475,581</td></tr>
+                    <tr><td class="k" style="padding:7px 11px">Hitpoints</td><td class="v" style="padding:7px 11px">84</td><td class="v" style="padding:7px 11px">3,046,182</td></tr>
+                    <tr><td class="k" style="padding:7px 11px">Slayer</td><td class="v" style="padding:7px 11px">79</td><td class="v" style="padding:7px 11px">1,629,200</td></tr>
+                    <tr><td class="k" style="padding:7px 11px">Woodcutting</td><td class="v" style="padding:7px 11px">74</td><td class="v" style="padding:7px 11px">1,096,278</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-theme="dark">
+        <div class="sbs-cap">Dark — soot &amp; parchment</div>
+        <div class="frame">
+          <span class="rivet tl"></span><span class="rivet tr"></span><span class="rivet bl"></span><span class="rivet br"></span>
+          <div class="screen" style="height:404px">
+            <div class="topbar"><span class="brand">PocketRPG</span><span class="pill pill--gold">◆ 124</span></div>
+            <div class="scr-body">
+              <div class="scr-h1">Stats</div>
+              <div class="panel" style="padding:0;overflow:hidden">
+                <table class="ledger" style="min-width:0;font-size:12px">
+                  <thead><tr><th style="padding:8px 11px">Skill</th><th style="padding:8px 11px;text-align:right">Lvl</th><th style="padding:8px 11px;text-align:right">XP</th></tr></thead>
+                  <tbody>
+                    <tr><td class="k" style="padding:7px 11px">Attack</td><td class="v" style="padding:7px 11px">82</td><td class="v" style="padding:7px 11px">2,192,818</td></tr>
+                    <tr><td class="k" style="padding:7px 11px">Strength</td><td class="v" style="padding:7px 11px">85</td><td class="v" style="padding:7px 11px">3,258,594</td></tr>
+                    <tr><td class="k" style="padding:7px 11px">Defence</td><td class="v" style="padding:7px 11px">78</td><td class="v" style="padding:7px 11px">1,475,581</td></tr>
+                    <tr><td class="k" style="padding:7px 11px">Hitpoints</td><td class="v" style="padding:7px 11px">84</td><td class="v" style="padding:7px 11px">3,046,182</td></tr>
+                    <tr><td class="k" style="padding:7px 11px">Slayer</td><td class="v" style="padding:7px 11px">79</td><td class="v" style="padding:7px 11px">1,629,200</td></tr>
+                    <tr><td class="k" style="padding:7px 11px">Woodcutting</td><td class="v" style="padding:7px 11px">74</td><td class="v" style="padding:7px 11px">1,096,278</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-head__n">05</span><h2>What breaks</h2></div>
+    <div class="narrow sec-sub"><p>Three real failures, not hypotheticals. Switch this page to dark to see the first two disappear.</p></div>
+    <div class="notes">
+      <div class="note note--warn">
+        <h3>Every stat number on the combat screen</h3>
+        <p><code>--fm-ember-deep</code> is the value colour for <code>.cb-kstat__v</code>, <code>.cb-stat__v</code> and <code>.cb-mon__kc</code>. On iron it measures <b>1.8:1</b> — effectively invisible.</p>
+        <div class="demo-line" style="margin-top:10px;background:#1c1a18;padding:9px 11px;border-radius:var(--r-sharp)">
+          <span style="color:#8a7553;font-size:12px">Kills</span> <b style="color:#7c2708">2,481</b>
+          <span class="verdict verdict--fail" style="margin-left:auto">1.8:1</span>
+        </div>
+        <div class="demo-line" style="background:#1c1a18;padding:9px 11px;border-radius:var(--r-sharp)">
+          <span style="color:#9d8862;font-size:12px">Kills</span> <b style="color:#f0742a">2,481</b>
+          <span class="verdict verdict--pass" style="margin-left:auto">6.0:1</span>
+        </div>
+      </div>
+      <div class="note note--warn">
+        <h3>Faint labels fall a step short</h3>
+        <p><code>--fm-ink-faint</code> <code>#8a7553</code> reads <b>4.2:1</b> on iron — under the 4.5:1 floor. Lightening to <code>#9d8862</code> clears it at 5.2:1 without changing the tone.</p>
+        <div class="demo-line" style="margin-top:10px;background:#1c1a18;padding:9px 11px;border-radius:var(--r-sharp)">
+          <span style="color:#8a7553;font-size:13px">Level 86 · 111 HP</span>
+          <span class="verdict verdict--fail" style="margin-left:auto">4.2:1</span>
+        </div>
+        <div class="demo-line" style="background:#1c1a18;padding:9px 11px;border-radius:var(--r-sharp)">
+          <span style="color:#9d8862;font-size:13px">Level 86 · 111 HP</span>
+          <span class="verdict verdict--pass" style="margin-left:auto">5.2:1</span>
+        </div>
+      </div>
+      <div class="note note--warn">
+        <h3>Two item tiers vanish</h3>
+        <p><code>--tier-cryptbound</code> and <code>--tier-dhide-black</code> are both <code>#1f1f1f</code> — near-identical to the iron panel behind them. The tint is <em>data</em>, so it must not change: add a theme-conditional hairline instead.</p>
+        <div style="display:flex;gap:10px;margin-top:12px;background:#1c1a18;padding:11px;border-radius:var(--r-sharp)">
+          <span class="slot" style="width:42px;height:42px;background:#262220;border-color:#3a332b"><span class="slot__g" style="background:#1f1f1f"></span></span>
+          <span class="slot" style="width:42px;height:42px;background:#262220;border-color:#3a332b"><span class="slot__g" style="background:#1f1f1f;box-shadow:0 0 0 1px #9d8862, inset 0 -2px 3px rgba(0,0,0,0.35)"></span></span>
+          <span style="align-self:center;font-size:12px;color:#9d8862">Bare, then outlined</span>
+        </div>
+      </div>
+      <div class="note note--wide">
+        <h3>Never flips</h3>
+        <p>HP and XP bar colours are safety semantics, already exempt from the forge repoint. Item tier and potion tints are data encodings. <code>PlaceArt.jsx</code> is illustration — check its scrim, don't recolour the art.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-head__n">06</span><h2>Order of work</h2></div>
+    <ol class="phases">
+      <li><b>Token layer</b><span>Add layer 2 to <code>:root</code> with today's light values. Screenshots must come out pixel-identical — this phase changes nothing.</span></li>
+      <li><b>Plumbing</b><span><code>src/utils/theme.js</code>, plus a pre-paint stanza in <code>build_single.cjs</code>'s <code>&lt;head&gt;</code>. It must sit above <code>#app-splash</code>, which paints before the existing body scripts and would otherwise flash parchment.</span></li>
+      <li><b>The flip</b><span>Scope the parchment button block and the 45 forge overrides to light. Give <code>.fm-parch</code> its iron material.</span></li>
+      <li><b>The audit</b><span>All 40 screens and 71 components in dark, ordered by rule count: <code>cb-</code>, <code>wm-</code>, <code>clog-</code>, the <code>fm-</code> kit, <code>lm-</code>. This is the bulk of the task, not a polish pass.</span></li>
+      <li><b>Settings</b><span>A three-way Light / Dark / System control on the Settings screen. Preference lives in <code>localStorage</code> — the save blob is locked during PvP, co-op and open-world sessions, so a theme changed mid-fight would silently revert.</span></li>
+      <li><b>Guards</b><span>A token-parity test and a hardcoded-colour test, both build-failing, in the shape of <code>questGateProduction.test.ts</code>. The colour allowlist starts at today's state and only ever shrinks.</span></li>
+    </ol>
+  </section>
+
+  <footer>
+    <p>Out of scope: the open-world companion, the admin portal, and the pre-login landing screens. Full plan in <code>docs/dark-mode-plan.md</code>.</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.seg button'));
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  var pref = 'system';
+
+  function paint() {
+    if (pref === 'system') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', pref);
+    btns.forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.set === pref));
+    });
+  }
+
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () { pref = b.dataset.set; paint(); });
+  });
+  mq.addEventListener('change', function () { if (pref === 'system') paint(); });
+
+  // Adopt whatever theme the host already stamped, so the page opens in the
+  // reader's own mode rather than overriding it.
+  var stamped = root.getAttribute('data-theme');
+  if (stamped === 'dark' || stamped === 'light') pref = stamped;
+  paint();
+})();
+</script>

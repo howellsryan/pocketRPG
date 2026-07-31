@@ -304,7 +304,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
             })}
 
             {visibleQuests.length === 0 && (
-              <div class="py-10 text-center text-[var(--fm-ink-faint)] text-[12px]">
+              <div class="py-10 text-center text-[var(--text-faint)] text-[12px]">
                 {searching ? `No quests match “${search.trim()}”.` : 'No quests to show.'}
               </div>
             )}

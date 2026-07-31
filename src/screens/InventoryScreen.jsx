@@ -625,17 +625,17 @@ export default function InventoryScreen() {
               onClick={() => toggleAutoBankExclusion(selected.item.id)}
               class={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold border ${autoBankExcludedItems.has(selected.item.id)
                 ? 'bg-[var(--color-gold-dim)] text-white border-[var(--color-gold-dim)]'
-                : 'bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] opacity-70 border-[var(--fm-rule)]'}`}
+                : 'bg-[var(--surface-sunken)] text-[var(--color-parchment)] opacity-70 border-[var(--hairline)]'}`}
             >
               <span>{autoBankExcludedItems.has(selected.item.id) ? '🔒 Excluded from auto-bank' : '🔓 Keep out of auto-bank'}</span>
               <span class="text-[10px] opacity-70">{autoBankExcludedItems.has(selected.item.id) ? 'ON' : 'OFF'}</span>
             </button>
             {/* Special attack info — shown for weapons with a spec */}
             {selected.item.specialAttack && (
-              <div class="bg-[var(--fm-parch-lo)] rounded-lg border border-yellow-900 overflow-hidden">
+              <div class="bg-[var(--surface-sunken)] rounded-lg border border-yellow-900 overflow-hidden">
                 <button
                   onClick={() => setShowSpecInfo(v => !v)}
-                  class="w-full flex items-center justify-between px-3 py-2 active:bg-[var(--fm-parch-lo)]"
+                  class="w-full flex items-center justify-between px-3 py-2 active:bg-[var(--surface-sunken)]"
                 >
                   <span class="text-xs font-semibold text-yellow-400">⚡ Special Attack</span>
                   <span class="flex items-center gap-1 text-[10px] text-yellow-600">
@@ -716,7 +716,7 @@ export default function InventoryScreen() {
             </div>
 
             {/* Bank deposit section */}
-            <div class="border-t border-[var(--fm-rule)] pt-2 mt-1">
+            <div class="border-t border-[var(--hairline)] pt-2 mt-1">
               <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">Bank</p>
               {(selected.item.stackable || selected.slot.noted) ? (
                 <div>
@@ -793,7 +793,7 @@ export default function InventoryScreen() {
               // Ironmen vendor at the reduced Ironman value; everyone else at shopValue.
               const sellUnit = isIronman ? getIronmanShopValue(selected.item) : selected.item.shopValue
               return (
-              <div class="border-t border-[var(--fm-rule)] pt-2 mt-1">
+              <div class="border-t border-[var(--hairline)] pt-2 mt-1">
                 <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">
                   {useQuickSell ? 'Sell' : 'Trading Post Listing'}
                 </p>
@@ -882,7 +882,7 @@ export default function InventoryScreen() {
                   min="1"
                   max={maxQty}
                   placeholder="Enter quantity"
-                  class="w-full bg-[var(--fm-parch-lo)] border border-[var(--fm-rule)] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                  class="w-full bg-[var(--surface-sunken)] border border-[var(--hairline)] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
                   autoFocus
                 />
               </div>

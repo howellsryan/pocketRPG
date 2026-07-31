@@ -250,8 +250,8 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
                 onClick={() => onSelect(prayer.id, 'protection')}
                 class={`p-2 rounded-lg border text-center ${
                   isActive
-                    ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald-light)]'
-                    : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--fm-parch)]'
+                    ? 'bg-[var(--surface-raised)] border-[var(--color-emerald-light)]'
+                    : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--surface-panel)]'
                 }`}
               >
                 <div class="flex justify-center"><SkillIcon skill={prayerSkill(prayer)} size={20} /></div>
@@ -274,8 +274,8 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
                 onClick={() => onSelect(prayer.id, 'combat')}
                 class={`p-2 rounded-lg border text-left ${
                   isActive
-                    ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]'
-                    : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--fm-parch)]'
+                    ? 'bg-[var(--surface-raised)] border-[var(--color-gold)]'
+                    : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--surface-panel)]'
                 }`}
               >
                 <div class="flex items-center gap-1.5 text-sm text-[var(--color-parchment)]"><SkillIcon skill={prayerSkill(prayer)} size={16} /> {prayer.name}</div>

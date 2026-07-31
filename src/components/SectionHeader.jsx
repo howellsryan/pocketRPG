@@ -11,7 +11,7 @@ const SECTION_HEADER_SIZES = {
  * `variant="parchment"` uses ink instead of parchment text — pair with Card/Panel variant="parchment".
  */
 export default function SectionHeader({ children, size = 'md', variant = 'default', className = '', as: Tag = 'h3' }) {
-  const colorClass = variant === 'parchment' ? 'text-[var(--fm-ink-faint)]' : 'text-[var(--color-parchment)]'
+  const colorClass = variant === 'parchment' ? 'text-[var(--text-faint)]' : 'text-[var(--color-parchment)]'
   return (
     <Tag
       class={`font-[var(--font-display)] font-bold ${colorClass} opacity-60 uppercase tracking-wider ${SECTION_HEADER_SIZES[size] || SECTION_HEADER_SIZES.md} ${className}`}

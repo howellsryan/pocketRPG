@@ -114,6 +114,15 @@
   --fm-rule: #b6a079;
   --fm-iron: #1c1a18;
   --fm-soot: #14110d;
+  /* Iron counterparts of the parchment tones, so the dark theme's semantic
+     layer below is a re-point rather than a pile of literals. --fm-parch-faint
+     is NOT --fm-ink-faint: that reads 4.2:1 on iron, under the AA floor. */
+  --fm-iron-hi: #262220;
+  --fm-iron-lo: #100e0b;
+  --fm-iron-rule: #3a332b;
+  --fm-parch-faint: #9d8862;
+  /* Base of the --fm-parch-face gradient; the welcome card sits on it. */
+  --fm-parch-warm: #ece0c2;
   --fm-brass: #b08842;
   --fm-brass-hi: #e6c878;
   --fm-brass-lo: #6e521f;
@@ -149,6 +158,13 @@
     radial-gradient(120% 80% at 0% 0%, rgba(255,240,200,0.5), transparent 55%),
     radial-gradient(140% 120% at 100% 100%, rgba(150,110,60,0.18), transparent 60%),
     linear-gradient(160deg, #ece0c2, #e0d0a8);
+  --fm-iron-face:
+    radial-gradient(120% 80% at 0% 0%, rgba(255,255,255,0.06), transparent 55%),
+    radial-gradient(140% 120% at 100% 100%, rgba(0,0,0,0.4), transparent 60%),
+    linear-gradient(160deg, #221f1c, #171512);
+  --fm-iron-inset:
+    inset 0 2px 5px rgba(0,0,0,0.5),
+    inset 0 0 0 1px rgba(255,255,255,0.05);
   --fm-gilt-text: linear-gradient(180deg, #f3dd9a 0%, #c9a227 55%, #8c6a16 100%);
   --fm-ease: cubic-bezier(0.2, 0.9, 0.3, 1);
   --fm-dur: 0.16s;
@@ -203,6 +219,91 @@
   --fm-orn-divider: url('/public/forge/divider.svg');
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   LAYER 2 — semantic surfaces. The whole theme lives here.
+
+   The layer-1 palette above is FROZEN: those names mean literal colours, and
+   two of them are load-bearing in both themes at once — `--fm-btn-ink:
+   var(--fm-parch)` is light text on an iron button, so re-pointing --fm-parch
+   for dark would render dark-on-dark. Screens consume the semantic names
+   below instead, and only these flip.
+
+   A nested [data-theme] wins over the root one, so a panel can opt either way
+   the same way .fm-on-iron/.fm-on-parch already do for buttons.
+   ════════════════════════════════════════════════════════════════════════ */
+:root,
+[data-theme='light'] {
+  --surface-page: var(--fm-vellum);
+  --surface-panel: var(--fm-parch);
+  --surface-card: var(--fm-vellum);
+  --surface-warm: var(--fm-parch-warm);
+  --surface-raised: var(--fm-parch-hi);
+  --surface-sunken: var(--fm-parch-lo);
+  --surface-tex: var(--fm-tex-parch);
+  --surface-blend: normal;
+  --surface-face: var(--fm-parch-face);
+  --surface-inset: var(--fm-parch-inset);
+  --text-strong: var(--fm-ink);
+  --text-soft: var(--fm-ink-soft);
+  --text-faint: var(--fm-ink-faint);
+  --hairline: var(--fm-rule);
+  --accent: var(--fm-ember-deep);
+  --accent-bright: var(--fm-ember);
+  --accent-metal: var(--fm-brass-lo);
+  /* Foxing on vellum — a warm stain. On iron the same haze reads as mud, so
+     the dark side dims instead of tinting. */
+  --surface-vignette: inset 0 0 36px rgba(120,80,30,0.32), inset 0 0 6px rgba(80,50,15,0.25);
+  --surface-vignette-bg: radial-gradient(130% 120% at 50% 50%, transparent 62%, rgba(110,75,30,0.22));
+  --surface-hover: rgba(120,90,45,0.08);
+  --surface-zebra: rgba(120,90,45,0.07);
+
+  --btn-surface-face: var(--fm-btn-vellum);
+  --btn-surface-ink: var(--fm-ink);
+  --btn-surface-sub: var(--fm-ink-faint);
+  --btn-surface-edge: var(--fm-rule);
+  --btn-surface-relief: var(--fm-btn-relief-vellum);
+  --btn-surface-press: var(--fm-btn-press-vellum);
+  --btn-surface-dead: #cfbd99;
+  --btn-surface-dead-ink: var(--fm-ink-soft);
+  --btn-surface-dead-edge: #9c7c50;
+}
+
+[data-theme='dark'] {
+  --surface-page: var(--fm-soot);
+  --surface-panel: var(--fm-iron);
+  --surface-card: #232020;
+  --surface-warm: #201d1a;
+  --surface-raised: var(--fm-iron-hi);
+  --surface-sunken: var(--fm-iron-lo);
+  --surface-tex: var(--fm-tex-iron);
+  --surface-blend: multiply;
+  --surface-face: var(--fm-iron-face);
+  --surface-inset: var(--fm-iron-inset);
+  --text-strong: var(--fm-parch);
+  --text-soft: var(--fm-rule);
+  --text-faint: var(--fm-parch-faint);
+  --hairline: var(--fm-iron-rule);
+  /* --fm-ember-deep measures 1.8:1 on iron — it is the value colour for every
+     stat number on the combat screen, so dark takes the bright ember. */
+  --accent: var(--fm-ember-hi);
+  --accent-bright: var(--fm-ember-hi);
+  --accent-metal: var(--fm-brass-hi);
+  --surface-vignette: inset 0 0 36px rgba(0,0,0,0.45), inset 0 0 6px rgba(0,0,0,0.32);
+  --surface-vignette-bg: radial-gradient(130% 120% at 50% 50%, transparent 62%, rgba(0,0,0,0.28));
+  --surface-hover: rgba(255,255,255,0.05);
+  --surface-zebra: rgba(255,255,255,0.035);
+
+  --btn-surface-face: var(--fm-btn-iron);
+  --btn-surface-ink: var(--fm-parch);
+  --btn-surface-sub: var(--fm-brass);
+  --btn-surface-edge: var(--fm-iron-rule);
+  --btn-surface-relief: var(--fm-btn-relief-iron);
+  --btn-surface-press: var(--fm-btn-press-iron);
+  --btn-surface-dead: #211e1a;
+  --btn-surface-dead-ink: #8d8478;
+  --btn-surface-dead-edge: #2b2620;
+}
+
 /* Parchment surfaces re-point the button token set to vellum, so every button
    rule below (.fm-btn, .fm-toggle, .fm-tile, .cb-*, .wm-*) picks up the right
    resting face from its container without a single per-screen override. Add a
@@ -213,15 +314,15 @@
 .clog-sheet:not(.is-done),
 .cb-qa,
 .fm-on-parch {
-  --fm-btn-face: var(--fm-btn-vellum);
-  --fm-btn-ink: var(--fm-ink);
-  --fm-btn-sub: var(--fm-ink-faint);
-  --fm-btn-edge: var(--fm-rule);
-  --fm-btn-relief: var(--fm-btn-relief-vellum);
-  --fm-btn-press: var(--fm-btn-press-vellum);
-  --fm-btn-dead: #cfbd99;
-  --fm-btn-dead-ink: var(--fm-ink-soft);
-  --fm-btn-dead-edge: #9c7c50;
+  --fm-btn-face: var(--btn-surface-face);
+  --fm-btn-ink: var(--btn-surface-ink);
+  --fm-btn-sub: var(--btn-surface-sub);
+  --fm-btn-edge: var(--btn-surface-edge);
+  --fm-btn-relief: var(--btn-surface-relief);
+  --fm-btn-press: var(--btn-surface-press);
+  --fm-btn-dead: var(--btn-surface-dead);
+  --fm-btn-dead-ink: var(--btn-surface-dead-ink);
+  --fm-btn-dead-edge: var(--btn-surface-dead-edge);
 }
 
 /* Dark panels nested inside a parchment screen flip back to iron. */
@@ -253,20 +354,20 @@
   --font-mono: var(--fm-num);
 
   /* Card/Panel/Button's *default* variant (and any other markup still reading
-     these vars directly) render via these — retinted to the parchment family
-     so wrapping a new screen in .forge-shell "just works" without hand-tuning
-     every card: --color-void-light (Card) is the same medium parchment tone
-     used everywhere else; --color-void (Panel, nested/sunken) a shade deeper;
-     --color-void-lighter a lighter "raised" tone. All paper, no iron. */
-  --color-void: var(--fm-parch-lo);
-  --color-void-dark: var(--fm-ink);
-  --color-void-light: #e6d8b6;
-  --color-void-lighter: var(--fm-parch-hi);
-  --color-void-border: var(--fm-rule);
+     these vars directly) render via these — routed through the semantic layer
+     so wrapping a new screen in .forge-shell "just works" in either theme
+     without hand-tuning every card: --color-void-light (Card) is the medium
+     surface tone used everywhere else; --color-void (Panel, nested/sunken) a
+     shade deeper; --color-void-lighter a lighter "raised" tone. */
+  --color-void: var(--surface-sunken);
+  --color-void-dark: var(--text-strong);
+  --color-void-light: var(--surface-card);
+  --color-void-lighter: var(--surface-raised);
+  --color-void-border: var(--hairline);
 
   --color-gold: var(--fm-brass);
   --color-gold-light: var(--fm-brass-hi);
-  --color-gold-dim: var(--fm-brass-lo);
+  --color-gold-dim: var(--accent-metal);
   --color-blood: var(--fm-blood);
   --color-blood-mid: #6b1414;
   --color-blood-light: #b3392f;
@@ -276,21 +377,31 @@
   --color-mana: var(--fm-woad);
   --color-mana-light: #527bb0;
 
-  /* Text that sits directly on the screen background (not inside a card) still
-     uses --color-parchment/-dark — flip those to ink too now that the page
-     itself is paper, not void-black. Anything already on a parchment card
-     (welcome-card, skill-card, cb-area, etc.) sets its own ink color already,
-     so this only affects text that was previously assumed to be on dark. */
-  --color-parchment: var(--fm-ink-soft);
-  --color-parchment-dark: var(--fm-ink-faint);
+  /* Text that sits directly on the screen background (not inside a card)
+     still uses --color-parchment/-dark — route them through the semantic text
+     ramp so they read against whichever material the page is. Anything already
+     on a card (welcome-card, skill-card, cb-area, etc.) sets its own colour. */
+  --color-parchment: var(--text-soft);
+  --color-parchment-dark: var(--text-faint);
 
   /* Forgemark is the *page* — parchment, not iron. Cards sit on it as a
      slightly deeper/richer shade of the same paper (see .skill-card etc.),
      not a different dark material. */
-  background-color: var(--fm-vellum);
-  background-image: var(--fm-tex-parch);
+  background-color: var(--surface-page);
+  background-image: var(--surface-tex);
+  background-blend-mode: var(--surface-blend);
   background-size: 600px;
 }
+
+/* Opacity as hierarchy only works when the text is DARKER than its surface.
+   On iron a faded light text sinks into the panel, so dark trades the fade for
+   the solid faint tone. Light is untouched — it still reads at full contrast
+   through the fade. */
+[data-theme='dark'] .forge-shell .xp-meta,
+[data-theme='dark'] .forge-shell .wstat,
+[data-theme='dark'] .forge-shell .hero-total__label,
+[data-theme='dark'] .forge-shell .section-head span { opacity: 1; }
+[data-theme='dark'] .forge-shell .hero-total__label { color: var(--text-faint); }
 
 /* ── Forgemark material classes: iron frames, parchment panels, rivets,
    ledger rows, gilt/gothic type, ornaments. Shared by IronFrame, ForgeButton,
@@ -322,29 +433,30 @@
 .fm-parch {
   position: relative;
   border-radius: var(--fm-r-sm);
-  background-color: #e6d8b6;
-  background-image: var(--fm-tex-parch);
+  background-color: var(--surface-card);
+  background-image: var(--surface-tex);
+  background-blend-mode: var(--surface-blend);
   background-size: cover;
-  box-shadow: var(--fm-parch-inset);
-  color: var(--fm-ink);
+  box-shadow: var(--surface-inset);
+  color: var(--text-strong);
   overflow: hidden;
 }
 .fm-parch::after {
   content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
-  box-shadow: inset 0 0 36px rgba(120,80,30,0.32), inset 0 0 6px rgba(80,50,15,0.25);
-  background: radial-gradient(130% 120% at 50% 50%, transparent 62%, rgba(110,75,30,0.22));
+  box-shadow: var(--surface-vignette);
+  background: var(--surface-vignette-bg);
 }
 
-.fm-banner { font-family: var(--fm-display); font-weight: 800; letter-spacing: 0.01em; line-height: 1.0; color: var(--fm-ink); }
+.fm-banner { font-family: var(--fm-display); font-weight: 800; letter-spacing: 0.01em; line-height: 1.0; color: var(--text-strong); }
 .fm-banner--gilt {
   background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
   filter: drop-shadow(0 1px 0 rgba(0,0,0,0.5));
   padding-right: 0.12em;
 }
-.fm-eyebrow { font-family: var(--fm-serif); font-weight: 600; font-size: 12px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--fm-ink-faint); }
+.fm-eyebrow { font-family: var(--fm-serif); font-weight: 600; font-size: 12px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--text-faint); }
 .fm-eyebrow--light { color: var(--fm-brass); }
-.fm-lore { font-family: var(--fm-fell); font-style: italic; color: var(--fm-ink-soft); line-height: 1.5; }
+.fm-lore { font-family: var(--fm-fell); font-style: italic; color: var(--text-soft); line-height: 1.5; }
 .fm-num { font-family: var(--fm-num); font-variant-numeric: tabular-nums; }
 
 /* ════════════════════════════════════════════════════════════════════════
@@ -395,17 +507,17 @@
   text-shadow: 0 1px 0 rgba(255,210,160,0.35);
 }
 /* The one glow in the system (DESIGN.md §5) — primary action only. */
-.fm-btn--ember:hover { border-color: var(--fm-ember-deep); box-shadow: inset 0 1px 0 rgba(255,220,180,0.55), 0 6px 18px -8px rgba(240,116,42,0.75); }
+.fm-btn--ember:hover { border-color: var(--accent); box-shadow: inset 0 1px 0 rgba(255,220,180,0.55), 0 6px 18px -8px rgba(240,116,42,0.75); }
 .fm-btn--brass, .fm-btn.is-on {
-  color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo);
+  color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--accent-metal);
   box-shadow: var(--fm-btn-relief-brass);
 }
-.fm-btn--brass:hover, .fm-btn.is-on:hover { border-color: var(--fm-brass-lo); background: var(--fm-btn-brass-hi); }
+.fm-btn--brass:hover, .fm-btn.is-on:hover { border-color: var(--accent-metal); background: var(--fm-btn-brass-hi); }
 .fm-btn--iron {
   color: var(--fm-parch); background: var(--fm-btn-iron); border-color: #000;
   box-shadow: var(--fm-btn-relief-iron);
 }
-.fm-btn--iron:hover { color: var(--fm-brass-hi); border-color: var(--fm-brass-lo); }
+.fm-btn--iron:hover { color: var(--fm-brass-hi); border-color: var(--accent-metal); }
 .fm-btn--iron:active { box-shadow: var(--fm-btn-press-iron); }
 .fm-btn--blood { color: #f7e4dc; background: var(--fm-btn-blood); border-color: #4d1010; box-shadow: inset 0 1px 0 rgba(255,190,175,0.2), inset 0 -1px 0 rgba(0,0,0,0.4); }
 .fm-btn--blood:hover { border-color: #4d1010; background: linear-gradient(180deg, #ab2c2c 0%, #8d2222 62%, #711818 100%); }
@@ -431,12 +543,12 @@
 }
 .fm-toggle.is-on {
   color: var(--fm-btn-ink-on); background: var(--fm-btn-brass);
-  border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass);
+  border-color: var(--accent-metal); box-shadow: var(--fm-btn-relief-brass);
 }
-.fm-toggle.is-on:hover { border-color: var(--fm-brass-lo); }
+.fm-toggle.is-on:hover { border-color: var(--accent-metal); }
 .fm-toggle--sm { min-height: 44px; padding: 7px 10px; font-size: 12px; }
 .fm-toggle__n { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 600; color: var(--fm-btn-sub); }
-.fm-toggle.is-on .fm-toggle__n { color: var(--fm-brass-lo); }
+.fm-toggle.is-on .fm-toggle__n { color: var(--accent-metal); }
 /* Stacked label-over-count form used by tab strips. */
 .fm-toggle--stack { flex-direction: column; gap: 2px; padding: 6px 6px; }
 
@@ -448,12 +560,12 @@
 }
 .fm-tile.is-on, .fm-tile.is-active {
   color: var(--fm-btn-ink-on); background: var(--fm-btn-brass);
-  border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass);
+  border-color: var(--accent-metal); box-shadow: var(--fm-btn-relief-brass);
 }
-.fm-tile.is-on:hover, .fm-tile.is-active:hover { border-color: var(--fm-brass-lo); }
+.fm-tile.is-on:hover, .fm-tile.is-active:hover { border-color: var(--accent-metal); }
 .fm-tile__name { font-family: var(--fm-serif); font-weight: 700; font-size: 10px; line-height: 1.1; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .fm-tile__sub { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fm-btn-sub); }
-.fm-tile.is-on .fm-tile__sub, .fm-tile.is-active .fm-tile__sub { color: var(--fm-brass-lo); }
+.fm-tile.is-on .fm-tile__sub, .fm-tile.is-active .fm-tile__sub { color: var(--accent-metal); }
 
 @media (prefers-reduced-motion: reduce) {
   .fm-btn, .fm-toggle, .fm-tile { transition: none; }
@@ -461,23 +573,23 @@
 }
 
 .fm-ledger { width: 100%; }
-.fm-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--fm-rule); }
+.fm-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--hairline); }
 .fm-row:last-child { border-bottom: 0; }
-.fm-row--head { border-bottom: 2px solid var(--fm-ink); }
-.fm-row__label { font-weight: 600; color: var(--fm-ink); }
-.fm-row__val { margin-left: auto; font-family: var(--fm-num); font-variant-numeric: tabular-nums; color: var(--fm-ink); font-weight: 600; }
-.fm-row--alt:nth-child(even) { background: rgba(120,90,45,0.07); }
+.fm-row--head { border-bottom: 2px solid var(--text-strong); }
+.fm-row__label { font-weight: 600; color: var(--text-strong); }
+.fm-row__val { margin-left: auto; font-family: var(--fm-num); font-variant-numeric: tabular-nums; color: var(--text-strong); font-weight: 600; }
+.fm-row--alt:nth-child(even) { background: var(--surface-zebra); }
 
 .fm-tag {
   display: inline-flex; align-items: center; gap: 6px;
   font-family: var(--fm-serif); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
   padding: 3px 9px; border-radius: var(--fm-r-sharp); border: 1px solid currentColor;
 }
-.fm-tag--ember { color: var(--fm-ember); }
+.fm-tag--ember { color: var(--accent-bright); }
 .fm-tag--verdigris { color: var(--fm-verdigris); }
 .fm-tag--blood { color: var(--fm-blood); }
 .fm-tag--woad { color: var(--fm-woad); }
-.fm-tag--brass { color: var(--fm-brass-lo); }
+.fm-tag--brass { color: var(--accent-metal); }
 
 .fm-corner { position: absolute; width: 30px; height: 30px; background: var(--fm-orn-corner) center/contain no-repeat; pointer-events: none; opacity: 0.5; }
 .fm-corner--tl { top: 7px; left: 7px; }
@@ -486,7 +598,7 @@
 .fm-corner--br { bottom: 7px; right: 7px; transform: scale(-1); }
 .fm-divider { height: 18px; background: var(--fm-orn-divider) center/auto 100% no-repeat; }
 .fm-rule-head { display: flex; align-items: center; gap: 14px; }
-.fm-rule-head::before, .fm-rule-head::after { content: ''; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, var(--fm-rule), transparent); }
+.fm-rule-head::before, .fm-rule-head::after { content: ''; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, var(--hairline), transparent); }
 
 .fm-crest { position: relative; display: inline-flex; align-items: center; justify-content: center; }
 .fm-crest__ring {
@@ -619,7 +731,7 @@ html, body, #app {
     border-radius: 18px;
     overflow: hidden;
     border: 2px solid #171009;
-    background: var(--fm-vellum);
+    background: var(--surface-card);
     box-shadow:
       0 0 0 1px rgba(217, 180, 90, 0.4),
       0 4px 16px rgba(0, 0, 0, 0.55);
@@ -824,24 +936,24 @@ html, body, #app {
    (--color-void) stays dark under .forge-shell, so anything not on one of
    these parchment surfaces already reads fine unchanged. */
 /* Split into background-color + background-image (rather than `background:
-   var(--fm-parch-face)`): the token is a multi-radial-gradient, and engines
+   var(--surface-face)`): the token is a multi-radial-gradient, and engines
    that reject any layer collapse the whole shorthand to transparent, so the
    dark shell shows through and washes out the text. As separate longhands an
    unsupported gradient drops to background-image:none, leaving the solid
    parchment fallback. */
-.forge-shell .welcome-card { background-color: #ece0c2; background-image: var(--fm-parch-face); border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .welcome-card { background-color: var(--surface-warm); background-image: var(--surface-face); border-color: var(--hairline); box-shadow: var(--surface-inset); }
 .forge-shell .welcome-card::after { display: none; }
 .forge-shell .welcome-card__title { background-image: var(--fm-gilt-text); }
-.forge-shell .wstat { color: var(--fm-ink-soft); }
-.forge-shell .wstat b { color: var(--fm-ember); }
+.forge-shell .wstat { color: var(--text-soft); }
+.forge-shell .wstat b { color: var(--accent-bright); }
 
-.forge-shell .skill-card { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .skill-card { background: var(--surface-card); background-image: var(--surface-tex); background-size: cover; border-color: var(--hairline); box-shadow: var(--surface-inset); background-blend-mode: var(--surface-blend); }
 .forge-shell .skill-card:hover { border-color: var(--fm-brass); }
-.forge-shell .skill-card__name span { color: var(--fm-ink); text-shadow: none; }
-.forge-shell .skill-card__level { color: var(--fm-ember-deep); text-shadow: none; }
-.forge-shell .xp-meta { color: var(--fm-ink-faint); }
-.forge-shell .xp-meta--max { color: var(--fm-ember); }
-.forge-shell .hero-total b { color: var(--fm-ember-deep); }
+.forge-shell .skill-card__name span { color: var(--text-strong); text-shadow: none; }
+.forge-shell .skill-card__level { color: var(--accent); text-shadow: none; }
+.forge-shell .xp-meta { color: var(--text-faint); }
+.forge-shell .xp-meta--max { color: var(--accent-bright); }
+.forge-shell .hero-total b { color: var(--accent); }
 
 /* Forgemark pilot — Combat screen: area/monster picker rows + stat tiles
    flip to parchment. The combat log keeps its dark terminal-feed look
@@ -852,46 +964,48 @@ html, body, #app {
 .forge-shell .cb-mon,
 .forge-shell .cb-kstat,
 .forge-shell .cb-stat {
-  background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover;
-  border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset);
+  background: var(--surface-card); background-image: var(--surface-tex); background-size: cover;
+  background-blend-mode: var(--surface-blend);
+  border-color: var(--hairline); box-shadow: var(--surface-inset);
 }
-.forge-shell .cb-area--raid { background-image: var(--fm-tex-parch); border-color: var(--fm-royal); }
+.forge-shell .cb-area--raid { background-image: var(--surface-tex); border-color: var(--fm-royal); background-blend-mode: var(--surface-blend); }
 .forge-shell .cb-mon--task { border-color: var(--fm-brass); }
 .forge-shell .cb-area:hover, .forge-shell .cb-mon:hover { border-color: var(--fm-brass); }
-.forge-shell .cb-area__name, .forge-shell .cb-mon__name, .forge-shell .cb-fight__name { color: var(--fm-ink); }
-.forge-shell .cb-area__blurb, .forge-shell .cb-area__count, .forge-shell .cb-mon__stats { color: var(--fm-ink-soft); opacity: 1; }
-.forge-shell .cb-h1sub { color: var(--fm-ink-soft); opacity: 1; }
-.forge-shell .cb-mon__info { background: var(--fm-parch-hi); border-color: var(--fm-brass); }
-.forge-shell .cb-back { color: var(--fm-ember); }
-.forge-shell .cb-kstat__k, .forge-shell .cb-stat__k { color: var(--fm-ink-faint); }
-.forge-shell .cb-kstat__v, .forge-shell .cb-stat__v { color: var(--fm-ember-deep); }
-.forge-shell .cb-mon__kc { color: var(--fm-ember-deep); }
+.forge-shell .cb-area__name, .forge-shell .cb-mon__name, .forge-shell .cb-fight__name { color: var(--text-strong); }
+.forge-shell .cb-area__blurb, .forge-shell .cb-area__count, .forge-shell .cb-mon__stats { color: var(--text-soft); opacity: 1; }
+.forge-shell .cb-h1sub { color: var(--text-soft); opacity: 1; }
+.forge-shell .cb-mon__info { background: var(--surface-raised); border-color: var(--fm-brass); }
+.forge-shell .cb-back { color: var(--accent-bright); }
+.forge-shell .cb-kstat__k, .forge-shell .cb-stat__k { color: var(--text-faint); }
+.forge-shell .cb-kstat__v, .forge-shell .cb-stat__v { color: var(--accent); }
+.forge-shell .cb-mon__kc { color: var(--accent); }
 
 /* Forgemark pilot — Collection Log: category cards flip to parchment (the
    "done" gilt-glow treatment is left alone, it already reads as a highlight
    on any background). Sheet/modal is always Forgemark since CollectionLog
    is fully reskinned. */
-.forge-shell .clog-cat:not(.is-done) { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .clog-cat:not(.is-done) { background: var(--surface-card); background-image: var(--surface-tex); background-size: cover; border-color: var(--hairline); box-shadow: var(--surface-inset); background-blend-mode: var(--surface-blend); }
 .forge-shell .clog-cat:not(.is-done):hover { border-color: var(--fm-brass); }
-.forge-shell .clog-cat__name, .forge-shell .clog-cat__count { color: var(--fm-ink); text-shadow: none; }
-.forge-shell .clog-cat__blurb, .forge-shell .clog-cat__foot span { color: var(--fm-ink-faint); }
-.forge-shell .clog-cat__count b { color: var(--fm-ember-deep); }
-.forge-shell .clog-header__sub, .forge-shell .clog-hero__k, .forge-shell .clog-hero__v, .forge-shell .clog-secthead span { color: var(--fm-ink-faint); }
-.forge-shell .clog-hero__v b { color: var(--fm-ember-deep); }
+.forge-shell .clog-cat__name, .forge-shell .clog-cat__count { color: var(--text-strong); text-shadow: none; }
+.forge-shell .clog-cat__blurb, .forge-shell .clog-cat__foot span { color: var(--text-faint); }
+.forge-shell .clog-cat__count b { color: var(--accent); }
+.forge-shell .clog-header__sub, .forge-shell .clog-hero__k, .forge-shell .clog-hero__v, .forge-shell .clog-secthead span { color: var(--text-faint); }
+.forge-shell .clog-hero__v b { color: var(--accent); }
 .forge-shell .clog-hero {
-  background: radial-gradient(130% 90% at 0% 0%, rgba(176,136,66,0.14), transparent 55%), var(--fm-parch);
-  background-image: var(--fm-tex-parch), radial-gradient(130% 90% at 0% 0%, rgba(176,136,66,0.14), transparent 55%);
+  background: radial-gradient(130% 90% at 0% 0%, rgba(176,136,66,0.14), transparent 55%), var(--surface-panel);
+  background-image: var(--surface-tex), radial-gradient(130% 90% at 0% 0%, rgba(176,136,66,0.14), transparent 55%);
+  background-blend-mode: var(--surface-blend);
   background-size: cover, 100% 100%;
-  border-color: var(--fm-rule);
-  box-shadow: var(--fm-parch-inset);
+  border-color: var(--hairline);
+  box-shadow: var(--surface-inset);
 }
-.forge-shell .clog-hero__div { background: linear-gradient(90deg, var(--fm-brass-lo), transparent); }
-.forge-shell .clog-hero__mastered { color: var(--fm-ember-deep); text-shadow: none; }
-.clog-sheet:not(.is-done) { background: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-top-color: var(--fm-brass-lo); }
-.clog-sheet:not(.is-done) .clog-sheet__name, .clog-sheet:not(.is-done) .clog-cat__name { color: var(--fm-ink); }
-.clog-sheet:not(.is-done) .clog-sheet__sub { color: var(--fm-ink-faint); }
-.clog-sheet:not(.is-done) .clog-sheet__count b { color: var(--fm-ember-deep); }
-.clog-sheet:not(.is-done) .clog-sheet__count span, .clog-sheet:not(.is-done) .clog-sheet__count em { color: var(--fm-ink-faint); }
+.forge-shell .clog-hero__div { background: linear-gradient(90deg, var(--accent-metal), transparent); }
+.forge-shell .clog-hero__mastered { color: var(--accent); text-shadow: none; }
+.clog-sheet:not(.is-done) { background: var(--surface-card); background-image: var(--surface-tex); background-size: 400px; border-top-color: var(--accent-metal); background-blend-mode: var(--surface-blend); }
+.clog-sheet:not(.is-done) .clog-sheet__name, .clog-sheet:not(.is-done) .clog-cat__name { color: var(--text-strong); }
+.clog-sheet:not(.is-done) .clog-sheet__sub { color: var(--text-faint); }
+.clog-sheet:not(.is-done) .clog-sheet__count b { color: var(--accent); }
+.clog-sheet:not(.is-done) .clog-sheet__count span, .clog-sheet:not(.is-done) .clog-sheet__count em { color: var(--text-faint); }
 .forge-shell .cb-h1 { background-image: var(--fm-gilt-text); }
 
 /* Quick-actions panel — the panel itself is paper; its tabs and slots carry the
@@ -902,11 +1016,11 @@ html, body, #app {
    originated — see docs/map-driven-overhaul-plan.md). The banner itself
    (photo or vector scene + white overlay text) is unaffected — that overlay
    treatment already works over any art, themed or not. */
-.forge-shell.wm-hub { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; }
-.forge-shell .wm-hub-lore { color: var(--fm-ink-soft); }
-.forge-shell .wm-hub-sectionhead::before, .forge-shell .wm-hub-sectionhead::after { background: var(--fm-rule); }
-.forge-shell .wm-hub-sectionhead span { color: var(--fm-ink-faint); }
-.forge-shell .wm-facility { background: var(--fm-parch-hi); border-color: var(--fm-rule); color: var(--fm-ember-deep); }
+.forge-shell.wm-hub { background: var(--surface-page); background-image: var(--surface-tex); background-size: cover; background-blend-mode: var(--surface-blend); }
+.forge-shell .wm-hub-lore { color: var(--text-soft); }
+.forge-shell .wm-hub-sectionhead::before, .forge-shell .wm-hub-sectionhead::after { background: var(--hairline); }
+.forge-shell .wm-hub-sectionhead span { color: var(--text-faint); }
+.forge-shell .wm-facility { background: var(--surface-raised); border-color: var(--hairline); color: var(--accent); }
 .wm-hub-seal { float: right; margin: 0 0 8px 12px; }
 
 /* Category buttons (replaces the old flat activity chip-wall) + the dark,
@@ -924,50 +1038,51 @@ html, body, #app {
 .wm-cat-btn:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .wm-cat-btn:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
 .wm-cat-btn__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.wm-cat-btn__label { flex: 1; min-width: 0; font-family: var(--fm-serif); font-weight: 700; font-size: 13.5px; color: var(--fm-ink); }
-.wm-cat-btn__count { font-family: var(--fm-num); font-size: 12px; font-weight: 600; color: var(--fm-ink-faint); flex-shrink: 0; }
+.wm-cat-btn__label { flex: 1; min-width: 0; font-family: var(--fm-serif); font-weight: 700; font-size: 13.5px; color: var(--text-strong); }
+.wm-cat-btn__count { font-family: var(--fm-num); font-size: 12px; font-weight: 600; color: var(--text-faint); flex-shrink: 0; }
 
-.wm-actmodal-panel { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 280px; border-color: var(--fm-rule); }
-.wm-actmodal-content { background: radial-gradient(130% 120% at 50% 50%, transparent 62%, rgba(110,75,30,0.14)); }
-.wm-actmodal-count { font-family: var(--fm-num); font-size: 13px; color: var(--fm-ember-deep); }
+.wm-actmodal-panel { background-color: var(--surface-card); background-image: var(--surface-tex); background-size: 280px; border-color: var(--hairline); background-blend-mode: var(--surface-blend); }
+.wm-actmodal-content { background: var(--surface-vignette-bg); }
+.wm-actmodal-count { font-family: var(--fm-num); font-size: 13px; color: var(--accent); }
 .wm-actmodal-group + .wm-actmodal-group { margin-top: 14px; }
 .wm-actmodal-grouphead {
   font-family: var(--fm-serif); font-weight: 700; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--fm-ink-faint); margin-bottom: 6px;
+  color: var(--text-faint); margin-bottom: 6px;
 }
 .wm-actmodal-row {
   display: flex; align-items: center; gap: 10px; padding: 8px 4px; min-height: 44px;
-  border-bottom: 1px solid var(--fm-rule); font-family: var(--fm-serif); font-size: 13.5px;
+  border-bottom: 1px solid var(--hairline); font-family: var(--fm-serif); font-size: 13.5px;
   width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0;
   cursor: pointer;
 }
 .wm-actmodal-row:last-child { border-bottom: 0; }
-.wm-actmodal-row:hover, .wm-actmodal-row:active { background: rgba(120,90,45,0.08); }
+.wm-actmodal-row:hover, .wm-actmodal-row:active { background: var(--surface-hover); }
 .wm-actmodal-row__icon { flex-shrink: 0; }
-.wm-actmodal-row__name { flex: 1; min-width: 0; color: var(--fm-ink); }
-.wm-actmodal-row__lvl { font-family: var(--fm-num); font-size: 12.5px; font-weight: 600; color: var(--fm-ember-deep); flex-shrink: 0; }
+.wm-actmodal-row__name { flex: 1; min-width: 0; color: var(--text-strong); }
+.wm-actmodal-row__lvl { font-family: var(--fm-num); font-size: 12.5px; font-weight: 600; color: var(--accent); flex-shrink: 0; }
 
 /* Forgemark nav rail (desktop SideNav) — the app chrome joins the parchment
    screens: vellum texture, rule border, gilt brand. */
-.fm-navrail { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-right: 1px solid var(--fm-rule); scrollbar-width: thin; scrollbar-color: var(--fm-rule) transparent; }
+.fm-navrail { background-color: var(--surface-page); background-image: var(--surface-tex); background-size: 400px; border-right: 1px solid var(--hairline); scrollbar-width: thin; scrollbar-color: var(--hairline) transparent; background-blend-mode: var(--surface-blend); }
 /* The global scrollbar track (--color-void-light) resolves near-black outside
    .forge-shell — on the vellum rail it reads as a black line. Parchment it. */
 .fm-navrail::-webkit-scrollbar-track { background: transparent; }
-.fm-navrail::-webkit-scrollbar-thumb { background: var(--fm-rule); }
+.fm-navrail::-webkit-scrollbar-thumb { background: var(--hairline); }
 .fm-navbrand { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.02em; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
 
 /* Desktop top bar joins the parchment chrome too (the bar is md+ only).
    Same token remap as .forge-shell so var-based text reads as ink on vellum —
    hardcoded dark chips (skip/credits/daily pills) stay iron-on-parchment. */
 .fm-topbar {
-  background-color: var(--fm-vellum);
-  background-image: var(--fm-tex-parch);
+  background-color: var(--surface-page);
+  background-image: var(--surface-tex);
+  background-blend-mode: var(--surface-blend);
   background-size: 400px;
-  border-bottom-color: var(--fm-rule);
-  --color-parchment: var(--fm-ink-soft);
-  --color-parchment-dark: var(--fm-ink-faint);
+  border-bottom-color: var(--hairline);
+  --color-parchment: var(--text-soft);
+  --color-parchment-dark: var(--text-faint);
   --color-gold: var(--fm-brass);
-  --color-gold-dim: var(--fm-brass-lo);
+  --color-gold-dim: var(--accent-metal);
 }
 
 /* Emblem primitive */
@@ -998,8 +1113,8 @@ html, body, #app {
 .armoury-card__tier { display: block; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9px; letter-spacing: 0.04em; color: var(--fm-btn-sub); }
 .armoury-card__spec { position: absolute; top: 3px; right: 5px; font-size: 11px; line-height: 1; }
 
-.forge-shell .section-head span { color: var(--fm-ink-faint); }
-.forge-shell .section-head__rule { background: linear-gradient(90deg, var(--fm-brass-lo), transparent); }
+.forge-shell .section-head span { color: var(--text-faint); }
+.forge-shell .section-head__rule { background: linear-gradient(90deg, var(--accent-metal), transparent); }
 
 /* Skill detail modal hero */
 .skill-detail__hero { display: flex; align-items: center; gap: 14px; }
@@ -1055,7 +1170,7 @@ html, body, #app {
 .cb-idle:focus-visible, .cb-styleseg:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
 .cb-idle.is-on, .cb-styleseg.is-on, .cb-prayon {
   color: var(--fm-btn-ink-on); background: var(--fm-btn-brass);
-  border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass);
+  border-color: var(--accent-metal); box-shadow: var(--fm-btn-relief-brass);
 }
 .cb-idle__chk { width: 13px; height: 13px; }
 
@@ -1138,8 +1253,8 @@ html, body, #app {
 .cb-mon__info img, .cb-mon__info svg { width: 18px; height: 18px; }
 
 /* ── Live combat view ── */
-.cb-back { background: none; border: none; cursor: pointer; font-family: var(--fm-serif); font-weight: 700; font-size: 15px; color: var(--fm-ember-deep); padding: 4px 0 12px; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; }
-.cb-back:hover { color: var(--fm-ember); }
+.cb-back { background: none; border: none; cursor: pointer; font-family: var(--fm-serif); font-weight: 700; font-size: 15px; color: var(--accent); padding: 4px 0 12px; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; }
+.cb-back:hover { color: var(--accent-bright); }
 .cb-fight__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .cb-fight__id { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .cb-fight__name { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--color-parchment); line-height: 1.1; overflow-wrap: anywhere; }
@@ -1194,7 +1309,7 @@ span.cb-fight__cb { cursor: default; }
 /* Active/toggled action (an active prayer) is struck brass, exactly as every
    other ON control. Special/Cast are plain buttons: resting metal by default,
    dead metal when unavailable. */
-.cb-act.is-on { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
+.cb-act.is-on { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--accent-metal); box-shadow: var(--fm-btn-relief-brass); }
 .cb-act:disabled, .cb-act--dim {
   background: var(--fm-btn-dead); background-image: none; color: var(--fm-btn-dead-ink);
   border-color: var(--fm-btn-dead-edge); box-shadow: none; cursor: not-allowed;
@@ -1205,7 +1320,7 @@ span.cb-fight__cb { cursor: default; }
 @keyframes cbKF { from { opacity: 1; } to { opacity: 0; } }
 
 /* ── Quick-actions inventory (replaces the combat log + Eat/Potion/Gear) ── */
-.cb-qa { margin-top: 4px; border-radius: var(--fm-r-frame); padding: 11px; background: var(--fm-parch-lo); border: 1px solid var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.cb-qa { margin-top: 4px; border-radius: var(--fm-r-frame); padding: 11px; background: var(--surface-sunken); border: 1px solid var(--hairline); box-shadow: var(--surface-inset); }
 .cb-qa__tabs { display: flex; gap: 5px; margin-bottom: 11px; }
 .cb-qa__tab, .cb-qa__edit {
   min-height: 44px; border-radius: var(--fm-r-sm); cursor: pointer;
@@ -1217,11 +1332,11 @@ span.cb-fight__cb { cursor: default; }
 .cb-qa__tab:hover, .cb-qa__edit:hover { border-color: var(--fm-brass); }
 .cb-qa__tab:active, .cb-qa__edit:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .cb-qa__tab:focus-visible, .cb-qa__edit:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
-.cb-qa__tab.is-on { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
-.cb-qa__tabn { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 10px; font-weight: 600; color: var(--fm-ink-faint); }
-.cb-qa__tab.is-on .cb-qa__tabn { color: var(--fm-brass-lo); }
+.cb-qa__tab.is-on { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--accent-metal); box-shadow: var(--fm-btn-relief-brass); }
+.cb-qa__tabn { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 10px; font-weight: 600; color: var(--text-faint); }
+.cb-qa__tab.is-on .cb-qa__tabn { color: var(--accent-metal); }
 .cb-qa__edit { flex: 0 0 auto; min-width: 44px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
-.cb-qa__empty { grid-column: 1 / -1; text-align: center; font-family: var(--fm-serif); font-size: 12px; font-weight: 600; color: var(--fm-ink-faint); padding: 20px 8px; }
+.cb-qa__empty { grid-column: 1 / -1; text-align: center; font-family: var(--fm-serif); font-size: 12px; font-weight: 600; color: var(--text-faint); padding: 20px 8px; }
 .cb-qa__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .cb-slot {
   position: relative; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
@@ -1233,7 +1348,7 @@ span.cb-fight__cb { cursor: default; }
 .cb-slot:hover { border-color: var(--fm-brass); }
 .cb-slot:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .cb-slot:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
-.cb-slot.is-active { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
+.cb-slot.is-active { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--accent-metal); box-shadow: var(--fm-btn-relief-brass); }
 /* Locked = dead metal with ink-faint text, never a dimmed tile — an opacity
    fade on a parchment page makes the level requirement unreadable. */
 .cb-slot.is-locked, .cb-slot:disabled {
@@ -1242,13 +1357,13 @@ span.cb-fight__cb { cursor: default; }
 }
 .cb-slot.is-locked:active, .cb-slot:disabled:active { transform: none; box-shadow: none; }
 .cb-slot.is-locked:hover, .cb-slot:disabled:hover { border-color: var(--fm-btn-dead-edge); }
-.cb-slot__ring { position: absolute; inset: -1px; border-radius: var(--fm-r-sm); pointer-events: none; box-shadow: 0 0 0 1.5px var(--fm-brass-lo); }
+.cb-slot__ring { position: absolute; inset: -1px; border-radius: var(--fm-r-sm); pointer-events: none; box-shadow: 0 0 0 1.5px var(--accent-metal); }
 .cb-slot__ping { position: absolute; inset: -1px; border-radius: var(--fm-r-sm); pointer-events: none; box-shadow: 0 0 0 2px var(--fm-ember), 0 0 14px -3px var(--fm-ember-hi); animation: cbSlotPing .3s ease-out forwards; }
 @keyframes cbSlotPing { from { opacity: 1; } to { opacity: 0; } }
-.cb-slot__qty { position: absolute; top: 3px; right: 4px; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 8.5px; font-weight: 700; color: var(--fm-ink-faint); }
-.cb-slot.is-active .cb-slot__qty, .cb-slot.is-active .cb-slot__tag { color: var(--fm-brass-lo); }
+.cb-slot__qty { position: absolute; top: 3px; right: 4px; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 8.5px; font-weight: 700; color: var(--text-faint); }
+.cb-slot.is-active .cb-slot__qty, .cb-slot.is-active .cb-slot__tag { color: var(--accent-metal); }
 .cb-slot__name { font-family: var(--fm-serif); font-size: 9px; font-weight: 700; line-height: 1.1; text-align: center; color: inherit; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.cb-slot__tag { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 7.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fm-ink-faint); }
+.cb-slot__tag { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 7.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); }
 .cb-slot__tag.heal { color: var(--fm-verdigris); }
 
 /* Potion timer / active-boost badges sit on the right of the Your-HP row */
@@ -1260,10 +1375,10 @@ span.cb-fight__cb { cursor: default; }
    Written against the fm-* tokens directly (like .cb-qa), so it needs no
    .forge-shell override — DESIGN.md §2. */
 .cb-loot { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-.cb-loot__track { flex: 1 1 auto; min-width: 40px; max-width: 120px; height: 4px; border-radius: var(--fm-r-sharp); overflow: hidden; background: var(--fm-parch-lo); box-shadow: inset 0 1px 2px rgba(43, 33, 20, 0.35); }
+.cb-loot__track { flex: 1 1 auto; min-width: 40px; max-width: 120px; height: 4px; border-radius: var(--fm-r-sharp); overflow: hidden; background: var(--surface-sunken); box-shadow: inset 0 1px 2px rgba(43, 33, 20, 0.35); }
 .cb-loot__fill { height: 100%; background: var(--fm-brass); transition: width var(--fm-dur) var(--fm-ease); }
 .cb-loot.is-paid .cb-loot__fill { background: var(--fm-verdigris); }
-.cb-loot__v { flex-shrink: 0; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9px; font-weight: 700; letter-spacing: 0.02em; color: var(--fm-ink-faint); }
+.cb-loot__v { flex-shrink: 0; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9px; font-weight: 700; letter-spacing: 0.02em; color: var(--text-faint); }
 .cb-loot.is-paid .cb-loot__v { color: var(--fm-verdigris); }
 @media (prefers-reduced-motion: reduce) { .cb-loot__fill { transition: none; } }
 
@@ -1271,29 +1386,29 @@ span.cb-fight__cb { cursor: default; }
    Shut it is one 44px row showing the newest line; open it grows a short
    scrolling log above the same row. Same tokens-direct approach as .cb-loot, so
    no .forge-shell override is needed (DESIGN.md §2). */
-.cb-chat { flex-shrink: 0; margin-top: 8px; border-top: 1px solid var(--fm-rule); padding-top: 8px; }
-.cb-chat__log { max-height: 132px; overflow-y: auto; margin-bottom: 6px; padding: 6px 8px; border: 1px solid var(--fm-rule); border-radius: var(--fm-r-sm); background: var(--fm-parch-hi); box-shadow: var(--fm-parch-inset); }
-.cb-chat__line { font-size: 12px; line-height: 1.45; color: var(--fm-ink); overflow-wrap: anywhere; }
+.cb-chat { flex-shrink: 0; margin-top: 8px; border-top: 1px solid var(--hairline); padding-top: 8px; }
+.cb-chat__log { max-height: 132px; overflow-y: auto; margin-bottom: 6px; padding: 6px 8px; border: 1px solid var(--hairline); border-radius: var(--fm-r-sm); background: var(--surface-raised); box-shadow: var(--surface-inset); }
+.cb-chat__line { font-size: 12px; line-height: 1.45; color: var(--text-strong); overflow-wrap: anywhere; }
 .cb-chat__line.is-drop { color: var(--fm-royal); font-weight: 700; }
-.cb-chat__who { font-weight: 700; color: var(--fm-ink-soft); margin-right: 5px; }
+.cb-chat__who { font-weight: 700; color: var(--text-soft); margin-right: 5px; }
 .cb-chat__who::after { content: ':'; }
-.cb-chat__empty { font-size: 11px; color: var(--fm-ink-faint); font-style: italic; }
+.cb-chat__empty { font-size: 11px; color: var(--text-faint); font-style: italic; }
 .cb-chat__bar { display: flex; align-items: stretch; gap: 6px; }
 .cb-chat__toggle { position: relative; flex: 0 0 auto; width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--fm-btn-edge); border-radius: var(--fm-r-sm); background: var(--fm-btn-face); color: var(--fm-btn-ink); box-shadow: var(--fm-btn-relief); }
 .cb-chat__toggle:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .cb-chat__badge { position: absolute; top: 2px; right: 2px; min-width: 15px; padding: 0 3px; border-radius: var(--fm-r-sharp); background: var(--fm-ember); color: var(--fm-parch-hi); font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9px; font-weight: 700; line-height: 15px; text-align: center; }
 .cb-chat__form { flex: 1 1 auto; display: flex; align-items: stretch; gap: 6px; min-width: 0; }
-.cb-chat__input { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid var(--fm-rule); border-radius: var(--fm-r-sm); background: var(--fm-parch-hi); color: var(--fm-ink); font-size: 13px; }
-.cb-chat__input::placeholder { color: var(--fm-ink-faint); }
+.cb-chat__input { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid var(--hairline); border-radius: var(--fm-r-sm); background: var(--surface-raised); color: var(--text-strong); font-size: 13px; }
+.cb-chat__input::placeholder { color: var(--text-faint); }
 .cb-chat__send { flex: 0 0 auto; min-height: 44px; padding: 0 12px; border: 1px solid var(--fm-btn-edge); border-radius: var(--fm-r-sm); background: var(--fm-btn-face); color: var(--fm-btn-ink); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: var(--fm-btn-relief); }
 .cb-chat__send:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .cb-chat__send:disabled { background: var(--fm-btn-dead); color: var(--fm-btn-dead-ink); box-shadow: none; }
-.cb-chat__latest { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 10px; display: flex; align-items: center; border: 1px solid var(--fm-rule); border-radius: var(--fm-r-sm); background: var(--fm-parch); color: var(--fm-ink-soft); font-size: 12px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cb-chat__latest { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 10px; display: flex; align-items: center; border: 1px solid var(--hairline); border-radius: var(--fm-r-sm); background: var(--surface-panel); color: var(--text-soft); font-size: 12px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── Prayer picker (mobile combat prayer modal) ── */
 .cb-prayhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .cb-prayhead h3 { font-family: var(--font-display); font-weight: 800; font-size: 20px; margin: 0; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.cb-praysec { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fm-ink-faint); margin: 16px 2px 9px; }
+.cb-praysec { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-faint); margin: 16px 2px 9px; }
 .cb-praygrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .cb-praygrid--prot { grid-template-columns: 1fr 1fr 1fr; }
 .cb-prayer {
@@ -1306,7 +1421,7 @@ span.cb-fight__cb { cursor: default; }
 .cb-prayer:hover { border-color: var(--fm-brass); }
 .cb-prayer:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .cb-prayer:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
-.cb-prayer.is-on { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
+.cb-prayer.is-on { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--accent-metal); box-shadow: var(--fm-btn-relief-brass); }
 .cb-prayer.is-locked {
   background: var(--fm-btn-dead); background-image: none; color: var(--fm-btn-dead-ink);
   border-color: var(--fm-btn-dead-edge); box-shadow: none; cursor: not-allowed;
@@ -1314,11 +1429,11 @@ span.cb-fight__cb { cursor: default; }
 .cb-prayer.is-locked:active { transform: none; box-shadow: none; }
 .cb-prayer.is-locked:hover { border-color: var(--fm-btn-dead-edge); }
 .cb-prayer__name { font-family: var(--fm-display); font-weight: 700; font-size: 13.5px; color: inherit; display: flex; align-items: center; gap: 6px; }
-.cb-prayer__desc { font-family: var(--fm-serif); font-size: 10px; color: var(--fm-ink-soft); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cb-prayer__desc { font-family: var(--fm-serif); font-size: 10px; color: var(--text-soft); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .cb-prayer.is-on .cb-prayer__desc, .cb-prayer.is-locked .cb-prayer__desc { color: inherit; }
-.cb-prayer__lv { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9.5px; font-weight: 700; color: var(--fm-ink-faint); margin-top: auto; }
-.cb-prayer.is-on .cb-prayer__lv { color: var(--fm-brass-lo); }
-.cb-prayer__chk { position: absolute; top: 8px; right: 10px; color: var(--fm-ember-deep); font-size: 13px; font-weight: 700; }
+.cb-prayer__lv { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9.5px; font-weight: 700; color: var(--text-faint); margin-top: auto; }
+.cb-prayer.is-on .cb-prayer__lv { color: var(--accent-metal); }
+.cb-prayer__chk { position: absolute; top: 8px; right: 10px; color: var(--accent); font-size: 13px; font-weight: 700; }
 
 /* Attack-style / weakness chip */
 .cb-stylechip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; border: 1px solid; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; font-family: var(--font-body); white-space: nowrap; }
@@ -1332,52 +1447,52 @@ span.cb-fight__cb { cursor: default; }
 
 /* Drop table + unique panel */
 .cb-drops { display: flex; flex-direction: column; gap: 7px; }
-.cb-droprow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 13px; border-radius: 11px; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); }
+.cb-droprow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 13px; border-radius: 11px; background: var(--surface-raised); border: 1px solid var(--hairline); }
 .cb-droprow__l { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.cb-droprow__name { font-size: 13.5px; font-weight: 700; color: var(--fm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cb-droprow__name { font-size: 13.5px; font-weight: 700; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb-droprow__r { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .cb-droprow__rate { font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
 .cb-droprow__rate.common { color: #66707a; }
 .cb-droprow__rate.uncommon { color: #3d7020; }
 .cb-droprow__rate.rare { color: #1e5fa8; }
-.cb-droprow__rate.veryrare { color: var(--fm-ember-deep); }
-.cb-droprow__qty { font-family: var(--font-mono); font-size: 11px; color: var(--fm-ink-soft); min-width: 54px; text-align: right; }
-.cb-unique { margin-top: 4px; border-radius: 14px; padding: 13px 14px 14px; background: radial-gradient(120% 90% at 100% 0%, rgba(176,136,66,0.22), transparent 60%), var(--fm-parch-hi); border: 1px solid var(--fm-brass); box-shadow: var(--fm-parch-inset); }
-.cb-unique__head { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--fm-ember-deep); }
+.cb-droprow__rate.veryrare { color: var(--accent); }
+.cb-droprow__qty { font-family: var(--font-mono); font-size: 11px; color: var(--text-soft); min-width: 54px; text-align: right; }
+.cb-unique { margin-top: 4px; border-radius: 14px; padding: 13px 14px 14px; background: radial-gradient(120% 90% at 100% 0%, rgba(176,136,66,0.22), transparent 60%), var(--surface-raised); border: 1px solid var(--fm-brass); box-shadow: var(--surface-inset); }
+.cb-unique__head { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--accent); }
 .cb-unique__spark { color: var(--fm-brass); }
 .cb-unique__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 14px; margin-top: 11px; }
-.cb-unique__item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--fm-ink); min-width: 0; }
+.cb-unique__item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--text-strong); min-width: 0; }
 .cb-unique__item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb-unique__info { margin-left: auto; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; padding: 3px; border: 0; background: transparent; cursor: pointer; }
 .cb-unique__info:active { opacity: 0.6; }
 
 /* Unique drop-rate modal (opened from the ✦ Unique Drops info icon) */
 .cb-rates-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 22px; background: rgba(4,3,2,0.8); backdrop-filter: blur(3px); animation: cbFade .2s ease; }
-.cb-rates { width: 100%; max-width: 340px; max-height: 70vh; overflow-y: auto; border-radius: 16px; padding: 13px 15px 15px; background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border: 1px solid var(--fm-brass); box-shadow: 0 20px 50px -10px rgba(0,0,0,0.6); }
-.cb-rates__head { display: flex; align-items: center; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--fm-ink); margin-bottom: 8px; }
-.cb-rates__note { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--fm-ember-deep); padding: 2px 0 6px; }
-.cb-rates__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--fm-rule); }
+.cb-rates { width: 100%; max-width: 340px; max-height: 70vh; overflow-y: auto; border-radius: 16px; padding: 13px 15px 15px; background-color: var(--surface-card); background-image: var(--surface-tex); background-size: 400px; border: 1px solid var(--fm-brass); box-shadow: 0 20px 50px -10px rgba(0,0,0,0.6); background-blend-mode: var(--surface-blend); }
+.cb-rates__head { display: flex; align-items: center; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--text-strong); margin-bottom: 8px; }
+.cb-rates__note { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--accent); padding: 2px 0 6px; }
+.cb-rates__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--hairline); }
 .cb-rates__row:first-child { border-top: 0; }
-.cb-rates__l { display: flex; align-items: center; gap: 9px; min-width: 0; font-size: 13px; font-weight: 700; color: var(--fm-ink); }
+.cb-rates__l { display: flex; align-items: center; gap: 9px; min-width: 0; font-size: 13px; font-weight: 700; color: var(--text-strong); }
 .cb-rates__l span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cb-rates__rate { flex-shrink: 0; font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; color: var(--fm-ember-deep); }
+.cb-rates__rate { flex-shrink: 0; font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; color: var(--accent); }
 
 /* Combat-stats grid */
 .cb-statgrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-.cb-stat { display: flex; flex-direction: column; gap: 3px; padding: 11px 12px; border-radius: 12px; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); }
-.cb-stat__k { font-size: 9.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fm-ink-faint); }
-.cb-stat__v { font-family: var(--font-mono); font-weight: 700; font-size: 17px; color: var(--fm-ember-deep); }
+.cb-stat { display: flex; flex-direction: column; gap: 3px; padding: 11px 12px; border-radius: 12px; background: var(--surface-raised); border: 1px solid var(--hairline); }
+.cb-stat__k { font-size: 9.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
+.cb-stat__v { font-family: var(--font-mono); font-weight: 700; font-size: 17px; color: var(--accent); }
 
 /* Multi-form boss phase breakdown (attack/defence per form) */
 .cb-phases { display: flex; flex-direction: column; gap: 10px; }
-.cb-phase { padding: 11px 12px; border-radius: 12px; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); }
+.cb-phase { padding: 11px 12px; border-radius: 12px; background: var(--surface-raised); border: 1px solid var(--hairline); }
 .cb-phase__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .cb-phase__name { font-size: 13px; font-weight: 700; }
-.cb-phase__maxhit { font-family: var(--font-mono); font-size: 10px; color: var(--fm-ink-faint); }
-.cb-phase__bonuses { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 700; color: var(--fm-ink-soft); margin-bottom: 8px; }
-.cb-phase__v { font-family: var(--font-mono); color: var(--fm-ember-deep); }
-.cb-phase__weak { font-size: 10px; color: var(--fm-ink-faint); text-transform: capitalize; margin-top: 6px; }
-.cb-phase__note { font-size: 10px; color: var(--fm-ink-faint); margin-top: 4px; }
+.cb-phase__maxhit { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); }
+.cb-phase__bonuses { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 700; color: var(--text-soft); margin-bottom: 8px; }
+.cb-phase__v { font-family: var(--font-mono); color: var(--accent); }
+.cb-phase__weak { font-size: 10px; color: var(--text-faint); text-transform: capitalize; margin-top: 6px; }
+.cb-phase__note { font-size: 10px; color: var(--text-faint); margin-top: 4px; }
 .cb-statgrid--tight { grid-template-columns: repeat(5, 1fr); gap: 5px; }
 .cb-statgrid--tight .cb-stat { padding: 6px 4px; gap: 1px; border-radius: 8px; }
 .cb-statgrid--tight .cb-stat__k { font-size: 8px; }
@@ -1404,10 +1519,10 @@ span.cb-fight__cb { cursor: default; }
 /* Raid sheet specifics */
 .cb-raid__tag { display: inline-block; font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.2em; color: var(--fm-parch-hi); background: var(--fm-royal); border: 1px solid var(--fm-royal); padding: 2px 8px; border-radius: 999px; margin-bottom: 5px; }
 .cb-raid__times { display: grid; grid-template-columns: 1fr; gap: 8px; }
-.cb-raid__time { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 11px 6px; border-radius: 12px; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); }
-.cb-raid__tk { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fm-ink-faint); }
-.cb-raid__tv { font-family: var(--font-mono); font-weight: 700; font-size: 15px; color: var(--fm-ink); }
-.cb-raid__tv.gold { color: var(--fm-ember-deep); }
+.cb-raid__time { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 11px 6px; border-radius: 12px; background: var(--surface-raised); border: 1px solid var(--hairline); }
+.cb-raid__tk { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+.cb-raid__tv { font-family: var(--font-mono); font-weight: 700; font-size: 15px; color: var(--text-strong); }
+.cb-raid__tv.gold { color: var(--accent); }
 .cb-rooms { display: flex; flex-direction: column; }
 .cb-room { display: flex; align-items: center; gap: 10px; padding: 4px 0; position: relative; opacity: 0.65; }
 .cb-room.is-clear { opacity: 1; }
@@ -1432,15 +1547,15 @@ span.cb-fight__cb { cursor: default; }
 /* Bestiary/task bottom sheet (CombatMobileSheets, SlayerScreen) — always
    Forgemark parchment; both consumers are fully reskinned so this doesn't
    need .forge-shell scoping, and uses the global --fm-* tokens directly. */
-.cb-sheet, .cb-sheet--raid { background: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 500px; border-top-color: var(--fm-brass-lo); }
+.cb-sheet, .cb-sheet--raid { background: var(--surface-card); background-image: var(--surface-tex); background-size: 500px; border-top-color: var(--accent-metal); background-blend-mode: var(--surface-blend); }
 .cb-sheet--raid { border-top-color: var(--fm-royal); }
-.cb-sheet__grab { background: var(--fm-rule); }
-.cb-sheet__name, .cb-room__name { color: var(--fm-ink); }
-.cb-sheet__sub, .cb-sheet__sec, .cb-room__boss { color: var(--fm-ink-faint); }
-.cb-room__dot { background: var(--fm-parch-lo); border-color: var(--fm-rule); }
+.cb-sheet__grab { background: var(--hairline); }
+.cb-sheet__name, .cb-room__name { color: var(--text-strong); }
+.cb-sheet__sub, .cb-sheet__sec, .cb-room__boss { color: var(--text-faint); }
+.cb-room__dot { background: var(--surface-sunken); border-color: var(--hairline); }
 .cb-room.is-clear .cb-room__dot { background: radial-gradient(circle, #fcecb0, var(--fm-brass)); border-color: var(--fm-brass-hi); }
-.cb-room__line { background: var(--fm-rule); }
-.cb-req { color: var(--fm-ink-soft); background: var(--fm-parch-hi); border-color: var(--fm-rule); }
+.cb-room__line { background: var(--hairline); }
+.cb-req { color: var(--text-soft); background: var(--surface-raised); border-color: var(--hairline); }
 
 /* Idle config sheet */
 .cb-sheet--idle { padding-top: 18px; }
@@ -1451,22 +1566,22 @@ span.cb-fight__cb { cursor: default; }
 .cb-x:hover { border-color: var(--fm-brass); }
 .cb-x:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .cb-x img, .cb-x svg { width: 16px; height: 16px; }
-.cb-idledesc { font-size: 13px; line-height: 1.5; color: var(--fm-ink-soft); margin: 6px 2px 14px; flex-shrink: 0; }
+.cb-idledesc { font-size: 13px; line-height: 1.5; color: var(--text-soft); margin: 6px 2px 14px; flex-shrink: 0; }
 .cb-idlelist { overflow-y: auto; display: flex; flex-direction: column; gap: 9px; padding: 2px; }
 .cb-idlelist::-webkit-scrollbar { width: 4px; }
 .cb-idlelist::-webkit-scrollbar-thumb { background: rgba(240,192,64,0.3); border-radius: 999px; }
 .cb-fooditem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 12px 13px; border-radius: var(--fm-r-sm); cursor: pointer; color: var(--fm-btn-ink); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief); transition: transform var(--fm-dur) var(--fm-ease), background var(--fm-dur), border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur); }
 .cb-fooditem:hover { border-color: var(--fm-brass); }
 .cb-fooditem:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
-.cb-fooditem.is-sel { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
+.cb-fooditem.is-sel { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--accent-metal); box-shadow: var(--fm-btn-relief-brass); }
 .cb-fooditem__art { flex-shrink: 0; }
 .cb-fooditem__body { flex: 1; min-width: 0; }
 .cb-fooditem__name { font-family: var(--fm-display); font-weight: 700; font-size: 16px; color: inherit; }
 .cb-fooditem__heal { color: var(--fm-verdigris); font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 700; }
-.cb-fooditem.is-sel .cb-fooditem__heal, .cb-fooditem.is-sel .cb-fooditem__sub { color: var(--fm-brass-lo); }
-.cb-fooditem__sub { font-size: 11.5px; color: var(--fm-ink-soft); margin-top: 2px; font-weight: 600; }
-.cb-fooditem__btn { flex-shrink: 0; font-family: var(--fm-serif); font-weight: 700; font-size: 13px; color: var(--fm-ink-soft); padding: 7px 15px; border-radius: var(--fm-r-sharp); border: 1px solid var(--fm-rule); }
-.cb-fooditem__btn.is-sel { color: var(--fm-btn-ink-on); border-color: var(--fm-brass-lo); background: transparent; }
+.cb-fooditem.is-sel .cb-fooditem__heal, .cb-fooditem.is-sel .cb-fooditem__sub { color: var(--accent-metal); }
+.cb-fooditem__sub { font-size: 11.5px; color: var(--text-soft); margin-top: 2px; font-weight: 600; }
+.cb-fooditem__btn { flex-shrink: 0; font-family: var(--fm-serif); font-weight: 700; font-size: 13px; color: var(--text-soft); padding: 7px 15px; border-radius: var(--fm-r-sharp); border: 1px solid var(--hairline); }
+.cb-fooditem__btn.is-sel { color: var(--fm-btn-ink-on); border-color: var(--accent-metal); background: transparent; }
 .cb-done { margin-top: 14px; flex-shrink: 0; align-self: flex-end; min-height: 44px; padding: 11px 28px; cursor: pointer; border-radius: var(--fm-r-sm); font-family: var(--fm-display); font-weight: 700; font-size: 15px; color: #2a0f02; background: var(--fm-ember-face); border: 1px solid var(--fm-ember-deep); box-shadow: inset 0 1px 0 rgba(255,220,180,0.5), inset 0 -1px 0 rgba(90,30,4,0.55); transition: transform var(--fm-dur) var(--fm-ease), box-shadow var(--fm-dur); }
 .cb-done:hover { box-shadow: inset 0 1px 0 rgba(255,220,180,0.55), 0 6px 18px -8px rgba(240,116,42,0.75); }
 .cb-done:active { transform: translateY(1px); }
@@ -2828,7 +2943,7 @@ span.cb-fight__cb { cursor: default; }
    re-points to ink — near-black text on a near-black tile. */
 .clog-slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: var(--fm-r-sm); text-align: center; color: var(--fm-btn-ink); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief); transition: border-color var(--fm-dur), background var(--fm-dur), box-shadow var(--fm-dur); }
 .clog-slot.is-got { border-color: var(--fm-brass); }
-.clog-slot.is-got.gold-card { border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief), inset 0 0 16px -6px rgba(176,136,66,0.55); }
+.clog-slot.is-got.gold-card { border-color: var(--accent-metal); box-shadow: var(--fm-btn-relief), inset 0 0 16px -6px rgba(176,136,66,0.55); }
 .clog-slot.is-locked { background: var(--fm-btn-dead); background-image: none; border-color: var(--fm-btn-dead-edge); box-shadow: none; color: var(--fm-btn-dead-ink); }
 .clog-slot__name { font-family: var(--fm-serif); font-size: 10px; font-weight: 700; line-height: 1.2; letter-spacing: .01em; color: inherit; min-height: 24px; display: flex; align-items: center; }
 .clog-slot__lock { position: absolute; top: 5px; right: 7px; font-size: 11px; opacity: .55; line-height: 1; }
@@ -2842,7 +2957,8 @@ span.cb-fight__cb { cursor: default; }
   background-size: auto, auto, 280px; }
 .wm-stage:active { cursor: grabbing; }
 .wm-board { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
-.wm-chart { position: absolute; inset: 0; background-color: #e4d6b2; background-image: var(--fm-tex-parch); background-size: 600px;
+.wm-chart { position: absolute; inset: 0; background-color: #e4d6b2; background-image: var(--surface-tex); background-size: 600px;
+background-blend-mode: var(--surface-blend);
   border-radius: 10px;
   box-shadow: inset 0 0 0 2px rgba(120,95,55,0.4), 0 30px 80px -30px #000; }
 /* Painted terrain (PlaceArt's <WorldTerrain>) sits over the parchment; the grunge layer
@@ -2854,7 +2970,8 @@ span.cb-fight__cb { cursor: default; }
 .wm-map-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 10px; pointer-events: none; user-select: none; }
 
 .wm-grunge { position: absolute; inset: 0; border-radius: 10px; pointer-events: none;
-  background-image: radial-gradient(130% 120% at 50% 50%, transparent 55%, rgba(90,60,20,0.35)), var(--fm-tex-parch);
+  background-image: radial-gradient(130% 120% at 50% 50%, transparent 55%, rgba(90,60,20,0.35)), var(--surface-tex);
+  background-blend-mode: var(--surface-blend);
   background-size: cover, 600px; mix-blend-mode: multiply; opacity: 0.5; }
 .wm-routes { position: absolute; top: 0; left: 0; overflow: visible; }
 .wm-road { stroke: #6e4f20; stroke-width: 3; stroke-dasharray: 2 9; stroke-linecap: round; opacity: 0.9; }
@@ -2875,15 +2992,15 @@ span.cb-fight__cb { cursor: default; }
    terrain (the old dark-iron plates fought the parchment map). */
 .wm-plate { display: flex; flex-direction: column; align-items: center; padding: 3px 10px; border-radius: 4px;
   background: rgba(243,234,208,0.92); border: 1px solid rgba(122,95,55,0.55); box-shadow: 0 2px 7px -3px rgba(50,32,8,0.75); white-space: nowrap; }
-.wm-name { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--fm-ink); line-height: 1.1; }
+.wm-name { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--text-strong); line-height: 1.1; }
 .wm-tier { font-size: 8.5px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700;
-  color: color-mix(in srgb, var(--wm-accent) 55%, var(--fm-ink)); }
+  color: color-mix(in srgb, var(--wm-accent) 55%, var(--text-strong)); }
 .wm-node--here .wm-plate { border-color: rgba(194,65,12,0.75); box-shadow: 0 0 0 1px rgba(240,116,42,0.35), 0 2px 7px -3px rgba(50,32,8,0.75); }
-.wm-node--here .wm-name { color: var(--fm-ember-deep); }
+.wm-node--here .wm-name { color: var(--accent); }
 
 .wm-legend { position: absolute; left: 14px; bottom: 14px; z-index: 20; padding: 10px 12px; border-radius: 8px; max-width: 220px;
-  background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 6px 18px -10px #000, var(--fm-parch-inset); }
-.wm-legend h4 { margin: 0 0 7px; font-family: var(--font-display); font-weight: 600; font-size: 12px; color: var(--fm-ember-deep); }
+  background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 6px 18px -10px #000, var(--surface-inset); }
+.wm-legend h4 { margin: 0 0 7px; font-family: var(--font-display); font-weight: 600; font-size: 12px; color: var(--accent); }
 .wm-legrow { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-parchment); margin: 4px 0; }
 .wm-dot { width: 13px; height: 13px; border-radius: 50%; flex: 0 0 auto; box-shadow: inset 0 0 0 2px rgba(0,0,0,.4); }
 .wm-hint { margin-top: 8px; font-style: italic; font-size: 11.5px; color: var(--color-parchment-dark); }
@@ -2893,8 +3010,8 @@ span.cb-fight__cb { cursor: default; }
 /* The map desk is always hammered iron, so these are pinned to the vellum face
    rather than inheriting the surrounding token set — an iron key on an iron
    desk is the dark-on-dark case this avoids. */
-.wm-ctl button { width: 44px; height: 44px; border-radius: var(--fm-r-sm); cursor: pointer; color: var(--fm-ink);
-  background: var(--fm-btn-vellum); border: 1px solid var(--fm-rule); box-shadow: var(--fm-btn-relief-vellum);
+.wm-ctl button { width: 44px; height: 44px; border-radius: var(--fm-r-sm); cursor: pointer; color: var(--text-strong);
+  background: var(--fm-btn-vellum); border: 1px solid var(--hairline); box-shadow: var(--fm-btn-relief-vellum);
   font-size: 20px; font-family: var(--fm-display); display: grid; place-items: center;
   transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur); }
 .wm-ctl button:hover { color: var(--fm-brass-hi); border-color: var(--fm-brass); }
@@ -2937,10 +3054,10 @@ span.cb-fight__cb { cursor: default; }
 .wm-act-icon { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; font-size: 22px;
   background: radial-gradient(circle at 38% 30%, #2a2622, #100e0c); box-shadow: inset 0 0 0 2px var(--color-gold-dim); }
 .wm-act-main { flex: 1; min-width: 0; }
-.wm-act-name { display: block; font-family: var(--fm-display); font-weight: 700; font-size: 16px; color: var(--fm-ink); line-height: 1.1; }
-.wm-act-note { display: block; font-family: var(--fm-serif); font-size: 12px; color: var(--fm-ink-soft); margin-top: 2px; }
+.wm-act-name { display: block; font-family: var(--fm-display); font-weight: 700; font-size: 16px; color: var(--text-strong); line-height: 1.1; }
+.wm-act-note { display: block; font-family: var(--fm-serif); font-size: 12px; color: var(--text-soft); margin-top: 2px; }
 .wm-act-right { text-align: right; flex: 0 0 auto; }
-.wm-act-lvl { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 600; color: var(--fm-ink-faint); display: block; margin-bottom: 4px; }
+.wm-act-lvl { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 600; color: var(--text-faint); display: block; margin-bottom: 4px; }
 
 /* World Map — place hub facilities */
 .wm-hub-facilities { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
@@ -2963,8 +3080,8 @@ span.cb-fight__cb { cursor: default; }
 .wm-tp-place { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
 .wm-tp-ticks { font-family: var(--font-mono); font-size: 13px; color: var(--color-gold-dim); }
 .wm-tp-cancel { min-height: 44px; padding: 10px 14px; border-radius: var(--fm-r-sm); cursor: pointer;
-  background: transparent; border: 1px solid var(--fm-rule); color: var(--fm-ink-soft); font-family: var(--fm-serif); font-weight: 600; }
-.wm-tp-cancel:hover { color: var(--fm-ink); border-color: var(--fm-ink-soft); background: rgba(74,54,28,0.08); }
+  background: transparent; border: 1px solid var(--hairline); color: var(--text-soft); font-family: var(--fm-serif); font-weight: 600; }
+.wm-tp-cancel:hover { color: var(--text-strong); border-color: var(--text-soft); background: var(--surface-hover); }
 .wm-tp-cancel:active { transform: translateY(1px); }
 
 /* World Map — travel (phase 2) */
@@ -2987,14 +3104,14 @@ span.cb-fight__cb { cursor: default; }
 .wm-travelbar-route { margin-top: 8px; font-style: italic; font-size: 12px; color: var(--color-parchment-dark); }
 .wm-travelbar-actions { margin-top: 10px; display: flex; gap: 8px; }
 .wm-travelbar-cancel { flex: 1; min-height: 44px; font-family: var(--fm-serif); font-weight: 600;
-  font-size: 13px; color: var(--fm-ink-soft); background: transparent; border: 1px solid var(--fm-rule);
+  font-size: 13px; color: var(--text-soft); background: transparent; border: 1px solid var(--hairline);
   border-radius: var(--fm-r-sm); cursor: pointer; }
-.wm-travelbar-cancel:hover { border-color: var(--fm-ink-soft); color: var(--fm-ink); background: rgba(74,54,28,0.08); }
+.wm-travelbar-cancel:hover { border-color: var(--text-soft); color: var(--text-strong); background: var(--surface-hover); }
 .wm-travelbar-cancel:active { transform: translateY(1px); }
 .wm-travelbar-skip { flex: 1; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   font-family: var(--fm-display); font-weight: 700; font-size: 13px; color: var(--fm-btn-ink-on); cursor: pointer;
   border-radius: var(--fm-r-sm); background: var(--fm-btn-brass);
-  border: 1px solid var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
+  border: 1px solid var(--accent-metal); box-shadow: var(--fm-btn-relief-brass); }
 .wm-travelbar-skip:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .wm-travelbar-skip:disabled { background: var(--fm-btn-dead); background-image: none; color: var(--fm-btn-dead-ink); border-color: var(--fm-btn-dead-edge); box-shadow: none; cursor: not-allowed; }
 .wm-travelbar-tele { flex: 1; min-height: 44px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 8px;
@@ -3033,11 +3150,11 @@ span.cb-fight__cb { cursor: default; }
 .wm-runecost__n { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 700; color: #d9cbee; }
 .wm-runecost__item.is-short .wm-runecost__n { color: var(--fm-blood); }
 .wm-travelbar-tele__lead { display: inline-flex; align-items: center; gap: 6px; }
-.wm-tele-btn.is-locked .wm-runecost__n { color: var(--fm-ink-faint); }
+.wm-tele-btn.is-locked .wm-runecost__n { color: var(--text-faint); }
 .wm-tele-btn.is-locked .wm-runecost__item.is-short .wm-runecost__n,
 .wm-travelbar-tele.is-locked .wm-runecost__item.is-short .wm-runecost__n { color: var(--fm-blood); }
 .wm-tele-btn.is-locked { cursor: not-allowed; background: var(--fm-btn-dead); background-image: none; border-color: var(--fm-btn-dead-edge); box-shadow: none; transform: none; }
-.wm-tele-btn.is-locked .wm-tele-btn__lead, .wm-tele-btn.is-locked .wm-tele-btn__cost { color: var(--fm-ink-faint); }
+.wm-tele-btn.is-locked .wm-tele-btn__lead, .wm-tele-btn.is-locked .wm-tele-btn__cost { color: var(--text-faint); }
 
 /* ── Place map (PlaceMapView) — per-place interactive town map, the world map's
    interaction model one level down. Reuses .wm-stage/.wm-board/.wm-ctl; the
@@ -3051,7 +3168,7 @@ span.cb-fight__cb { cursor: default; }
 .pm-back { pointer-events: auto; min-height: 44px; padding: 0 16px; border-radius: var(--fm-r-sm); cursor: pointer;
   font-family: var(--fm-display); font-weight: 700; font-size: 13px; color: var(--fm-parch);
   background: var(--fm-btn-iron); border: 1px solid #000; box-shadow: var(--fm-btn-relief-iron); }
-.pm-back:hover { color: var(--fm-brass-hi); border-color: var(--fm-brass-lo); }
+.pm-back:hover { color: var(--fm-brass-hi); border-color: var(--accent-metal); }
 .pm-back:active { transform: translateY(1px); box-shadow: var(--fm-btn-press-iron); }
 .pm-title { display: flex; flex-direction: column; min-width: 0; padding: 6px 14px; border-radius: 10px;
   background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 6px 18px -8px #000; }

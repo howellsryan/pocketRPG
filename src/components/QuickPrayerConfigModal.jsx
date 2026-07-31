@@ -22,7 +22,7 @@ export default function QuickPrayerConfigModal({ prayerLevel, selected, onChange
       <div class="cb-prayhead">
         <h3>Quick Prayers</h3>
         <button onClick={onClose} class="cb-x" aria-label="Close">
-          <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
+          <GameIcon iconKey="cancel" color="var(--text-soft)" size={16} />
         </button>
       </div>
 
