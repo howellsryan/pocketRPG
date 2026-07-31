@@ -300,7 +300,10 @@ export const api = {
     body: JSON.stringify(
       action?.refill ? { refill: true } : action?.confirm ? { confirm: action.confirm } : { message, history },
     ),
-    timeoutMs: 90_000,
+    // Must stay above CHAT_TIME_BUDGET_MS: past its own budget the endpoint
+    // returns a retrieval-only answer, which is worth more to the player than
+    // the "too much for me" message an abort here produces.
+    timeoutMs: 110_000,
   }),
 }
 
