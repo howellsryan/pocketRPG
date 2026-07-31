@@ -121,6 +121,14 @@ Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward
 
 A boss hunts you across its whole lair, further than any other monster will follow, and any minions it has summoned stay on the field with it. The way out of a boss fight is the way you came in.
 
+## Hard Mode
+
+Most bosses and every raid can be switched to Hard Mode from the prompt that opens when you tap them in the combat picker. The switch is per boss (and per raid), stays on until you turn it off, and shows as a **HARD** tag wherever that fight is listed.
+
+A hard fight doubles the boss's health and every combat stat it has: it hits harder, hits more often, and is harder to hit. In exchange every drop rate on its table doubles — a 1-in-500 unique becomes 1-in-250. Guaranteed drops stay one drop.
+
+Difficulty belongs to the fight, not to you: a group boss room or a raid party is opened at the difficulty the player who opened it chose, everyone in it fights the same boss, and joining a listed group means taking that group's difficulty. Hard Mode applies to solo fights and group fights; open-world boss lairs are always normal.
+
 ## Group boss fights
 
 Tap most bosses in the combat picker and you are asked whether to fight solo or join a group. A group holds up to 8 players against one shared boss; you join the fullest group with room, or open a new one. Raid bosses stay inside their raids, and four bosses are solo only: Ember Tyrant, Ashen Crucible, Venomcoil Matriarch and Blighted Gauntlet.

@@ -85,6 +85,8 @@ import { openWorld } from './utils/helpers.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
 import { fetchKillCounts } from './cloud/killCounts.js'
+import { fetchHardModeTargets, hardModeKey } from './cloud/hardMode.js'
+import { hardModeSkipCost } from './engine/hardMode.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 import { rollClueRewards } from './engine/clueScrolls.js'
 import dailyTasksData from './data/dailyTasks.json'
@@ -359,7 +361,7 @@ const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the d
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, syncHardModeTargets, hardModeTargets, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
@@ -1817,6 +1819,7 @@ function GameApp() {
       // Kick off KC + daily-tasks fetch in parallel with checkSave to minimise the
       // window where data is missing from the first render.
       const kcPromise = fetchKillCounts()
+      const hardModePromise = fetchHardModeTargets()
       const dailyTasksPromise = api.getDailyTasks().catch(() => null)
       await checkSave()
       // Pull collection log alongside the save. Fire-and-forget — UI shows a
@@ -1831,6 +1834,9 @@ function GameApp() {
         // shows the warm cache rather than blocking the screen.
         markKillCountsLoaded()
       })
+      hardModePromise.then(keys => {
+        if (keys) syncHardModeTargets(keys)
+      }).catch(() => {})
       dailyTasksPromise.then(dt => {
         if (!dt?.tasks) return
         setDailyTaskDate(dt.date)
@@ -3270,7 +3276,11 @@ function GameApp() {
 
   // Skip button mode — shared by the desktop Header and the mobile frame bar.
   const skipMode = activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'
-  const raidSkipCost = activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null
+  // A hard raid costs double to skip, because a skip buys the run's (doubled)
+  // reward roll. The server charges the same multiple from its own switch.
+  const raidSkipCost = activeTask?.type === 'combat' && activeTask?.raidId
+    ? hardModeSkipCost(raidsData[activeTask.raidId]?.skipCost ?? 1, (hardModeTargets || []).includes(hardModeKey('raids', activeTask.raidId)))
+    : null
 
   // Persistent combat host: the CombatScreen stays mounted (hidden) while a
   // background-eligible fight is still busy (ticking, or holding a loot/death

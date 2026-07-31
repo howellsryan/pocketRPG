@@ -28,6 +28,7 @@ import {
   removeCoopMember,
 } from '../../../src/engine/coopBossEngine.js'
 import { bossEntryFailure, loadBossKillCounts } from './bossEntry.js'
+import { isHardModeEnabled } from './hardMode.js'
 import { monsterMaxHitRange } from '../../../src/engine/monsterMaxHit.js'
 import { rollMonsterRewardsById } from './monsterRewards.js'
 import { rollRaidRewardsById } from './raidRewards.js'
@@ -96,7 +97,7 @@ export function parseSessionState(row) {
 export async function readSession(env, sessionId) {
   return env.DB.prepare(
     `SELECT id, boss_id, raid_id, phase, host_character_id, status, member_count, current_tick,
-            state_json, last_tick_at, created_at, ended_at, kill_seq
+            state_json, last_tick_at, created_at, ended_at, kill_seq, hard_mode
        FROM coop_boss_sessions WHERE id = ?`,
   ).bind(sessionId).first()
 }
@@ -262,7 +263,7 @@ export async function pruneCoopExhaust(env, now = Date.now()) {
  */
 export async function listOpenSessions(env, bossId, now = Date.now()) {
   const rows = await env.DB.prepare(
-    `SELECT id, boss_id, member_count, current_tick, boss_hp, boss_max_hp
+    `SELECT id, boss_id, member_count, current_tick, boss_hp, boss_max_hp, hard_mode
        FROM coop_boss_sessions
       WHERE boss_id = ? AND raid_id IS NULL AND status = 'active' AND last_tick_at >= ?
       ORDER BY member_count DESC, id ASC`,
@@ -280,7 +281,7 @@ export async function listAllOpenSessions(env, bossIds, now = Date.now()) {
   if (ids.length === 0) return byBoss
   const placeholders = ids.map(() => '?').join(',')
   const rows = await env.DB.prepare(
-    `SELECT id, boss_id, member_count, current_tick, boss_hp, boss_max_hp
+    `SELECT id, boss_id, member_count, current_tick, boss_hp, boss_max_hp, hard_mode
        FROM coop_boss_sessions
       WHERE boss_id IN (${placeholders}) AND raid_id IS NULL AND status = 'active' AND last_tick_at >= ?
       ORDER BY member_count DESC, id ASC`,
@@ -328,6 +329,7 @@ function toOpenSession(row) {
   return {
     sessionId: row.id,
     bossId: row.boss_id,
+    hardMode: row.hard_mode === 1,
     memberCount: row.member_count,
     maxMembers: COOP_MAX_MEMBERS,
     bossHP: row.boss_hp ?? null,
@@ -391,6 +393,10 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
   if (gate) throw new GameApiError(gate.code, gate.message, 403)
 
   const monster = monstersData[bossId]
+  // The joiner's own switch decides which ROOM they are looking for, never the
+  // difficulty of a room they tapped: a room's difficulty is fixed when it is
+  // opened, because everyone in it shares one health bar.
+  const wantsHardMode = await isHardModeEnabled(env, characterId, 'monsters', bossId)
 
   // The session snapshot becomes the authority on this character's inventory
   // and equipment until they leave, so bump the revision now: any save the
@@ -429,17 +435,17 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
       // to this boss, so a foreign session id simply is not found.
       const target = requestedSessionId
         ? open.find((s) => s.sessionId === requestedSessionId && !exhausted.has(s.sessionId))
-        : open.find((s) => !s.full && !exhausted.has(s.sessionId))
+        : open.find((s) => !s.full && !exhausted.has(s.sessionId) && s.hardMode === wantsHardMode)
       if (requestedSessionId && (!target || target.full)) {
         throw new GameApiError('COOP_SESSION_UNAVAILABLE', 'That group is full or has finished — pick another', 409)
       }
 
       if (!target) {
-        const fresh = addCoopMember(createCoopBossState(bossId, monstersData, now), member)
+        const fresh = addCoopMember(createCoopBossState(bossId, monstersData, now, { hardMode: wantsHardMode }), member)
         const res = await env.DB.prepare(
-          `INSERT INTO coop_boss_sessions (boss_id, status, member_count, created_at, current_tick, state_json, last_tick_at, boss_hp, boss_max_hp, kill_seq)
-           VALUES (?, 'active', 1, ?, 0, ?, ?, ?, ?, 0)`,
-        ).bind(bossId, now, JSON.stringify(fresh), now, fresh.boss.currentHP, fresh.boss.maxHP).run()
+          `INSERT INTO coop_boss_sessions (boss_id, status, member_count, created_at, current_tick, state_json, last_tick_at, boss_hp, boss_max_hp, kill_seq, hard_mode)
+           VALUES (?, 'active', 1, ?, 0, ?, ?, ?, ?, 0, ?)`,
+        ).bind(bossId, now, JSON.stringify(fresh), now, fresh.boss.currentHP, fresh.boss.maxHP, wantsHardMode ? 1 : 0).run()
         sessionId = res.meta.last_row_id
         break
       }
@@ -847,9 +853,14 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
   // OWN slayer task, so task-only drops behave exactly as they do solo. A raid
   // has no on-task drops of its own — it rolls the raid's reward table.
   const onTask = Array.isArray(kill?.onTaskCharacterIds) && kill.onTaskCharacterIds.some((id) => Number(id) === Number(characterId))
+  // The ROOM's difficulty, never the member's switch — one health bar, one set
+  // of rates, whatever any individual has toggled since. state_json is what the
+  // room is fighting so it leads; the column says the same for a caller holding
+  // only the row.
+  const hardMode = state?.hardMode === true || session?.hard_mode === 1
   const rewards = sourceType === 'raids'
-    ? rollRaidRewardsById(sourceId)
-    : rollMonsterRewardsById(sourceId, Math.random, onTask)
+    ? rollRaidRewardsById(sourceId, Math.random, hardMode)
+    : rollMonsterRewardsById(sourceId, Math.random, onTask, hardMode)
   const withSession = applyMemberToSave(saveObject, member)
   let settled
   let write

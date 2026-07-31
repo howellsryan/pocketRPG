@@ -78,6 +78,7 @@ export function projectStateForMember(state, characterId) {
   return {
     tick: state.tick || 0,
     bossId: state.bossId,
+    hardMode: state.hardMode === true,
     boss: state.boss,
     targetCharId: state.targetCharId ?? null,
     phase: state.phase || 'active',

@@ -96,6 +96,10 @@ export function GameProvider({ children }) {
   const [slayerStoreUnlocks, setSlayerStoreUnlocksState] = useState([])
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
+  // Hard Mode switches, as `${sourceType}:${sourceId}` keys. A MIRROR of
+  // hard_mode_targets — the server decides the doubled drop rates, this only
+  // decides what the picker renders and which monster the client scales.
+  const [hardModeTargets, setHardModeTargetsState] = useState([])
   const [raidKillCounts, setRaidKillCountsState] = useState({})
   // True once the per-character server KC fetch has settled (success or fail).
   // The combat screen gates its first render on this so a cold cache never
@@ -186,7 +190,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -194,7 +198,7 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
-      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme')
+      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -705,6 +709,7 @@ export function GameProvider({ children }) {
     setDungeoneeringTokensState(savedDungeoneeringTokens)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
+    setHardModeTargetsState(Array.isArray(savedHardModeTargets) ? savedHardModeTargets : [])
     setRaidKillCountsState(savedRaidKillCounts ?? {})
     setFarmingState(savedFarming ?? { patchesById: {} })
     const initialCompletedQuests = new Set(savedCompletedQuests || [])
@@ -1103,6 +1108,29 @@ export function GameProvider({ children }) {
     slayerStoreUnlocksRef.current = next
     setSlayerStoreUnlocksState(next)
     saveSetting('slayerStoreUnlocks', next)
+  }, [])
+
+  // Replaces the mirror wholesale from the server's own list — the server is the
+  // only writer, so merging a stale local copy in would resurrect a switch the
+  // player turned off on another device.
+  const syncHardModeTargets = useCallback((keys) => {
+    const next = Array.isArray(keys) ? [...new Set(keys)] : []
+    setHardModeTargetsState(next)
+    saveSetting('hardModeTargets', next)
+  }, [])
+
+  // Local echo of one accepted server write. The caller has already had its POST
+  // acknowledged — a failed write must never reach here, or the client fights a
+  // doubled boss for normal drop rates.
+  const applyHardModeTarget = useCallback((key, enabled) => {
+    setHardModeTargetsState((prev) => {
+      const set = new Set(prev)
+      if (enabled) set.add(key)
+      else set.delete(key)
+      const next = [...set]
+      saveSetting('hardModeTargets', next)
+      return next
+    })
   }, [])
 
   const updateBossKillCounts = useCallback((counts) => {
@@ -1669,6 +1697,7 @@ export function GameProvider({ children }) {
     dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens,
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
+    hardModeTargets, syncHardModeTargets, applyHardModeTarget,
     raidKillCounts, updateRaidKillCounts,
     syncServerKillCounts,
     killCountsLoaded, markKillCountsLoaded,

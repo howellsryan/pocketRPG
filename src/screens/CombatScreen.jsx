@@ -27,6 +27,9 @@ import { prayerSkill } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
+import { hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
+import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
+import { HardModeTag, HardModeToggle } from '../components/HardMode.jsx'
 import { liveAdds, targetedAdd } from '../engine/bossAdds.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -346,7 +349,7 @@ function MonsterAddStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
@@ -1413,6 +1416,29 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
   }, [coopSessionId])
 
+  // Hard Mode. The switch itself is server state (§14) — this is the mirror the
+  // picker renders and the flag that decides which monster record the fight is
+  // built from. The offline demo has no server to hold the switch, so it has no
+  // hard mode either.
+  const hardModeSet = useMemo(() => new Set(hardModeTargets || []), [hardModeTargets])
+  const offersHardMode = (entity) => supportsHardMode(entity) && !isDemo
+  const isHardMode = (sourceType, sourceId) => hardModeSet.has(hardModeKey(sourceType, sourceId))
+  const [hardModePending, setHardModePending] = useState(null)
+  // Writes first, mirrors second. A refused write leaves the switch where it
+  // was: a client-only hard mode is a doubled boss paying normal drop rates.
+  const toggleHardMode = async (sourceType, sourceId, enabled) => {
+    const key = hardModeKey(sourceType, sourceId)
+    setHardModePending(key)
+    try {
+      await pushHardModeTarget(sourceType, sourceId, enabled)
+      applyHardModeTarget(key, enabled)
+    } catch (err) {
+      addToast(err?.message || 'Could not change difficulty — try again.', 'error')
+    } finally {
+      setHardModePending(null)
+    }
+  }
+
   // Co-op needs a cloud account (the server owns the fight), so the offline demo
   // always goes straight to the solo path.
   const offersCoop = (monster) => isCoopBossId(monster.id) && !isDemo
@@ -1424,7 +1450,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // the mobile picker is the primary layout, so wiring only one of them is how
   // the prompt goes missing for most players.
   const pickMonsterForFight = (monster) => {
-    if (offersCoop(monster) || offersWorldLair(monster)) setCoopChoice(monster)
+    if (offersCoop(monster) || offersWorldLair(monster) || offersHardMode(monster)) setCoopChoice(monster)
     else startFight(monster)
   }
 
@@ -1560,7 +1586,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // point routes through pickRaidForFight so the two layouts cannot disagree.
   const offersRaidParty = (raid) => isCoopRaidId(raid?.id) && !isDemo
   const pickRaidForFight = (raid) => {
-    if (offersRaidParty(raid)) setRaidChoice(raid)
+    if (offersRaidParty(raid) || offersHardMode(raid)) setRaidChoice(raid)
     else startRaid(raid)
   }
 
@@ -1782,7 +1808,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const { combatType: weaponCombatType, weaponItem, isPoweredStaff, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
     const combatType = needsSpell ? 'melee' : weaponCombatType
     if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
-    const state = createCombatState(monster, combatType, combatStance, spell, monstersData)
+    // Hard mode is a scaled COPY of the record (and of the table its adds come
+    // out of), never a branch in the engine — see src/engine/hardMode.js. The
+    // scaled record is what the active task carries, so an auto-fight, an idle
+    // sim and a reload all keep fighting the same boss.
+    const hard = offersHardMode(monster) && isHardMode('monsters', monster.id)
+    monster = hard ? scaleMonsterForHardMode(monster) : monster
+    const state = createCombatState(monster, combatType, combatStance, spell, monstersTableFor(monstersData, hard))
     // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
     state.specialAttackEnergy = 100
     // Prayer pool starts full (= Prayer level) at the start of a combat session.
@@ -1815,7 +1847,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const { combatType: weaponCombatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
     const combatType = needsSpell ? 'melee' : weaponCombatType
     if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
-    const state = createRaidCombatState(raidData, monstersData, combatType, combatStance, spell)
+    // A hard raid scales the TABLE, so every boss in the run — including the
+    // ones the engine looks up as it advances — comes out doubled.
+    const hardRaid = offersHardMode(raidData) && isHardMode('raids', raidData.id)
+    const state = createRaidCombatState(raidData, monstersTableFor(monstersData, hardRaid), combatType, combatStance, spell)
     if (!state) {
       addToast('Failed to start raid — missing boss data', 'error')
       return
@@ -1829,7 +1864,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
-    const firstBoss = monstersData[raidData.bosses[0]]
+    const firstBoss = monstersTableFor(monstersData, hardRaid)[raidData.bosses[0]]
     setLog([
       { text: `🩸 ${raidData.name} — Raid started!`, type: 'raid', time: Date.now() },
       { text: `Boss 1/${raidData.bosses.length}: ${firstBoss?.name || 'Unknown'}`, type: 'info', time: Date.now() }
@@ -1842,7 +1877,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // A magic weapon with no castable spell fights with melee instead of
     // stopping the auto-fight — see resolveMagicSpell.
     const combatType = needsSpell ? 'melee' : weaponCombatType
-    const state = createCombatState(monster, combatType, combatStance, spell, monstersData)
+    // The monster handed in here came out of the active task, so a hard-mode
+    // fight arrives already scaled — scaleMonsterForHardMode is idempotent, and
+    // the table has to match it or the next add spawns at normal strength.
+    const hard = monster?.hardModeActive === true
+    const state = createCombatState(monster, combatType, combatStance, spell, monstersTableFor(monstersData, hard))
     // Reset special attack energy on kill; preserve active potions and prayers so they last their full duration
     state.specialAttackEnergy = 100
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
@@ -1996,7 +2035,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
 
     setLootModal(null)
-    const original = monstersData[modal.monster.id]
+    // Hard mode has to survive the next pull: the raw table would quietly hand
+    // back the normal boss while the drop rates stay whatever the switch says.
+    const original = monstersTableFor(monstersData, modal.monster?.hardModeActive === true)[modal.monster.id]
     if (original) continueFight(original)
     skipHourHandlerRef?.current?.()
   }
@@ -2576,6 +2617,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             onSearchChange={handleMonsterSearchChange}
             onToggleSection={toggleSection}
             onFight={pickMonsterForFight}
+            isHardMode={isHardMode}
             offersCoop={offersCoop}
             onMonsterInfo={setSelectedMonsterInfo}
             onStartRaid={pickRaidForFight}
@@ -3084,8 +3126,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="flex items-center gap-2 mb-1">
             <SkillEmblem iconKey={getRaidArt(raidChoice.id).icon} accent={getRaidArt(raidChoice.id).accent} size={28} glow={0} />
             <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">{raidChoice.name}</h3>
+            {isHardMode('raids', raidChoice.id) && <HardModeTag />}
           </div>
           <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-4">How do you want to run this raid?</p>
+
+          {offersHardMode(raidChoice) && (
+            <div class="mb-4">
+              <HardModeToggle
+                enabled={isHardMode('raids', raidChoice.id)}
+                pending={hardModePending === hardModeKey('raids', raidChoice.id)}
+                onToggle={(next) => toggleHardMode('raids', raidChoice.id, next)}
+              />
+            </div>
+          )}
 
           <div class="space-y-2 mb-4">
             <button
@@ -3145,8 +3198,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="flex items-center gap-2 mb-1">
             <SkillEmblem iconKey={getMonsterArt(coopChoice).icon} accent={getMonsterArt(coopChoice).accent} size={28} glow={0} />
             <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">{coopChoice.name}</h3>
+            {isHardMode('monsters', coopChoice.id) && <HardModeTag />}
           </div>
           <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-4">How do you want to fight this?</p>
+
+          {offersHardMode(coopChoice) && (
+            <div class="mb-4">
+              <HardModeToggle
+                enabled={isHardMode('monsters', coopChoice.id)}
+                pending={hardModePending === hardModeKey('monsters', coopChoice.id)}
+                onToggle={(next) => toggleHardMode('monsters', coopChoice.id, next)}
+              />
+            </div>
+          )}
 
           <div class="space-y-2">
             <button
@@ -3175,7 +3239,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {coopOpenSessions === null
                     ? 'Checking who is in there\u2026'
                     : (() => {
-                      const fighters = coopOpenSessions.reduce((sum, s) => sum + (s.memberCount || 0), 0)
+                      // Only rooms at the difficulty this player would join —
+                      // a hard-mode join never lands in a normal room.
+                      const wantHard = isHardMode('monsters', coopChoice.id)
+                      const fighters = coopOpenSessions
+                        .filter((s) => !!s.hardMode === wantHard)
+                        .reduce((sum, s) => sum + (s.memberCount || 0), 0)
                       if (fighters === 0) return 'Nobody in there yet, so you would start a new fight.'
                       return `${fighters} ${fighters === 1 ? 'player is' : 'players are'} fighting right now.`
                     })()}
@@ -3776,7 +3845,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 nameColor={getStyleArt(form ? form.attackStyle : m.attackStyle).color}
                 combatLevel={m.combatLevel}
                 onInfo={() => setSelectedMonsterInfo(m)}
-                aside={arenaChip}
+                aside={<>{m.hardModeActive && <HardModeTag />}{arenaChip}</>}
               />
 
               {/* Raid progress */}
@@ -4194,7 +4263,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             heroGp={!lootModal.loading && hero ? hero.totalGp : 0}
             heroUnitGp={!lootModal.loading && hero ? hero.unitGp : 0}
             skipLabel={!lootModal.loading && getToken() && getCharacterId()
-              ? (isRaid ? `Skip raid (${raidsData[lootModal.raidId]?.skipCost ?? 1})` : 'Skip')
+              ? (isRaid ? `Skip raid (${hardModeSkipCost(raidsData[lootModal.raidId]?.skipCost ?? 1, isHardMode('raids', lootModal.raidId))})` : 'Skip')
               : null}
             onSkip={skipAgain}
             loot={!lootModal.loading && rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
@@ -4207,7 +4276,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   const raid = raidsData[lootModal.raidId]
                   if (raid) startRaid(raid)
                 } else {
-                  const original = monstersData[lootModal.monster.id]
+                  const original = monstersTableFor(monstersData, lootModal.monster?.hardModeActive === true)[lootModal.monster.id]
                   if (original) continueFight(original)
                 }
                 setLootModal(null)

@@ -1,4 +1,5 @@
 import SkillEmblem from './SkillEmblem.jsx'
+import { HardModeTag } from './HardMode.jsx'
 import HPBar from './HPBar.jsx'
 import { getMonsterArt, getCategoryArt } from '../utils/combatArt.js'
 
@@ -95,7 +96,10 @@ export function CoopSessionList({
               <SkillEmblem iconKey={art.icon} accent={art.accent} size={42} glow={0} />
             </div>
             <div class="cb-mon__body">
-              <div class="cb-mon__name">{monster.name}</div>
+              <div class="cb-mon__name">
+                {monster.name}
+                {session.hardMode && <HardModeTag className="ml-1.5" />}
+              </div>
               <div class="cb-mon__stats">
                 <span class="cb-live__seats">{session.memberCount}/{maxMembers} fighting</span>
                 <i />

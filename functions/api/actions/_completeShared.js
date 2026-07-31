@@ -92,8 +92,10 @@ export function makeCompletionHandler(sourceType, deps = {}) {
       // Rewards are resolved after the save loads so server-side reward tables
       // can gate on save state (e.g. task-only drops requiring the character's
       // active slayer task to match the killed monster).
+      // env + characterId are handed over so a reward table can gate on state the
+      // SERVER owns (hard mode's doubled drop rates, §14) rather than on the body.
       const resolvedRewards = typeof deps.resolveRewards === 'function'
-        ? deps.resolveRewards({ sourceType, sourceId, body, saveObject })
+        ? await deps.resolveRewards({ sourceType, sourceId, body, saveObject, env, characterId })
         : (Array.isArray(body?.rewards) ? body.rewards : [])
       const settled = settleActionCompletion(saveObject, {
         sourceType,

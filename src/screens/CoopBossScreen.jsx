@@ -22,6 +22,7 @@ import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRef
 import { coopRaidSummary, raidProgress } from '../engine/coopRaidEngine.js'
 import { appendChatLines, chatLinesFromCoopEvents } from '../utils/coopChat.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
+import { HardModeTag } from '../components/HardMode.jsx'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { canAffordSpecialAttack } from '../engine/specialAttackEnergy.js'
@@ -393,6 +394,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
             : `${memberCount} ${memberCount === 1 ? 'player' : 'players'} in this fight`}
           meta={<CoopLootShare member={me} maxHP={coopLootBasisHP(state)} />}
           combatLevel={monster?.combatLevel}
+          aside={state?.hardMode ? <HardModeTag /> : null}
         />
 
         <CombatHPBlock
