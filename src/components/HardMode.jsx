@@ -6,7 +6,14 @@
 // doubled drop rates are the server's decision (§14), so a switch that flipped
 // locally on a failed write would sell the player a fight twice as hard for
 // ordinary loot. `pending` is the round trip.
+//
+// The prompt this sits in is a phone-height modal that already carries two or
+// three fight options, so the switch is ONE line and the terms are two short
+// ones under it. `.fm-toggle` centres its own content (index.css) — the sub-line
+// lives outside the button rather than fighting that, which also keeps the tap
+// target a clean 44px band.
 
+import OneLifeIcon from './OneLifeIcon.jsx'
 import { HARD_MODE_MULTIPLIERS } from '../engine/hardMode.js'
 
 const { offence, dropRate } = HARD_MODE_MULTIPLIERS
@@ -19,12 +26,21 @@ export function HardModeTag({ className = '' }) {
   )
 }
 
+/** The terms, in the fewest words that stay true. */
+export function HardModeTerms({ className = '' }) {
+  return (
+    <p class={`text-[10px] text-[var(--color-parchment)] opacity-70 ${className}`}>
+      {offence}× max hit · {offence}× accuracy · {dropRate}× drop rates · same health and defence
+    </p>
+  )
+}
+
 /** The one line that has to land before anything else: death is permanent loss. */
 export function HardModeDeathWarning({ className = '' }) {
   return (
-    <p class={`text-[10px] font-semibold text-[var(--color-blood-light)] ${className}`}>
-      ☠ If you die in Hard Mode you lose every <strong>tradeable</strong> item you are carrying and wearing —
-      permanently. Untradeables (Infernal Cape, quest gear, skill capes) stay with you, and your bank is safe.
+    <p class={`flex items-start gap-1.5 text-[10px] font-semibold text-[var(--color-blood-light)] ${className}`}>
+      <OneLifeIcon size={13} title="" class="mt-px" />
+      <span>Die and you lose everything you are carrying and wearing. Bank and untradeables are safe.</span>
     </p>
   )
 }
@@ -36,17 +52,13 @@ export function HardModeToggle({ enabled, pending = false, onToggle }) {
         onClick={() => { if (!pending) onToggle(!enabled) }}
         disabled={pending}
         aria-pressed={enabled ? 'true' : 'false'}
-        class={`fm-toggle w-full justify-between text-left ${enabled ? 'is-on' : ''}`}
+        class={`fm-toggle w-full justify-between ${enabled ? 'is-on' : ''}`}
       >
-        <span class="flex flex-col gap-0.5">
-          <span class="text-sm font-semibold">Hard Mode</span>
-          <span class="text-[10px] font-normal opacity-70">
-            {offence}× max hit and accuracy for the same health bar, {dropRate}× drop rates. Solo and group fights.
-          </span>
-        </span>
+        <span>Hard Mode</span>
         <span class="fm-toggle__n">{pending ? '…' : enabled ? 'ON' : 'OFF'}</span>
       </button>
-      <HardModeDeathWarning className="mt-1.5" />
+      <HardModeTerms className="mt-1.5" />
+      <HardModeDeathWarning className="mt-1" />
     </div>
   )
 }
@@ -58,10 +70,10 @@ export function HardModeToggle({ enabled, pending = false, onToggle }) {
 export function HardModeConfirm({ name, pending = false, onConfirm, onCancel }) {
   return (
     <div>
-      <div class="text-sm font-bold text-[var(--color-blood-light)] mb-1">Fight {name} in Hard Mode?</div>
+      <div class="text-sm font-bold text-[var(--color-blood-light)] mb-1.5">Fight {name} in Hard Mode?</div>
       <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-2">
-        It will hit {offence}× as hard and {offence}× as often on the mark. Its health and defences are
-        unchanged, so it dies just as fast — the danger is what it does to you first. Its drop rates double.
+        It hits {offence}× as hard and lands {offence}× as often. Its health and defences are unchanged, so it
+        dies just as fast — the danger is what it does to you first.
       </p>
       <HardModeDeathWarning className="mb-3" />
       <div class="flex gap-2">

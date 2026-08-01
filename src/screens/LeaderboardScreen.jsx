@@ -12,6 +12,7 @@ import { getLeaderboardFilters, getLeaderboardFilterById } from '../engine/leade
 import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS } from '../utils/constants.js'
 import { getRaidArt, getMonsterArt } from '../utils/combatArt.js'
 import BackLink from '../components/BackLink.jsx'
+import OneLifeIcon from '../components/OneLifeIcon.jsx'
 
 const LEADERBOARD_FILTERS = getLeaderboardFilters()
 const PAGE_SIZE = 50
@@ -57,7 +58,7 @@ function AccountBadge({ char, size = 26 }) {
     return <GameIcon item={DRAGON_HELM_ITEM} size={size} class="flex-shrink-0" title="Ironman · One Life" />
   }
   if (char.isIronman) return <GameIcon item={IRON_HELM_ITEM} size={size} class="flex-shrink-0" title="Ironman" />
-  if (char.isOneLife) return <span class="flex-shrink-0 leading-none" style={{ fontSize: `${size - 6}px` }} title="One Life">☠️</span>
+  if (char.isOneLife) return <OneLifeIcon size={size - 6} class="flex-shrink-0" title="One Life" />
   return null
 }
 

@@ -3,6 +3,7 @@ import { api, startGitHubLogin, startGoogleLogin, isEmbeddedBrowser, isHosted, s
 import { resetSyncState } from '../cloud/sync.js'
 import LandingScreen from './LandingScreen.jsx'
 import IronFrame from '../components/IronFrame.jsx'
+import OneLifeIcon from '../components/OneLifeIcon.jsx'
 // Inline the iron full helm SVG so it renders on the auth screen before the
 // game chunk (which carries gameIconsData) has loaded.
 function IronHelmIcon({ size = 16 }) {
@@ -257,7 +258,9 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
                   class="w-[18px] h-[18px] mt-0.5 flex-shrink-0 cursor-pointer accent-[var(--fm-ember)]"
                 />
                 <div>
-                  <div class="text-[13px] font-bold text-[var(--fm-ink)]">☠️ One Life Mode</div>
+                  <div class="flex items-center gap-1.5 text-[13px] font-bold text-[var(--fm-ink)]">
+                    <OneLifeIcon size={15} title="" /> One Life Mode
+                  </div>
                   <div class="text-[11px] text-[var(--fm-ink-soft)] mt-0.5 leading-snug">
                     Die once and your account is permanently deleted.
                   </div>

@@ -78,6 +78,7 @@ import { getSlayerTaskReward, resolveSlayerLoopRewards, buildSlayerResultRows, c
 import { hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
 import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
 import GameIcon from './components/GameIcon.jsx'
+import OneLifeIcon from './components/OneLifeIcon.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { openWorld } from './utils/helpers.js'
 import { advanceFarmingState } from './engine/farming.ts'
@@ -3647,7 +3648,7 @@ function GameApp() {
                 return (
                   <div class="lm-card" style={{ borderColor: 'rgba(255, 135, 135, 0.3)', borderLeft: '3px solid #ff8787' }}>
                     <div class="lm-card__head" style={{ color: '#ff8787' }}>
-                      <span class="lm-card__icn">{idleResult.died ? '☠️' : '⚠️'}</span>
+                      <span class="lm-card__icn">{idleResult.died ? <OneLifeIcon size={14} title="" /> : '⚠️'}</span>
                       {idleResult.died ? 'Combat Halted' : 'Stopped Early'}
                     </div>
                     <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4' }}>
@@ -3665,7 +3666,7 @@ function GameApp() {
               {idleResult.hardModeItemsLost?.length > 0 && (
                 <div class="lm-card" style={{ borderColor: 'rgba(255, 135, 135, 0.3)', borderLeft: '3px solid #ff8787' }}>
                   <div class="lm-card__head" style={{ color: '#ff8787' }}>
-                    <span class="lm-card__icn">☠️</span>Lost Forever
+                    <span class="lm-card__icn"><OneLifeIcon size={14} title="" /></span>Lost Forever
                   </div>
                   <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4', marginBottom: '4px' }}>
                     Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.

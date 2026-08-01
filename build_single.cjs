@@ -174,6 +174,7 @@ const sourceFiles = [
   'components/CollapseChevron.js',
   'components/CombatQuickActions.js',
   'components/CombatHud.js',
+  'components/OneLifeIcon.js',
   'components/HardMode.js',
   'components/CoopSessionBrowser.js',
   'components/CoopRaidPartyList.js',
