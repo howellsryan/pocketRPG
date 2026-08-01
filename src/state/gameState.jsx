@@ -23,6 +23,8 @@ import prayersData from '../data/prayers.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
 import { applyTaskResult } from '../engine/applyTaskResult.js'
 import { preserveBankCharges } from '../engine/bankCharges.js'
+import { applyBankDeltas } from '../engine/bankMutations.js'
+import { createDirtyFlags, claimDirtyFlags, restoreDirtyFlags, hasDirtyFlags } from '../db/dirtyFlags.js'
 import { isBackground, getActivityKey } from '../engine/activityRegistry.js'
 import {
   saveActivityProgress, getActivityProgress, hydrateActivityLedger,
@@ -127,7 +129,7 @@ export function GameProvider({ children }) {
   const recordGameEventRef = useRef(null)
   const showInfoToastsRef = useRef(false)
 
-  const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
+  const dirty = useRef(createDirtyFlags())
   // CombatScreen registers a force-kill handler here so handleSkip1h (in App) can invoke it
   const combatSkipHandlerRef = useRef(null)
   // App registers handleSkip1h here so CombatScreen (loot modal) can trigger another skip
@@ -729,25 +731,57 @@ export function GameProvider({ children }) {
     return idleResult
   }, [])
 
-  // Auto-save debounced — reads from refs for latest state
-  const autoSave = useCallback(debounce(async () => {
-    const d = dirty.current
+  // Write every dirty store to IndexedDB now. `autoSave` debounces this; anything
+  // that must not be readable in its pre-change form by another code path (a
+  // loadout swap, the tab going to background) calls flushLocalSaves directly.
+  // The idle catch-up paths re-read these stores from IDB and write their result
+  // back, so a store left behind by the debounce is a store that gets reverted.
+  const inFlightLocalSaveRef = useRef(null)
+  const autoSaveRef = useRef(null)
+  const runLocalSave = useCallback(async () => {
+    // Join an in-flight flush before deciding there is nothing to do: that flush
+    // has already claimed the flags, so returning early here would make `await
+    // flushLocalSaves()` resolve while the writes it is meant to guarantee are
+    // still open — and the idle catch-up paths await it precisely as a barrier
+    // before re-reading these stores.
+    const inFlight = inFlightLocalSaveRef.current
+    if (inFlight) await inFlight.catch(() => {})
+    const claimed = claimDirtyFlags(dirty.current)
+    if (!hasDirtyFlags(claimed)) return
     const s = stateRef.current
     const promises = []
-    if (d.stats) promises.push(saveAllStats(s.stats))
-    if (d.inventory) promises.push(saveInventory(s.inventory))
-    if (d.equipment) promises.push(saveEquipment(s.equipment))
-    if (d.bank) promises.push(saveBank(s.bank))
-    if (d.player && s.player) promises.push(savePlayer(s.player))
-    if (promises.length === 0) return
+    if (claimed.stats) promises.push(saveAllStats(s.stats))
+    if (claimed.inventory) promises.push(saveInventory(s.inventory))
+    if (claimed.equipment) promises.push(saveEquipment(s.equipment))
+    if (claimed.bank) promises.push(saveBank(s.bank))
+    if (claimed.player && s.player) promises.push(savePlayer(s.player))
     setIsSaving(true)
-    try {
-      await Promise.all(promises)
-      dirty.current = { stats: false, inventory: false, equipment: false, bank: false, player: false }
-    } finally {
-      setIsSaving(false)
-    }
+    const run = (async () => {
+      try {
+        await Promise.all(promises)
+      } catch (err) {
+        // Put the claim back AND re-arm the debounce — a restored flag nothing
+        // retries just waits for an unrelated mutation to happen along.
+        restoreDirtyFlags(dirty.current, claimed)
+        autoSaveRef.current?.()
+        throw err
+      } finally {
+        setIsSaving(false)
+        if (inFlightLocalSaveRef.current === run) inFlightLocalSaveRef.current = null
+      }
+    })()
+    inFlightLocalSaveRef.current = run
+    await run
+  }, [])
+  const runLocalSaveRef = useRef(runLocalSave)
+  runLocalSaveRef.current = runLocalSave
+
+  const autoSave = useCallback(debounce(() => {
+    runLocalSaveRef.current().catch(e => console.warn('[PocketRPG] Local save failed:', e?.message || e))
   }, AUTO_SAVE_DEBOUNCE), [])
+  autoSaveRef.current = autoSave
+
+  const flushLocalSaves = useCallback(async () => { await runLocalSaveRef.current() }, [])
 
   // Mark dirty and trigger save
   const markDirty = useCallback((key) => {
@@ -771,7 +805,9 @@ export function GameProvider({ children }) {
       console.error('One-life revert failed; will retry on the next death:', err)
       return { ok: false, isIronman }
     }
-    setPlayer(prev => (prev ? { ...prev, is_one_life: false } : prev))
+    const nextPlayer = stateRef.current.player ? { ...stateRef.current.player, is_one_life: false } : stateRef.current.player
+    stateRef.current.player = nextPlayer
+    setPlayer(nextPlayer)
     syncAccountModeFlags({ is_ironman: isIronman, is_one_life: false })
     markDirty('player')
     return { ok: true, isIronman }
@@ -781,7 +817,12 @@ export function GameProvider({ children }) {
   // surface level-ups through the reward-reveal card / full-screen overlay
   // instead. Max HP still updates on a silent Hitpoints level-up.
   const grantXP = useCallback((skill, amount, { silent = false } = {}) => {
-    setStats(prev => {
+    // stateRef is written synchronously here for the same reason the holdings
+    // mutators do it: flushLocalSaves reads stateRef and CLEARS the dirty flag,
+    // so an unload-time flush that ran before the post-commit effect would
+    // persist the pre-XP stats and mark them clean — losing the XP outright.
+    {
+      const prev = stateRef.current.stats
       const cur = prev[skill] || { skill, xp: 0, level: 1 }
       const newXP = clampXP(cur.xp + Math.floor(amount))
       const newLevel = getLevelFromXP(newXP)
@@ -808,23 +849,37 @@ export function GameProvider({ children }) {
       }
 
       const next = { ...prev, [skill]: { skill, xp: newXP, level: newLevel } }
-      dirty.current.stats = true
-      autoSave()
-      return next
-    })
+      stateRef.current.stats = next
+      setStats(next)
+      markDirty('stats')
+    }
     // Feed XP gains to the daily-task event bus (live + idle/offline all funnel
     // through grantXP). Floor to keep task progress integer-aligned with displayed XP.
     const gained = Math.floor(amount)
     if (gained > 0) recordGameEventRef.current?.({ kind: 'skill_xp', skill, xp: gained })
-  }, [autoSave])
+    // addToast is deliberately NOT a dep: it is declared below this callback, so
+    // naming it here evaluates in its temporal dead zone and whites out the app.
+    // Calling it from the body resolves at call time and is fine.
+  }, [markDirty])
 
+  // The three holdings mutators write stateRef SYNCHRONOUSLY as well as setting
+  // state. stateRef is what flushLocalSaves / getSnapshot / getHoldings read, and
+  // it used to be updated by a post-commit useEffect — so for a frame after any
+  // mutation those readers saw the pre-change holdings. A 600ms background
+  // activity tick or a tab-hide landing in that window read stale holdings and
+  // wrote them back over the change. The effects below still run; they are now
+  // belt-and-braces rather than the only sync.
   const updateInventory = useCallback((newInv) => {
-    setInventory([...newInv])
+    const next = [...newInv]
+    stateRef.current.inventory = next
+    setInventory(next)
     markDirty('inventory')
   }, [markDirty])
 
   const updateEquipment = useCallback((newEq) => {
-    setEquipment({ ...newEq })
+    const next = { ...newEq }
+    stateRef.current.equipment = next
+    setEquipment(next)
     markDirty('equipment')
   }, [markDirty])
 
@@ -832,38 +887,29 @@ export function GameProvider({ children }) {
     // Wholesale bank replacement is the one funnel every screen writes through,
     // so the charge-preservation invariant (src/engine/bankCharges.js) is
     // enforced here rather than trusted to each call site.
-    setBank(prev => ({ ...preserveBankCharges(prev, newBank) }))
+    const next = { ...preserveBankCharges(stateRef.current.bank, newBank) }
+    stateRef.current.bank = next
+    setBank(next)
     markDirty('bank')
   }, [markDirty])
 
   const removeFromInventory = useCallback((slotIndex, qty = 1) => {
-    setInventory(prev => {
-      const next = [...prev]
-      if (next[slotIndex]) {
-        const newQty = next[slotIndex].quantity - qty
-        if (newQty <= 0) {
-          next[slotIndex] = null
-        } else {
-          next[slotIndex] = { ...next[slotIndex], quantity: newQty }
-        }
-      }
-      markDirty('inventory')
-      return next
-    })
+    const next = [...stateRef.current.inventory]
+    if (next[slotIndex]) {
+      const newQty = next[slotIndex].quantity - qty
+      next[slotIndex] = newQty <= 0 ? null : { ...next[slotIndex], quantity: newQty }
+    }
+    stateRef.current.inventory = next
+    setInventory(next)
+    markDirty('inventory')
   }, [markDirty])
 
   const addToBank = useCallback((itemId, qty) => {
     const isNew = !stateRef.current.bank[itemId]
-    setBank(prev => {
-      const next = { ...prev }
-      if (next[itemId]) {
-        next[itemId] = { ...next[itemId], quantity: next[itemId].quantity + qty }
-      } else {
-        next[itemId] = { itemId, quantity: qty }
-      }
-      markDirty('bank')
-      return next
-    })
+    const next = applyBankDeltas(stateRef.current.bank, { [itemId]: qty })
+    stateRef.current.bank = next
+    setBank(next)
+    markDirty('bank')
     if (isNew) {
       const cfg = stateRef.current.bankConfig
       if (!cfg.itemTabMap?.[itemId]) {
@@ -876,6 +922,41 @@ export function GameProvider({ children }) {
       }
     }
   }, [markDirty])
+
+  // Synchronous read of the holdings as they stand right now — always current,
+  // unlike the render props, which are a commit behind any mutation made in the
+  // same frame. Callers that compute a whole new container from the old one (the
+  // background activity runner, loot deposits) must read through this or they
+  // rebuild from state the player has already moved on from.
+  // Same synchronous-stateRef rule as the holdings mutators and grantXP: the
+  // flush reads stateRef and clears the dirty flag, so a post-commit-only sync
+  // can be persisted-then-marked-clean in its pre-change form.
+  const setPlayerSynced = useCallback((nextOrFn) => {
+    const next = typeof nextOrFn === 'function' ? nextOrFn(stateRef.current.player) : nextOrFn
+    stateRef.current.player = next
+    setPlayer(next)
+    markDirty('player')
+  }, [markDirty])
+
+  const getHoldings = useCallback(() => ({
+    equipment: stateRef.current.equipment,
+    inventory: stateRef.current.inventory,
+    bank: stateRef.current.bank,
+  }), [])
+
+  // Apply a whole-holdings rearrangement (loadout preset) and make it durable
+  // before returning. Ordinary mutations ride the 300ms debounce, but these three
+  // containers only balance as a set: if the IDB copy of one lands and another
+  // does not, the items that moved between them exist in neither. Awaiting the
+  // flush also closes the window in which a background tick or a tab-hide could
+  // read the pre-swap holdings back out of IDB.
+  const commitHoldings = useCallback(async ({ equipment, inventory, bank }) => {
+    if (equipment) updateEquipment(equipment)
+    if (inventory) updateInventory(inventory)
+    if (bank) updateBank(bank)
+    await flushLocalSaves()
+    requestCriticalPushSave(() => getSnapshotImplRef.current(), CRITICAL_SAVE_REASONS.HOLDINGS_REARRANGE)
+  }, [updateEquipment, updateInventory, updateBank, flushLocalSaves])
 
   const updateHP = useCallback((hp) => {
     const maxHP = stats.hitpoints ? getLevelFromXP(stats.hitpoints.xp) : 10
@@ -1206,30 +1287,11 @@ export function GameProvider({ children }) {
   // `charges` pools an auto-banked item's charges onto its entry — a bank trip
   // that carried charged gear must not drop them (src/engine/bankCharges.js).
   const updateBankDirect = useCallback((itemUpdates, { charges = null } = {}) => {
-    setBank(prev => {
-      const newBank = { ...prev }
-      for (const [itemId, qty] of Object.entries(itemUpdates)) {
-        if (newBank[itemId]) {
-          const newQty = newBank[itemId].quantity + qty
-          if (newQty <= 0) {
-            delete newBank[itemId]
-          } else {
-            newBank[itemId] = { ...newBank[itemId], quantity: newQty }
-          }
-        } else if (qty > 0) {
-          newBank[itemId] = { itemId, quantity: qty }
-        }
-        const incoming = Math.max(0, Math.floor(Number(charges?.[itemId]) || 0))
-        if (incoming > 0 && newBank[itemId]) {
-          const pooled = Math.max(0, Math.floor(Number(newBank[itemId].charges) || 0))
-          newBank[itemId] = { ...newBank[itemId], charges: pooled + incoming }
-        }
-      }
-      dirty.current.bank = true
-      autoSave()
-      return newBank
-    })
-  }, [autoSave])
+    const next = applyBankDeltas(stateRef.current.bank, itemUpdates, charges)
+    stateRef.current.bank = next
+    setBank(next)
+    markDirty('bank')
+  }, [markDirty])
 
   // Settle elapsed kingdom time (coffer drain + banked output) up to `now`.
   // Independent of the active-task idle dispatch — called at boot (inline,
@@ -1684,8 +1746,9 @@ export function GameProvider({ children }) {
     lockGame, unlockGame, runLockedSave,
     awaitCombatCompletion, resolveCombatCompletion,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
+    getHoldings, commitHoldings, flushLocalSaves,
     removeFromInventory, addToBank,
-    updateHP, getMaxHP, getSkillLevel, addToast, dismissToast, setPlayer,
+    updateHP, getMaxHP, getSkillLevel, addToast, dismissToast, setPlayer: setPlayerSynced,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
     setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig,

@@ -142,3 +142,86 @@ describe('equipmentPresets — apply', () => {
     expect(res.bank.bronze_arrow).toEqual({ itemId: 'bronze_arrow', quantity: 150 })
   })
 })
+
+// A preset only ever RE-ARRANGES items the character already owns — it may never
+// create or destroy one. This is the invariant the reported item-loss bug was
+// first suspected of breaking (it holds; the loss was at the write-back boundary,
+// covered by holdingsReconcile.test.ts), and it must stay true as the draw/bank
+// rules evolve. Deterministic PRNG so a failure is reproducible.
+describe('equipmentPresets — item conservation', () => {
+  const SLOTS = ['weapon', 'body', 'ring', 'ammo']
+  const IDS = Object.keys(ITEMS)
+
+  function seeded(seed: number) {
+    let s = seed
+    return () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648
+  }
+
+  function totals(equipment: any, inventory: any[], bank: any) {
+    const t: Record<string, number> = {}
+    const add = (id: string, q: number) => { if (id && q > 0) t[id] = (t[id] || 0) + q }
+    for (const slot of Object.keys(equipment || {})) {
+      const e = equipment[slot]
+      if (e?.itemId) add(e.itemId, e.quantity || 1)
+    }
+    for (const slot of inventory || []) if (slot?.itemId) add(slot.itemId, slot.quantity || 1)
+    for (const [id, entry] of Object.entries<any>(bank || {})) if (entry) add(id, entry.quantity || 0)
+    return t
+  }
+
+  // Charges are pooled per itemId (one scalar on a bank entry, per-instance
+  // elsewhere), so §4 makes them as destructible as the items themselves.
+  function chargeTotals(equipment: any, inventory: any[], bank: any) {
+    const t: Record<string, number> = {}
+    const add = (id: string, c: number) => { if (id && c > 0) t[id] = (t[id] || 0) + c }
+    for (const slot of Object.keys(equipment || {})) {
+      const e = equipment[slot]
+      if (e?.itemId) add(e.itemId, Number(e.charges) || 0)
+    }
+    for (const slot of inventory || []) if (slot?.itemId) add(slot.itemId, Number(slot.charges) || 0)
+    for (const [id, entry] of Object.entries<any>(bank || {})) if (entry) add(id, Number(entry.charges) || 0)
+    return t
+  }
+
+  it('never creates or destroys an item across 2000 randomised loadout swaps', () => {
+    const rand = seeded(20260801)
+    const build = () => {
+      const equipment: any = {}
+      for (const slot of SLOTS) {
+        if (rand() >= 0.5) continue
+        const id = IDS[Math.floor(rand() * IDS.length)]
+        equipment[slot] = { itemId: id, quantity: ITEMS[id].stackable ? 1 + Math.floor(rand() * 500) : 1 }
+        if (id === 'charged_staff') equipment[slot].charges = 1 + Math.floor(rand() * 5000)
+      }
+      const inventory = new Array(28).fill(null).map(() => {
+        if (rand() < 0.4) return null
+        const id = IDS[Math.floor(rand() * IDS.length)]
+        const entry: any = { itemId: id, quantity: ITEMS[id].stackable ? 1 + Math.floor(rand() * 5000) : 1 }
+        if (id === 'charged_staff') entry.charges = 1 + Math.floor(rand() * 5000)
+        return entry
+      })
+      return { equipment, inventory }
+    }
+
+    for (let iteration = 0; iteration < 2000; iteration++) {
+      const snapshot = build()
+      const preset = createPreset(`P${iteration}`, snapshot.equipment, snapshot.inventory)
+      const live = build()
+      const bank: any = {}
+      for (const id of IDS) {
+        if (rand() >= 0.6) continue
+        bank[id] = { itemId: id, quantity: 1 + Math.floor(rand() * 10000) }
+        if (id === 'charged_staff') bank[id].charges = 1 + Math.floor(rand() * 20000)
+      }
+
+      const before = totals(live.equipment, live.inventory, bank)
+      const beforeCharges = chargeTotals(live.equipment, live.inventory, bank)
+      const res = applyPreset(preset, { equipment: live.equipment, inventory: live.inventory, bank }, ITEMS, {}, new Set())
+      const after = totals(res.equipment, res.inventory, res.bank)
+      const afterCharges = chargeTotals(res.equipment, res.inventory, res.bank)
+
+      expect({ iteration, ...after }).toEqual({ iteration, ...before })
+      expect({ iteration, ...afterCharges }).toEqual({ iteration, ...beforeCharges })
+    }
+  })
+})
