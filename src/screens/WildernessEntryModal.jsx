@@ -52,11 +52,11 @@ export default function WildernessEntryModal({ onClose }) {
     <Modal onClose={onClose} title="The Wilderness">
       <div class="flex flex-col gap-3">
         <div class="text-center">
-          <div class="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Currently in the Wilderness</div>
+          <div class="text-[11px] uppercase tracking-widest text-[var(--text-soft)]">Currently in the Wilderness</div>
           <div class="text-3xl font-bold text-[var(--accent)] leading-tight">
             {count === null ? '—' : count}
           </div>
-          <div class="text-[10px] text-[var(--text-muted)]">
+          <div class="text-[10px] text-[var(--text-soft)]">
             {count === 0
               ? 'Nobody is out there — the roaming outlaws will have to do.'
               : 'Bots roam the wastes when the map is quiet.'}
@@ -65,7 +65,7 @@ export default function WildernessEntryModal({ onClose }) {
 
         {!confirming && (
           <>
-            <ul class="text-[11px] leading-relaxed text-[var(--text-secondary)] flex flex-col gap-1.5">
+            <ul class="text-[11px] leading-relaxed text-[var(--text-soft)] flex flex-col gap-1.5">
               <li>You arrive in a walled border camp with a bank chest. Nothing can touch you there.</li>
               <li>North through the gate is open PvP. You will be asked to confirm before you cross.</li>
               <li>Anyone within <strong>10 combat levels</strong> of you can attack you out there.</li>
@@ -74,7 +74,7 @@ export default function WildernessEntryModal({ onClose }) {
               <li>Kill an outlaw for a shot at the <strong>Zesta</strong> longsword, vest and skirt. They drop nowhere else.</li>
             </ul>
             {isIronman && (
-              <div class="text-[10px] leading-relaxed text-[var(--text-muted)] border border-[var(--hairline)] rounded p-2">
+              <div class="text-[10px] leading-relaxed text-[var(--text-soft)] border border-[var(--hairline)] rounded p-2">
                 <strong>Ironman:</strong> you can fight and you keep every outlaw drop. You cannot pick up loot
                 dropped by another player — that is somebody else's account, and it stays on the ground.
               </div>
@@ -87,14 +87,14 @@ export default function WildernessEntryModal({ onClose }) {
           <>
             <div class="border border-[var(--accent)] rounded p-3 text-center flex flex-col gap-2">
               <div class="text-sm font-bold text-[var(--accent)]">You will lose everything.</div>
-              <div class="text-[11px] leading-relaxed text-[var(--text-secondary)]">
+              <div class="text-[11px] leading-relaxed text-[var(--text-soft)]">
                 If you die in the Wilderness, every item in your inventory <em>and</em> every item you are
                 wearing drops on the ground for your killer. Bank what you cannot afford to lose — there is a
                 chest in the camp.
               </div>
               {/* One-life is the one status the death also ends, so it is named
                   rather than left to the general warning above. */}
-              <div class="text-[10px] text-[var(--text-muted)]">
+              <div class="text-[10px] text-[var(--text-soft)]">
                 A One Life run ends here like it ends anywhere else.
               </div>
             </div>
