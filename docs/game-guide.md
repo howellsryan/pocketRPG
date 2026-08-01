@@ -125,7 +125,7 @@ A boss hunts you across its whole lair, further than any other monster will foll
 
 Most bosses and every raid can be switched to Hard Mode from the prompt that opens when you tap them in the combat picker. The switch is per boss (and per raid), stays on until you turn it off, and shows as a **HARD** tag wherever that fight is listed.
 
-A hard fight doubles the boss's health and its offence — twice the max hit, twice the accuracy. Its defences are untouched, so it dies to the same hits it always did; what changes is how much damage it does to you on the way. In exchange every drop rate on its table doubles — a 1-in-500 unique becomes 1-in-250. Guaranteed drops stay one drop, and a boss you skip with credits costs double the credits.
+A hard fight doubles the boss's offence — twice the max hit, twice the accuracy. Its health and its defences are untouched, so it dies to the same hits in the same time it always did; the only thing that changes is how much damage it does to you along the way. In exchange every drop rate on its table doubles — a 1-in-500 unique becomes 1-in-250. Guaranteed drops stay one drop, and a boss you skip with credits costs double the credits.
 
 **If you die in Hard Mode you lose every tradeable item you are carrying and every tradeable item you are wearing, permanently.** Untradeables — Infernal Cape, quest gear, skill capes, anything you could never buy back — stay with you. Your bank is untouched, so the counter-play is to take in less than you can afford to lose. This applies to solo fights, group fights, raid parties and idle catch-up alike: a hard fight left running while you are away costs the same pack. Turning Hard Mode on asks you to confirm it first.
 

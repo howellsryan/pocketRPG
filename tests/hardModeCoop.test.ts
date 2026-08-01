@@ -43,28 +43,35 @@ function member(characterId: number) {
 }
 
 describe('co-op hard mode', () => {
-  it('opens the room on doubled health and remembers the choice', () => {
+  it('opens the room on a hard boss and remembers the choice', () => {
     const normal = createCoopBossState(BOSS, monstersData)!
     const hard = createCoopBossState(BOSS, monstersData, Date.now(), { hardMode: true })!
     expect(normal.hardMode).toBe(false)
     expect(hard.hardMode).toBe(true)
-    expect(hard.boss.maxHP).toBe(normal.boss.maxHP * HARD_MODE_MULTIPLIERS.hitpoints)
+    // Same health bar as the normal room — hard mode is what the boss does to
+    // the party, not how long it takes to bring down.
+    expect(hard.boss.maxHP).toBe(normal.boss.maxHP)
+    // `boss.monster` is only the mutable subset (no hardModeActive on it), so
+    // the proof the scaled table reached the room is the offence it carries.
+    expect(hard.boss.monster.attackBonus).toBe(normal.boss.monster.attackBonus * HARD_MODE_MULTIPLIERS.offence)
   })
 
-  it('keeps the boss doubled across ticks, not just at creation', () => {
+  it('keeps the boss hard across ticks, not just at creation', () => {
     let state = addCoopMember(createCoopBossState(BOSS, monstersData, Date.now(), { hardMode: true })!, member(1))
     const maxHP = state.boss.maxHP
     for (let i = 0; i < 5; i++) state = processCoopTick(state, [], deps, Date.now()).stateNext
     expect(state.hardMode).toBe(true)
     expect(state.boss.maxHP).toBe(maxHP)
     expect(state.boss.currentHP).toBeLessThanOrEqual(maxHP)
-    expect(state.boss.monster.hitpoints ?? maxHP).toBeGreaterThanOrEqual(anyMonsters[BOSS].hitpoints)
+    expect(state.boss.monster.attackBonus).toBe(anyMonsters[BOSS].attackBonus * HARD_MODE_MULTIPLIERS.offence)
   })
 
-  it('measures a hard raid’s loot gate against the hard run, not the normal one', () => {
+  it('measures a raid’s loot gate against the run’s real health, hard or not', () => {
     const normal = createCoopRaidState(RAID, monstersData, { hostCharacterId: 1 })!
     const hard = createCoopRaidState(RAID, monstersData, { hostCharacterId: 1, hardMode: true })!
     expect(coopLootBasisHP(normal)).toBe(raidTotalHitpoints(RAID, monstersData))
+    // The basis is read off the table the party is actually fighting, so it
+    // tracks the health dial whatever it is set to.
     expect(coopLootBasisHP(hard)).toBe(coopLootBasisHP(normal) * HARD_MODE_MULTIPLIERS.hitpoints)
     expect(hard.hardMode).toBe(true)
   })
@@ -126,7 +133,8 @@ describe('co-op hard mode, server side', () => {
     expect(rows.find((s: any) => s.sessionId === normal.sessionId).hardMode).toBe(false)
     expect(rows.find((s: any) => s.sessionId === hard.sessionId).hardMode).toBe(true)
     const state = parseSessionState(await readSession(env, hard.sessionId))
-    expect(state.boss.maxHP).toBe(anyMonsters[BOSS].hitpoints * HARD_MODE_MULTIPLIERS.hitpoints)
+    expect(state.hardMode).toBe(true)
+    expect(state.boss.monster.attackBonus).toBe(anyMonsters[BOSS].attackBonus * HARD_MODE_MULTIPLIERS.offence)
   })
 
   it('joins the matching room rather than opening a third one', async () => {

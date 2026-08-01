@@ -20,7 +20,7 @@ const anyMonsters = monstersData as Record<string, any>
 const anyRaids = raidsData as Record<string, any>
 
 describe('hard mode scaling', () => {
-  it('scales health and offence, and leaves defence exactly where it was', () => {
+  it('scales offence and leaves health and defence exactly where they were', () => {
     const base = {
       id: 'x', hitpoints: 255, maxHit: 40, attackStyle: 'crush',
       stats: { attack: 100, strength: 120, defence: 130, magic: 200, ranged: 1 },
@@ -28,14 +28,15 @@ describe('hard mode scaling', () => {
       defenceBonus: { stab: 10, slash: 20, crush: 30, magic: 90, ranged: 0 },
     }
     const hard = scaleMonsterForHardMode(base)
-    expect(hard.hitpoints).toBe(255 * HARD_MODE_MULTIPLIERS.hitpoints)
     expect(hard.maxHit).toBe(40 * HARD_MODE_MULTIPLIERS.offence)
     expect(hard.attackBonus).toBe(130 * HARD_MODE_MULTIPLIERS.offence)
     expect(hard.strengthBonus).toBe(40 * HARD_MODE_MULTIPLIERS.offence)
     expect(hard.stats.attack).toBe(100 * HARD_MODE_MULTIPLIERS.offence)
     expect(hard.stats.strength).toBe(120 * HARD_MODE_MULTIPLIERS.offence)
     expect(hard.stats.ranged).toBe(1 * HARD_MODE_MULTIPLIERS.offence)
-    // The whole point of the mode: it is deadlier, not tankier.
+    // The whole point of the mode: it is deadlier, not tankier and not longer.
+    // Same health bar, same defences — it dies to what it always died to.
+    expect(hard.hitpoints).toBe(255)
     expect(hard.stats.defence).toBe(130)
     expect(hard.defenceBonus).toEqual(base.defenceBonus)
   })
@@ -61,6 +62,7 @@ describe('hard mode scaling', () => {
     expect(Object.keys(HARD_MODE_MULTIPLIERS).sort())
       .toEqual(['defence', 'dropRate', 'hitpoints', 'offence', 'skipCost'])
     expect(HARD_MODE_MULTIPLIERS.defence).toBe(1)
+    expect(HARD_MODE_MULTIPLIERS.hitpoints).toBe(1)
   })
 
   it('leaves the drop table alone — doubling loot is the server’s call', () => {
@@ -69,14 +71,14 @@ describe('hard mode scaling', () => {
   })
 
   it('is idempotent, because the active task persists the scaled record', () => {
-    const once = scaleMonsterForHardMode({ id: 'x', hitpoints: 100, stats: { strength: 50 } })
+    const once = scaleMonsterForHardMode({ id: 'x', hitpoints: 100, maxHit: 20, stats: { strength: 50 } })
     const twice = scaleMonsterForHardMode(once)
-    expect(twice.hitpoints).toBe(200)
-    expect(twice.stats.strength).toBe(100)
+    expect(twice.maxHit).toBe(20 * HARD_MODE_MULTIPLIERS.offence)
+    expect(twice.stats.strength).toBe(50 * HARD_MODE_MULTIPLIERS.offence)
     expect(twice).toBe(once)
   })
 
-  it('scales every form, including a phased boss’s own health bar', () => {
+  it('scales every form’s offence, and no form’s health bar or defences', () => {
     const base = {
       id: 'x', multiForm: true, hitpoints: 100, verzikPhased: true,
       forms: {
@@ -85,11 +87,15 @@ describe('hard mode scaling', () => {
       },
     }
     const hard = scaleMonsterForHardMode(base)
-    const { hitpoints: hp, offence, defence } = HARD_MODE_MULTIPLIERS
+    const { offence } = HARD_MODE_MULTIPLIERS
     expect(hard.forms.one).toMatchObject({
-      maxHit: 30 * offence, attackBonus: 50 * offence, strengthBonus: 50 * offence, phaseHP: 2000 * hp,
+      maxHit: 30 * offence, attackBonus: 50 * offence, strengthBonus: 50 * offence,
     })
-    expect(hard.forms.two.defenceBonus.magic).toBe(300 * defence)
+    // A phase's own bar follows the health dial, so a phased boss is no longer
+    // than it ever was either.
+    expect(hard.forms.one.phaseHP).toBe(2000)
+    expect(hard.forms.two.phaseHP).toBe(3250)
+    expect(hard.forms.two.defenceBonus.magic).toBe(300)
   })
 
   it('leaves a malformed form entry alone rather than throwing', () => {
@@ -134,26 +140,35 @@ describe('hard mode drop chances (server-side only)', () => {
 describe('hard mode tables', () => {
   it('scales every entry and memoises the table', () => {
     const table = hardModeMonstersData(anyMonsters)
-    expect(table.deepmaw_kraken.hitpoints).toBe(anyMonsters.deepmaw_kraken.hitpoints * HARD_MODE_MULTIPLIERS.hitpoints)
+    expect(table.deepmaw_kraken.hardModeActive).toBe(true)
+    expect(table.deepmaw_kraken.attackBonus)
+      .toBe(anyMonsters.deepmaw_kraken.attackBonus * HARD_MODE_MULTIPLIERS.offence)
     expect(hardModeMonstersData(anyMonsters)).toBe(table)
     expect(monstersTableFor(anyMonsters, false)).toBe(anyMonsters)
   })
 
-  it('a hard fight opens on doubled health without any engine change', () => {
+  it('opens a hard fight on the same health bar and a bigger max hit', () => {
     const normal = createCombatState(anyMonsters.deepmaw_kraken, 'melee', 'accurate', null, anyMonsters)
     const hard = createCombatState(
       scaleMonsterForHardMode(anyMonsters.deepmaw_kraken), 'melee', 'accurate', null, hardModeMonstersData(anyMonsters),
     )
-    expect(hard.monster.currentHP).toBe(normal.monster.currentHP * HARD_MODE_MULTIPLIERS.hitpoints)
+    expect(hard.monster.currentHP).toBe(normal.monster.currentHP)
+    expect(monsterMaxHit(hard.monster)).toBeGreaterThan(monsterMaxHit(normal.monster))
   })
 
   it('a hard raid scales every boss in the run, not just the first', () => {
     const raid = anyRaids.vaults_of_xyren
     const hardTable = hardModeMonstersData(anyMonsters)
     const state = createRaidCombatState(raid, hardTable, 'melee', 'accurate', null)!
-    expect(state.monster.currentHP).toBe(anyMonsters[raid.bosses[0]].hitpoints * HARD_MODE_MULTIPLIERS.hitpoints)
+    expect(state.monster.currentHP).toBe(anyMonsters[raid.bosses[0]].hitpoints)
     for (const bossId of raid.bosses) {
-      expect(state.raid.monstersData[bossId].hitpoints).toBe(anyMonsters[bossId].hitpoints * HARD_MODE_MULTIPLIERS.hitpoints)
+      const authored = anyMonsters[bossId]
+      const scaled = state.raid.monstersData[bossId]
+      expect(scaled.hardModeActive).toBe(true)
+      expect(scaled.hitpoints).toBe(authored.hitpoints)
+      if (Number.isFinite(authored.attackBonus)) {
+        expect(scaled.attackBonus).toBe(authored.attackBonus * HARD_MODE_MULTIPLIERS.offence)
+      }
     }
   })
 })

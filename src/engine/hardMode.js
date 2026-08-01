@@ -6,8 +6,8 @@
  * inside combat.js: every fight in the game is built from a monster record plus
  * the monsters table (combat.js createCombatState, coopBossEngine
  * createCoopBossState), so scaling those two inputs at the door gives the
- * doubled health, max hit and accuracy for free — the damage, accuracy and form
- * code never learns hard mode exists.
+ * doubled max hit and accuracy for free — the damage, accuracy and form code
+ * never learns hard mode exists.
  *
  * Drops are the exception on purpose: `drops` is left untouched here because
  * doubling a drop rate is a §14 server decision (hardModeDropChance, called only
@@ -20,15 +20,15 @@
 /**
  * Every number Hard Mode moves, in one place. Retune the fight from here.
  *
- * `defence` is deliberately 1: the boss gets a bigger health bar, hits harder
- * and hits more often, but is no harder to hit. That is the shape of the mode —
- * more danger per second against the same time-to-kill per swing, rather than a
- * damage sponge. Setting it above 1 makes hard mode a slog, which is why it is a
- * named dial rather than a number buried in the scaling pass.
+ * `hitpoints` and `defence` are both deliberately 1: the boss dies to the same
+ * hits in the same time it always did, and only what it does to YOU changes.
+ * That is the shape of the mode — more danger per second, not a longer fight.
+ * Raising either turns it into a damage sponge, which is why they are named
+ * dials rather than numbers buried in the scaling pass.
  */
 export const HARD_MODE_MULTIPLIERS = {
   /** Health bar: hitpoints, and a phased boss's per-phase bar. */
-  hitpoints: 2,
+  hitpoints: 1,
   /** Offence: max hit, attack/strength bonuses, and the levels behind them. */
   offence: 2,
   /** Defence: defence level and every defence bonus. */

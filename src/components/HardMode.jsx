@@ -9,7 +9,7 @@
 
 import { HARD_MODE_MULTIPLIERS } from '../engine/hardMode.js'
 
-const { hitpoints, offence, dropRate } = HARD_MODE_MULTIPLIERS
+const { offence, dropRate } = HARD_MODE_MULTIPLIERS
 
 export function HardModeTag({ className = '' }) {
   return (
@@ -41,7 +41,7 @@ export function HardModeToggle({ enabled, pending = false, onToggle }) {
         <span class="flex flex-col gap-0.5">
           <span class="text-sm font-semibold">Hard Mode</span>
           <span class="text-[10px] font-normal opacity-70">
-            {hitpoints}× health, {offence}× max hit and accuracy, {dropRate}× drop rates. Solo and group fights.
+            {offence}× max hit and accuracy for the same health bar, {dropRate}× drop rates. Solo and group fights.
           </span>
         </span>
         <span class="fm-toggle__n">{pending ? '…' : enabled ? 'ON' : 'OFF'}</span>
@@ -60,8 +60,8 @@ export function HardModeConfirm({ name, pending = false, onConfirm, onCancel }) 
     <div>
       <div class="text-sm font-bold text-[var(--color-blood-light)] mb-1">Fight {name} in Hard Mode?</div>
       <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-2">
-        It will have {hitpoints}× health and hit {offence}× as hard, {offence}× as often on the mark. Its drop
-        rates double.
+        It will hit {offence}× as hard and {offence}× as often on the mark. Its health and defences are
+        unchanged, so it dies just as fast — the danger is what it does to you first. Its drop rates double.
       </p>
       <HardModeDeathWarning className="mb-3" />
       <div class="flex gap-2">
