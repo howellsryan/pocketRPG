@@ -41,6 +41,17 @@ How PocketRPG stays regression-resistant. Deep rationale: `docs/testing-strategy
 
 `tests/spec/` is a curated, greppable index of the CLAUDE.md §4–§7 gameplay invariants, one file per domain, each headed with the invariant and its source module (see `tests/spec/README.md`). It's the on-demand "how this should behave in depth" context for a hard bug — precise where CLAUDE.md is terse. Seeded with `inventoryCap` and `comboFood`; existing domain tests (`prayerDrain`, `journeys`, `consumables`, …) are the spec for their areas and migrate in incrementally. New invariants start here.
 
+## Manual browser repros (`scripts/repro-*.mjs`)
+
+Outside `npm test` — they drive a built bundle in a real browser and need
+`playwright` installed separately. They exist to reproduce an end-to-end failure
+whose durable regression cover is a logic test. Point one at any build root:
+`node scripts/repro-preset-item-loss.mjs <build-root>`.
+
+| Repro | Reproduces | Logic test that guards it |
+| --- | --- | --- |
+| `repro-preset-item-loss.mjs` | Loadout swap + tab suspend + idle catch-up destroying everything the preset withdrew | `holdingsReconcile` |
+
 ## Adding tests
 
 Follow `.claude/rules/testing.md`: bug fix => failing test first in the same PR; new behaviour => test in the same diff; logic that can't be tested where you write it moves to `src/engine`/`functions/_lib`. New CLAUDE.md gameplay invariant (§4-§7) => a matching test in the same change.
