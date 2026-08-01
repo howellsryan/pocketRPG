@@ -90,6 +90,7 @@ import { rollClueRewards } from './engine/clueScrolls.js'
 import dailyTasksData from './data/dailyTasks.json'
 import { skillingGainEvents, idleCombatDailyEvents } from './engine/dailyTasks.js'
 import { countItem, addItem, collectDepositAll, applyServerConsumed } from './engine/inventory.js'
+import { resolveIdleHoldingsWrites, applyIdleEquipmentWear } from './engine/holdingsReconcile.js'
 import { skillingActionBlockedByFullInventory } from './engine/skilling.js'
 
 // ── Lazy in-game code chunk ──────────────────────────────────────────────────
@@ -363,7 +364,8 @@ function GameApp() {
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
-    autoBankExcludedItems, backgroundCombat, combatStatus, settleKingdom, applyKingdomSkip } = useGame()
+    autoBankExcludedItems, backgroundCombat, combatStatus, settleKingdom, applyKingdomSkip,
+    getHoldings, flushLocalSaves } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
   const [gameReady, setGameReady] = useState(false)
@@ -463,13 +465,13 @@ function GameApp() {
     }
   }
 
-  // The scroll debit has to land on inventoryRef too, not just state: the paid
-  // skip chains several solves inside one call stack, and the ref is what the
-  // next iteration reads.
+  // The paid skip chains several solves inside one call stack, so each iteration
+  // has to see the previous one's scroll debit. updateInventory writes the
+  // holdings synchronously, so getHoldings() is that read.
   const clueSolveDeps = () => ({
     updateBankDirect,
-    updateInventory: (inv) => { inventoryRef.current = inv; updateInventory(inv) },
-    getInventory: () => inventoryRef.current,
+    updateInventory,
+    getInventory: () => getHoldings().inventory,
     getSnapshot, addToast,
   })
 
@@ -848,12 +850,13 @@ function GameApp() {
     if (!keep) setCombatMount(prev => (prev ? null : prev))
   }, [screen, backgroundCombat, combatStatus])
 
-  // Keep refs to stats/equipment/inventory for visibility handler (avoids stale closures)
+  // Keep refs for the visibility handler (avoids stale closures). Holdings are
+  // deliberately NOT mirrored here — they are read through getHoldings(), which
+  // is written synchronously by every mutation; a post-commit ref copy is a
+  // frame behind, and code that rebuilds a container from one reverts whatever
+  // the player changed in that frame.
   const statsRef = useRef(stats)
-  const equipmentRef = useRef(equipment)
-  const inventoryRef = useRef(inventory)
   const itemsDataRef = useRef(itemsData)
-  const bankRef = useRef(bank)
   const questQueueRef = useRef(questQueue)
   // Guards the skip handler (one skip at a time) and, below, freezes the
   // questQueueRef state-sync while a skip's quest cascade drains the queue.
@@ -861,15 +864,12 @@ function GameApp() {
   const worldLocationRef = useRef(worldLocation)
   const idleCombatSetupRef = useRef(idleCombatSetup)
   const currentHPRef = useRef(currentHP)
-  useEffect(() => { bankRef.current = bank }, [bank])
   useEffect(() => { worldLocationRef.current = worldLocation }, [worldLocation])
   useEffect(() => { idleCombatSetupRef.current = idleCombatSetup }, [idleCombatSetup])
   useEffect(() => { currentHPRef.current = currentHP }, [currentHP])
   useEffect(() => { completedQuestsRef.current = completedQuests }, [completedQuests])
   useEffect(() => { pendingXpChoicesRef.current = pendingXpChoices }, [pendingXpChoices])
   useEffect(() => { statsRef.current = stats }, [stats])
-  useEffect(() => { equipmentRef.current = equipment }, [equipment])
-  useEffect(() => { inventoryRef.current = inventory }, [inventory])
   // While a skip's quest cascade is draining the queue, promoteNextQueuedQuestOrClear
   // owns questQueueRef and advances it synchronously between completions. This
   // state-sync must NOT fire mid-cascade: the `questQueue` state lags the ref
@@ -901,6 +901,13 @@ function GameApp() {
         // last_active_at + active_task in character_idle_state), so no
         // separate beacon to /api/idle is needed here.
         try { beaconSaveNow(getSnapshot()) } catch (e) { /* non-fatal */ }
+        // Flush IndexedDB too, bypassing the 300ms autosave debounce. The
+        // foreground-return branch below re-reads these stores from IDB and
+        // writes the simulation's result back over live state, so a mutation the
+        // debounce hasn't landed yet is a mutation that gets reverted — which is
+        // how a loadout swap made moments before backgrounding the tab used to
+        // destroy everything it had just withdrawn from the bank.
+        try { await flushLocalSaves() } catch (e) { /* runLocalSave restores the flags and re-arms the debounce */ }
       } else {
         // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
         // to prevent system-time manipulation from granting fake idle progress.
@@ -965,7 +972,11 @@ function GameApp() {
             return
           }
 
-          // Re-read latest stats/equipment/inventory/bank from DB to avoid stale state
+          // Re-read latest stats/equipment/inventory/bank from DB to avoid stale
+          // state. Flush first — IDB is only as current as the debounced autosave,
+          // and a snapshot taken behind live state is one this handler will write
+          // back over the player's holdings.
+          try { await flushLocalSaves() } catch (e) { /* fall through to the divergence guard */ }
           const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
             getAllStats(),
             getInventory(),
@@ -1043,13 +1054,13 @@ function GameApp() {
               try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
               clearActivityProgress(getActivityKey({ type: 'gather', gatherTask: savedTask.gatherTask }))
               if (isCloudAuthoritativeMinigame(savedTask.gatherTask)) {
-                grantMinigameTaskRewards(savedTask.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
+                grantMinigameTaskRewards(savedTask.gatherTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
                 requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
                 void syncCompletedMinigameToServer(savedTask.gatherTask).catch((err) => {
                   console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
                 })
               } else {
-                grantMinigameTaskRewards(savedTask.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+                grantMinigameTaskRewards(savedTask.gatherTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
                 requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
               }
               recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.gatherTask?.id ?? 'any' })
@@ -1069,13 +1080,13 @@ function GameApp() {
               try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
               clearActivityProgress(getActivityKey({ type: 'minigame', minigameTask: savedTask.minigameTask }))
               if (isCloudAuthoritativeMinigame(savedTask.minigameTask)) {
-                grantMinigameTaskRewards(savedTask.minigameTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
+                grantMinigameTaskRewards(savedTask.minigameTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
                 requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
                 void syncCompletedMinigameToServer(savedTask.minigameTask).catch((err) => {
                   console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
                 })
               } else {
-                grantMinigameTaskRewards(savedTask.minigameTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+                grantMinigameTaskRewards(savedTask.minigameTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
                 requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
               }
               recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.minigameTask?.id ?? 'any' })
@@ -1218,13 +1229,29 @@ function GameApp() {
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
             grantXP('slayer', sim.slayerXpGained)
           }
-          // Apply items
+          // Apply items. The simulation ran on the IDB snapshot read above;
+          // resolving its result against LIVE holdings is what stops a stale
+          // snapshot reverting the inventory and equipment while the bank keeps
+          // its removals — which strands everything that moved between them.
+          const idleAmmoConsumed = savedTask.type === 'combat' ? sim.ammoConsumed : null
+          const idleChargesConsumed = (savedTask.type === 'combat' || savedTask.type === 'skill') ? sim.chargesConsumed : 0
+          let idleWearApplied = false
           if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather' || savedTask.type === 'clue') && sim.finalInventory) {
-            updateInventory(sim.finalInventory)
-            const bankedItems = sim.lootBanked || sim.itemsBanked || {}
-            if (Object.keys(bankedItems).length > 0) {
-              updateBankDirect(bankedItems, { charges: sim.chargesBanked })
+            const writes = resolveIdleHoldingsWrites({
+              base: { inventory: freshInv, equipment: freshEq },
+              sim,
+              live: getHoldings(),
+              itemsData: itemsDataRef.current,
+              bankedItems: sim.lootBanked || sim.itemsBanked || {},
+              ammoConsumed: idleAmmoConsumed,
+              chargesConsumed: idleChargesConsumed,
+            })
+            updateInventory(writes.inventory)
+            if (writes.equipment) updateEquipment(writes.equipment)
+            if (Object.keys(writes.bankDeltas).length > 0) {
+              updateBankDirect(writes.bankDeltas, { charges: sim.chargesBanked })
             }
+            idleWearApplied = true
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)
           }
@@ -1267,16 +1294,16 @@ function GameApp() {
             updateBankDirect(negated)
           }
 
-          if (savedTask.type === 'combat' && sim.ammoConsumed && freshEq?.ammo && freshEq.ammo.itemId === sim.ammoConsumed.itemId) {
-            const remainingAmmo = Math.max(0, (freshEq.ammo.quantity || 0) - sim.ammoConsumed.quantity)
-            freshEq.ammo = remainingAmmo > 0 ? { ...freshEq.ammo, quantity: remainingAmmo } : null
-            updateEquipment({ ...freshEq })
-          }
-
-          if ((savedTask.type === 'combat' || savedTask.type === 'skill') && sim.chargesConsumed > 0 && freshEq?.weapon) {
-            const remainingCharges = Math.max(0, (freshEq.weapon.charges || 0) - sim.chargesConsumed)
-            freshEq.weapon = { ...freshEq.weapon, charges: remainingCharges }
-            updateEquipment({ ...freshEq })
+          // Equipment wear for the task types that produce no finalInventory.
+          // Applied against live equipment (never by writing the snapshot back),
+          // and gated on the live slot still holding what the simulation wore.
+          if (!idleWearApplied) {
+            const worn = applyIdleEquipmentWear(getHoldings().equipment, {
+              baseEquipment: freshEq,
+              ammoConsumed: idleAmmoConsumed,
+              chargesConsumed: idleChargesConsumed,
+            })
+            if (worn) updateEquipment(worn)
           }
           // Deduct runes consumed from bank (inventory portion already reflected in finalInventory)
           if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {
@@ -1384,6 +1411,10 @@ function GameApp() {
       // Folds the idle heartbeat into the same /api/save write — see the
       // visibilitychange handler above.
       try { beaconSaveNow(getSnapshot()) } catch { /* non-fatal */ }
+      // Teardown can't await, but starting the IDB writes here still lets most
+      // of them land, and the next boot reads IDB. Same reasoning as the
+      // visibility-hide flush above.
+      try { flushLocalSaves().catch(() => {}) } catch { /* non-fatal */ }
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
@@ -1394,7 +1425,7 @@ function GameApp() {
       window.removeEventListener('pagehide', handleUnload)
       window.removeEventListener('beforeunload', handleUnload)
     }
-  }, [gameReady, grantXP, updateInventory, updateBankDirect, settleKingdom])
+  }, [gameReady, grantXP, updateInventory, updateBankDirect, settleKingdom, flushLocalSaves, getHoldings])
 
   // Day rollover: re-fetch daily tasks when UTC date changes while game is open
   useEffect(() => {
@@ -1540,13 +1571,13 @@ function GameApp() {
           try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
           clearActivityProgress(getActivityKey({ type: 'gather', gatherTask: task.gatherTask }))
           if (isCloudAuthoritativeMinigame(task.gatherTask)) {
-            grantMinigameTaskRewards(task.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
+            grantMinigameTaskRewards(task.gatherTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
             requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
             void syncCompletedMinigameToServer(task.gatherTask).catch((err) => {
               console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
             })
           } else {
-            grantMinigameTaskRewards(task.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+            grantMinigameTaskRewards(task.gatherTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
             requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
           }
           recordGameEvent?.({ kind: 'minigame_complete', minigameId: task.gatherTask?.id ?? 'any' })
@@ -1569,13 +1600,13 @@ function GameApp() {
           try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
           clearActivityProgress(getActivityKey({ type: 'minigame', minigameTask: mgTask }))
           if (isCloudAuthoritativeMinigame(mgTask)) {
-            grantMinigameTaskRewards(mgTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
+            grantMinigameTaskRewards(mgTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
             requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
             void syncCompletedMinigameToServer(mgTask).catch((err) => {
               console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
             })
           } else {
-            grantMinigameTaskRewards(mgTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+            grantMinigameTaskRewards(mgTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
             requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
           }
           recordGameEvent?.({ kind: 'minigame_complete', minigameId: mgTask?.id ?? 'any' })
@@ -2169,7 +2200,7 @@ function GameApp() {
     // their own screens); a full inventory pauses them before this runs (below),
     // and a rare multi-item overflow falls back to the bank.
     const depositLootToInventory = (loot) => {
-      const inv = [...inventoryRef.current]
+      const inv = [...getHoldings().inventory]
       const overflow = {}
       for (const [itemId, qty] of Object.entries(loot)) {
         if (qty <= 0) continue
@@ -2222,7 +2253,7 @@ function GameApp() {
   // inventory and let the paused action resume on the next tick.
   function bankFullInventory() {
     const { updates, charges, inventory: nextInv, deposited } =
-      collectDepositAll(inventoryRef.current, autoBankExcludedItems)
+      collectDepositAll(getHoldings().inventory, autoBankExcludedItems)
     if (deposited === 0) {
       // Every occupied slot is excluded from auto-bank, so there is nothing this
       // button can free. Dismiss rather than resolve: resolving would let the
@@ -2254,11 +2285,15 @@ function GameApp() {
       const task = activeTaskRef.current
       if (!isRunnableBackgroundTask(task)) return
 
+      // Read holdings synchronously: this rebuilds the whole inventory from what
+      // it reads, so a copy one commit behind (the refs below are synced by a
+      // post-commit effect) reverts anything the player changed this frame.
+      const holdings = getHoldings()
       const ctx = {
-        inventory: inventoryRef.current,
-        bank: bankRef.current,
+        inventory: holdings.inventory,
+        bank: holdings.bank,
         stats: statsRef.current,
-        equipment: equipmentRef.current,
+        equipment: holdings.equipment,
         itemsData: itemsDataRef.current,
         isIronman: getIronmanMode(),
         // Active real-time play never silently auto-banks: a full inventory
@@ -2332,14 +2367,15 @@ function GameApp() {
       commit(actions > 0 ? 0 : pending, nextSession)
     })
     return unsub
-  }, [gameReady])
+  }, [gameReady, getHoldings])
 
-  // Wait for React to commit and run the stateRef-syncing effects in
-  // gameState before snapshotting. grantXP / updateBankDirect etc. are
-  // setState calls, and getSnapshot() reads stateRef.current, which is
-  // synced via useEffect — so a snapshot taken synchronously after the
-  // mutations would capture the PRE-skip state. Two animation frames
-  // guarantee a paint (and thus the passive effects) have run.
+  // Wait for React to commit before snapshotting. The holdings mutators,
+  // grantXP and setPlayer now write stateRef synchronously, but the SETTINGS
+  // half of getSnapshot() (currentHP, activeTask, farming, quest state, …)
+  // still reads render-scope values that only update on commit — so a snapshot
+  // taken synchronously after those mutations would capture the PRE-skip
+  // settings. Two animation frames guarantee a paint (and thus the passive
+  // effects) have run.
   function waitForStateFlush() {
     return new Promise((resolve) => {
       if (typeof requestAnimationFrame === 'function') {
@@ -2467,6 +2503,9 @@ function GameApp() {
     let resumeCombatLive = null
     try {
       const task = activeTaskRef.current
+      // Flush before reading: IDB is only as current as the debounced autosave,
+      // and this handler writes its simulation's result back over live holdings.
+      try { await flushLocalSaves() } catch (e) { /* resolved against live below */ }
       const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
         getAllStats(), getInventory(), getEquipment(), getBank(), getSetting('slayerTask'),
       ])
@@ -2678,13 +2717,13 @@ function GameApp() {
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
             clearActivityProgress(getActivityKey({ type: 'gather', gatherTask: savedTask.gatherTask }))
             if (isCloudAuthoritativeMinigame(savedTask.gatherTask)) {
-              grantMinigameTaskRewards(savedTask.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
+              grantMinigameTaskRewards(savedTask.gatherTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
               requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
               await syncCompletedMinigameToServer(savedTask.gatherTask).catch((err) => {
                 console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
               })
             } else {
-              grantMinigameTaskRewards(savedTask.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+              grantMinigameTaskRewards(savedTask.gatherTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
             }
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
@@ -2712,13 +2751,13 @@ function GameApp() {
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
             clearActivityProgress(getActivityKey({ type: 'minigame', minigameTask: savedTask.minigameTask }))
             if (isCloudAuthoritativeMinigame(savedTask.minigameTask)) {
-              grantMinigameTaskRewards(savedTask.minigameTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
+              grantMinigameTaskRewards(savedTask.minigameTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
               requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
               await syncCompletedMinigameToServer(savedTask.minigameTask).catch((err) => {
                 console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
               })
             } else {
-              grantMinigameTaskRewards(savedTask.minigameTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+              grantMinigameTaskRewards(savedTask.minigameTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
             }
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
@@ -2808,13 +2847,29 @@ function GameApp() {
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
             grantXP('slayer', sim.slayerXpGained)
           }
-          // Apply items
+          // Apply items. The simulation ran on the IDB snapshot read above;
+          // resolving its result against LIVE holdings is what stops a stale
+          // snapshot reverting the inventory and equipment while the bank keeps
+          // its removals — which strands everything that moved between them.
+          const idleAmmoConsumed = savedTask.type === 'combat' ? sim.ammoConsumed : null
+          const idleChargesConsumed = (savedTask.type === 'combat' || savedTask.type === 'skill') ? sim.chargesConsumed : 0
+          let idleWearApplied = false
           if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather' || savedTask.type === 'clue') && sim.finalInventory) {
-            updateInventory(sim.finalInventory)
-            const bankedItems = sim.lootBanked || sim.itemsBanked || {}
-            if (Object.keys(bankedItems).length > 0) {
-              updateBankDirect(bankedItems, { charges: sim.chargesBanked })
+            const writes = resolveIdleHoldingsWrites({
+              base: { inventory: freshInv, equipment: freshEq },
+              sim,
+              live: getHoldings(),
+              itemsData: itemsDataRef.current,
+              bankedItems: sim.lootBanked || sim.itemsBanked || {},
+              ammoConsumed: idleAmmoConsumed,
+              chargesConsumed: idleChargesConsumed,
+            })
+            updateInventory(writes.inventory)
+            if (writes.equipment) updateEquipment(writes.equipment)
+            if (Object.keys(writes.bankDeltas).length > 0) {
+              updateBankDirect(writes.bankDeltas, { charges: sim.chargesBanked })
             }
+            idleWearApplied = true
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)
           }
@@ -2880,16 +2935,16 @@ function GameApp() {
             updateBankDirect(negated)
           }
 
-          if (savedTask.type === 'combat' && sim.ammoConsumed && freshEq?.ammo && freshEq.ammo.itemId === sim.ammoConsumed.itemId) {
-            const remainingAmmo = Math.max(0, (freshEq.ammo.quantity || 0) - sim.ammoConsumed.quantity)
-            freshEq.ammo = remainingAmmo > 0 ? { ...freshEq.ammo, quantity: remainingAmmo } : null
-            updateEquipment({ ...freshEq })
-          }
-
-          if ((savedTask.type === 'combat' || savedTask.type === 'skill') && sim.chargesConsumed > 0 && freshEq?.weapon) {
-            const remainingCharges = Math.max(0, (freshEq.weapon.charges || 0) - sim.chargesConsumed)
-            freshEq.weapon = { ...freshEq.weapon, charges: remainingCharges }
-            updateEquipment({ ...freshEq })
+          // Equipment wear for the task types that produce no finalInventory.
+          // Applied against live equipment (never by writing the snapshot back),
+          // and gated on the live slot still holding what the simulation wore.
+          if (!idleWearApplied) {
+            const worn = applyIdleEquipmentWear(getHoldings().equipment, {
+              baseEquipment: freshEq,
+              ammoConsumed: idleAmmoConsumed,
+              chargesConsumed: idleChargesConsumed,
+            })
+            if (worn) updateEquipment(worn)
           }
           // Deduct runes consumed from bank
           if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {

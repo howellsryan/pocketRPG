@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'preact/hooks'
+import { useState, useMemo, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Model3DViewer from '../components/Model3DViewer.jsx'
 import { getCharacterAssetPath, getCharacterModel, getWeaponPlacement, getGearPlacements } from '../utils/equipModels.js'
@@ -19,9 +19,15 @@ import InventoryGrid from '../components/InventoryGrid.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS, spellRuneDamageLabel } from '../utils/bonusLabels.js'
 import { formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
+import { holdTicks, releaseTicks } from '../engine/tick.js'
+
+// Tick-hold key for a loadout swap (see handleLoadPreset).
+const PRESET_LOAD_HOLD = 'preset-load'
+// Ceiling on how long the swap may hold the global tick loop waiting on its save.
+const PRESET_COMMIT_TIMEOUT_MS = 5000
 
 export default function EquipmentScreen() {
-  const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests, equipmentPresets, updateEquipmentPresets, combatStatus, characterUnlocks } = useGame()
+  const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, getHoldings, commitHoldings, addToast, itemsData, completedQuests, equipmentPresets, updateEquipmentPresets, combatStatus, characterUnlocks } = useGame()
   // Loadout presets reshuffle equipment/inventory/bank wholesale — disabled while
   // a fight ticks in the background so gear can't swap out from under it.
   const presetsLocked = !!combatStatus?.active
@@ -32,6 +38,8 @@ export default function EquipmentScreen() {
   const [createName, setCreateName] = useState('')
   const [managePreset, setManagePreset] = useState(null) // preset being renamed/deleted
   const [manageName, setManageName] = useState('')
+  const [loadingPresetId, setLoadingPresetId] = useState(null) // swap in flight (display)
+  const loadingPresetRef = useRef(false)                        // swap in flight (guard)
 
   const presets = Array.isArray(equipmentPresets) ? equipmentPresets : []
   const presetLimit = equipmentPresetLimit(characterUnlocks)
@@ -65,12 +73,46 @@ export default function EquipmentScreen() {
   // Load a preset: re-arrange owned items across equipment/inventory/bank, then
   // report anything the player lacks (missing / requirement-locked / partial
   // stacks) in a single toast so empty slots are explained.
-  const handleLoadPreset = (preset) => {
+  //
+  // This is the only action in the game that rewrites all three containers at
+  // once, so it is also the only one where a concurrent writer can strand items
+  // between them. Two guards: ticks are HELD for the duration, so the background
+  // activity runner cannot rebuild the inventory from its pre-swap copy, and the
+  // result is flushed to IndexedDB before we let go — the idle catch-up paths
+  // re-read these stores from IDB, and a swap still sitting behind the debounced
+  // autosave is a swap they revert.
+  const handleLoadPreset = async (preset) => {
     if (presetsLocked) { addToast('⚔️ Finish your fight to swap loadouts.', 'warning'); return }
-    const result = applyPreset(preset, { equipment, inventory, bank }, itemsData, stats, completedQuests)
-    updateEquipment(result.equipment)
-    updateInventory(result.inventory)
-    updateBank(result.bank)
+    // Ref, not the state flag: `disabled` and `loadingPresetId` only take effect
+    // after the commit, so two taps in one frame would both get past a state
+    // read and the first release would lift the tick hold under the second.
+    if (loadingPresetRef.current) return
+    loadingPresetRef.current = true
+    setLoadingPresetId(preset.id)
+    holdTicks(PRESET_LOAD_HOLD)
+    let result
+    try {
+      const live = getHoldings()
+      result = applyPreset(preset, live, itemsData, stats, completedQuests)
+      // Bounded: holdTicks stops the GLOBAL tick loop, so an IndexedDB write
+      // that never settles (a versionchange block in another tab, an exhausted
+      // quota) would otherwise freeze combat, gathering and HP regen with no
+      // error and no way back. The swap is already applied in memory either way.
+      await Promise.race([
+        commitHoldings(result),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('save_timeout')), PRESET_COMMIT_TIMEOUT_MS)),
+      ])
+    } catch (err) {
+      // The swap is applied in memory; only persisting it failed. runLocalSave
+      // restores the dirty flags and re-arms the debounce, so it keeps retrying.
+      addToast('Loadout swapped, but saving is failing — check your connection.', 'error')
+      console.warn('[PocketRPG] Preset load save failed:', err?.message || err)
+      return
+    } finally {
+      releaseTicks(PRESET_LOAD_HOLD)
+      loadingPresetRef.current = false
+      setLoadingPresetId(null)
+    }
 
     const problems = []
     if (result.reqFailed.length) {
@@ -308,18 +350,18 @@ export default function EquipmentScreen() {
       <div class="mb-3 flex items-center gap-1.5 flex-wrap">
         <span class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mr-1">Presets</span>
         {presets.map(p => (
-          <div key={p.id} class={`flex items-stretch rounded-md overflow-hidden ${presetsLocked ? 'opacity-40' : ''}`}>
+          <div key={p.id} class={`flex items-stretch rounded-md overflow-hidden ${presetsLocked || loadingPresetId ? 'opacity-40' : ''}`}>
             <button
               onClick={() => handleLoadPreset(p)}
-              disabled={presetsLocked}
+              disabled={presetsLocked || !!loadingPresetId}
               title={presetsLocked ? 'Locked while fighting' : undefined}
               class="px-3 py-1.5 bg-[var(--color-void-light)] text-[var(--color-parchment)] text-xs font-bold max-w-[110px] truncate active:opacity-80"
             >
-              {p.name}
+              {loadingPresetId === p.id ? 'Loading…' : p.name}
             </button>
             <button
               onClick={() => { setManagePreset(p); setManageName(p.name) }}
-              disabled={presetsLocked}
+              disabled={presetsLocked || !!loadingPresetId}
               class="px-2 py-1.5 bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-40 text-xs active:opacity-70"
               aria-label={`Edit preset ${p.name}`}
             >
