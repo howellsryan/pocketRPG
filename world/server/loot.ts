@@ -3,7 +3,7 @@
 // client's diff (WorldZone diffs each player's visible set tick-to-tick, which
 // naturally handles the owner→public transition, pickup and despawn).
 import type { InvSlot, LootItem } from '../shared/protocol'
-import { addToInventory } from './mining'
+import { addToInventory, isStackable } from './mining'
 
 export type LootEntity = {
   id: string
@@ -15,31 +15,59 @@ export type LootEntity = {
   spawnTick: number
   /** Owner-only window override (player drops go public faster than kill loot). */
   ownerTicks?: number
+  /** This stack came off a player killed in the Wilderness. An Ironman may
+   * never take it — not even when they are the killer who owns it — because
+   * every unit in it was earned on somebody else's account. Bot drops carry no
+   * flag: those are a drop table, and an Ironman rolling one has earned it. */
+  fromPlayer?: boolean
 }
 
 export const LOOT_OWNER_TICKS = 100
 export const LOOT_DESPAWN_TICKS = 300
 /** A player-dropped item shows for everyone after ~10s (spec: drop visibility). */
 export const PLAYER_DROP_OWNER_TICKS = 17
+/**
+ * A Wilderness KILL's pile is the killer's for ~36s, not the 10s a voluntarily
+ * dropped item gets. Pickup is one item per tick and a death can put a 28-slot
+ * pack plus eleven worn pieces on one tile (each non-stackable unit is its own
+ * entity — see spawnDrops), so 39 ticks of clicking is the realistic worst
+ * case: at 17 the loot a player actually won went public while they were still
+ * bending down for it, and the fight was decided by whoever loitered nearby.
+ */
+export const KILL_DROP_OWNER_TICKS = 60
 
 let lootSeq = 0
 
 /** Turns rolled drops into loot entities at the death tile, owned by the killer
- * for the owner window. Zero-quantity rolls are skipped. */
+ * for the owner window. Zero-quantity rolls are skipped.
+ *
+ * A NON-STACKABLE drop becomes one entity per unit, never a single qty-N pile.
+ * Three sharks in the pack are three things on the floor, so the take menu lists
+ * three rows and a killer with two free slots gets two of them instead of the
+ * whole stack failing at addToInventory. It is also what makes `qty > 1` mean
+ * "this is a stack" everywhere downstream — the client renders the count on that
+ * rule alone and never needs the item table to decide. */
 export function spawnDrops(
   drops: { itemId: string; quantity: number }[],
   x: number,
   z: number,
   ownerCharId: string,
   tick: number,
-  ownerTicks?: number
+  ownerTicks?: number,
+  opts?: { fromPlayer?: boolean }
 ): LootEntity[] {
   const out: LootEntity[] = []
   for (const drop of drops) {
     if (!drop.itemId || drop.quantity < 1) continue
-    const loot: LootEntity = { id: `loot_${++lootSeq}`, itemId: drop.itemId, qty: drop.quantity, x, z, ownerCharId, spawnTick: tick }
-    if (ownerTicks !== undefined) loot.ownerTicks = ownerTicks
-    out.push(loot)
+    const stackable = isStackable(drop.itemId)
+    const piles = stackable ? 1 : Math.floor(drop.quantity)
+    const per = stackable ? Math.floor(drop.quantity) : 1
+    for (let i = 0; i < piles; i++) {
+      const loot: LootEntity = { id: `loot_${++lootSeq}`, itemId: drop.itemId, qty: per, x, z, ownerCharId, spawnTick: tick }
+      if (ownerTicks !== undefined) loot.ownerTicks = ownerTicks
+      if (opts?.fromPlayer) loot.fromPlayer = true
+      out.push(loot)
+    }
   }
   return out
 }
@@ -67,7 +95,13 @@ export function isOwnedBy(loot: LootEntity, viewer: LootViewer): boolean {
  * change to the windows above — none of which may put the item in the pack.
  * Checked immediately before the inventory mutation, so it is the last word. */
 export function mayTake(loot: LootEntity, viewer: LootViewer): boolean {
-  return !viewer.isIronman || isOwnedBy(loot, viewer)
+  if (!viewer.isIronman) return true
+  // Ownership is not enough for a player kill: an Ironman who wins a fight in
+  // the Wilderness still may not pick the loser's account up off the floor.
+  // They keep the fight, the rank and every bot drop — this is the one thing
+  // the mode costs them.
+  if (loot.fromPlayer) return false
+  return isOwnedBy(loot, viewer)
 }
 
 /** Owner-only until the owner window elapses, then visible to everyone (until
@@ -75,6 +109,7 @@ export function mayTake(loot: LootEntity, viewer: LootViewer): boolean {
  * whom loot they don't own never becomes visible at all. */
 export function isVisibleTo(loot: LootEntity, viewer: LootViewer, tick: number): boolean {
   if (isExpired(loot, tick)) return false
+  if (viewer.isIronman && loot.fromPlayer) return false
   if (viewer.isIronman && !isOwnedBy(loot, viewer)) return false
   if (tick - loot.spawnTick < (loot.ownerTicks ?? LOOT_OWNER_TICKS)) return isOwnedBy(loot, viewer)
   return true

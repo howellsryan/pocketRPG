@@ -11,7 +11,6 @@
 // portal is a front end for this endpoint and sends the same header.
 import { json } from '../../_lib/auth.js'
 import { isAdminRequest } from '../../_lib/adminAuth.js'
-import { assertNotInActiveMatch } from '../../_lib/pvp.js'
 import { assertNotInCoopSession } from '../../_lib/game/coopBoss.js'
 import { isWorldSessionLive } from '../../_lib/game/worldSessions.js'
 import { loadAnyCharacterWithSave, writeSave } from '../../_lib/game/save.js'
@@ -70,8 +69,6 @@ export async function onRequestPost({ request, env }) {
     // Every path that owns this save refuses the grant rather than racing it:
     // the owner replays its own snapshot on write-back, so a write underneath
     // one is either lost or duplicated (§14, §20).
-    const pvpLock = await assertNotInActiveMatch(env, characterId)
-    if (pvpLock) return pvpLock
     const coopLock = await assertNotInCoopSession(env, characterId)
     if (coopLock) return coopLock
     if (await isWorldSessionLive(env, characterId)) {

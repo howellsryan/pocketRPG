@@ -1,19 +1,18 @@
 import { getServerByName, routePartykitRequest } from 'partyserver'
 import { WorldZone } from './WorldZone'
 import { CoopBossRoom } from './CoopBossRoom'
-import { PvpMatchRoom } from './PvpMatchRoom'
 import { handleWorldSession } from './session'
 import { handleWorldLeave, type DepartInRoom } from './leave'
+import { handlePvpCount } from './pvpCount'
 import { handleEditorRequest } from './editor'
 import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
 import type { Env } from './env'
 
-// CoopBossRoom and PvpMatchRoom are reached only as Durable Objects, by the
-// Pages app's /api/coop/* and /api/pvp/* routes over cross-script bindings —
-// this Worker exposes no HTTP route for either. They live here because Pages
-// projects cannot export DO classes, and this Worker already has the DO
-// infrastructure and the same D1 binding.
-export { WorldZone, CoopBossRoom, PvpMatchRoom }
+// CoopBossRoom is reached only as a Durable Object, by the Pages app's
+// /api/coop/* routes over a cross-script binding — this Worker exposes no HTTP
+// route for it. It lives here because Pages projects cannot export DO classes,
+// and this Worker already has the DO infrastructure and the same D1 binding.
+export { WorldZone, CoopBossRoom }
 export type { Env }
 
 const EDITOR_PREFIX = '/api/world/editor'
@@ -46,6 +45,12 @@ export default {
     // than a socket frame precisely because the socket may already be gone.
     if (url.pathname === '/api/world/leave' && request.method === 'POST') {
       return handleWorldLeave(request, env, departInRoom)
+    }
+
+    // Wilderness occupancy for the idle game's PvP card. Public and CORS-open
+    // by design — see server/pvpCount.ts.
+    if (url.pathname === '/api/world/pvp-count') {
+      return handlePvpCount(request, env)
     }
 
     if (url.pathname === EDITOR_PREFIX || url.pathname.startsWith(EDITOR_PREFIX + '/')) {

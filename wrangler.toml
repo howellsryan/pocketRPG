@@ -24,15 +24,6 @@ name = "COOP_ROOM"
 class_name = "CoopBossRoom"
 script_name = "pocketrpg-world"
 
-# PvP duels, same arrangement: the class lives in the world Worker
-# (world/server/PvpMatchRoom.ts) and the match endpoints are thin proxies over
-# it. A missing binding degrades to PVP_UNAVAILABLE
-# (functions/_lib/game/pvpRoom.js) rather than throwing.
-[[durable_objects.bindings]]
-name = "PVP_ROOM"
-class_name = "PvpMatchRoom"
-script_name = "pocketrpg-world"
-
 [ai]
 binding = "AI"
 
@@ -84,8 +75,7 @@ r2_buckets = [
   { binding = "TRIPO_ASSETS", bucket_name = "pocketrpg-assets-preview" }
 ]
 durable_objects = { bindings = [
-  { name = "COOP_ROOM", class_name = "CoopBossRoom", script_name = "pocketrpg-world-preview" },
-  { name = "PVP_ROOM", class_name = "PvpMatchRoom", script_name = "pocketrpg-world-preview" }
+  { name = "COOP_ROOM", class_name = "CoopBossRoom", script_name = "pocketrpg-world-preview" }
 ] }
 # DISABLE_QUEST_REQUIREMENTS is preview-ONLY and must never appear in the
 # production [vars] block above — it bypasses every quest gate so testers can

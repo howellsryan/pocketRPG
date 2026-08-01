@@ -1,5 +1,4 @@
 import { requireAuth, json } from '../../_lib/auth.js'
-import { assertNotInActiveMatch } from '../../_lib/pvp.js'
 import { auditLog } from '../../_lib/game/audit.js'
 
 // Registry of purchasable permanent character unlocks.
@@ -26,8 +25,6 @@ export async function onRequestPost({ request, env }) {
     ).bind(characterId, auth.identity.id).first()
     if (!character) return json({ error: 'Character not found' }, 404)
 
-    const lock = await assertNotInActiveMatch(env, characterId)
-    if (lock) return lock
 
     let body
     try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }

@@ -27,8 +27,6 @@ function mockEnv({ save, isIronman = false }: { save: any; isIronman?: boolean }
   const prepare = (sql: string) => ({
     bind: (...args: any[]) => ({
       first: async () => {
-        if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
-        if (sql.includes('FROM pvp_matches')) return null
         if (sql.includes('LEFT JOIN saves')) {
           return {
             id: Number(args[0]),

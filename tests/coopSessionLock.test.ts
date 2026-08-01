@@ -29,8 +29,8 @@ let env: any
 
 function char(id: number, ownerId = 1) {
   raw.prepare(
-    `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, active_match_id, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
-     VALUES (?, ?, ?, 0, 0, 0, 0, NULL, 0, 0, 700, 126, 0, 0)`,
+    `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
+     VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, 700, 126, 0, 0)`,
   ).run(id, ownerId, 'c' + id)
 }
 

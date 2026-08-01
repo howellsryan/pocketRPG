@@ -20,20 +20,35 @@ export type Pickable = {
   /** Combat level for npc/player menu colour-coding. */
   monsterLevel?: number
   examine?: string
+  /** Player pickables in the Wilderness: this player may be attacked from where
+   * we are standing (both sides north of the line, inside the ±10 bracket). The
+   * server re-checks everything — this only decides whether the row is offered,
+   * so a menu never advertises an attack that will be refused. */
+  attackable?: boolean
+  /** A roaming Wilderness bot. Offered Attack like anyone else, never Follow —
+   * there is nothing behind it to follow. */
+  bot?: boolean
 }
 
 // Hover picks the highest-priority thing under the cursor; the context menu
 // lists everything in ray order (near-to-far), which the caller preserves.
-// 'player' has no entry deliberately — other players are menu-only (Follow),
-// never a hover/left-click default, so tapping through a crowd still walks.
-const HOVER_PRIORITY: Partial<Record<PickKind, number>> = { loot: 0, npc: 1, rock: 2, object: 2, exit: 3 }
+// A player ranks alongside an npc — in the Wilderness they ARE the monster —
+// but only while they carry an Attack action; topPick skips action-less
+// pickables, so a player you cannot attack still lets the click walk through.
+const HOVER_PRIORITY: Partial<Record<PickKind, number>> = { loot: 0, npc: 1, player: 1, rock: 2, object: 2, exit: 3 }
 
 /** The thing a left-click acts on: highest hover-priority, ties broken by the
- * caller's near-to-far order. Null when only the ground is under the cursor. */
+ * caller's near-to-far order. Null when only the ground is under the cursor.
+ *
+ * A pickable with no actions is not a click target at all. That is what keeps a
+ * player standing in the safe camp (or outside your combat bracket) from
+ * swallowing a walk click — and it is why the caller MUST decorate players
+ * before calling this, not only before building the menu. */
 export function topPick(pickables: Pickable[]): Pickable | null {
   let best: Pickable | null = null
   let bestRank = Infinity
   for (let i = 0; i < pickables.length; i++) {
+    if (pickables[i].actions.length === 0) continue
     const rank = HOVER_PRIORITY[pickables[i].kind]
     if (rank !== undefined && rank < bestRank) {
       bestRank = rank
@@ -55,7 +70,7 @@ export function defaultInteract(p: Pickable): { kind: PickKind; id: string; acti
 export function hoverText(pickables: Pickable[]): string {
   const pick = topPick(pickables)
   if (!pick || pick.actions.length === 0) return 'Walk here'
-  const suffix = pick.kind === 'npc' && pick.monsterLevel != null ? ` (level-${pick.monsterLevel})` : ''
+  const suffix = (pick.kind === 'npc' || pick.kind === 'player') && pick.monsterLevel != null ? ` (level-${pick.monsterLevel})` : ''
   const name = pick.actions[0].name ?? pick.name
   return `${pick.actions[0].label} ${name}${suffix}`
 }
@@ -89,14 +104,31 @@ export function buildMenu(pickables: Pickable[], playerCombatLevel: number): Men
     // so it gets its own row shape instead of running through `actions`.
     const favourable = pick.monsterLevel == null ? undefined : playerCombatLevel >= pick.monsterLevel
     if (pick.kind === 'player') {
-      rows.push({
-        text: `Follow ${pick.name}`,
-        followTargetId: pick.id,
-        targetName: pick.name,
-        targetKind: pick.kind,
-        monsterLevel: pick.monsterLevel,
-        levelFavourable: favourable,
-      })
+      // Attack leads when it is on the table: in the Wilderness that is the
+      // reason you clicked, and burying it under Follow costs a fight.
+      // Comes from `actions` (set by the caller's decorator) so the menu row
+      // and the left-click default can never disagree about whether Attack is
+      // on the table.
+      for (const action of pick.actions) {
+        rows.push({
+          text: `${action.label} ${pick.name}`,
+          interact: { kind: 'player', id: action.id ?? pick.id, action: action.action },
+          targetName: pick.name,
+          targetKind: pick.kind,
+          monsterLevel: pick.monsterLevel,
+          levelFavourable: favourable,
+        })
+      }
+      if (!pick.bot) {
+        rows.push({
+          text: `Follow ${pick.name}`,
+          followTargetId: pick.id,
+          targetName: pick.name,
+          targetKind: pick.kind,
+          monsterLevel: pick.monsterLevel,
+          levelFavourable: favourable,
+        })
+      }
       continue
     }
     for (const action of pick.actions) {

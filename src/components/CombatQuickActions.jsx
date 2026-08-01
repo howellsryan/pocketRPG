@@ -4,11 +4,12 @@ import SkillIcon from './SkillIcon.jsx'
 import { prayerSkill } from '../utils/prayerIcons.js'
 import { isConsumableFood, isConsumablePotion } from '../engine/consumables.js'
 
-// Shared mobile combat quick-actions panel (a PvE-only Prayers tab first, then
-// Consume / Weapons / Armour). Used by BOTH PvE (CombatScreen) and PvP
-// (PvpCombatScreen) so the layout lives in one place. Each screen supplies its own
-// dispatch: PvE acts immediately by itemId, PvP queues by inventory slot index —
-// both read the same resolved `entry` ({ itemId, item, qty, slotIdx }). Pass
+// Shared mobile combat quick-actions panel (a Prayers tab first, then Consume /
+// Weapons / Armour). Used by BOTH the solo fight (CombatScreen) and the group
+// fight (CoopBossScreen) so the layout lives in one place. Each screen supplies
+// its own dispatch: solo acts immediately by itemId, the group fight files an
+// intent by inventory slot index — both read the same resolved `entry`
+// ({ itemId, item, qty, slotIdx }). Pass
 // `isPotionActive` to light up the highlight ring on potions whose effect is
 // currently active. The Prayers tab only renders when `onPrayer` is supplied (PvE);
 // it lists the player's configured `quickPrayers` and toggles them exactly like the

@@ -1,6 +1,6 @@
 // /api/idle persistence guards (§14): ownership, PvP save-lock, task-JSON
 // validation, and the write-throttle that collapses per-tick flushes. Real
-// schema; real assertNotInActiveMatch / verifyJWT.
+// schema; real verifyJWT.
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { makeD1, FakeD1 } from './helpers/d1'
 import { signJWT } from '../functions/_lib/jwt.js'
@@ -16,11 +16,11 @@ import { onRequestGet, onRequestPut, onRequestDelete, onRequestPost } from '../f
 const SECRET = 'idle-secret'
 let raw: any
 let env: any
-function char(id: number, ownerId = 1, activeMatchId: number | null = null) {
+function char(id: number, ownerId = 1) {
   raw.prepare(
-    `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, active_match_id, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
-     VALUES (?, ?, ?, 0, 0, 0, 0, ?, 0, 0, 1, 3, 0, 0)`,
-  ).run(id, ownerId, 'c' + id, activeMatchId)
+    `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
+     VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, 1, 3, 0, 0)`,
+  ).run(id, ownerId, 'c' + id)
 }
 function putReq(characterId: number, body: any) {
   return new Request('https://x', { method: 'PUT', headers: { 'X-Character-Id': String(characterId), 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -57,12 +57,6 @@ describe('PUT /api/idle', () => {
     const res = await onRequestPut({ request: putReq(5, { active_task: JSON.stringify({ type: 'skill', id: 'mining' }) }), env } as any)
     expect(res.status).toBe(200)
     expect(JSON.parse(idleRow(5).active_task).type).toBe('skill')
-  })
-  it('blocks writes while in an active PvP match', async () => {
-    char(5, 1, 100)
-    raw.prepare(`INSERT INTO pvp_matches (id, character_a, character_b, status, started_at, current_tick, state_json, last_tick_at) VALUES (100, 5, 6, 'active', 0, 0, '{}', 0)`).run()
-    const res = await onRequestPut({ request: putReq(5, { active_task: null }), env } as any)
-    expect(res.status).toBe(409)
   })
   it('throttles an unchanged same-task rewrite (no second write)', async () => {
     char(5)

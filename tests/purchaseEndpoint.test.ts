@@ -10,10 +10,6 @@ vi.mock('../functions/_lib/auth.js', () => ({
   json: (body: any, status = 200) =>
     new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
 }))
-vi.mock('../functions/_lib/pvp.js', () => ({
-  assertNotInActiveMatch: async () => null,
-  sweepStaleRows: async () => {},
-}))
 
 import { onRequestPost } from '../functions/api/purchase.js'
 

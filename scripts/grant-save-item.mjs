@@ -166,7 +166,7 @@ async function main() {
   if (!Number.isInteger(characterId) || characterId <= 0) die(`Character id must be a positive integer (got "${characterRaw}").`)
 
   console.log(C.dim(`\nReading character ${characterId} from ${db} (${envName})…`))
-  const { results } = d1(db, `SELECT c.id AS character_id, c.name, c.owner_id, c.deleted_at, c.active_match_id, c.active_coop_session_id, c.total_level, s.save_revision, s.updated_at, length(s.save_blob) AS blob_len, hex(s.save_blob) AS blob_hex FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ${characterId};`)
+  const { results } = d1(db, `SELECT c.id AS character_id, c.name, c.owner_id, c.deleted_at, c.active_coop_session_id, c.total_level, s.save_revision, s.updated_at, length(s.save_blob) AS blob_len, hex(s.save_blob) AS blob_hex FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ${characterId};`)
   const row = results[0]
   if (!row) die(`No character with id ${characterId} in ${db}.`)
   if (row.deleted_at) die(`Character ${characterId} ("${row.name}") is deleted (deleted_at = ${fmtTime(row.deleted_at)}).`)
@@ -174,9 +174,8 @@ async function main() {
 
   // 3) Save locks. Writing under any of these races a server-side writer that
   //    owns the save (CLAUDE.md §14/§20) and would lose one side's changes.
-  const lock = d1(db, `SELECT (SELECT COUNT(*) FROM pvp_matches WHERE id = (SELECT active_match_id FROM characters WHERE id = ${characterId}) AND status = 'active') AS pvp_active, (SELECT heartbeat_at FROM world_sessions WHERE character_id = ${characterId}) AS world_heartbeat, (SELECT active_coop_session_id FROM characters WHERE id = ${characterId}) AS coop_session;`).results[0] || {}
+  const lock = d1(db, `SELECT (SELECT heartbeat_at FROM world_sessions WHERE character_id = ${characterId}) AS world_heartbeat, (SELECT active_coop_session_id FROM characters WHERE id = ${characterId}) AS coop_session;`).results[0] || {}
   const worldLive = Number(lock.world_heartbeat) > 0 && Date.now() - Number(lock.world_heartbeat) < 120_000
-  if (Number(lock.pvp_active) > 0) die('Character is in an active PvP match — its save is locked. Try again after the match.')
   if (lock.coop_session) die(`Character is in co-op boss session ${lock.coop_session} — its save is locked. Try again after the fight.`)
   if (worldLive) die(`Character has a live open-world session (heartbeat ${fmtTime(lock.world_heartbeat)}) — its save is locked. Try again once it lapses (~2 min).`)
 

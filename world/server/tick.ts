@@ -15,6 +15,7 @@ import type { NpcState } from './npc'
 import type { LootEntity } from './loot'
 import { hasLineOfSight } from './los'
 import { protectionOverhead } from '../shared/prayer'
+import { isDangerTile } from '../shared/pvpArea'
 import monstersData from '../../src/data/monsters.json'
 
 type MonsterStyles = Record<string, { attackStyle?: string; forms?: Record<string, { attackStyle?: string } | undefined> } | undefined>
@@ -106,6 +107,13 @@ export type TickPlayer = {
    * when this changes, so a stationary target doesn't cost a pathfind every
    * tick while the follower is still en route. */
   followTargetTile: { x: number; z: number } | null
+  /** Wilderness: a special armed for the next PvP swing (world/server/pvpCombat.ts).
+   * Distinct from `pendingSpecial`, which arms the next PvE fight. */
+  specialAttackQueued?: boolean
+  /** Wilderness single-combat opponent (world/server/pvpCombat.ts), or null.
+   * Lives on the base session rather than the DO's Player so the entity diff can
+   * read it without importing the zone. */
+  pvpOpponentId?: string | null
   /** Overhead protection-prayer style last put on the wire. Prayers toggle
    * BETWEEN ticks (a client message), so the tick's own before/after snapshot
    * can't see the change — this is what makes the entity diff go out, the same
@@ -141,6 +149,12 @@ export type TickContext = {
    * served as many rooms, and it is the private room, not the geography, that
    * makes an unbounded chase fair. */
   lair?: boolean
+  /** Refuses a step before it is taken (the Wilderness line: crossing north
+   * without having answered the prompt). Gating the STEP rather than each path
+   * assignment is deliberate — a walk, a follow, an approach path and anything
+   * added later all funnel through takeSteps, so there is exactly one place a
+   * player can cross and exactly one place to stop them. */
+  blockStep?: (player: TickPlayer, to: Tile) => boolean
 }
 
 export type TickResult = {
@@ -484,15 +498,30 @@ function tickCrafting(player: TickPlayer, ctx: TickContext, result: TickResult):
 
 /** Advances the player along its path: one tile normally, a second tile when
  * running with energy to spare. Drains run energy per running tile. Returns
- * whether the player ran this tick (drives regen). */
-function takeSteps(player: TickPlayer): boolean {
+ * whether the player ran this tick (drives regen).
+ *
+ * A refused step (ctx.blockStep) drops the rest of the path on the floor: the
+ * character stops where they stand, which is what makes the Wilderness prompt
+ * read as "you are at the gate" rather than as a click that did nothing. */
+function takeSteps(player: TickPlayer, ctx: TickContext, result: TickResult): boolean {
   if (player.path.length === 0) return false
+  if (ctx.blockStep?.(player, player.path[0])) {
+    player.path = []
+    result.events.push({ e: 'pvpPrompt' })
+    return false
+  }
   const first = player.path.shift()!
   player.x = first.x
   player.z = first.z
   if (!player.running || player.runEnergy <= 0) return false
   let ranTiles = 1
   if (player.path.length > 0) {
+    if (ctx.blockStep?.(player, player.path[0])) {
+      player.path = []
+      result.events.push({ e: 'pvpPrompt' })
+      player.runEnergy = Math.max(0, player.runEnergy - RUN_DRAIN_PER_TILE)
+      return true
+    }
     const second = player.path.shift()!
     player.x = second.x
     player.z = second.z
@@ -557,7 +586,7 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   let ran = false
   let moved = false
   if (player.path.length > 0) {
-    ran = takeSteps(player)
+    ran = takeSteps(player, ctx, result)
     moved = true
     player.anim = 'walk'
     if (player.path.length === 0 && player.pendingInteract) startInteract(player, ctx, result)
@@ -611,7 +640,7 @@ export function sessionCombatLevel(stats: SessionStats): number {
   return combatLevelFromLevels(levels)
 }
 
-export function toEntityDiff(player: TickPlayer): EntityDiff {
+export function toEntityDiff(player: TickPlayer, opts?: { pvpZone?: boolean }): EntityDiff {
   // Gear rides every player diff (even empty) so an in-world unequip
   // propagates — omitting it would leave stale weapons on observers. hp/maxHp
   // ride every diff too (item 11 — players show an overhead HP bar like
@@ -622,6 +651,10 @@ export function toEntityDiff(player: TickPlayer): EntityDiff {
     gear: player.gear, hp: player.hp, maxHp: player.maxHp,
   }
   if (player.combat) diff.targetId = player.combat.npcId
+  else if (player.pvpOpponentId) diff.targetId = player.pvpOpponentId
+  // Only ever set inside the Wilderness: `isDangerTile` is a z test, and every
+  // other zone has tiles that would satisfy it by accident.
+  if (opts?.pvpZone && isDangerTile(player)) diff.pvp = true
   // Overhead protection prayer, for everyone who can see this player. Absent
   // means none — the client clears the icon rather than merging.
   const overhead = protectionOverhead(player.activeProtectionPrayer)

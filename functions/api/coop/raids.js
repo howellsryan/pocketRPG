@@ -1,5 +1,5 @@
 import { requireAuth, json } from '../../_lib/auth.js'
-import { getOwnedCharacter } from '../../_lib/pvp.js'
+import { getOwnedCharacter } from '../../_lib/character.js'
 import { activeSessionIdFor, sweepStaleCoopSessions } from '../../_lib/game/coopBoss.js'
 import { activeRaidPartyFor, coopRaidCatalogue, listOpenRaidParties } from '../../_lib/game/coopRaid.js'
 

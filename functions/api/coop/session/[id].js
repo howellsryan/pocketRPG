@@ -1,5 +1,5 @@
 import { requireAuth, json } from '../../../_lib/auth.js'
-import { getOwnedCharacter } from '../../../_lib/pvp.js'
+import { getOwnedCharacter } from '../../../_lib/character.js'
 import { readSession, parseSessionState, parseCoopSessionId } from '../../../_lib/game/coopBoss.js'
 import { projectStateForMember } from '../../../_lib/game/coopProjection.js'
 

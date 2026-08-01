@@ -29,8 +29,6 @@ export default function GameFrameBar({
   position = 'top',
   active,
   onNavigate,
-  isInCombat = false,
-  onDisabledClick = null,
   demo = false,
   lockedScreens = null,
   onLockedClick = null,
@@ -53,10 +51,9 @@ export default function GameFrameBar({
         key={tab.id}
         label={tab.label}
         active={active === tab.id}
-        disabled={isInCombat}
         locked={isLocked}
         title={isLocked ? 'Available with a free account' : tab.label}
-        onClick={() => { if (isInCombat) onDisabledClick?.(); else if (isLocked) onLockedClick?.(); else onNavigate?.(tab.id) }}
+        onClick={() => { if (isLocked) onLockedClick?.(); else onNavigate?.(tab.id) }}
       >
         {tab.iconDisc
           ? <span class="gf-icon-disc"><GameIcon iconKey={tab.iconKey} size={tab.iconSize || 30} color={tab.iconColor} /></span>

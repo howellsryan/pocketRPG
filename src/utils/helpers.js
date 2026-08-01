@@ -1,4 +1,5 @@
 import { combatLevelFromLevels } from '../engine/combatLevel.js'
+import { markWorldHandoff } from '../cloud/worldHandoff.js'
 
 /**
  * Random integer between min and max (inclusive)
@@ -155,6 +156,10 @@ export function worldBossLairsEnabled() {
  */
 export async function openWorld(api, zone) {
   const { handoff } = await api.requestWorldHandoff(zone)
+  // From here the world is the save's writer, and this tab's own IndexedDB
+  // writes must stop outranking the cloud copy on the next boot — see
+  // cloud/worldHandoff.js for why that costs a Wilderness loot pile otherwise.
+  markWorldHandoff()
   window.open(`${worldOrigin()}/#handoff=${handoff}`, '_blank')
 }
 
@@ -176,4 +181,25 @@ export function chatActionCostLine(cost) {
       : `Costs ${skip} credit${skip === 1 ? '' : 's'} for the skip`
   }
   return `Costs ${fee} credit${fee === 1 ? '' : 's'}`
+}
+
+/**
+ * How many players are in the Wilderness right now, for the PvP card's live
+ * headcount. Served by the world Worker (not Pages, which has no WorldZone
+ * binding) and fetched straight from the world origin under CORS.
+ *
+ * Resolves null on any failure — an unreachable count must never be the reason
+ * a player can't see the entry card, so callers hide the number rather than
+ * showing an error.
+ */
+export async function fetchWildernessCount() {
+  try {
+    const res = await fetch(`${worldOrigin()}/api/world/pvp-count`)
+    if (!res.ok) return null
+    const body = await res.json()
+    const count = Number(body?.count)
+    return Number.isFinite(count) && count >= 0 ? Math.floor(count) : null
+  } catch {
+    return null
+  }
 }

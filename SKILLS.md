@@ -56,7 +56,7 @@ Ten compact single-file skills vendored verbatim from [`CloudAI-X/threejs-skills
 
 | Rule | Scope (`paths:`) | Contents |
 |---|---|---|
-| `.claude/rules/pvp.md` | `functions/api/pvp/**`, `functions/_lib/pvp*`, `src/engine/pvp*`, `src/data/pvpBots.json`, `functions/api/leaderboard.js` | Matchmaking, save-lockdown, special-energy/equip-swap timing, magic parity, bot system |
+| `.claude/rules/pvp.md` | `src/engine/pvp*`, `world/server/pvp*`, `world/shared/pvpArea.ts`, `src/data/pvpBots.json`, `functions/api/leaderboard.js` | The Wilderness: the attack gate, the one swing function, death drops, combat logout, bot system |
 | `.claude/rules/mcp.md` | `functions/api/mcp.js`, `functions/_lib/mcp/**`, OAuth paths, consent screen, MCP tests | MCP architecture, bridge tools vs save-intents, schema/tools/test trio |
 | `.claude/rules/chat.md` | `functions/api/chat.js`, `functions/_lib/chat/**`, `ChatWidget.jsx`, `docs/game-guide.md`, `scripts/gen-chat-knowledge.cjs` | Chatbot model chain, progressive tool exposure, write gating + action fee, spend budgets, knowledge index |
 | `.claude/rules/testing.md` | `tests/**` | Bug-fix-first, test-in-same-diff, move-logic-out-of-JSX, no mirror-list/source-regex tests, the CI gates |

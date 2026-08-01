@@ -1,7 +1,7 @@
 // Server-side loot box rolling for PvP bot wins.
 //
 // Pure function — no I/O, no Date.now. Pass a deterministic rng for tests.
-// Called by settlePvpMatch (functions/_lib/pvpSettle.js) when the human wins vs a bot.
+// Called by world/server/pvpBots.ts when a player kills a Wilderness bot.
 //
 // Drop table (per product spec):
 //   ~70% common  — 1 000–10 000 coins

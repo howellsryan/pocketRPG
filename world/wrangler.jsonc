@@ -18,14 +18,16 @@
   "durable_objects": {
     "bindings": [
       { "name": "WorldZone", "class_name": "WorldZone" },
-      { "name": "CoopBossRoom", "class_name": "CoopBossRoom" },
-      { "name": "PvpMatchRoom", "class_name": "PvpMatchRoom" }
+      { "name": "CoopBossRoom", "class_name": "CoopBossRoom" }
     ]
   },
+  // v4 retires the duel room the Wilderness replaced. A class that is gone from
+  // the code must be named in `deleted_classes` or wrangler rejects the deploy.
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["WorldZone"] },
     { "tag": "v2", "new_sqlite_classes": ["CoopBossRoom"] },
-    { "tag": "v3", "new_sqlite_classes": ["PvpMatchRoom"] }
+    { "tag": "v3", "new_sqlite_classes": ["PvpMatchRoom"] },
+    { "tag": "v4", "deleted_classes": ["PvpMatchRoom"] }
   ],
   "d1_databases": [
     {

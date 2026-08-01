@@ -81,7 +81,7 @@ The committed root `index.html` is the **CDN single-file build** (`build_single.
 
 ### 3.2 Make API calls use an absolute base URL ⚠️ **blocker**
 
-`src/cloud/api.js` (`request()`, ~line 109) and `src/cloud/pvp.js` (~line 20) call `fetch('/api/...')` with **relative** paths. In the app the shell loads from `capacitor://localhost`, so `/api/...` hits the local bundle and **every API call 404s**.
+`src/cloud/api.js` (`request()`, ~line 109) calls `fetch('/api/...')` with **relative** paths. In the app the shell loads from `capacitor://localhost`, so `/api/...` hits the local bundle and **every API call 404s**.
 
 ```js
 // src/cloud/apiBase.js

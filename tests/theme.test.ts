@@ -226,6 +226,30 @@ describe('themed rules do not regain parchment literals', () => {
     expect(offenders).toEqual([])
   })
 
+  // Same static-asset invariant as the guard above, catching the other way a
+  // themed rule silently fails: an UNDECLARED token. `var(--text-secondary)`
+  // with no fallback is an invalid declaration, so `color` never applies and the
+  // text inherits — which on a parchment modal is near-white on cream, i.e.
+  // invisible. Nothing else notices: it builds, it renders, it has no contrast.
+  it('reads no semantic token that neither theme declares', () => {
+    const files = [
+      ...globSync(resolve(__dirname, '../src/components/*.jsx')),
+      ...globSync(resolve(__dirname, '../src/screens/*.jsx')),
+    ]
+    const declared = new Set([...LIGHT, ...DARK])
+    const offenders: string[] = []
+    for (const file of files) {
+      const body = readFileSync(file, 'utf8')
+      // Only the semantic families this test owns. A `var(--x, fallback)` is
+      // fine by construction, and `--fm-*` is the frozen palette the guard
+      // above polices instead.
+      for (const m of body.matchAll(/var\((--(?:text|surface|accent|hairline)[a-z0-9-]*)\)/g)) {
+        if (!declared.has(m[1])) offenders.push(`${file.split('/').slice(-2).join('/')}: ${m[1]}`)
+      }
+    }
+    expect(offenders).toEqual([])
+  })
+
   it('leaves no raw vellum hex in a themed rule', () => {
     const offenders = Array.from(
       themedRegion().matchAll(/^.*#(?:e6d8b6|e9dcbd|f3ead0|d8c69e)\b.*$/gim),

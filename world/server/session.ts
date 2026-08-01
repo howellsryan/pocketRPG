@@ -1,7 +1,7 @@
 import { signJWT, verifyJWT } from '../../functions/_lib/jwt.js'
-import { isCharacterInActiveMatch } from './pvpLock'
 import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import { isInstancedRoom, isInstancedZone } from '../shared/instances'
+import { isPvpZone } from '../shared/pvpArea'
 import { assignInstanceRoom } from './instances'
 import type { Env } from './env'
 
@@ -47,13 +47,8 @@ export async function handleWorldSession(request: Request, env: Env): Promise<Re
     return jsonResponse({ error: 'Character not found' }, 404)
   }
 
-  // Refuse world entry while a PvP match is active (defence in depth behind
-  // /api/world-token's check — a 60s handoff could still be replayed here).
-  if (await isCharacterInActiveMatch(env, row.id)) {
-    return jsonResponse({ error: 'character_in_active_match', code: 'CHARACTER_IN_ACTIVE_MATCH' }, 409)
-  }
-  // Same for a live co-op boss fight: the room owns this save's pack and XP,
-  // and flushGrants would write straight over it.
+  // Refuse world entry during a live co-op boss fight: the room owns this
+  // save's pack and XP, and flushGrants would write straight over it.
   if (await isCoopSessionLive(env, row.id)) {
     return jsonResponse({ error: 'character_in_coop_session', code: 'CHARACTER_IN_COOP_SESSION' }, 409)
   }
@@ -71,6 +66,12 @@ export async function handleWorldSession(request: Request, env: Env): Promise<Re
   if (requested && isInstancedZone(requested)) {
     const zone = await assignInstanceRoom(env, requested)
     return jsonResponse({ token, character: { id: row.id, name: row.username }, zone })
+  }
+  // The Wilderness is the other named entry target, and the one non-instanced
+  // one: it is a single shared room on purpose (players who cannot find each
+  // other are not in a PvP zone), so there is no instance to assign.
+  if (requested && isPvpZone(requested)) {
+    return jsonResponse({ token, character: { id: row.id, name: row.username }, zone: requested })
   }
 
   // Otherwise the character's current zone, so a fresh device connects to the

@@ -34,7 +34,7 @@ export type StationType = 'furnace' | 'anvil' | 'range'
 export type ClientMessage =
   | { t: 'hello'; token: string }
   | { t: 'walk'; x: number; z: number }
-  | { t: 'interact'; kind: 'rock' | 'npc' | 'loot' | 'object'; id: string; action: string }
+  | { t: 'interact'; kind: 'rock' | 'npc' | 'loot' | 'object' | 'player'; id: string; action: string }
   | { t: 'cancel' }
   | { t: 'chat'; text: string }
   | { t: 'moveInv'; from: number; to: number }
@@ -55,6 +55,10 @@ export type ClientMessage =
   /** Follow another player until cancelled (explicit walk/interact/teleport/
    * combat, or the target dying/leaving/logging out — see tick.ts). */
   | { t: 'follow'; targetId: string }
+  /** The player answered the Wilderness crossing prompt. `yes` resumes the walk
+   * that was stopped at the line and marks them consenting until they return to
+   * the camp; `no` simply drops the prompt. */
+  | { t: 'pvpConsent'; yes: boolean }
   | { t: 'logout' }
   /** The tab is really going away (closed or navigated off), as opposed to a
    * socket that dropped by accident. Flushes and releases the save lock now
@@ -94,6 +98,22 @@ export type ZoneEvent =
   /** Live damage-contribution readout for an in-combat boss, sorted by damage
    * descending — makes the top-damage loot rule legible mid-fight (item 11). */
   | { e: 'threat'; npcId: string; contributors: { charId: string; name: string; dmg: number }[] }
+  /** The player walked into the Wilderness line without having consented yet.
+   * Their path is already stopped at the last safe tile; the client shows the
+   * confirm and answers with {t:'pvpConsent'}. */
+  | { e: 'pvpPrompt' }
+  /** This player's own PvP standing changed: which side of the line they are on,
+   * and who (if anyone) they are locked in single combat with. Drives the HUD
+   * banner and the "already fighting" menu state. Snapshot, not a merge. */
+  | { e: 'pvpState'; inDanger: boolean; opponentId: string | null; opponentName: string | null }
+  /** Zone-wide kill feed for a player kill — the Wilderness equivalent of the
+   * boss `kill` event. `bot` marks a kill on one of the roaming bots. */
+  | { e: 'pvpKill'; killer: string; victim: string; bot?: boolean }
+  /** The Log out button was refused because the player is in a fight. Carries
+   * the reason as the chat line AND is the client's signal to cancel the reload
+   * it is holding — one message, so the two can never disagree. The refusal is
+   * server-side regardless: ignoring this event does not get anyone out. */
+  | { e: 'logoutRefused'; text: string }
 
 export type EntityDiff = {
   id: string
@@ -123,6 +143,15 @@ export type EntityDiff = {
    * blocks, drawn as an overhead icon. Snapshot, not a merge — absent means no
    * protection prayer, and must actually clear the icon. */
   overhead?: 'melee' | 'ranged' | 'magic'
+  /** Player entities only: this player is north of the Wilderness line and can
+   * therefore be attacked. The client uses it (with `combatLevel`) to decide
+   * whether to offer an Attack row; the server re-checks everything. Absent
+   * means safe. */
+  pvp?: true
+  /** Player entities only: a roaming Wilderness bot rather than a real account.
+   * Rendered exactly like a player on purpose — this only exists so the client
+   * never offers Follow on something that cannot be followed. */
+  bot?: true
 }
 
 export type StaticObject = {
@@ -249,7 +278,7 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
       const id = r.id
       const action = r.action
       if (
-        (kind === 'rock' || kind === 'npc' || kind === 'loot' || kind === 'object') &&
+        (kind === 'rock' || kind === 'npc' || kind === 'loot' || kind === 'object' || kind === 'player') &&
         typeof id === 'string' &&
         typeof action === 'string'
       ) {
@@ -329,6 +358,10 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
     case 'follow': {
       const targetId = (raw as Record<string, unknown>).targetId
       return typeof targetId === 'string' && targetId.length > 0 && targetId.length <= 64 ? { t: 'follow', targetId } : null
+    }
+    case 'pvpConsent': {
+      const yes = (raw as Record<string, unknown>).yes
+      return typeof yes === 'boolean' ? { t: 'pvpConsent', yes } : null
     }
     case 'logout':
       return { t: 'logout' }

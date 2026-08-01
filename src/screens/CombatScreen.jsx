@@ -1,9 +1,6 @@
-import { Component } from 'preact'
 import { useState, useEffect, useRef, useMemo } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import { usePvp } from '../state/pvpState.jsx'
-import PvpLobbyModal from './PvpLobbyModal.jsx'
-import PvpCombatScreen from './PvpCombatScreen.jsx'
+import WildernessEntryModal from './WildernessEntryModal.jsx'
 import CoopBossScreen from './CoopBossScreen.jsx'
 import CoopSessionBrowser, { CoopSessionList } from '../components/CoopSessionBrowser.jsx'
 import CoopRaidPartyList from '../components/CoopRaidPartyList.jsx'
@@ -44,7 +41,6 @@ import { RAID_TASK_META } from '../engine/slayerMasters.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel, SELF_HEALING_SPEC_TYPES } from '../engine/specialAttackEnergy.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, lastSaveLockCode } from '../cloud/sync.js'
-import { pvpApi } from '../cloud/pvp.js'
 import monstersData from '../data/monsters.json'
 import worldData from '../data/world.json'
 import { placeActivities } from '../engine/worldContent.js'
@@ -223,45 +219,6 @@ function buildDungeonData(placeId) {
   return { categories, raids }
 }
 
-class PvpCombatErrorBoundary extends Component {
-  constructor(props) {
-    super(props)
-    this.state = { hasError: false, message: '' }
-  }
-
-  componentDidUpdate(prevProps) {
-    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
-      this.setState({ hasError: false, message: '' })
-    }
-  }
-
-  static getDerivedStateFromError(error) {
-    return {
-      hasError: true,
-      message: error?.message || String(error || 'Unknown PvP render error'),
-    }
-  }
-
-  componentDidCatch(error, info) {
-    console.error('[PocketRPG][PvP] combat screen render failed', error, info)
-    this.props.onCrash?.(error, info)
-  }
-
-  reset = () => {
-    this.setState({ hasError: false, message: '' })
-  }
-
-  render(props, state) {
-    if (state.hasError) {
-      if (typeof props.fallback === 'function') {
-        return props.fallback({ reset: this.reset, message: state.message })
-      }
-      return null
-    }
-    return props.children
-  }
-}
-
 const DEFENCE_STYLES = ['stab', 'slash', 'crush', 'magic', 'ranged']
 
 // Per-phase attack/defence breakdown for multiForm bosses (e.g. Venomcoil
@@ -350,12 +307,11 @@ function MonsterAddStats({ monster }) {
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
   const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget } = useGame()
-  const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
-  const [showPvpLobby, setShowPvpLobby] = useState(false)
+  const [showWildernessEntry, setShowWildernessEntry] = useState(false)
   // Co-op boss session. The server owns the fight and locks the save for its
-  // duration, so this takes over the screen exactly like an active PvP match.
+  // duration, so this takes over the screen.
   const [coopSessionId, setCoopSessionId] = useState(null)
   // Set while exitCoopFight is releasing the session, so the effect cleanup
   // that fires straight after doesn't send a second leave for the same fight.
@@ -493,7 +449,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const statsRef = useRef(stats)
   const equipmentRef = useRef(equipment)
   const slayerTaskRef = useRef(slayerTask)
-  const pvpCrashHandledRef = useRef(false)
   const oneLifeModeRef = useRef(isOneLife || getOneLifeMode())
 
   // One-life death: the character already revives at full HP like any other
@@ -516,42 +471,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
   const logRef = useRef(null)
-
-  useEffect(() => {
-    if (pvp.phase === 'in_match' && combat?.active) {
-      setCombat(null)
-    }
-  }, [pvp.phase])
-
-  useEffect(() => {
-    let cancelled = false
-
-    const reconnectToActiveMatch = async () => {
-      if (pvp.phase === 'in_match') return
-      if (!pvp.canAutoReconnect) return
-      try {
-        const invitesRes = await pvpApi.listInvitations()
-        const activeMatchId = Number(invitesRes?.active_match_id)
-        if (cancelled || !Number.isFinite(activeMatchId) || activeMatchId <= 0) return
-        setShowPvpLobby(false)
-        pauseTicks()
-        pvp.enterMatch(activeMatchId)
-      } catch {
-        // best-effort reconnect check
-      }
-    }
-
-    reconnectToActiveMatch()
-    const onVisible = () => {
-      if (!document.hidden) reconnectToActiveMatch()
-    }
-    document.addEventListener('visibilitychange', onVisible)
-
-    return () => {
-      cancelled = true
-      document.removeEventListener('visibilitychange', onVisible)
-    }
-  }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect])
 
   useEffect(() => { hpRef.current = currentHP }, [currentHP])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
@@ -1570,7 +1489,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       // rather than rebuilding a worse one from the monster.
       if (code === 'BOSS_REQUIREMENTS_NOT_MET') addToast(err?.body?.error || 'You have not unlocked this boss yet.', 'error')
       else if (code === 'CHARACTER_IN_WORLD_SESSION') addToast('You are adventuring in the World.', 'error')
-      else if (code === 'CHARACTER_IN_ACTIVE_MATCH') addToast('Finish your duel first.', 'error')
       else if (code === 'CHARACTER_IN_COOP_SESSION') addToast(err?.body?.error || 'Leave your current group fight first.', 'error')
       else if (code === 'COOP_UNAVAILABLE') addToast('Group boss fights are offline right now — fight alone for the moment.', 'error')
       else if (code === 'COOP_SESSION_UNAVAILABLE') addToast(err?.body?.error || 'That group is no longer taking fighters.', 'error')
@@ -1657,7 +1575,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       else if (code === 'RAID_ALREADY_STARTED') addToast(err?.body?.error || 'That party has already set off.', 'error')
       else if (code === 'COOP_SESSION_UNAVAILABLE') addToast(err?.body?.error || 'That party is no longer taking raiders.', 'error')
       else if (code === 'CHARACTER_IN_WORLD_SESSION') addToast('You are adventuring in the World.', 'error')
-      else if (code === 'CHARACTER_IN_ACTIVE_MATCH') addToast('Finish your duel first.', 'error')
       else if (code === 'CHARACTER_IN_COOP_SESSION') addToast(err?.body?.error || 'Leave your current group fight first.', 'error')
       else if (code === 'COOP_UNAVAILABLE') addToast('Raid parties are offline right now — raid alone for the moment.', 'error')
       else addToast(err?.message || 'Could not join the party.', 'error')
@@ -1706,7 +1623,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     } catch (err) {
       const code = err?.body?.code
       if (code === 'CHARACTER_IN_COOP_SESSION') addToast('Leave your current group fight first.', 'error')
-      else if (code === 'CHARACTER_IN_ACTIVE_MATCH') addToast('Finish your duel first.', 'error')
       else addToast(err?.message || 'Could not reach the world.', 'error')
     } finally {
       setWorldJoining(null)
@@ -2471,99 +2387,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const bankDelayMs = getAgilityBankDelayMs(agilityLevel)
-  const finalizePvpExit = async () => {
-    pvpCrashHandledRef.current = false
-    pvp.leaveMatch()
-    try {
-      const pulled = await pullSave()
-      if (pulled?.payload) {
-        await applyCloudSave(pulled.payload, pulled.updatedAt)
-      }
-      await loadGame()
-    } catch (err) {
-      console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
-    }
-    resumeTicks()
-    setShowPvpLobby(false)
-  }
-
-  const handleRecoveryForfeit = async (reset) => {
-    try {
-      await pvpApi.forfeitMatch(pvp.activeMatchId)
-      addToast('Forfeit queued. Resolving...', 'info')
-      pvpCrashHandledRef.current = false
-      reset()
-    } catch (err) {
-      const code = err?.body?.error || err?.message
-      if (code === 'match_not_found' || code === 'match_not_active') {
-        try {
-          const invites = await pvpApi.listInvitations()
-          const activeMatchId = Number(invites?.active_match_id)
-          if (!Number.isFinite(activeMatchId) || activeMatchId <= 0) {
-            addToast('Match already ended.', 'info')
-            await finalizePvpExit()
-            return
-          }
-        } catch {
-          // fall through to generic error toast
-        }
-      }
-      addToast(err.body?.error || err.message, 'error')
-    }
-  }
-
-  if (pvp.phase === 'in_match' && pvp.activeMatchId) {
-    return (
-      <PvpCombatErrorBoundary
-        resetKey={pvp.activeMatchId}
-        onCrash={async (error) => {
-          if (pvpCrashHandledRef.current) return
-          pvpCrashHandledRef.current = true
-          console.error('[PocketRPG][PvP] Match view crashed; keeping recovery mode active:', error?.message || error)
-          addToast('PvP match view failed. Use retry or forfeit.', 'error')
-        }}
-        fallback={({ reset, message }) => (
-          <div className="p-3">
-            <Card className="border-[var(--color-blood)] bg-[#2a1010]">
-              <div class="text-sm font-bold text-[var(--color-blood-light)]">PvP match view failed to render</div>
-              <div class="text-[11px] text-[#f5e6c8] opacity-70 mt-1">
-                The server still has you in an active PvP match. Do not return to PvE.
-              </div>
-              {message && (
-                <p className="text-xs text-red-200 break-words mt-2">
-                  {message}
-                </p>
-              )}
-              <div class="flex gap-2 mt-3">
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    pvpCrashHandledRef.current = false
-                    reset()
-                  }}
-                >
-                  Retry PvP screen
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => handleRecoveryForfeit(reset)}
-                >
-                  Forfeit
-                </Button>
-              </div>
-            </Card>
-          </div>
-        )}
-      >
-        <PvpCombatScreen
-          matchId={pvp.activeMatchId}
-          addToast={addToast}
-          onExit={finalizePvpExit}
-        />
-      </PvpCombatErrorBoundary>
-    )
-  }
-
   if (coopSessionId) {
     return (
       <CoopBossScreen
@@ -2633,8 +2456,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             onStance={updateCombatStance}
             idleSetup={idleCombatSetup}
             onOpenIdle={setIdleSetupMode}
-            showPvp={!isIronman && !isOneLife && !isDemo && !isDungeon}
-            onOpenPvp={() => setShowPvpLobby(true)}
+            showPvp={!isDemo && !isDungeon}
+            onOpenPvp={() => setShowWildernessEntry(true)}
             demoLockBosses={isDemo}
             coopBrowserPanel={coopBrowserPanel}
             onBack={onStopBack || onBack}
@@ -2874,31 +2697,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
         )}
 
-        {/* PvP entry — hidden for ironman / one-life accounts, the demo, and dungeons. */}
-        {!isIronman && !isOneLife && !isDemo && !isDungeon && (
+        {/* Wilderness entry — hidden only in the demo (no account, so no world
+            handoff) and in dungeons. Ironman and One Life accounts may both go:
+            an Ironman simply cannot take another player's loot, and a One Life
+            run ends there like it ends anywhere else. */}
+        {!isDemo && !isDungeon && (
           <div class="mt-6 pb-2">
             <button
-              onClick={() => setShowPvpLobby(true)}
+              onClick={() => setShowWildernessEntry(true)}
               class="cb-raid__enter flex items-center justify-center gap-2"
               style={{ marginTop: 0, background: 'linear-gradient(180deg,#c0392b,#8b1a1a)', color: 'var(--color-parchment)', boxShadow: '0 8px 20px -8px rgba(192,57,43,0.6), inset 0 1px 0 rgba(255,255,255,0.15)' }}
-              title="Player vs Player"
+              title="The Wilderness"
             >
               <GameIcon iconKey="crossed_swords" color="var(--color-parchment)" size={18} />
-              <span>Player vs Player</span>
+              <span>The Wilderness</span>
             </button>
             <div class="text-[9px] text-[var(--color-parchment)] opacity-90 mt-1.5 text-center px-2">
-              On death, your tradeable inventory + equipped gear go to the winner. Untradeables stay with you.
+              Open-world PvP. Die out there and you drop everything you carry and everything you wear.
             </div>
           </div>
         )}
       </div>
       )}
 
-      {showPvpLobby && (
-        <PvpLobbyModal
-          onClose={() => setShowPvpLobby(false)}
-          getSnapshot={getSnapshot}
-        />
+      {showWildernessEntry && (
+        <WildernessEntryModal onClose={() => setShowWildernessEntry(false)} />
       )}
 
       {/* Idle combat setup */}
