@@ -19,16 +19,8 @@ const DEMO_MODE_KEY = 'pocketrpg_demo'
 // 5s guard at the sync layer; this is the hard cap that aborts a genuinely hung
 // connection so it can't trap boot or wedge the save queue (inFlight) forever.
 const REQUEST_TIMEOUT_MS = 15_000
-const ACTIVE_MATCH_EVENT = 'pocketrpg:pvp-active-match'
 export const SAVE_REVISION_EVENT = 'pocketrpg:cloud-save-revision'
 export const CREDITS_UPDATED_EVENT = 'pocketrpg:credits-updated'
-
-function emitActiveMatchConflict(matchId = null) {
-  if (typeof window === 'undefined') return
-  const parsed = Number(matchId)
-  const safeMatchId = Number.isFinite(parsed) && parsed > 0 ? parsed : null
-  window.dispatchEvent(new CustomEvent(ACTIVE_MATCH_EVENT, { detail: { matchId: safeMatchId } }))
-}
 
 export function emitSaveRevision(revision) {
   if (typeof window === 'undefined') return
@@ -172,9 +164,6 @@ async function request(path, options = {}) {
   let body = null
   try { body = await res.json() } catch { /* non-JSON */ }
   if (!res.ok) {
-    if (res.status === 409 && body?.error === 'character_in_active_match') {
-      emitActiveMatchConflict(body?.match_id ?? body?.matchId ?? body?.active_match_id ?? null)
-    }
     const err = new Error(body?.error || `Request failed (${res.status})`)
     err.status = res.status
     err.body = body

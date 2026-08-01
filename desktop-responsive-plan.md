@@ -68,7 +68,7 @@ Active combat splits into three panes at md+:
 - `src/screens/CombatScreen.jsx:1619-1620` — wrap active-combat root in `md:grid md:grid-cols-[1fr_1.2fr_1fr] md:gap-4`. Centre column needs `min-h-0` for the combat log auto-scroll.
 - Surface Inventory / Prayers / Potions panels inline at md+, suppress the modal triggers there. **Per user direction, replace the modals on desktop with the inline panels** rather than keeping both.
 - Picker monster lists at `:1304` get `lg:grid lg:grid-cols-2 xl:grid-cols-3`.
-- PvP gating: 3-pane wrap applies to PvE only — `PvpCombatScreen.jsx` keeps single-column for now.
+- PvP gating: PvP is the open-world client (`world/`), which has its own layout and is out of scope here.
 
 ### Phase 4 — Master-detail screens (medium, ~3–4h)
 

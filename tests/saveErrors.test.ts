@@ -4,7 +4,7 @@
 // toward the failure streak and escalates to the blocking "save failed" modal.
 
 import { describe, it, expect } from 'vitest'
-import { classifySaveError, activeMatchIdFromSaveError } from '../src/cloud/saveErrors.js'
+import { classifySaveError } from '../src/cloud/saveErrors.js'
 
 const lock409 = (body: Record<string, unknown>) => ({ status: 409, body })
 
@@ -13,14 +13,14 @@ describe('classifySaveError', () => {
     expect(classifySaveError(lock409({ code: 'CHARACTER_IN_COOP_SESSION', error: 'character_in_coop_session' }))).toBe('lock')
   })
 
-  it('treats the PvP and world-session locks as locks', () => {
-    expect(classifySaveError(lock409({ error: 'character_in_active_match' }))).toBe('lock')
+  it('treats the world-session lock as a lock', () => {
+    expect(classifySaveError(lock409({ error: 'character_in_world_session' }))).toBe('lock')
     expect(classifySaveError(lock409({ code: 'CHARACTER_IN_WORLD_SESSION' }))).toBe('lock')
   })
 
   it('reads a lock off err.message when the body did not parse', () => {
     expect(classifySaveError({ status: 409, message: 'character_in_coop_session' })).toBe('lock')
-    expect(classifySaveError({ status: 409, message: 'character_in_active_match' })).toBe('lock')
+    expect(classifySaveError({ status: 409, message: 'character_in_world_session' })).toBe('lock')
   })
 
   it('routes revision conflicts and bank wipes to the rollback path', () => {
@@ -43,19 +43,3 @@ describe('classifySaveError', () => {
   })
 })
 
-describe('activeMatchIdFromSaveError', () => {
-  it('returns the match id only for the PvP lock', () => {
-    expect(activeMatchIdFromSaveError(lock409({ error: 'character_in_active_match', match_id: 42 }))).toBe(42)
-    expect(activeMatchIdFromSaveError(lock409({ code: 'CHARACTER_IN_ACTIVE_MATCH', match_id: 7 }))).toBe(7)
-  })
-
-  it('returns null for the other locks, which carry no match', () => {
-    expect(activeMatchIdFromSaveError(lock409({ code: 'CHARACTER_IN_COOP_SESSION' }))).toBeNull()
-    expect(activeMatchIdFromSaveError(lock409({ code: 'CHARACTER_IN_WORLD_SESSION' }))).toBeNull()
-    expect(activeMatchIdFromSaveError(lock409({ code: 'SAVE_REVISION_CONFLICT' }))).toBeNull()
-  })
-
-  it('returns null rather than undefined when a PvP lock carries no match id', () => {
-    expect(activeMatchIdFromSaveError(lock409({ error: 'character_in_active_match' }))).toBeNull()
-  })
-})

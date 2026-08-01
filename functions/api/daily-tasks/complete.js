@@ -1,5 +1,4 @@
 import { requireAuth, json } from '../../_lib/auth.js'
-import { assertNotInActiveMatch } from '../../_lib/pvp.js'
 import { auditLog } from '../../_lib/game/audit.js'
 
 async function resolveCharacterId(request, env, identityId) {
@@ -20,8 +19,6 @@ export async function onRequestPost({ request, env }) {
   const ch = await resolveCharacterId(request, env, auth.identity.id)
   if (ch.error) return json({ error: ch.error }, ch.status)
 
-  const lock = await assertNotInActiveMatch(env, ch.id)
-  if (lock) return lock
 
   let body = {}
   try { body = await request.json() } catch { body = {} }

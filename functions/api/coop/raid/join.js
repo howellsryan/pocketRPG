@@ -1,5 +1,5 @@
 import { requireAuth, json } from '../../../_lib/auth.js'
-import { assertNotInActiveMatch, getOwnedCharacter } from '../../../_lib/pvp.js'
+import { getOwnedCharacter } from '../../../_lib/character.js'
 import { isWorldSessionLive } from '../../../_lib/game/worldSessions.js'
 import { currentSaveRevision, parseCoopSessionId, parseSessionState, readSession, sweepStaleCoopSessions } from '../../../_lib/game/coopBoss.js'
 import { joinCoopRaidParty } from '../../../_lib/game/coopRaid.js'
@@ -22,10 +22,8 @@ export async function onRequestPost({ request, env }) {
   const ch = await getOwnedCharacter(request, env, auth.identity.id)
   if (ch.error) return json({ error: ch.error }, ch.status)
 
-  // A raid party mutates the save, so it collides with every other path that
-  // owns it: an active PvP match and a live world session both win.
-  const lock = await assertNotInActiveMatch(env, ch.id)
-  if (lock) return lock
+  // A raid party mutates the save, so it collides with a live world session,
+  // which wins.
   if (await isWorldSessionLive(env, ch.id)) {
     return json({ error: 'character_in_world_session', code: 'CHARACTER_IN_WORLD_SESSION' }, 409)
   }

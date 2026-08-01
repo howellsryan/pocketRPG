@@ -40,8 +40,8 @@ describe('the co-op migration', () => {
     const db = migratedDb()
     db.exec(sql.slice(sql.indexOf(';', sql.indexOf('ALTER TABLE characters')) + 1))
     db.prepare(
-      `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, active_match_id, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
-       VALUES (1, 1, 'c1', 0, 0, 0, 0, NULL, 0, 0, 700, 126, 0, 0)`,
+      `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
+       VALUES (1, 1, 'c1', 0, 0, 0, 0, 0, 0, 700, 126, 0, 0)`,
     ).run()
     // The exact read /api/save makes on every single write.
     await expect(isCoopSessionLive({ DB: new FakeD1(db) } as never, 1)).resolves.toBe(false)

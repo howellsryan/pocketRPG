@@ -40,7 +40,6 @@ describe('saveLockCode', () => {
   it('names the lock that refused the write', () => {
     expect(saveLockCode(lockError('CHARACTER_IN_COOP_SESSION'))).toBe('CHARACTER_IN_COOP_SESSION')
     expect(saveLockCode({ status: 409, body: { error: 'character_in_world_session' } })).toBe('CHARACTER_IN_WORLD_SESSION')
-    expect(saveLockCode({ status: 409, message: 'character_in_active_match' })).toBe('CHARACTER_IN_ACTIVE_MATCH')
   })
 
   it('is null for anything that is not a lock', () => {

@@ -418,8 +418,10 @@ describe('MCP trading-post source: inventory|bank', () => {
           return { results: [] }
         },
         first: async () => {
-          if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
-          if (sql.includes('FROM pvp_matches')) return null
+          // Ownership read at the head of GET /api/save.
+          if (sql.includes('combat_level FROM characters')) {
+            return { id: Number(args[0]), total_level: 1, combat_level: 3 }
+          }
           // GET /api/save read (bridged by get_bank / get_character_state).
           if (sql.includes('save_data, save_blob') && sql.includes('FROM saves')) {
             return { save_data: null, save_blob: await blob, updated_at: 123, save_revision: 0 }
@@ -518,8 +520,6 @@ describe('MCP clue scrolls (start_clue + server claim)', () => {
               ? null
               : { last_active_at: idle.last_active_at, active_task: idle.active_task, updated_at: idle.updated_at || 1 }
           }
-          if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
-          if (sql.includes('FROM pvp_matches')) return null
           if (sql.includes('c.credits') && sql.includes('save_blob')) {
             return { id: Number(args[0]), owner_id: args[1], is_ironman: 0, credits: 0, save_blob: await blob, save_data: null, updated_at: 123, save_revision: 0 }
           }
@@ -684,8 +684,6 @@ describe('MCP unlock purchases (buy_unlock + buy_slayer_unlock)', () => {
           return { results: [] }
         },
         first: async () => {
-          if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
-          if (sql.includes('FROM pvp_matches')) return null
           if (sql.startsWith('SELECT id FROM characters')) return { id: 7 }
           if (sql.includes('UPDATE') && sql.includes('credits_remaining')) {
             // The atomic debit only matches when credits >= cost (last bind arg).

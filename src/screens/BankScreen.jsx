@@ -335,7 +335,6 @@ export default function BankScreen({ onBack }) {
       else if (code === 'IRONMAN_RESTRICTED') addToast(err.body.error, 'error')
       else if (code === 'INSUFFICIENT_SUPPLIES') addToast("You don't have that many to sell.", 'error')
       else if (code === 'NOT_LISTABLE') addToast('This item cannot be listed.', 'error')
-      else if (code === 'IN_ACTIVE_MATCH') addToast('Cannot sell during a PvP match.', 'error')
       else addToast(`Sell failed: ${err?.message || 'unknown error'}`, 'error')
     } finally {
       setSellBusy(false)

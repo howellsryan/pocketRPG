@@ -25,11 +25,11 @@ import { onRequestPost as worldTokenPost } from '../functions/api/world-token.js
 const SECRET = 'world-lock-secret'
 let raw: any
 let env: any
-function char(id: number, ownerId = 1, activeMatchId: number | null = null) {
+function char(id: number, ownerId = 1) {
   raw.prepare(
-    `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, active_match_id, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
-     VALUES (?, ?, ?, 0, 0, 0, 0, ?, 0, 0, 1, 3, 0, 0)`,
-  ).run(id, ownerId, 'c' + id, activeMatchId)
+    `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
+     VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, 1, 3, 0, 0)`,
+  ).run(id, ownerId, 'c' + id)
 }
 function savePut(characterId: number, body: any) {
   return new Request('https://x', { method: 'PUT', headers: { 'X-Character-Id': String(characterId), 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -145,18 +145,3 @@ describe('PUT /api/save world-session lock', () => {
   })
 })
 
-describe('POST /api/world-token PvP lock', () => {
-  it('refuses a world handoff while a PvP match is active', async () => {
-    char(5, 1, 100)
-    raw.prepare(`INSERT INTO pvp_matches (id, character_a, character_b, status, started_at, current_tick, state_json, last_tick_at) VALUES (100, 5, 6, 'active', 0, 0, '{}', 0)`).run()
-    const res = await worldTokenPost({ request: worldTokenReq(5), env } as any)
-    expect(res.status).toBe(409)
-  })
-
-  it('mints a handoff when no match is active', async () => {
-    char(5)
-    const res = await worldTokenPost({ request: worldTokenReq(5), env } as any)
-    expect(res.status).toBe(200)
-    expect(typeof (await res.json()).handoff).toBe('string')
-  })
-})

@@ -1,5 +1,4 @@
 import { signJWT, verifyJWT } from '../../functions/_lib/jwt.js'
-import { isCharacterInActiveMatch } from './pvpLock'
 import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import { isInstancedRoom, isInstancedZone } from '../shared/instances'
 import { isPvpZone } from '../shared/pvpArea'
@@ -48,13 +47,8 @@ export async function handleWorldSession(request: Request, env: Env): Promise<Re
     return jsonResponse({ error: 'Character not found' }, 404)
   }
 
-  // Refuse world entry while a PvP match is active (defence in depth behind
-  // /api/world-token's check — a 60s handoff could still be replayed here).
-  if (await isCharacterInActiveMatch(env, row.id)) {
-    return jsonResponse({ error: 'character_in_active_match', code: 'CHARACTER_IN_ACTIVE_MATCH' }, 409)
-  }
-  // Same for a live co-op boss fight: the room owns this save's pack and XP,
-  // and flushGrants would write straight over it.
+  // Refuse world entry during a live co-op boss fight: the room owns this
+  // save's pack and XP, and flushGrants would write straight over it.
   if (await isCoopSessionLive(env, row.id)) {
     return jsonResponse({ error: 'character_in_coop_session', code: 'CHARACTER_IN_COOP_SESSION' }, 409)
   }

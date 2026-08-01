@@ -1,5 +1,5 @@
 // Client wrapper for /api/coop/* (co-operative boss fights). Same auth +
-// character-header pattern as cloud/pvp.js.
+// character-header pattern as cloud/api.js.
 
 import { getToken, getCharacterId, clearAuth, emitSaveRevision } from './api.js'
 import { apiUrl } from './apiBase.js'
@@ -37,8 +37,7 @@ async function coopRequest(path, options = {}) {
 // The live session id, mirrored at module scope so App can tell a co-op fight
 // is in progress without threading state through every screen. While it is set
 // the server owns this character, so client-side progress reporting (the idle
-// catch-up modal) must stay out of the way — the same role `pvp.phase ===
-// 'in_match'` plays for duels.
+// catch-up modal) must stay out of the way.
 let activeCoopSessionId = null
 export const COOP_SESSION_EVENT = 'pocketrpg:coop-session'
 export function setActiveCoopSession(sessionId) {

@@ -1,5 +1,4 @@
 import { requireAuth, json } from '../../_lib/auth.js'
-import { assertNotInActiveMatch } from '../../_lib/pvp.js'
 import { assertNotInCoopSession } from '../../_lib/game/coopBoss.js'
 import { loadCharacterWithSave, writeSave } from '../../_lib/game/save.js'
 import { settleActionCompletion } from '../../_lib/game/actionCompletion.js'
@@ -70,10 +69,8 @@ export function makeCompletionHandler(sourceType, deps = {}) {
       const characterId = parseInt(request.headers.get('X-Character-Id') || '0', 10)
       if (!characterId) return json({ error: 'Missing X-Character-Id header' }, 400)
 
-      const lock = await (deps.assertNotInActiveMatch || assertNotInActiveMatch)(env, characterId)
-      if (lock) return lock
-      // A co-op boss fight owns this save the same way a PvP match does: the room
-      // is mutating the pack tick by tick and replays its snapshot on write-back.
+      // A co-op boss fight owns this save: the room is mutating the pack tick by
+      // tick and replays its snapshot on write-back.
       const coopLock = await (deps.assertNotInCoopSession || assertNotInCoopSession)(env, characterId)
       if (coopLock) return coopLock
 

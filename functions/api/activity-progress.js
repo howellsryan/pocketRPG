@@ -1,5 +1,4 @@
 import { requireAuth, json } from '../_lib/auth.js'
-import { assertNotInActiveMatch } from '../_lib/pvp.js'
 
 const MAX_KEYS = 50
 const MAX_KEY_LENGTH = 128
@@ -10,12 +9,10 @@ function getCharacterIdFromHeaders(request) {
   return Number.isFinite(id) ? id : null
 }
 
-// Returns the owning row ({ id, active_match_id }) or null. active_match_id
-// rides along so the PvP lock check can reuse this read instead of issuing its
-// own identical SELECT.
+// Returns the owning row ({ id }) or null.
 async function assertCharacterOwned(env, characterId, identityId) {
   const row = await env.DB.prepare(
-    'SELECT id, active_match_id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    'SELECT id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
   ).bind(characterId, identityId).first()
   return row || null
 }
@@ -63,10 +60,6 @@ export async function onRequestPut({ request, env }) {
   if (!owned) {
     return json({ error: 'Character not found' }, 404)
   }
-
-  // Reuse the active_match_id from the ownership read above.
-  const lock = await assertNotInActiveMatch(env, characterId, owned.active_match_id ?? null)
-  if (lock) return lock
 
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }

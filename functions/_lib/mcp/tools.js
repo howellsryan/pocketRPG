@@ -4,7 +4,6 @@ import { getItem, getMonster, itemName, withItemName, itemSources, raidForBoss, 
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
-import { assertNotInActiveMatch } from '../pvp.js'
 import { assertNotInCoopSession } from '../game/coopBoss.js'
 import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, skipSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
@@ -73,28 +72,22 @@ async function resolveCharacterId(env, authorization, provided) {
 /**
  * Refuses a tool call while another system owns this character's save.
  *
- * Both lock classes, always together: every one of these tools reaches
- * writeSave, and a write landing mid-fight is not a lost write but a
- * DUPLICATED one — the co-op room replays its own snapshot on write-back, and
- * the world's grant flush does the same. The PvP check alone used to be the
- * only guard here, so a single chat action during a group boss fight cost the
- * player the whole fight's XP and supplies (§14, §20).
+ * Every one of these tools reaches writeSave, and a write landing mid-fight is
+ * not a lost write but a DUPLICATED one — the co-op room replays its own
+ * snapshot on write-back, and the world's grant flush does the same.
  *
  * Adding a lock class to functions/api/save.js means adding it here too; this
  * surface does not route through /api/save.
  */
 export async function assertCharacterFree(env, id) {
-  if (await assertNotInActiveMatch(env, id)) {
-    throw new Error('Blocked: the character is in an active PvP match.')
-  }
   if (await assertNotInCoopSession(env, id)) {
     throw new Error('Blocked: the character is in a group boss fight.')
   }
 }
 
-// Apply a Phase C save intent: resolve + own the character, refuse during PvP,
-// load → mutate (throws abort the write) → save → audit. No value is created;
-// intents only relocate items the character already owns.
+// Apply a Phase C save intent: resolve + own the character, refuse while a
+// room owns it, load → mutate (throws abort the write) → save → audit. No
+// value is created; intents only relocate items the character already owns.
 async function applySaveIntent({ env, authorization, identity }, characterIdArg, intentFn, auditType) {
   if (!identity?.id) throw new Error('Not authenticated.')
   const id = await resolveCharacterId(env, authorization, characterIdArg)

@@ -81,7 +81,7 @@ Execution playbook for the phased plan in `docs/testing-strategy-review.md`. One
 Shared step for PR 6, spent by the rest: **`tests/helpers/d1.ts`** — a fake D1 with tables as maps, recording `prepare/bind/first/all/run/batch` calls, replacing per-file regex fakes only in files the PR already touches.
 
 6. **Money**: (a) migration-schema test — `npm i -D better-sqlite3`, apply all `migrations/*.sql` in filename order to an in-memory DB, then execute the *actual SQL strings* used by `purchase.js`/`save.js` against it (schema-drift tripwire for all the map-based fakes); (b) `purchase.js`: no auth → 401, unknown item → 4xx, insufficient coins → 4xx and **no** debit, success → atomic debit+grant+audit row, replay → no double-grant; (c) `stripe/create-session.js`: auth required, product/price mapping, payload shape.
-7. **PvP settlement/lifecycle**: invitations accept/decline (`functions/api/pvp/invitations/*`), `_lib/pvpMatchCreate.js`, match tick endpoint, settlement double-spend (two settle calls → one payout).
+7. ~~**PvP settlement/lifecycle**~~ — dropped: the duel stack this item covered was deleted when PvP moved to the Wilderness. Its replacement is covered by `world/tests/pvp*.test.ts`.
 8. **Identity**: GitHub/Google OAuth callbacks (state mismatch, token-exchange failure, happy path) + `_lib/oauth/store.js`.
 9. **Save pipeline**: `src/cloud/api.js` + `src/db` round-trip (save → serialize → load → deep-equal state) and failure injection (timeout mid-save, revision conflict), extending `criticalSavePolicy`.
 10. **Persistence guards**: `api/idle.js`, `activity-progress.js` — ownership check, PvP lock, write throttle. (Stamp endpoints — small PR.)

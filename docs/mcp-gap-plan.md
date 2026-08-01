@@ -59,7 +59,7 @@ the single `character_idle_state` slot and accrues over wall‑clock time.
 1. `intents.js`: add `buildXTask(save, …)` (validates and returns the task object) and `runXTask(save, task, elapsedMs)` (runs the **existing pure simulator** and applies the result, mirroring `gameState.jsx`).
 2. `intents.js`: add the task `type` to `SUPPORTED_IDLE_TYPES` and teach `isClaimableTask` about it.
 3. `tools.js`: in `claimIdleCore`, add a branch (or extend `runIdleTask`) for the new `task.type`.
-4. `tools.js`: add a `start_X` tool that calls `assertNotInActiveMatch`, `assertNoActiveQuest`, auto‑claims the prior task via `claimIdleCore`, builds the task, and `setIdleTask`.
+4. `tools.js`: add a `start_X` tool that calls `assertCharacterFree`, `assertNoActiveQuest`, auto‑claims the prior task via `claimIdleCore`, builds the task, and `setIdleTask`.
 5. `tools.js`: extend `get_active_activity`'s rendering for the new type.
 6. `schema.js`: add the `start_X` schema (and any new reference).
 
@@ -519,7 +519,7 @@ Only if WO‑8 lands cleanly and there's appetite. Extend `simulateBossFight` (`
   it** so the screen and the MCP import one source — never copy‑paste the math.
 - **Mirror `src/state/gameState.jsx` load‑time application** for any save mutation,
   so the MCP and client never drift.
-- **Respect existing guards:** `assertNotInActiveMatch` (PvP lock) on every write,
+- **Respect existing guards:** `assertCharacterFree` (co-op + world save locks) on every write,
   `assertNoActiveQuest` before starting a new idle activity, One‑Life refusal on
   combat, the idle‑food warning on `start_fight`, `XP_CAP` (200,000,000), 28‑slot
   inventory, `Math.floor` rounding.

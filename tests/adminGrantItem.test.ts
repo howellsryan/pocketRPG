@@ -276,14 +276,6 @@ describe('POST /api/admin/grant-item grants', () => {
 describe('POST /api/admin/grant-item save locks', () => {
   beforeEach(async () => { await seedCharacter() })
 
-  it('refuses while an active PvP match owns the save', async () => {
-    raw.prepare(`INSERT INTO pvp_matches (id, character_a, character_b, status, started_at, current_tick, state_json, last_tick_at) VALUES (300, 7, 8, 'active', 0, 0, '{}', 0)`).run()
-    raw.prepare('UPDATE characters SET active_match_id = 300 WHERE id = 7').run()
-    const res = await onRequestPost({ request: req({ character_id: 7, item_id: 'coins' }), env } as any)
-    expect(res.status).toBe(409)
-    expect(storedSave().revision).toBe(4)
-  })
-
   it('refuses while a co-op boss session owns the save', async () => {
     raw.prepare(`INSERT INTO coop_boss_sessions (id, boss_id, status, member_count, created_at, current_tick, state_json, last_tick_at) VALUES (11, 'grondar', 'active', 1, ?, 0, '{}', ?)`).run(NOW, NOW)
     raw.prepare(`INSERT INTO coop_session_members (session_id, character_id, joined_at, last_seen_at) VALUES (11, 7, ?, ?)`).run(NOW, NOW)

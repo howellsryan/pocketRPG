@@ -145,9 +145,8 @@ export async function isCoopSessionLive(env, characterId, now = Date.now()) {
 }
 
 /**
- * Refuses an action while a co-op fight owns this character, the same shape
- * assertNotInActiveMatch returns. Every server path that writes the save has to
- * call this: the room is mutating that save's inventory and XP tick by tick,
+ * Refuses an action while a co-op fight owns this character. Every server path
+ * that writes the save has to call this: the room is mutating that save's inventory and XP tick by tick,
  * and the write-back replaces the pack wholesale, so a concurrent write is
  * either lost or — worse — rolled back into a duplicate.
  */

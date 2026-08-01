@@ -1,42 +1,36 @@
-// PvP bot ladder coverage — the lobby only surfaces bots within ±10 combat
-// levels of the caller (CB_BAND in functions/api/pvp/waiting.js), so every
-// reachable combat level (3..126) must have at least one bot template within
-// that band. This test fails the moment adding/removing/re-statting a bot
-// opens a matchmaking dead zone.
+// Wilderness bot ladder coverage — the world only spawns a bot the player may
+// actually attack, which is one inside the ±PVP_LEVEL_BRACKET band
+// (templateForCombatLevel in world/server/pvpBots.ts), so every reachable
+// combat level (3..126) must have at least one bot template within that band.
+// This test fails the moment adding/removing/re-statting a bot opens a stretch
+// of the ladder with no opponent in it.
 
 import { describe, it, expect } from 'vitest'
-import { getCombatLevelFromSave } from '../functions/_lib/combatLevel.js'
-import { getXPForLevel } from '../src/engine/experience.js'
+import { combatLevelFromLevels } from '../src/engine/combatLevel.js'
+import { PVP_LEVEL_BRACKET } from '../world/shared/pvpArea'
 import pvpBots from '../src/data/pvpBots.json' assert { type: 'json' }
 import itemsData from '../src/data/items.json' assert { type: 'json' }
 
-// Mirrors functions/api/pvp/waiting.js CB_BAND.
-const CB_BAND = 10
 // Fresh character (all level 1, HP 10) floors at CB 3; all-99 caps at 126.
 const MIN_PLAYER_CB = 3
 const MAX_PLAYER_CB = 126
 
-// Compute each bot's combat level exactly the way the server does: template
-// levels → XP → getCombatLevelFromSave (the function that populates the
-// characters.combat_level column the lobby filters on).
+// Compute each bot's combat level exactly the way the world does when it spawns
+// one (world/server/pvpBots.ts botTemplateCombatLevel).
 function botCombatLevel(template: any): number {
-  const stats: Record<string, { xp: number }> = {}
-  for (const [skill, level] of Object.entries(template.stats as Record<string, number>)) {
-    stats[skill] = { xp: getXPForLevel(level) }
-  }
-  return getCombatLevelFromSave({ stats })
+  return combatLevelFromLevels(template.stats)
 }
 
-describe('pvp bot combat-level coverage', () => {
+describe('wilderness bot combat-level coverage', () => {
   const botLevels = pvpBots.bots.map((b: any) => ({ id: b.id, cb: botCombatLevel(b) }))
 
   it('every combat level from 3 to 126 has at least one bot within ±10', () => {
     const gaps: number[] = []
     for (let cb = MIN_PLAYER_CB; cb <= MAX_PLAYER_CB; cb++) {
-      const covered = botLevels.some((b) => Math.abs(b.cb - cb) <= CB_BAND)
+      const covered = botLevels.some((b) => Math.abs(b.cb - cb) <= PVP_LEVEL_BRACKET)
       if (!covered) gaps.push(cb)
     }
-    expect(gaps, `no bot within ±${CB_BAND} of combat level(s): ${gaps.join(', ')}`).toEqual([])
+    expect(gaps, `no bot within ±${PVP_LEVEL_BRACKET} of combat level(s): ${gaps.join(', ')}`).toEqual([])
   })
 
   it('bot combat levels stay inside the playable range', () => {

@@ -3,9 +3,9 @@ import { hasRequiredRunes } from '../engine/runes.js'
 
 // Shared combat-spell picker. Renders standard-spellbook combat spells in the
 // same card grid the prayer modal uses (the `cb-pray*` classes from index.css),
-// so the spell picker matches the prayer picker in BOTH PvE (CombatScreen) and
-// PvP (PvpCombatScreen). Each screen supplies its own container (PvE a Modal,
-// PvP an inline Card/panel) and its own onSelect dispatch — the spell list,
+// so the spell picker matches the prayer picker in BOTH the solo fight
+// (CombatScreen) and the group fight (CoopBossScreen). Each screen supplies its
+// own container and its own onSelect dispatch — the spell list,
 // level/rune gating, sorting and card markup live here once.
 
 function capitalize(word) {
