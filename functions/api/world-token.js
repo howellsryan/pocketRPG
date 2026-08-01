@@ -1,6 +1,5 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { signJWT } from '../_lib/jwt.js'
-import { assertNotInActiveMatch } from '../_lib/pvp.js'
 import { assertNotInCoopSession } from '../_lib/game/coopBoss.js'
 import { bossEntryFailure, bossHasEntryGate, loadBossKillCounts } from '../_lib/game/bossEntry.js'
 import { loadCharacterWithSave } from '../_lib/game/save.js'
@@ -38,11 +37,7 @@ export async function onRequestPost({ request, env }) {
   ).bind(characterId, auth.identity.id).first()
   if (!row) return json({ error: 'Character not found' }, 404)
 
-  // Never hand off into the world while a PvP match is active — the world flush
-  // path mutates the save and would bypass the match's save-lockdown (§10/§14).
-  const lock = await assertNotInActiveMatch(env, row.id)
-  if (lock) return lock
-  // Same for a co-op boss fight, and for the same reason: the world's grant
+  // Never hand off into the world during a co-op boss fight: the world's grant
   // flush writes the save directly, so it does not pass through /api/save's
   // co-op lock at all.
   const coopLock = await assertNotInCoopSession(env, row.id)

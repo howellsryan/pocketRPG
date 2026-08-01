@@ -55,7 +55,6 @@ describe('kill count increment replay safety', () => {
     }
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       claimActionNonce: async () => {
         const { GameApiError } = await import('../functions/_lib/game/errors.js')
         throw new GameApiError('STALE_REPLAYED_ACTION', 'stale_replayed_action', 409)

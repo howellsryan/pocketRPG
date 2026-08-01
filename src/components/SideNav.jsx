@@ -1,7 +1,7 @@
 import GameIcon from './GameIcon.jsx'
 import { DESKTOP_NAV_TABS } from './navTabs.js'
 
-export default function SideNav({ active, onNavigate, isInCombat, onDisabledClick, demo = false, lockedScreens = null, onLockedClick, isCloudAccount = false, onOpenChat = null }) {
+export default function SideNav({ active, onNavigate, demo = false, lockedScreens = null, onLockedClick, isCloudAccount = false, onOpenChat = null }) {
   return (
     <nav
       class="hidden md:flex flex-col flex-shrink-0 w-44 lg:w-52 fm-navrail pb-3 gap-1 overflow-y-auto"
@@ -19,18 +19,17 @@ export default function SideNav({ active, onNavigate, isInCombat, onDisabledClic
         const isActive = active === tab.id
         const isLocked = demo && lockedScreens?.has(tab.id)
         const baseColor = isActive ? 'text-[var(--accent)]' : 'text-[var(--text-soft)]'
-        const opacity = isInCombat ? 'opacity-30' : isLocked ? 'opacity-40' : isActive ? 'opacity-100' : 'opacity-80'
-        const cursor = isInCombat ? 'cursor-not-allowed' : 'cursor-pointer'
+        const opacity = isLocked ? 'opacity-40' : isActive ? 'opacity-100' : 'opacity-80'
+        const cursor = 'cursor-pointer'
         const activeBg = isActive ? 'bg-[var(--surface-raised)]' : 'bg-transparent'
-        const hover = isInCombat || isLocked ? '' : 'hover:bg-[var(--surface-raised)] hover:opacity-100'
+        const hover = isLocked ? '' : 'hover:bg-[var(--surface-raised)] hover:opacity-100'
         const activeBorder = isActive
           ? 'border-l-2 border-[var(--accent-bright)]'
           : 'border-l-2 border-transparent'
         return (
           <button
             key={tab.id}
-            onClick={() => { if (isInCombat) onDisabledClick?.(); else if (isLocked) onLockedClick?.(); else onNavigate(tab.id) }}
-            disabled={isInCombat}
+            onClick={() => { if (isLocked) onLockedClick?.(); else onNavigate(tab.id) }}
             aria-current={isActive ? 'page' : undefined}
             title={isLocked ? 'Available with a free account' : undefined}
             class={`flex items-center gap-3 w-full px-4 py-2 mx-0 border-0 text-left transition-colors ${activeBg} ${activeBorder} ${baseColor} ${opacity} ${cursor} ${hover}`}
@@ -49,10 +48,9 @@ export default function SideNav({ active, onNavigate, isInCombat, onDisabledClic
           rail's foot, below the primary destinations. */}
       {isCloudAccount && !demo && onOpenChat && (
         <button
-          onClick={() => { if (!isInCombat) onOpenChat() }}
-          disabled={isInCombat}
+          onClick={() => onOpenChat()}
           title="Game Helper"
-          class={`mt-auto flex items-center gap-3 w-full px-4 py-2 mx-0 border-0 border-l-2 border-transparent text-left text-[var(--text-soft)] transition-colors ${isInCombat ? 'opacity-30 cursor-not-allowed' : 'opacity-80 cursor-pointer hover:bg-[var(--surface-raised)] hover:opacity-100'}`}
+          class="mt-auto flex items-center gap-3 w-full px-4 py-2 mx-0 border-0 border-l-2 border-transparent text-left text-[var(--text-soft)] opacity-80 cursor-pointer transition-colors hover:bg-[var(--surface-raised)] hover:opacity-100"
         >
           <span class="w-11 flex justify-center items-center flex-shrink-0">
             <GameIcon iconKey="chat_bubble" size={30} />

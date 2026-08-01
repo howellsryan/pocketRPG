@@ -57,17 +57,6 @@ describe('assertCharacterFree', () => {
     await expect(assertCharacterFree(env as never, 7)).rejects.toThrow(/group boss fight/i)
   })
 
-  it('blocks a character in an active PvP match', async () => {
-    await seedCharacter(7)
-    await seedCharacter(8)
-    raw.prepare(
-      `INSERT INTO pvp_matches (id, character_a, character_b, status, started_at, current_tick, state_json, last_tick_at)
-       VALUES (1, 7, 8, 'active', 0, 0, '{}', ?)`,
-    ).run(Date.now())
-    raw.prepare('UPDATE characters SET active_match_id = 1 WHERE id IN (7, 8)').run()
-    await expect(assertCharacterFree(env as never, 7)).rejects.toThrow(/PvP match/i)
-  })
-
   it('lets the character through again once the co-op fight is over', async () => {
     await seedCharacter(7)
     await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })

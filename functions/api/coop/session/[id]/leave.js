@@ -1,5 +1,5 @@
 import { requireAuth, json } from '../../../../_lib/auth.js'
-import { getOwnedCharacter } from '../../../../_lib/pvp.js'
+import { getOwnedCharacter } from '../../../../_lib/character.js'
 import { callCoopRoom, coopRoomsAvailable } from '../../../../_lib/game/coopRoom.js'
 import { closeCoopMembership, leaveCoopSession, parseCoopSessionId } from '../../../../_lib/game/coopBoss.js'
 import { toErrorResponse } from '../../../../_lib/game/errors.js'

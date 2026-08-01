@@ -10,7 +10,7 @@ import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.j
 import { LOCAL_WRITE_MARKER_KEY } from '../db/stores.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
-import { classifySaveError, activeMatchIdFromSaveError, saveLockCode } from './saveErrors.js'
+import { classifySaveError, saveLockCode } from './saveErrors.js'
 import { clearWorldHandoff, hasPendingWorldHandoff } from './worldHandoff.js'
 
 const PUSH_DEBOUNCE_MS = 120_000
@@ -43,7 +43,7 @@ const FRESHNESS_GRACE_MS = 5_000
 // endpoint must never trap the user on the loading screen or prevent the
 // idle-result modal from appearing — we fall back to local state instead.
 const CLOUD_READ_TIMEOUT_MS = 5_000
-const ACTIVE_MATCH_RETRY_MS = 5_000
+const LOCK_RETRY_MS = 5_000
 // How many consecutive failed pushes we tolerate before declaring the save
 // "blocked" — at which point the UI hard-stops play and forces the player to
 // retry or log out, rather than letting them keep playing on top of progress
@@ -145,22 +145,8 @@ function markUnsynced() {
   emitCloudSaveStatus('out_of_sync')
 }
 
-function emitSaveSyncActiveMatchConflict(matchId) {
-  const parsed = Number(matchId)
-  if (!Number.isFinite(parsed) || parsed <= 0 || typeof window === 'undefined') return
-  window.dispatchEvent(new CustomEvent('pocketrpg:pvp-active-match', { detail: { matchId: parsed } }))
-}
-
-function isPvpSaveSyncBlocked() {
-  try {
-    return localStorage.getItem('pocketrpg_pvp_sync_block') === '1'
-  } catch {
-    return false
-  }
-}
-
 function canSync() {
-  return !!getToken() && !!getCharacterId() && !isPvpSaveSyncBlocked()
+  return !!getToken() && !!getCharacterId()
 }
 
 // Perform the actual network push for the current pendingSnapshot. The caller
@@ -212,8 +198,8 @@ async function performPush() {
   } catch (err) {
     const kind = classifySaveError(err)
     // A save lock means something else legitimately owns this character right
-    // now — a PvP match, a live open-world session, or a co-op boss fight — so
-    // the companion app and the idle game never write the same save at once.
+    // now — a live open-world session or a co-op boss fight — so the companion
+    // app and the idle game never write the same save at once.
     // Expected and transient: keep the latest snapshot queued, retry shortly
     // (it clears when the player leaves), and NEVER count it toward the failure
     // streak that escalates to the blocking "save failed" modal.
@@ -231,11 +217,9 @@ async function performPush() {
         emitCloudSaveStatus('saved', { updatedAt: lastPushedAt || null, skipped: true })
         return false
       }
-      const matchId = activeMatchIdFromSaveError(err)
-      if (matchId !== null) emitSaveSyncActiveMatchConflict(matchId)
       pendingSnapshot = snap
       markUnsynced()
-      schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
+      schedulePush(snap, LOCK_RETRY_MS)
       return false
     }
     // save_revision_conflict: our local state diverged from the server's

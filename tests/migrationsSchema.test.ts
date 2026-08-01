@@ -11,7 +11,7 @@ describe('migrations apply to a real SQLite schema', () => {
     const tables = new Set(
       (db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as any[]).map((r) => r.name),
     )
-    for (const t of ['characters', 'saves', 'audit_events', 'purchase_grants', 'action_nonces', 'pvp_matches', 'oauth_identities']) {
+    for (const t of ['characters', 'saves', 'audit_events', 'purchase_grants', 'action_nonces', 'oauth_identities']) {
       expect(tables.has(t), `missing table ${t}`).toBe(true)
     }
   })
@@ -22,6 +22,21 @@ describe('migrations apply to a real SQLite schema', () => {
     const saves = cols('saves')
     for (const c of ['save_data', 'save_blob', 'save_revision', 'updated_at']) expect(saves.has(c), `saves.${c}`).toBe(true)
     const chars = cols('characters')
-    for (const c of ['owner_id', 'is_ironman', 'credits', 'deleted_at', 'active_match_id']) expect(chars.has(c), `characters.${c}`).toBe(true)
+    for (const c of ['owner_id', 'is_ironman', 'credits', 'deleted_at']) expect(chars.has(c), `characters.${c}`).toBe(true)
+  })
+
+  // The duel stack the Wilderness replaced. Its tables carried real save-lock
+  // authority, so a migration that resurrected one would make every endpoint
+  // that used to read it start refusing writes again.
+  it('leaves no trace of the retired duel schema', () => {
+    const db = migratedDb()
+    const tables = new Set(
+      (db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as any[]).map((r) => r.name),
+    )
+    for (const t of ['pvp_matches', 'pvp_waiting_room', 'pvp_invitations', 'pvp_intents']) {
+      expect(tables.has(t), `duel table ${t} is back`).toBe(false)
+    }
+    const chars = new Set((db.prepare('PRAGMA table_info(characters)').all() as any[]).map((r) => r.name))
+    expect(chars.has('active_match_id'), 'characters.active_match_id is back').toBe(false)
   })
 })

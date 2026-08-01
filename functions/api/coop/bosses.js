@@ -1,5 +1,5 @@
 import { requireAuth, json } from '../../_lib/auth.js'
-import { getOwnedCharacter } from '../../_lib/pvp.js'
+import { getOwnedCharacter } from '../../_lib/character.js'
 import {
   COOP_BOSS_IDS,
   activeSessionIdFor,

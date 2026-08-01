@@ -1,7 +1,6 @@
 import { Component } from 'preact'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { GameProvider, useGame } from './state/gameState.jsx'
-import { PvpProvider, usePvp } from './state/pvpState.jsx'
 import GameFrameBar from './components/GameFrameBar.jsx'
 import SideNav from './components/SideNav.jsx'
 import Header from './components/Header.jsx'
@@ -71,7 +70,6 @@ import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from './engine/questIdleCascade.js'
 import { getLevelFromXP, createLevelUpTracker } from './engine/experience.js'
-import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
 import { buildAutoStartTask } from './engine/autoStartTask.js'
 import { resolveMagicSpell } from './engine/equipment.js'
@@ -194,7 +192,7 @@ function clueRevealTitle(clueTask) {
 // records kill-count/collection-log and replay nonce server-side); otherwise
 // rolls locally and banks the rewards. Mirrors the path previously inlined in
 // CluesScreen so the App-level tick can drive clues on any screen.
-function completeClueSolve(clueTask, { updateBankDirect, updateInventory, getInventory, getSnapshot, addToast, isInPvpMatch }) {
+function completeClueSolve(clueTask, { updateBankDirect, updateInventory, getInventory, getSnapshot, addToast }) {
   const title = clueRevealTitle(clueTask)
   if (getToken() && getCharacterId()) {
     return api.completeClue(clueTask.clueLevel, {
@@ -240,7 +238,7 @@ function completeClueSolve(clueTask, { updateBankDirect, updateInventory, getInv
     for (const reward of rewards) {
       if (isLoggedDrop(reward.itemId, 'clues', clueTask.clueLevel)) recordCollectionLogDrop({ itemId: reward.itemId, sourceType: 'clues', sourceId: clueTask.clueLevel })
     }
-    if (!isInPvpMatch) requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.CLUE_REWARD)
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.CLUE_REWARD)
     emitRewardReveal(title, clueTask.icon || '📜', rewards)
   }
 }
@@ -364,7 +362,6 @@ function GameApp() {
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
     autoBankExcludedItems, backgroundCombat, combatStatus, settleKingdom, applyKingdomSkip } = useGame()
-  const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
   const [gameReady, setGameReady] = useState(false)
@@ -414,10 +411,6 @@ function GameApp() {
   // Fires openWorld once cloudPhase is ready; cleared immediately after so a
   // later re-render (or a fresh manual visit to the idle game) never refires it.
   const resumeWorldZoneRef = useRef(null)
-  const pvpReconnectBusyRef = useRef(false)
-  const prevPvpPhaseRef = useRef(pvp.phase)
-  const isInPvpMatch = pvp.phase === 'in_match'
-  const [suppressIdleModalUntil, setSuppressIdleModalUntil] = useState(0)
   // Mirrors the co-op session id into render state. Reading the module getter
   // during render only worked when some unrelated re-render happened to follow
   // the change.
@@ -468,87 +461,6 @@ function GameApp() {
     }
   }
 
-  // Global PvP route/overlay guard:
-  // - if an active match exists server-side, enter PvP from any screen.
-  // - when in match, force Combat screen and dismiss idle modal overlays.
-  useEffect(() => {
-    if (pvp.phase !== 'in_match') return
-    setScreen(SCREENS.COMBAT)
-    setActionData(null)
-    setIdleResult(null)
-    pauseTicks()
-    try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* ignore */ }
-  }, [pvp.phase])
-
-  useEffect(() => {
-    const prevPhase = prevPvpPhaseRef.current
-    if (prevPhase === 'in_match' && pvp.phase !== 'in_match') {
-      setIdleResult(null)
-      setSuppressIdleModalUntil(Date.now() + 15000)
-      try {
-        localStorage.removeItem('pocketrpg_hiddenAt')
-        localStorage.removeItem('pocketrpg_activeTask')
-      } catch { /* ignore */ }
-    }
-    prevPvpPhaseRef.current = pvp.phase
-  }, [pvp.phase])
-
-  useEffect(() => {
-    let cancelled = false
-    const reconnectActiveMatch = async () => {
-      if (cancelled || pvp.phase === 'in_match' || pvpReconnectBusyRef.current) return
-      if (!pvp.canAutoReconnect) return
-      if (!getToken() || !getCharacterId()) return
-      pvpReconnectBusyRef.current = true
-      try {
-        const res = await pvpApi.listInvitations()
-        const activeMatchId = Number(res?.active_match_id)
-        if (cancelled || !Number.isFinite(activeMatchId) || activeMatchId <= 0) return
-        pvp.enterMatch(activeMatchId)
-      } catch {
-        // best-effort reconnect only
-      } finally {
-        pvpReconnectBusyRef.current = false
-      }
-    }
-
-    reconnectActiveMatch()
-    const onVisible = () => {
-      if (!document.hidden) reconnectActiveMatch()
-    }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => {
-      cancelled = true
-      document.removeEventListener('visibilitychange', onVisible)
-    }
-  }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect])
-
-  useEffect(() => {
-    const onActiveMatchConflict = (event) => {
-      const routeToPvp = async () => {
-        let matchId = Number(event?.detail?.matchId)
-        if (!Number.isFinite(matchId) || matchId <= 0) {
-          try {
-            const invites = await pvpApi.listInvitations()
-            matchId = Number(invites?.active_match_id)
-          } catch {
-            matchId = null
-          }
-        }
-        if (!Number.isFinite(matchId) || matchId <= 0) return
-        addToast('Server reports an active PvP match — entering combat.', 'info')
-        pauseTicks()
-        setScreen(SCREENS.COMBAT)
-        setActionData(null)
-        setIdleResult(null)
-        pvp.enterMatch(matchId)
-      }
-      routeToPvp()
-    }
-    window.addEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
-    return () => window.removeEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
-  }, [addToast, pvp.enterMatch])
-
   // The scroll debit has to land on inventoryRef too, not just state: the paid
   // skip chains several solves inside one call stack, and the ref is what the
   // next iteration reads.
@@ -556,7 +468,7 @@ function GameApp() {
     updateBankDirect,
     updateInventory: (inv) => { inventoryRef.current = inv; updateInventory(inv) },
     getInventory: () => inventoryRef.current,
-    getSnapshot, addToast, isInPvpMatch,
+    getSnapshot, addToast,
   })
 
   // A finished journey grants its content through the exact same paths idling
@@ -986,11 +898,8 @@ function GameApp() {
         // /api/save folds the idle heartbeat into the same write (stamps
         // last_active_at + active_task in character_idle_state), so no
         // separate beacon to /api/idle is needed here.
-        if (!isInPvpMatch) {
-          try { beaconSaveNow(getSnapshot()) } catch (e) { /* non-fatal */ }
-        }
+        try { beaconSaveNow(getSnapshot()) } catch (e) { /* non-fatal */ }
       } else {
-        if (isInPvpMatch) return
         // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
         // to prevent system-time manipulation from granting fake idle progress.
         try {
@@ -1082,14 +991,14 @@ function GameApp() {
               if (adv.location) updateWorldLocation(adv.location)
               setActiveTask(adv.task)
               activeTaskRef.current = adv.task
-              if (!isInPvpMatch) schedulePushSave(getSnapshot())
+              schedulePushSave(getSnapshot())
               return
             }
             const adv = advanceTravel(savedTask, elapsedMs)
             if (!adv.arrived) {
               setActiveTask(adv.task)
               activeTaskRef.current = adv.task
-              if (!isInPvpMatch) schedulePushSave(getSnapshot())
+              schedulePushSave(getSnapshot())
               return
             }
             updateWorldLocation(savedTask.dest)
@@ -1115,7 +1024,7 @@ function GameApp() {
               setActiveTask(null)
               activeTaskRef.current = null
               resumeAutoStart(savedTask.autoStart, savedTask.returnTo)
-              if (!isInPvpMatch) schedulePushSave(getSnapshot())
+              schedulePushSave(getSnapshot())
               return
             }
           }
@@ -1133,13 +1042,13 @@ function GameApp() {
               clearActivityProgress(getActivityKey({ type: 'gather', gatherTask: savedTask.gatherTask }))
               if (isCloudAuthoritativeMinigame(savedTask.gatherTask)) {
                 grantMinigameTaskRewards(savedTask.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
-                if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
+                requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
                 void syncCompletedMinigameToServer(savedTask.gatherTask).catch((err) => {
                   console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
                 })
               } else {
                 grantMinigameTaskRewards(savedTask.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-                if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
+                requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
               }
               recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.gatherTask?.id ?? 'any' })
               sim = { minigameCompleted: true }
@@ -1159,13 +1068,13 @@ function GameApp() {
               clearActivityProgress(getActivityKey({ type: 'minigame', minigameTask: savedTask.minigameTask }))
               if (isCloudAuthoritativeMinigame(savedTask.minigameTask)) {
                 grantMinigameTaskRewards(savedTask.minigameTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
-                if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
+                requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
                 void syncCompletedMinigameToServer(savedTask.minigameTask).catch((err) => {
                   console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
                 })
               } else {
                 grantMinigameTaskRewards(savedTask.minigameTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-                if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
+                requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
               }
               recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.minigameTask?.id ?? 'any' })
               sim = { minigameCompleted: true }
@@ -1245,7 +1154,7 @@ function GameApp() {
 
             // Quest completions reveal like clue solves (no idle-result modal).
             emitQuestCompletionReveal(completedQuests, aggregatedXpReward, coinsGained, levelTracker.result())
-            if (!isInPvpMatch) schedulePushSave(getSnapshot())
+            schedulePushSave(getSnapshot())
             return
           }
 
@@ -1260,7 +1169,7 @@ function GameApp() {
               activeTaskRef.current = null
               try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
               resumeAutoStart(resumeCombatLive, resumeCombatReturnTo)
-              if (!isInPvpMatch) schedulePushSave(getSnapshot())
+              schedulePushSave(getSnapshot())
               return
             }
             setIdleResult({ elapsedMs, task: savedTask })
@@ -1451,7 +1360,7 @@ function GameApp() {
           }
 
           // Push the post-idle state to the cloud (debounced + hash-skipped).
-          if (!isInPvpMatch) schedulePushSave(getSnapshot())
+          schedulePushSave(getSnapshot())
         } catch (err) {
           console.warn('[PocketRPG] Visibility idle error:', err)
           // DB may be stale — force reconnect for next read
@@ -1472,9 +1381,7 @@ function GameApp() {
       localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
       // Folds the idle heartbeat into the same /api/save write — see the
       // visibilitychange handler above.
-      if (!isInPvpMatch) {
-        try { beaconSaveNow(getSnapshot()) } catch { /* non-fatal */ }
-      }
+      try { beaconSaveNow(getSnapshot()) } catch { /* non-fatal */ }
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
@@ -1485,7 +1392,7 @@ function GameApp() {
       window.removeEventListener('pagehide', handleUnload)
       window.removeEventListener('beforeunload', handleUnload)
     }
-  }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch, settleKingdom])
+  }, [gameReady, grantXP, updateInventory, updateBankDirect, settleKingdom])
 
   // Day rollover: re-fetch daily tasks when UTC date changes while game is open
   useEffect(() => {
@@ -1529,7 +1436,7 @@ function GameApp() {
         // session is idle/AFK so an unattended idle grind stops writing every
         // ~2 min — the local snapshot above still runs every 60s as the IDB
         // failover, and tab-hide/unload + critical milestones still flush.
-        if (!isInPvpMatch) schedulePeriodicSave(getSnapshot())
+        schedulePeriodicSave(getSnapshot())
       }
       // No periodic idle heartbeat: /api/save now stamps last_active_at +
       // active_task server-side on every write (including no-op writes) at an
@@ -1593,7 +1500,7 @@ function GameApp() {
               // Clue trails advance silently — per-waypoint toasts were noise.
               if (step.kind === 'search') {
                 updateWorldLocation(task.dest)
-                if (!isInPvpMatch) schedulePushSave(getSnapshot())
+                schedulePushSave(getSnapshot())
                 if (task.journey?.kind !== 'clue') {
                   const s = journeyStatus(step.next)
                   addToast(`🔎 Searching ${travelDestName(task)} (${s?.step}/${s?.steps})`, 'info')
@@ -1610,7 +1517,7 @@ function GameApp() {
             activeTaskRef.current = null
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
             addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
-            if (!isInPvpMatch) schedulePushSave(getSnapshot())
+            schedulePushSave(getSnapshot())
             resumeAutoStart(task.autoStart, task.returnTo)
           }
         } else {
@@ -1632,13 +1539,13 @@ function GameApp() {
           clearActivityProgress(getActivityKey({ type: 'gather', gatherTask: task.gatherTask }))
           if (isCloudAuthoritativeMinigame(task.gatherTask)) {
             grantMinigameTaskRewards(task.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
-            if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
+            requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
             void syncCompletedMinigameToServer(task.gatherTask).catch((err) => {
               console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
             })
           } else {
             grantMinigameTaskRewards(task.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-            if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
+            requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
           }
           recordGameEvent?.({ kind: 'minigame_complete', minigameId: task.gatherTask?.id ?? 'any' })
         } else {
@@ -1661,13 +1568,13 @@ function GameApp() {
           clearActivityProgress(getActivityKey({ type: 'minigame', minigameTask: mgTask }))
           if (isCloudAuthoritativeMinigame(mgTask)) {
             grantMinigameTaskRewards(mgTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
-            if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
+            requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
             void syncCompletedMinigameToServer(mgTask).catch((err) => {
               console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
             })
           } else {
             grantMinigameTaskRewards(mgTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-            if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
+            requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
           }
           recordGameEvent?.({ kind: 'minigame_complete', minigameId: mgTask?.id ?? 'any' })
         } else {
@@ -1707,7 +1614,7 @@ function GameApp() {
       }
     })
     return unsub
-  }, [gameReady, currentHP, stats, questQueue, isInPvpMatch, settleKingdom])
+  }, [gameReady, currentHP, stats, questQueue, settleKingdom])
 
   async function initCloudAndSave() {
     try {
@@ -1805,7 +1712,7 @@ function GameApp() {
           // safe to initialise a new game and push it.
           await wipeLocalSave()
           await startNewGame(getIronmanMode(), getCharacterName(), getOneLifeMode())
-          if (!isInPvpMatch) await pushNow(getSnapshot())
+          await pushNow(getSnapshot())
           // Brand-new character — there are no kill counts to wait for.
           markKillCountsLoaded()
           setCloudPhase('ready')
@@ -1889,7 +1796,7 @@ function GameApp() {
     // during boot. Push it now, or a just-idled quest completion can be lost to a
     // later server-authoritative round-trip (e.g. a Trading Post buy adopting the
     // server's older save) before the debounced autosave lands.
-    if (!isInPvpMatch) requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.QUEST_COMPLETE)
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.QUEST_COMPLETE)
     if (idleResult.questCascade) {
       emitQuestCompletionReveal(idleResult.completedQuests, idleResult.aggregatedXpReward, idleResult.coinsGained, idleResult.levelUps)
       return
@@ -2020,7 +1927,7 @@ function GameApp() {
     }
     // When leaving from the save-blocked modal the save is already failing, so
     // skip the final push (it would just hang) and drop the doomed retry queue.
-    if (!skipSave && !isInPvpMatch) {
+    if (!skipSave) {
       try { await pushNow(getSnapshot()) } catch { /* non-fatal */ }
     }
     setSaveBlocked(false)
@@ -2065,7 +1972,6 @@ function GameApp() {
 
 
   async function handleManualSave() {
-    if (isInPvpMatch) return
     // Lock the game until the save SUCCESSFULLY RESPONDS — runLockedSave blocks
     // input behind the overlay and suspends competing autosaves while the single
     // authoritative write is in flight.
@@ -2446,10 +2352,6 @@ function GameApp() {
   // idle-result modal. On a hard outage we still reveal the result but
   // warn the player and leave the autosave retrying.
   async function persistSkipThenReveal(idleResultData) {
-    if (isInPvpMatch) {
-      if (idleResultData) setIdleResult(idleResultData)
-      return
-    }
     setSkipSaving(true)
     try {
       await waitForStateFlush()
@@ -2771,13 +2673,13 @@ function GameApp() {
             clearActivityProgress(getActivityKey({ type: 'gather', gatherTask: savedTask.gatherTask }))
             if (isCloudAuthoritativeMinigame(savedTask.gatherTask)) {
               grantMinigameTaskRewards(savedTask.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
-              if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
+              requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
               await syncCompletedMinigameToServer(savedTask.gatherTask).catch((err) => {
                 console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
               })
             } else {
               grantMinigameTaskRewards(savedTask.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-              if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
+              requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
             }
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
@@ -2805,13 +2707,13 @@ function GameApp() {
             clearActivityProgress(getActivityKey({ type: 'minigame', minigameTask: savedTask.minigameTask }))
             if (isCloudAuthoritativeMinigame(savedTask.minigameTask)) {
               grantMinigameTaskRewards(savedTask.minigameTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame: () => {} })
-              if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
+              requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
               await syncCompletedMinigameToServer(savedTask.minigameTask).catch((err) => {
                 console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
               })
             } else {
               grantMinigameTaskRewards(savedTask.minigameTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-              if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
+              requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
             }
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
@@ -3301,10 +3203,8 @@ function GameApp() {
       <SideNav
         active={screen}
         onNavigate={(s) => navigate(s)}
-        isInCombat={isInPvpMatch}
         demo={demoMode}
         lockedScreens={CLOUD_ONLY_SCREENS}
-        onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
         onLockedClick={notifyDemoLocked}
         isCloudAccount={isCloudAccount && !demoMode}
         onOpenChat={() => setChatOpen(true)}
@@ -3315,7 +3215,7 @@ function GameApp() {
         <Header credits={credits} isCloudAccount={isCloudAccount} demo={demoMode} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} skipMode={skipMode} raidSkipCost={raidSkipCost} onNavigate={navigate} />
         {/* OSRS-style mobile frame: icon rails above and below the content
             panel replace the SideNav/Header chrome on small screens. */}
-        <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} />
+        <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} />
         <ToastContainer />
         <TravelPrompt onNavigate={navigate} originScreen={screen} originScreenData={actionData} />
         <InventoryFullPrompt
@@ -3340,7 +3240,7 @@ function GameApp() {
             </div>
           )}
         </main>
-        <GameFrameBar position="bottom" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onBuyCredits={() => setShowBuyCreditsModal(true)} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} skipMode={skipMode} raidSkipCost={raidSkipCost} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onOpenChat={() => setChatOpen(true)} />
+        <GameFrameBar position="bottom" active={screen} onNavigate={(s) => navigate(s)} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onBuyCredits={() => setShowBuyCreditsModal(true)} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} skipMode={skipMode} raidSkipCost={raidSkipCost} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onOpenChat={() => setChatOpen(true)} />
       </div>
       <XpDropOverlay />
       <RewardRevealOverlay />
@@ -3412,7 +3312,7 @@ function GameApp() {
       )}
 
       {/* Idle Result Modal */}
-      {idleResult && !skipSaving && !gameLocked && pvp.phase !== 'in_match' && !inCoopFight && Date.now() >= suppressIdleModalUntil && (() => {
+      {idleResult && !skipSaving && !gameLocked && !inCoopFight && (() => {
         const hrs = idleResult.elapsedMs / 3600000
         const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
 
@@ -3797,9 +3697,7 @@ export default function App() {
   return (
     <BootErrorBoundary>
       <GameProvider>
-        <PvpProvider>
-          <GameApp />
-        </PvpProvider>
+        <GameApp />
       </GameProvider>
     </BootErrorBoundary>
   )

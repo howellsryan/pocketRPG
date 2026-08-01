@@ -1,6 +1,5 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { verifyJWT } from '../_lib/jwt.js'
-import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
 import { detectTotalLevelRegression, detectBankWipe } from '../_lib/game/saveValidation.js'
@@ -21,12 +20,11 @@ const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well u
 // refused and refresh the freshness stamp.
 const IDLE_WRITE_CEILING_MS = 24 * 60 * 60 * 1000
 
-// Probabilistic gate for the PvP-state sweep on the save-PUT path. Saves
-// happen on a tight client-side cadence; running the full sweep on every
-// one was burning a chunk of the daily D1 write budget on cleanup work
-// the PvP endpoints (which sweep on every action) already do. 5% keeps
-// global state tidy in any reasonable traffic without piling sweep load
-// on a non-PvP player's routine save loop.
+// Probabilistic gate for the stale-room sweep on the save-PUT path. Saves
+// happen on a tight client-side cadence; running the full sweep on every one
+// was burning a chunk of the daily D1 write budget on cleanup work. 5% keeps
+// global state tidy in any reasonable traffic without piling sweep load on
+// every routine save.
 const SAVE_SWEEP_PROBABILITY = 0.05
 
 export function shouldSweepOnSave(rng = Math.random) {
@@ -62,14 +60,12 @@ async function getCharacterId(request, env, identityId) {
   if (!Number.isFinite(id)) return { error: 'Invalid character id', status: 400 }
 
   // Confirm ownership. total_level / combat_level ride along so the PUT
-  // path can skip the denormalized-summary UPDATE when nothing changed, and
-  // active_match_id so the PvP lock check reuses this read instead of issuing
-  // its own identical SELECT.
+  // path can skip the denormalized-summary UPDATE when nothing changed.
   const row = await env.DB.prepare(
-    'SELECT id, total_level, combat_level, active_match_id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    'SELECT id, total_level, combat_level FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
   ).bind(id, identityId).first()
   if (!row) return { error: 'Character not found', status: 404 }
-  return { id, total_level: row.total_level, combat_level: row.combat_level, active_match_id: row.active_match_id ?? null }
+  return { id, total_level: row.total_level, combat_level: row.combat_level }
 }
 
 export async function onRequestGet({ request, env }) {
@@ -125,22 +121,18 @@ export async function onRequestPost({ request, env }) {
   if (!Number.isFinite(id)) return json({ error: 'Missing character_id' }, 400)
 
   const row = await env.DB.prepare(
-    'SELECT id, total_level, combat_level, active_match_id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    'SELECT id, total_level, combat_level FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
   ).bind(id, payload.sub).first()
   if (!row) return json({ error: 'Character not found' }, 404)
-  const ch = { id, total_level: row.total_level, combat_level: row.combat_level, active_match_id: row.active_match_id ?? null }
+  const ch = { id, total_level: row.total_level, combat_level: row.combat_level }
   return applySaveWrite({ env, ch, identityId: payload.sub, body })
 }
 
 // Shared write core for PUT (header auth) and the beacon POST (body auth). The
 // caller has already resolved + ownership-checked `ch` and parsed `body`.
 async function applySaveWrite({ env, ch, identityId, body }) {
-  // PvP inventory lock: refuse local-client saves while a match is active.
-  // Reuse the active_match_id already fetched during character resolution.
-  const lock = await assertNotInActiveMatch(env, ch.id, ch.active_match_id)
-  if (lock) return lock
-  // World-session lock (same lock class as the PvP lock, not economy policing):
-  // refuse idle-client saves while the open-world companion holds a live session
+  // World-session lock (a lock, not economy policing): refuse idle-client
+  // saves while the open-world companion holds a live session
   // for this character, so the two clients can never write the same save
   // concurrently (equipment clobber / item dupe / stale-view vanish). The world
   // DO flushes through its own grant path, not this endpoint.
@@ -153,11 +145,8 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   if (await isCoopSessionLive(env, ch.id)) {
     return json({ error: 'character_in_coop_session', code: 'CHARACTER_IN_COOP_SESSION' }, 409)
   }
-  // Probabilistic sweep — see SAVE_SWEEP_PROBABILITY above. PvP endpoints
-  // already sweep on every action, so the global state stays fresh during
-  // active PvP without forcing every routine save to do cleanup work.
+  // Probabilistic sweep — see SAVE_SWEEP_PROBABILITY above.
   if (shouldSweepOnSave()) {
-    sweepStaleRows(env).catch(() => {})
     // Co-op has no endpoint that every player hits, so without piggybacking on
     // the save cadence a quiet period leaves abandoned rooms — and the save
     // locks they hold — sitting until someone next opens the boss picker.
@@ -257,8 +246,8 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // Idle heartbeat, folded into the save write: stamp last_active_at + the
   // active task so idling clients no longer need a separate periodic PUT
   // /api/idle. Serialize the task exactly as the client's putIdle does. The
-  // PvP lock above already returned, so an in-match save never reaches here —
-  // the stamp stays blocked during a match just like the dedicated idle PUT.
+  // world/co-op locks above already returned, so a save made while a room owns
+  // this character never reaches here.
   const activeTaskObj = parsedNext?.settings?.activeTask ?? null
   const idleTaskJson = activeTaskObj ? JSON.stringify(activeTaskObj) : null
 

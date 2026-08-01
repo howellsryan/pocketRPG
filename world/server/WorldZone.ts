@@ -35,7 +35,6 @@ import monstersDataJson from '../../src/data/monsters.json'
 
 type MonsterNames = Record<string, { name?: string } | undefined>
 const monsterNames = monstersDataJson as MonsterNames
-import { isCharacterInActiveMatch } from './pvpLock'
 import { beginWorldSession, refreshWorldSession, endWorldSession, expireWorldSessionAfter } from '../../functions/_lib/game/worldSessions.js'
 import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
@@ -538,15 +537,8 @@ export class WorldZone extends Server<Env> {
       return
     }
 
-    // Never enter the world while a PvP match is active — the world flush path
-    // mutates the save and would bypass the match's save-lockdown (§10/§14).
-    if (await isCharacterInActiveMatch(this.env, row.id)) {
-      connection.close(1008, 'in_active_match')
-      return
-    }
-
-    // Same for a live co-op boss fight: the room is the authority on this
-    // character's pack and XP until they leave it.
+    // Never enter the world during a live co-op boss fight: the room is the
+    // authority on this character's pack and XP until they leave it.
     if (await isCoopSessionLive(this.env, row.id)) {
       connection.close(1008, 'in_coop_session')
       return

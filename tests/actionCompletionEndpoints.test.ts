@@ -4,7 +4,6 @@ import { makeCompletionHandler } from '../functions/api/actions/_completeShared.
 function makeHandler() {
   return makeCompletionHandler('raids', {
     requireAuth: async () => ({ identity: { id: 1 } }),
-    assertNotInActiveMatch: async () => null,
     assertNotInCoopSession: async () => null,
     claimActionNonce: async () => {},
     loadCharacterWithSave: async () => ({ saveObject: { inventory: [{ id: 'food', quantity: 1 }] }, saveRevision: 0 }),
@@ -40,7 +39,6 @@ describe('action completion endpoint tamper guards', () => {
   it('rejects stale/replayed nonce via DB-side claim', async () => {
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {
         // Simulate the DB-side ON CONFLICT path firing — replay throws
@@ -64,7 +62,6 @@ describe('action completion endpoint tamper guards', () => {
   it('accepts server-resolved raid common rewards for the matching raid source', async () => {
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
@@ -83,7 +80,6 @@ describe('action completion endpoint tamper guards', () => {
   it('accepts dungeoneering reward claims mapped to skilling collection sources', async () => {
     const handler = makeCompletionHandler('dungeoneering', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: { dungeoneeringTokens: 100000 } }, saveRevision: 0 }),
@@ -108,7 +104,6 @@ describe('action completion endpoint tamper guards', () => {
   it('rejects non-dungeoneering items on dungeoneering completion endpoint', async () => {
     const handler = makeCompletionHandler('dungeoneering', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [], dungeoneeringTokens: 100000 }, saveRevision: 0 }),
@@ -131,7 +126,6 @@ describe('action completion endpoint tamper guards', () => {
     const sparseInventory = Array.from({ length: 28 }, (_, i) => (i < 19 ? { itemId: `occupied_${i}`, quantity: 1 } : null))
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: sparseInventory }, saveRevision: 0 }),
@@ -160,7 +154,6 @@ describe('action completion endpoint tamper guards', () => {
     const fullInventory = Array.from({ length: 28 }, (_, i) => ({ itemId: `occupied_${i}`, quantity: 1 }))
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: fullInventory, bank: {} }, saveRevision: 0 }),
@@ -203,7 +196,6 @@ describe('action completion endpoint tamper guards', () => {
     }
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: {} }, saveRevision: 0 }),
@@ -247,7 +239,6 @@ describe('action completion endpoint tamper guards', () => {
     const { GameApiError } = await import('../functions/_lib/game/errors.js')
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [], bank: {} }, saveRevision: 7 }),
@@ -270,7 +261,6 @@ describe('action completion endpoint tamper guards', () => {
   it('accepts minigame rewards validated by minigame task id', async () => {
     const handler = makeCompletionHandler('minigames', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
@@ -302,7 +292,6 @@ describe('action completion endpoint tamper guards', () => {
     // minigame id (`barbarian_assault`).
     const handler = makeCompletionHandler('minigames', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
@@ -334,7 +323,6 @@ describe('action completion endpoint tamper guards', () => {
     // not a valid log section. This documents the bug the remap fixes.
     const handler = makeCompletionHandler('minigames', {
       requireAuth: async () => ({ identity: { id: 1 } }),
-      assertNotInActiveMatch: async () => null,
       assertNotInCoopSession: async () => null,
       claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),

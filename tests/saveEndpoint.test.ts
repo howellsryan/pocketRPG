@@ -18,13 +18,6 @@ vi.mock('../functions/_lib/jwt.js', () => ({
   verifyJWT: async (token: string) => (token === 'bad-token' ? null : { sub: 1 }),
 }))
 
-// Mutable so a test can simulate the PvP inventory lock (active match → 409).
-let pvpLockResponse: Response | null = null
-vi.mock('../functions/_lib/pvp.js', () => ({
-  assertNotInActiveMatch: async () => pvpLockResponse,
-  sweepStaleRows: async () => {},
-}))
-
 import { onRequestPut, onRequestPost } from '../functions/api/save.js'
 
 // Minimal save bodies. stats → totalLevel 1 (one skill at level 1), CB 3.
@@ -246,22 +239,6 @@ describe('PUT /api/save folds the idle heartbeat', () => {
     expect(stamp.args[2]).toBeNull()
   })
 
-  it('performs NO idle write when the PvP inventory lock returns (active match)', async () => {
-    const stored = JSON.stringify(baseSave())
-    const incoming = JSON.stringify(baseSave({ bank: { shrimps: { itemId: 'shrimps', quantity: 6 } } }))
-    const { env, batches, runs } = makeEnv({ existingSaveData: stored })
-    pvpLockResponse = new Response(JSON.stringify({ error: 'in_active_match' }), { status: 409 })
-    try {
-      const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
-      expect(res.status).toBe(409)
-      // Guard returns before parsing/derivation — neither the blob nor the idle
-      // stamp may write.
-      expect(batches).toHaveLength(0)
-      expect(runs.some(r => /character_idle_state/.test(r.sql))).toBe(false)
-    } finally {
-      pvpLockResponse = null
-    }
-  })
 })
 
 describe('PUT /api/save idle write ceiling', () => {

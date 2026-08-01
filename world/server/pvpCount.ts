@@ -2,7 +2,7 @@
 //
 // Served by this Worker rather than by Pages because Pages has no binding to
 // WorldZone (it binds only the two DO classes it proxies, CoopBossRoom and
-// PvpMatchRoom), and the number is a public, non-sensitive occupancy count —
+// CoopBossRoom), and the number is a public, non-sensitive occupancy count —
 // so the idle client fetches it straight from the world origin under CORS
 // instead of paying for a new cross-script binding and a proxy route.
 import { getServerByName } from 'partyserver'

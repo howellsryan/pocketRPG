@@ -17,13 +17,11 @@
 // same change, or the client treats the lock as a hard save failure.
 
 const LOCK_CODES = new Set([
-  'CHARACTER_IN_ACTIVE_MATCH',
   'CHARACTER_IN_WORLD_SESSION',
   'CHARACTER_IN_COOP_SESSION',
 ])
 
 const LOCK_ERRORS = new Set([
-  'character_in_active_match',
   'character_in_world_session',
   'character_in_coop_session',
 ])
@@ -51,12 +49,4 @@ export function classifySaveError(err) {
   if (LOCK_CODES.has(code) || LOCK_ERRORS.has(error) || LOCK_ERRORS.has(message)) return 'lock'
   if (CONFLICT_CODES.has(code) || CONFLICT_ERRORS.has(error) || CONFLICT_ERRORS.has(message)) return 'conflict'
   return 'failure'
-}
-
-/** The PvP lock alone carries a match id the UI surfaces; the others don't. */
-export function activeMatchIdFromSaveError(err) {
-  const isMatch = err?.body?.code === 'CHARACTER_IN_ACTIVE_MATCH'
-    || err?.body?.error === 'character_in_active_match'
-    || err?.message === 'character_in_active_match'
-  return isMatch ? (err?.body?.match_id ?? null) : null
 }

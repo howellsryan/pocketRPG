@@ -87,7 +87,7 @@ export function collectDeathDrops(inventory: InvSlot[], equipment: Record<string
 
 /**
  * Records a player kill on the rank ladder — the same column the duel system
- * incremented (functions/_lib/pvpSettle.js), so the Wilderness feeds the ladder
+ * incremented, so the Wilderness feeds the ladder
  * that already exists rather than opening a second one.
  *
  * Bot kills are deliberately NOT recorded: a bot is not a character row, and a
