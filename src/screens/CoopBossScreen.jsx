@@ -336,6 +336,30 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     )
   })() : null
 
+  // Built before the lobby branch and rendered by BOTH, for the same reason the
+  // loot modal above is: a wipe returns the party to its lobby on the very tick
+  // the last member died, so a death rendered only by the fight view is the one
+  // death nobody is ever told about.
+  const deathModalNode = me?.status === 'dead' ? (
+    <LootResultModal
+      theme="blood"
+      kind="progress"
+      icon="💀"
+      eyebrow={`Slain by ${bossName}`}
+      title="Defeated"
+      // The room already emptied the pack (the member record is the
+      // authority until the write-back), so this only reports it. Derived
+      // from the death EVENT because only that carries the tally — a
+      // reload falls back to the plain modal rather than an empty list.
+      sub={state?.hardMode ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined}
+      loot={itemsLost.length > 0 ? lootRowsForModal(shapeLootForModal(itemsLost, itemsData).valued, itemsData) : undefined}
+      lootTitle={itemsLost.length > 0 ? 'Lost Forever' : undefined}
+      lootSigned="-"
+      primaryAction={{ label: 'Continue', onClick: handleLeave }}
+      onClose={handleLeave}
+    />
+  ) : null
+
   if (inLobby && raid) {
     const summary = coopRaidSummary(raid.raidId, monstersData)
     return (
@@ -366,6 +390,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
             same band as the fight, so nothing moves when the run starts. */}
         <CoopChatPanel messages={chatLog} onSend={sendChat} />
         {lootModalNode}
+        {deathModalNode}
       </div>
     )
   }
@@ -550,25 +575,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       {/* Derived from the member's status rather than the death event, so a
           reload or a dropped poll still shows it. A dead member stays dead for
           the life of the session — respawning the boss does not revive them. */}
-      {me?.status === 'dead' && (
-        <LootResultModal
-          theme="blood"
-          kind="progress"
-          icon="💀"
-          eyebrow={`Slain by ${bossName}`}
-          title="Defeated"
-          // The room already emptied the pack (the member record is the
-          // authority until the write-back), so this only reports it. Derived
-          // from the death EVENT because only that carries the tally — a
-          // reload falls back to the plain modal rather than an empty list.
-          sub={state?.hardMode ? 'Hard Mode — everything you carried and wore is gone.' : undefined}
-          loot={itemsLost.length > 0 ? lootRowsForModal(shapeLootForModal(itemsLost, itemsData).valued, itemsData) : undefined}
-          lootTitle={itemsLost.length > 0 ? 'Lost Forever' : undefined}
-          lootSigned="-"
-          primaryAction={{ label: 'Continue', onClick: handleLeave }}
-          onClose={handleLeave}
-        />
-      )}
+      {deathModalNode}
     </div>
   )
 }

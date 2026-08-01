@@ -178,28 +178,71 @@ export function hardModeDropChance(chance, hardMode) {
 }
 
 /**
- * What a hard-mode death costs: everything carried and everything worn, gone
- * for good. The BANK is untouched — the risk is what you took in with you, so
- * the counter-play is to take in less.
+ * Whether one item survives a hard-mode death.
  *
- * Returns the emptied pack and the tally of what was lost, so the death screen
- * can name it rather than leaving the player to work out what happened.
+ * Untradeables do. An Infernal Cape, a quest reward, a skill cape cannot be
+ * bought back at any price, so losing one is not a setback the player can play
+ * their way out of — it ends the account's relationship with that content. The
+ * risk hard mode sells is the gear and supplies you can replace.
+ *
+ * COINS are the one exception to the exception: items.json flags them
+ * isUntradeable for the general-store engine (the same artefact PvP loot
+ * special-cases in lootTransfer.js), and coins are the most replaceable thing
+ * in the game. They burn with the rest of the pack.
  */
-export function hardModeDeathLoss(inventory, equipment) {
+export function survivesHardModeDeath(itemId, itemsData) {
+  if (typeof itemId !== 'string' || !itemId || itemId === 'coins') return false
+  return itemsData?.[itemId]?.isUntradeable === true
+}
+
+/**
+ * What a hard-mode death costs: everything tradeable carried and worn, gone for
+ * good. Untradeables stay exactly where they are, in the slot they were in. The
+ * BANK is untouched — the risk is what you took in with you, so the counter-play
+ * is to take in less.
+ *
+ * Returns the surviving pack and the tally of what was lost, so the death screen
+ * can name it rather than leaving the player to work out what happened. An item
+ * this table has never heard of is treated as tradeable and lost, which is the
+ * conservative reading of a mode whose whole premise is that it takes things.
+ */
+export function hardModeDeathLoss(inventory, equipment, itemsData) {
   const lost = []
   const tally = (itemId, quantity) => {
-    if (typeof itemId !== 'string' || !itemId) return
     const qty = Math.max(0, Math.floor(Number(quantity) || 0)) || 1
     const existing = lost.find((entry) => entry.itemId === itemId)
     if (existing) existing.quantity += qty
     else lost.push({ itemId, quantity: qty })
   }
   const slots = Array.isArray(inventory) ? inventory : []
-  for (const slot of slots) tally(slot?.itemId, slot?.quantity)
-  for (const worn of Object.values(equipment && typeof equipment === 'object' ? equipment : {})) {
-    tally(worn?.itemId, worn?.quantity)
+  // A fixed-length pack, not a shorter array: the inventory is indexed by slot
+  // everywhere it is read, and a kept item stays in the slot it was in.
+  const keptInventory = slots.map((slot) => {
+    const itemId = slot?.itemId
+    if (typeof itemId !== 'string' || !itemId) return null
+    if (survivesHardModeDeath(itemId, itemsData)) return slot
+    tally(itemId, slot?.quantity)
+    return null
+  })
+  const keptEquipment = {}
+  for (const [slotName, worn] of Object.entries(equipment && typeof equipment === 'object' ? equipment : {})) {
+    const itemId = worn?.itemId
+    if (typeof itemId !== 'string' || !itemId) continue
+    if (survivesHardModeDeath(itemId, itemsData)) keptEquipment[slotName] = worn
+    else tally(itemId, worn?.quantity)
   }
-  // A fixed-length pack of empty slots, not a shorter array: the inventory is
-  // indexed by slot everywhere it is read.
-  return { inventory: slots.map(() => null), equipment: {}, lost }
+  return { inventory: keptInventory, equipment: keptEquipment, lost }
+}
+
+/**
+ * Whether a saved task's death is a hard-mode death.
+ *
+ * The active task persists the SCALED monster (that is what
+ * `scaleMonsterForHardMode`'s idempotency guard is for), so the fight carries
+ * its own difficulty into idle catch-up, offline boot and skip-1h — none of
+ * which can read the player's current toggle, and none of which should: the
+ * fight that killed them is the one that was running.
+ */
+export function idleTaskDiedHard(task) {
+  return task?.type === 'combat' && task?.monster?.hardModeActive === true
 }

@@ -29,6 +29,7 @@
 // itemId alone). Harmless today because no idle sim produces noted items; a sim
 // that starts to would need a noted-aware delta.
 import { addItem, removeItem, freeSlots } from './inventory.js'
+import { hardModeDeathLoss } from './hardMode.js'
 import { INVENTORY_SIZE } from '../utils/constants.js'
 
 function slotQuantity(slot) {
@@ -165,14 +166,21 @@ export function reconcileIdleInventory({ base, simulated, live, itemsData = {} }
  * resolved against live state. Both catch-up call sites (visibility return,
  * skip-1h) go through this so they cannot drift apart.
  *
+ * `hardModeDeath` folds the death penalty INTO this write rather than leaving
+ * the caller to apply it afterwards: a second write would race the reconcile
+ * that just resolved these three containers against live state (§4). Loot
+ * already banked during the window is kept — the bank is never at risk in hard
+ * mode, only what the player was carrying when they went down.
+ *
  * @returns {{
  *   inventory: Array,                    // write wholesale
  *   bankDeltas: Record<string, number>,  // apply as deltas (never wholesale)
  *   equipment: object|null,              // write only when non-null
  *   reconciled: boolean,                 // true when live had moved under the sim
+ *   hardModeItemsLost: Array|null,       // tally for the idle-result modal
  * }}
  */
-export function resolveIdleHoldingsWrites({ base, sim, live, itemsData = {}, bankedItems = {}, ammoConsumed = null, chargesConsumed = 0 }) {
+export function resolveIdleHoldingsWrites({ base, sim, live, itemsData = {}, bankedItems = {}, ammoConsumed = null, chargesConsumed = 0, hardModeDeath = false }) {
   const { inventory, overflow, reconciled } = reconcileIdleInventory({
     base: base?.inventory,
     simulated: sim?.finalInventory,
@@ -189,7 +197,11 @@ export function resolveIdleHoldingsWrites({ base, sim, live, itemsData = {}, ban
     ammoConsumed,
     chargesConsumed,
   })
-  return { inventory, bankDeltas, equipment, reconciled }
+  if (hardModeDeath) {
+    const loss = hardModeDeathLoss(inventory, equipment || live?.equipment, itemsData)
+    return { inventory: loss.inventory, bankDeltas, equipment: loss.equipment, reconciled, hardModeItemsLost: loss.lost }
+  }
+  return { inventory, bankDeltas, equipment, reconciled, hardModeItemsLost: null }
 }
 
 /**

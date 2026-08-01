@@ -478,13 +478,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => { statsRef.current = stats }, [stats])
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
 
-  // A hard-mode death takes everything carried and everything worn, for good
+  // A hard-mode death takes everything tradeable carried and worn, for good
   // (hardModeDeathLoss). Applied here rather than in the engine because the pack
   // lives in the screen's refs during a fight; the bank is untouched. Declared
   // above the tick loop that calls it.
   const applyHardModeDeath = (state) => {
     if (state?.monster?.hardModeActive !== true) return null
-    const loss = hardModeDeathLoss(inventoryRef.current, equipmentRef.current)
+    const loss = hardModeDeathLoss(inventoryRef.current, equipmentRef.current, itemsData)
     inventoryRef.current = loss.inventory
     updateInventory(loss.inventory)
     equipmentRef.current = loss.equipment
@@ -4186,9 +4186,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           // A hard-mode death is the one death that costs items, so the screen
           // has to name what went with it rather than leave the player to work
           // out why their pack is empty.
-          sub={deathModal.itemsLost ? 'Hard Mode — everything you carried and wore is gone.' : undefined}
-          loot={deathModal.itemsLost ? lootRowsForModal(shapeLootForModal(deathModal.itemsLost, itemsData).valued, itemsData) : undefined}
-          lootTitle={deathModal.itemsLost ? 'Lost Forever' : undefined}
+          sub={deathModal.itemsLost ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined}
+          loot={deathModal.itemsLost?.length > 0 ? lootRowsForModal(shapeLootForModal(deathModal.itemsLost, itemsData).valued, itemsData) : undefined}
+          lootTitle={deathModal.itemsLost?.length > 0 ? 'Lost Forever' : undefined}
           lootSigned="-"
           primaryAction={{
             label: 'Continue',

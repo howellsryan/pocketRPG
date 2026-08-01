@@ -84,7 +84,7 @@ import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
 import { fetchKillCounts } from './cloud/killCounts.js'
 import { fetchHardModeTargets, hardModeKey } from './cloud/hardMode.js'
-import { hardModeSkipCost } from './engine/hardMode.js'
+import { hardModeSkipCost, idleTaskDiedHard } from './engine/hardMode.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 import { rollClueRewards } from './engine/clueScrolls.js'
 import dailyTasksData from './data/dailyTasks.json'
@@ -1245,7 +1245,14 @@ function GameApp() {
               bankedItems: sim.lootBanked || sim.itemsBanked || {},
               ammoConsumed: idleAmmoConsumed,
               chargesConsumed: idleChargesConsumed,
+              hardModeDeath: sim.died === true && idleTaskDiedHard(savedTask),
             })
+            if (writes.hardModeItemsLost) {
+              sim.hardModeItemsLost = writes.hardModeItemsLost
+              // Losing a pack has to survive a closed tab, so it does not wait
+              // for the ordinary debounced flush.
+              requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
+            }
             updateInventory(writes.inventory)
             if (writes.equipment) updateEquipment(writes.equipment)
             if (Object.keys(writes.bankDeltas).length > 0) {
@@ -1821,6 +1828,13 @@ function GameApp() {
     const oneLifeMode = isOneLife || getOneLifeMode()
     if (oneLifeMode) revertOneLifeAfterDeath()
     addToast('You died while you were away!', 'error')
+    // Boot catch-up applies its result straight to IDB and fires no push of its
+    // own, so an emptied pack would sit local until the next autosave — long
+    // enough for a server-authoritative round trip to adopt the older save and
+    // hand the items back.
+    if (idleResult.hardModeItemsLost?.length > 0) {
+      requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
+    }
     setIdleResult(idleResult)
   }
 
@@ -2863,7 +2877,14 @@ function GameApp() {
               bankedItems: sim.lootBanked || sim.itemsBanked || {},
               ammoConsumed: idleAmmoConsumed,
               chargesConsumed: idleChargesConsumed,
+              hardModeDeath: sim.died === true && idleTaskDiedHard(savedTask),
             })
+            if (writes.hardModeItemsLost) {
+              sim.hardModeItemsLost = writes.hardModeItemsLost
+              // Losing a pack has to survive a closed tab, so it does not wait
+              // for the ordinary debounced flush.
+              requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
+            }
             updateInventory(writes.inventory)
             if (writes.equipment) updateEquipment(writes.equipment)
             if (Object.keys(writes.bankDeltas).length > 0) {
@@ -3637,6 +3658,26 @@ function GameApp() {
                   </div>
                 )
               })()}
+
+              {/* What a hard-mode death took. Named here rather than left for the
+                  player to notice: an idle death is already invisible, and this
+                  one emptied their pack. */}
+              {idleResult.hardModeItemsLost?.length > 0 && (
+                <div class="lm-card" style={{ borderColor: 'rgba(255, 135, 135, 0.3)', borderLeft: '3px solid #ff8787' }}>
+                  <div class="lm-card__head" style={{ color: '#ff8787' }}>
+                    <span class="lm-card__icn">☠️</span>Lost Forever
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4', marginBottom: '4px' }}>
+                    Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.
+                  </div>
+                  {idleResult.hardModeItemsLost.map((entry) => (
+                    <div key={entry.itemId} style={{ padding: '2px 0', fontSize: '12px', color: 'var(--color-parchment)' }}>
+                      {itemsData[entry.itemId]?.name || entry.itemId}
+                      {entry.quantity > 1 ? ` ×${entry.quantity.toLocaleString()}` : ''}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Clue scrolls completed */}
               {clueScrollCount > 0 && (
