@@ -73,19 +73,19 @@ describe('Zesta item definitions', () => {
     expect(item.specialAttack?.energyCost).toBe(25)
   })
 
-  it('zesta_vest exists with body slot and strength bonus', () => {
+  it('zesta_vest exists with body slot, no defence requirement, and strength bonus', () => {
     const item = (itemsData as any)['zesta_vest']
     expect(item).toBeDefined()
     expect(item.slot).toBe('body')
-    expect(item.requirements?.defence).toBe(45)
+    expect(item.requirements?.defence).toBeUndefined()
     expect(item.otherBonus?.meleeStrength).toBe(10)
   })
 
-  it('zesta_skirt exists with legs slot and strength bonus', () => {
+  it('zesta_skirt exists with legs slot, no defence requirement, and strength bonus', () => {
     const item = (itemsData as any)['zesta_skirt']
     expect(item).toBeDefined()
     expect(item.slot).toBe('legs')
-    expect(item.requirements?.defence).toBe(45)
+    expect(item.requirements?.defence).toBeUndefined()
     expect(item.otherBonus?.meleeStrength).toBe(8)
   })
 })

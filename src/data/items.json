@@ -17952,9 +17952,6 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "requirements": {
-      "defence": 45
-    },
     "shopValue": 150000,
     "isGeneralStore": false,
     "isUntradeable": true
@@ -17984,9 +17981,6 @@
       "meleeStrength": 8,
       "rangedStrength": 0,
       "magicDamage": 0
-    },
-    "requirements": {
-      "defence": 45
     },
     "shopValue": 130000,
     "isGeneralStore": false,
