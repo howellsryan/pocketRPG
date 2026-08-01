@@ -15,6 +15,7 @@ export const CRITICAL_SAVE_REASONS = Object.freeze({
   SKIP_HOUR: 'skip_hour',
   PVP_MATCH_COMPLETE: 'pvp_match_complete',
   EQUIPMENT_PRESET_CHANGE: 'equipment_preset_change',
+  HOLDINGS_REARRANGE: 'holdings_rearrange',
   QUICK_PRAYERS_CHANGE: 'quick_prayers_change',
   BANK_CONFIG_CHANGE: 'bank_config_change',
   INFO_TOAST_SETTING_CHANGE: 'info_toast_setting_change',
