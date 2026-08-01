@@ -3,6 +3,7 @@ import { tileToWorld } from './scene'
 import { lootExamine } from './ui'
 import { iconSvgString, itemEmoji, itemName } from './itemIcon'
 import type { LootItem } from '../../shared/protocol'
+import { lootLabel } from '../../shared/lootLabel'
 import type { Pickable } from './picking'
 
 const MARKER_SIZE = 0.5
@@ -21,6 +22,8 @@ function lootOrder(id: string): number {
   const n = Number(id.split('_').pop())
   return Number.isFinite(n) ? n : 0
 }
+
+const pileLabel = (item: LootItem): string => lootLabel(itemName(item.itemId), item.qty)
 
 /** Floor-loot renderer: one spinning emoji marker per tile (showing the most
  * recent drop), and one loot Pickable per tile whose actions list every item on
@@ -97,8 +100,8 @@ export function createLootLayer(scene: THREE.Scene): LootLayer {
     marker.userData.pick = {
       kind: 'loot',
       id: k,
-      name: itemName(top.itemId),
-      actions: here.map((l) => ({ label: 'Take', name: itemName(l.itemId), action: 'take', id: l.id })),
+      name: pileLabel(top),
+      actions: here.map((l) => ({ label: 'Take', name: pileLabel(l), action: 'take', id: l.id })),
       examine: lootExamine(itemName(top.itemId)),
     } satisfies Pickable
     scene.add(marker)

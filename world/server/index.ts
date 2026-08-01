@@ -4,6 +4,7 @@ import { CoopBossRoom } from './CoopBossRoom'
 import { PvpMatchRoom } from './PvpMatchRoom'
 import { handleWorldSession } from './session'
 import { handleWorldLeave, type DepartInRoom } from './leave'
+import { handlePvpCount } from './pvpCount'
 import { handleEditorRequest } from './editor'
 import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
 import type { Env } from './env'
@@ -46,6 +47,12 @@ export default {
     // than a socket frame precisely because the socket may already be gone.
     if (url.pathname === '/api/world/leave' && request.method === 'POST') {
       return handleWorldLeave(request, env, departInRoom)
+    }
+
+    // Wilderness occupancy for the idle game's PvP card. Public and CORS-open
+    // by design — see server/pvpCount.ts.
+    if (url.pathname === '/api/world/pvp-count') {
+      return handlePvpCount(request, env)
     }
 
     if (url.pathname === EDITOR_PREFIX || url.pathname.startsWith(EDITOR_PREFIX + '/')) {

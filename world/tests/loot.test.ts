@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  KILL_DROP_OWNER_TICKS,
   LOOT_DESPAWN_TICKS,
   LOOT_OWNER_TICKS,
   PLAYER_DROP_OWNER_TICKS,
@@ -17,13 +18,40 @@ import { flushGrants, type GrantIO, type GrantPayload } from '../server/grants'
 
 describe('spawnDrops', () => {
   it('creates one entity per non-empty drop, owned by the killer at the death tile', () => {
-    const loot = spawnDrops([{ itemId: 'bones', quantity: 1 }, { itemId: 'cowhide', quantity: 2 }], 10, 12, '1', 40)
+    const loot = spawnDrops([{ itemId: 'bones', quantity: 1 }, { itemId: 'cowhide', quantity: 1 }], 10, 12, '1', 40)
     expect(loot).toHaveLength(2)
     expect(loot[0]).toMatchObject({ itemId: 'bones', qty: 1, x: 10, z: 12, ownerCharId: '1', spawnTick: 40 })
     expect(new Set(loot.map((l) => l.id)).size).toBe(2)
   })
+  it('splits a non-stackable drop into one entity per unit so the take menu lists each copy', () => {
+    const loot = spawnDrops([{ itemId: 'cowhide', quantity: 3 }], 4, 5, '1', 9)
+    expect(loot).toHaveLength(3)
+    expect(loot.every((l) => l.itemId === 'cowhide' && l.qty === 1)).toBe(true)
+    expect(new Set(loot.map((l) => l.id)).size).toBe(3)
+  })
+  it('keeps a stackable drop as a single pile carrying its whole quantity', () => {
+    const loot = spawnDrops([{ itemId: 'coins', quantity: 12_000 }], 4, 5, '1', 9)
+    expect(loot).toHaveLength(1)
+    expect(loot[0]).toMatchObject({ itemId: 'coins', qty: 12_000 })
+  })
+  it('carries the player-drop flag onto every unit of a split stack', () => {
+    const loot = spawnDrops([{ itemId: 'cowhide', quantity: 2 }], 0, 0, '1', 0, 17, { fromPlayer: true })
+    expect(loot).toHaveLength(2)
+    expect(loot.every((l) => l.fromPlayer === true && l.ownerTicks === 17)).toBe(true)
+  })
   it('skips zero-quantity rolls', () => {
     expect(spawnDrops([{ itemId: 'bones', quantity: 0 }], 0, 0, '1', 0)).toHaveLength(0)
+  })
+
+  it('holds a kill pile long enough to actually pick a full pack up', () => {
+    // Pickup is one item per tick and a death can put a 28-slot pack plus worn
+    // gear on one tile, each non-stackable unit its own entity. The 17-tick
+    // window a voluntarily dropped item gets would go public mid-pickup.
+    expect(KILL_DROP_OWNER_TICKS).toBeGreaterThan(28 + 11)
+    const pile = spawnDrops([{ itemId: 'shark', quantity: 1 }], 0, 0, 'killer', 0, KILL_DROP_OWNER_TICKS, { fromPlayer: true })[0]
+    const bystander = { charId: 'other', isIronman: false }
+    expect(isVisibleTo(pile, bystander, PLAYER_DROP_OWNER_TICKS + 1)).toBe(false)
+    expect(isVisibleTo(pile, bystander, KILL_DROP_OWNER_TICKS)).toBe(true)
   })
 })
 

@@ -15,6 +15,9 @@ const sourceFiles = [
   'utils/theme.js',
   'utils/constants.js',
   'utils/combatWindup.js',
+  // Ahead of helpers.js, which calls into it (openWorld) — dependency-free by
+  // design so it can sit this early.
+  'cloud/worldHandoff.js',
   'utils/helpers.js',
   'utils/complexityColors.js',
   'utils/completion.js',
@@ -224,7 +227,7 @@ const sourceFiles = [
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
   'screens/BankScreen.js',
-  'screens/PvpLobbyModal.js',
+  'screens/WildernessEntryModal.js',
   'screens/PvpCombatScreen.js',
   'screens/CoopBossScreen.js',
   'screens/CombatMobileSelect.js',
@@ -307,7 +310,7 @@ const GAME_CHUNK_FILES = new Set([
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
   'screens/BankScreen.js',
-  'screens/PvpLobbyModal.js',
+  'screens/WildernessEntryModal.js',
   'screens/PvpCombatScreen.js',
   'screens/CoopBossScreen.js',
   'components/CoopSessionBrowser.js',

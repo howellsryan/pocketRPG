@@ -1,5 +1,6 @@
 import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
-import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, removeOverheadPrayer, updateOverheadPrayer, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showDeathChoiceOverlay, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
+import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, removeOverheadPrayer, updateOverheadPrayer, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showDeathChoiceOverlay, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showPvpCrossingPrompt, setPvpBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
+import { PVP_LEVEL_BRACKET } from '../../shared/pvpArea'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { openWorldMap, type WorldMapData } from './worldMap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
@@ -62,12 +63,21 @@ function buildNpcPickable(diff: EntityDiff): Pickable {
   }
 }
 
-/** Other players are menu-only (item 10): no `actions`, so topPick/hoverText
- * skip them (HOVER_PRIORITY has no 'player' entry) and a left-click through a
- * crowd still walks — buildMenu gives player pickables their own "Follow"
- * row instead of running them through the normal actions list. */
+/** Built with NO actions, which is the safe default: topPick skips an
+ * action-less pickable entirely, so outside the Wilderness a left-click through
+ * a crowd still walks and Follow stays a menu row. `decoratePickable` is the
+ * only thing that ever puts an Attack action on one — and because that single
+ * decision feeds hover, left-click and the menu alike, the three can never
+ * disagree about whether this player may be attacked from where we stand. */
 function buildPlayerPickable(diff: EntityDiff): Pickable {
-  return { kind: 'player', id: diff.id, name: diff.name ?? 'Adventurer', actions: [], monsterLevel: diff.combatLevel }
+  return {
+    kind: 'player',
+    id: diff.id,
+    name: diff.name ?? 'Adventurer',
+    actions: [],
+    monsterLevel: diff.combatLevel,
+    ...(diff.bot ? { bot: true } : {}),
+  }
 }
 
 function enterWorld(session: WorldSession): void {
@@ -109,6 +119,22 @@ function enterWorld(session: WorldSession): void {
   let lastBossFrame: { npcId: string; hp: number; maxHp: number } | null = null
   let lastThreatContributors: { charId: string; name: string; dmg: number }[] | null = null
   let playerCombatLevel = 3
+  /** Whether SELF is north of the Wilderness line. Server-reported
+   * ({e:'pvpState'}) rather than derived from our own tile: the line is the
+   * server's rule, and a client that decided it locally would offer attacks the
+   * server then refuses. */
+  let selfInDanger = false
+  /** Pending "did the logout land?" timer — see onLogout. */
+  let logoutFallback: ReturnType<typeof setTimeout> | null = null
+  const LOGOUT_ANSWER_TIMEOUT_MS = 4000
+  /** Really leave. Reload rather than close(): partysocket auto-reconnects on a
+   * bare close and would re-enter the world; a reload with the session cleared
+   * lands on the login screen with no reconnect loop. */
+  function leaveWorld(): void {
+    if (logoutFallback !== null) { clearTimeout(logoutFallback); logoutFallback = null }
+    clearStoredSession()
+    window.location.reload()
+  }
   let minimap: Minimap | null = null
   let exitMarkers: ExitMarker[] = []
   // Local run state so the toggle button sends the opposite; server {e:'run'}
@@ -218,6 +244,18 @@ function enterWorld(session: WorldSession): void {
     else if (event.e === 'spec') setSpecialEnergy(event.energy, event.queued)
     else if (event.e === 'prayer') setPrayerState(event.points, event.max, event.protection, event.combat)
     else if (event.e === 'kill') pushKillFeed(event.monster, event.killer)
+    else if (event.e === 'pvpPrompt') {
+      showPvpCrossingPrompt(() => send(socket, { t: 'pvpConsent', yes: true }))
+    }
+    else if (event.e === 'pvpState') {
+      selfInDanger = event.inDanger
+      setPvpBanner(event.inDanger, event.opponentName)
+    }
+    else if (event.e === 'pvpKill') pushKillFeed(event.victim, event.killer)
+    else if (event.e === 'logoutRefused') {
+      if (logoutFallback !== null) { clearTimeout(logoutFallback); logoutFallback = null }
+      pushMessage(event.text)
+    }
     else if (event.e === 'uniqueDrop') showUniqueBanner(event.monster, event.player, event.item, event.epic)
     else if (event.e === 'threat') threatByNpc.set(event.npcId, event.contributors)
     else if (event.e === 'equip') {
@@ -625,14 +663,14 @@ function enterWorld(session: WorldSession): void {
             openWorldMap({ ...worldMapData, self: { x: Math.floor(self.mesh.position.x), z: Math.floor(self.mesh.position.z) } })
           },
           onLogout: () => {
-            // Reload rather than close(): partysocket auto-reconnects on a bare
-            // close and would re-enter the world. A reload with the session
-            // cleared lands on the login screen with no reconnect loop. (The
-            // server also linger-flushes on the dropped socket, so no data is
-            // lost even if the logout frame doesn't flush before unload.)
+            // Ask, then wait for the answer — the server refuses a logout mid
+            // fight, and reloading over the top of that refusal would drop the
+            // player on the login screen while their character is still in the
+            // world being killed. `leaveWorld` runs on {t:'error' logged_out},
+            // and on a timer in case the socket died with the question.
             send(socket, { t: 'logout' })
-            clearStoredSession()
-            window.location.reload()
+            if (logoutFallback !== null) clearTimeout(logoutFallback)
+            logoutFallback = setTimeout(leaveWorld, LOGOUT_ANSWER_TIMEOUT_MS)
           },
         })
         initChatInput((text) => send(socket, { t: 'chat', text }))
@@ -692,10 +730,6 @@ function enterWorld(session: WorldSession): void {
               }
               return
             }
-            // Unreachable in practice — players have no `actions` (empty
-            // array in buildPlayerPickable), so topPick/defaultInteract never
-            // select one; this is here to satisfy the type narrowing below.
-            if (interact.kind === 'player') return
             send(socket, { t: 'interact', kind: interact.kind, id: interact.id, action: interact.action })
           },
           onFollow: (targetId) => {
@@ -714,6 +748,24 @@ function enterWorld(session: WorldSession): void {
             ...[...others.values()].map((e) => pickProxyOf(e.mesh)),
           ],
           getPlayerCombatLevel: () => playerCombatLevel,
+          // Recomputed per menu, not stored on the pickable: whether an attack
+          // is on the table depends on where BOTH of us are standing right now.
+          decoratePickable: (pick) => {
+            if (pick.kind !== 'player') return
+            const other = others.get(pick.id)
+            const level = other?.combatLevel ?? pick.monsterLevel
+            const attackable = selfInDanger
+              && !!other?.pvp
+              && level != null
+              && Math.abs(level - playerCombatLevel) <= PVP_LEVEL_BRACKET
+            // The ACTION is the decoration: it makes the player a left-click
+            // target, gives them a hover line, and supplies the menu's Attack
+            // row — all three from one decision, so they cannot disagree.
+            pick.actions = attackable ? [{ label: 'Attack', action: 'attack' }] : []
+            pick.attackable = attackable
+            pick.bot = !!other?.bot
+            if (level != null) pick.monsterLevel = level
+          },
           // Wheel zoom, arrow-key orbit/zoom, and middle-drag orbit all live in
           // cam (cameraControls.ts) — pinch is the one gesture input.ts already
           // owns (two-finger touch), forwarded into the same state.
@@ -911,6 +963,9 @@ function enterWorld(session: WorldSession): void {
     }
 
     if (message.t === 'error') {
+      // The server accepted the logout and has already flushed and released the
+      // save lock — this is the go-ahead the button was waiting on, not a fault.
+      if (message.code === 'logged_out') { leaveWorld(); return }
       showLoginRequired(pocketRpgUrl())
     }
   })

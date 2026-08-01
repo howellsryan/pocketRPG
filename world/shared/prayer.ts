@@ -14,6 +14,7 @@ type PrayerDef = {
   level: number
   bonusType: string
   style?: string
+  damageReductionPercent?: number
 }
 const prayers = prayersData as unknown as Record<string, PrayerDef>
 
@@ -51,6 +52,30 @@ export function protectionOverhead(prayerId: string | null): OverheadStyle | nul
   if (!prayer || prayer.bonusType !== 'protection') return null
   const style = prayer.style
   return style === 'melee' || style === 'ranged' || style === 'magic' ? style : null
+}
+
+/**
+ * Damage a protection prayer takes off an incoming PvP swing of `attackStyle`,
+ * as a whole number of hitpoints. Mirrors src/engine/combat.js's private
+ * protectionPrayerMatches + reduction (a melee prayer answers stab/slash/crush;
+ * everything else matches on the style name), because the Wilderness is the one
+ * place PvP protection prayers are live and the two must agree — a player who
+ * prays melee against a scimitar in a boss fight and takes full damage from the
+ * same scimitar in a duel has been lied to by one of them.
+ *
+ * Pure, and returns 0 for every "no protection" case, so callers subtract
+ * unconditionally.
+ */
+export function protectionReduction(prayerId: string | null, attackStyle: string | null | undefined, damage: number): number {
+  const prayer = prayerId ? prayers[prayerId] : null
+  if (!prayer || prayer.bonusType !== 'protection' || !attackStyle) return 0
+  const percent = Number(prayer.damageReductionPercent)
+  if (!Number.isFinite(percent) || percent <= 0) return 0
+  const matches = prayer.style === 'melee'
+    ? attackStyle === 'stab' || attackStyle === 'slash' || attackStyle === 'crush' || attackStyle === 'melee'
+    : prayer.style === attackStyle
+  if (!matches) return 0
+  return Math.floor(Math.max(0, damage) * percent / 100)
 }
 
 export type PrayerCategory = 'protection' | 'combat'

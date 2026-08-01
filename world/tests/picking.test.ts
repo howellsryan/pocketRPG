@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildMenu, hoverText, topPick, type Pickable } from '../client/src/picking'
+import { buildMenu, defaultInteract, hoverText, topPick, type Pickable } from '../client/src/picking'
 
 const rock: Pickable = { kind: 'rock', id: 'rock_tin_1', name: 'Tin Rock', actions: [{ label: 'Mine', action: 'mine' }], examine: 'Tin ore, ripe for the picking.' }
 const chest: Pickable = { kind: 'object', id: 'chest_1', name: 'Bank Chest', actions: [{ label: 'Deposit', action: 'deposit' }] }
@@ -96,5 +96,57 @@ describe('buildMenu', () => {
     const row = buildMenu([{ ...otherPlayer, monsterLevel: undefined }], 42)[0]
     expect(row.monsterLevel).toBeUndefined()
     expect(row.levelFavourable).toBeUndefined()
+  })
+})
+
+describe('attacking a player (the Wilderness)', () => {
+  const player = (over: Partial<Pickable> = {}): Pickable => ({
+    kind: 'player', id: 'p2', name: 'Rival', actions: [], monsterLevel: 80, ...over,
+  })
+  const attackable = () => player({ actions: [{ label: 'Attack', action: 'attack' }] })
+
+  it('makes an attackable player the left-click default', () => {
+    // Regression: players had no hover priority and no actions, so a left click
+    // walked straight through them and Attack was right-click only.
+    const pick = topPick([attackable()])
+    expect(pick?.id).toBe('p2')
+    expect(defaultInteract(pick!)).toEqual({ kind: 'player', id: 'p2', action: 'attack' })
+  })
+
+  it('leaves a player you cannot attack out of the left-click entirely', () => {
+    // Someone in the safe camp or outside the bracket must not swallow a walk.
+    expect(topPick([player()])).toBeNull()
+  })
+
+  it('reads the hover line as an attack with their combat level', () => {
+    expect(hoverText([attackable()])).toBe('Attack Rival (level-80)')
+  })
+
+  it('still walks when only an un-attackable player is under the cursor', () => {
+    expect(hoverText([player()])).toBe('Walk here')
+  })
+
+  it('offers Attack above Follow in the menu, from the same action', () => {
+    const rows = buildMenu([attackable()], 80)
+    expect(rows[0].text).toBe('Attack Rival')
+    expect(rows[0].interact).toEqual({ kind: 'player', id: 'p2', action: 'attack' })
+    expect(rows[1].text).toBe('Follow Rival')
+  })
+
+  it('offers Follow alone when the attack is not on the table', () => {
+    const rows = buildMenu([player()], 80)
+    expect(rows.filter((r) => r.text.startsWith('Attack'))).toHaveLength(0)
+    expect(rows[0].text).toBe('Follow Rival')
+  })
+
+  it('never offers Follow on a bot — there is nobody behind it', () => {
+    const rows = buildMenu([player({ bot: true, actions: [{ label: 'Attack', action: 'attack' }] })], 80)
+    expect(rows.filter((r) => r.text.startsWith('Follow'))).toHaveLength(0)
+    expect(rows[0].text).toBe('Attack Rival')
+  })
+
+  it('lets loot still outrank a player under the same cursor', () => {
+    const loot: Pickable = { kind: 'loot', id: 'l1', name: 'Coins', actions: [{ label: 'Take', action: 'take' }] }
+    expect(topPick([attackable(), loot])?.id).toBe('l1')
   })
 })

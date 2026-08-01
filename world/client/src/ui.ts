@@ -338,6 +338,36 @@ ${SCROLL_CSS}
 #boss-frame .threat { margin-top: 5px; display: flex; flex-direction: column; gap: 2px; }
 #boss-frame .threat-row { display: flex; justify-content: space-between; font-size: 10px; color: #d8c9a2; }
 #boss-frame .threat-row.self { color: #ffe066; font-weight: bold; }
+/* Wilderness. The banner is a permanent state readout, not a notification: it
+   stays up for as long as you are north of the line, because "am I in danger"
+   is the one thing that must never require remembering. */
+#pvp-banner {
+  position: fixed; left: 50%; top: 8px; transform: translateX(-50%); z-index: 12;
+  display: none; font-family: sans-serif; font-size: 12px; font-weight: bold;
+  color: #ffb3a7; background: rgba(58, 18, 14, 0.92); border: 1px solid #c94a4a;
+  border-radius: 6px; padding: 5px 12px; text-shadow: 0 1px 2px #000;
+  pointer-events: none; text-align: center; letter-spacing: 0.04em;
+}
+#pvp-banner.visible { display: block; }
+#pvp-prompt {
+  position: fixed; inset: 0; z-index: 30; display: none;
+  align-items: center; justify-content: center; background: rgba(10, 6, 4, 0.72);
+  font-family: sans-serif;
+}
+#pvp-prompt.visible { display: flex; }
+#pvp-prompt .card {
+  width: min(340px, 86vw); background: #221a14; border: 1px solid #c94a4a;
+  border-radius: 10px; padding: 18px 18px 14px; color: #e8ddc8; text-align: center;
+}
+#pvp-prompt h3 { margin: 0 0 8px; font-size: 16px; color: #ffb3a7; }
+#pvp-prompt p { margin: 0 0 6px; font-size: 13px; line-height: 1.45; }
+#pvp-prompt .warn { color: #ffd7a7; font-weight: bold; }
+#pvp-prompt .row { display: flex; gap: 10px; margin-top: 14px; }
+#pvp-prompt button {
+  flex: 1; min-height: 44px; font-size: 14px; font-weight: bold; border-radius: 6px;
+  border: 1px solid #665; background: #332; color: #e8ddc8; cursor: pointer;
+}
+#pvp-prompt button.yes { background: #5a1f1a; border-color: #c94a4a; color: #ffd0c8; }
 #unique-banner {
   position: fixed; left: 50%; top: 90px; transform: translateX(-50%); z-index: 12;
   font-family: sans-serif; font-size: 14px; font-weight: bold; color: #ffe066;
@@ -1117,6 +1147,26 @@ export function initHud(handlers?: HudHandlers): void {
   uniqueBanner.id = 'unique-banner'
   document.body.appendChild(uniqueBanner)
 
+  const pvpBanner = document.createElement('div')
+  pvpBanner.id = 'pvp-banner'
+  document.body.appendChild(pvpBanner)
+
+  const pvpPrompt = document.createElement('div')
+  pvpPrompt.id = 'pvp-prompt'
+  pvpPrompt.innerHTML = `<div class="card">
+    <h3>Enter the Wilderness?</h3>
+    <p>Past this gate, any player within 10 combat levels of you can attack you.</p>
+    <p class="warn">If you die you will lose everything you are carrying and everything you are wearing.</p>
+    <div class="row"><button class="no" type="button">No</button><button class="yes" type="button">Yes</button></div>
+  </div>`
+  document.body.appendChild(pvpPrompt)
+  pvpPrompt.querySelector<HTMLButtonElement>('button.no')?.addEventListener('click', () => hidePvpCrossingPrompt())
+  pvpPrompt.querySelector<HTMLButtonElement>('button.yes')?.addEventListener('click', () => {
+    const confirm = pvpConsentHandler
+    hidePvpCrossingPrompt()
+    confirm?.()
+  })
+
   setupSheetDrag(handle)
   window.addEventListener('keydown', onGlobalKeyDown)
   window.addEventListener('resize', applyLayout)
@@ -1824,6 +1874,37 @@ const UNIQUE_BANNER_MS = 5000
 /** Zone-wide kill feed line (item 11) — reuses the message strip. */
 export function pushKillFeed(monster: string, killer: string): void {
   pushMessage(`⚔ ${killer} has defeated ${monster}!`)
+}
+
+let pvpConsentHandler: (() => void) | null = null
+
+/**
+ * The Wilderness gate. The server has already stopped the character on the safe
+ * tile and sent {e:'pvpPrompt'}; this is the YES that arms the crossing.
+ *
+ * Re-arming the handler on a repeat prompt (rather than early-returning while
+ * open) is deliberate: the prompt can only be raised by a step the server
+ * refused, so a second one means a second attempt, and the newest socket
+ * closure is the one that should answer.
+ */
+export function showPvpCrossingPrompt(onConfirm: () => void): void {
+  pvpConsentHandler = onConfirm
+  document.getElementById('pvp-prompt')?.classList.add('visible')
+}
+
+export function hidePvpCrossingPrompt(): void {
+  pvpConsentHandler = null
+  document.getElementById('pvp-prompt')?.classList.remove('visible')
+}
+
+/** Permanent "you are in danger" readout, naming the opponent once a fight has
+ * locked so single combat is legible from the screen rather than inferred. */
+export function setPvpBanner(inDanger: boolean, opponentName: string | null): void {
+  const el = document.getElementById('pvp-banner')
+  if (!el) return
+  el.classList.toggle('visible', inDanger)
+  if (!inDanger) return
+  el.textContent = opponentName ? `⚔ FIGHTING ${opponentName.toUpperCase()}` : '⚔ WILDERNESS — YOU CAN BE ATTACKED'
 }
 
 /** Prominent zone-wide banner for a boss unique drop (item 11). */

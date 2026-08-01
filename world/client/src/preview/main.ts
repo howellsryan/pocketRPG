@@ -12,6 +12,7 @@ import cowPastureZone from '../../../zones/cow_pasture.json'
 import fiendPitZone from '../../../zones/fiend_pit.json'
 import dragonRoostZone from '../../../zones/dragon_roost.json'
 import zarythThroneZone from '../../../zones/zaryth_throne.json'
+import wildernessZone from '../../../zones/wilderness.json'
 
 // Auth-free, server-free terrain preview. Renders a bundled zone JSON through
 // the REAL terrain pipeline (createTerrain + scatter + statics/props), so it
@@ -26,6 +27,7 @@ const ZONES: Record<string, ZoneDef> = {
   fiend_pit: fiendPitZone as unknown as ZoneDef,
   dragon_roost: dragonRoostZone as unknown as ZoneDef,
   zaryth_throne: zarythThroneZone as unknown as ZoneDef,
+  wilderness: wildernessZone as unknown as ZoneDef,
 }
 
 declare global {

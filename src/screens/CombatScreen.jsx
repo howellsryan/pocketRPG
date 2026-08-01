@@ -2,7 +2,7 @@ import { Component } from 'preact'
 import { useState, useEffect, useRef, useMemo } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { usePvp } from '../state/pvpState.jsx'
-import PvpLobbyModal from './PvpLobbyModal.jsx'
+import WildernessEntryModal from './WildernessEntryModal.jsx'
 import PvpCombatScreen from './PvpCombatScreen.jsx'
 import CoopBossScreen from './CoopBossScreen.jsx'
 import CoopSessionBrowser, { CoopSessionList } from '../components/CoopSessionBrowser.jsx'
@@ -350,6 +350,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
+  // PvP is open-world only now: this opens the Wilderness entry card, not a
+  // lobby. The matchmaking screens are gone from every entry point.
   const [showPvpLobby, setShowPvpLobby] = useState(false)
   // Co-op boss session. The server owns the fight and locks the save for its
   // duration, so this takes over the screen exactly like an active PvP match.
@@ -2591,7 +2593,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             onStance={updateCombatStance}
             idleSetup={idleCombatSetup}
             onOpenIdle={setIdleSetupMode}
-            showPvp={!isIronman && !isOneLife && !isDemo && !isDungeon}
+            showPvp={!isDemo && !isDungeon}
             onOpenPvp={() => setShowPvpLobby(true)}
             demoLockBosses={isDemo}
             coopBrowserPanel={coopBrowserPanel}
@@ -2832,20 +2834,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
         )}
 
-        {/* PvP entry — hidden for ironman / one-life accounts, the demo, and dungeons. */}
-        {!isIronman && !isOneLife && !isDemo && !isDungeon && (
+        {/* Wilderness entry — hidden only in the demo (no account, so no world
+            handoff) and in dungeons. Ironman and One Life accounts may both go:
+            an Ironman simply cannot take another player's loot, and a One Life
+            run ends there like it ends anywhere else. */}
+        {!isDemo && !isDungeon && (
           <div class="mt-6 pb-2">
             <button
               onClick={() => setShowPvpLobby(true)}
               class="cb-raid__enter flex items-center justify-center gap-2"
               style={{ marginTop: 0, background: 'linear-gradient(180deg,#c0392b,#8b1a1a)', color: 'var(--color-parchment)', boxShadow: '0 8px 20px -8px rgba(192,57,43,0.6), inset 0 1px 0 rgba(255,255,255,0.15)' }}
-              title="Player vs Player"
+              title="The Wilderness"
             >
               <GameIcon iconKey="crossed_swords" color="var(--color-parchment)" size={18} />
-              <span>Player vs Player</span>
+              <span>The Wilderness</span>
             </button>
             <div class="text-[9px] text-[var(--color-parchment)] opacity-90 mt-1.5 text-center px-2">
-              On death, your tradeable inventory + equipped gear go to the winner. Untradeables stay with you.
+              Open-world PvP. Die out there and you drop everything you carry and everything you wear.
             </div>
           </div>
         )}
@@ -2853,10 +2858,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       )}
 
       {showPvpLobby && (
-        <PvpLobbyModal
-          onClose={() => setShowPvpLobby(false)}
-          getSnapshot={getSnapshot}
-        />
+        <WildernessEntryModal onClose={() => setShowPvpLobby(false)} />
       )}
 
       {/* Idle combat setup */}

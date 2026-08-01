@@ -11,6 +11,7 @@ import { LOCAL_WRITE_MARKER_KEY } from '../db/stores.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
 import { classifySaveError, activeMatchIdFromSaveError, saveLockCode } from './saveErrors.js'
+import { clearWorldHandoff, hasPendingWorldHandoff } from './worldHandoff.js'
 
 const PUSH_DEBOUNCE_MS = 120_000
 // Engagement-aware idle throttle. The periodic autosave + activity heartbeat
@@ -202,6 +203,9 @@ async function performPush() {
     hasUnsyncedChanges = false
     consecutiveFailures = 0
     lastLockCode = null
+    // The server took our copy, so no world session holds this character's save
+    // lock and the cloud has nothing we don't (see worldHandoff.js).
+    clearWorldHandoff()
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
     return true
@@ -582,6 +586,9 @@ export async function applyCloudSave(payload, updatedAt, saveRevision) {
   // so a subsequent boot doesn't mistake this adoption itself for an unsynced
   // local change (see isLocalWriteNewerThanCloud below).
   try { localStorage.setItem(LOCAL_WRITE_MARKER_KEY, String(Date.now())) } catch { /* non-fatal */ }
+  // We now hold the server's copy, which includes anything the open world
+  // granted — the handoff is settled.
+  clearWorldHandoff()
 }
 
 // Public: does IndexedDB hold a local write made after the cloud's last known
@@ -593,6 +600,11 @@ export async function applyCloudSave(payload, updatedAt, saveRevision) {
 // local-write marker lives in localStorage, which (unlike the module state
 // here) survives the reload. Same clock-skew grace as checkCloudNewer.
 export function isLocalWriteNewerThanCloud(cloudUpdatedAt) {
+  // The open world runs in its own tab and is the save's only writer while it
+  // holds the lock — but this tab kept ticking behind it, so its local writes
+  // are newer AND older at once: newer by clock, older by content. The cloud
+  // copy wins until we have positively re-agreed with it (worldHandoff.js).
+  if (hasPendingWorldHandoff()) return false
   let localWriteAt = 0
   try { localWriteAt = parseInt(localStorage.getItem(LOCAL_WRITE_MARKER_KEY) || '0', 10) } catch { localWriteAt = 0 }
   if (!Number.isFinite(localWriteAt) || localWriteAt <= 0) return false
