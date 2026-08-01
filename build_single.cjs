@@ -31,6 +31,8 @@ const sourceFiles = [
   'utils/killCountMerge.js',
   'utils/idleElapsed.js',
   'utils/itemIcons.js',
+  'utils/iconTints.js',
+  'utils/itemIconResolve.js', // shared with the open world client — see its header
   'utils/skillArt.js',
   'utils/monsterIcons.js',
   'utils/combatArt.js',
