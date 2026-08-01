@@ -259,6 +259,9 @@ const SCRIPT = `
   var noted = false;
   var selectedCharacter = null;
   var selectedItem = null;
+  var snapshots = [];
+  var selectedSnapshot = null;
+  var snapshotCharacter = null;
 
   var $ = function(id){ return document.getElementById(id); };
 
@@ -277,6 +280,7 @@ const SCRIPT = `
     catalog = { items: [], characters: [] };
     selectedCharacter = null;
     selectedItem = null;
+    clearSnapshots();
     $('portal').hidden = true;
     $('gate').hidden = false;
     $('secret').value = '';
@@ -388,6 +392,11 @@ const SCRIPT = `
     $('character-count').textContent = charMatches.length + ' of ' + catalog.characters.length + ' characters';
     describeChosen('item');
     describeChosen('character');
+    // Snapshots belong to the character they were listed for. The picker moves
+    // by click AND by the single-match auto-select above, so this is checked
+    // here rather than in the click handler — leaving a stale list on screen is
+    // how a restore lands on the wrong account.
+    if (snapshotCharacter !== null && String(snapshotCharacter) !== String(selectedCharacter)) clearSnapshots();
   }
 
   function num(n){ return Number(n).toLocaleString('en-GB'); }
@@ -402,7 +411,20 @@ const SCRIPT = `
       ['Held after', num(body.after)],
       ['Save revision', body.save_revision === undefined ? '—' : num(body.save_revision)],
     ];
-    var tbody = $('receipt-body');
+    ledgerRows('receipt-body', rows);
+    $('receipt-tag').className = 'fm-tag ' + (dryRun ? 'fm-tag--brass' : 'fm-tag--verdigris');
+    $('receipt-tag').textContent = dryRun ? 'Preview only — nothing written' : 'Granted';
+    $('receipt').hidden = false;
+    $('receipt').scrollIntoView({ block: 'nearest' });
+  }
+
+  function when(ms){
+    var d = new Date(Number(ms) || 0);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleString('en-GB');
+  }
+
+  function ledgerRows(tbodyId, rows){
+    var tbody = $(tbodyId);
     tbody.textContent = '';
     for (var i = 0; i < rows.length; i++){
       var tr = document.createElement('tr');
@@ -414,10 +436,128 @@ const SCRIPT = `
       tr.appendChild(th); tr.appendChild(td);
       tbody.appendChild(tr);
     }
-    $('receipt-tag').className = 'fm-tag ' + (dryRun ? 'fm-tag--brass' : 'fm-tag--verdigris');
-    $('receipt-tag').textContent = dryRun ? 'Preview only — nothing written' : 'Granted';
-    $('receipt').hidden = false;
-    $('receipt').scrollIntoView({ block: 'nearest' });
+  }
+
+  function clearSnapshots(){
+    snapshots = [];
+    selectedSnapshot = null;
+    snapshotCharacter = null;
+    $('snapshots').textContent = '';
+    $('snapshot-count').textContent = '';
+    $('snapshot-chosen').textContent = '';
+    $('snapshot-detail').hidden = true;
+    $('restore-msg').hidden = true;
+  }
+
+  function adminGet(path, onOk, msgEl){
+    fetch(path, { headers: { 'X-Admin-Secret': secret } }).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(body){
+        return { status: res.status, body: body };
+      });
+    }).then(function(r){
+      if (r.status === 401) return lock('That secret is no longer valid. Enter it again.');
+      if (r.status >= 400 || !r.body || !r.body.ok) return message(msgEl, 'err', errorText(r.status, r.body));
+      onOk(r.body);
+    }).catch(function(){
+      message(msgEl, 'err', 'Could not reach the server.');
+    });
+  }
+
+  function loadSnapshots(){
+    var msg = $('restore-msg');
+    msg.hidden = true;
+    clearSnapshots();
+    var characterId = Number(selectedCharacter);
+    if (!characterId) return message(msg, 'err', 'Choose a character first.');
+    adminGet('/api/admin/restore-save?character_id=' + characterId, function(body){
+      snapshots = body.snapshots || [];
+      snapshotCharacter = String(characterId);
+      var held = body.current && body.current.holdings ? body.current.holdings : null;
+      $('snapshot-count').textContent = snapshots.length
+        ? snapshots.length + ' snapshot' + (snapshots.length === 1 ? '' : 's') +
+          (held ? ' · live save holds ' + num(held.distinctItems) + ' distinct items' : '')
+        : 'No snapshots preserved for this character yet.';
+      renderSnapshots();
+    }, msg);
+  }
+
+  function renderSnapshots(){
+    var entries = [];
+    for (var i = 0; i < snapshots.length; i++){
+      var snap = snapshots[i];
+      entries.push({
+        value: String(snap.id),
+        label: when(snap.created_at),
+        meta: snap.reason + ' · rev ' + snap.save_revision,
+      });
+    }
+    fillList('snapshots', entries, selectedSnapshot === null ? null : String(selectedSnapshot), pickSnapshot);
+  }
+
+  function pickSnapshot(e){
+    var id = Number(e.currentTarget.getAttribute('data-value'));
+    selectedSnapshot = id;
+    renderSnapshots();
+    var msg = $('restore-msg');
+    msg.hidden = true;
+    adminGet('/api/admin/restore-save?character_id=' + Number(selectedCharacter) + '&history_id=' + id, function(body){
+      var snap = body.snapshot || {};
+      var loss = body.lost_since_snapshot || {};
+      var holdings = snap.holdings || {};
+      $('snapshot-chosen').textContent = 'Snapshot #' + snap.id + ' — ' + when(snap.created_at) +
+        ', holding ' + num(holdings.distinctItems || 0) + ' distinct items';
+      var rows = [
+        ['Durable items', num(loss.durableUnits || 0) + '  (' + num(loss.durableValue || 0) + ' gp)'],
+        ['Resources', num(loss.resourceUnits || 0) + '  (' + num(loss.resourceValue || 0) + ' gp)'],
+        ['Coins', num(loss.coinsLost || 0)],
+        ['Charges', num(loss.chargesLost || 0)],
+      ];
+      var top = loss.items || [];
+      for (var i = 0; i < top.length; i++){
+        rows.push(['· ' + top[i].itemId, num(top[i].lost)]);
+      }
+      ledgerRows('snapshot-detail-body', rows);
+      $('snapshot-detail').hidden = false;
+    }, msg);
+  }
+
+  function restore(dryRun){
+    var msg = $('restore-msg');
+    msg.hidden = true;
+    if (!selectedSnapshot) return message(msg, 'err', 'Choose a snapshot.');
+    if (!dryRun && !window.confirm('Overwrite this character\\'s live save with the snapshot? Everything gained since is discarded.')) return;
+    $('restore-preview-btn').disabled = true;
+    $('restore-btn').disabled = true;
+    fetch('/api/admin/restore-save', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({
+        character_id: Number(selectedCharacter),
+        history_id: selectedSnapshot,
+        dry_run: !!dryRun,
+        reason: 'admin portal',
+      }),
+    }).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(body){
+        return { status: res.status, body: body };
+      });
+    }).then(function(r){
+      if (r.status === 401) return lock('That secret is no longer valid. Enter it again.');
+      if (r.status >= 400 || !r.body || !r.body.ok) return message(msg, 'err', errorText(r.status, r.body));
+      var restores = r.body.restores || {};
+      var discards = r.body.discards || {};
+      var summary = 'restores ' + num(restores.durableUnits || 0) + ' durable / ' +
+        num(restores.resourceUnits || 0) + ' resource units, discards ' +
+        num(discards.durableUnits || 0) + ' / ' + num(discards.resourceUnits || 0);
+      if (dryRun) return message(msg, 'ok', 'Preview only — nothing written. This would ' + summary + '.');
+      message(msg, 'ok', 'Restored (' + summary + '). The player must reload the game to pull it.');
+      loadSnapshots();
+    }).catch(function(){
+      message(msg, 'err', 'Could not reach the server.');
+    }).then(function(){
+      $('restore-preview-btn').disabled = false;
+      $('restore-btn').disabled = false;
+    });
   }
 
   function errorText(status, body){
@@ -531,6 +671,9 @@ const SCRIPT = `
     $('character-filter').addEventListener('input', refreshLists);
     $('preview-btn').addEventListener('click', function(){ grant(true); });
     $('grant-btn').addEventListener('click', function(){ grant(false); });
+    $('snapshots-btn').addEventListener('click', loadSnapshots);
+    $('restore-preview-btn').addEventListener('click', function(){ restore(true); });
+    $('restore-btn').addEventListener('click', function(){ restore(false); });
     $('dest-inventory').addEventListener('click', function(){ setDestination('inventory'); });
     $('dest-bank').addEventListener('click', function(){ setDestination('bank'); });
     $('noted-off').addEventListener('click', function(){ setNoted(false); });
@@ -652,12 +795,34 @@ const BODY = `
             <tbody id="receipt-body"></tbody>
           </table>
         </div>
+
+        <div class="fm-rule-head"><span>Salvage</span></div>
+        <p class="fm-lore">Pull a character's save back out of the vault, from before whatever went missing.</p>
+        <div class="field">
+          <div class="actions">
+            <button id="snapshots-btn" type="button" class="fm-btn fm-btn--brass">Find snapshots</button>
+          </div>
+          <p class="field__hint" id="snapshot-count"></p>
+          <div id="snapshots" class="picklist" role="listbox" aria-label="Snapshot"></div>
+          <p class="chosen" id="snapshot-chosen"></p>
+        </div>
+        <div id="snapshot-detail" hidden>
+          <table class="fm-ledger">
+            <thead><tr><th>Lost since this snapshot</th><th>Value</th></tr></thead>
+            <tbody id="snapshot-detail-body"></tbody>
+          </table>
+          <div class="actions">
+            <button id="restore-preview-btn" type="button" class="fm-btn fm-btn--brass">Preview restore</button>
+            <button id="restore-btn" type="button" class="fm-btn fm-btn--ember">Restore</button>
+          </div>
+        </div>
+        <p id="restore-msg" class="msg" hidden></p>
       </div>
     </div>
   </main>
 
 </div>
-<p class="foot">Every grant is written to the audit log</p>
+<p class="foot">Every grant and every restore is written to the audit log</p>
 `
 
 export function renderPortalPage() {
