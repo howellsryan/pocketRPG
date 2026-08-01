@@ -204,7 +204,7 @@ export default function CombatMobileSelect({
                         </div>
                         <button
                           class="cb-mon__info"
-                          onClick={(e) => { e.stopPropagation(); onMonsterInfo(monster) }}
+                          onClick={(e) => { e.stopPropagation(); onMonsterInfo(shownMonster) }}
                           aria-label={`${monster.name} info`}
                         >
                           <GameIcon iconKey="info" color="var(--fm-ember)" size={18} />

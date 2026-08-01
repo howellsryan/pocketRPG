@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
-  HARD_MODE_SCALE,
+  HARD_MODE_MULTIPLIERS,
+  hardModeDeathLoss,
   hardModeDropChance,
   hardModeMonstersData,
   hardModeSkipCost,
@@ -17,20 +18,47 @@ const anyMonsters = monstersData as Record<string, any>
 const anyRaids = raidsData as Record<string, any>
 
 describe('hard mode scaling', () => {
-  it('doubles hitpoints, combat stats and combat bonuses', () => {
+  it('scales health and offence, and leaves defence exactly where it was', () => {
     const base = {
-      id: 'x', hitpoints: 255, maxHit: 40,
+      id: 'x', hitpoints: 255, maxHit: 40, attackStyle: 'crush',
       stats: { attack: 100, strength: 120, defence: 130, magic: 200, ranged: 1 },
       attackBonus: 130, strengthBonus: 40,
       defenceBonus: { stab: 10, slash: 20, crush: 30, magic: 90, ranged: 0 },
     }
     const hard = scaleMonsterForHardMode(base)
-    expect(hard.hitpoints).toBe(510)
-    expect(hard.maxHit).toBe(80)
-    expect(hard.stats).toEqual({ attack: 200, strength: 240, defence: 260, magic: 400, ranged: 2 })
-    expect(hard.attackBonus).toBe(260)
-    expect(hard.strengthBonus).toBe(80)
-    expect(hard.defenceBonus).toEqual({ stab: 20, slash: 40, crush: 60, magic: 180, ranged: 0 })
+    expect(hard.hitpoints).toBe(255 * HARD_MODE_MULTIPLIERS.hitpoints)
+    expect(hard.maxHit).toBe(40 * HARD_MODE_MULTIPLIERS.offence)
+    expect(hard.attackBonus).toBe(130 * HARD_MODE_MULTIPLIERS.offence)
+    expect(hard.strengthBonus).toBe(40 * HARD_MODE_MULTIPLIERS.offence)
+    expect(hard.stats.attack).toBe(100 * HARD_MODE_MULTIPLIERS.offence)
+    expect(hard.stats.strength).toBe(120 * HARD_MODE_MULTIPLIERS.offence)
+    expect(hard.stats.ranged).toBe(1 * HARD_MODE_MULTIPLIERS.offence)
+    // The whole point of the mode: it is deadlier, not tankier.
+    expect(hard.stats.defence).toBe(130)
+    expect(hard.defenceBonus).toEqual(base.defenceBonus)
+  })
+
+  it('treats a caster’s magic level as offence and a brawler’s as defence', () => {
+    const stats = { attack: 10, strength: 10, defence: 10, magic: 200, ranged: 10 }
+    // 70% of every monster's magic defence roll is its magic LEVEL, so scaling
+    // it on a melee boss would be the defensive buff this mode withholds.
+    const melee = scaleMonsterForHardMode({ id: 'a', attackStyle: 'crush', stats })
+    expect(melee.stats.magic).toBe(200)
+
+    const caster = scaleMonsterForHardMode({ id: 'b', attackStyle: 'magic', stats })
+    expect(caster.stats.magic).toBe(200 * HARD_MODE_MULTIPLIERS.offence)
+
+    const rotates = scaleMonsterForHardMode({
+      id: 'c', attackStyle: 'crush', stats, multiForm: true,
+      forms: { one: { attackStyle: 'crush' }, two: { attackStyle: 'magic' } },
+    })
+    expect(rotates.stats.magic).toBe(200 * HARD_MODE_MULTIPLIERS.offence)
+  })
+
+  it('reads every multiplier from one config, so the fight is retunable', () => {
+    expect(Object.keys(HARD_MODE_MULTIPLIERS).sort())
+      .toEqual(['defence', 'dropRate', 'hitpoints', 'offence', 'skipCost'])
+    expect(HARD_MODE_MULTIPLIERS.defence).toBe(1)
   })
 
   it('leaves the drop table alone — doubling loot is the server’s call', () => {
@@ -55,8 +83,11 @@ describe('hard mode scaling', () => {
       },
     }
     const hard = scaleMonsterForHardMode(base)
-    expect(hard.forms.one).toMatchObject({ maxHit: 60, attackBonus: 100, strengthBonus: 100, phaseHP: 4000 })
-    expect(hard.forms.two.defenceBonus.magic).toBe(600)
+    const { hitpoints: hp, offence, defence } = HARD_MODE_MULTIPLIERS
+    expect(hard.forms.one).toMatchObject({
+      maxHit: 30 * offence, attackBonus: 50 * offence, strengthBonus: 50 * offence, phaseHP: 2000 * hp,
+    })
+    expect(hard.forms.two.defenceBonus.magic).toBe(300 * defence)
   })
 
   it('leaves a malformed form entry alone rather than throwing', () => {
@@ -101,7 +132,7 @@ describe('hard mode drop chances (server-side only)', () => {
 describe('hard mode tables', () => {
   it('scales every entry and memoises the table', () => {
     const table = hardModeMonstersData(anyMonsters)
-    expect(table.deepmaw_kraken.hitpoints).toBe(anyMonsters.deepmaw_kraken.hitpoints * HARD_MODE_SCALE)
+    expect(table.deepmaw_kraken.hitpoints).toBe(anyMonsters.deepmaw_kraken.hitpoints * HARD_MODE_MULTIPLIERS.hitpoints)
     expect(hardModeMonstersData(anyMonsters)).toBe(table)
     expect(monstersTableFor(anyMonsters, false)).toBe(anyMonsters)
   })
@@ -111,16 +142,16 @@ describe('hard mode tables', () => {
     const hard = createCombatState(
       scaleMonsterForHardMode(anyMonsters.deepmaw_kraken), 'melee', 'accurate', null, hardModeMonstersData(anyMonsters),
     )
-    expect(hard.monster.currentHP).toBe(normal.monster.currentHP * HARD_MODE_SCALE)
+    expect(hard.monster.currentHP).toBe(normal.monster.currentHP * HARD_MODE_MULTIPLIERS.hitpoints)
   })
 
   it('a hard raid scales every boss in the run, not just the first', () => {
     const raid = anyRaids.vaults_of_xyren
     const hardTable = hardModeMonstersData(anyMonsters)
     const state = createRaidCombatState(raid, hardTable, 'melee', 'accurate', null)!
-    expect(state.monster.currentHP).toBe(anyMonsters[raid.bosses[0]].hitpoints * HARD_MODE_SCALE)
+    expect(state.monster.currentHP).toBe(anyMonsters[raid.bosses[0]].hitpoints * HARD_MODE_MULTIPLIERS.hitpoints)
     for (const bossId of raid.bosses) {
-      expect(state.raid.monstersData[bossId].hitpoints).toBe(anyMonsters[bossId].hitpoints * HARD_MODE_SCALE)
+      expect(state.raid.monstersData[bossId].hitpoints).toBe(anyMonsters[bossId].hitpoints * HARD_MODE_MULTIPLIERS.hitpoints)
     }
   })
 })
@@ -135,5 +166,40 @@ describe('hard mode skip cost', () => {
   it('carries the doubled cost on the scaled record the prompt reads', () => {
     const scaled = scaleMonsterForHardMode({ id: 'x', hitpoints: 10, skipCost: 6 })
     expect(scaled.skipCost).toBe(12)
+  })
+})
+
+describe('a hard-mode death', () => {
+  const pack = [
+    { itemId: 'shark', quantity: 12 },
+    null,
+    { itemId: 'twisted_longbow', quantity: 1 },
+    { itemId: 'shark', quantity: 3 },
+  ]
+  const worn = {
+    weapon: { itemId: 'dragon_scimitar', quantity: 1 },
+    cape: { itemId: 'fire_cape', quantity: 1 },
+    ring: null,
+  }
+
+  it('empties the pack and strips the gear, keeping the slot count', () => {
+    const loss = hardModeDeathLoss(pack, worn)
+    expect(loss.inventory).toEqual([null, null, null, null])
+    expect(loss.equipment).toEqual({})
+  })
+
+  it('tallies what was lost, stacking repeats, for the death screen', () => {
+    const loss = hardModeDeathLoss(pack, worn)
+    expect(loss.lost).toEqual([
+      { itemId: 'shark', quantity: 15 },
+      { itemId: 'twisted_longbow', quantity: 1 },
+      { itemId: 'dragon_scimitar', quantity: 1 },
+      { itemId: 'fire_cape', quantity: 1 },
+    ])
+  })
+
+  it('survives an empty or missing pack', () => {
+    expect(hardModeDeathLoss([], {})).toEqual({ inventory: [], equipment: {}, lost: [] })
+    expect(hardModeDeathLoss(undefined as any, undefined as any)).toEqual({ inventory: [], equipment: {}, lost: [] })
   })
 })

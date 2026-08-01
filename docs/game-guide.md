@@ -125,7 +125,9 @@ A boss hunts you across its whole lair, further than any other monster will foll
 
 Most bosses and every raid can be switched to Hard Mode from the prompt that opens when you tap them in the combat picker. The switch is per boss (and per raid), stays on until you turn it off, and shows as a **HARD** tag wherever that fight is listed.
 
-A hard fight doubles the boss's health and every combat stat it has: it hits harder, hits more often, and is harder to hit. In exchange every drop rate on its table doubles — a 1-in-500 unique becomes 1-in-250. Guaranteed drops stay one drop.
+A hard fight doubles the boss's health and its offence — twice the max hit, twice the accuracy. Its defences are untouched, so it dies to the same hits it always did; what changes is how much damage it does to you on the way. In exchange every drop rate on its table doubles — a 1-in-500 unique becomes 1-in-250. Guaranteed drops stay one drop, and a boss you skip with credits costs double the credits.
+
+**If you die in Hard Mode you lose every item you are carrying and every item you are wearing, permanently.** Your bank is untouched, so the counter-play is to take in less than you can afford to lose. This applies to solo fights, group fights and raids alike, and turning Hard Mode on asks you to confirm it first.
 
 Difficulty belongs to the fight, not to you: a group boss room or a raid party is opened at the difficulty the player who opened it chose, everyone in it fights the same boss, and joining a listed group means taking that group's difficulty. Hard Mode applies to solo fights and group fights; open-world boss lairs are always normal.
 

@@ -17,7 +17,7 @@
 // fields; the monster itself is rebuilt from `monstersData` on every tick.
 
 import { createCombatState, processCombatTick } from './combat.js'
-import { monstersTableFor } from './hardMode.js'
+import { hardModeDeathLoss, monstersTableFor } from './hardMode.js'
 import { getLevelFromXP } from './experience.js'
 import { resolveSlayerTaskKill } from './slayerTasks.js'
 import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
@@ -1168,7 +1168,17 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
     if (member.hp <= 0) {
       member.status = 'dead'
       member.hp = 0
-      events.push({ type: 'memberDeath', characterId: member.characterId })
+      // Hard mode takes the pack. Applied to the MEMBER record because that is
+      // the authority on their inventory until the write-back (§20) — clearing
+      // the save instead would be overwritten by the next flush.
+      let itemsLost = null
+      if (next.hardMode) {
+        const loss = hardModeDeathLoss(member.inventory, member.equipment)
+        member.inventory = loss.inventory
+        member.equipment = loss.equipment
+        itemsLost = loss.lost
+      }
+      events.push({ type: 'memberDeath', characterId: member.characterId, itemsLost })
       reselectTarget(next)
     }
   }

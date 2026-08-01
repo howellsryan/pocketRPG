@@ -7,6 +7,7 @@ import { makeD1 } from './helpers/d1'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 import { joinCoopSession, listOpenSessions, parseSessionState, readSession, settleCoopKill } from '../functions/_lib/game/coopBoss.js'
 import { setHardModeTarget } from '../functions/_lib/game/hardMode.js'
+import { projectEventsForMember } from '../functions/_lib/game/coopProjection.js'
 import {
   addCoopMember,
   createCoopBossState,
@@ -16,7 +17,7 @@ import {
   processCoopTick,
 } from '../src/engine/coopBossEngine.js'
 import { raidTotalHitpoints } from '../src/engine/coopRaidEngine.js'
-import { HARD_MODE_SCALE } from '../src/engine/hardMode.js'
+import { HARD_MODE_MULTIPLIERS } from '../src/engine/hardMode.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 import prayersData from '../src/data/prayers.json'
@@ -47,7 +48,7 @@ describe('co-op hard mode', () => {
     const hard = createCoopBossState(BOSS, monstersData, Date.now(), { hardMode: true })!
     expect(normal.hardMode).toBe(false)
     expect(hard.hardMode).toBe(true)
-    expect(hard.boss.maxHP).toBe(normal.boss.maxHP * HARD_MODE_SCALE)
+    expect(hard.boss.maxHP).toBe(normal.boss.maxHP * HARD_MODE_MULTIPLIERS.hitpoints)
   })
 
   it('keeps the boss doubled across ticks, not just at creation', () => {
@@ -64,7 +65,7 @@ describe('co-op hard mode', () => {
     const normal = createCoopRaidState(RAID, monstersData, { hostCharacterId: 1 })!
     const hard = createCoopRaidState(RAID, monstersData, { hostCharacterId: 1, hardMode: true })!
     expect(coopLootBasisHP(normal)).toBe(raidTotalHitpoints(RAID, monstersData))
-    expect(coopLootBasisHP(hard)).toBe(coopLootBasisHP(normal) * HARD_MODE_SCALE)
+    expect(coopLootBasisHP(hard)).toBe(coopLootBasisHP(normal) * HARD_MODE_MULTIPLIERS.hitpoints)
     expect(hard.hardMode).toBe(true)
   })
 
@@ -125,7 +126,7 @@ describe('co-op hard mode, server side', () => {
     expect(rows.find((s: any) => s.sessionId === normal.sessionId).hardMode).toBe(false)
     expect(rows.find((s: any) => s.sessionId === hard.sessionId).hardMode).toBe(true)
     const state = parseSessionState(await readSession(env, hard.sessionId))
-    expect(state.boss.maxHP).toBe(anyMonsters[BOSS].hitpoints * HARD_MODE_SCALE)
+    expect(state.boss.maxHP).toBe(anyMonsters[BOSS].hitpoints * HARD_MODE_MULTIPLIERS.hitpoints)
   })
 
   it('joins the matching room rather than opening a third one', async () => {
@@ -156,5 +157,54 @@ describe('co-op hard mode, server side', () => {
     } finally {
       spy.mockRestore()
     }
+  })
+})
+
+// The room owns the pack while a member is in it (§20), so the death penalty
+// has to land on the MEMBER record — that is what the write-back persists.
+describe('dying in a hard-mode room', () => {
+  function killMember(state: any, characterId: number) {
+    const member = state.members[String(characterId)]
+    member.hp = 0
+    return processCoopTick(state, [], deps, Date.now())
+  }
+
+  function joined(hardMode: boolean) {
+    let state = createCoopBossState(BOSS, monstersData, Date.now(), { hardMode })!
+    state = addCoopMember(state, member(1))
+    state.members['1'].equipment = { weapon: { itemId: 'krylth_spear', quantity: 1 } }
+    return state
+  }
+
+  it('takes everything carried and worn, and reports the tally to the dead player', () => {
+    const out = killMember(joined(true), 1)
+    const dead = out.stateNext.members['1']
+    expect(dead.status).toBe('dead')
+    expect(dead.inventory.every((slot: any) => slot === null)).toBe(true)
+    expect(dead.equipment).toEqual({})
+    const death = out.events.find((e: any) => e.type === 'memberDeath')
+    expect(death.itemsLost).toEqual(expect.arrayContaining([
+      { itemId: 'shark', quantity: 5 },
+      { itemId: 'krylth_spear', quantity: 1 },
+    ]))
+  })
+
+  it('leaves a normal room’s death costing exactly what it always cost', () => {
+    const out = killMember(joined(false), 1)
+    const dead = out.stateNext.members['1']
+    expect(dead.status).toBe('dead')
+    expect(dead.inventory.some((slot: any) => slot?.itemId === 'shark')).toBe(true)
+    expect(dead.equipment.weapon).toEqual({ itemId: 'krylth_spear', quantity: 1 })
+    expect(out.events.find((e: any) => e.type === 'memberDeath').itemsLost).toBeNull()
+  })
+
+  it('keeps one member’s losses off everyone else’s feed', () => {
+    const events = [
+      { type: 'memberDeath', characterId: 1, itemsLost: [{ itemId: 'shark', quantity: 5 }] },
+      { type: 'memberDeath', characterId: 2, itemsLost: [{ itemId: 'twisted_longbow', quantity: 1 }] },
+    ]
+    const mine = projectEventsForMember(events, 1) as any[]
+    expect(mine[0].itemsLost).toHaveLength(1)
+    expect(mine[1].itemsLost).toBeNull()
   })
 })
