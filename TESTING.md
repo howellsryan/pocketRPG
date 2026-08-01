@@ -27,6 +27,7 @@ How PocketRPG stays regression-resistant. Deep rationale: `docs/testing-strategy
 | Slayer / daily tasks | `slayer*`, `dailyTasks*` | `src/engine/slayer*.js`, `dailyTasks.js` |
 | Drops / collection log / content contracts | `data-contracts`, `collectionLog`, `seedDrops`, `*RewardsData` | `src/data/*.json`, `src/engine/seedDrops.js` |
 | Save / sync integrity | `saveEndpoint`, `saveRevisionMandatory`, `totalLevelRegression`, `criticalSavePolicy` | `functions/api/save.js`, `functions/_lib/game/saveValidation.js` |
+| Holdings integrity (loadouts, idle write-back) | `equipmentPresets`, `holdingsReconcile`, `bankMutations`, `bankChargePreservation` | `src/engine/equipmentPresets.js`, `holdingsReconcile.js`, `bankMutations.js`, `bankCharges.js` |
 | Server-authoritative grants | `actionCompletion*`, `rewardClaimAuthority`, `serverAuthority` | `functions/api/actions/**` |
 | PvP | `pvp*` | `functions/_lib/pvp*`, `src/engine/pvp*` |
 | Co-op bosses | `coopBoss*`, `coopSessionLock`, `coopProjection` | `src/engine/coopBossEngine.js`, `functions/_lib/game/coopBoss.js`, `functions/_lib/game/coopProjection.js`, `functions/api/coop/**`, `world/server/CoopBossRoom.ts` |
