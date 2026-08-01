@@ -23,7 +23,8 @@ export function HardModeTag({ className = '' }) {
 export function HardModeDeathWarning({ className = '' }) {
   return (
     <p class={`text-[10px] font-semibold text-[var(--color-blood-light)] ${className}`}>
-      ☠ If you die in Hard Mode you lose every item you are carrying and wearing — permanently. Your bank is safe.
+      ☠ If you die in Hard Mode you lose every <strong>tradeable</strong> item you are carrying and wearing —
+      permanently. Untradeables (Infernal Cape, quest gear, skill capes) stay with you, and your bank is safe.
     </p>
   )
 }

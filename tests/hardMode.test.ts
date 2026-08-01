@@ -3,6 +3,7 @@ import {
   HARD_MODE_MULTIPLIERS,
   hardModeDeathLoss,
   hardModeDropChance,
+  idleTaskDiedHard,
   hardModeMonstersData,
   hardModeSkipCost,
   monstersTableFor,
@@ -11,6 +12,7 @@ import {
 } from '../src/engine/hardMode.js'
 import monstersData from '../src/data/monsters.json'
 import raidsData from '../src/data/raids.json'
+import itemsData from '../src/data/items.json'
 import { createCombatState, createRaidCombatState } from '../src/engine/combat.js'
 import { monsterMaxHit } from '../src/engine/monsterMaxHit.js'
 
@@ -183,23 +185,60 @@ describe('a hard-mode death', () => {
   }
 
   it('empties the pack and strips the gear, keeping the slot count', () => {
-    const loss = hardModeDeathLoss(pack, worn)
+    const loss = hardModeDeathLoss(pack, worn, itemsData)
     expect(loss.inventory).toEqual([null, null, null, null])
-    expect(loss.equipment).toEqual({})
   })
 
   it('tallies what was lost, stacking repeats, for the death screen', () => {
-    const loss = hardModeDeathLoss(pack, worn)
+    const loss = hardModeDeathLoss(pack, worn, itemsData)
     expect(loss.lost).toEqual([
       { itemId: 'shark', quantity: 15 },
       { itemId: 'twisted_longbow', quantity: 1 },
       { itemId: 'dragon_scimitar', quantity: 1 },
-      { itemId: 'fire_cape', quantity: 1 },
     ])
   })
 
+  it('leaves untradeables where they are — worn and carried', () => {
+    const loss = hardModeDeathLoss(
+      [{ itemId: 'shark', quantity: 12 }, { itemId: 'infernal_cape', quantity: 1 }],
+      worn,
+      itemsData,
+    )
+    // The kept item stays in ITS slot: the pack is indexed by slot everywhere.
+    expect(loss.inventory).toEqual([null, { itemId: 'infernal_cape', quantity: 1 }])
+    expect(loss.equipment).toEqual({ cape: { itemId: 'fire_cape', quantity: 1 } })
+    expect(loss.lost.map((e) => e.itemId)).toEqual(['shark', 'dragon_scimitar'])
+  })
+
+  it('burns coins, which items.json flags untradeable only for the store engine', () => {
+    const loss = hardModeDeathLoss([{ itemId: 'coins', quantity: 500_000 }], {}, itemsData)
+    expect(loss.inventory).toEqual([null])
+    expect(loss.lost).toEqual([{ itemId: 'coins', quantity: 500_000 }])
+  })
+
+  it('treats an item the table has never heard of as tradeable', () => {
+    const loss = hardModeDeathLoss([{ itemId: 'not_an_item', quantity: 1 }], {}, itemsData)
+    expect(loss.inventory).toEqual([null])
+    expect(loss.lost).toEqual([{ itemId: 'not_an_item', quantity: 1 }])
+  })
+
   it('survives an empty or missing pack', () => {
-    expect(hardModeDeathLoss([], {})).toEqual({ inventory: [], equipment: {}, lost: [] })
-    expect(hardModeDeathLoss(undefined as any, undefined as any)).toEqual({ inventory: [], equipment: {}, lost: [] })
+    expect(hardModeDeathLoss([], {}, itemsData)).toEqual({ inventory: [], equipment: {}, lost: [] })
+    expect(hardModeDeathLoss(undefined as any, undefined as any, itemsData))
+      .toEqual({ inventory: [], equipment: {}, lost: [] })
+  })
+})
+
+describe('an idle death on a hard fight', () => {
+  it('is recognised from the task the simulation ran, not the current toggle', () => {
+    const hard = scaleMonsterForHardMode(anyMonsters.grondar || Object.values(anyMonsters)[0])
+    expect(idleTaskDiedHard({ type: 'combat', monster: hard })).toBe(true)
+  })
+
+  it('is not claimed for a normal fight, a non-combat task, or no task at all', () => {
+    const normal = Object.values(anyMonsters)[0]
+    expect(idleTaskDiedHard({ type: 'combat', monster: normal })).toBe(false)
+    expect(idleTaskDiedHard({ type: 'skill', monster: scaleMonsterForHardMode(normal) })).toBe(false)
+    expect(idleTaskDiedHard(null)).toBe(false)
   })
 })
