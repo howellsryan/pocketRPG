@@ -198,6 +198,49 @@ describe('dying in a hard-mode room', () => {
     expect(out.events.find((e: any) => e.type === 'memberDeath').itemsLost).toBeNull()
   })
 
+  it('leaves untradeables on the corpse — an Infernal Cape cannot be bought back', () => {
+    const state = joined(true)
+    state.members['1'].inventory = [{ itemId: 'shark', quantity: 5 }, { itemId: 'infernal_cape', quantity: 1 }]
+    state.members['1'].equipment = { weapon: { itemId: 'krylth_spear', quantity: 1 }, cape: { itemId: 'fire_cape', quantity: 1 } }
+    const dead = killMember(state, 1).stateNext.members['1']
+    expect(dead.inventory).toEqual([null, { itemId: 'infernal_cape', quantity: 1 }])
+    expect(dead.equipment).toEqual({ cape: { itemId: 'fire_cape', quantity: 1 } })
+  })
+
+  // A raid runs through the same tick as a boss room, and its wipe returns the
+  // party to the lobby on the very tick the death lands — so the loss has to be
+  // applied before that reset, not after it.
+  it('costs a raid party the same pack a boss room costs', () => {
+    let state: any = createCoopRaidState(RAID, monstersData, { hostCharacterId: 1, hardMode: true })!
+    state = addCoopMember(state, member(1))
+    state.phase = 'active'
+    state.members['1'].inventory = [{ itemId: 'shark', quantity: 5 }, { itemId: 'infernal_cape', quantity: 1 }]
+    state.members['1'].equipment = { weapon: { itemId: 'krylth_spear', quantity: 1 } }
+    const out = killMember(state, 1)
+    const dead = out.stateNext.members['1']
+    expect(dead.status).toBe('dead')
+    expect(dead.inventory).toEqual([null, { itemId: 'infernal_cape', quantity: 1 }])
+    expect(dead.equipment).toEqual({})
+    expect(out.events.find((e: any) => e.type === 'memberDeath').itemsLost).toEqual(expect.arrayContaining([
+      { itemId: 'shark', quantity: 5 },
+      { itemId: 'krylth_spear', quantity: 1 },
+    ]))
+    // The wipe fires on the same tick; the party is back in its lobby with the
+    // dead member still dead and still stripped.
+    expect(out.stateNext.phase).toBe('lobby')
+    expect(out.stateNext.members['1'].inventory).toEqual([null, { itemId: 'infernal_cape', quantity: 1 }])
+  })
+
+  it('leaves a normal raid party’s death costing exactly what it always cost', () => {
+    let state: any = createCoopRaidState(RAID, monstersData, { hostCharacterId: 1 })!
+    state = addCoopMember(state, member(1))
+    state.phase = 'active'
+    state.members['1'].equipment = { weapon: { itemId: 'krylth_spear', quantity: 1 } }
+    const dead = killMember(state, 1).stateNext.members['1']
+    expect(dead.inventory.some((slot: any) => slot?.itemId === 'shark')).toBe(true)
+    expect(dead.equipment.weapon).toEqual({ itemId: 'krylth_spear', quantity: 1 })
+  })
+
   it('keeps one member’s losses off everyone else’s feed', () => {
     const events = [
       { type: 'memberDeath', characterId: 1, itemsLost: [{ itemId: 'shark', quantity: 5 }] },

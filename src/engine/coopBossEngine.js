@@ -1173,7 +1173,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
       // the save instead would be overwritten by the next flush.
       let itemsLost = null
       if (next.hardMode) {
-        const loss = hardModeDeathLoss(member.inventory, member.equipment)
+        const loss = hardModeDeathLoss(member.inventory, member.equipment, itemsData)
         member.inventory = loss.inventory
         member.equipment = loss.equipment
         itemsLost = loss.lost

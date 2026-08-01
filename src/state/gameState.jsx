@@ -31,6 +31,7 @@ import {
   fetchAndHydrateActivityProgress, clearActivityProgress, resetActivityProgressSync,
 } from '../cloud/activityProgress.js'
 import { getSlayerTaskReward, resolveSlayerLoopRewards } from '../engine/slayerRewards.js'
+import { hardModeDeathLoss, idleTaskDiedHard } from '../engine/hardMode.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
 import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
@@ -333,6 +334,7 @@ export function GameProvider({ children }) {
           // toast.
           const hpRegenSim = simulateIdleHPRegen(elapsedMs)
           let diedDuringIdle = false
+          let hardModeDeathApplied = false
           // Snapshot for the daily-task feed below — savedTask is reassigned by
           // the quest cascade and cleared on an offline death before we emit.
           const idleTask = savedTask
@@ -364,6 +366,17 @@ export function GameProvider({ children }) {
             // still kept (see the note above); we only clear the task itself.
             diedDuringIdle = true
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            // A hard fight that killed the player while the app was closed costs
+            // the same pack a live one does. Applied to the post-simulation
+            // holdings, so supplies eaten on the way down are already gone and
+            // loot banked before the killing blow is kept.
+            if (idleTaskDiedHard(savedTask)) {
+              const loss = hardModeDeathLoss(inv, eq, itemsData)
+              inv = loss.inventory
+              eq = loss.equipment
+              hardModeDeathApplied = true
+              sim.hardModeItemsLost = loss.lost
+            }
           } else if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
             savedHP = applySettings.currentHP
             sim.hpRestored = 0
@@ -381,8 +394,9 @@ export function GameProvider({ children }) {
             }
           }
 
-          // Save equipment if ammo or charges changed during combat
-          if (savedTask.type === 'combat' && (sim.ammoConsumed || sim.chargesConsumed > 0)) {
+          // Save equipment if ammo or charges changed during combat, or if a
+          // hard-mode death stripped what was worn.
+          if (savedTask.type === 'combat' && (sim.ammoConsumed || sim.chargesConsumed > 0 || hardModeDeathApplied)) {
             await saveEquipment(eq)
           }
 

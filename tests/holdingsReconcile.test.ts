@@ -432,3 +432,46 @@ describe('resolveIdleHoldingsWrites — the preset item-loss regression', () => 
     expect(after.shark ?? 0).toBe(0) // 3 live, 6 consumed → clamped at zero
   })
 })
+
+// Hard mode's death penalty rides the same write, because a second write would
+// race the reconcile above (§4). Before this, a hard boss left running while the
+// tab was shut killed the player for free — the mode's whole premise, missing on
+// every idle path.
+describe('resolveIdleHoldingsWrites — a hard-mode death during idle catch-up', () => {
+  const HARD_ITEMS: any = { ...ITEMS, fire_cape: { id: 'fire_cape', name: 'Fire Cape', slot: 'cape', isUntradeable: true } }
+
+  function scenario(hardModeDeath: boolean) {
+    const base = {
+      inventory: inv({ 0: { itemId: 'shark', quantity: 10 }, 1: { itemId: 'fire_cape', quantity: 1 } }),
+      equipment: { head: { itemId: 'kodai_hat' } },
+    }
+    const live = {
+      inventory: inv({ 0: { itemId: 'shark', quantity: 10 }, 1: { itemId: 'fire_cape', quantity: 1 } }),
+      equipment: { head: { itemId: 'kodai_hat' } },
+      bank: {},
+    }
+    const sim = { finalInventory: inv({ 0: { itemId: 'shark', quantity: 4 }, 1: { itemId: 'fire_cape', quantity: 1 } }), died: true }
+    return resolveIdleHoldingsWrites({ base, sim, live, itemsData: HARD_ITEMS, bankedItems: { coal: 12 }, hardModeDeath })
+  }
+
+  it('takes the tradeable pack and the worn gear', () => {
+    const writes = scenario(true)
+    expect(inventoryTotals(writes.inventory).shark ?? 0).toBe(0)
+    expect(writes.equipment).toEqual({})
+    expect(writes.hardModeItemsLost).toEqual([{ itemId: 'shark', quantity: 4 }, { itemId: 'kodai_hat', quantity: 1 }])
+  })
+
+  it('leaves untradeables in the slot they were in', () => {
+    expect(inventoryTotals(scenario(true).inventory).fire_cape).toBe(1)
+  })
+
+  it('keeps loot already banked during the window — the bank is never at risk', () => {
+    expect(scenario(true).bankDeltas).toEqual({ coal: 12 })
+  })
+
+  it('changes nothing for an ordinary idle death', () => {
+    const writes = scenario(false)
+    expect(inventoryTotals(writes.inventory).shark).toBe(4)
+    expect(writes.hardModeItemsLost).toBe(null)
+  })
+})
