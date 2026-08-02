@@ -3,7 +3,7 @@ import { GameApiError } from './errors.js'
 import { migrateLegacyNonces } from './nonces.js'
 import { computeSaveSummary } from '../saveSummary.js'
 import { auditLog } from './audit.js'
-import { classifyItemLossFromHoldings, readHoldingsBaseline, rememberHoldingsBaseline } from './holdingsDelta.js'
+import { classifyItemLossFromHoldings, mergeDeclaredLosses, readDeclaredLosses, readHoldingsBaseline, rememberHoldingsBaseline } from './holdingsDelta.js'
 import { flaggedSaveHistoryStatement, forcedSaveHistoryStatement, routineSaveHistoryStatement } from './saveHistory.js'
 
 const CHARACTER_SAVE_COLUMNS = `c.id, c.owner_id, c.username, c.is_ironman, c.is_one_life, c.credits, s.save_data, s.save_blob, s.updated_at, s.save_revision`
@@ -68,8 +68,14 @@ function auditStatement(env, auditEvent, now, characterId, requiredRevision) {
  * loadCharacterWithSave handed out, for the callers that write a REBUILT save
  * rather than the loaded one (co-op's applyMemberToSave). Without it those
  * writes carry no baseline and are silently skipped by the detector.
+ *
+ * `declaredLosses` ({ itemId: qty }) is what this write deliberately spends —
+ * the recipe inputs an idle claim consumed, the supplies it burned. The detector
+ * nets it off before thresholding, so ordinary consumption stops reading as
+ * destruction. A caller that rebuilds a container wholesale has nothing to
+ * declare, which is exactly the case the detector exists to catch.
  */
-export async function writeSave(env, characterId, saveObject, expectedRevision, { auditEvent = null, baselineFrom = null, historyReason = null } = {}) {
+export async function writeSave(env, characterId, saveObject, expectedRevision, { auditEvent = null, baselineFrom = null, historyReason = null, declaredLosses = null } = {}) {
   if (!Number.isFinite(expectedRevision) || expectedRevision < 0) {
     throw new GameApiError('SAVE_REVISION_REQUIRED', 'save_revision_required', 400)
   }
@@ -87,7 +93,11 @@ export async function writeSave(env, characterId, saveObject, expectedRevision, 
   // world's grant flush, co-op write-backs, purchases, MCP intents and admin
   // grants at once. It rejects nothing.
   const baseline = readHoldingsBaseline(baselineFrom || saveObject)
-  const itemLoss = baseline ? classifyItemLossFromHoldings(baseline, saveObject) : null
+  const declared = mergeDeclaredLosses(
+    readDeclaredLosses(baselineFrom || saveObject),
+    declaredLosses,
+  )
+  const itemLoss = baseline ? classifyItemLossFromHoldings(baseline, saveObject, undefined, declared) : null
   // `historyReason` forces an unrated snapshot: a write the caller knows is
   // wholesale (an admin restore) must never be the one the routine cadence
   // happens to skip.

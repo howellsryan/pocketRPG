@@ -35,3 +35,29 @@ export function applyBankDeltas(bank, itemUpdates, charges = null) {
   }
   return next
 }
+
+/**
+ * Units a delta actually took OUT of the bank, keyed by itemId — the declared
+ * half of the item-loss ledger (src/engine/lossLedger.js).
+ *
+ * Read off the resulting banks rather than off the delta, because a negative
+ * delta is a request, not an outcome: applyBankDeltas floors an entry at removal
+ * and ignores a debit against an item the bank does not hold, so the delta
+ * routinely asks for more than it gets. Declaring the request would over-declare
+ * and let a genuine loss of the same item hide behind it.
+ *
+ * @param {Record<string, any>} before
+ * @param {Record<string, any>} after
+ * @param {Record<string, number>} itemUpdates the deltas that produced `after`
+ * @returns {Record<string, number>} itemId -> POSITIVE units removed
+ */
+export function bankUnitsRemoved(before, after, itemUpdates) {
+  const removed = {}
+  for (const [itemId, rawQty] of Object.entries(itemUpdates || {})) {
+    if ((Math.floor(Number(rawQty) || 0)) >= 0) continue
+    const had = Math.max(0, Math.floor(Number(before?.[itemId]?.quantity) || 0))
+    const has = Math.max(0, Math.floor(Number(after?.[itemId]?.quantity) || 0))
+    if (had > has) removed[itemId] = had - has
+  }
+  return removed
+}

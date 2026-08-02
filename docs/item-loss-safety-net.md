@@ -159,7 +159,7 @@ Salvage open and the snapshot already selected. It is a press rather than a side
 effect of selecting a row — switching scope under someone who is reading a list
 is how the wrong account gets restored.
 
-## Phase 3 — enforcement (not built)
+## Phase 3 — the declared loss ledger
 
 The mechanism, and the reason it is a separate phase: **the threat model is
 bugs, not cheaters.** §14 already concedes the save blob is client-trusted, so
@@ -177,43 +177,113 @@ Double-entry bookkeeping for items. It generalises what the world already does
 right: `world/server/grants.ts` passes explicit `consumed` / `movedToBank` /
 `bankToInventory` lists rather than a wholesale container write.
 
-Work items:
+### 3a — suppression (shipped)
 
-1. **`src/engine/lossLedger.js`** — `recordItemLoss(itemId, qty, reason)`,
-   aggregated by itemId, persisted to IndexedDB, cleared **only** on a
-   successful push and reset on a cloud pull. Ships as a compact `losses` field
-   on the save payload. Server-side `writeSave` callers pass theirs explicitly;
-   the world flush's existing delta lists convert directly.
-2. **Ledger coverage** — wire it into every removal helper: `inventory.js`,
-   `bankMutations.js`, `applyTaskResult`, `holdingsReconcile`, consumables,
-   alching, shop sell, trading-post listing. *This is the whole risk of the
-   design.* A missed path is a false rejection, which is a player who cannot
-   save.
-3. **Destructive actions become critical saves** — add `ITEM_DESTROYED` /
+The ledger nets deliberate spends off what the detector reports. **Nothing is
+rejected**, which is what makes this half safe to ship first: a gap in ledger
+coverage costs a noisy flag, never a blocked save. That inverts the risk the
+enforcement half carries, so coverage can be grown against real traffic instead
+of guessed at up front.
+
+It was not optional. Every one of the first fifteen production flags was the same
+thing: a Steel Titan infusion, spending equal counts of `empty_pouch`,
+`blue_charm` and `steel_platebody` — and the last is `type: armour`, so
+**durable**. Ordinary production idling tripped `durable_items` on nearly every
+save, and a queue that fires on the core loop is a queue nobody can read.
+
+- **`src/engine/lossLedger.js`** — aggregates `{itemId: qty}`, persisted to
+  localStorage so a reload does not drop it, entry-capped so malformed state
+  cannot bloat a request.
+- **Window semantics.** The ledger covers everything spent since the write the
+  *server* last stored, because that is what the detector compares against. So a
+  successful push **settles by subtraction, not by clearing** — it was on the
+  wire for a round trip, and anything spent in that window belongs to the next
+  save. A failed push retains it, so the retry covers the wider window. Adopting
+  a server copy (`applyCloudSave`) **resets** it: from there it describes a
+  window the server has already superseded, and carrying it forward would let
+  real losses hide behind spends that no longer relate to the comparison.
+- **Transport is a side channel**, not the blob: `losses` on the PUT/beacon body.
+  Nothing is stored, so the save format is untouched, the blob does not grow, and
+  `noopSaveKey` is unaffected.
+- **Coverage is at the itemised mutators only.** Client: `updateBankDirect`'s
+  negative deltas — the single funnel for the live activity runner, the
+  visibility-return catch-up and skip-hour — plus `applyTaskResult`'s `consumed`
+  for boot catch-up. Server: `applyTaskResult`'s three MCP sites declare against
+  the save via a WeakMap (`declareItemLosses`), keyed like the holdings baseline,
+  because the mutation and the `writeSave` that records it are several layers
+  apart and a declaration a caller can forget to pass is a flag nobody can
+  explain. `writeSave` also takes an explicit `declaredLosses` for callers that
+  write a rebuilt object.
+- **The trading post's escrow declares too.** Escrowed goods are *moved* into the
+  book, not destroyed, but bank ∪ inventory ∪ equipment is all the detector can
+  see, so listing a stack read as a loss. Declared inside `escrowSellItems` /
+  `escrowBuyCoins` / `autoFillSellAtShopValue` and at `sell-immediate`'s vendor
+  sale — with the removal, not at the call site, and only *after* it succeeds, or
+  a refused escrow would cover a real loss of the same item on a later write.
+  Nothing else in `trading-post/` removes: collect, cancel and instant-sell only
+  deliver. The declaration is exact because `removeItemFromSource` throws rather
+  than clamping.
+- **A declaration is cumulative from the load, not per write.** The baseline is
+  captured once in `hydrateCharacterSave` and every `writeSave` on that request
+  measures against it — so `list.js`, which writes twice around matching, needs
+  its declaration to accumulate the same way. That is why the WeakMap ledger is
+  never cleared between writes.
+- **A declaration is measured from what LEFT, never from what was asked for.**
+  `bankUnitsRemoved` and `applyTaskResult`'s tally both read the resulting
+  container, because a debit is clamped by what the entry held and skipped
+  entirely for an item the bank does not carry. Declaring the request would
+  over-declare, and a real loss of that same item could then hide behind the
+  excess.
+- **Netting is per item and clamped at zero**, so an over-declared line can never
+  absorb another item's disappearance.
+- A wholesale container write declares nothing **by construction**. That is the
+  whole mechanism, not a happy accident — do not add a declaration to a path that
+  rebuilds a container from a snapshot.
+- `declaredUnits` rides the audit payload and shows in the Incidents panel: a
+  flag that survived a declaration is a stronger signal than one from a client
+  too old to declare at all.
+
+### 3b — enforcement (not built)
+
+1. **Ledger coverage** — wire it into the remaining removal helpers:
+   `inventory.js`, `holdingsReconcile`, consumables, alching, shop sell,
+   and the inventory half of a production task's materials
+   (the sims fold that into `finalInventory`, which is a wholesale write and
+   therefore declares nothing). *This is the whole risk of the design.* Under 3a
+   a missed path is noise; under enforcement it is a false rejection, which is a
+   player who cannot save.
+2. **Destructive actions become critical saves** — add `ITEM_DESTROYED` /
    `ITEM_SOLD` to `CRITICAL_SAVE_REASONS` so a sell or a drop pushes inside the
    3s coalesce window instead of sitting in the 120s debounce. This is what
    makes "at most one item lost per revision" true rather than aspirational.
-4. **Asymmetric enforcement.** Durables: uncovered loss ≥2 units → 409
+3. **Asymmetric enforcement.** Durables: uncovered loss ≥2 units → 409
    `ITEM_LOSS_UNEXPLAINED`. One free unit as slack, because a single lost item is
    support-recoverable while a false positive blocks saving entirely. Resources:
    audit and snapshot, but **allow** — idle catch-up and skip-hour legitimately
    burn thousands of units per revision, and a tight rule there breaks the core
    loop for the class of loss that is cheapest to re-earn. Phase 1 is the net
    for those.
-5. **Register the code client-side.** `ITEM_LOSS_UNEXPLAINED` goes in
+4. **Register the code client-side.** `ITEM_LOSS_UNEXPLAINED` goes in
    `CONFLICT_CODES` (`src/cloud/saveErrors.js`) — mandatory, per the comment
    there — so the client rolls back to the intact cloud copy instead of treating
    it as a hard save failure. The rejection then *restores* the bank.
-6. **Flip enforcement only after the Phase 2 audit is clean** for a week of real
-   traffic.
+5. **Flip enforcement only after the Phase 2 audit is clean** for a week of real
+   traffic — which is now readable, because 3a stopped the core loop filling it.
 
 ## Known gaps (deliberate, not oversights)
 
 - `world/server/grants.ts` writes `equipment` wholesale (`saveObject.equipment =
   payload.equipment`) — a second instance of the preset-bug pattern. Phase 2 now
   observes it; converting it to a delta is its own change.
-- The trading post's escrow sequence (`functions/api/trading-post/list.js`) makes
-  three separate writes with a partial-failure window between them.
+- The trading post's escrow sequence (`functions/api/trading-post/list.js`) still
+  makes three separate writes with a partial-failure window between them. The
+  compensating refund covers the player; the write sequence itself is unchanged.
+- The boot catch-up in `gameState.jsx` persists the bank **conditionally** for
+  `combat`/`skill`/`gather`/`clue` (only when the window banked something), so a
+  combat window that consumed supplies and banked no loot declares a spend it did
+  not persist. Bounded — those are resource-type supplies, well under the
+  1,000,000 gp floor, and the ledger settles on the next push — but it is a
+  pre-existing persistence gap that 3b's enforcement would have to close first.
 - `detectBankWipe`'s constants are untouched. Phase 2 supersedes it; retuning
   both at once is churn. Retire it once the shadow data justifies the
   replacement.

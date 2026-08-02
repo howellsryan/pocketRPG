@@ -36,6 +36,7 @@ import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionI
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
 import { applyTaskResult } from '../../../src/engine/applyTaskResult.js'
+import { declareItemLosses } from '../game/holdingsDelta.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTokens.js'
 import { SLAYER_MASTERS, pickSlayerMonster, buildSlayerTask } from '../../../src/engine/slayerMasters.js'
@@ -855,6 +856,7 @@ function applyToSave(save, sim, type) {
   const state = { stats: save.stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
   const result = applyTaskResult(state, sim, type)
   save.inventory = state.inventory  // may be sim.finalInventory or modified inv28
+  declareItemLosses(save, result.consumed)
   return result
 }
 
@@ -911,6 +913,7 @@ export function runIdleTask(save, task, elapsedMs, { isIronman = false } = {}) {
   const state = { stats: save.stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
   const result = applyTaskResult(state, sim, task.type)
   save.inventory = state.inventory
+  declareItemLosses(save, result.consumed)
   return {
     applied: true,
     skill: sim.skill,
@@ -1401,6 +1404,7 @@ export function runCombatTask(save, task, elapsedMs) {
   const state = { stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
   const result = applyTaskResult(state, sim, 'combat')
   save.inventory = state.inventory
+  declareItemLosses(save, result.consumed)
   const xpGained = {}
   for (const [skill, xp] of Object.entries(sim.xpGained || {})) {
     if (Math.floor(Number(xp) || 0) > 0) xpGained[skill] = Math.floor(Number(xp))

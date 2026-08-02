@@ -5,7 +5,16 @@
 //      total_level / combat_level actually changed;
 //   3. the stale-write and total-level-regression guards stay intact.
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+// The save path runs two probabilistic side-jobs — the 5% stale-co-op-room sweep
+// and the 2% save-history prune — and both issue their own D1 work. Left to a
+// real RNG they fire in roughly one run in fourteen and add a batch these
+// write-count assertions are not expecting, which is why this file failed
+// intermittently on unrelated changes. Pin the RNG above both gates.
+beforeEach(() => {
+  vi.spyOn(Math, 'random').mockReturnValue(0.99)
+})
 
 vi.mock('../functions/_lib/auth.js', () => ({
   requireAuth: async () => ({ identity: { id: 1 } }),

@@ -190,6 +190,36 @@ describe('applyTaskResult — itemsConsumed from bank', () => {
   })
 })
 
+// `consumed` is the declared half of the item-loss ledger
+// (src/engine/lossLedger.js). It must report what actually LEFT holdings, since
+// over-declaring lets a real loss of the same item hide behind the excess.
+describe('applyTaskResult — declared consumption', () => {
+  it('reports what left the bank, capped by what it held', () => {
+    const state = makeState({ bank: { raw_lobster: { itemId: 'raw_lobster', quantity: 3 } } })
+    const result = applyTaskResult(state, { xpGained: {}, itemsConsumed: { raw_lobster: 10 } }, 'skill')
+    expect(result.consumed).toEqual({ raw_lobster: 3 })
+  })
+
+  it('reports nothing for an item the bank never held', () => {
+    const state = makeState()
+    const result = applyTaskResult(state, { xpGained: {}, itemsConsumed: { missing_item: 5 } }, 'skill')
+    expect(result.consumed).toEqual({})
+  })
+
+  it('reports ammo fired from the equipped stack', () => {
+    const state = makeState({
+      stats: { hitpoints: { xp: 1154, level: 10 } },
+      equipment: { ammo: { itemId: 'rune_arrow', quantity: 100 } },
+    })
+    const result = applyTaskResult(
+      state,
+      { xpGained: {}, finalHP: 10, ammoConsumed: { itemId: 'rune_arrow', quantity: 250 } },
+      'combat',
+    )
+    expect(result.consumed).toEqual({ rune_arrow: 100 })
+  })
+})
+
 describe('applyTaskResult — quest type is a no-op', () => {
   it('does not apply XP for quest type (handled by applyQuestTask)', () => {
     const state = makeState({ stats: { slayer: { xp: 0, level: 1 } } })
