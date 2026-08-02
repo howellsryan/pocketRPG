@@ -214,6 +214,20 @@ save, and a queue that fires on the core loop is a queue nobody can read.
   apart and a declaration a caller can forget to pass is a flag nobody can
   explain. `writeSave` also takes an explicit `declaredLosses` for callers that
   write a rebuilt object.
+- **The trading post's escrow declares too.** Escrowed goods are *moved* into the
+  book, not destroyed, but bank ∪ inventory ∪ equipment is all the detector can
+  see, so listing a stack read as a loss. Declared inside `escrowSellItems` /
+  `escrowBuyCoins` / `autoFillSellAtShopValue` and at `sell-immediate`'s vendor
+  sale — with the removal, not at the call site, and only *after* it succeeds, or
+  a refused escrow would cover a real loss of the same item on a later write.
+  Nothing else in `trading-post/` removes: collect, cancel and instant-sell only
+  deliver. The declaration is exact because `removeItemFromSource` throws rather
+  than clamping.
+- **A declaration is cumulative from the load, not per write.** The baseline is
+  captured once in `hydrateCharacterSave` and every `writeSave` on that request
+  measures against it — so `list.js`, which writes twice around matching, needs
+  its declaration to accumulate the same way. That is why the WeakMap ledger is
+  never cleared between writes.
 - **A declaration is measured from what LEFT, never from what was asked for.**
   `bankUnitsRemoved` and `applyTaskResult`'s tally both read the resulting
   container, because a debit is clamped by what the entry held and skipped
@@ -233,7 +247,7 @@ save, and a queue that fires on the core loop is a queue nobody can read.
 
 1. **Ledger coverage** — wire it into the remaining removal helpers:
    `inventory.js`, `holdingsReconcile`, consumables, alching, shop sell,
-   trading-post listing, and the inventory half of a production task's materials
+   and the inventory half of a production task's materials
    (the sims fold that into `finalInventory`, which is a wholesale write and
    therefore declares nothing). *This is the whole risk of the design.* Under 3a
    a missed path is noise; under enforcement it is a false rejection, which is a
@@ -261,10 +275,9 @@ save, and a queue that fires on the core loop is a queue nobody can read.
 - `world/server/grants.ts` writes `equipment` wholesale (`saveObject.equipment =
   payload.equipment`) — a second instance of the preset-bug pattern. Phase 2 now
   observes it; converting it to a delta is its own change.
-- The trading post's escrow sequence (`functions/api/trading-post/list.js`) makes
-  three separate writes with a partial-failure window between them, and declares
-  nothing — so listing a large stack still flags. Escrowed items are *moved*, not
-  destroyed, so the fix is a declaration at the listing write, not a threshold.
+- The trading post's escrow sequence (`functions/api/trading-post/list.js`) still
+  makes three separate writes with a partial-failure window between them. The
+  compensating refund covers the player; the write sequence itself is unchanged.
 - The boot catch-up in `gameState.jsx` persists the bank **conditionally** for
   `combat`/`skill`/`gather`/`clue` (only when the window banked something), so a
   combat window that consumed supplies and banked no loot declares a spend it did

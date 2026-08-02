@@ -18,6 +18,7 @@ import {
   OFFER_STATUS,
 } from '../functions/_lib/game/tradingPost.js'
 import { getCoinTotal } from '../functions/_lib/game/economy.js'
+import { readDeclaredLosses } from '../functions/_lib/game/holdingsDelta.js'
 
 // Tiny in-memory shim of the subset of D1 that tradingPost.js actually uses.
 // Pattern-matches against the exact SQL strings used by the engine.
@@ -618,6 +619,56 @@ describe('escrow primitives', () => {
     escrowBuyCoins(save, 800)
     expect(getCoinTotal(save)).toBe(200)
     expect(save.bank.coins.quantity).toBe(200)
+  })
+})
+
+// The escrow is the one trading-post path that takes goods OUT of holdings.
+// They are MOVED into the book, not destroyed, but bank ∪ inventory ∪ equipment
+// is all the item-loss detector can see — so listing a stack of gear read as a
+// loss until the escrow declared it (docs/item-loss-safety-net.md, Phase 3a).
+describe('escrow declares what it moves into the book', () => {
+  it('declares a sell escrow against the save it debited', () => {
+    const save = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 5 }])
+    escrowSellItems(save, 'twisted_longbow', 3)
+    expect(readDeclaredLosses(save)).toEqual({ twisted_longbow: 3 })
+  })
+
+  it('declares a bank-sourced sell escrow the same way', () => {
+    const save = makeSave(0, [])
+    save.bank = { twisted_longbow: { itemId: 'twisted_longbow', quantity: 9 } }
+    escrowSellItems(save, 'twisted_longbow', 4, 'bank')
+    expect(readDeclaredLosses(save)).toEqual({ twisted_longbow: 4 })
+  })
+
+  // A refused escrow must declare nothing, or the failed attempt would cover a
+  // real loss of the same item on a later write of this save.
+  it('declares nothing when the escrow throws', () => {
+    const save = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 5 }])
+    save.bank = { twisted_longbow: { itemId: 'twisted_longbow', quantity: 2 } }
+    expect(() => escrowSellItems(save, 'twisted_longbow', 3, 'bank')).toThrow(/bank/)
+    expect(readDeclaredLosses(save)).toBeNull()
+  })
+
+  it('declares escrowed coins', () => {
+    const save = makeSave(1000)
+    escrowBuyCoins(save, 800)
+    expect(readDeclaredLosses(save)).toEqual({ coins: 800 })
+  })
+
+  it('declares a shopValue auto-fill sale', () => {
+    const save = makeSave(0, [{ itemId: 'bronze_dagger', quantity: 4 }])
+    autoFillSellAtShopValue(save, { shopValue: 10, isGeneralStore: true } as any, 'bronze_dagger', 4)
+    expect(readDeclaredLosses(save)).toEqual({ bronze_dagger: 4 })
+  })
+
+  // list.js escrows, writes, then writes AGAIN after matching. Both writes are
+  // measured against the baseline captured at load, so the declaration has to
+  // be cumulative from load too — it accumulates and is never cleared.
+  it('accumulates across the two writes a listing makes', () => {
+    const save = makeSave(1000, [{ itemId: 'twisted_longbow', quantity: 5 }])
+    escrowSellItems(save, 'twisted_longbow', 2)
+    escrowSellItems(save, 'twisted_longbow', 1)
+    expect(readDeclaredLosses(save)).toEqual({ twisted_longbow: 3 })
   })
 })
 

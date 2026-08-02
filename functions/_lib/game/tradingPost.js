@@ -2,6 +2,7 @@ import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import { GameApiError } from './errors.js'
 import { getInventory, addItemToInventory, addItemToBank, removeItemFromInventory, removeItemFromSource, canonicalItemId } from './inventory.js'
 import { subtractCoins, addCoins } from './economy.js'
+import { declareItemLosses } from './holdingsDelta.js'
 
 // Alias map keyed by every id form (canonical AND legacy) -> the full set
 // of synonymous ids. Used by the matcher so a buy can find sells stored
@@ -526,12 +527,20 @@ export async function assertSlotAvailable(env, characterId) {
   }
 }
 
+// Escrowed goods are MOVED into the book, not destroyed — but they leave bank ∪
+// inventory ∪ equipment, which is the only thing the item-loss detector can see,
+// so listing a large stack read as a loss. Declared here rather than at the call
+// site: the removal and the declaration belong together, and both escrow paths
+// remove exactly what they ask for (removeItemFromSource throws rather than
+// clamping), so the declaration is exact.
 export function escrowSellItems(saveObject, itemId, quantity, source = 'inventory') {
   removeItemFromSource(saveObject, itemId, quantity, source)
+  declareItemLosses(saveObject, { [itemId]: quantity })
 }
 
 export function escrowBuyCoins(saveObject, totalCoins) {
   subtractCoins(saveObject, totalCoins)
+  declareItemLosses(saveObject, { coins: totalCoins })
 }
 
 // Settle a non-order-book sell instantly at the item's shopValue. The game is
@@ -547,6 +556,7 @@ export function autoFillSellAtShopValue(saveObject, item, itemId, quantity, sour
     throw new GameApiError('NO_VALUE', 'This item has no shop value.', 400)
   }
   removeItemFromSource(saveObject, itemId, quantity, source)
+  declareItemLosses(saveObject, { [itemId]: quantity })
   const totalPayout = unit * quantity
   addCoins(saveObject, totalPayout)
   return { unit, totalPayout }
