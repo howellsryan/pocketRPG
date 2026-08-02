@@ -9,6 +9,7 @@ import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { combatLevelFromLevels } from '../../src/engine/combatLevel.js'
+import { BASE_SPECIAL_REGEN_PER_TICK, specialRegenPerTick, regenSpecialEnergy } from '../../src/engine/specialRegen.js'
 import { MONSTER_CLIP_ATTACK_RANGED, monsterAttackClipName } from '../../src/engine/monsterClips.js'
 import { startCombat, stepCombat, resumeAggro, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
 import type { NpcState } from './npc'
@@ -78,6 +79,9 @@ export type TickPlayer = {
    * on the clock. `lastSpecSent` gates the {e:'spec'} echo. */
   specialEnergy: number
   lastSpecSent: number
+  /** The Master Rejuvenation construction perk, read from the save at hello:
+   * doubles the regen rate above. Absent on a session that predates it. */
+  masterRejuvenation?: boolean
   /** Gates the {e:'spec'} echo's `queued` field alongside lastSpecSent. */
   lastSpecQueuedSent: boolean
   /** Armed by a {t:'special'} sent with no active fight (combat.ts): fires as
@@ -127,8 +131,9 @@ export const RUN_DRAIN_PER_TILE = 0.6
 export const RUN_REGEN_PER_TICK = 0.45
 /** Special energy is a session resource out here, not a per-fight one: it only
  * ever comes back on the clock, at 10 points per 30s (50 ticks) — so a spent
- * special stays spent whether you keep fighting, walk away, or kill the thing. */
-export const SPECIAL_REGEN_PER_TICK = 10 / 50
+ * special stays spent whether you keep fighting, walk away, or kill the thing.
+ * Master Rejuvenation doubles it (src/engine/specialRegen.js). */
+export const SPECIAL_REGEN_PER_TICK = BASE_SPECIAL_REGEN_PER_TICK
 
 export type TickContext = {
   tick: number
@@ -620,7 +625,7 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   // Special energy ticks back up everywhere — mid-fight, walking, standing
   // still — and is pushed onto the live engine state so the fight sees it.
   if (player.specialEnergy < FULL_SPECIAL_ENERGY) {
-    player.specialEnergy = Math.min(FULL_SPECIAL_ENERGY, player.specialEnergy + SPECIAL_REGEN_PER_TICK)
+    player.specialEnergy = regenSpecialEnergy(player.specialEnergy, specialRegenPerTick(player.masterRejuvenation, SPECIAL_REGEN_PER_TICK))
     pinSpecialToSession(player)
     emitSpecIfChanged(player, result.events)
   }

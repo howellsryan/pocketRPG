@@ -57,7 +57,7 @@ Worn **magic damage %** multiplies whatever you cast. Melee and Ranged have the 
 
 ## Special attacks
 
-Some weapons have a special attack, triggered manually with the ⚡ Special Attack button during a fight. Special attack energy runs 0–100: each fight starts at full energy, using a special drains its energy cost, and energy refills when you get a kill. Specials never fire automatically or while offline. Each weapon's special has its own effect — stuns, heals, bonus damage and more — shown on the button. The Sunbearer Ring keeps your special attack energy pinned at 100% in PvE, letting you fire specials back-to-back with no cooldown.
+Some weapons have a special attack, triggered manually with the ⚡ Special Attack button during a fight. Special attack energy runs 0–100: each fight starts at full energy, using a special drains its energy cost, and energy refills when you get a kill. Specials never fire automatically or while offline. Each weapon's special has its own effect — stuns, heals, bonus damage and more — shown on the button. The Sunbearer Ring keeps your special attack energy pinned at 100% in PvE, letting you fire specials back-to-back with no cooldown. In the open world energy works differently: it is a session resource that never refills on a kill and only climbs on the clock, 10% every 30 seconds. The Master Rejuvenation Construction perk doubles that everywhere — 20% every 30 seconds, mid-fight, in solo fights, group bosses, raids and the open world alike.
 
 ## Food, potions and combo eating
 
@@ -217,7 +217,7 @@ The Arcane Proving Grounds minigame (Edgevale, unlocked at Magic 50) is a timed 
 
 ## Construction
 
-Construction is trained by building with planks — each build consumes one plank and grants instant XP: Plank (level 1, 29 XP), Oak Plank (level 15, 60 XP), Teak Plank (level 35, 90 XP) and Mahogany Plank (level 70, 140 XP). High Construction also unlocks permanent perks: the Money Purse (level 70) lets you spend coins directly from your bank when shopping; at level 80 gathered loot banks automatically when your inventory fills during idle and offline play, so long gathering sessions never stall; and Master Rejuvenation (level 90) passively refills your special attack bar to 100% whenever it empties during a fight. Perks are managed on the Character Unlocks screen.
+Construction is trained by building with planks — each build consumes one plank and grants instant XP: Plank (level 1, 29 XP), Oak Plank (level 15, 60 XP), Teak Plank (level 35, 90 XP) and Mahogany Plank (level 70, 140 XP). High Construction also unlocks permanent perks: the Money Purse (level 70) lets you spend coins directly from your bank when shopping; at level 80 gathered loot banks automatically when your inventory fills during idle and offline play, so long gathering sessions never stall; and Master Rejuvenation (level 90) recharges your special attack energy twice as fast — 20% every 30 seconds during any fight, solo, group or open world. Perks are managed on the Character Unlocks screen.
 
 ## Dungeoneering
 

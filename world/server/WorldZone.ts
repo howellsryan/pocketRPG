@@ -61,6 +61,7 @@ import { checkEquipRequirements, equipItem, placeUnequippedItems, getAttackSpeed
 import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
 import { applyEat, applyCombo } from '../../src/engine/combat.js'
 import { isComboConsumable } from '../../src/engine/consumables.js'
+import { hasMasterRejuvenation } from '../../src/engine/specialRegen.js'
 import itemsData from '../../src/data/items.json'
 import { commitFlush, consumeUnits, depositUnits, drainForFlush, emptyPools, mintUnits, restoreFlush, withdrawUnits, type ItemPools, type Tally } from './sessionItems'
 import { grantSessionXp, cutPathToRange, withinRange, withinRangeAndSight } from './tick'
@@ -602,6 +603,7 @@ export class WorldZone extends Server<Env> {
     let maxHp = 10
     let bankView: Tally = {}
     let completedQuests = new Set<string>()
+    let masterRejuvenation = false
     let stance: CombatStance = 'accurate'
     let saveForGate: unknown = null
     try {
@@ -615,6 +617,7 @@ export class WorldZone extends Server<Env> {
       bankView = bankViewFromSave(saveObject)
       const questList = (saveObject.settings as { completedQuests?: unknown } | undefined)?.completedQuests
       completedQuests = new Set(Array.isArray(questList) ? questList.filter((q): q is string => typeof q === 'string') : [])
+      masterRejuvenation = hasMasterRejuvenation((saveObject.settings as { unlockedFeatures?: unknown } | undefined)?.unlockedFeatures)
       stance = combatStanceFromSave(saveObject)
     } catch {
       connection.close(1008, 'character_not_found')
@@ -690,6 +693,7 @@ export class WorldZone extends Server<Env> {
       stance,
       spell: null,
       specialEnergy: FULL_SPECIAL_ENERGY,
+      masterRejuvenation,
       lastSpecSent: FULL_SPECIAL_ENERGY,
       lastSpecQueuedSent: false,
       pendingSpecial: false,

@@ -25,6 +25,7 @@ import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumabl
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers } from './roomWideAttacks.js'
+import { hasMasterRejuvenation, specialRegenPerTick, accrueSpecialEnergy } from './specialRegen.js'
 import { bossAddsOf, getAddSpec, rollRespawnDelay } from './bossAdds.js'
 import { advanceSharedForm, formChangeAttackTimer, isMultiForm, pinFormToSession } from './bossForms.js'
 import {
@@ -417,6 +418,10 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     slayerTask: settings.slayerTask || null,
     slayerTasksCompleted: Math.max(0, Math.floor(Number(settings.slayerTasksCompleted) || 0)),
     doubleSlayerXp: !!settings.characterUnlocks?.doubleSlayerXp,
+    // The construction perk rides the member because the room owns the save for
+    // the length of the fight: it is read once from the join snapshot, exactly
+    // as the slayer and quick-prayer state above is.
+    masterRejuvenation: hasMasterRejuvenation(settings.unlockedFeatures),
     slayerCredit: emptySlayerCredit(),
     // Carried through the fight because the room owns the save while it lives:
     // a quick-prayer edit made mid-fight cannot reach /api/save (the co-op lock
@@ -437,6 +442,7 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
       potionCooldown: 0,
       comboCooldown: 0,
       specialAttackEnergy: 100,
+      specialRegenCarry: 0,
       specialAttackQueued: false,
       activeProtectionPrayer: null,
       activeCombatPrayer: null,
@@ -998,6 +1004,12 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
     applyCoopIntent(next, member, intent.action || {}, itemsData, spellsData, prayersData, monstersData, events)
   }
 
+  // Special energy climbs on the clock for a member with Master Rejuvenation,
+  // in every phase — the lobby and the respawn wait are prep time, and nothing
+  // else here regenerates it. Before the fight loop below, whose hydrate copies
+  // this value onto the engine state and dehydrate writes it back.
+  for (const member of Object.values(next.members)) tickSpecialRegen(member)
+
   // A raid lobby is prep time in the same sense the respawn wait is: nothing
   // fights, but the intents above have already run, so the party gears up, eats
   // and drinks while they wait for the host. The cooldowns still have to be
@@ -1422,6 +1434,17 @@ function returnPartyToLobby(state, monstersData, events, reason) {
     member.combat.addTargetIndex = null
   }
   events.push({ type: 'raidEnded', raidId: raid.raidId, reason })
+}
+
+/** Master Rejuvenation's regen, in WHOLE points with the fraction carried
+ * beside them: the room projects this value to every client every tick and
+ * skips the frame when nothing moved (§20). */
+function tickSpecialRegen(member) {
+  const perTick = specialRegenPerTick(member?.masterRejuvenation)
+  if (!member?.combat || !(perTick > 0)) return
+  const next = accrueSpecialEnergy(member.combat.specialAttackEnergy, member.combat.specialRegenCarry, perTick)
+  member.combat.specialAttackEnergy = next.energy
+  member.combat.specialRegenCarry = next.carry
 }
 
 /** Walks down the timers processCombatTick would have advanced. Only the

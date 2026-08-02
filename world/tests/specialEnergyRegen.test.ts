@@ -99,4 +99,17 @@ describe('special energy is a session resource, not a per-fight one', () => {
     for (let tick = 1; tick <= 50; tick++) tickPlayer(player, ctx(tick))
     expect(player.specialEnergy).toBeCloseTo(10)
   })
+
+  it('recovers 20 in the same 30s for a player with Master Rejuvenation', () => {
+    const player = makePlayer({ specialEnergy: 0, masterRejuvenation: true })
+    for (let tick = 1; tick <= 50; tick++) tickPlayer(player, ctx(tick))
+    expect(player.specialEnergy).toBeCloseTo(20)
+  })
+
+  it('still only recharges — the perk never snaps the bar to full', () => {
+    const player = makePlayer({ specialEnergy: 0, masterRejuvenation: true })
+    tickPlayer(player, ctx(1))
+    expect(player.specialEnergy).toBeCloseTo(SPECIAL_REGEN_PER_TICK * 2)
+    expect(player.specialEnergy).toBeLessThan(100)
+  })
 })

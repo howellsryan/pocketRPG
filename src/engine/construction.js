@@ -23,7 +23,7 @@ export const UNLOCKABLES = [
     id: 'master_rejuvenation',
     name: 'Create Master Rejuvenation',
     level: 90,
-    description: 'Passively refills your special attack bar to 100% whenever it empties during a fight.',
+    description: 'Recharges your special attack energy twice as fast — 20% every 30 seconds, in every fight.',
     icon: '⚡',
   },
 ]
