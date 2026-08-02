@@ -111,6 +111,27 @@ which is what `GET /api/admin/item-loss` and the **Incidents** panel are for:
 - Shaping is `functions/_lib/game/itemLossReport.js`, separated from the queries
   so the snapshot-linking rule is under test.
 
+## The /admin portal is split by scope
+
+The portal has two tabs, because an admin action is either about **one player**
+or about **the whole server**, and which one you are in decides whether a press
+touches somebody's account:
+
+- **Player** — gated on choosing a character, and every action below is scoped
+  to them: Grant, and Salvage (find snapshots, snapshot now, preview, restore).
+  The chosen name stays on screen above the actions rather than only in the
+  picker they scrolled past — a grant and a restore are both irreversible for
+  whoever is on the receiving end.
+- **Server** — read-only across every account. Today that is the item-loss
+  Incidents queue, loaded when the tab is first opened and searchable by
+  character.
+
+The two meet at one handoff: **Open in Player actions** on a selected incident
+carries its character *and* its pre-loss snapshot into the Player scope with
+Salvage open and the snapshot already selected. It is a press rather than a side
+effect of selecting a row — switching scope under someone who is reading a list
+is how the wrong account gets restored.
+
 ## Phase 3 — enforcement (not built)
 
 The mechanism, and the reason it is a separate phase: **the threat model is

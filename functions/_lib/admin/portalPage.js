@@ -219,6 +219,42 @@ input::placeholder{color:var(--fm-ink-faint)}
 .actions{display:flex;gap:10px;margin-top:22px}
 .actions .fm-btn{flex:1}
 
+/* Nav. The portal acts on ONE character or on the whole server, and which of
+   those you are in decides whether a press touches somebody's account — so the
+   scope is a tab bar at the top, not a heading part-way down a long form.
+   Selected reads brass, matching every other chosen thing on the page
+   (.pick, .fm-toggle); ember stays reserved for the act-now buttons. */
+.tabs{display:flex;width:100%;margin-top:18px;border:1px solid var(--fm-rule);border-radius:var(--fm-r-sm);overflow:hidden;background:var(--fm-btn-vellum);box-shadow:var(--fm-btn-relief-vellum)}
+.tabs button{
+  flex:1;appearance:none;min-height:50px;padding:12px 10px;border:0;cursor:pointer;
+  background:transparent;color:var(--fm-ink-soft);
+  font-family:'Grenze Gotisch','Cinzel',Georgia,serif;font-weight:800;font-size:18px;letter-spacing:0.05em;
+}
+.tabs button+button{border-left:1px solid var(--fm-rule)}
+.tabs button[aria-selected="true"]{background:var(--fm-btn-brass);color:var(--fm-btn-ink-on);box-shadow:var(--fm-btn-relief-brass)}
+.tabs button:focus-visible{outline:2px solid var(--fm-brass);outline-offset:-3px}
+
+.subnav{display:flex;width:100%;margin-top:16px;border:1px solid var(--fm-rule);border-radius:var(--fm-r-sm);overflow:hidden;background:var(--fm-btn-vellum)}
+.subnav button{
+  flex:1;appearance:none;min-height:44px;padding:10px 8px;border:0;cursor:pointer;
+  background:transparent;color:var(--fm-ink-soft);
+  font-family:'Spectral',Georgia,serif;font-weight:600;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;
+}
+.subnav button+button{border-left:1px solid var(--fm-rule)}
+.subnav button[aria-selected="true"]{background:var(--fm-btn-brass);color:var(--fm-btn-ink-on);box-shadow:var(--fm-btn-relief-brass)}
+.subnav button:focus-visible{outline:2px solid var(--fm-brass);outline-offset:-3px}
+
+/* Who every action below is about to hit. A grant and a restore are both
+   irreversible for the player on the receiving end, so the name stays on
+   screen above them rather than only in the picker they scrolled past. */
+.scope{
+  margin:16px 0 0;padding:11px 13px;
+  border:1px solid var(--fm-brass-lo);border-left-width:4px;border-radius:var(--fm-r-sharp);
+  background:rgba(176,136,66,0.13);color:var(--fm-ink);font-size:14px;line-height:1.45;
+}
+.scope strong{font-weight:600}
+.scope--idle{border-color:var(--fm-rule);background:rgba(184,160,121,0.12);color:var(--fm-ink-soft);font-style:italic}
+
 /* Gate */
 .wrap{max-width:560px;margin:0 auto}
 /* The gate is a door, not a page: it sits centred in the viewport with nothing
@@ -264,6 +300,12 @@ const SCRIPT = `
   var snapshotCharacter = null;
   var incidents = [];
   var selectedIncident = null;
+  // Which scope is on screen. 'player' acts on one character, 'server' reads
+  // across every account — the tab bar is the only thing standing between a
+  // restore and the wrong player, so it is state, not decoration.
+  var view = 'player';
+  var pane = 'grant';
+  var incidentSummary = null;
 
   var $ = function(id){ return document.getElementById(id); };
 
@@ -287,8 +329,11 @@ const SCRIPT = `
     selectedIncident = null;
     $('incidents').textContent = '';
     $('incident-summary').textContent = '';
+    $('incident-filter').value = '';
     $('incident-detail').hidden = true;
     $('incident-msg').hidden = true;
+    setView('player');
+    setPane('grant');
     $('portal').hidden = true;
     $('gate').hidden = false;
     $('secret').value = '';
@@ -400,6 +445,7 @@ const SCRIPT = `
     $('character-count').textContent = charMatches.length + ' of ' + catalog.characters.length + ' characters';
     describeChosen('item');
     describeChosen('character');
+    renderPlayerScope();
     // Snapshots belong to the character they were listed for. The picker moves
     // by click AND by the single-match auto-select above, so this is checked
     // here rather than in the click handler — leaving a stale list on screen is
@@ -499,19 +545,38 @@ const SCRIPT = `
     selectedIncident = null;
     adminGet('/api/admin/item-loss?limit=100', function(body){
       incidents = body.incidents || [];
-      var s = body.summary || {};
-      $('incident-summary').textContent = incidents.length
-        ? s.incidents + ' incidents · ' + s.characters + ' character(s) · ' + s.unresolved +
-          ' not restored since · ' + num(s.durableValue) + ' gp of durables, ' + num(s.resourceValue) + ' gp of resources'
-        : 'Nothing caught. The detector has flagged no losses.';
+      incidentSummary = body.summary || null;
       renderIncidents();
     }, msg);
   }
 
-  function renderIncidents(){
-    var entries = [];
+  function incidentMatches(){
+    var q = $('incident-filter').value.trim().toLowerCase();
+    if (!q) return incidents;
+    var out = [];
     for (var i = 0; i < incidents.length; i++){
       var inc = incidents[i];
+      var name = (inc.username || '').toLowerCase();
+      if (name.indexOf(q) !== -1 || String(inc.character_id) === q) out.push(inc);
+    }
+    return out;
+  }
+
+  function renderIncidents(){
+    var matches = incidentMatches();
+    var s = incidentSummary;
+    var line;
+    if (!s) line = '';
+    else if (!incidents.length) line = 'Nothing caught. The detector has flagged no losses.';
+    else {
+      line = s.incidents + ' incidents · ' + s.characters + ' character(s) · ' + s.unresolved +
+        ' not restored since · ' + num(s.durableValue) + ' gp of durables, ' + num(s.resourceValue) + ' gp of resources';
+      if (matches.length !== incidents.length) line = 'Showing ' + matches.length + ' of ' + line;
+    }
+    $('incident-summary').textContent = line;
+    var entries = [];
+    for (var i = 0; i < matches.length; i++){
+      var inc = matches[i];
       var marks = [inc.source || 'unknown source'];
       if (inc.durable_units) marks.push(num(inc.durable_units) + ' durable (' + num(inc.durable_value) + ' gp)');
       if (inc.resource_units) marks.push(num(inc.resource_units) + ' resource');
@@ -524,6 +589,11 @@ const SCRIPT = `
       });
     }
     fillList('incidents', entries, selectedIncident === null ? null : String(selectedIncident), pickIncident);
+  }
+
+  function selectedIncidentRow(){
+    for (var i = 0; i < incidents.length; i++) if (incidents[i].id === selectedIncident) return incidents[i];
+    return null;
   }
 
   function pickIncident(e){
@@ -554,17 +624,73 @@ const SCRIPT = `
     }
     ledgerRows('incident-detail-body', rows);
     $('incident-detail').hidden = false;
+    $('incident-msg').hidden = true;
+    $('incident-open-btn').textContent = 'Open ' + (inc.username || '#' + inc.character_id) + ' in Player actions';
+  }
 
-    // Hand the whole thing to Salvage: the character selected, its snapshots
-    // listed, and the pre-loss one already picked.
-    var msg = $('incident-msg');
-    msg.hidden = true;
+  /** The handoff the server view exists for: carry the incident's character —
+   * and the snapshot that undoes it — into the player scope. Deliberately a
+   * press rather than a side effect of selecting a row: switching scope under
+   * someone reading a list is how the wrong account gets restored. */
+  function openIncidentInPlayer(){
+    var inc = selectedIncidentRow();
+    if (!inc) return message($('incident-msg'), 'err', 'Choose an incident first.');
     selectedCharacter = String(inc.character_id);
+    $('character-filter').value = '';
+    setView('player');
+    setPane('salvage');
     refreshLists();
     loadSnapshots(inc.history_id || 0);
     if (!inc.history_id){
-      message(msg, 'err', 'No snapshot was preserved at revision ' + inc.previous_revision + ' — pick the nearest one below by hand.');
+      message($('restore-msg'), 'err', 'No snapshot was preserved at revision ' + inc.previous_revision + ' — pick the nearest one below by hand.');
     }
+  }
+
+  function setView(next){
+    view = next;
+    $('tab-player').setAttribute('aria-selected', String(next === 'player'));
+    $('tab-server').setAttribute('aria-selected', String(next === 'server'));
+    $('view-player').hidden = next !== 'player';
+    $('view-server').hidden = next !== 'server';
+    $('scope-lore').textContent = next === 'player'
+      ? 'Everything below acts on one character. Choose them first.'
+      : 'Read-only, across every account. Nothing here writes to a save.';
+    // Opening the tab IS the request to see the queue — landing on an empty
+    // panel with a button on it is a step with no decision in it. Once only:
+    // after that the list is whatever the admin last loaded or filtered.
+    if (next === 'server' && incidentSummary === null && secret) loadIncidents();
+  }
+
+  function setPane(next){
+    pane = next;
+    $('pane-grant-tab').setAttribute('aria-selected', String(next === 'grant'));
+    $('pane-salvage-tab').setAttribute('aria-selected', String(next === 'salvage'));
+    $('pane-grant').hidden = next !== 'grant';
+    $('pane-salvage').hidden = next !== 'salvage';
+  }
+
+  /** The name every action in this view is about to hit, kept on screen above
+   * them — a grant and a restore are both irreversible for whoever is on the
+   * receiving end, and the picker scrolls out of sight. */
+  function renderPlayerScope(){
+    var chosen = null;
+    for (var i = 0; i < catalog.characters.length; i++){
+      if (String(catalog.characters[i].id) === String(selectedCharacter)) chosen = catalog.characters[i];
+    }
+    $('player-empty').hidden = !!selectedCharacter;
+    $('player-actions').hidden = !selectedCharacter;
+    if (!selectedCharacter) return;
+    var el = $('player-scope');
+    el.textContent = '';
+    el.appendChild(document.createTextNode('Acting on '));
+    var strong = document.createElement('strong');
+    strong.textContent = chosen ? chosen.username + ' (#' + chosen.id + ')' : '#' + selectedCharacter;
+    el.appendChild(strong);
+    var marks = [];
+    if (chosen && chosen.isIronman) marks.push('ironman');
+    if (chosen && chosen.isOneLife) marks.push('one life');
+    if (chosen) marks.push('total level ' + chosen.totalLevel);
+    if (marks.length) el.appendChild(document.createTextNode(' — ' + marks.join(' · ')));
   }
 
   function snapshotNow(){
@@ -757,6 +883,8 @@ const SCRIPT = `
         $('secret').value = '';
         $('gate').hidden = true;
         $('portal').hidden = false;
+        setView('player');
+        setPane('grant');
         refreshLists();
         if (r.body.truncated) message($('form-msg'), 'err', 'Character list was truncated — use the filter to find the account.');
         $('character-filter').focus();
@@ -787,7 +915,13 @@ const SCRIPT = `
     $('character-filter').addEventListener('input', refreshLists);
     $('preview-btn').addEventListener('click', function(){ grant(true); });
     $('grant-btn').addEventListener('click', function(){ grant(false); });
+    $('tab-player').addEventListener('click', function(){ setView('player'); });
+    $('tab-server').addEventListener('click', function(){ setView('server'); });
+    $('pane-grant-tab').addEventListener('click', function(){ setPane('grant'); });
+    $('pane-salvage-tab').addEventListener('click', function(){ setPane('salvage'); });
     $('incidents-btn').addEventListener('click', loadIncidents);
+    $('incident-filter').addEventListener('input', renderIncidents);
+    $('incident-open-btn').addEventListener('click', openIncidentInPlayer);
     $('snapshots-btn').addEventListener('click', function(){ loadSnapshots(); });
     $('snapshot-now-btn').addEventListener('click', snapshotNow);
     $('restore-preview-btn').addEventListener('click', function(){ restore(true); });
@@ -842,117 +976,146 @@ const BODY = `
           </div>
           <button id="lock-btn" type="button" class="fm-btn">Seal</button>
         </div>
-        <p class="fm-lore">Sign an item out of the stores and into a character's hands.</p>
 
-        <div id="grant-form">
-          <div class="fm-rule-head"><span>Recipient</span></div>
+        <nav class="tabs" role="tablist" aria-label="Scope">
+          <button id="tab-player" type="button" role="tab" aria-selected="true" aria-controls="view-player">Player</button>
+          <button id="tab-server" type="button" role="tab" aria-selected="false" aria-controls="view-server">Server</button>
+        </nav>
+        <p class="fm-lore" id="scope-lore"></p>
+
+        <section id="view-player" role="tabpanel" aria-labelledby="tab-player">
+          <div class="fm-rule-head"><span>Character</span></div>
           <div class="field">
-            <label for="character-filter">Character</label>
+            <label for="character-filter">Who</label>
             <input id="character-filter" class="filter" type="text" autocomplete="off" spellcheck="false" placeholder="Filter by name or id…">
             <div id="character" class="picklist" role="listbox" aria-label="Character"></div>
             <p class="chosen" id="character-chosen"></p>
             <p class="field__hint" id="character-count"></p>
           </div>
 
-          <div class="fm-rule-head"><span>Goods</span></div>
-          <div class="field">
-            <label for="item-filter">Item</label>
-            <input id="item-filter" class="filter" type="text" autocomplete="off" spellcheck="false" placeholder="Filter by name or id…">
-            <div id="item" class="picklist" role="listbox" aria-label="Item"></div>
-            <p class="chosen" id="item-chosen"></p>
-            <p class="field__hint" id="item-count"></p>
-          </div>
+          <p id="player-empty" class="scope scope--idle">No character chosen. Pick one above to unlock their actions.</p>
 
-          <div class="field">
-            <label for="quantity">Quantity</label>
-            <input id="quantity" type="number" min="1" max="1000000000" step="1" value="1" class="fm-num-input">
-            <div class="chips" id="quantity-chips">
-              <button type="button" data-qty="1">1</button>
-              <button type="button" data-qty="10">10</button>
-              <button type="button" data-qty="100">100</button>
-              <button type="button" data-qty="1000">1K</button>
-              <button type="button" data-qty="100000">100K</button>
-              <button type="button" data-qty="1000000">1M</button>
-            </div>
-          </div>
+          <div id="player-actions" hidden>
+            <p id="player-scope" class="scope"></p>
 
-          <div class="fm-rule-head"><span>Delivery</span></div>
-          <div class="field">
-            <label>Destination</label>
-            <div class="row">
-              <div class="fm-toggle" role="group" aria-label="Destination">
-                <button id="dest-inventory" type="button" aria-pressed="true">Inventory</button>
-                <button id="dest-bank" type="button" aria-pressed="false">Bank</button>
+            <nav class="subnav" role="tablist" aria-label="Player action">
+              <button id="pane-grant-tab" type="button" role="tab" aria-selected="true" aria-controls="pane-grant">Grant</button>
+              <button id="pane-salvage-tab" type="button" role="tab" aria-selected="false" aria-controls="pane-salvage">Salvage</button>
+            </nav>
+
+            <section id="pane-grant" role="tabpanel" aria-labelledby="pane-grant-tab">
+              <div id="grant-form">
+                <div class="fm-rule-head"><span>Goods</span></div>
+                <div class="field">
+                  <label for="item-filter">Item</label>
+                  <input id="item-filter" class="filter" type="text" autocomplete="off" spellcheck="false" placeholder="Filter by name or id…">
+                  <div id="item" class="picklist" role="listbox" aria-label="Item"></div>
+                  <p class="chosen" id="item-chosen"></p>
+                  <p class="field__hint" id="item-count"></p>
+                </div>
+
+                <div class="field">
+                  <label for="quantity">Quantity</label>
+                  <input id="quantity" type="number" min="1" max="1000000000" step="1" value="1" class="fm-num-input">
+                  <div class="chips" id="quantity-chips">
+                    <button type="button" data-qty="1">1</button>
+                    <button type="button" data-qty="10">10</button>
+                    <button type="button" data-qty="100">100</button>
+                    <button type="button" data-qty="1000">1K</button>
+                    <button type="button" data-qty="100000">100K</button>
+                    <button type="button" data-qty="1000000">1M</button>
+                  </div>
+                </div>
+
+                <div class="fm-rule-head"><span>Delivery</span></div>
+                <div class="field">
+                  <label>Destination</label>
+                  <div class="row">
+                    <div class="fm-toggle" role="group" aria-label="Destination">
+                      <button id="dest-inventory" type="button" aria-pressed="true">Inventory</button>
+                      <button id="dest-bank" type="button" aria-pressed="false">Bank</button>
+                    </div>
+                  </div>
+                  <p class="field__hint">Non-stackable items take one inventory slot each — send bulk to the bank, or note it.</p>
+                </div>
+
+                <div class="field">
+                  <label>Noted</label>
+                  <div class="row">
+                    <div class="fm-toggle" role="group" aria-label="Noted">
+                      <button id="noted-off" type="button" aria-pressed="true">Item</button>
+                      <button id="noted-on" type="button" aria-pressed="false">Noted</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="actions">
+                  <button id="preview-btn" type="button" class="fm-btn fm-btn--brass">Preview</button>
+                  <button id="grant-btn" type="button" class="fm-btn fm-btn--ember">Grant</button>
+                </div>
+                <p id="form-msg" class="msg" hidden></p>
               </div>
-            </div>
-            <p class="field__hint">Non-stackable items take one inventory slot each — send bulk to the bank, or note it.</p>
-          </div>
 
-          <div class="field">
-            <label>Noted</label>
-            <div class="row">
-              <div class="fm-toggle" role="group" aria-label="Noted">
-                <button id="noted-off" type="button" aria-pressed="true">Item</button>
-                <button id="noted-on" type="button" aria-pressed="false">Noted</button>
+              <div id="receipt" hidden>
+                <div class="fm-rule-head"><span>Ledger entry</span></div>
+                <p><span id="receipt-tag" class="fm-tag"></span></p>
+                <table class="fm-ledger">
+                  <thead><tr><th>Entry</th><th>Value</th></tr></thead>
+                  <tbody id="receipt-body"></tbody>
+                </table>
               </div>
+            </section>
+
+            <section id="pane-salvage" role="tabpanel" aria-labelledby="pane-salvage-tab" hidden>
+              <div class="fm-rule-head"><span>Salvage</span></div>
+              <p class="fm-lore">Pull this character's save back out of the vault, from before whatever went missing.</p>
+              <div class="field">
+                <div class="actions">
+                  <button id="snapshots-btn" type="button" class="fm-btn fm-btn--brass">Find snapshots</button>
+                  <button id="snapshot-now-btn" type="button" class="fm-btn">Snapshot now</button>
+                </div>
+                <p class="field__hint" id="snapshot-count"></p>
+                <div id="snapshots" class="picklist" role="listbox" aria-label="Snapshot"></div>
+                <p class="chosen" id="snapshot-chosen"></p>
+              </div>
+              <div id="snapshot-detail" hidden>
+                <table class="fm-ledger">
+                  <thead><tr><th>Lost since this snapshot</th><th>Value</th></tr></thead>
+                  <tbody id="snapshot-detail-body"></tbody>
+                </table>
+                <div class="actions">
+                  <button id="restore-preview-btn" type="button" class="fm-btn fm-btn--brass">Preview restore</button>
+                  <button id="restore-btn" type="button" class="fm-btn fm-btn--ember">Restore</button>
+                </div>
+              </div>
+              <p id="restore-msg" class="msg" hidden></p>
+            </section>
+          </div>
+        </section>
+
+        <section id="view-server" role="tabpanel" aria-labelledby="tab-server" hidden>
+          <div class="fm-rule-head"><span>Item-loss incidents</span></div>
+          <p class="fm-lore">Every loss the guard has caught, across every account. Find one, then take it to that player's salvage.</p>
+          <div class="field">
+            <div class="actions">
+              <button id="incidents-btn" type="button" class="fm-btn fm-btn--brass">Load incidents</button>
+            </div>
+            <label for="incident-filter">Search</label>
+            <input id="incident-filter" class="filter" type="text" autocomplete="off" spellcheck="false" placeholder="Filter by character name or id…">
+            <p class="field__hint" id="incident-summary"></p>
+            <div id="incidents" class="picklist" role="listbox" aria-label="Incident"></div>
+            <p id="incident-msg" class="msg" hidden></p>
+          </div>
+          <div id="incident-detail" hidden>
+            <table class="fm-ledger">
+              <thead><tr><th>What went missing</th><th>Value</th></tr></thead>
+              <tbody id="incident-detail-body"></tbody>
+            </table>
+            <div class="actions">
+              <button id="incident-open-btn" type="button" class="fm-btn fm-btn--ember">Open in Player actions</button>
             </div>
           </div>
-
-          <div class="actions">
-            <button id="preview-btn" type="button" class="fm-btn fm-btn--brass">Preview</button>
-            <button id="grant-btn" type="button" class="fm-btn fm-btn--ember">Grant</button>
-          </div>
-          <p id="form-msg" class="msg" hidden></p>
-        </div>
-
-        <div id="receipt" hidden>
-          <div class="fm-rule-head"><span>Ledger entry</span></div>
-          <p><span id="receipt-tag" class="fm-tag"></span></p>
-          <table class="fm-ledger">
-            <thead><tr><th>Entry</th><th>Value</th></tr></thead>
-            <tbody id="receipt-body"></tbody>
-          </table>
-        </div>
-
-        <div class="fm-rule-head"><span>Incidents</span></div>
-        <p class="fm-lore">Every item loss the guard has caught. Pick one to see what went, and the save that still had it.</p>
-        <div class="field">
-          <div class="actions">
-            <button id="incidents-btn" type="button" class="fm-btn fm-btn--brass">Load incidents</button>
-          </div>
-          <p class="field__hint" id="incident-summary"></p>
-          <div id="incidents" class="picklist" role="listbox" aria-label="Incident"></div>
-          <p id="incident-msg" class="msg" hidden></p>
-        </div>
-        <div id="incident-detail" hidden>
-          <table class="fm-ledger">
-            <thead><tr><th>What went missing</th><th>Value</th></tr></thead>
-            <tbody id="incident-detail-body"></tbody>
-          </table>
-        </div>
-
-        <div class="fm-rule-head"><span>Salvage</span></div>
-        <p class="fm-lore">Pull a character's save back out of the vault, from before whatever went missing.</p>
-        <div class="field">
-          <div class="actions">
-            <button id="snapshots-btn" type="button" class="fm-btn fm-btn--brass">Find snapshots</button>
-            <button id="snapshot-now-btn" type="button" class="fm-btn">Snapshot now</button>
-          </div>
-          <p class="field__hint" id="snapshot-count"></p>
-          <div id="snapshots" class="picklist" role="listbox" aria-label="Snapshot"></div>
-          <p class="chosen" id="snapshot-chosen"></p>
-        </div>
-        <div id="snapshot-detail" hidden>
-          <table class="fm-ledger">
-            <thead><tr><th>Lost since this snapshot</th><th>Value</th></tr></thead>
-            <tbody id="snapshot-detail-body"></tbody>
-          </table>
-          <div class="actions">
-            <button id="restore-preview-btn" type="button" class="fm-btn fm-btn--brass">Preview restore</button>
-            <button id="restore-btn" type="button" class="fm-btn fm-btn--ember">Restore</button>
-          </div>
-        </div>
-        <p id="restore-msg" class="msg" hidden></p>
+        </section>
       </div>
     </div>
   </main>
