@@ -80,7 +80,7 @@ function keyFromId(id) {
   if (id === 'tinderbox') return 'default'
   if (id === 'fishing_rod') return 'fishing_pole'
   if (id === 'fishing_net' || id === 'lobster_cage' || id === 'angler_net') return 'fishing_net'
-  if (id === 'harpoon') return 'spear'
+  if (id === 'harpoon' || id.endsWith('_harpoon')) return 'spear'
   if (id === 'gold_spade') return 'spade'
   if (id === 'dragon_claws') return 'claws'
   if (id === 'scythe_of_vythar') return 'scythe'

@@ -164,12 +164,13 @@ describe('armoury classifier', () => {
     }
   })
 
-  it('flags weapons that have a special attack (31 canonical items)', () => {
+  it('flags weapons that have a special attack (32 canonical items)', () => {
     // 27 + Zul-Kaar's Blade (Disrupt) + Ancient Maul (Quake, shared with the
-    // Gargoyle Maul) + the Zaryth Crossbow (Empty Bolt) and Zaryth Godsword
-    // (Empty Lord's Cleave) — deliberate content additions, not drift fixes.
+    // Gargoyle Maul) + the Zaryth Crossbow (Empty Bolt), Zaryth Godsword
+    // (Empty Lord's Cleave) and Shardglass Halberd (Shardstorm, Quake shared a
+    // third time) — deliberate content additions, not drift fixes.
     const specials = Object.values(items).filter(hasSpecialAttack)
-    expect(specials.length).toBe(31)
+    expect(specials.length).toBe(32)
   })
 
   describe('buildArmoury over the live data', () => {

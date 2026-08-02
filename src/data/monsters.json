@@ -5012,6 +5012,16 @@
         "chance": 0.01
       },
       {
+        "itemId": "shardglass_harpoon",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "shardglass_halberd",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
         "itemId": "shardglass_helmet",
         "quantity": 1,
         "chance": 0.004

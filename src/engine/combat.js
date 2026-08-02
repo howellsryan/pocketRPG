@@ -661,6 +661,17 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
               return { combatState: state, events }
             }
           }
+          // A scale-charged melee weapon pays a charge for its special exactly
+          // as for an ordinary swing, checked before the energy drain so an
+          // empty weapon costs nothing. Melee-only: ranged spec handlers spend
+          // their charge inline (toxic_siphon), so the blowpipe would pay twice.
+          if (state.combatType === 'melee' && weapon.scaleCharged && weaponCharges <= 0) {
+            events.push({ type: 'noCharges', itemId: weaponEntry.itemId })
+            state.specialAttackQueued = false
+            state.playerAttackTimer = weaponSpeed
+            state.monster = monster
+            return { combatState: state, events }
+          }
           // Check if we still have enough energy before firing
           const currentEnergy = state.specialAttackEnergy || 0
           if (canAffordSpecialAttack(weapon.specialAttack, currentEnergy)) {
@@ -687,6 +698,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
             }
             Object.assign(state, newState)
             state.specialAttackQueued = false
+            if (state.combatType === 'melee' && weapon.scaleCharged) {
+              events.push({ type: 'consumeCharge', qty: 1 })
+            }
             // If a boss phase reset occurred, timers are already set — don't override them
             const hadPhaseReset = specEvents.some(ev => ev.type === 'bossPhaseReset')
             if (!hadPhaseReset) {

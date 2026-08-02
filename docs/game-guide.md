@@ -33,6 +33,14 @@ You have 11 equipment slots: weapon, ammo, head, body, legs, shield, neck, glove
 
 Equipment tabs save a full loadout — everything worn plus your inventory — and load it back by re-arranging gear you already own between bank, inventory and equipment. Every character gets three tabs; more can be bought on the Character Unlocks screen for 10 credits each, with no limit on how many you buy.
 
+## Shardglass gear
+
+Shardglass gear runs on charges rather than durability: load it with shardglass shards from the item's modal, and it does nothing at all once empty. The Blighted Gauntlet drops the whole set, and any duplicate breaks down into 5,000 shards.
+
+Three gathering tools carry the same perk — the Shardglass Pickaxe (Mining 70), Axe (Woodcutting 70) and Harpoon (Fishing 70). Each is the fastest tool in its skill, and while charged every action spends 2 charges to bring back double the ore, logs or fish. This works live, idle and offline. Run one dry and it stops counting as a tool entirely, so you fall back to your next-best pickaxe, axe or harpoon until you recharge it.
+
+The Shardglass Halberd (Attack and Strength 75) is the set's weapon: slow to swing but hitting harder than anything else in the game, with +150 accuracy and +200 strength. Its special, Shardstorm, sweeps three times in a single attack for 30% energy — roughly three specials per full bar. Every swing costs one charge, special attacks included, so bring shards to a long fight.
+
 ## Ranged combat and ammunition
 
 Ranged weapons need matching ammunition equipped in your ammo slot (for example arrows for a bow), and ammunition is consumed as you shoot — in live and idle combat alike. If you run out mid-fight your attacks stop with a warning, so stock plenty before long idle sessions. A few special weapons use built-in charges instead of ammunition.

@@ -85,6 +85,18 @@ describe('itemIcons', () => {
     expect(getItemIconKey(itemsData.cooked_meat)).toBe('meat')
   })
 
+  // Every harpoon shares the spear silhouette. Without the suffix rule the
+  // Shardglass Harpoon falls through to its stab attack style and draws a dagger.
+  it('harpoons of every tier resolve to the spear glyph', () => {
+    expect(getItemIconKey(itemsData.harpoon)).toBe('spear')
+    expect(getItemIconKey(itemsData.shardglass_harpoon)).toBe('spear')
+  })
+
+  it('the shardglass halberd resolves to the halberd glyph, tinted shardglass', () => {
+    expect(getItemIconKey(itemsData.shardglass_halberd)).toBe('halberd')
+    expect(getItemIconTint(itemsData.shardglass_halberd)).toBe('var(--tier-shardglass)')
+  })
+
   it('stab weapons resolve to the dagger glyph', () => {
     const dagger = itemsData.bronze_dagger
     expect(getItemIconKey(dagger)).toBe('dagger')
