@@ -665,6 +665,7 @@ const SCRIPT = `
       ['Resources lost', num(inc.resource_units) + '  (' + num(inc.resource_value) + ' gp)'],
       ['Coins lost', num(inc.coins_lost)],
       ['Charges lost', num(inc.charges_lost)],
+      ['Declared spend', inc.declared_units ? num(inc.declared_units) + ' units (already netted off)' : 'none'],
       ['Distinct items', num(inc.distinct_items_lost)],
       ['Incidents on this account', num(inc.character_incident_count)],
       ['Restored since', inc.restored_since ? 'yes' : 'no'],

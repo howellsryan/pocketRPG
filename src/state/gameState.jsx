@@ -23,7 +23,8 @@ import prayersData from '../data/prayers.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
 import { applyTaskResult } from '../engine/applyTaskResult.js'
 import { preserveBankCharges } from '../engine/bankCharges.js'
-import { applyBankDeltas } from '../engine/bankMutations.js'
+import { applyBankDeltas, bankUnitsRemoved } from '../engine/bankMutations.js'
+import { recordItemLosses } from '../engine/lossLedger.js'
 import { createDirtyFlags, claimDirtyFlags, restoreDirtyFlags, hasDirtyFlags } from '../db/dirtyFlags.js'
 import { isBackground, getActivityKey } from '../engine/activityRegistry.js'
 import {
@@ -344,8 +345,12 @@ export function GameProvider({ children }) {
           // then read back the two primitive fields that may have changed.
           const applySettings = { currentHP: savedHP, dungeoneeringTokens: savedDungeoneeringTokens }
           const applyState = { stats: s, inventory: inv, bank: b, equipment: eq, settings: applySettings }
-          applyTaskResult(applyState, sim, savedTask.type)
+          const applied = applyTaskResult(applyState, sim, savedTask.type)
           inv = applyState.inventory  // may be sim.finalInventory (new array ref)
+          // Offline catch-up burns a whole window's supplies and materials in one
+          // write. Declare it, or every return from a long absence reads as an
+          // item-loss incident (src/engine/lossLedger.js).
+          recordItemLosses(applied.consumed)
 
           if (applySettings.dungeoneeringTokens !== savedDungeoneeringTokens) {
             savedDungeoneeringTokens = applySettings.dungeoneeringTokens
@@ -1330,6 +1335,12 @@ export function GameProvider({ children }) {
   // that carried charged gear must not drop them (src/engine/bankCharges.js).
   const updateBankDirect = useCallback((itemUpdates, { charges = null } = {}) => {
     const next = applyBankDeltas(stateRef.current.bank, itemUpdates, charges)
+    // A negative delta here is an itemised, deliberate spend — recipe inputs for
+    // a live or caught-up production task, idle supplies. Declaring it stops the
+    // server's item-loss detector reading routine idling as destruction
+    // (src/engine/lossLedger.js). Measured against the bank we actually held, so
+    // a delta the bank could not cover declares only what it really took.
+    recordItemLosses(bankUnitsRemoved(stateRef.current.bank, next, itemUpdates))
     stateRef.current.bank = next
     setBank(next)
     markDirty('bank')

@@ -48,6 +48,11 @@ export const RESOURCE_VALUE_FLOOR = 1_000_000
 // missing without putting a whole bank in the audit table.
 const MAX_REPORTED_ITEMS = 12
 
+// Ceiling on a declared-loss ledger. A save window spends a handful of distinct
+// materials, so anything past this is a malformed or hostile payload rather than
+// a play session; the excess is dropped, which flags MORE, never less.
+const MAX_DECLARED_ITEMS = 256
+
 function addUnits(map, rawId, quantity, itemsTable) {
   const qty = Math.floor(Number(quantity) || 0)
   if (qty <= 0) return
@@ -159,6 +164,44 @@ export function readHoldingsBaseline(saveObject) {
   return holdingsBaselines.get(saveObject) || null
 }
 
+// Deliberate removals a server-side mutation has already made to the save it is
+// about to write, keyed the same way as the baseline above. A WeakMap rather
+// than an argument threaded through every return shape, because the mutation
+// (an MCP idle claim consuming its materials) and the writeSave call that
+// records it are several layers apart, and a declaration a caller can forget to
+// pass on is a flag nobody can explain.
+const declaredLossLedgers = new WeakMap()
+
+/** @param {Record<string, number>} items itemId -> POSITIVE units removed */
+export function declareItemLosses(saveObject, items) {
+  if (!saveObject || typeof saveObject !== 'object' || !items) return
+  const ledger = declaredLossLedgers.get(saveObject) || {}
+  let changed = false
+  for (const [itemId, qty] of Object.entries(items)) {
+    const units = Math.floor(Number(qty) || 0)
+    if (units <= 0 || typeof itemId !== 'string' || !itemId) continue
+    ledger[itemId] = (ledger[itemId] || 0) + units
+    changed = true
+  }
+  if (changed) declaredLossLedgers.set(saveObject, ledger)
+}
+
+export function readDeclaredLosses(saveObject) {
+  if (!saveObject || typeof saveObject !== 'object') return null
+  return declaredLossLedgers.get(saveObject) || null
+}
+
+/** Fold two declared ledgers into one. Either side may be absent. */
+export function mergeDeclaredLosses(a, b) {
+  if (!a) return b || null
+  if (!b) return a
+  const merged = { ...a }
+  for (const [itemId, qty] of Object.entries(b)) {
+    merged[itemId] = (merged[itemId] || 0) + (Math.floor(Number(qty) || 0))
+  }
+  return merged
+}
+
 export function isResourceItem(itemId, itemsTable = itemsData) {
   const item = Object.prototype.hasOwnProperty.call(itemsTable || {}, itemId)
     ? itemsTable[itemId]
@@ -180,6 +223,34 @@ function unitValue(itemId, itemsTable) {
 }
 
 /**
+ * A DECLARED loss ledger, canonicalised and clamped. The client (and the
+ * server-side idle claim) reports what it deliberately spent since the write the
+ * server last stored — the recipe inputs an infusion consumed, the food an idle
+ * catch-up ate — so the detector can tell a deliberate spend from destruction.
+ *
+ * It is a CLAIM, never a fact, and it may only ever REDUCE what gets reported.
+ * That is safe for the same reason §14 already concedes: the save blob is
+ * client-trusted, so a client willing to lie about its ledger could simply not
+ * lose the items in the first place. The threat model here is buggy code, and a
+ * buggy path — a wholesale container overwrite — declares nothing by
+ * construction, which is the whole mechanism.
+ */
+export function sanitiseDeclaredLosses(raw, itemsTable = itemsData) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  // Accepts a plain ledger or an already-built Map, so a caller cannot skip
+  // canonicalisation by handing over the wrong shape — Object.keys(map) is
+  // empty, which would have silently declared nothing.
+  const entries = raw instanceof Map ? raw.entries() : Object.entries(raw)
+  const declared = new Map()
+  let seen = 0
+  for (const [key, value] of entries) {
+    if (++seen > MAX_DECLARED_ITEMS) break
+    addUnits(declared, key, value, itemsTable)
+  }
+  return declared.size > 0 ? declared : null
+}
+
+/**
  * What `nextSave` destroys relative to `previousSave`. A unit that merely moved
  * between containers is not a loss; a unit that left all three is.
  *
@@ -187,15 +258,16 @@ function unitValue(itemId, itemsTable) {
  * (normalizeSaveItemIds) reads as the same item rather than as one item
  * vanishing and another appearing.
  */
-export function classifyItemLoss(previousSave, nextSave, itemsTable = itemsData) {
-  return classifyItemLossFromHoldings(holdingsOf(previousSave, itemsTable), nextSave, itemsTable)
+export function classifyItemLoss(previousSave, nextSave, itemsTable = itemsData, declared = null) {
+  return classifyItemLossFromHoldings(holdingsOf(previousSave, itemsTable), nextSave, itemsTable, declared)
 }
 
 /** As classifyItemLoss, but from holdings captured EARLIER. Server-side writers
  * mutate the loaded save in place, so by the time the write happens the "before"
  * is already gone — it has to be measured at load time and carried. */
-export function classifyItemLossFromHoldings(previous, nextSave, itemsTable = itemsData) {
+export function classifyItemLossFromHoldings(previous, nextSave, itemsTable = itemsData, declared = null) {
   const next = holdingsOf(nextSave, itemsTable)
+  const covered = sanitiseDeclaredLosses(declared, itemsTable)
 
   let durableUnits = 0
   let durableValue = 0
@@ -203,10 +275,17 @@ export function classifyItemLossFromHoldings(previous, nextSave, itemsTable = it
   let resourceValue = 0
   let coinsLost = 0
   let chargesLost = 0
+  let declaredUnits = 0
   const items = []
 
   for (const [itemId, before] of previous.units) {
-    const lost = before - (next.units.get(itemId) || 0)
+    const gross = before - (next.units.get(itemId) || 0)
+    if (gross <= 0) continue
+    // Netted PER ITEM and clamped at zero, so an over-declaration of one item
+    // can never absorb the disappearance of another.
+    const explained = Math.min(gross, covered?.get(itemId) || 0)
+    declaredUnits += explained
+    const lost = gross - explained
     if (lost <= 0) continue
     if (itemId === COINS_ITEM_ID) {
       coinsLost += lost
@@ -246,6 +325,7 @@ export function classifyItemLossFromHoldings(previous, nextSave, itemsTable = it
     resourceValue,
     coinsLost,
     chargesLost,
+    declaredUnits,
     distinctItemsLost: items.length,
     items: items.slice(0, MAX_REPORTED_ITEMS),
   }

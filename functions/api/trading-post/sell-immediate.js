@@ -8,6 +8,7 @@ import { isOrderBookItem, normalizeSellSource } from '../../_lib/game/tradingPos
 import { getIronmanShopValue } from '../../_lib/game/itemValue.js'
 import { removeItemFromSource, canonicalItemId, normalizeSaveItemIds } from '../../_lib/game/inventory.js'
 import { addCoins } from '../../_lib/game/economy.js'
+import { declareItemLosses } from '../../_lib/game/holdingsDelta.js'
 
 // POST /api/trading-post/sell-immediate  { item_id, quantity }
 //
@@ -67,6 +68,10 @@ export async function onRequestPost({ request, env }) {
 
     normalizeSaveItemIds(saveObject, itemsData)
     removeItemFromSource(saveObject, itemId, quantity, source)
+    // A vendored item leaves the game deliberately. Declared so the item-loss
+    // detector reads it as a sale rather than destruction — liquidating a stack
+    // of gear is otherwise indistinguishable from a bug eating it.
+    declareItemLosses(saveObject, { [itemId]: quantity })
     const totalPayout = unit * quantity
     addCoins(saveObject, totalPayout)
 
