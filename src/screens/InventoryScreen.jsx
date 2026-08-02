@@ -9,6 +9,8 @@ import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import SellConfirmModal from '../components/SellConfirmModal.jsx'
 import { freeSlots, countItem, removeItem, addItem, getBreakdownYield, sumSlotCharges } from '../engine/inventory.js'
 import { resolveInventoryEat } from '../engine/consumables.js'
+import { chargeRecipeSpend } from '../engine/chargeRecipes.js'
+import { recordItemLosses } from '../engine/lossLedger.js'
 import GameIcon from '../components/GameIcon.jsx'
 import { getSkillArt } from '../utils/skillArt.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
@@ -186,6 +188,15 @@ export default function InventoryScreen() {
     newInv[slotIndex] = null
     newInv[targetIdx] = { itemId: resultId, quantity: 1 }
     if (cost > 0) removeItem(newInv, 'coins', cost)
+    // Both ingredients leave holdings for good, and one of them is usually the
+    // expensive half of the recipe — undeclared, forging a Slayer helmet reads
+    // to the detector as a million gp evaporating (src/engine/lossLedger.js).
+    // Built additively rather than as one literal: a recipe whose two halves are
+    // the same item would collapse to a single key and under-declare.
+    const combineSpend = { [slot.itemId]: 1 }
+    combineSpend[targetId] = (combineSpend[targetId] || 0) + 1
+    if (cost > 0) combineSpend.coins = (combineSpend.coins || 0) + cost
+    recordItemLosses(combineSpend)
     updateInventory(newInv)
     addToast(`Created ${resultData.name}`, 'info')
     setSelected(null)
@@ -228,6 +239,7 @@ export default function InventoryScreen() {
     const newSlot = { ...slot, charges: (slot.charges || 0) + actualQty }
     newInv[slotIndex] = newSlot
 
+    recordItemLosses(chargeRecipeSpend(recipe, actualQty))
     updateInventory(newInv)
     setSelected({ ...selected, slot: newSlot })
     addToast(`Charged ${item.name} with ${actualQty} charge${actualQty === 1 ? '' : 's'}`, 'info')

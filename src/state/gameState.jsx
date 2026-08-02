@@ -24,7 +24,7 @@ import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../en
 import { applyTaskResult } from '../engine/applyTaskResult.js'
 import { preserveBankCharges } from '../engine/bankCharges.js'
 import { applyBankDeltas, bankUnitsRemoved } from '../engine/bankMutations.js'
-import { recordItemLosses } from '../engine/lossLedger.js'
+import { recordItemLossEntries, recordItemLosses } from '../engine/lossLedger.js'
 import { createDirtyFlags, claimDirtyFlags, restoreDirtyFlags, hasDirtyFlags } from '../db/dirtyFlags.js'
 import { isBackground, getActivityKey } from '../engine/activityRegistry.js'
 import {
@@ -381,6 +381,7 @@ export function GameProvider({ children }) {
               eq = loss.equipment
               hardModeDeathApplied = true
               sim.hardModeItemsLost = loss.lost
+              recordItemLossEntries(loss.lost)
             }
           } else if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
             savedHP = applySettings.currentHP

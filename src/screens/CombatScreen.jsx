@@ -26,6 +26,7 @@ import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
 import { hardModeDeathLoss, hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
 import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
+import { recordItemLossEntries } from '../engine/lossLedger.js'
 import { HardModeConfirm, HardModeTag, HardModeToggle } from '../components/HardMode.jsx'
 import { liveAdds, targetedAdd } from '../engine/bossAdds.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
@@ -489,6 +490,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     updateInventory(loss.inventory)
     equipmentRef.current = loss.equipment
     updateEquipment(loss.equipment)
+    // Declared, or the one write that deliberately empties a pack is also the
+    // one the item-loss detector cannot tell from the bug it watches for
+    // (src/engine/lossLedger.js).
+    recordItemLossEntries(loss.lost)
     // Losing a pack has to survive a closed tab, so it does not wait for the
     // ordinary idle flush.
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)

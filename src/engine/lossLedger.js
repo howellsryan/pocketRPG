@@ -80,6 +80,24 @@ export function recordItemLosses(items) {
   if (changed) persist()
 }
 
+/**
+ * As recordItemLosses, for the `[{ itemId, quantity }]` tally shape the engine
+ * hands back when a removal is also shown to the player — a hard-mode death
+ * names what it took, so the loss arrives as a list rather than a map.
+ *
+ * @param {Array<{itemId: string, quantity: number}>} entries
+ */
+export function recordItemLossEntries(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) return
+  const items = {}
+  for (const entry of entries) {
+    const itemId = entry?.itemId
+    if (typeof itemId !== 'string' || !itemId) continue
+    items[itemId] = (items[itemId] || 0) + (Math.floor(Number(entry.quantity) || 0) || 1)
+  }
+  recordItemLosses(items)
+}
+
 /** Everything declared since the server last stored a write, or null if nothing
  * has been. Null rather than {} so the push omits the field entirely. */
 export function readItemLossLedger() {

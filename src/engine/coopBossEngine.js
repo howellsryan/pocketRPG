@@ -313,6 +313,22 @@ export function emptySlayerCredit() {
 }
 
 /**
+ * Folds a hard-mode death's tally into the member's banked declaration. Also a
+ * DELTA cleared by the write-back, so a member written back twice declares the
+ * loss once — over-declaring on the second write would let a genuine loss in
+ * that window pass unflagged.
+ */
+export function bankMemberItemsLost(banked, lost) {
+  const out = { ...(banked || {}) }
+  for (const entry of Array.isArray(lost) ? lost : []) {
+    const itemId = entry?.itemId
+    if (typeof itemId !== 'string' || !itemId) continue
+    out[itemId] = (out[itemId] || 0) + (Math.floor(Number(entry.quantity) || 0) || 1)
+  }
+  return out
+}
+
+/**
  * Credits one boss kill against a member's own slayer task.
  *
  * Deliberately independent of damage: a group kill counts for everyone who was
@@ -388,6 +404,12 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     damage: 0,
     damageTick: 0,
     xpGained: {},
+    // Deliberate removals awaiting a save write-back, itemId -> units. Banked
+    // like xpGained (and cleared at the same points) because the room takes the
+    // pack in the Durable Object, several ticks before anything reaches the
+    // save — and the client ledger that explains a solo hard-mode death to the
+    // item-loss detector cannot see a loss it never made.
+    itemsLost: {},
     // Slayer state rides the session so a group kill credits the member's own
     // task. The running completion total comes along because the task-reward
     // multiplier keys off it (every 5th task ×10, every 50th ×50) — snapshotting
@@ -1177,6 +1199,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
         member.inventory = loss.inventory
         member.equipment = loss.equipment
         itemsLost = loss.lost
+        member.itemsLost = bankMemberItemsLost(member.itemsLost, loss.lost)
       }
       events.push({ type: 'memberDeath', characterId: member.characterId, itemsLost })
       reselectTarget(next)

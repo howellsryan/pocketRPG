@@ -625,9 +625,13 @@ export async function writeBackMember(env, { characterId, identityId, member, se
   }
 
   const next = applyMemberToSave(saveObject, member)
-  const write = await writeSave(env, characterId, next, saveRevision, { baselineFrom: saveObject })
+  const write = await writeSave(env, characterId, next, saveRevision, {
+    baselineFrom: saveObject,
+    declaredLosses: member.itemsLost,
+  })
   member.saveRevision = write.saveRevision
   member.xpGained = {}
+  member.itemsLost = {}
   // Banked slayer points/completions are deltas — clearing them is what stops a
   // second write-back paying the same completed task again.
   member.slayerCredit = emptySlayerCredit()
@@ -865,7 +869,10 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
   let write
   try {
     settled = settleActionCompletion(withSession, { sourceType, sourceId, rewards })
-    write = await writeSave(env, characterId, withSession, saveRevision, { baselineFrom: saveObject })
+    write = await writeSave(env, characterId, withSession, saveRevision, {
+      baselineFrom: saveObject,
+      declaredLosses: member.itemsLost,
+    })
   } catch (err) {
     await releaseClaim()
     throw err
@@ -877,6 +884,7 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
   // by the write above, so clear it rather than granting it twice.
   member.inventory = Array.isArray(withSession.inventory) ? withSession.inventory.map((s) => (s ? { ...s } : null)) : []
   member.xpGained = {}
+  member.itemsLost = {}
   member.slayerCredit = emptySlayerCredit()
   member.saveRevision = write.saveRevision
 

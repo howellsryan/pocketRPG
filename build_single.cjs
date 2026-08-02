@@ -85,6 +85,7 @@ const sourceFiles = [
   'engine/itemMigrations.js',
   'engine/bankCharges.js',
   'engine/bankMutations.js',
+  'engine/chargeRecipes.js',
   'engine/lossLedger.js',
   'engine/holdingsReconcile.js',
   'engine/prayerDrain.js',

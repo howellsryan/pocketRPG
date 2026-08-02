@@ -86,6 +86,7 @@ import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, o
 import { fetchKillCounts } from './cloud/killCounts.js'
 import { fetchHardModeTargets, hardModeKey } from './cloud/hardMode.js'
 import { hardModeSkipCost, idleTaskDiedHard } from './engine/hardMode.js'
+import { recordItemLossEntries } from './engine/lossLedger.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 import { rollClueRewards } from './engine/clueScrolls.js'
 import dailyTasksData from './data/dailyTasks.json'
@@ -1250,6 +1251,10 @@ function GameApp() {
             })
             if (writes.hardModeItemsLost) {
               sim.hardModeItemsLost = writes.hardModeItemsLost
+              // Declared, or the one write that deliberately empties a pack
+              // reads to the detector exactly like the bug it watches for
+              // (src/engine/lossLedger.js).
+              recordItemLossEntries(writes.hardModeItemsLost)
               // Losing a pack has to survive a closed tab, so it does not wait
               // for the ordinary debounced flush.
               requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
@@ -2882,6 +2887,10 @@ function GameApp() {
             })
             if (writes.hardModeItemsLost) {
               sim.hardModeItemsLost = writes.hardModeItemsLost
+              // Declared, or the one write that deliberately empties a pack
+              // reads to the detector exactly like the bug it watches for
+              // (src/engine/lossLedger.js).
+              recordItemLossEntries(writes.hardModeItemsLost)
               // Losing a pack has to survive a closed tab, so it does not wait
               // for the ordinary debounced flush.
               requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
