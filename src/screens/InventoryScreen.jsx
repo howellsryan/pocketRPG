@@ -7,7 +7,7 @@ import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePa
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import SellConfirmModal from '../components/SellConfirmModal.jsx'
-import { freeSlots, countItem, removeItem, addItem, getBreakdownYield, sumSlotCharges } from '../engine/inventory.js'
+import { freeSlots, countItem, removeItem, addItem, getBreakdownYield, slotUnitsRemoved, sumSlotCharges } from '../engine/inventory.js'
 import { resolveInventoryEat } from '../engine/consumables.js'
 import { chargeRecipeSpend } from '../engine/chargeRecipes.js'
 import { recordItemLosses } from '../engine/lossLedger.js'
@@ -130,6 +130,7 @@ export default function InventoryScreen() {
     if (!selected) { setShowDropConfirm(false); return }
     const newInv = [...inventory]
     newInv[selected.slotIndex] = null
+    recordItemLosses(slotUnitsRemoved(selected.slot))
     updateInventory(newInv)
     setShowDropConfirm(false)
     setSelected(null)
@@ -147,6 +148,7 @@ export default function InventoryScreen() {
     const newInv = [...inventory]
     newInv[selected.slotIndex] = null
     addItem(newInv, yieldResult.itemId, yieldResult.qty, itemsData[yieldResult.itemId]?.stackable || false)
+    recordItemLosses(slotUnitsRemoved(selected.slot))
     updateInventory(newInv)
     addToast(`Broke down ${selected.item.name} into ${yieldResult.qty.toLocaleString()} ${itemsData[yieldResult.itemId]?.name || yieldResult.itemId}`, 'info')
     setShowBreakdownConfirm(false)

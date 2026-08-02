@@ -10,6 +10,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { classifyItemLoss } from '../functions/_lib/game/holdingsDelta.js'
 import { chargeRecipeSpend } from '../src/engine/chargeRecipes.js'
 import { hardModeDeathLoss } from '../src/engine/hardMode.js'
+import { slotUnitsRemoved } from '../src/engine/inventory.js'
 import { bankMemberItemsLost } from '../src/engine/coopBossEngine.js'
 import {
   readItemLossLedger,
@@ -112,6 +113,72 @@ describe('charging an item with its charge material', () => {
     expect(chargeRecipeSpend([{ itemId: SHARDS, qty: 1 }], 0)).toEqual({})
     expect(chargeRecipeSpend([{ itemId: SHARDS, qty: 1 }], NaN)).toEqual({})
     expect(chargeRecipeSpend(null as any, 5)).toEqual({})
+  })
+})
+
+describe('breaking an item down for its materials', () => {
+  // All 8 breakdownables are 7.5m-25m gear, so two in one save window clears the
+  // durable floor on value alone.
+  const PIPE = 'venom_blowpipe'
+  const HELM = 'serpentine_helm'
+  const YIELD = items[PIPE].breakdownResult
+
+  const before = { inventory: [{ itemId: PIPE, quantity: 1 }, { itemId: HELM, quantity: 1 }], bank: {}, equipment: {} }
+  const after = {
+    inventory: [{ itemId: YIELD, quantity: items[PIPE].breakdownQty + items[HELM].breakdownQty }],
+    bank: {},
+    equipment: {},
+  }
+
+  it('flags undeclared — the false positive being fixed', () => {
+    const loss = classifyItemLoss(before, after)
+    expect(loss.flagged).toBe(true)
+    expect(loss.reasons).toContain('durable_items')
+  })
+
+  it('does not flag once each broken slot is declared', () => {
+    const declared = { ...slotUnitsRemoved({ itemId: PIPE, quantity: 1 }), ...slotUnitsRemoved({ itemId: HELM, quantity: 1 }) }
+    expect(classifyItemLoss(before, after, undefined, declared).flagged).toBe(false)
+  })
+})
+
+describe('dropping an item', () => {
+  const BOW = 'twisted_bow'
+
+  it('flags undeclared once two valuable drops land in one window', () => {
+    const dropped = {
+      inventory: [{ itemId: BOW, quantity: 1 }, { itemId: 'scythe_of_vitur', quantity: 1 }],
+      bank: {}, equipment: {},
+    }
+    const empty = { inventory: [null, null], bank: {}, equipment: {} }
+    expect(classifyItemLoss(dropped, empty).flagged).toBe(true)
+  })
+
+  it('does not flag once the dropped slots are declared', () => {
+    const dropped = {
+      inventory: [{ itemId: BOW, quantity: 1 }, { itemId: 'scythe_of_vitur', quantity: 1 }],
+      bank: {}, equipment: {},
+    }
+    const empty = { inventory: [null, null], bank: {}, equipment: {} }
+    const declared = { [BOW]: 1, scythe_of_vitur: 1 }
+    expect(classifyItemLoss(dropped, empty, undefined, declared).flagged).toBe(false)
+  })
+
+  it('declares the whole stack a slot was holding, not one unit', () => {
+    expect(slotUnitsRemoved({ itemId: 'shark', quantity: 40 })).toEqual({ shark: 40 })
+  })
+
+  it('declares one unit for a slot carrying no quantity', () => {
+    expect(slotUnitsRemoved({ itemId: BOW })).toEqual({ [BOW]: 1 })
+  })
+
+  it('declares nothing for an empty or malformed slot', () => {
+    expect(slotUnitsRemoved(null as any)).toEqual({})
+    expect(slotUnitsRemoved({ quantity: 3 } as any)).toEqual({})
+  })
+
+  it('covers a noted slot, which holds a real stack', () => {
+    expect(slotUnitsRemoved({ itemId: 'shark', quantity: 500, noted: true })).toEqual({ shark: 500 })
   })
 })
 

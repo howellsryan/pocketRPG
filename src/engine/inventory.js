@@ -212,6 +212,22 @@ export function collectDepositAll(inventory, excludedItemIds = null) {
 }
 
 /**
+ * What emptying one slot outright takes out of holdings, as an item-loss
+ * declaration (src/engine/lossLedger.js). For the actions that destroy a slot
+ * on purpose — dropping it, breaking it down for materials — where the detector
+ * would otherwise read a deliberate 25m Venom Blowpipe going up in smoke as an
+ * incident.
+ *
+ * Quantity defaults to 1: a non-stackable slot carries no `quantity`, and
+ * declaring 0 would leave the loss unexplained.
+ */
+export function slotUnitsRemoved(slot) {
+  const itemId = slot?.itemId
+  if (typeof itemId !== 'string' || !itemId) return {}
+  return { [itemId]: Math.max(1, Math.floor(Number(slot.quantity) || 1)) }
+}
+
+/**
  * Total the charges carried by the first `depositQty` un-noted copies of
  * `itemId` — the copies a non-stackable bank deposit actually moves. Reading a
  * single slot's charges instead destroyed the rest of the stack's pool.
