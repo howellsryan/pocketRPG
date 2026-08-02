@@ -111,6 +111,33 @@ which is what `GET /api/admin/item-loss` and the **Incidents** panel are for:
 - Shaping is `functions/_lib/game/itemLossReport.js`, separated from the queries
   so the snapshot-linking rule is under test.
 
+### Verdicts — `POST /api/admin/item-loss`
+
+A flag is not a loss. The detector is in shadow mode precisely because we do not
+yet know which of its flags are real, so the queue needs somewhere to put that
+answer: `item_loss_reviews` (migration 0037), keyed on the audit event id, with
+the **Not an incident** / **Confirm real loss** / **Reopen** buttons on the
+selected incident and an optional note saying why.
+
+- **Both verdicts, not just the dismissal.** Recording only false positives
+  leaves `confirmed` and "nobody has looked yet" as the same unlabelled row, and
+  the false-positive rate is the one number Phase 3 turns on. `open` is the
+  absence of a row, so reopening is a DELETE and undo leaves no residue.
+- **Dismissed leaves the queue; it is never deleted.** The whole point is to
+  come back in a few weeks and ask what the detector got wrong, which needs the
+  rows *and* the notes. The default list hides them, `review=dismissed|confirmed|all`
+  brings them back.
+- **The filter runs in SQL**, joined into the list query before its `LIMIT` —
+  filtering the shaped rows afterwards returns a short page every time something
+  recent was dismissed. `character_incident_count` excludes dismissed flags for
+  the same reason: the number has to keep meaning incidents.
+- The verdict is keyed on `audit_events.id`, and audit ids are one sequence
+  across every event type, so the POST checks the row's `event_type` before
+  writing — an off-by-one would otherwise file a verdict against a grant or a
+  restore and quietly poison the measurement.
+- Nothing here touches a save, a save lock or the detector, which is what keeps
+  the portal's Server tab read-only where it counts.
+
 ## The /admin portal is split by scope
 
 The portal has two tabs, because an admin action is either about **one player**
@@ -122,9 +149,9 @@ touches somebody's account:
   The chosen name stays on screen above the actions rather than only in the
   picker they scrolled past — a grant and a restore are both irreversible for
   whoever is on the receiving end.
-- **Server** — read-only across every account. Today that is the item-loss
-  Incidents queue, loaded when the tab is first opened and searchable by
-  character.
+- **Server** — across every account, and it writes no save. Today that is the
+  item-loss Incidents queue, loaded when the tab is first opened, searchable by
+  character and filterable by verdict.
 
 The two meet at one handoff: **Open in Player actions** on a selected incident
 carries its character *and* its pre-loss snapshot into the Player scope with
