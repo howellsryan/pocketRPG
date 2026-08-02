@@ -87,11 +87,15 @@ function rotate(meshes, rot) {
 }
 
 // Blade up +Y, grip ~16% below origin, centred on X/Z, height = targetLen (m).
-function canonWeapon(meshes, targetLen) {
+// `grip` names the haft's materials for a weapon whose head sweeps out to one
+// side (a scythe): centring such a model on its total bounds puts the origin —
+// and so the hero's fist — out in the air beside the shaft.
+function canonWeapon(meshes, targetLen, grip) {
   rotate(meshes, rotWeapon)
   const { mn, mx } = bounds(meshes)
   const s = targetLen / (mx[1] - mn[1])
-  const cx = (mn[0] + mx[0]) / 2, cz = (mn[2] + mx[2]) / 2
+  const shaft = grip ? bounds(meshes.filter((m) => grip.test(m.name))) : { mn, mx }
+  const cx = (shaft.mn[0] + shaft.mx[0]) / 2, cz = (shaft.mn[2] + shaft.mx[2]) / 2
   for (const m of meshes) for (let i = 0; i < m.positions.length; i += 3) {
     m.positions[i] = (m.positions[i] - cx) * s
     m.positions[i + 1] = (m.positions[i + 1] - mn[1]) * s - 0.16 * targetLen
@@ -119,6 +123,7 @@ const ARCHETYPES = [
   { fbx: 'WoodenStaff', out: 'weapons/q_wooden_staff.gltf', kind: 'weapon', len: 1.55 },
   // Polearm + two-hander.
   { fbx: 'Spear', out: 'weapons/q_spear.gltf', kind: 'weapon', len: 2.1 },
+  { fbx: 'Scythe', out: 'weapons/q_scythe.gltf', kind: 'weapon', len: 2.1, grip: /wood/i },
   { fbx: 'Claymore', out: 'weapons/q_claymore.gltf', kind: 'weapon', len: 1.6 },
   // Extra shields (the plain q_shield_basic is a near-duplicate of the existing
   // wooden q_shield, so it is not built — heater/round/celtic add the variety).
@@ -131,7 +136,7 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)
 
 for (const a of ARCHETYPES) {
   const meshes = extractMeshes(parseFbx(path.join(SRC, a.fbx + '.fbx')))
-  if (a.kind === 'weapon') canonWeapon(meshes, a.len)
+  if (a.kind === 'weapon') canonWeapon(meshes, a.len, a.grip)
   else canonShield(meshes, a.span)
 
   const doc = new Document()

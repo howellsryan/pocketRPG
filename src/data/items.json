@@ -9044,6 +9044,7 @@
     "chargeItemId": "shardglass_shards",
     "breakdownResult": "shardglass_shards",
     "breakdownQty": 5000,
+    "shardglassShopCost": 15000,
     "speedMultiplier": 0.5,
     "attackSpeed": 4,
     "attackStyle": "stab",
@@ -9085,6 +9086,7 @@
     "chargeItemId": "shardglass_shards",
     "breakdownResult": "shardglass_shards",
     "breakdownQty": 5000,
+    "shardglassShopCost": 50000,
     "attackSpeed": 7,
     "attackStyle": "slash",
     "attackBonus": {

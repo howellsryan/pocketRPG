@@ -35,7 +35,7 @@ Equipment tabs save a full loadout — everything worn plus your inventory — a
 
 ## Shardglass gear
 
-Shardglass gear runs on charges rather than durability: load it with shardglass shards from the item's modal, and it does nothing at all once empty. The Blighted Gauntlet drops the whole set, and any duplicate breaks down into 5,000 shards.
+Shardglass gear runs on charges rather than durability: load it with shardglass shards from the item's modal, and it does nothing at all once empty. The Blighted Gauntlet drops the whole set, and any duplicate breaks down into 5,000 shards — which the shard store will sell you a replacement for, at 15,000 shards a tool and 50,000 a weapon.
 
 Three gathering tools carry the same perk — the Shardglass Pickaxe (Mining 70), Axe (Woodcutting 70) and Harpoon (Fishing 70). Each is the fastest tool in its skill, and while charged every action spends 2 charges to bring back double the ore, logs or fish. This works live, idle and offline. Run one dry and it stops counting as a tool entirely, so you fall back to your next-best pickaxe, axe or harpoon until you recharge it.
 
