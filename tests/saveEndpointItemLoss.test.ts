@@ -95,6 +95,58 @@ describe('PUT /api/save item-loss shadow mode', () => {
     expect(payload.nextRevision).toBe(8)
   })
 
+  // The noise this endpoint was drowning in: a summoning infusion spends equal
+  // counts of empty_pouch, blue_charm and steel_platebody, and the last is
+  // `type: armour` — durable — so routine production idling flagged on nearly
+  // every save. Declared, it is consumption; undeclared, it still reads as loss.
+  it('does not flag an infusion whose inputs the client declared', async () => {
+    const before = {
+      empty_pouch: { itemId: 'empty_pouch', quantity: 1000 },
+      blue_charm: { itemId: 'blue_charm', quantity: 1000 },
+      steel_platebody: { itemId: 'steel_platebody', quantity: 1000 },
+    }
+    const after = {
+      empty_pouch: { itemId: 'empty_pouch', quantity: 800 },
+      blue_charm: { itemId: 'blue_charm', quantity: 800 },
+      steel_platebody: { itemId: 'steel_platebody', quantity: 800 },
+      steel_titan_pouch: { itemId: 'steel_titan_pouch', quantity: 200 },
+    }
+    await seed(before)
+
+    const res = await onRequestPut({
+      request: put({
+        save_data: JSON.stringify(saveWith(after)),
+        save_revision: 7,
+        losses: { empty_pouch: 200, blue_charm: 200, steel_platebody: 200 },
+      }),
+      env,
+    } as any)
+
+    expect(res.status).toBe(200)
+    expect(history().map((r: any) => r.reason)).toEqual(['routine'])
+    expect(audits()).toHaveLength(0)
+  })
+
+  it('still flags the gear a declared infusion did not account for', async () => {
+    await seed({ ...bankOf(DURABLES), empty_pouch: { itemId: 'empty_pouch', quantity: 1000 } })
+
+    // Enough gear survives that detectBankWipe's 90%-of-ids floor stays clear —
+    // this has to be the DELTA detector's verdict, not the old guard's.
+    const survivors = { ...bankOf(DURABLES.slice(0, 6)), empty_pouch: { itemId: 'empty_pouch', quantity: 800 } }
+    await onRequestPut({
+      request: put({
+        save_data: JSON.stringify(saveWith(survivors)),
+        save_revision: 7,
+        losses: { empty_pouch: 200 },
+      }),
+      env,
+    } as any)
+
+    const payload = JSON.parse(audits()[0].payload_json)
+    expect(payload.durableUnits).toBe(DURABLES.length - 6)
+    expect(payload.declaredUnits).toBe(200)
+  })
+
   it('still lets the old bank-wipe guard refuse a total wipe', async () => {
     await seed(bankOf(DURABLES))
     const res = await onRequestPut({

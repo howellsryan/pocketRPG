@@ -11,6 +11,7 @@ import { LOCAL_WRITE_MARKER_KEY } from '../db/stores.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
 import { classifySaveError, saveLockCode } from './saveErrors.js'
+import { readItemLossLedger, resetItemLossLedger, settleItemLossLedger } from '../engine/lossLedger.js'
 import { clearWorldHandoff, hasPendingWorldHandoff } from './worldHandoff.js'
 
 const PUSH_DEBOUNCE_MS = 120_000
@@ -181,7 +182,14 @@ async function performPush() {
     // enforce the idle write ceiling; engaged/manual saves omit it (default
     // interactive) and always persist + refresh the freshness stamp.
     const interactive = isEngaged()
-    const res = await api.putSave(json, { ...pendingSaveOptions, saveRevision: lastSaveRevision, interactive })
+    // What this window deliberately spent, so the server's item-loss detector
+    // reads routine idling as consumption rather than destruction
+    // (src/engine/lossLedger.js). Captured BEFORE the request so the settle
+    // below subtracts exactly what went out — anything spent while this push is
+    // on the wire belongs to the next save's ledger.
+    const losses = readItemLossLedger()
+    const res = await api.putSave(json, { ...pendingSaveOptions, saveRevision: lastSaveRevision, interactive, losses })
+    if (losses) settleItemLossLedger(losses)
     pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     if (Number.isFinite(res?.save_revision)) lastSaveRevision = res.save_revision
@@ -439,8 +447,13 @@ export function beaconSaveNow(snapshot) {
   // Teardown saves are player-driven, so mark them interactive: the server then
   // always persists them (never applies the idle write ceiling), which keeps the
   // optimistic +1 revision bump below correct.
-  const sent = sendSaveBeacon(JSON.stringify(data), { saveRevision: lastSaveRevision, interactive: true })
+  const losses = readItemLossLedger()
+  const sent = sendSaveBeacon(JSON.stringify(data), { saveRevision: lastSaveRevision, interactive: true, losses })
   if (!sent) return false
+  // A beacon's outcome is unreadable, so the ledger is settled on the same
+  // optimistic assumption as the revision bump below. A beacon that misses
+  // leaves the next push under-declaring, which flags — never the reverse.
+  if (losses) settleItemLossLedger(losses)
   lastSaveRevision = (Number.isFinite(lastSaveRevision) ? lastSaveRevision : 0) + 1
   lastPushedContentKey = contentKey
   lastPushedAt = Date.now()
@@ -549,6 +562,11 @@ export async function checkCloudNewer() {
 // to do this based on conflict-resolution UX.
 export async function applyCloudSave(payload, updatedAt, saveRevision) {
   await applySavePayload(payload, { restoreLocalIdleMirrors: false })
+  // We just adopted the server's holdings, so anything the ledger still claims
+  // describes a window the server has already superseded. Carrying it forward
+  // would let the next save's real losses hide behind spends that no longer
+  // relate to what the server is comparing against.
+  resetItemLossLedger()
   if (updatedAt) lastPushedAt = updatedAt
   // We just adopted the server's copy, so its content is already durably stored.
   // Seed the dirty-check key with it: the next autosave / screen-change push of
@@ -597,6 +615,7 @@ export function isLocalWriteNewerThanCloud(cloudUpdatedAt) {
 
 // Reset cached state — call on logout / character switch.
 export function resetSyncState() {
+  resetItemLossLedger()
   lastPushedAt = 0
   lastSaveRevision = 0
   lastPushedContentKey = null

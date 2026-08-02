@@ -114,6 +114,10 @@ export function shapeItemLossIncidents({ rows = [], snapshots = [], restores = [
       resource_value: Number(payload.resourceValue) || 0,
       coins_lost: Number(payload.coinsLost) || 0,
       charges_lost: Number(payload.chargesLost) || 0,
+      // Units the writer declared as deliberate spends, already netted out of
+      // the figures above. Non-zero means the flag survived a declaration, which
+      // is a stronger signal than one from a client too old to declare at all.
+      declared_units: Number(payload.declaredUnits) || 0,
       distinct_items_lost: Number(payload.distinctItemsLost) || 0,
       items: Array.isArray(payload.items) ? payload.items : [],
       // The row to hand the Salvage panel. Null means the pre-loss state was

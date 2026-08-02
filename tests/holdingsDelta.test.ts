@@ -6,7 +6,10 @@ import { describe, it, expect } from 'vitest'
 import {
   classifyItemLoss,
   classifyItemLossFromHoldings,
+  declareItemLosses,
   holdingsOf,
+  mergeDeclaredLosses,
+  readDeclaredLosses,
   isResourceItem,
   rememberHoldingsBaseline,
   readHoldingsBaseline,
@@ -224,5 +227,103 @@ describe('summariseHoldings', () => {
     expect(summary.distinctItems).toBe(3)
     expect(summary.totalUnits).toBe(52)
     expect(summary.topItems[0].itemId).toBe('nether_demon_whip')
+  })
+})
+
+// ── Declared losses (Phase 3) ──────────────────────────────────────────────
+// Production idling spends recipe inputs by the thousand. Every one of the 15
+// real incidents this feature was built from was a summoning infusion — equal
+// counts of empty_pouch, blue_charm and steel_platebody, the last of which is
+// `type: armour` and therefore DURABLE — so ordinary crafting flagged on
+// essentially every save and buried the flags worth reading.
+describe('declared losses', () => {
+  const infusionBefore = {
+    bank: {
+      empty_pouch: { itemId: 'empty_pouch', quantity: 1000 },
+      blue_charm: { itemId: 'blue_charm', quantity: 1000 },
+      steel_platebody: { itemId: 'steel_platebody', quantity: 1000 },
+    },
+  }
+  const infusionAfter = {
+    bank: {
+      empty_pouch: { itemId: 'empty_pouch', quantity: 800 },
+      blue_charm: { itemId: 'blue_charm', quantity: 800 },
+      steel_platebody: { itemId: 'steel_platebody', quantity: 800 },
+      steel_titan_pouch: { itemId: 'steel_titan_pouch', quantity: 200 },
+    },
+  }
+  const infusionDeclared = { empty_pouch: 200, blue_charm: 200, steel_platebody: 200 }
+
+  it('flags an infusion that declares nothing', () => {
+    const loss = classifyItemLoss(infusionBefore, infusionAfter)
+    expect(loss.flagged).toBe(true)
+    expect(loss.reasons).toContain('durable_items')
+  })
+
+  it('does not flag the same infusion once declared', () => {
+    const loss = classifyItemLoss(infusionBefore, infusionAfter, undefined, infusionDeclared)
+    expect(loss.flagged).toBe(false)
+    expect(loss.durableUnits).toBe(0)
+    expect(loss.resourceUnits).toBe(0)
+    expect(loss.declaredUnits).toBe(600)
+  })
+
+  it('still flags what the declaration does not cover', () => {
+    // Declares its materials honestly, but a bug eats the bank's gear alongside.
+    const before = {
+      bank: {
+        ...infusionBefore.bank,
+        ...bankOf(DURABLES.slice(0, 8)),
+      },
+    }
+    const after = { bank: { ...infusionAfter.bank } }
+    const loss = classifyItemLoss(before, after, undefined, infusionDeclared)
+    expect(loss.flagged).toBe(true)
+    expect(loss.durableUnits).toBe(8)
+    expect(loss.items.some((i: any) => i.itemId === 'steel_platebody')).toBe(false)
+  })
+
+  // The netting is per item and clamped at zero. Without that, one wildly
+  // over-declared line would absorb every other item's disappearance.
+  it('cannot let an over-declaration of one item cover another', () => {
+    const before = { bank: { ...bankOf(DURABLES.slice(0, 6)), empty_pouch: { itemId: 'empty_pouch', quantity: 10 } } }
+    const after = { bank: {} }
+    const loss = classifyItemLoss(before, after, undefined, { empty_pouch: 1_000_000 })
+    expect(loss.flagged).toBe(true)
+    expect(loss.durableUnits).toBe(6)
+    expect(loss.declaredUnits).toBe(10)
+  })
+
+  it('ignores a malformed or negative declaration rather than trusting it', () => {
+    const loss = classifyItemLoss(infusionBefore, infusionAfter, undefined, {
+      empty_pouch: -500, blue_charm: 'lots', steel_platebody: null,
+    } as any)
+    expect(loss.declaredUnits).toBe(0)
+    expect(loss.flagged).toBe(true)
+  })
+
+  it('nets a declaration through classifyItemLossFromHoldings too', () => {
+    const loss = classifyItemLossFromHoldings(holdingsOf(infusionBefore), infusionAfter, undefined, infusionDeclared)
+    expect(loss.flagged).toBe(false)
+  })
+})
+
+describe('declared-loss ledgers carried on the save object', () => {
+  it('reads back what a server-side mutation declared', () => {
+    const save: any = { bank: {} }
+    declareItemLosses(save, { empty_pouch: 5 })
+    declareItemLosses(save, { empty_pouch: 3, blue_charm: 2 })
+    expect(readDeclaredLosses(save)).toEqual({ empty_pouch: 8, blue_charm: 2 })
+  })
+
+  it('declares nothing for a save nothing was recorded against', () => {
+    expect(readDeclaredLosses({ bank: {} })).toBeNull()
+  })
+
+  it('merges an explicit declaration with the carried one', () => {
+    expect(mergeDeclaredLosses({ a: 1 }, { a: 2, b: 3 })).toEqual({ a: 3, b: 3 })
+    expect(mergeDeclaredLosses(null, { a: 1 })).toEqual({ a: 1 })
+    expect(mergeDeclaredLosses({ a: 1 }, null)).toEqual({ a: 1 })
+    expect(mergeDeclaredLosses(null, null)).toBeNull()
   })
 })

@@ -50,7 +50,10 @@ import { getLevelFromXP } from './experience.js'
 // block — pass type:'quest' and this function is intentionally a no-op.
 //
 // Returns a plain summary with raw item ids (no name decoration).
-// { banked, stoppedReason, died?, finalHP?, monstersKilled? }
+// { banked, consumed, stoppedReason, died?, finalHP?, monstersKilled? }
+// `consumed` is what this call actually took out of holdings — the declared half
+// of the item-loss ledger (src/engine/lossLedger.js); callers route it to the
+// client ledger or to writeSave's declaredLosses.
 
 const XP_CAP = 200_000_000
 
@@ -105,6 +108,16 @@ export function applyTaskResult(state, sim, type) {
 
   const { stats, bank, equipment, settings } = state
 
+  // Units this call actually removes from holdings, for the declared-loss ledger
+  // (src/engine/lossLedger.js). Tallied from what LEFT, never from what the sim
+  // asked for: every debit below is clamped by what the container held.
+  /** @type {Record<string, number>} */
+  const consumed = {}
+  /** @param {string} itemId @param {number} qty */
+  const tally = (itemId, qty) => {
+    if (itemId && qty > 0) consumed[itemId] = (consumed[itemId] || 0) + qty
+  }
+
   // XP (all non-quest types)
   if (type !== 'quest' && sim.xpGained) {
     for (const [skill, xp] of Object.entries(sim.xpGained)) {
@@ -136,8 +149,10 @@ export function applyTaskResult(state, sim, type) {
     }
 
     if (sim.ammoConsumed && equipment.ammo && equipment.ammo.itemId === sim.ammoConsumed.itemId) {
-      const remaining = Math.max(0, (Number(equipment.ammo.quantity) || 0) - sim.ammoConsumed.quantity)
+      const held = Number(equipment.ammo.quantity) || 0
+      const remaining = Math.max(0, held - sim.ammoConsumed.quantity)
       equipment.ammo = remaining > 0 ? { ...equipment.ammo, quantity: remaining } : null
+      tally(sim.ammoConsumed.itemId, held - remaining)
     }
 
     // Scale-charged armour (shardglass) drains one charge per worn piece per hit.
@@ -168,9 +183,11 @@ export function applyTaskResult(state, sim, type) {
     for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
       const existing = bank[itemId]
       if (!existing) continue
-      const newQty = (Number(existing.quantity) || 0) - qty
+      const had = Number(existing.quantity) || 0
+      const newQty = had - qty
       if (newQty <= 0) delete bank[itemId]
       else bank[itemId] = { ...existing, quantity: newQty }
+      tally(itemId, had - Math.max(0, newQty))
     }
   }
 
@@ -195,6 +212,7 @@ export function applyTaskResult(state, sim, type) {
 
   return {
     banked,
+    consumed,
     stoppedReason: sim.stoppedReason || null,
     ...(type === 'combat' ? {
       died: sim.died === true,

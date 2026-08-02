@@ -212,6 +212,10 @@ export const api = {
       // enforce the idle write ceiling. Omitted (→ server default interactive)
       // for genuine/engaged saves so they always persist + refresh freshness.
       ...(options?.interactive === false ? { interactive: false } : {}),
+      // Declared item-loss ledger for this window (src/engine/lossLedger.js).
+      // A side-channel, never stored: it only tells the server's detector which
+      // of this write's removals were deliberate.
+      ...(options?.losses ? { losses: options.losses } : {}),
     }),
   }),
   getCollectionLog: () => request('/api/collection-log'),
@@ -301,7 +305,7 @@ export const api = {
 // cancelled mid-flight, losing progress since the last debounced push. Routes
 // to POST /api/save (beacon can't set the Authorization / X-Character-Id
 // headers, so token + character_id ride in the body). Returns true if queued.
-export function sendSaveBeacon(save_data, { saveRevision = 0, interactive = true } = {}) {
+export function sendSaveBeacon(save_data, { saveRevision = 0, interactive = true, losses = null } = {}) {
   try {
     if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return false
     const token = getToken()
@@ -313,6 +317,7 @@ export function sendSaveBeacon(save_data, { saveRevision = 0, interactive = true
       save_data,
       save_revision: Number.isFinite(saveRevision) ? saveRevision : 0,
       ...(interactive === false ? { interactive: false } : {}),
+      ...(losses ? { losses } : {}),
     })
     const blob = new Blob([body], { type: 'application/json' })
     return navigator.sendBeacon(apiUrl('/api/save'), blob)

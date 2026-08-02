@@ -359,7 +359,14 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // audited and the outgoing blob preserved. The two guards above remain the
   // only writes /api/save refuses (§14). Runs after the no-op early-return, so
   // a content-identical save never pays for it.
-  const itemLoss = previousJson !== null ? classifyItemLoss(previousSave, parsedNext || {}) : null
+  //
+  // `losses` is the client's declared ledger for this window — what its engine
+  // deliberately spent (recipe inputs, idle supplies). It is a side-channel, NOT
+  // part of the blob: nothing here is stored, so the save format is untouched and
+  // the no-op key above is unaffected. It can only net a loss down, never up.
+  const itemLoss = previousJson !== null
+    ? classifyItemLoss(previousSave, parsedNext || {}, undefined, body?.losses)
+    : null
 
   // Recompute denormalized summary so the leaderboard / PvP CB lookups can
   // run as cheap indexed SELECTs against `characters` instead of LEFT
