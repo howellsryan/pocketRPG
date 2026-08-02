@@ -59,7 +59,13 @@ export class FakeD1 {
     this.db.exec('BEGIN')
     try {
       const out: any[] = []
-      for (const s of statements) out.push(await (s as any).run())
+      // A batched SELECT comes back with `results` in real D1, so reading in a
+      // batch has to work here too — `run()` alone would hand every query back
+      // empty and the caller would silently see no rows.
+      for (const s of statements) {
+        const reads = /^\s*(select|with)\b/i.test((s as any).sql || '')
+        out.push(await (reads ? (s as any).all() : (s as any).run()))
+      }
       this.db.exec('COMMIT')
       return out
     } catch (e) {

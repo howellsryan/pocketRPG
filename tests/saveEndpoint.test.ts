@@ -184,10 +184,14 @@ describe('PUT /api/save summary update skipping', () => {
 
     await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
     expect(batches).toHaveLength(1)
-    // saves upsert + folded idle stamp; no characters UPDATE (summary unchanged).
-    expect(batches[0]).toHaveLength(2)
-    expect(batches[0][0].sql).toMatch(/INSERT INTO saves/)
-    expect(batches[0][1].sql).toMatch(/INSERT INTO character_idle_state/)
+    // save-history snapshot + saves upsert + folded idle stamp; no characters
+    // UPDATE (summary unchanged).
+    expect(batches[0]).toHaveLength(3)
+    // The snapshot copies the row the upsert is about to overwrite, so it must
+    // come first — D1 runs a batch in order.
+    expect(batches[0][0].sql).toMatch(/INSERT INTO save_history/)
+    expect(batches[0][1].sql).toMatch(/INSERT INTO saves/)
+    expect(batches[0][2].sql).toMatch(/INSERT INTO character_idle_state/)
     expect(batches[0].some((s: any) => /UPDATE characters/.test(s.sql))).toBe(false)
   })
 
@@ -203,8 +207,9 @@ describe('PUT /api/save summary update skipping', () => {
 
     await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
     expect(batches).toHaveLength(1)
-    // saves upsert + folded idle stamp + characters UPDATE (summary changed).
-    expect(batches[0]).toHaveLength(3)
+    // save-history snapshot + saves upsert + folded idle stamp + characters
+    // UPDATE (summary changed).
+    expect(batches[0]).toHaveLength(4)
     expect(batches[0].some((s: any) => /UPDATE characters/.test(s.sql))).toBe(true)
     expect(batches[0].some((s: any) => /INSERT INTO character_idle_state/.test(s.sql))).toBe(true)
   })
