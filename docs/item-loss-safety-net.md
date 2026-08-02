@@ -37,7 +37,16 @@ better threshold.
   days (≈12 rows per character); `item_loss` forced whenever Phase 2 flags,
   rate-limited to one per 5 minutes so a flag storm cannot fill the table, kept
   14 days; `pre_restore` written unconditionally by an admin restore, so a
-  restore to the wrong snapshot is itself undoable.
+  restore to the wrong snapshot is itself undoable; `manual` taken on demand.
+- `POST /api/admin/snapshot-save` (the **Snapshot now** button) takes the
+  cadence's snapshot immediately — the same `INSERT ... SELECT`, the same blob
+  copied verbatim — ignoring the 6h window, for an admin about to touch an
+  account or looking at one mid-incident. It carries its own reason so it is
+  distinguishable in the list and keeps the longer retention: a snapshot someone
+  took deliberately is the last one worth pruning after three days. It is the
+  one admin write that does **not** check the save locks, because it only reads
+  the stored row — and a character mid-world-session or mid-co-op fight is
+  precisely when a snapshot is worth having.
 - Pruned by age on a 2% probabilistic gate on the save path.
 
 Recovery is `/api/admin/restore-save` (`ADMIN_SECRET` only, same as

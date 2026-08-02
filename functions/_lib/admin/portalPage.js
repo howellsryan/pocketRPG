@@ -481,6 +481,33 @@ const SCRIPT = `
     }, msg);
   }
 
+  function snapshotNow(){
+    var msg = $('restore-msg');
+    msg.hidden = true;
+    var characterId = Number(selectedCharacter);
+    if (!characterId) return message(msg, 'err', 'Choose a character first.');
+    var btn = $('snapshot-now-btn');
+    btn.disabled = true;
+    fetch('/api/admin/snapshot-save', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ character_id: characterId, reason: 'admin portal' }),
+    }).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(body){
+        return { status: res.status, body: body };
+      });
+    }).then(function(r){
+      if (r.status === 401) return lock('That secret is no longer valid. Enter it again.');
+      if (r.status >= 400 || !r.body || !r.body.ok) return message(msg, 'err', errorText(r.status, r.body));
+      // Re-list so the new row is on screen and immediately restorable. It
+      // clears the panel (restore-msg included), so the receipt goes after it.
+      loadSnapshots();
+      message(msg, 'ok', 'Snapshot taken at save revision ' + num(r.body.save_revision) + '.');
+    }).catch(function(){
+      message(msg, 'err', 'Could not reach the server.');
+    }).then(function(){ btn.disabled = false; });
+  }
+
   function renderSnapshots(){
     var entries = [];
     for (var i = 0; i < snapshots.length; i++){
@@ -550,8 +577,8 @@ const SCRIPT = `
         num(restores.resourceUnits || 0) + ' resource units, discards ' +
         num(discards.durableUnits || 0) + ' / ' + num(discards.resourceUnits || 0);
       if (dryRun) return message(msg, 'ok', 'Preview only — nothing written. This would ' + summary + '.');
-      message(msg, 'ok', 'Restored (' + summary + '). The player must reload the game to pull it.');
       loadSnapshots();
+      message(msg, 'ok', 'Restored (' + summary + '). The player must reload the game to pull it.');
     }).catch(function(){
       message(msg, 'err', 'Could not reach the server.');
     }).then(function(){
@@ -672,6 +699,7 @@ const SCRIPT = `
     $('preview-btn').addEventListener('click', function(){ grant(true); });
     $('grant-btn').addEventListener('click', function(){ grant(false); });
     $('snapshots-btn').addEventListener('click', loadSnapshots);
+    $('snapshot-now-btn').addEventListener('click', snapshotNow);
     $('restore-preview-btn').addEventListener('click', function(){ restore(true); });
     $('restore-btn').addEventListener('click', function(){ restore(false); });
     $('dest-inventory').addEventListener('click', function(){ setDestination('inventory'); });
@@ -801,6 +829,7 @@ const BODY = `
         <div class="field">
           <div class="actions">
             <button id="snapshots-btn" type="button" class="fm-btn fm-btn--brass">Find snapshots</button>
+            <button id="snapshot-now-btn" type="button" class="fm-btn">Snapshot now</button>
           </div>
           <p class="field__hint" id="snapshot-count"></p>
           <div id="snapshots" class="picklist" role="listbox" aria-label="Snapshot"></div>

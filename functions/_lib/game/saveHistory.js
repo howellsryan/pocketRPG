@@ -25,6 +25,12 @@ export const SAVE_HISTORY_FLAGGED_TTL_MS = 14 * 24 * 60 * 60 * 1000
 
 export const SAVE_HISTORY_REASON_ROUTINE = 'routine'
 export const SAVE_HISTORY_REASON_ITEM_LOSS = 'item_loss'
+// An admin pressing the button. Same snapshot the cadence takes — the same
+// INSERT ... SELECT off the same row — just now instead of on the 6h clock. It
+// carries its own reason rather than 'routine' so it is distinguishable in the
+// list and keeps the longer retention: someone took it deliberately, which is
+// exactly the snapshot least worth pruning after three days.
+export const SAVE_HISTORY_REASON_MANUAL = 'manual'
 
 // Prune probability on the save path. Deliberately lower than the co-op sweep's
 // 5%: two DELETEs that match nothing are cheap, but there is no reason to run
@@ -83,6 +89,14 @@ export function flaggedSaveHistoryStatement(env, characterId, now = Date.now()) 
 
 export function forcedSaveHistoryStatement(env, characterId, reason, now = Date.now()) {
   return saveHistoryStatement(env, characterId, { reason, minIntervalMs: 0, now })
+}
+
+/** Takes the cadence snapshot on demand. Returns false when the character has
+ * no `saves` row for the INSERT ... SELECT to copy — there is no prior state to
+ * preserve, which is not an error. */
+export async function takeManualSaveHistory(env, characterId, now = Date.now()) {
+  const res = await forcedSaveHistoryStatement(env, characterId, SAVE_HISTORY_REASON_MANUAL, now).run()
+  return Number(res?.meta?.changes) > 0
 }
 
 export async function pruneSaveHistory(env, now = Date.now()) {
