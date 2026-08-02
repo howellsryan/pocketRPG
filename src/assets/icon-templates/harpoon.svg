@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_head" x1="0" y1="0" x2="1" y2="0.4">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+    <linearGradient id="{{id}}_shaft" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4a3a2a"/><stop offset="1" stop-color="#241a10"/>
+    </linearGradient>
+    <linearGradient id="{{id}}_grip" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#b08850"/><stop offset="1" stop-color="#6d4c22"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="245" y="196" width="22" height="150" rx="9" fill="url(#{{id}}_shaft)"/>
+    <rect x="243" y="318" width="26" height="118" rx="9" fill="url(#{{id}}_grip)"/>
+    <rect x="233" y="424" width="46" height="40" rx="10" fill="#241a10"/>
+    <path d="M256 34 C 292 100 306 158 300 206 L212 206 C 206 158 220 100 256 34 Z" fill="url(#{{id}}_head)"/>
+    <path d="M214 142 C 172 156 140 190 128 240 C 168 214 194 202 220 198 Z" fill="{{base}}"/>
+    <path d="M256 70 L256 194" stroke="{{light}}" stroke-width="7" fill="none"/>
+    <rect x="227" y="200" width="58" height="26" rx="8" fill="{{shade}}"/>
+  </g>
+</svg>

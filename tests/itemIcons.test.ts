@@ -85,8 +85,9 @@ describe('itemIcons', () => {
     expect(getItemIconKey(itemsData.cooked_meat)).toBe('meat')
   })
 
-  // Every harpoon shares the spear silhouette. Without the suffix rule the
-  // Shardglass Harpoon falls through to its stab attack style and draws a dagger.
+  // The glyph layer under the bespoke art, which the world falls back to until
+  // its lazy bespoke map lands. Without the suffix rule the Shardglass Harpoon
+  // drops to its stab attack style there and flashes a dagger.
   it('harpoons of every tier resolve to the spear glyph', () => {
     expect(getItemIconKey(itemsData.harpoon)).toBe('spear')
     expect(getItemIconKey(itemsData.shardglass_harpoon)).toBe('spear')

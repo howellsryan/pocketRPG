@@ -19,6 +19,14 @@ const HEX = /^#[0-9a-f]{3,8}$/i
 const resolve = (item: any) => resolveItemIcon(item, { bespoke, glyphs })
 
 describe('item icon parity — idle game vs open world', () => {
+  // Both drew a generic tinted glyph before their icon-templates went in, which
+  // read as a dagger and a plain halberd beside the bespoke Axe and Pickaxe.
+  it('the shardglass polearms draw their own bespoke art, not a shared glyph', () => {
+    for (const id of ['shardglass_halberd', 'shardglass_harpoon']) {
+      expect(resolve(itemsData[id]).kind, id).toBe('bespoke')
+    }
+  })
+
   it('every item resolves to renderable art, so no item can fall through to a placeholder', () => {
     const unrendered = Object.values(itemsData)
       .filter(item => resolve(item).kind === 'none')

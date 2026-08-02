@@ -287,6 +287,12 @@
     "spear": {
       "krylth_spear": "krylth", "gorath_s_warspear": "gorath", "dragon_hunter_lance": "dragon"
     },
+    "harpoon": {
+      "shardglass_harpoon": "shardglass"
+    },
+    "halberd": {
+      "shardglass_halberd": "shardglass"
+    },
     "axe": {
       "2nd_age_axe": "gold", "emberhowl_axe": "fire_orange", "shardglass_axe": "shardglass"
     },
