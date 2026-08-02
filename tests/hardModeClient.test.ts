@@ -66,3 +66,40 @@ describe('hard mode client mirror', () => {
     await expect(pushHardModeTarget('monsters', 'corporeal_horror', true)).rejects.toThrow('nope')
   })
 })
+
+// The bug this pins: the loot modal used to read `hardModeActive` off the
+// record resolveMonsterRewardData returns, which is a RAW monsters.json lookup
+// built for the reward tables. It never carries the flag, so the answer was
+// always "not hard" — and Fight Again / Skip after a hard kill silently
+// restarted an ORDINARY boss while the server's switch kept paying the doubled
+// drop rates. The flag has to ride the fight record, or the modal itself.
+describe('the reward-table lookup is not a record of how the fight was fought', () => {
+  it('drops hardModeActive, so the flag can never be read back off it', async () => {
+    const { resolveMonsterRewardData } = await import('../src/engine/slayerRewards.js')
+    const { scaleMonsterForHardMode } = await import('../src/engine/hardMode.js')
+    const monstersData = (await import('../src/data/monsters.json')).default as Record<string, any>
+    const hardId = Object.keys(monstersData).find((id) => monstersData[id].hardMode === true)!
+
+    const fought = scaleMonsterForHardMode(monstersData[hardId])
+    expect(fought.hardModeActive).toBe(true)
+
+    const forRewards = resolveMonsterRewardData(fought, fought, monstersData)
+    expect(forRewards.hardModeActive).toBeUndefined()
+  })
+
+  it('scales back up from a plain id once the flag is carried alongside', async () => {
+    const { monstersTableFor } = await import('../src/engine/hardMode.js')
+    const monstersData = (await import('../src/data/monsters.json')).default as Record<string, any>
+    const hardId = Object.keys(monstersData).find((id) => monstersData[id].hardMode === true)!
+
+    // What Fight Again does: look the id back up in the table the flag selects.
+    expect(monstersTableFor(monstersData, true)[hardId].hardModeActive).toBe(true)
+    expect(monstersTableFor(monstersData, false)[hardId].hardModeActive).toBeUndefined()
+    // Offence really is doubled in the table Fight Again lands in, and the
+    // health bar really is not (HARD_MODE_MULTIPLIERS).
+    expect(monstersTableFor(monstersData, true)[hardId].attackBonus)
+      .toBe(monstersData[hardId].attackBonus * 2)
+    expect(monstersTableFor(monstersData, true)[hardId].hitpoints)
+      .toBe(monstersData[hardId].hitpoints)
+  })
+})

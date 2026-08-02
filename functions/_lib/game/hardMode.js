@@ -1,9 +1,8 @@
 // Server side of Hard Mode (§14). The doubled drop rates are a high-value
 // grant, so the flag that unlocks them is server state: it lives in
-// hard_mode_targets (migration 0035), is written only by /api/hard-mode, and is
-// read back here on the kill. Nothing in a request body ever decides whether a
-// kill rolled hard — a client that could claim hard mode could double its own
-// drop rates for free.
+// hard_mode_targets (migration 0038), is written only by /api/hard-mode, and is
+// read back here on the kill. No request body can ever turn hard mode ON — a
+// client that could claim it could double its own drop rates for free.
 
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
@@ -28,6 +27,25 @@ export async function isHardModeEnabled(env, characterId, sourceType, sourceId) 
     'SELECT 1 AS enabled FROM hard_mode_targets WHERE character_id = ? AND source_type = ? AND source_id = ?',
   ).bind(characterId, sourceType, sourceId).first()
   return !!row
+}
+
+/**
+ * Whether THIS kill rolls at hard-mode rates.
+ *
+ * The server's switch is the ceiling and the only thing that can turn the
+ * doubling on. The client may only turn it DOWN, by reporting which record it
+ * actually fought (`hardModeActive` on the monster the fight was built from).
+ *
+ * That downgrade exists because the two can legitimately disagree: the switch
+ * lives in D1 and the client holds a mirror, so a fight built before the mirror
+ * lands — or one running while the switch is flipped on another device — is an
+ * ordinary boss. Paying it hard-mode rates would hand out doubled drops for a
+ * fight nobody fought hard. A missing field means an older client and keeps the
+ * server's own answer, so this can never quietly stop paying a real hard kill.
+ */
+export async function hardModeForKill(env, characterId, sourceType, sourceId, body) {
+  if (body?.hardMode === false) return false
+  return isHardModeEnabled(env, characterId, sourceType, sourceId)
 }
 
 /** Everything this character has switched on, for the client mirror. */

@@ -1091,6 +1091,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const defeatedMonsterId = defeatedMonsterData?.id || defeatedMonster?.id
           const defeatedMonsterName = defeatedMonsterData?.name || defeatedMonster?.name || state.monster?.name || 'Monster'
           const isDefeatedBoss = defeatedMonsterData?.boss === true || defeatedMonster?.boss === true
+          // Whether the fight that just ended was hard, taken from the record it
+          // was BUILT from. defeatedMonsterData is a raw monsters.json lookup for
+          // the reward tables, so it never carries hardModeActive — reading the
+          // flag off it silently answered "no" every time, which sent Fight Again
+          // and Skip back into an unscaled boss while the server's own switch
+          // kept paying the doubled drop rates.
+          const defeatedHardMode = defeatedMonster?.hardModeActive === true || state.monster?.hardModeActive === true
           const killLoot = Array.isArray(ev.loot) ? ev.loot : []
           const raidId = state.raid?.raidId || null
           const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
@@ -1179,10 +1186,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }
 
           if (cloudAuthoritativeRaid) {
-            void claimRaidCompletion({ raidId, monster: defeatedMonsterData, slayerXpGained, isBossKill: isDefeatedBoss })
+            void claimRaidCompletion({
+              raidId,
+              monster: defeatedMonsterData,
+              slayerXpGained,
+              isBossKill: isDefeatedBoss,
+              hardMode: defeatedHardMode,
+            })
           } else if (cloudAuthoritativeMonster) {
             setLootModal({
               monster: defeatedMonsterData,
+              hardMode: defeatedHardMode,
               loot: [],
               slayerXpGained,
               isBossKill: isDefeatedBoss,
@@ -1196,6 +1210,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               try { await pushNow(getSnapshot()) } catch { /* non-fatal; server falls back to last saved state */ }
               return api.completeMonster(defeatedMonsterId, {
                 actionNonce: `monster:${defeatedMonsterId}:${Date.now()}`,
+                // What we actually fought, from the fight's own record rather
+                // than the switch — the server treats this as a downgrade only
+                // (hardModeForKill), so it can refuse to pay hard rates for an
+                // ordinary boss but can never claim them.
+                hardMode: defeatedHardMode,
               })
             })().then(async (res) => {
               const granted = Array.isArray(res?.granted) ? res.granted : []
@@ -1238,6 +1257,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               // save_revision stays in sync generically via SAVE_REVISION_EVENT (api.js).
               setLootModal({
                 monster: defeatedMonsterData,
+                hardMode: defeatedHardMode,
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
                 slayerXpGained,
                 isBossKill: isDefeatedBoss,
@@ -1289,6 +1309,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (!cloudAuthoritativeRaid && !cloudAuthoritativeMonster) {
             setLootModal({
               monster: defeatedMonsterData,
+              hardMode: defeatedHardMode,
               loot: killLoot,
               slayerXpGained,
               isBossKill: isDefeatedBoss,
@@ -1855,10 +1876,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // and surface it in the loot modal. Used both when a raid is completed live
   // and when the player skips an entire raid from the loot modal — a skip just
   // re-rolls another complete reward rather than re-simulating every boss.
-  const claimRaidCompletion = async ({ raidId, monster, slayerXpGained = 0, isBossKill = false }) => {
-    setLootModal({ monster, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
+  const claimRaidCompletion = async ({ raidId, monster, slayerXpGained = 0, isBossKill = false, hardMode = false }) => {
+    setLootModal({ monster, hardMode, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
     try {
-      const res = await api.completeRaid(raidId, { actionNonce: `raid:${raidId}:${Date.now()}` })
+      const res = await api.completeRaid(raidId, {
+        actionNonce: `raid:${raidId}:${Date.now()}`,
+        hardMode,
+      })
       const granted = Array.isArray(res?.granted) ? res.granted : []
       if (granted.length > 0) {
         const newInv = [...inventoryRef.current]
@@ -1921,7 +1945,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // loot-modal Skip (after a completion): charge the raid's skipCost
   // server-side, then re-roll one complete raid reward (no per-boss
   // re-simulation). Serialized end-to-end via raidSkipBusyRef.
-  const skipEntireRaid = async ({ raidId, monster, slayerXpGained = 0, isBossKill = false } = {}) => {
+  const skipEntireRaid = async ({ raidId, monster, slayerXpGained = 0, isBossKill = false, hardMode = false } = {}) => {
     if (!raidId || raidSkipBusyRef.current) return
     const charge = chargeSkipRef?.current
     if (!charge) return
@@ -1939,7 +1963,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       combatRef.current = frozen
       setCombat(frozen)
     }
-    setLootModal({ monster, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
+    setLootModal({ monster, hardMode, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
     try {
       await charge({ raidId })
     } catch (err) {
@@ -1957,7 +1981,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
     try {
       setActiveTask(null)
-      await claimRaidCompletion({ raidId, monster, slayerXpGained, isBossKill })
+      await claimRaidCompletion({ raidId, monster, slayerXpGained, isBossKill, hardMode })
     } finally {
       raidSkipBusyRef.current = false
       // Pairs with this handler's lockGame — a conflict rollback re-applies
@@ -1982,6 +2006,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         monster: modal.monster,
         slayerXpGained: modal.slayerXpGained || 0,
         isBossKill: modal.isBossKill,
+        hardMode: modal.hardMode === true,
       })
       return
     }
@@ -1989,7 +2014,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setLootModal(null)
     // Hard mode has to survive the next pull: the raw table would quietly hand
     // back the normal boss while the drop rates stay whatever the switch says.
-    const original = monstersTableFor(monstersData, modal.monster?.hardModeActive === true)[modal.monster.id]
+    const original = monstersTableFor(monstersData, modal.hardMode === true)[modal.monster.id]
     if (original) continueFight(original)
     skipHourHandlerRef?.current?.()
   }
@@ -2002,7 +2027,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const st = combatRef.current
     const raidId = st?.raid?.raidId
     if (!raidId) return Promise.resolve()
-    return skipEntireRaid({ raidId, monster: st?.monster, isBossKill: true })
+    return skipEntireRaid({ raidId, monster: st?.monster, isBossKill: true, hardMode: st?.monster?.hardModeActive === true })
   }
   useEffect(() => {
     if (!raidSkipHandlerRef) return
@@ -4153,7 +4178,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   const raid = raidsData[lootModal.raidId]
                   if (raid) startRaid(raid)
                 } else {
-                  const original = monstersTableFor(monstersData, lootModal.monster?.hardModeActive === true)[lootModal.monster.id]
+                  const original = monstersTableFor(monstersData, lootModal.hardMode === true)[lootModal.monster.id]
                   if (original) continueFight(original)
                 }
                 setLootModal(null)

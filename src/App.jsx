@@ -1776,18 +1776,25 @@ function GameApp() {
       // Pull collection log alongside the save. Fire-and-forget — UI shows a
       // loading state until cache populates.
       fetchCollectionLog({ force: true }).catch(() => {})
-      kcPromise.then(server => {
+      const kcApplied = kcPromise.then(server => {
         if (!server) return
         syncServerKillCounts(server.bossKillCounts, server.raidKillCounts)
-      }).catch(() => {}).finally(() => {
-        // Settled (success OR fail) — let the combat screen render. Local
-        // IDB KC was already loaded by checkSave, so a failed fetch still
-        // shows the warm cache rather than blocking the screen.
-        markKillCountsLoaded()
-      })
-      hardModePromise.then(keys => {
+      }).catch(() => {})
+      const hardModeApplied = hardModePromise.then(keys => {
         if (keys) syncHardModeTargets(keys)
       }).catch(() => {})
+      // Settled (success OR fail) — let the combat screen render. Local IDB
+      // holds a warm copy of both, so a failed fetch shows the cache rather
+      // than blocking the screen.
+      //
+      // The Hard Mode mirror is part of this gate, not a fetch alongside it:
+      // the screen's auto-start builds a fight the instant this flips, and it
+      // scales the monster off the mirror. Landing second meant an auto-started
+      // boss was built UNSCALED while the server — which reads its own
+      // hard_mode_targets on the kill — still paid the doubled drop rates (§14).
+      Promise.all([kcApplied, hardModeApplied]).finally(() => {
+        markKillCountsLoaded()
+      })
       dailyTasksPromise.then(dt => {
         if (!dt?.tasks) return
         setDailyTaskDate(dt.date)

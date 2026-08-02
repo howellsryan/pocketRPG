@@ -208,12 +208,12 @@ describe('a solo kill claims hard-mode rates from D1', () => {
       .bind(id, blob, json).run()
   }
 
-  function completion(handler: any, sourceId: string, nonce: string) {
+  function completion(handler: any, sourceId: string, nonce: string, extra: Record<string, unknown> = {}) {
     return handler({
       request: new Request('https://example.com', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
-        body: JSON.stringify({ sourceId, actionNonce: nonce }),
+        body: JSON.stringify({ sourceId, actionNonce: nonce, ...extra }),
       }),
       env,
     })
@@ -248,6 +248,92 @@ describe('a solo kill claims hard-mode rates from D1', () => {
       await setHardModeTarget(env, 42, 'raids', raidId, true)
       const hard = await (await completion(completeRaid, raidId, 'raid-2')).json()
       expect(hard.granted.length).toBeGreaterThan(normal.granted.length)
+    } finally {
+      spy.mockRestore()
+    }
+  })
+})
+
+// The switch lives in D1 and the client holds a mirror, so the two can disagree:
+// a fight built before the mirror lands is an ordinary boss. Paying it hard-mode
+// rates would double the drops for a fight nobody fought hard.
+describe('a fight the client reports as ordinary is paid ordinary rates', () => {
+  async function seedSave(id = 42) {
+    const inventory = new Array(28).fill(null)
+    const json = JSON.stringify({ inventory, bank: {}, stats: {}, settings: {} })
+    const blob = await gzipJsonString(json)
+    env.DB.prepare('INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision) VALUES (?, ?, ?, 0, 1)')
+      .bind(id, blob, json).run()
+  }
+
+  function completion(handler: any, sourceId: string, nonce: string, extra: Record<string, unknown> = {}) {
+    return handler({
+      request: new Request('https://example.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+        body: JSON.stringify({ sourceId, actionNonce: nonce, ...extra }),
+      }),
+      env,
+    })
+  }
+
+  it('refuses the doubled roll when the client fought the ordinary record', async () => {
+    await seedSave()
+    const { onRequestPost: completeMonster } = await import('../functions/api/actions/monster/complete.js')
+    await setHardModeTarget(env, 42, 'monsters', HARD_BOSS, true)
+    const drop = anyMonsters[HARD_BOSS].drops.find((d: any) => d.chance > 0 && d.chance < 0.5)
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(drop.chance * 1.5)
+    try {
+      const claimed = await (await completion(completeMonster, HARD_BOSS, 'k-soft', { hardMode: false })).json()
+      expect(claimed.granted.some((g: any) => g.itemId === drop.itemId)).toBe(false)
+
+      const fought = await (await completion(completeMonster, HARD_BOSS, 'k-hard', { hardMode: true })).json()
+      expect(fought.granted.some((g: any) => g.itemId === drop.itemId)).toBe(true)
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  it('cannot turn hard mode ON from the body', async () => {
+    await seedSave()
+    const { onRequestPost: completeMonster } = await import('../functions/api/actions/monster/complete.js')
+    const drop = anyMonsters[HARD_BOSS].drops.find((d: any) => d.chance > 0 && d.chance < 0.5)
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(drop.chance * 1.5)
+    try {
+      // No row in hard_mode_targets — the claim is worth nothing.
+      const res = await (await completion(completeMonster, HARD_BOSS, 'k-liar', { hardMode: true })).json()
+      expect(res.granted.some((g: any) => g.itemId === drop.itemId)).toBe(false)
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  it('keeps the server answer for a client that sends no claim at all', async () => {
+    await seedSave()
+    const { onRequestPost: completeMonster } = await import('../functions/api/actions/monster/complete.js')
+    await setHardModeTarget(env, 42, 'monsters', HARD_BOSS, true)
+    const drop = anyMonsters[HARD_BOSS].drops.find((d: any) => d.chance > 0 && d.chance < 0.5)
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(drop.chance * 1.5)
+    try {
+      const res = await (await completion(completeMonster, HARD_BOSS, 'k-old')).json()
+      expect(res.granted.some((g: any) => g.itemId === drop.itemId)).toBe(true)
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  it('applies the same downgrade to a raid', async () => {
+    await seedSave()
+    const { onRequestPost: completeRaid } = await import('../functions/api/actions/raid/complete.js')
+    const raids = raidsData as Record<string, any>
+    const raidId = Object.keys(raids).find((id) => raids[id]?.rewards?.unique?.chance > 0)!
+    await setHardModeTarget(env, 42, 'raids', raidId, true)
+    const chance = raids[raidId].rewards.unique.chance
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(chance * 1.5)
+    try {
+      const soft = await (await completion(completeRaid, raidId, 'r-soft', { hardMode: false })).json()
+      const hard = await (await completion(completeRaid, raidId, 'r-hard', { hardMode: true })).json()
+      expect(hard.granted.length).toBeGreaterThan(soft.granted.length)
     } finally {
       spy.mockRestore()
     }
