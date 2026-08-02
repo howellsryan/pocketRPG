@@ -89,7 +89,27 @@ writers. **It rejects nothing.** `/api/save` still refuses exactly two writes
 
 Shadow mode is not a soft launch, it is the measurement that makes Phase 3
 safe: enforcement can only be turned on once real traffic produces no
-unexplained flags.
+unexplained flags. That measurement is only worth taking if someone reads it,
+which is what `GET /api/admin/item-loss` and the **Incidents** panel are for:
+
+- Every `item_loss_detected` event, newest first, with the character, its owner,
+  which writer produced it (`api_save` vs `write_save`), which threshold it
+  tripped, the revision span, the durable/resource/coins/charges split and the
+  per-item breakdown.
+- Each incident is joined to the snapshot that can undo it —
+  `save_history.save_revision === payload.previousRevision`, because the forced
+  snapshot preserves the revision being *replaced*. Selecting an incident loads
+  that character into Salvage with the pre-loss snapshot already picked, so a
+  restore is one press away. The link can legitimately be absent (the forced
+  snapshot is rate-limited to one per 5 minutes, so a burst shares one) and the
+  panel says so rather than offering a neighbouring snapshot as if it were the
+  right one.
+- `restored_since` marks an incident whose character has been restored since it
+  happened, and `character_incident_count` tells one unlucky player apart from
+  one bad client build. Both are derived, so there is no state to keep in sync
+  and nothing to mark off by hand.
+- Shaping is `functions/_lib/game/itemLossReport.js`, separated from the queries
+  so the snapshot-linking rule is under test.
 
 ## Phase 3 — enforcement (not built)
 

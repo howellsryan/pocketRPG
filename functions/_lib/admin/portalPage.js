@@ -262,6 +262,8 @@ const SCRIPT = `
   var snapshots = [];
   var selectedSnapshot = null;
   var snapshotCharacter = null;
+  var incidents = [];
+  var selectedIncident = null;
 
   var $ = function(id){ return document.getElementById(id); };
 
@@ -281,6 +283,12 @@ const SCRIPT = `
     selectedCharacter = null;
     selectedItem = null;
     clearSnapshots();
+    incidents = [];
+    selectedIncident = null;
+    $('incidents').textContent = '';
+    $('incident-summary').textContent = '';
+    $('incident-detail').hidden = true;
+    $('incident-msg').hidden = true;
     $('portal').hidden = true;
     $('gate').hidden = false;
     $('secret').value = '';
@@ -463,7 +471,7 @@ const SCRIPT = `
     });
   }
 
-  function loadSnapshots(){
+  function loadSnapshots(preselectId){
     var msg = $('restore-msg');
     msg.hidden = true;
     clearSnapshots();
@@ -478,7 +486,85 @@ const SCRIPT = `
           (held ? ' · live save holds ' + num(held.distinctItems) + ' distinct items' : '')
         : 'No snapshots preserved for this character yet.';
       renderSnapshots();
+      // Arriving from an incident: select the snapshot that incident named, so
+      // the restore is one press away rather than a date to match by eye.
+      if (preselectId && snapshots.some(function(x){ return x.id === preselectId; })) selectSnapshot(preselectId);
     }, msg);
+  }
+
+  function loadIncidents(){
+    var msg = $('incident-msg');
+    msg.hidden = true;
+    $('incident-detail').hidden = true;
+    selectedIncident = null;
+    adminGet('/api/admin/item-loss?limit=100', function(body){
+      incidents = body.incidents || [];
+      var s = body.summary || {};
+      $('incident-summary').textContent = incidents.length
+        ? s.incidents + ' incidents · ' + s.characters + ' character(s) · ' + s.unresolved +
+          ' not restored since · ' + num(s.durableValue) + ' gp of durables, ' + num(s.resourceValue) + ' gp of resources'
+        : 'Nothing caught. The detector has flagged no losses.';
+      renderIncidents();
+    }, msg);
+  }
+
+  function renderIncidents(){
+    var entries = [];
+    for (var i = 0; i < incidents.length; i++){
+      var inc = incidents[i];
+      var marks = [inc.source || 'unknown source'];
+      if (inc.durable_units) marks.push(num(inc.durable_units) + ' durable (' + num(inc.durable_value) + ' gp)');
+      if (inc.resource_units) marks.push(num(inc.resource_units) + ' resource');
+      if (inc.restored_since) marks.push('restored since');
+      else if (!inc.history_id) marks.push('no snapshot');
+      entries.push({
+        value: String(inc.id),
+        label: when(inc.created_at) + ' · ' + (inc.username || 'unknown') + ' #' + inc.character_id,
+        meta: marks.join(' · '),
+      });
+    }
+    fillList('incidents', entries, selectedIncident === null ? null : String(selectedIncident), pickIncident);
+  }
+
+  function pickIncident(e){
+    var id = Number(e.currentTarget.getAttribute('data-value'));
+    var inc = null;
+    for (var i = 0; i < incidents.length; i++) if (incidents[i].id === id) inc = incidents[i];
+    if (!inc) return;
+    selectedIncident = id;
+    renderIncidents();
+
+    var rows = [
+      ['When', when(inc.created_at)],
+      ['Character', (inc.username || 'unknown') + '  #' + inc.character_id],
+      ['Owner', inc.owner_id === null ? '—' : String(inc.owner_id)],
+      ['Written by', inc.source || '—'],
+      ['Tripped', inc.reasons.length ? inc.reasons.join(', ') : '—'],
+      ['Save revision', inc.previous_revision + ' → ' + inc.next_revision],
+      ['Durable lost', num(inc.durable_units) + '  (' + num(inc.durable_value) + ' gp)'],
+      ['Resources lost', num(inc.resource_units) + '  (' + num(inc.resource_value) + ' gp)'],
+      ['Coins lost', num(inc.coins_lost)],
+      ['Charges lost', num(inc.charges_lost)],
+      ['Distinct items', num(inc.distinct_items_lost)],
+      ['Incidents on this account', num(inc.character_incident_count)],
+      ['Restored since', inc.restored_since ? 'yes' : 'no'],
+    ];
+    for (var j = 0; j < inc.items.length; j++){
+      rows.push(['· ' + inc.items[j].itemId, num(inc.items[j].lost) + '  (' + num(inc.items[j].value) + ' gp)']);
+    }
+    ledgerRows('incident-detail-body', rows);
+    $('incident-detail').hidden = false;
+
+    // Hand the whole thing to Salvage: the character selected, its snapshots
+    // listed, and the pre-loss one already picked.
+    var msg = $('incident-msg');
+    msg.hidden = true;
+    selectedCharacter = String(inc.character_id);
+    refreshLists();
+    loadSnapshots(inc.history_id || 0);
+    if (!inc.history_id){
+      message(msg, 'err', 'No snapshot was preserved at revision ' + inc.previous_revision + ' — pick the nearest one below by hand.');
+    }
   }
 
   function snapshotNow(){
@@ -522,7 +608,10 @@ const SCRIPT = `
   }
 
   function pickSnapshot(e){
-    var id = Number(e.currentTarget.getAttribute('data-value'));
+    selectSnapshot(Number(e.currentTarget.getAttribute('data-value')));
+  }
+
+  function selectSnapshot(id){
     selectedSnapshot = id;
     renderSnapshots();
     var msg = $('restore-msg');
@@ -698,7 +787,8 @@ const SCRIPT = `
     $('character-filter').addEventListener('input', refreshLists);
     $('preview-btn').addEventListener('click', function(){ grant(true); });
     $('grant-btn').addEventListener('click', function(){ grant(false); });
-    $('snapshots-btn').addEventListener('click', loadSnapshots);
+    $('incidents-btn').addEventListener('click', loadIncidents);
+    $('snapshots-btn').addEventListener('click', function(){ loadSnapshots(); });
     $('snapshot-now-btn').addEventListener('click', snapshotNow);
     $('restore-preview-btn').addEventListener('click', function(){ restore(true); });
     $('restore-btn').addEventListener('click', function(){ restore(false); });
@@ -821,6 +911,23 @@ const BODY = `
           <table class="fm-ledger">
             <thead><tr><th>Entry</th><th>Value</th></tr></thead>
             <tbody id="receipt-body"></tbody>
+          </table>
+        </div>
+
+        <div class="fm-rule-head"><span>Incidents</span></div>
+        <p class="fm-lore">Every item loss the guard has caught. Pick one to see what went, and the save that still had it.</p>
+        <div class="field">
+          <div class="actions">
+            <button id="incidents-btn" type="button" class="fm-btn fm-btn--brass">Load incidents</button>
+          </div>
+          <p class="field__hint" id="incident-summary"></p>
+          <div id="incidents" class="picklist" role="listbox" aria-label="Incident"></div>
+          <p id="incident-msg" class="msg" hidden></p>
+        </div>
+        <div id="incident-detail" hidden>
+          <table class="fm-ledger">
+            <thead><tr><th>What went missing</th><th>Value</th></tr></thead>
+            <tbody id="incident-detail-body"></tbody>
           </table>
         </div>
 

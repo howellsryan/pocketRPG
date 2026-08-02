@@ -12,6 +12,7 @@ import {
   SAVE_HISTORY_ROUTINE_TTL_MS,
   SAVE_HISTORY_FLAGGED_TTL_MS,
   pruneSaveHistory,
+  takeManualSaveHistory,
 } from '../functions/_lib/game/saveHistory.js'
 
 const SECRET = 'a-very-long-admin-portal-secret'
@@ -203,6 +204,25 @@ describe('POST /api/admin/restore-save', () => {
     // relying on it would leave the pre-restore state unrecoverable.
     await onRequestPost({ request: req({ character_id: 7, history_id: snapshot.id }), env } as any)
     expect(history().some((r: any) => r.reason === 'pre_restore')).toBe(true)
+  })
+
+  it('restores a snapshot preserved as text rather than gzip', async () => {
+    await seedCharacter()
+    // A legacy `saves` row can carry save_data with no blob, and the snapshot
+    // copies it into save_data for exactly that case. decodeSaveRow returns
+    // null for a blobless row, so without the text fallback such a snapshot
+    // would list fine and refuse to restore.
+    raw.prepare('UPDATE saves SET save_blob = NULL WHERE character_id = 7').run()
+    await takeManualSaveHistory(env, 7, NOW)
+    const snapshot = history().find((r: any) => r.reason === 'manual')
+    expect(raw.prepare('SELECT save_blob, save_data FROM save_history WHERE id = ?').get(snapshot.id).save_blob).toBeNull()
+
+    await writeThrough(7, (save) => { save.bank = {} })
+    expect(storedBank()).toEqual({})
+
+    const res = await onRequestPost({ request: req({ character_id: 7, history_id: snapshot.id }), env } as any)
+    expect(res.status).toBe(200)
+    expect(Object.keys(storedBank())).toHaveLength(DURABLES.length)
   })
 
   it('writes nothing on a dry run', async () => {
