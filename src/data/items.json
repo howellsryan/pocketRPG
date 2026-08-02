@@ -9033,6 +9033,94 @@
     "isGeneralStore": false,
     "isBossUnique": true
   },
+  "shardglass_harpoon": {
+    "id": "shardglass_harpoon",
+    "name": "Shardglass Harpoon",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
+    "shardglassShopCost": 15000,
+    "speedMultiplier": 0.5,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "requirements": {
+      "fishing": 70
+    },
+    "shopValue": 7500000,
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "shardglass_halberd": {
+    "id": "shardglass_halberd",
+    "name": "Shardglass Halberd",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
+    "shardglassShopCost": 50000,
+    "attackSpeed": 7,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 150,
+      "slash": 150,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 200,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 75,
+      "strength": 75
+    },
+    "specialAttack": {
+      "type": "triple_hit",
+      "energyCost": 30,
+      "description": "Shardstorm: three sweeps of the blade in a single attack, each rolling its own damage. Spends one shardglass charge, like every other swing."
+    },
+    "shopValue": 100000000,
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
   "bow_of_faerdhinen": {
     "id": "bow_of_faerdhinen",
     "legacy_item_id": "bow_of_faerdhinen",

@@ -19,11 +19,15 @@ const shardglassGear = Object.values(itemsData as any).filter(
 const toolItems = {
   shardglass_pickaxe: { id: 'shardglass_pickaxe', name: 'Shardglass Pickaxe', toolFor: 'mining', requirements: { mining: 70 }, scaleCharged: true },
   bronze_pickaxe: { id: 'bronze_pickaxe', name: 'Bronze Pickaxe', toolFor: 'mining', requirements: { mining: 1 } },
+  shardglass_harpoon: { id: 'shardglass_harpoon', name: 'Shardglass Harpoon', toolFor: 'fishing', requirements: { fishing: 70 }, scaleCharged: true },
+  harpoon: { id: 'harpoon', name: 'Harpoon', toolFor: 'fishing', requirements: { fishing: 50 } },
   shardglass_shards: { id: 'shardglass_shards', name: 'Shardglass Shards', stackable: true },
   adamantite_ore: { id: 'adamantite_ore', name: 'Adamantite Ore' },
+  raw_shark: { id: 'raw_shark', name: 'Raw Shark' },
 } as any
 
 const maxedMining = { mining: { xp: 200_000_000 } } as any
+const maxedFishing = { fishing: { xp: 200_000_000 } } as any
 
 const pad = (slots: any[]) => [...slots, ...Array(28 - slots.length).fill(null)]
 
@@ -152,6 +156,47 @@ describe('shardglass gathering perk — idle simulation', () => {
   })
 })
 
+describe('shardglass gathering perk — fishing', () => {
+  const sharkAction = { id: 'shark', name: 'Fish Shark', level: 76, ticks: 8, xp: 110, product: 'raw_shark' }
+
+  it('recognises a charged shardglass harpoon as the fishing perk tool, over a plain harpoon', () => {
+    const inv = pad([{ itemId: 'harpoon', quantity: 1 }, { itemId: 'shardglass_harpoon', quantity: 1, charges: 10 }])
+    expect(usesShardglassGatherTool('fishing', {}, inv, toolItems, maxedFishing)).toBe(true)
+  })
+
+  it('falls back to the plain harpoon once the shardglass one is out of charges', () => {
+    const inv = pad([{ itemId: 'harpoon', quantity: 1 }, { itemId: 'shardglass_harpoon', quantity: 1, charges: 0 }])
+    expect(usesShardglassGatherTool('fishing', {}, inv, toolItems, maxedFishing)).toBe(false)
+  })
+
+  it('doubles idle fish and drains 2 harpoon charges per catch while charges last', () => {
+    const inv = pad([{ itemId: 'shardglass_harpoon', quantity: 1, charges: 4 }])
+    const actionTicks = getEffectiveToolActionTicks('fishing', sharkAction.ticks, {}, itemsData as any, maxedFishing, pad([{ itemId: 'shardglass_harpoon', quantity: 1, charges: 100 }]))
+    const sim = simulateIdleSkilling(
+      { skill: 'fishing', action: sharkAction } as any,
+      3 * actionTicks * 600,
+      {},
+      {},
+      maxedFishing,
+      itemsData as any,
+      inv,
+      {},
+    ) as any
+
+    // 2 doubled catches + 1 single = 5 sharks; the harpoon survives at 0 charges.
+    expect(sim.itemsGained.raw_shark).toBe(5)
+    expect(sim.finalInventory.find((s: any) => s?.itemId === 'shardglass_harpoon').charges).toBe(0)
+  })
+
+  it('fishes faster than every other harpoon or net in the game', () => {
+    const shardTicks = getEffectiveToolActionTicks('fishing', 8, {}, itemsData as any, maxedFishing, pad([{ itemId: 'shardglass_harpoon', quantity: 1, charges: 10 }]))
+    for (const rival of ['harpoon', 'angler_net', 'lobster_cage', 'fishing_rod']) {
+      const rivalTicks = getEffectiveToolActionTicks('fishing', 8, {}, itemsData as any, maxedFishing, pad([{ itemId: rival, quantity: 1 }]))
+      expect(shardTicks, `${rival} out-fishes the shardglass harpoon`).toBeLessThan(rivalTicks)
+    }
+  })
+})
+
 describe('shardglass tool mining speed', () => {
   it('mines at the same speed as the dragon pickaxe when charged', () => {
     const maxed = { mining: { xp: 200_000_000 } } as any
@@ -231,7 +276,7 @@ describe('breaking shardglass gear down into shards', () => {
 describe('shardglass store prices', () => {
   // The Shardglass Bow and Shield are quest-only unlocks — kept out of the
   // shard store. The elven warweapons (Faerdhinen Warbow, Saeldor Warblade)
-  // are the 50k-shard weapon offering instead.
+  // and the Shardglass Halberd are the 50k-shard weapon offering instead.
   const expected: Record<string, number> = {
     shardglass_helmet: 25000,
     shardglass_plate_body: 25000,
@@ -240,6 +285,8 @@ describe('shardglass store prices', () => {
     blade_of_saeldor: 50000,
     shardglass_pickaxe: 15000,
     shardglass_axe: 15000,
+    shardglass_harpoon: 15000,
+    shardglass_halberd: 50000,
   }
 
   it('prices every shardglass gear piece: 25k armour, 50k weapon, 15k tools', () => {

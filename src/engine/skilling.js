@@ -398,13 +398,13 @@ export function rollGatherBonusDrops(skill, rng = Math.random) {
 }
 
 /**
- * Shardglass gathering perk. The shardglass axe/pickaxe are scale-charged
+ * Shardglass gathering perk. The shardglass axe/pickaxe/harpoon are scale-charged
  * tools (`scaleCharged: true`, `chargeItemId: shardglass_shards`) — charges
  * are loaded via the normal charge UI, same as any other scale-charged
  * weapon. While gathering with the matching shardglass tool, each action
  * consumes SHARDGLASS_SHARDS_PER_GATHER charges from the tool itself (not
  * loose shards from the inventory) and doubles the gathered output (ore,
- * gems, logs). Bonus drops added afterwards (e.g. bird's nests) are
+ * gems, logs, fish). Bonus drops added afterwards (e.g. bird's nests) are
  * unaffected. Once the tool runs out of charges it stops counting as a
  * candidate tool at all (see findBestToolForSkill), so both the doubling and
  * its gathering-speed bonus are lost until it's recharged.
@@ -413,6 +413,7 @@ export const SHARDGLASS_SHARDS_PER_GATHER = 2
 export const SHARDGLASS_GATHER_TOOLS = {
   mining: 'shardglass_pickaxe',
   woodcutting: 'shardglass_axe',
+  fishing: 'shardglass_harpoon',
 }
 
 /** True when the best available tool for `skill` is its shardglass tool. */

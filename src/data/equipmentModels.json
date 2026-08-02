@@ -868,7 +868,10 @@
     "grondar_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#8a4b32" },
     "zephyra_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#7fa8c0" },
     "lumira_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#b58fb0" },
-    "krylth_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#4a4a55" }
+    "krylth_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#4a4a55" },
+    "harpoon": { "model": "weapons/q_spear.gltf", "tint": "#b7c3cc" },
+    "shardglass_harpoon": { "model": "weapons/q_spear.gltf", "tint": "#7fd6d0" },
+    "shardglass_halberd": { "model": "weapons/q_scythe.gltf", "tint": "#7fd6d0" }
   },
   "gear": {
     "bronze_kiteshield": {

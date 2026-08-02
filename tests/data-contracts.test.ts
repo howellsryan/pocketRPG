@@ -29,6 +29,8 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'blade_of_saeldor',
   'bow_of_faerdhinen',
   'shardglass_axe',
+  'shardglass_halberd',
+  'shardglass_harpoon',
   'shardglass_helmet',
   'shardglass_pickaxe',
   'shardglass_plate_body',

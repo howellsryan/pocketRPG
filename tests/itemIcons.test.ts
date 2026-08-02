@@ -85,6 +85,19 @@ describe('itemIcons', () => {
     expect(getItemIconKey(itemsData.cooked_meat)).toBe('meat')
   })
 
+  // The glyph layer under the bespoke art, which the world falls back to until
+  // its lazy bespoke map lands. Without the suffix rule the Shardglass Harpoon
+  // drops to its stab attack style there and flashes a dagger.
+  it('harpoons of every tier resolve to the spear glyph', () => {
+    expect(getItemIconKey(itemsData.harpoon)).toBe('spear')
+    expect(getItemIconKey(itemsData.shardglass_harpoon)).toBe('spear')
+  })
+
+  it('the shardglass halberd resolves to the halberd glyph, tinted shardglass', () => {
+    expect(getItemIconKey(itemsData.shardglass_halberd)).toBe('halberd')
+    expect(getItemIconTint(itemsData.shardglass_halberd)).toBe('var(--tier-shardglass)')
+  })
+
   it('stab weapons resolve to the dagger glyph', () => {
     const dagger = itemsData.bronze_dagger
     expect(getItemIconKey(dagger)).toBe('dagger')

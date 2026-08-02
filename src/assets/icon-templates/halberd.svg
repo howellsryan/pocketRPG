@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_head" x1="0" y1="0" x2="1" y2="0.4">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+    <linearGradient id="{{id}}_shaft" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4a3a2a"/><stop offset="1" stop-color="#241a10"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="245" y="170" width="22" height="268" rx="9" fill="url(#{{id}}_shaft)"/>
+    <path d="M256 24 C 270 82 276 140 274 186 L238 186 C 236 140 242 82 256 24 Z" fill="url(#{{id}}_head)"/>
+    <path d="M270 110 C 340 108 396 146 410 214 C 362 176 314 164 270 172 Z" fill="url(#{{id}}_head)"/>
+    <path d="M242 124 C 190 132 158 162 150 212 C 184 180 214 168 242 168 Z" fill="{{shade}}"/>
+    <path d="M292 138 C 336 148 372 174 392 206" stroke="{{light}}" stroke-width="9" fill="none"/>
+    <path d="M256 60 L256 176" stroke="{{light}}" stroke-width="7" fill="none"/>
+    <rect x="232" y="180" width="48" height="26" rx="8" fill="{{shade}}"/>
+    <path d="M256 486 L234 420 L278 420 Z" fill="url(#{{id}}_head)"/>
+  </g>
+</svg>
