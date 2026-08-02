@@ -674,7 +674,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'unlock_construction_perk',
     description:
-      "Unlock a level-gated Construction perk: 'money_purse' (level 70 — spend bank coins directly when shopping) or 'master_rejuvenation' (level 90 — auto-refill the special-attack bar in combat). Checks the Construction level and that it is not already unlocked. Valid perk_id values: " + CONSTRUCTION_PERK_IDS.join(', ') + '.',
+      "Unlock a level-gated Construction perk: 'money_purse' (level 70 — spend bank coins directly when shopping) or 'master_rejuvenation' (level 90 — special-attack energy recharges twice as fast, 20% every 30 seconds, in every fight). Checks the Construction level and that it is not already unlocked. Valid perk_id values: " + CONSTRUCTION_PERK_IDS.join(', ') + '.',
     inputSchema: {
       type: 'object',
       properties: {

@@ -40,6 +40,7 @@ import { SUMMONING_CREATURES, getSummoningCreature, createSummonState, getMonste
 import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel, SELF_HEALING_SPEC_TYPES } from '../engine/specialAttackEnergy.js'
+import { hasMasterRejuvenation, specialRegenPerTick, regenSpecialEnergy } from '../engine/specialRegen.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, lastSaveLockCode } from '../cloud/sync.js'
 import monstersData from '../data/monsters.json'
@@ -666,9 +667,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current, slayerTaskRef.current)
 
-      // Master Rejuvenation: auto-refill spec bar when it hits 0 mid-fight
-      if (combatState.active && combatState.specialAttackEnergy === 0 && unlockedFeaturesRef.current.has('master_rejuvenation')) {
-        combatState.specialAttackEnergy = 100
+      // Master Rejuvenation: the only special-energy regen a solo fight has —
+      // twice the open world's clock rate (src/engine/specialRegen.js).
+      const specRegen = specialRegenPerTick(hasMasterRejuvenation(unlockedFeaturesRef.current))
+      if (combatState.active && specRegen > 0) {
+        combatState.specialAttackEnergy = regenSpecialEnergy(combatState.specialAttackEnergy, specRegen)
       }
 
       combatRef.current = combatState
@@ -3591,16 +3594,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         if (!weapon?.specialAttack) return null
         const energy = combat.specialAttackEnergy || 0
         const canSpec = canAffordSpecialAttack(weapon.specialAttack, energy)
+        const shown = Math.floor(energy)
         return (
           <div class="mb-2 bg-[var(--color-void)] rounded-lg px-3 py-2">
             <div class="flex items-center justify-between mb-1">
               <span class="text-[10px] text-yellow-400 font-semibold">⚡ Special Attack</span>
-              <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">{energy}%</span>
+              <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">{shown}%</span>
             </div>
             <div class="h-2 rounded-full bg-[var(--color-void-light)] overflow-hidden">
               <div
                 class="h-full rounded-full transition-all duration-300"
-                style={{ width: `${energy}%`, background: canSpec ? '#eab308' : '#78530a' }}
+                style={{ width: `${shown}%`, background: canSpec ? '#eab308' : '#78530a' }}
               />
             </div>
             <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5">
@@ -3843,7 +3847,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   <div class="cb-actions" style={{ marginTop: 12, marginBottom: 12 }}>
                     <button class={'cb-act' + (specQueued ? ' is-on' : '')} disabled={!canSpec && !specQueued} onClick={canSpec ? handleSpecialAttack : undefined}>
                       <GameIcon iconKey="lightning_arc" color="currentColor" size={18} />
-                      <span>Special{hasSpec ? ` ${energy}%` : ''}</span>
+                      <span>Special{hasSpec ? ` ${Math.floor(energy)}%` : ''}</span>
                     </button>
                     <button class="cb-act" disabled={!isMagic} onClick={isMagic ? () => setShowSpellModal(true) : undefined}>
                       <GameIcon iconKey="crystal_ball" color="currentColor" size={18} />
