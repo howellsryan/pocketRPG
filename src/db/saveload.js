@@ -36,6 +36,10 @@ function normaliseSaveSettings(settings = {}) {
   // clobbered by last-write-wins merges, which is what lost users their KC.
   delete next.bossKillCounts
   delete next.raidKillCounts
+  // Hard Mode switches decide server-side drop rates (§14) and live in
+  // hard_mode_targets — a save blob that could carry them is a save blob that
+  // could turn them on.
+  delete next.hardModeTargets
   return next
 }
 
@@ -56,7 +60,7 @@ export function buildSavePayloadFromSnapshot(snapshot) {
 /** Settings that live ONLY in the server's own tables and are deliberately
  * stripped from the save blob, so a payload can never carry them back. They
  * have to survive applySavePayload's wipe or the pull silently deletes them. */
-export const SERVER_OWNED_SETTINGS = ['bossKillCounts', 'raidKillCounts']
+export const SERVER_OWNED_SETTINGS = ['bossKillCounts', 'raidKillCounts', 'hardModeTargets']
 
 async function readPreservedSettings() {
   const out = {}

@@ -78,6 +78,7 @@ export function projectStateForMember(state, characterId) {
   return {
     tick: state.tick || 0,
     bossId: state.bossId,
+    hardMode: state.hardMode === true,
     boss: state.boss,
     targetCharId: state.targetCharId ?? null,
     phase: state.phase || 'active',
@@ -98,6 +99,11 @@ export function projectStateForMember(state, characterId) {
 export function projectEventsForMember(events, characterId) {
   const self = String(characterId)
   return (events || []).map((ev) => {
+    // What a hard-mode death cost is the dead player's business, and it is a
+    // whole pack of items on an event the whole room receives.
+    if (ev?.type === 'memberDeath' && ev.itemsLost && String(ev.characterId) !== self) {
+      return { ...ev, itemsLost: null }
+    }
     if (ev?.type !== 'killSettled' || !Array.isArray(ev.settlements)) return ev
     const mine = String(ev.ownerCharacterId) === self
     return {

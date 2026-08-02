@@ -3,6 +3,7 @@
     "id": "vaults_of_xyren",
     "name": "Vaults of Xyren",
     "icon": "🏛️",
+    "hardMode": true,
     "description": "Delve into Xeric's mountain stronghold. Defeat Tecton, Vespara, the Mudtadile and the Grand Olm to claim your reward.",
     "bosses": [
       "tekton",
@@ -118,6 +119,7 @@
     "id": "crimson_night_theatre",
     "name": "Crimson Night Theatre",
     "icon": "🩸",
+    "hardMode": true,
     "description": "Fight through six deadly bosses in Verzik Vitura's theatre. Defeat them all to claim your reward.",
     "bosses": [
       "the_maiden_of_sugadinti",
@@ -227,6 +229,7 @@
     "id": "cryptbound_champions",
     "name": "Cryptbound Champions",
     "icon": "⚰️",
+    "hardMode": true,
     "description": "Descend into the ancient crypt and defeat all six champions to claim their treasures.",
     "bosses": [
       "morvyn_the_blighted",
@@ -380,6 +383,7 @@
     "id": "tomb_of_arasmus",
     "name": "Tomb of Arasmus",
     "icon": "🏜️",
+    "hardMode": true,
     "description": "Brave the cursed tomb of the god-king Arasmus. Defeat his four guardians and the Warden to claim the treasures within.",
     "bosses": [
       "khareth_the_shadowbound",
@@ -480,6 +484,7 @@
     "id": "vaults_of_xyren",
     "name": "Vaults of Xyren",
     "icon": "🏛️",
+    "hardMode": true,
     "description": "Delve into Xeric's mountain stronghold. Defeat Tecton, Vespara, the Mudtadile and the Grand Olm to claim your reward.",
     "bosses": [
       "tekton",
@@ -595,6 +600,7 @@
     "id": "crimson_night_theatre",
     "name": "Crimson Night Theatre",
     "icon": "🩸",
+    "hardMode": true,
     "description": "Fight through six deadly bosses in Verzik Vitura's theatre. Defeat them all to claim your reward.",
     "bosses": [
       "the_maiden_of_sugadinti",
@@ -704,6 +710,7 @@
     "id": "cryptbound_champions",
     "name": "Cryptbound Champions",
     "icon": "⚰️",
+    "hardMode": true,
     "description": "Descend into the ancient crypt and defeat all six champions to claim their treasures.",
     "bosses": [
       "morvyn_the_blighted",
@@ -857,6 +864,7 @@
     "id": "tomb_of_arasmus",
     "name": "Tomb of Arasmus",
     "icon": "🏜️",
+    "hardMode": true,
     "description": "Brave the cursed tomb of the god-king Arasmus. Defeat his four guardians and the Warden to claim the treasures within.",
     "bosses": [
       "khareth_the_shadowbound",

@@ -1,4 +1,5 @@
 import SkillEmblem from './SkillEmblem.jsx'
+import { HardModeTag } from './HardMode.jsx'
 import { getRaidArt } from '../utils/combatArt.js'
 
 // Open lobbies for one raid, plus the button that opens your own.
@@ -71,7 +72,10 @@ export default function CoopRaidPartyList({
               <SkillEmblem iconKey={art.icon} accent={art.accent} size={42} glow={0} />
             </div>
             <div class="cb-mon__body">
-              <div class="cb-mon__name">{partyRosterLabel(party)}</div>
+              <div class="cb-mon__name">
+                {partyRosterLabel(party)}
+                {party.hardMode && <HardModeTag className="ml-1.5" />}
+              </div>
               <div class="cb-mon__stats">
                 <span class="cb-live__seats">{party.memberCount}/{maxMembers} in the lobby</span>
                 <i />

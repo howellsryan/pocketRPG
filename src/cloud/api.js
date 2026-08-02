@@ -224,6 +224,11 @@ export const api = {
     body: JSON.stringify({ entries }),
   }),
   getKillCounts: () => request('/api/kill-counts'),
+  getHardModeTargets: () => request('/api/hard-mode'),
+  setHardModeTarget: (sourceType, sourceId, enabled) => request('/api/hard-mode', {
+    method: 'POST',
+    body: JSON.stringify({ sourceType, sourceId, enabled }),
+  }),
   getDailyTasks: () => request('/api/daily-tasks'),
   completeDailyTask: (payload) => request('/api/daily-tasks/complete', { method: 'POST', body: JSON.stringify(payload) }),
   getIdle: () => request('/api/idle'),

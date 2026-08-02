@@ -21,6 +21,7 @@ import {
 import { COOP_RAID_IDS, coopRaidData, coopRaidSummary, isCoopRaidId } from '../../../src/engine/coopRaidEngine.js'
 import { checkRaidRequirementsPure } from '../../../src/engine/combatRequirements.js'
 import { completedQuestIds } from './bossEntry.js'
+import { isHardModeEnabled } from './hardMode.js'
 import { loadCharacterWithSave, writeSave } from './save.js'
 import { GameApiError } from './errors.js'
 import { callCoopRoom, coopRoomSupportsRaids, coopRoomsAvailable } from './coopRoom.js'
@@ -63,6 +64,7 @@ function toOpenParty(row) {
     memberCount: row.member_count,
     maxMembers: COOP_MAX_MEMBERS,
     hostCharacterId: row.host_character_id ?? null,
+    hardMode: row.hard_mode === 1,
     phase: row.phase || 'active',
     full: row.member_count >= COOP_MAX_MEMBERS,
   }
@@ -80,7 +82,7 @@ export async function listOpenRaidParties(env, now = Date.now()) {
   const placeholders = COOP_RAID_IDS.map(() => '?').join(',')
   if (!placeholders) return byRaid
   const rows = await env.DB.prepare(
-    `SELECT id, raid_id, member_count, host_character_id, phase
+    `SELECT id, raid_id, member_count, host_character_id, phase, hard_mode
        FROM coop_boss_sessions
       WHERE raid_id IN (${placeholders}) AND status = 'active' AND phase = 'lobby' AND last_tick_at >= ?
       ORDER BY member_count DESC, id ASC`,
@@ -160,7 +162,9 @@ export async function joinCoopRaidParty(env, { characterId, identityId, raidId, 
   let joinedSessionId = null
   try {
     joinedSessionId = sessionId === null
-      ? await openRaidParty(env, { raidId, member, characterId, now })
+      // The host's own switch fixes the party's difficulty; a raider joining a
+      // lobby adopts what the host set, exactly as a boss room works.
+      ? await openRaidParty(env, { raidId, member, characterId, now, hardMode: await isHardModeEnabled(env, characterId, 'raids', raidId) })
       : await joinExistingParty(env, { raidId, member, characterId, sessionId })
   } catch (err) {
     await env.DB.prepare(
@@ -185,18 +189,18 @@ export async function joinCoopRaidParty(env, { characterId, identityId, raidId, 
   return { sessionId: joinedSessionId, rejoined: false, saveRevision: written.saveRevision }
 }
 
-async function openRaidParty(env, { raidId, member, characterId, now }) {
-  const state = createCoopRaidState(raidId, monstersData, { hostCharacterId: characterId, now })
+async function openRaidParty(env, { raidId, member, characterId, now, hardMode = false }) {
+  const state = createCoopRaidState(raidId, monstersData, { hostCharacterId: characterId, now, hardMode })
   if (!state) throw new GameApiError('INVALID_COOP_RAID', 'That raid cannot be run as a party', 400)
   const seeded = addCoopMember(state, member)
   const res = await env.DB.prepare(
     `INSERT INTO coop_boss_sessions
        (boss_id, raid_id, phase, host_character_id, status, member_count, created_at, current_tick,
-        state_json, last_tick_at, boss_hp, boss_max_hp, kill_seq)
-     VALUES (?, ?, 'lobby', ?, 'active', 1, ?, 0, ?, ?, ?, ?, 0)`,
+        state_json, last_tick_at, boss_hp, boss_max_hp, kill_seq, hard_mode)
+     VALUES (?, ?, 'lobby', ?, 'active', 1, ?, 0, ?, ?, ?, ?, 0, ?)`,
   ).bind(
     seeded.bossId, raidId, characterId, now, JSON.stringify(seeded), now,
-    seeded.boss.currentHP, seeded.boss.maxHP,
+    seeded.boss.currentHP, seeded.boss.maxHP, hardMode ? 1 : 0,
   ).run()
   return res.meta.last_row_id
 }

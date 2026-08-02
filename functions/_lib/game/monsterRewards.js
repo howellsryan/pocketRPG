@@ -1,4 +1,5 @@
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
+import { hardModeDropChance } from '../../../src/engine/hardMode.js'
 
 function rollQuantity(quantity, random) {
   if (Array.isArray(quantity)) {
@@ -10,7 +11,9 @@ function rollQuantity(quantity, random) {
   return Math.floor(Number(quantity) || 0)
 }
 
-export function rollMonsterRewardsById(monsterId, random = Math.random, isOnTask = false) {
+// `hardMode` comes from the server's own state (hard_mode_targets, or the co-op
+// session's column) — never from the caller's request body (§14).
+export function rollMonsterRewardsById(monsterId, random = Math.random, isOnTask = false, hardMode = false) {
   const monster = monstersData?.[monsterId]
   if (!monster) return []
 
@@ -19,8 +22,10 @@ export function rollMonsterRewardsById(monsterId, random = Math.random, isOnTask
   for (const drop of monster?.drops || []) {
     // Task-only drops (e.g. Imbued Crown/Brain) never roll off-task.
     if (drop?.taskOnly && !isOnTask) continue
-    const chance = Number(drop?.chance)
-    const rollCount = chance === 1 ? 1 : rolls
+    // The roll COUNT keys off the authored chance, not the hard-mode one: a
+    // doubled 0.5 hitting 1 must not also collapse the table's extra rolls.
+    const chance = hardModeDropChance(drop?.chance, hardMode)
+    const rollCount = Number(drop?.chance) === 1 ? 1 : rolls
     for (let i = 0; i < rollCount; i++) {
       if (random() < (Number.isFinite(chance) ? chance : 0)) {
         const qty = rollQuantity(drop?.quantity, random)

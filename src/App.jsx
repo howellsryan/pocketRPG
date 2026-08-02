@@ -78,11 +78,15 @@ import { getSlayerTaskReward, resolveSlayerLoopRewards, buildSlayerResultRows, c
 import { hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
 import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
 import GameIcon from './components/GameIcon.jsx'
+import OneLifeIcon from './components/OneLifeIcon.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { openWorld } from './utils/helpers.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
 import { fetchKillCounts } from './cloud/killCounts.js'
+import { fetchHardModeTargets, hardModeKey } from './cloud/hardMode.js'
+import { hardModeSkipCost, idleTaskDiedHard } from './engine/hardMode.js'
+import { recordItemLossEntries } from './engine/lossLedger.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 import { rollClueRewards } from './engine/clueScrolls.js'
 import dailyTasksData from './data/dailyTasks.json'
@@ -358,7 +362,7 @@ const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the d
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, syncHardModeTargets, hardModeTargets, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
@@ -1243,7 +1247,18 @@ function GameApp() {
               bankedItems: sim.lootBanked || sim.itemsBanked || {},
               ammoConsumed: idleAmmoConsumed,
               chargesConsumed: idleChargesConsumed,
+              hardModeDeath: sim.died === true && idleTaskDiedHard(savedTask),
             })
+            if (writes.hardModeItemsLost) {
+              sim.hardModeItemsLost = writes.hardModeItemsLost
+              // Declared, or the one write that deliberately empties a pack
+              // reads to the detector exactly like the bug it watches for
+              // (src/engine/lossLedger.js).
+              recordItemLossEntries(writes.hardModeItemsLost)
+              // Losing a pack has to survive a closed tab, so it does not wait
+              // for the ordinary debounced flush.
+              requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
+            }
             updateInventory(writes.inventory)
             if (writes.equipment) updateEquipment(writes.equipment)
             if (Object.keys(writes.bankDeltas).length > 0) {
@@ -1755,18 +1770,29 @@ function GameApp() {
       // Kick off KC + daily-tasks fetch in parallel with checkSave to minimise the
       // window where data is missing from the first render.
       const kcPromise = fetchKillCounts()
+      const hardModePromise = fetchHardModeTargets()
       const dailyTasksPromise = api.getDailyTasks().catch(() => null)
       await checkSave()
       // Pull collection log alongside the save. Fire-and-forget — UI shows a
       // loading state until cache populates.
       fetchCollectionLog({ force: true }).catch(() => {})
-      kcPromise.then(server => {
+      const kcApplied = kcPromise.then(server => {
         if (!server) return
         syncServerKillCounts(server.bossKillCounts, server.raidKillCounts)
-      }).catch(() => {}).finally(() => {
-        // Settled (success OR fail) — let the combat screen render. Local
-        // IDB KC was already loaded by checkSave, so a failed fetch still
-        // shows the warm cache rather than blocking the screen.
+      }).catch(() => {})
+      const hardModeApplied = hardModePromise.then(keys => {
+        if (keys) syncHardModeTargets(keys)
+      }).catch(() => {})
+      // Settled (success OR fail) — let the combat screen render. Local IDB
+      // holds a warm copy of both, so a failed fetch shows the cache rather
+      // than blocking the screen.
+      //
+      // The Hard Mode mirror is part of this gate, not a fetch alongside it:
+      // the screen's auto-start builds a fight the instant this flips, and it
+      // scales the monster off the mirror. Landing second meant an auto-started
+      // boss was built UNSCALED while the server — which reads its own
+      // hard_mode_targets on the kill — still paid the doubled drop rates (§14).
+      Promise.all([kcApplied, hardModeApplied]).finally(() => {
         markKillCountsLoaded()
       })
       dailyTasksPromise.then(dt => {
@@ -1815,6 +1841,13 @@ function GameApp() {
     const oneLifeMode = isOneLife || getOneLifeMode()
     if (oneLifeMode) revertOneLifeAfterDeath()
     addToast('You died while you were away!', 'error')
+    // Boot catch-up applies its result straight to IDB and fires no push of its
+    // own, so an emptied pack would sit local until the next autosave — long
+    // enough for a server-authoritative round trip to adopt the older save and
+    // hand the items back.
+    if (idleResult.hardModeItemsLost?.length > 0) {
+      requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
+    }
     setIdleResult(idleResult)
   }
 
@@ -2857,7 +2890,18 @@ function GameApp() {
               bankedItems: sim.lootBanked || sim.itemsBanked || {},
               ammoConsumed: idleAmmoConsumed,
               chargesConsumed: idleChargesConsumed,
+              hardModeDeath: sim.died === true && idleTaskDiedHard(savedTask),
             })
+            if (writes.hardModeItemsLost) {
+              sim.hardModeItemsLost = writes.hardModeItemsLost
+              // Declared, or the one write that deliberately empties a pack
+              // reads to the detector exactly like the bug it watches for
+              // (src/engine/lossLedger.js).
+              recordItemLossEntries(writes.hardModeItemsLost)
+              // Losing a pack has to survive a closed tab, so it does not wait
+              // for the ordinary debounced flush.
+              requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
+            }
             updateInventory(writes.inventory)
             if (writes.equipment) updateEquipment(writes.equipment)
             if (Object.keys(writes.bankDeltas).length > 0) {
@@ -3232,7 +3276,11 @@ function GameApp() {
 
   // Skip button mode — shared by the desktop Header and the mobile frame bar.
   const skipMode = activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'
-  const raidSkipCost = activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null
+  // A hard raid costs double to skip, because a skip buys the run's (doubled)
+  // reward roll. The server charges the same multiple from its own switch.
+  const raidSkipCost = activeTask?.type === 'combat' && activeTask?.raidId
+    ? hardModeSkipCost(raidsData[activeTask.raidId]?.skipCost ?? 1, (hardModeTargets || []).includes(hardModeKey('raids', activeTask.raidId)))
+    : null
 
   // Persistent combat host: the CombatScreen stays mounted (hidden) while a
   // background-eligible fight is still busy (ticking, or holding a loot/death
@@ -3616,7 +3664,7 @@ function GameApp() {
                 return (
                   <div class="lm-card" style={{ borderColor: 'rgba(255, 135, 135, 0.3)', borderLeft: '3px solid #ff8787' }}>
                     <div class="lm-card__head" style={{ color: '#ff8787' }}>
-                      <span class="lm-card__icn">{idleResult.died ? '☠️' : '⚠️'}</span>
+                      <span class="lm-card__icn">{idleResult.died ? <OneLifeIcon size={14} title="" /> : '⚠️'}</span>
                       {idleResult.died ? 'Combat Halted' : 'Stopped Early'}
                     </div>
                     <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4' }}>
@@ -3627,6 +3675,26 @@ function GameApp() {
                   </div>
                 )
               })()}
+
+              {/* What a hard-mode death took. Named here rather than left for the
+                  player to notice: an idle death is already invisible, and this
+                  one emptied their pack. */}
+              {idleResult.hardModeItemsLost?.length > 0 && (
+                <div class="lm-card" style={{ borderColor: 'rgba(255, 135, 135, 0.3)', borderLeft: '3px solid #ff8787' }}>
+                  <div class="lm-card__head" style={{ color: '#ff8787' }}>
+                    <span class="lm-card__icn"><OneLifeIcon size={14} title="" /></span>Lost Forever
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4', marginBottom: '4px' }}>
+                    Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.
+                  </div>
+                  {idleResult.hardModeItemsLost.map((entry) => (
+                    <div key={entry.itemId} style={{ padding: '2px 0', fontSize: '12px', color: 'var(--color-parchment)' }}>
+                      {itemsData[entry.itemId]?.name || entry.itemId}
+                      {entry.quantity > 1 ? ` ×${entry.quantity.toLocaleString()}` : ''}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Clue scrolls completed */}
               {clueScrollCount > 0 && (

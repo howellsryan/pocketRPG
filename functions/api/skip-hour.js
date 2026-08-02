@@ -3,18 +3,26 @@ import { assertNotInCoopSession } from '../_lib/game/coopBoss.js'
 import { auditLog } from '../_lib/game/audit.js'
 import monstersData from '../../src/data/monsters.json' assert { type: 'json' }
 import raidsData from '../../src/data/raids.json' assert { type: 'json' }
+import { hardModeSkipCost } from '../../src/engine/hardMode.js'
+import { isHardModeEnabled } from '../_lib/game/hardMode.js'
 
 // Server-authoritative skip cost. A boss instant-kill skip costs the monster's
 // `skipCost`; a full-raid skip costs the raid's `skipCost` (its bosses plus any
 // additional forms); a normal 1-hour skip costs 1. All default to 1 credit.
-function resolveSkipCost({ bossId, raidId } = {}) {
+//
+// A skip buys the kill's drops without the fight, and hard mode doubles those
+// drop rates — so a hard target's skip costs double, read from the server's own
+// switch (hard_mode_targets), never from the request.
+async function resolveSkipCost(env, characterId, { bossId, raidId } = {}) {
   if (raidId && typeof raidId === 'string') {
     const cost = raidsData[raidId]?.skipCost
-    return Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
+    const base = Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
+    return hardModeSkipCost(base, await isHardModeEnabled(env, characterId, 'raids', raidId))
   }
   if (bossId && typeof bossId === 'string') {
     const cost = monstersData[bossId]?.skipCost
-    return Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
+    const base = Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
+    return hardModeSkipCost(base, await isHardModeEnabled(env, characterId, 'monsters', bossId))
   }
   return 1
 }
@@ -28,13 +36,13 @@ export async function onRequestPost({ request, env }) {
 
   let body = {}
   try { body = await request.json() } catch { body = {} }
-  const cost = resolveSkipCost({ bossId: body?.bossId, raidId: body?.raidId })
-
   try {
     const character = await env.DB.prepare(
       'SELECT id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
     ).bind(characterId, auth.identity.id).first()
     if (!character) return json({ error: 'Character not found' }, 404)
+
+    const cost = await resolveSkipCost(env, characterId, { bossId: body?.bossId, raidId: body?.raidId })
 
     // A co-op boss fight owns this save: the room is mutating the pack tick by
     // tick and replays its snapshot on write-back.

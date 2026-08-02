@@ -19,6 +19,8 @@ import InventoryGrid from '../components/InventoryGrid.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS, spellRuneDamageLabel } from '../utils/bonusLabels.js'
 import { formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
+import { chargeRecipeSpend } from '../engine/chargeRecipes.js'
+import { recordItemLosses } from '../engine/lossLedger.js'
 import { holdTicks, releaseTicks } from '../engine/tick.js'
 
 // Tick-hold key for a loadout swap (see handleLoadPreset).
@@ -249,6 +251,7 @@ export default function EquipmentScreen() {
     const currentCharges = weaponEntry.charges || 0
     newEq[equipSlotName] = { ...weaponEntry, charges: currentCharges + actualQty }
 
+    recordItemLosses(chargeRecipeSpend(recipe, actualQty))
     updateInventory(newInv)
     updateEquipment(newEq)
     addToast(`Charged ${item.name} with ${actualQty} charge${actualQty === 1 ? '' : 's'}`, 'info')

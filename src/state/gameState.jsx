@@ -24,7 +24,7 @@ import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../en
 import { applyTaskResult } from '../engine/applyTaskResult.js'
 import { preserveBankCharges } from '../engine/bankCharges.js'
 import { applyBankDeltas, bankUnitsRemoved } from '../engine/bankMutations.js'
-import { recordItemLosses } from '../engine/lossLedger.js'
+import { recordItemLossEntries, recordItemLosses } from '../engine/lossLedger.js'
 import { createDirtyFlags, claimDirtyFlags, restoreDirtyFlags, hasDirtyFlags } from '../db/dirtyFlags.js'
 import { isBackground, getActivityKey } from '../engine/activityRegistry.js'
 import {
@@ -32,6 +32,7 @@ import {
   fetchAndHydrateActivityProgress, clearActivityProgress, resetActivityProgressSync,
 } from '../cloud/activityProgress.js'
 import { getSlayerTaskReward, resolveSlayerLoopRewards } from '../engine/slayerRewards.js'
+import { hardModeDeathLoss, idleTaskDiedHard } from '../engine/hardMode.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
 import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
@@ -99,6 +100,10 @@ export function GameProvider({ children }) {
   const [slayerStoreUnlocks, setSlayerStoreUnlocksState] = useState([])
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
+  // Hard Mode switches, as `${sourceType}:${sourceId}` keys. A MIRROR of
+  // hard_mode_targets — the server decides the doubled drop rates, this only
+  // decides what the picker renders and which monster the client scales.
+  const [hardModeTargets, setHardModeTargetsState] = useState([])
   const [raidKillCounts, setRaidKillCountsState] = useState({})
   // True once the per-character server KC fetch has settled (success or fail).
   // The combat screen gates its first render on this so a cold cache never
@@ -189,7 +194,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -197,7 +202,7 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
-      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme')
+      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -330,6 +335,7 @@ export function GameProvider({ children }) {
           // toast.
           const hpRegenSim = simulateIdleHPRegen(elapsedMs)
           let diedDuringIdle = false
+          let hardModeDeathApplied = false
           // Snapshot for the daily-task feed below — savedTask is reassigned by
           // the quest cascade and cleared on an offline death before we emit.
           const idleTask = savedTask
@@ -365,6 +371,18 @@ export function GameProvider({ children }) {
             // still kept (see the note above); we only clear the task itself.
             diedDuringIdle = true
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            // A hard fight that killed the player while the app was closed costs
+            // the same pack a live one does. Applied to the post-simulation
+            // holdings, so supplies eaten on the way down are already gone and
+            // loot banked before the killing blow is kept.
+            if (idleTaskDiedHard(savedTask)) {
+              const loss = hardModeDeathLoss(inv, eq, itemsData)
+              inv = loss.inventory
+              eq = loss.equipment
+              hardModeDeathApplied = true
+              sim.hardModeItemsLost = loss.lost
+              recordItemLossEntries(loss.lost)
+            }
           } else if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
             savedHP = applySettings.currentHP
             sim.hpRestored = 0
@@ -382,8 +400,9 @@ export function GameProvider({ children }) {
             }
           }
 
-          // Save equipment if ammo or charges changed during combat
-          if (savedTask.type === 'combat' && (sim.ammoConsumed || sim.chargesConsumed > 0)) {
+          // Save equipment if ammo or charges changed during combat, or if a
+          // hard-mode death stripped what was worn.
+          if (savedTask.type === 'combat' && (sim.ammoConsumed || sim.chargesConsumed > 0 || hardModeDeathApplied)) {
             await saveEquipment(eq)
           }
 
@@ -712,6 +731,7 @@ export function GameProvider({ children }) {
     setDungeoneeringTokensState(savedDungeoneeringTokens)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
+    setHardModeTargetsState(Array.isArray(savedHardModeTargets) ? savedHardModeTargets : [])
     setRaidKillCountsState(savedRaidKillCounts ?? {})
     setFarmingState(savedFarming ?? { patchesById: {} })
     const initialCompletedQuests = new Set(savedCompletedQuests || [])
@@ -1189,6 +1209,29 @@ export function GameProvider({ children }) {
     slayerStoreUnlocksRef.current = next
     setSlayerStoreUnlocksState(next)
     saveSetting('slayerStoreUnlocks', next)
+  }, [])
+
+  // Replaces the mirror wholesale from the server's own list — the server is the
+  // only writer, so merging a stale local copy in would resurrect a switch the
+  // player turned off on another device.
+  const syncHardModeTargets = useCallback((keys) => {
+    const next = Array.isArray(keys) ? [...new Set(keys)] : []
+    setHardModeTargetsState(next)
+    saveSetting('hardModeTargets', next)
+  }, [])
+
+  // Local echo of one accepted server write. The caller has already had its POST
+  // acknowledged — a failed write must never reach here, or the client fights a
+  // doubled boss for normal drop rates.
+  const applyHardModeTarget = useCallback((key, enabled) => {
+    setHardModeTargetsState((prev) => {
+      const set = new Set(prev)
+      if (enabled) set.add(key)
+      else set.delete(key)
+      const next = [...set]
+      saveSetting('hardModeTargets', next)
+      return next
+    })
   }, [])
 
   const updateBossKillCounts = useCallback((counts) => {
@@ -1742,6 +1785,7 @@ export function GameProvider({ children }) {
     dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens,
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
+    hardModeTargets, syncHardModeTargets, applyHardModeTarget,
     raidKillCounts, updateRaidKillCounts,
     syncServerKillCounts,
     killCountsLoaded, markKillCountsLoaded,
