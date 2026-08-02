@@ -10,12 +10,16 @@ import {
   holdingsOf,
   mergeDeclaredLosses,
   readDeclaredLosses,
+  sanitiseDeclaredLosses,
   isResourceItem,
   rememberHoldingsBaseline,
   readHoldingsBaseline,
   summariseHoldings,
 } from '../functions/_lib/game/holdingsDelta.js'
 import { detectBankWipe } from '../functions/_lib/game/saveValidation.js'
+import itemsJson from '../src/data/items.json'
+
+const itemsTableForLegacyProbe = () => itemsJson as any
 
 // Real ids so the items.json-driven classification and shopValue are exercised.
 const DURABLES = [
@@ -300,6 +304,24 @@ describe('declared losses', () => {
     } as any)
     expect(loss.declaredUnits).toBe(0)
     expect(loss.flagged).toBe(true)
+  })
+
+  it('canonicalises a declaration made under a legacy item id', () => {
+    const legacy = Object.values(itemsTableForLegacyProbe()).find((i: any) => i.legacy_item_id && i.legacy_item_id !== i.id) as any
+    const before = { bank: { [legacy.id]: { itemId: legacy.id, quantity: 20 } } }
+    const after = { bank: {} }
+    const undeclared = classifyItemLoss(before, after)
+    const declared = classifyItemLoss(before, after, undefined, { [legacy.legacy_item_id]: 20 })
+    expect(declared.declaredUnits).toBe(20)
+    expect(declared.durableUnits + declared.resourceUnits)
+      .toBeLessThan(undeclared.durableUnits + undeclared.resourceUnits)
+  })
+
+  it('accepts a pre-built Map without silently declaring nothing', () => {
+    const loss = classifyItemLoss(infusionBefore, infusionAfter, undefined,
+      sanitiseDeclaredLosses(infusionDeclared) as any)
+    expect(loss.flagged).toBe(false)
+    expect(loss.declaredUnits).toBe(600)
   })
 
   it('nets a declaration through classifyItemLossFromHoldings too', () => {

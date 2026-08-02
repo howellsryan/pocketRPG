@@ -90,6 +90,13 @@ export function saveContentKey(payload) {
 }
 let pendingTimer = null
 let pendingSnapshot = null
+// The declared loss ledger AS OF the moment pendingSnapshot was captured. It
+// must be pinned with the snapshot, not read at flush time: the snapshot is
+// taken on the 60s/120s heartbeat and then sits in the debounce, so a
+// flush-time read declares spends the payload does not yet contain — and
+// settling drops them, leaving the save that finally carries them looking
+// unexplained. That is the exact noise this ledger exists to remove.
+let pendingLosses = null
 let pendingSaveOptions = {}
 let inFlight = false
 // Promise for the push currently on the wire. Callers (pushNow, re-entrant
@@ -154,7 +161,9 @@ function canSync() {
 // guarantees no other push is in flight. Returns true if the save landed.
 async function performPush() {
   const snap = pendingSnapshot
+  const losses = pendingLosses
   pendingSnapshot = null
+  pendingLosses = null
   inFlight = true
   emitCloudSaveStatus('saving')
   try {
@@ -182,13 +191,9 @@ async function performPush() {
     // enforce the idle write ceiling; engaged/manual saves omit it (default
     // interactive) and always persist + refresh the freshness stamp.
     const interactive = isEngaged()
-    // What this window deliberately spent, so the server's item-loss detector
-    // reads routine idling as consumption rather than destruction
-    // (src/engine/lossLedger.js). Captured BEFORE the request so the settle
-    // below subtracts exactly what went out — anything spent while this push is
-    // on the wire belongs to the next save's ledger.
-    const losses = readItemLossLedger()
     const res = await api.putSave(json, { ...pendingSaveOptions, saveRevision: lastSaveRevision, interactive, losses })
+    // Settle by subtracting what THIS payload declared. Anything spent since it
+    // was captured stays on the ledger for the save that will carry it.
     if (losses) settleItemLossLedger(losses)
     pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
@@ -220,6 +225,10 @@ async function performPush() {
       // and drops with it. Drop it instead: the pull is the source of truth.
       if (lastLockCode === 'CHARACTER_IN_COOP_SESSION') {
         pendingSnapshot = null
+        // We are discarding this snapshot for the room's write-back, so the
+        // ledger describing it goes too — kept, it would declare against a
+        // window the room has already superseded.
+        resetItemLossLedger()
         hasUnsyncedChanges = false
         if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
         emitCloudSaveStatus('saved', { updatedAt: lastPushedAt || null, skipped: true })
@@ -227,7 +236,7 @@ async function performPush() {
       }
       pendingSnapshot = snap
       markUnsynced()
-      schedulePush(snap, LOCK_RETRY_MS)
+      schedulePush(snap, LOCK_RETRY_MS, losses)
       return false
     }
     // save_revision_conflict: our local state diverged from the server's
@@ -247,6 +256,7 @@ async function performPush() {
     if (kind === 'conflict') {
       conflictPending = true
       pendingSnapshot = null
+      pendingLosses = null
       pendingSaveOptions = {}
       hasUnsyncedChanges = false
       if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
@@ -270,7 +280,7 @@ async function performPush() {
     }
     // Keep retrying in the background regardless of state — if the network
     // recovers, the next success emits 'saved' and the UI lifts the block.
-    schedulePush(snap, backoff)
+    schedulePush(snap, backoff, losses)
     return false
   } finally {
     inFlight = false
@@ -299,8 +309,9 @@ async function flushNow() {
   }
 }
 
-function schedulePush(snapshot, delay = PUSH_DEBOUNCE_MS) {
+function schedulePush(snapshot, delay = PUSH_DEBOUNCE_MS, losses = readItemLossLedger()) {
   pendingSnapshot = snapshot
+  pendingLosses = losses
   markUnsynced()
   if (pendingTimer) return
   pendingTimer = setTimeout(flushNow, delay)
@@ -406,7 +417,7 @@ export async function pushNow(snapshot, options = {}) {
   // own. We must never abandon the server mid-response — the paid skip-hour
   // flow awaits this to confirm progress is durable before revealing rewards.
   if (inFlight && inFlightPromise) { try { await inFlightPromise } catch { /* re-attempted below */ } }
-  if (snapshot) pendingSnapshot = snapshot
+  if (snapshot) { pendingSnapshot = snapshot; pendingLosses = readItemLossLedger() }
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
 
   // Resolve any pending critical-save snapshot synchronously and feed it
@@ -419,7 +430,7 @@ export async function pushNow(snapshot, options = {}) {
     pendingCriticalSnapshotSource = null
     pendingCriticalReasons.clear()
     const criticalSnapshot = resolveSnapshotSource(source)
-    if (criticalSnapshot) pendingSnapshot = criticalSnapshot
+    if (criticalSnapshot) { pendingSnapshot = criticalSnapshot; pendingLosses = readItemLossLedger() }
   }
 
   return await flushNow()
@@ -621,6 +632,7 @@ export function resetSyncState() {
   lastPushedContentKey = null
   lastInteractionAt = Date.now()
   pendingSnapshot = null
+  pendingLosses = null
   hasUnsyncedChanges = false
   consecutiveFailures = 0
   inFlightPromise = null

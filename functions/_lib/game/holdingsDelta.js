@@ -237,11 +237,15 @@ function unitValue(itemId, itemsTable) {
  */
 export function sanitiseDeclaredLosses(raw, itemsTable = itemsData) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  // Accepts a plain ledger or an already-built Map, so a caller cannot skip
+  // canonicalisation by handing over the wrong shape — Object.keys(map) is
+  // empty, which would have silently declared nothing.
+  const entries = raw instanceof Map ? raw.entries() : Object.entries(raw)
   const declared = new Map()
   let seen = 0
-  for (const key of Object.keys(raw)) {
+  for (const [key, value] of entries) {
     if (++seen > MAX_DECLARED_ITEMS) break
-    addUnits(declared, key, raw[key], itemsTable)
+    addUnits(declared, key, value, itemsTable)
   }
   return declared.size > 0 ? declared : null
 }
@@ -263,7 +267,7 @@ export function classifyItemLoss(previousSave, nextSave, itemsTable = itemsData,
  * is already gone — it has to be measured at load time and carried. */
 export function classifyItemLossFromHoldings(previous, nextSave, itemsTable = itemsData, declared = null) {
   const next = holdingsOf(nextSave, itemsTable)
-  const covered = declared instanceof Map ? declared : sanitiseDeclaredLosses(declared, itemsTable)
+  const covered = sanitiseDeclaredLosses(declared, itemsTable)
 
   let durableUnits = 0
   let durableValue = 0
