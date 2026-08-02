@@ -17,6 +17,7 @@
 // fields; the monster itself is rebuilt from `monstersData` on every tick.
 
 import { createCombatState, processCombatTick } from './combat.js'
+import { hardModeDeathLoss, monstersTableFor } from './hardMode.js'
 import { getLevelFromXP } from './experience.js'
 import { resolveSlayerTaskKill } from './slayerTasks.js'
 import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
@@ -213,13 +214,18 @@ export function cloneCoopState(state) {
 }
 
 /** A fresh, empty instance of a boss. Members join into it afterwards. */
-export function createCoopBossState(bossId, monstersData, now = Date.now()) {
-  const monster = monstersData?.[bossId]
+export function createCoopBossState(bossId, monstersData, now = Date.now(), { hardMode = false } = {}) {
+  // The room's difficulty is decided once, here, and rides state_json from then
+  // on: every member of a room fights the same boss off one health bar, so it
+  // can never be a per-member preference.
+  const table = monstersTableFor(monstersData, hardMode)
+  const monster = table?.[bossId]
   if (!monster) return null
-  const seed = createCombatState(monster, 'melee', 'accurate', null, monstersData)
+  const seed = createCombatState(monster, 'melee', 'accurate', null, table)
   return {
     tick: 0,
     bossId,
+    hardMode: !!hardMode,
     startedAt: now,
     boss: {
       currentHP: seed.monster.currentHP,
@@ -256,12 +262,16 @@ export function createCoopBossState(bossId, monstersData, now = Date.now()) {
  * run's hitpoints, because the loot gate measures a member's share of the raid
  * rather than of whichever boss happened to be last.
  */
-export function createCoopRaidState(raidId, monstersData, { hostCharacterId = null, now = Date.now() } = {}) {
+export function createCoopRaidState(raidId, monstersData, { hostCharacterId = null, now = Date.now(), hardMode = false } = {}) {
   const raid = coopRaidData(raidId)
   if (!raid) return null
   const bosses = raidBossOrder(raidId)
-  const seed = createCoopBossState(bosses[0], monstersData, now)
+  const seed = createCoopBossState(bosses[0], monstersData, now, { hardMode })
   if (!seed) return null
+  // The loot gate measures a member's damage against the WHOLE run, so the
+  // basis has to be the run the party is actually fighting — read off the
+  // normal table it would be halved, and every raider would clear 10% twice over.
+  const table = monstersTableFor(monstersData, hardMode)
   return {
     ...seed,
     phase: 'lobby',
@@ -271,7 +281,7 @@ export function createCoopRaidState(raidId, monstersData, { hostCharacterId = nu
       name: raid.name,
       bosses,
       currentBossIndex: 0,
-      maxHP: raidTotalHitpoints(raidId, monstersData),
+      maxHP: raidTotalHitpoints(raidId, table),
       completions: 0,
     },
   }
@@ -300,6 +310,22 @@ function pickMutableMonsterFields(monster) {
  * so a member who is written back twice is not paid twice. */
 export function emptySlayerCredit() {
   return { pointsEarned: 0, tasksCompleted: 0, masterCompletions: {} }
+}
+
+/**
+ * Folds a hard-mode death's tally into the member's banked declaration. Also a
+ * DELTA cleared by the write-back, so a member written back twice declares the
+ * loss once — over-declaring on the second write would let a genuine loss in
+ * that window pass unflagged.
+ */
+export function bankMemberItemsLost(banked, lost) {
+  const out = { ...(banked || {}) }
+  for (const entry of Array.isArray(lost) ? lost : []) {
+    const itemId = entry?.itemId
+    if (typeof itemId !== 'string' || !itemId) continue
+    out[itemId] = (out[itemId] || 0) + (Math.floor(Number(entry.quantity) || 0) || 1)
+  }
+  return out
 }
 
 /**
@@ -378,6 +404,12 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     damage: 0,
     damageTick: 0,
     xpGained: {},
+    // Deliberate removals awaiting a save write-back, itemId -> units. Banked
+    // like xpGained (and cleared at the same points) because the room takes the
+    // pack in the Durable Object, several ticks before anything reaches the
+    // save — and the client ledger that explains a solo hard-mode death to the
+    // item-loss detector cannot see a loss it never made.
+    itemsLost: {},
     // Slayer state rides the session so a group kill credits the member's own
     // task. The running completion total comes along because the task-reward
     // multiplier keys off it (every 5th task ×10, every 50th ×50) — snapshotting
@@ -948,8 +980,12 @@ function applyConsumptionEvents(member, engineEvents, engine, itemsData) {
  * deterministically. Returns the next state plus this tick's events, and a
  * `kill` record when the boss died (the caller settles loot from it).
  */
-export function processCoopTick(state, intents, { itemsData, monstersData, prayersData, spellsData }, now = Date.now()) {
+export function processCoopTick(state, intents, { itemsData, monstersData: monstersTable, prayersData, spellsData }, now = Date.now()) {
   const next = cloneCoopState(state)
+  // One swap at the door is what carries hard mode through every monster lookup
+  // this tick makes — the next raid boss, a respawn, the boss's adds — without
+  // any of those call sites knowing hard mode exists (src/engine/hardMode.js).
+  const monstersData = monstersTableFor(monstersTable, next.hardMode)
   const events = []
   next.tick = (next.tick || 0) + 1
 
@@ -1154,7 +1190,18 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     if (member.hp <= 0) {
       member.status = 'dead'
       member.hp = 0
-      events.push({ type: 'memberDeath', characterId: member.characterId })
+      // Hard mode takes the pack. Applied to the MEMBER record because that is
+      // the authority on their inventory until the write-back (§20) — clearing
+      // the save instead would be overwritten by the next flush.
+      let itemsLost = null
+      if (next.hardMode) {
+        const loss = hardModeDeathLoss(member.inventory, member.equipment, itemsData)
+        member.inventory = loss.inventory
+        member.equipment = loss.equipment
+        itemsLost = loss.lost
+        member.itemsLost = bankMemberItemsLost(member.itemsLost, loss.lost)
+      }
+      events.push({ type: 'memberDeath', characterId: member.characterId, itemsLost })
       reselectTarget(next)
     }
   }
@@ -1226,7 +1273,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
 /** Ends the lobby and puts the first boss on the field. */
 function startCoopRaid(state, monstersData, events) {
   const bosses = state.raid.bosses || []
-  const fresh = createCoopBossState(bosses[0], monstersData, Date.now())
+  const fresh = createCoopBossState(bosses[0], monstersData, Date.now(), { hardMode: state.hardMode })
   if (!fresh) return
   state.phase = 'active'
   state.bossId = bosses[0]
@@ -1316,7 +1363,7 @@ function advanceRaidBoss(state, monstersData, events) {
   const raid = state.raid
   const nextIndex = (Math.max(0, Number(raid.currentBossIndex) || 0)) + 1
   const bossId = (raid.bosses || [])[nextIndex]
-  const fresh = bossId ? createCoopBossState(bossId, monstersData, Date.now()) : null
+  const fresh = bossId ? createCoopBossState(bossId, monstersData, Date.now(), { hardMode: state.hardMode }) : null
   if (!fresh) {
     returnPartyToLobby(state, monstersData, events, 'aborted')
     return
@@ -1353,7 +1400,7 @@ function advanceRaidBoss(state, monstersData, events) {
 function returnPartyToLobby(state, monstersData, events, reason) {
   const raid = state.raid
   const bosses = raid.bosses || []
-  const fresh = createCoopBossState(bosses[0], monstersData, Date.now())
+  const fresh = createCoopBossState(bosses[0], monstersData, Date.now(), { hardMode: state.hardMode })
   state.phase = 'lobby'
   if (fresh) {
     state.bossId = bosses[0]
@@ -1390,7 +1437,7 @@ function tickIdleCooldowns(member) {
 }
 
 function respawnBoss(state, monstersData, events) {
-  const fresh = createCoopBossState(state.bossId, monstersData, Date.now())
+  const fresh = createCoopBossState(state.bossId, monstersData, Date.now(), { hardMode: state.hardMode })
   if (!fresh) return
   state.boss = fresh.boss
   for (const member of Object.values(state.members)) {

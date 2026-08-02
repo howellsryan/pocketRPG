@@ -25,7 +25,9 @@ import {
 } from '../functions/_lib/game/coopBoss.js'
 import { validateCoopAction } from '../functions/api/coop/session/[id]/intent.js'
 import { MAX_XP } from '../src/utils/constants.js'
-import { COOP_MAX_MEMBERS } from '../src/engine/coopBossEngine.js'
+import { COOP_MAX_MEMBERS, bankMemberItemsLost } from '../src/engine/coopBossEngine.js'
+import { hardModeDeathLoss } from '../src/engine/hardMode.js'
+import itemsJson from '../src/data/items.json'
 
 const BOSS = 'corporeal_horror'
 const QUEST = 'the_heart_of_shadows'
@@ -966,5 +968,59 @@ describe('quick prayers written back from a fight', () => {
     await writeBackMember(env as never, { characterId: 7, identityId: 1, member, sessionId })
 
     expect(readSave(7).settings.quickPrayers).toEqual(['clarity_of_thought'])
+  })
+})
+
+describe('a hard-mode death declares itself to the item-loss detector', () => {
+  // The room takes the pack inside the Durable Object, so the client-side loss
+  // ledger never sees it — the declaration is banked on the member and spent by
+  // the write-back. Without it, every legitimate hard-mode death files an
+  // incident and buries the bugs the safety net exists to surface.
+  const PACK = [{ itemId: 'twisted_bow', quantity: 1 }, { itemId: 'scythe_of_vitur', quantity: 1 }]
+  const WORN = { weapon: { itemId: 'nether_demon_whip', quantity: 1 } }
+
+  function incidentCount(characterId: number) {
+    return raw.prepare(
+      "SELECT COUNT(*) AS n FROM audit_events WHERE event_type = 'item_loss_detected' AND character_id = ?",
+    ).get(characterId).n
+  }
+
+  async function killAndWriteBack({ declare }: { declare: boolean }) {
+    const save = baseSave()
+    ;(save as any).inventory = [...PACK, ...new Array(26).fill(null)]
+    ;(save as any).equipment = WORN
+    await seedCharacter(7, { save })
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId: 7, identityId: 1, bossId: BOSS, username: 'player7',
+    })
+    const member = parseSessionState(await readSession(env as never, sessionId)).members['7']
+
+    const loss = hardModeDeathLoss(member.inventory, member.equipment, itemsJson as never)
+    member.inventory = loss.inventory
+    member.equipment = loss.equipment
+    member.status = 'dead'
+    member.itemsLost = declare ? bankMemberItemsLost({}, loss.lost) : {}
+
+    await writeBackMember(env as never, { characterId: 7, identityId: 1, member, sessionId })
+    return { member, loss }
+  }
+
+  it('flags when nothing is declared — the false positive being fixed', async () => {
+    await killAndWriteBack({ declare: false })
+    expect(incidentCount(7)).toBe(1)
+  })
+
+  it('files no incident once the death is declared', async () => {
+    const { loss } = await killAndWriteBack({ declare: true })
+    expect(loss.lost.length).toBeGreaterThan(0)
+    expect(incidentCount(7)).toBe(0)
+    // The pack really is gone — the declaration explains the loss, it does not
+    // prevent it.
+    expect(readSave(7).inventory.filter(Boolean)).toEqual([])
+  })
+
+  it('clears the banked declaration so a second write-back cannot cover a real loss', async () => {
+    const { member } = await killAndWriteBack({ declare: true })
+    expect(member.itemsLost).toEqual({})
   })
 })

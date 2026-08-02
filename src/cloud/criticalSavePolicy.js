@@ -20,6 +20,7 @@ export const CRITICAL_SAVE_REASONS = Object.freeze({
   BANK_CONFIG_CHANGE: 'bank_config_change',
   INFO_TOAST_SETTING_CHANGE: 'info_toast_setting_change',
   BACKGROUND_COMBAT_SETTING_CHANGE: 'background_combat_setting_change',
+  HARD_MODE_DEATH: 'hard_mode_death',
 })
 
 export const CRITICAL_SAVE_COALESCE_MS = 3_000

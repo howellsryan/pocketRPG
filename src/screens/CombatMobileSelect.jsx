@@ -3,6 +3,8 @@ import GameIcon from '../components/GameIcon.jsx'
 import BackLink from '../components/BackLink.jsx'
 import { getMonsterArt, getCategoryArt, getRaidArt, getMonsterLocationLabel } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
+import { scaleMonsterForHardMode } from '../engine/hardMode.js'
+import { HardModeTag } from '../components/HardMode.jsx'
 
 // Mobile section display order (desktop keeps the COMBAT_CATEGORIES order).
 // Categories and raids are interleaved per design; PvP renders last.
@@ -42,6 +44,7 @@ export default function CombatMobileSelect({
   onToggleSection,
   onFight,
   offersCoop,
+  isHardMode,
   onMonsterInfo,
   onStartRaid,
   onRaidInfo,
@@ -165,6 +168,8 @@ export default function CombatMobileSelect({
                       : bossReq.locked ? bossReq.reason
                       : demoBossLocked ? 'Free account'
                       : null
+                    const hardOn = !!isHardMode?.('monsters', monster.id)
+                    const shownMonster = hardOn ? scaleMonsterForHardMode(monster) : monster
                     return (
                       <div
                         key={monster.id}
@@ -178,9 +183,12 @@ export default function CombatMobileSelect({
                             {monster.name}
                             {isOnTask && <span class="cb-mon__tasktag">TASK</span>}
                             {!isLocked && offersCoop?.(monster) && <span class="cb-mon__grouptag">GROUP</span>}
+                            {hardOn && <HardModeTag />}
                           </div>
+                          {/* The numbers a hard-mode fight will actually open
+                              with — the row is where the player decides. */}
                           <div class="cb-mon__stats">
-                            <span>HP {monster.hitpoints}</span><i /><span>Att {monster.stats.attack}</span><i /><span>Def {monster.stats.defence}</span>
+                            <span>HP {shownMonster.hitpoints}</span><i /><span>Att {shownMonster.stats.attack}</span><i /><span>Def {shownMonster.stats.defence}</span>
                           </div>
                           {getMonsterLocationLabel(monster) && (
                             <div class="cb-mon__location">📍 {getMonsterLocationLabel(monster)}</div>
@@ -196,7 +204,7 @@ export default function CombatMobileSelect({
                         </div>
                         <button
                           class="cb-mon__info"
-                          onClick={(e) => { e.stopPropagation(); onMonsterInfo(monster) }}
+                          onClick={(e) => { e.stopPropagation(); onMonsterInfo(shownMonster) }}
                           aria-label={`${monster.name} info`}
                         >
                           <GameIcon iconKey="info" color="var(--fm-ember)" size={18} />
@@ -226,7 +234,10 @@ export default function CombatMobileSelect({
               <div class="cb-area__head" role="button">
                 <div class="cb-area__icon"><SkillEmblem iconKey={art.icon} accent={art.accent} size={30} glow={0} /></div>
                 <div class="cb-area__txt">
-                  <div class="cb-area__name">{raid.name}</div>
+                  <div class="cb-area__name">
+                    {raid.name}
+                    {isHardMode?.('raids', raid.id) && <HardModeTag className="ml-1.5" />}
+                  </div>
                   {isLocked && <div class="cb-area__blurb">🔒 {raidLockReason}</div>}
                 </div>
                 {raidKillCounts[raid.id] > 0 && <span class="cb-mon__kc">KC {raidKillCounts[raid.id].toLocaleString()}</span>}

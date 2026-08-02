@@ -22,6 +22,7 @@ import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRef
 import { coopRaidSummary, raidProgress } from '../engine/coopRaidEngine.js'
 import { appendChatLines, chatLinesFromCoopEvents } from '../utils/coopChat.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
+import { HardModeTag } from '../components/HardMode.jsx'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { canAffordSpecialAttack } from '../engine/specialAttackEnergy.js'
@@ -55,6 +56,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   // cannot queue two starts (the second is refused server-side either way).
   const [startingRaid, setStartingRaid] = useState(false)
   const [chatLog, setChatLog] = useState([])
+  // What this player's hard-mode death cost them, from the death event.
+  const [itemsLost, setItemsLost] = useState([])
   // The room let this player go while they were away and the screen is waiting
   // to be put back in a fight. Distinct from the first-join spinner only in
   // what it says, because it is not the player's first arrival.
@@ -178,6 +181,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
             ? (isIronman ? 'One-life protection lost — you are now a standard Ironman.' : 'One-life protection lost — you are now a standard account.')
             : 'Connection issue confirming your account change — will retry on your next death.', 'error')
         })
+      }
+      // The tally of a hard-mode death rides the event and nothing else, so it
+      // is kept here for the death modal below to report.
+      else if (ev.type === 'memberDeath' && Array.isArray(ev.itemsLost) && ev.itemsLost.length > 0) {
+        setItemsLost(ev.itemsLost)
       }
       else if (ev.type === 'slayerCredit' && ev.completed) {
         addToast?.(`\u{1F480} Slayer Task #${ev.totalTasks} Completed - ${(ev.pointsEarned || 0).toLocaleString()} points.`, 'levelup')
@@ -328,6 +336,30 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     )
   })() : null
 
+  // Built before the lobby branch and rendered by BOTH, for the same reason the
+  // loot modal above is: a wipe returns the party to its lobby on the very tick
+  // the last member died, so a death rendered only by the fight view is the one
+  // death nobody is ever told about.
+  const deathModalNode = me?.status === 'dead' ? (
+    <LootResultModal
+      theme="blood"
+      kind="progress"
+      icon="💀"
+      eyebrow={`Slain by ${bossName}`}
+      title="Defeated"
+      // The room already emptied the pack (the member record is the
+      // authority until the write-back), so this only reports it. Derived
+      // from the death EVENT because only that carries the tally — a
+      // reload falls back to the plain modal rather than an empty list.
+      sub={state?.hardMode ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined}
+      loot={itemsLost.length > 0 ? lootRowsForModal(shapeLootForModal(itemsLost, itemsData).valued, itemsData) : undefined}
+      lootTitle={itemsLost.length > 0 ? 'Lost Forever' : undefined}
+      lootSigned="-"
+      primaryAction={{ label: 'Continue', onClick: handleLeave }}
+      onClose={handleLeave}
+    />
+  ) : null
+
   if (inLobby && raid) {
     const summary = coopRaidSummary(raid.raidId, monstersData)
     return (
@@ -358,6 +390,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
             same band as the fight, so nothing moves when the run starts. */}
         <CoopChatPanel messages={chatLog} onSend={sendChat} />
         {lootModalNode}
+        {deathModalNode}
       </div>
     )
   }
@@ -393,6 +426,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
             : `${memberCount} ${memberCount === 1 ? 'player' : 'players'} in this fight`}
           meta={<CoopLootShare member={me} maxHP={coopLootBasisHP(state)} />}
           combatLevel={monster?.combatLevel}
+          aside={state?.hardMode ? <HardModeTag /> : null}
         />
 
         <CombatHPBlock
@@ -541,17 +575,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       {/* Derived from the member's status rather than the death event, so a
           reload or a dropped poll still shows it. A dead member stays dead for
           the life of the session — respawning the boss does not revive them. */}
-      {me?.status === 'dead' && (
-        <LootResultModal
-          theme="blood"
-          kind="progress"
-          icon="💀"
-          eyebrow={`Slain by ${bossName}`}
-          title="Defeated"
-          primaryAction={{ label: 'Continue', onClick: handleLeave }}
-          onClose={handleLeave}
-        />
-      )}
+      {deathModalNode}
     </div>
   )
 }
