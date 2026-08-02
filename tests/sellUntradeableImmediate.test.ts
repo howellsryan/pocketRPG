@@ -48,7 +48,14 @@ function mockEnv({ save, isIronman = false }: { save: any; isIronman?: boolean }
       },
     }),
   })
-  return { env: { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any, captured }
+  // writeSave batches the save-history snapshot ahead of its UPDATE; the
+  // statements have to actually run and hand back per-statement results.
+  const batch = async (statements: any[]) => {
+    const out = []
+    for (const statement of statements) out.push(await statement.run())
+    return out
+  }
+  return { env: { DB: { prepare, batch }, JWT_SECRET: TEST_SECRET } as any, captured }
 }
 
 describe('POST /api/trading-post/sell-immediate — untradeable items', () => {

@@ -7,6 +7,13 @@ import { stampIdleActive, stampIdleActiveStatement } from '../_lib/game/idleStam
 import { isWorldSessionLive } from '../_lib/game/worldSessions.js'
 import { isCoopSessionLive, sweepStaleCoopSessions } from '../_lib/game/coopBoss.js'
 import { auditLog } from '../_lib/game/audit.js'
+import { classifyItemLoss } from '../_lib/game/holdingsDelta.js'
+import {
+  flaggedSaveHistoryStatement,
+  pruneSaveHistory,
+  routineSaveHistoryStatement,
+  shouldPruneSaveHistory,
+} from '../_lib/game/saveHistory.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
@@ -347,6 +354,13 @@ async function applySaveWrite({ env, ch, identityId, body }) {
     }
   }
 
+  // Item-loss detection (shadow mode — see docs/item-loss-safety-net.md). This
+  // REJECTS NOTHING: it measures what the write destroys so the loss can be
+  // audited and the outgoing blob preserved. The two guards above remain the
+  // only writes /api/save refuses (§14). Runs after the no-op early-return, so
+  // a content-identical save never pays for it.
+  const itemLoss = previousJson !== null ? classifyItemLoss(previousSave, parsedNext || {}) : null
+
   // Recompute denormalized summary so the leaderboard / PvP CB lookups can
   // run as cheap indexed SELECTs against `characters` instead of LEFT
   // JOINing `saves` and JSON.parsing the full blob in a Worker.
@@ -354,6 +368,13 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   const save_blob = save_data ? await gzipJsonString(save_data) : null
 
   const statements = [
+    // Preserve the blob this write is about to overwrite. FIRST in the batch —
+    // D1 runs a batch in order, so once the upsert below lands the prior state
+    // is gone. A flagged loss takes its own row as well as the routine one: the
+    // duplicate is the point, since the routine copy is pruned in days and the
+    // state immediately before a suspected loss has to outlive that.
+    routineSaveHistoryStatement(env, ch.id, now),
+    ...(itemLoss?.flagged ? [flaggedSaveHistoryStatement(env, ch.id, now)] : []),
     env.DB.prepare(
       `INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision)
        VALUES (?, ?, ?, ?, 1)
@@ -389,6 +410,20 @@ async function applySaveWrite({ env, ch, identityId, body }) {
     )
   }
   await env.DB.batch(statements)
+
+  if (itemLoss?.flagged) {
+    // Swallowed: the detector observes, and an audit outage must never turn a
+    // legitimate save into a failure.
+    await auditLog(env, 'item_loss_detected', {
+      characterId: ch.id,
+      identityId,
+      source: 'api_save',
+      previousRevision: currentRevision,
+      nextRevision: currentRevision + 1,
+      ...itemLoss,
+    }, { swallow: true })
+  }
+  if (shouldPruneSaveHistory()) pruneSaveHistory(env, now).catch(() => {})
 
   // The upsert always bumps the revision by one — to 1 on a fresh insert (where
   // currentRevision is 0) or COALESCE(save_revision,0)+1 on update — so the new

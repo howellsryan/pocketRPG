@@ -49,6 +49,14 @@ function makeDb({ initialRows = [] as Array<{ character_id: number; save_revisio
           },
         }
       },
+      // writeSave batches the save-history snapshot ahead of the UPDATE, so it
+      // always goes through batch() now. Run the statements in order, as D1
+      // does, and hand back the per-statement results the caller indexes into.
+      async batch(statements: any[]) {
+        const results = []
+        for (const statement of statements) results.push(await statement.run())
+        return results
+      },
     },
   }
 }

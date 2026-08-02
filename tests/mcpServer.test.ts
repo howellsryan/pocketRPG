@@ -6,6 +6,15 @@ import { callTool } from '../functions/_lib/mcp/tools.js'
 import { signJWT } from '../functions/_lib/jwt.js'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 
+// writeSave batches the save-history snapshot ahead of its UPDATE, so these
+// hand-rolled D1 doubles have to run a batch in order and hand back one result
+// per statement — the caller indexes into them.
+const runBatch = async (statements: any[]) => {
+  const out = []
+  for (const statement of statements) out.push(await statement.run())
+  return out
+}
+
 describe('MCP summarizeSave', () => {
   const save = {
     coins: 12345,
@@ -447,7 +456,7 @@ describe('MCP trading-post source: inventory|bank', () => {
         },
       }),
     })
-    return { env: { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any, captured }
+    return { env: { DB: { prepare, batch: runBatch }, JWT_SECRET: TEST_SECRET } as any, captured }
   }
 
   it("sell_item with source:'bank' drains the bank and leaves inventory copies", async () => {
@@ -546,7 +555,7 @@ describe('MCP clue scrolls (start_clue + server claim)', () => {
         },
       }),
     })
-    const env = { DB: { prepare, batch: async () => [] }, JWT_SECRET: TEST_SECRET } as any
+    const env = { DB: { prepare, batch: runBatch }, JWT_SECRET: TEST_SECRET } as any
     return { env, idle, captured }
   }
 
@@ -703,7 +712,7 @@ describe('MCP unlock purchases (buy_unlock + buy_slayer_unlock)', () => {
         },
       }),
     })
-    return { env: { DB: { prepare, batch: async () => [] }, JWT_SECRET: TEST_SECRET } as any, captured }
+    return { env: { DB: { prepare, batch: runBatch }, JWT_SECRET: TEST_SECRET } as any, captured }
   }
 
   it('buy_unlock debits credits and returns the remaining balance', async () => {
@@ -782,7 +791,7 @@ describe('MCP create_character', () => {
         run: async () => ({ meta: { last_row_id: 42, changes: 1 } }),
       }),
     })
-    return { env: { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any }
+    return { env: { DB: { prepare, batch: runBatch }, JWT_SECRET: TEST_SECRET } as any }
   }
 
   it('creates a character with a valid username', async () => {
@@ -831,7 +840,7 @@ describe('MCP create_character', () => {
         },
       }),
     })
-    const env = { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any
+    const env = { DB: { prepare, batch: runBatch }, JWT_SECRET: TEST_SECRET } as any
     const res = await callTool('create_character', { username: 'FreshOne' }, await ctxFor(env))
     expect(res.isError).toBeFalsy()
     const data = JSON.parse(res.content[0].text)
@@ -855,7 +864,7 @@ describe('MCP create_character', () => {
         },
       }),
     })
-    const env = { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any
+    const env = { DB: { prepare, batch: runBatch }, JWT_SECRET: TEST_SECRET } as any
     const res = await callTool('create_character', { username: 'TotalsOk' }, await ctxFor(env))
     expect(res.isError).toBeFalsy()
     const levelUpdate = charUpdates.find((u) => /SET total_level/.test(u.sql))

@@ -2,6 +2,9 @@ import { decodeSaveRow, gzipJsonString } from '../saveCodec.js'
 import { GameApiError } from './errors.js'
 import { migrateLegacyNonces } from './nonces.js'
 import { computeSaveSummary } from '../saveSummary.js'
+import { auditLog } from './audit.js'
+import { classifyItemLossFromHoldings, readHoldingsBaseline, rememberHoldingsBaseline } from './holdingsDelta.js'
+import { flaggedSaveHistoryStatement, forcedSaveHistoryStatement, routineSaveHistoryStatement } from './saveHistory.js'
 
 const CHARACTER_SAVE_COLUMNS = `c.id, c.owner_id, c.username, c.is_ironman, c.is_one_life, c.credits, s.save_data, s.save_blob, s.updated_at, s.save_revision`
 
@@ -28,6 +31,9 @@ async function hydrateCharacterSave(env, characterId, row) {
   // table. INSERT-OR-IGNORE makes it idempotent and safe even if the
   // same save is loaded by concurrent requests.
   await migrateLegacyNonces(env, characterId, saveObject)
+  // Measure the holdings NOW: every caller mutates this object in place, so by
+  // the time writeSave sees it the "before" is unrecoverable (see holdingsDelta).
+  rememberHoldingsBaseline(saveObject)
   return { row, saveObject, saveRevision: Number(row?.save_revision) || 0 }
 }
 
@@ -57,8 +63,13 @@ function auditStatement(env, auditEvent, now, characterId, requiredRevision) {
  * unrecorded (admin grants) passes it. The INSERT carries the same revision
  * precondition as the UPDATE, so a lost revision race writes neither row rather
  * than logging a grant that never landed.
+ *
+ * `baselineFrom` points the item-loss detector at the object
+ * loadCharacterWithSave handed out, for the callers that write a REBUILT save
+ * rather than the loaded one (co-op's applyMemberToSave). Without it those
+ * writes carry no baseline and are silently skipped by the detector.
  */
-export async function writeSave(env, characterId, saveObject, expectedRevision, { auditEvent = null } = {}) {
+export async function writeSave(env, characterId, saveObject, expectedRevision, { auditEvent = null, baselineFrom = null, historyReason = null } = {}) {
   if (!Number.isFinite(expectedRevision) || expectedRevision < 0) {
     throw new GameApiError('SAVE_REVISION_REQUIRED', 'save_revision_required', 400)
   }
@@ -69,9 +80,34 @@ export async function writeSave(env, characterId, saveObject, expectedRevision, 
     `UPDATE saves SET save_blob = ?, save_data = ?, updated_at = ?, save_revision = save_revision + 1
        WHERE character_id = ? AND save_revision = ?`
   ).bind(save_blob, save_data, now, characterId, expectedRevision)
-  const updateRes = auditEvent
-    ? (await env.DB.batch([updateStmt, auditStatement(env, auditEvent, now, characterId, expectedRevision + 1)]))[0]
-    : await updateStmt.run()
+
+  // Item-loss detection + blob preservation, shadow mode (see
+  // docs/item-loss-safety-net.md). Every server-authoritative save writer flows
+  // through here, so this is the one place that covers the trading post, the
+  // world's grant flush, co-op write-backs, purchases, MCP intents and admin
+  // grants at once. It rejects nothing.
+  const baseline = readHoldingsBaseline(baselineFrom || saveObject)
+  const itemLoss = baseline ? classifyItemLossFromHoldings(baseline, saveObject) : null
+  // `historyReason` forces an unrated snapshot: a write the caller knows is
+  // wholesale (an admin restore) must never be the one the routine cadence
+  // happens to skip.
+  const history = [historyReason
+    ? forcedSaveHistoryStatement(env, characterId, historyReason, now)
+    : routineSaveHistoryStatement(env, characterId, now)]
+  if (itemLoss?.flagged) history.push(flaggedSaveHistoryStatement(env, characterId, now))
+
+  const statements = [...history, updateStmt]
+  if (auditEvent) statements.push(auditStatement(env, auditEvent, now, characterId, expectedRevision + 1))
+  const updateRes = (await env.DB.batch(statements))[history.length]
+  if (itemLoss?.flagged && updateRes?.meta?.changes) {
+    await auditLog(env, 'item_loss_detected', {
+      characterId,
+      source: 'write_save',
+      previousRevision: expectedRevision,
+      nextRevision: expectedRevision + 1,
+      ...itemLoss,
+    }, { swallow: true })
+  }
   if (!updateRes?.meta?.changes) {
     // No row matched. Either there's no save yet (first write), or a
     // concurrent writer moved the revision forward. Only the first-write

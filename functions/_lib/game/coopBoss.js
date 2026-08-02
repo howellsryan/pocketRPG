@@ -625,7 +625,7 @@ export async function writeBackMember(env, { characterId, identityId, member, se
   }
 
   const next = applyMemberToSave(saveObject, member)
-  const write = await writeSave(env, characterId, next, saveRevision)
+  const write = await writeSave(env, characterId, next, saveRevision, { baselineFrom: saveObject })
   member.saveRevision = write.saveRevision
   member.xpGained = {}
   // Banked slayer points/completions are deltas — clearing them is what stops a
@@ -865,7 +865,7 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
   let write
   try {
     settled = settleActionCompletion(withSession, { sourceType, sourceId, rewards })
-    write = await writeSave(env, characterId, withSession, saveRevision)
+    write = await writeSave(env, characterId, withSession, saveRevision, { baselineFrom: saveObject })
   } catch (err) {
     await releaseClaim()
     throw err
