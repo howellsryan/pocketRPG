@@ -6,8 +6,15 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { makeD1 } from './helpers/d1'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 
-import { onRequestGet } from '../functions/api/admin/item-loss.js'
-import { shapeItemLossIncidents, summariseIncidents, clampIncidentLimit } from '../functions/_lib/game/itemLossReport.js'
+import { onRequestGet, onRequestPost } from '../functions/api/admin/item-loss.js'
+import {
+  shapeItemLossIncidents,
+  summariseIncidents,
+  clampIncidentLimit,
+  clampReviewNote,
+  normaliseReviewFilter,
+  normaliseReviewStatus,
+} from '../functions/_lib/game/itemLossReport.js'
 import { loadAnyCharacterWithSave, writeSave } from '../functions/_lib/game/save.js'
 import { onRequestPost as restoreSave } from '../functions/api/admin/restore-save.js'
 
@@ -59,6 +66,24 @@ function getReq(query = '', { secret = SECRET as string | null } = {}) {
 async function fetchIncidents(query = '') {
   const res = await onRequestGet({ request: getReq(query), env } as any)
   return { status: res.status, body: await res.json() as any }
+}
+
+async function review(body: Record<string, unknown>, { secret = SECRET as string | null } = {}) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (secret !== null) headers['X-Admin-Secret'] = secret
+  const res = await onRequestPost({
+    request: new Request('https://x/api/admin/item-loss', { method: 'POST', headers, body: JSON.stringify(body) }),
+    env,
+  } as any)
+  return { status: res.status, body: await res.json() as any }
+}
+
+/** One flagged write on a fresh character, returning its incident id. */
+async function oneIncident(characterId = 7) {
+  await seedCharacter(characterId)
+  await causeLoss(characterId)
+  const { body } = await fetchIncidents('character_id=' + characterId)
+  return body.incidents[0].id as number
 }
 
 beforeEach(() => {
@@ -191,6 +216,121 @@ describe('GET /api/admin/item-loss', () => {
   })
 })
 
+describe('POST /api/admin/item-loss — filing a verdict', () => {
+  it('refuses without the admin secret', async () => {
+    const { status } = await review({ id: 1, status: 'dismissed' }, { secret: null })
+    expect(status).toBe(401)
+  })
+
+  it('drops a dismissed flag out of the queue, and keeps it findable', async () => {
+    const id = await oneIncident()
+
+    const filed = await review({ id, status: 'dismissed', note: 'preset swap, not a loss' })
+    expect(filed.status).toBe(200)
+    expect(filed.body).toMatchObject({ id, review_status: 'dismissed', review_note: 'preset swap, not a loss' })
+
+    const active = await fetchIncidents()
+    expect(active.body.incidents).toEqual([])
+
+    // Dismissed is a verdict, not a delete: the row is still there to learn from.
+    const dismissed = await fetchIncidents('review=dismissed')
+    expect(dismissed.body.incidents).toHaveLength(1)
+    expect(dismissed.body.incidents[0]).toMatchObject({
+      id,
+      review_status: 'dismissed',
+      review_note: 'preset swap, not a loss',
+    })
+    expect(dismissed.body.incidents[0].reviewed_at).toBe(NOW)
+    expect((await fetchIncidents('review=all')).body.incidents).toHaveLength(1)
+  })
+
+  it('keeps a confirmed loss in the queue and counts it as confirmed', async () => {
+    const id = await oneIncident()
+    expect((await review({ id, status: 'confirmed' })).status).toBe(200)
+
+    const { body } = await fetchIncidents()
+    expect(body.incidents[0].review_status).toBe('confirmed')
+    expect(body.summary).toMatchObject({ confirmed: 1, dismissed: 0, unresolved: 1 })
+  })
+
+  it('reopens a verdict filed by mistake', async () => {
+    const id = await oneIncident()
+    await review({ id, status: 'dismissed', note: 'wrong call' })
+    expect((await review({ id, status: 'open' })).body).toMatchObject({ review_status: 'open', review_note: null })
+
+    const { body } = await fetchIncidents()
+    expect(body.incidents).toHaveLength(1)
+    expect(body.incidents[0]).toMatchObject({ id, review_status: 'open', review_note: null, reviewed_at: null })
+    // Undo leaves no residue: the row is gone, not flipped to a third value.
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM item_loss_reviews').get().n).toBe(0)
+  })
+
+  it('refiles rather than duplicating when the verdict changes', async () => {
+    const id = await oneIncident()
+    await review({ id, status: 'confirmed', note: 'first look' })
+    await review({ id, status: 'dismissed', note: 'second look' })
+
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM item_loss_reviews').get().n).toBe(1)
+    const row = raw.prepare('SELECT status, note, character_id FROM item_loss_reviews WHERE audit_event_id = ?').get(id)
+    expect(row).toMatchObject({ status: 'dismissed', note: 'second look', character_id: 7 })
+  })
+
+  it('stops counting a dismissed flag against the account', async () => {
+    await seedCharacter(7)
+    await causeLoss(7)
+    await refillBank(7)
+    vi.spyOn(Date, 'now').mockReturnValue(NOW + 6 * 60 * 1000)
+    await causeLoss(7)
+
+    const before = await fetchIncidents()
+    expect(before.body.incidents[0].character_incident_count).toBe(2)
+
+    await review({ id: before.body.incidents[0].id, status: 'dismissed' })
+    const after = await fetchIncidents()
+    expect(after.body.incidents).toHaveLength(1)
+    expect(after.body.incidents[0].character_incident_count).toBe(1)
+  })
+
+  it('refuses an id that is not an item-loss incident', async () => {
+    // Audit ids are one sequence across every event type, so an off-by-one
+    // would otherwise file a verdict against a restore or a grant.
+    const id = await oneIncident()
+    raw.prepare(
+      `INSERT INTO audit_events (event_type, identity_id, character_id, payload_json, created_at)
+       VALUES ('admin_save_restore', NULL, 7, '{}', ?)`
+    ).run(NOW)
+    const other = raw.prepare(`SELECT id FROM audit_events WHERE event_type = 'admin_save_restore'`).get().id
+    expect(other).not.toBe(id)
+
+    expect((await review({ id: other, status: 'dismissed' })).status).toBe(404)
+    expect((await review({ id: 99_999, status: 'dismissed' })).status).toBe(404)
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM item_loss_reviews').get().n).toBe(0)
+  })
+
+  it('rejects a malformed verdict rather than defaulting to one', async () => {
+    const id = await oneIncident()
+    expect((await review({ id, status: 'deleted' })).status).toBe(400)
+    expect((await review({ id, status: '' })).status).toBe(400)
+    expect((await review({ id: 0, status: 'dismissed' })).status).toBe(400)
+    expect((await review({ id: 'abc', status: 'dismissed' })).status).toBe(400)
+  })
+
+  it('filters honestly when the page is full of dismissed rows', async () => {
+    // The verdict filter has to run in SQL: applied after the LIMIT it would
+    // return a short page every time something recent was dismissed.
+    await seedCharacter(7)
+    await seedCharacter(8)
+    await causeLoss(7)
+    await causeLoss(8)
+    const all = await fetchIncidents('review=all')
+    await review({ id: all.body.incidents[0].id, status: 'dismissed' })
+
+    const { body } = await fetchIncidents('limit=1')
+    expect(body.incidents).toHaveLength(1)
+    expect(body.incidents[0].id).toBe(all.body.incidents[1].id)
+  })
+})
+
 describe('shapeItemLossIncidents', () => {
   const row = (over: Record<string, unknown> = {}) => ({
     id: 1,
@@ -269,9 +409,52 @@ describe('shapeItemLossIncidents', () => {
       incidents: 2,
       characters: 2,
       unresolved: 1,
+      dismissed: 0,
+      confirmed: 0,
       durableUnits: 24,
       durableValue: 1_800_000,
     })
+  })
+
+  it('treats an unreviewed row as open and a dismissed one as settled', () => {
+    const incidents = shapeItemLossIncidents({
+      rows: [
+        row(),
+        row({ id: 2, review_status: 'dismissed', review_note: ' noise ', reviewed_at: NOW }),
+        row({ id: 3, review_status: 'confirmed' }),
+        // A status the table should never hold reads as open rather than as a
+        // fourth state nothing knows how to clear.
+        row({ id: 4, review_status: 'deleted' }),
+      ],
+    })
+    expect(incidents.map((i) => i.review_status)).toEqual(['open', 'dismissed', 'confirmed', 'open'])
+    expect(incidents[1].review_note).toBe('noise')
+    expect(incidents[0].reviewed_at).toBeNull()
+    // Dismissed is not a loss, so it is not outstanding work.
+    expect(summariseIncidents(incidents)).toMatchObject({ incidents: 4, unresolved: 3, dismissed: 1, confirmed: 1 })
+  })
+})
+
+describe('review inputs', () => {
+  it('accepts only the three verdicts', () => {
+    expect(normaliseReviewStatus('dismissed')).toBe('dismissed')
+    expect(normaliseReviewStatus(' Confirmed ')).toBe('confirmed')
+    expect(normaliseReviewStatus('open')).toBe('open')
+    expect(normaliseReviewStatus('deleted')).toBeNull()
+    expect(normaliseReviewStatus(undefined)).toBeNull()
+  })
+
+  it('defaults the list to what is still outstanding', () => {
+    expect(normaliseReviewFilter(null)).toBe('active')
+    expect(normaliseReviewFilter('nonsense')).toBe('active')
+    expect(normaliseReviewFilter('all')).toBe('all')
+    expect(normaliseReviewFilter('dismissed')).toBe('dismissed')
+  })
+
+  it('bounds the note', () => {
+    expect(clampReviewNote('   ')).toBeNull()
+    expect(clampReviewNote(42)).toBeNull()
+    expect(clampReviewNote('x'.repeat(300))).toHaveLength(200)
   })
 })
 

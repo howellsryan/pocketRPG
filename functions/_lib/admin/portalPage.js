@@ -216,8 +216,10 @@ input::placeholder{color:var(--fm-ink-faint)}
 .chips button:hover{filter:brightness(1.04)}
 .chips button:focus-visible{outline:2px solid var(--fm-brass);outline-offset:1px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.actions{display:flex;gap:10px;margin-top:22px}
-.actions .fm-btn{flex:1}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+/* Wrapping, not shrinking: a flex item's automatic min-width is its longest
+   word, so a third button pushed the row off the side of a phone. */
+.actions .fm-btn{flex:1 1 130px}
 
 /* Nav. The portal acts on ONE character or on the whole server, and which of
    those you are in decides whether a press touches somebody's account — so the
@@ -231,7 +233,7 @@ input::placeholder{color:var(--fm-ink-faint)}
   font-family:'Grenze Gotisch','Cinzel',Georgia,serif;font-weight:800;font-size:18px;letter-spacing:0.05em;
 }
 .tabs button+button{border-left:1px solid var(--fm-rule)}
-.tabs button[aria-selected="true"]{background:var(--fm-btn-brass);color:var(--fm-btn-ink-on);box-shadow:var(--fm-btn-relief-brass)}
+.tabs button[aria-selected="true"],.tabs button[aria-pressed="true"]{background:var(--fm-btn-brass);color:var(--fm-btn-ink-on);box-shadow:var(--fm-btn-relief-brass)}
 .tabs button:focus-visible{outline:2px solid var(--fm-brass);outline-offset:-3px}
 
 .subnav{display:flex;width:100%;margin-top:16px;border:1px solid var(--fm-rule);border-radius:var(--fm-r-sm);overflow:hidden;background:var(--fm-btn-vellum)}
@@ -300,6 +302,7 @@ const SCRIPT = `
   var snapshotCharacter = null;
   var incidents = [];
   var selectedIncident = null;
+  var incidentReview = 'active';
   // Which scope is on screen. 'player' acts on one character, 'server' reads
   // across every account — the tab bar is the only thing standing between a
   // restore and the wrong player, so it is state, not decoration.
@@ -327,9 +330,11 @@ const SCRIPT = `
     clearSnapshots();
     incidents = [];
     selectedIncident = null;
+    markReviewFilter('active');
     $('incidents').textContent = '';
     $('incident-summary').textContent = '';
     $('incident-filter').value = '';
+    $('incident-note').value = '';
     $('incident-detail').hidden = true;
     $('incident-msg').hidden = true;
     setView('player');
@@ -538,16 +543,57 @@ const SCRIPT = `
     }, msg);
   }
 
+  function markReviewFilter(next){
+    incidentReview = next;
+    var buttons = $('incident-review').querySelectorAll('button');
+    for (var i = 0; i < buttons.length; i++){
+      buttons[i].setAttribute('aria-pressed', String(buttons[i].getAttribute('data-review') === next));
+    }
+  }
+
   function loadIncidents(){
     var msg = $('incident-msg');
     msg.hidden = true;
     $('incident-detail').hidden = true;
+    $('incident-note').value = '';
     selectedIncident = null;
-    adminGet('/api/admin/item-loss?limit=100', function(body){
+    adminGet('/api/admin/item-loss?limit=100&review=' + incidentReview, function(body){
       incidents = body.incidents || [];
       incidentSummary = body.summary || null;
       renderIncidents();
     }, msg);
+  }
+
+  var REVIEW_LABEL = { dismissed: 'not an incident', confirmed: 'confirmed loss', open: 'unreviewed' };
+
+  /** File the admin's verdict. Re-lists rather than patching the row in place:
+   * the server owns both the filter and the summary, and a dismissal usually
+   * means the row leaves the queue it was dismissed from. */
+  function reviewIncident(status){
+    var inc = selectedIncidentRow();
+    var msg = $('incident-msg');
+    if (!inc) return message(msg, 'err', 'Choose an incident first.');
+    msg.hidden = true;
+    var buttons = ['incident-dismiss-btn', 'incident-confirm-btn', 'incident-reopen-btn'];
+    for (var i = 0; i < buttons.length; i++) $(buttons[i]).disabled = true;
+    fetch('/api/admin/item-loss', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ id: inc.id, status: status, note: $('incident-note').value }),
+    }).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(body){
+        return { status: res.status, body: body };
+      });
+    }).then(function(r){
+      if (r.status === 401) return lock('That secret is no longer valid. Enter it again.');
+      if (r.status >= 400 || !r.body || !r.body.ok) return message(msg, 'err', errorText(r.status, r.body));
+      loadIncidents();
+      message(msg, 'ok', 'Filed as ' + REVIEW_LABEL[status] + '.');
+    }).catch(function(){
+      message(msg, 'err', 'Could not reach the server.');
+    }).then(function(){
+      for (var j = 0; j < buttons.length; j++) $(buttons[j]).disabled = false;
+    });
   }
 
   function incidentMatches(){
@@ -567,10 +613,13 @@ const SCRIPT = `
     var s = incidentSummary;
     var line;
     if (!s) line = '';
-    else if (!incidents.length) line = 'Nothing caught. The detector has flagged no losses.';
+    else if (!incidents.length) line = incidentReview === 'active'
+      ? 'Nothing outstanding. Every flagged loss has been dismissed, or none has been caught.'
+      : 'Nothing filed under that verdict yet.';
     else {
       line = s.incidents + ' incidents · ' + s.characters + ' character(s) · ' + s.unresolved +
-        ' not restored since · ' + num(s.durableValue) + ' gp of durables, ' + num(s.resourceValue) + ' gp of resources';
+        ' not restored since · ' + s.confirmed + ' confirmed · ' + s.dismissed + ' dismissed · ' +
+        num(s.durableValue) + ' gp of durables, ' + num(s.resourceValue) + ' gp of resources';
       if (matches.length !== incidents.length) line = 'Showing ' + matches.length + ' of ' + line;
     }
     $('incident-summary').textContent = line;
@@ -580,6 +629,7 @@ const SCRIPT = `
       var marks = [inc.source || 'unknown source'];
       if (inc.durable_units) marks.push(num(inc.durable_units) + ' durable (' + num(inc.durable_value) + ' gp)');
       if (inc.resource_units) marks.push(num(inc.resource_units) + ' resource');
+      if (inc.review_status && inc.review_status !== 'open') marks.push(REVIEW_LABEL[inc.review_status]);
       if (inc.restored_since) marks.push('restored since');
       else if (!inc.history_id) marks.push('no snapshot');
       entries.push({
@@ -618,11 +668,15 @@ const SCRIPT = `
       ['Distinct items', num(inc.distinct_items_lost)],
       ['Incidents on this account', num(inc.character_incident_count)],
       ['Restored since', inc.restored_since ? 'yes' : 'no'],
+      ['Verdict', REVIEW_LABEL[inc.review_status] + (inc.reviewed_at ? ' · ' + when(inc.reviewed_at) : '')],
     ];
+    if (inc.review_note) rows.push(['Verdict note', inc.review_note]);
     for (var j = 0; j < inc.items.length; j++){
       rows.push(['· ' + inc.items[j].itemId, num(inc.items[j].lost) + '  (' + num(inc.items[j].value) + ' gp)']);
     }
     ledgerRows('incident-detail-body', rows);
+    $('incident-note').value = inc.review_note || '';
+    $('incident-reopen-btn').hidden = inc.review_status === 'open';
     $('incident-detail').hidden = false;
     $('incident-msg').hidden = true;
     $('incident-open-btn').textContent = 'Open ' + (inc.username || '#' + inc.character_id) + ' in Player actions';
@@ -654,7 +708,7 @@ const SCRIPT = `
     $('view-server').hidden = next !== 'server';
     $('scope-lore').textContent = next === 'player'
       ? 'Everything below acts on one character. Choose them first.'
-      : 'Read-only, across every account. Nothing here writes to a save.';
+      : 'Across every account. Filing a verdict is the only write here — nothing touches a save.';
     // Opening the tab IS the request to see the queue — landing on an empty
     // panel with a button on it is a step with no decision in it. Once only:
     // after that the list is whatever the admin last loaded or filtered.
@@ -922,6 +976,17 @@ const SCRIPT = `
     $('incidents-btn').addEventListener('click', loadIncidents);
     $('incident-filter').addEventListener('input', renderIncidents);
     $('incident-open-btn').addEventListener('click', openIncidentInPlayer);
+    // The verdict decides which rows the server returns, so changing it is a
+    // re-list, not a client-side filter over what is already on screen.
+    $('incident-review').addEventListener('click', function(e){
+      var next = e.target && e.target.getAttribute && e.target.getAttribute('data-review');
+      if (!next || next === incidentReview) return;
+      markReviewFilter(next);
+      loadIncidents();
+    });
+    $('incident-dismiss-btn').addEventListener('click', function(){ reviewIncident('dismissed'); });
+    $('incident-confirm-btn').addEventListener('click', function(){ reviewIncident('confirmed'); });
+    $('incident-reopen-btn').addEventListener('click', function(){ reviewIncident('open'); });
     $('snapshots-btn').addEventListener('click', function(){ loadSnapshots(); });
     $('snapshot-now-btn').addEventListener('click', snapshotNow);
     $('restore-preview-btn').addEventListener('click', function(){ restore(true); });
@@ -1095,10 +1160,16 @@ const BODY = `
 
         <section id="view-server" role="tabpanel" aria-labelledby="tab-server" hidden>
           <div class="fm-rule-head"><span>Item-loss incidents</span></div>
-          <p class="fm-lore">Every loss the guard has caught, across every account. Find one, then take it to that player's salvage.</p>
+          <p class="fm-lore">Every loss the guard has caught, across every account. Find one, then take it to that player's salvage — or file it as noise, so what is left is what matters.</p>
           <div class="field">
             <div class="actions">
               <button id="incidents-btn" type="button" class="fm-btn fm-btn--brass">Load incidents</button>
+            </div>
+            <div class="tabs" role="group" id="incident-review" aria-label="Verdict">
+              <button type="button" data-review="active" aria-pressed="true">Open</button>
+              <button type="button" data-review="confirmed" aria-pressed="false">Confirmed</button>
+              <button type="button" data-review="dismissed" aria-pressed="false">Dismissed</button>
+              <button type="button" data-review="all" aria-pressed="false">All</button>
             </div>
             <label for="incident-filter">Search</label>
             <input id="incident-filter" class="filter" type="text" autocomplete="off" spellcheck="false" placeholder="Filter by character name or id…">
@@ -1111,8 +1182,17 @@ const BODY = `
               <thead><tr><th>What went missing</th><th>Value</th></tr></thead>
               <tbody id="incident-detail-body"></tbody>
             </table>
+            <div class="field">
+              <label for="incident-note">Why (optional — kept with the verdict)</label>
+              <input id="incident-note" class="filter" type="text" autocomplete="off" spellcheck="false" maxlength="200" placeholder="e.g. loadout preset swap, not a loss">
+            </div>
             <div class="actions">
               <button id="incident-open-btn" type="button" class="fm-btn fm-btn--ember">Open in Player actions</button>
+            </div>
+            <div class="actions">
+              <button id="incident-confirm-btn" type="button" class="fm-btn fm-btn--brass">Confirm real loss</button>
+              <button id="incident-dismiss-btn" type="button" class="fm-btn">Not an incident</button>
+              <button id="incident-reopen-btn" type="button" class="fm-btn" hidden>Reopen</button>
             </div>
           </div>
         </section>

@@ -13,11 +13,45 @@ export const SAVE_RESTORE_EVENT = 'admin_save_restore'
 
 const DEFAULT_LIMIT = 50
 const MAX_LIMIT = 200
+const MAX_NOTE = 200
+
+// A review is a HUMAN VERDICT on a detector flag, and the detector is in shadow
+// mode precisely because we do not yet know which flags are real. So both
+// answers are recorded, not just the dismissal: a queue where only false
+// positives are labelled cannot tell a confirmed incident from one nobody has
+// looked at yet, which is the one number Phase 3 needs. Absence of a row is the
+// third state, `open` — reopening is a DELETE, so undo leaves no residue.
+export const REVIEW_OPEN = 'open'
+export const REVIEW_DISMISSED = 'dismissed'
+export const REVIEW_CONFIRMED = 'confirmed'
+const REVIEW_STATUSES = [REVIEW_OPEN, REVIEW_DISMISSED, REVIEW_CONFIRMED]
 
 export function clampIncidentLimit(raw) {
   const n = Math.floor(Number(raw) || 0)
   if (!n || n < 1) return DEFAULT_LIMIT
   return Math.min(n, MAX_LIMIT)
+}
+
+/** The status a caller asked to write. Null means "not one of ours" — refuse
+ * rather than default, or a typo silently files the wrong verdict. */
+export function normaliseReviewStatus(raw) {
+  const value = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
+  return REVIEW_STATUSES.includes(value) ? value : null
+}
+
+export function clampReviewNote(raw) {
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim().slice(0, MAX_NOTE)
+  return trimmed || null
+}
+
+/** Which slice of the queue to list. `active` is the default because a
+ * dismissed incident has been dealt with — leaving it in the queue is the whole
+ * thing this feature removes. */
+export function normaliseReviewFilter(raw) {
+  const value = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
+  if (value === 'dismissed' || value === 'confirmed' || value === 'all') return value
+  return 'active'
 }
 
 function parsePayload(json) {
@@ -92,6 +126,11 @@ export function shapeItemLossIncidents({ rows = [], snapshots = [], restores = [
       // drains and one that only grows.
       restored_since: restored > 0 && restored >= createdAt,
       character_incident_count: incidentCount.get(characterId) || 0,
+      // The admin's verdict, carried on the row itself (the list query joins
+      // it) so the filter and the LIMIT stay in SQL together.
+      review_status: normaliseReviewStatus(row.review_status) || REVIEW_OPEN,
+      review_note: clampReviewNote(row.review_note),
+      reviewed_at: Number(row.reviewed_at) || null,
     }
   })
 }
@@ -104,17 +143,24 @@ export function summariseIncidents(incidents = []) {
   let durableValue = 0
   let resourceValue = 0
   let unresolved = 0
+  let dismissed = 0
+  let confirmed = 0
   for (const incident of incidents) {
     if (incident.character_id) characters.add(incident.character_id)
     durableUnits += incident.durable_units
     durableValue += incident.durable_value
     resourceValue += incident.resource_value
-    if (!incident.restored_since) unresolved += 1
+    if (incident.review_status === REVIEW_DISMISSED) dismissed += 1
+    else if (incident.review_status === REVIEW_CONFIRMED) confirmed += 1
+    // A dismissed flag was never a loss, so it is not something left to fix.
+    if (!incident.restored_since && incident.review_status !== REVIEW_DISMISSED) unresolved += 1
   }
   return {
     incidents: incidents.length,
     characters: characters.size,
     unresolved,
+    dismissed,
+    confirmed,
     durableUnits,
     durableValue,
     resourceValue,
