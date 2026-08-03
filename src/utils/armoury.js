@@ -99,7 +99,7 @@ const SKILLING_TOOL_SKILLS = new Set([
 
 // Non-combat otherBonus keys that mark a skilling tool (an XP boost or a
 // gathering-level requirement), e.g. the Angler Net's fishingXpPercent.
-const SKILLING_OTHER_BONUS = new Set(['fishingXpPercent', 'miningLevel', 'woodcuttingLevel'])
+const SKILLING_OTHER_BONUS = new Set(['fishingXpPercent', 'herbYieldPercent', 'miningLevel', 'woodcuttingLevel'])
 
 // Item kinds (name noun) that are unambiguously gathering tools even without a
 // skill requirement — Gold Spade, Angler Net, etc. "Axe"/"Pickaxe" are omitted:

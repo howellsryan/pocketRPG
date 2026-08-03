@@ -6691,6 +6691,10 @@
       "ref": "crush_birds_nest"
     },
     {
+      "kind": "minigame",
+      "ref": "lithe_farm"
+    },
+    {
       "kind": "quest",
       "ref": "brute_stronghold"
     },

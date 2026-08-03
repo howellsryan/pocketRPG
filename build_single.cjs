@@ -119,6 +119,7 @@ const sourceFiles = [
   'engine/kingdomResources.js',
   'engine/kingdomEngine.js',
   'engine/construction.js',
+  'engine/minigameGates.js',
   'engine/worldContent.js',
   'engine/placeMaps.js',
   'engine/idleEngine.js',

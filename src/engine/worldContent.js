@@ -24,6 +24,7 @@ import minigamesData from '../data/minigames.json'
 import questsData from '../data/quests.json'
 import farmingData from '../data/farming.json'
 import { GATHER_TASKS } from './gatherTasks.js'
+import { minigameRequirements } from './minigameGates.js'
 import { BUILDING_ACTIONS } from './construction.js'
 import { SLAYER_MASTERS } from './slayerMasters.js'
 import { normaliseLocation } from './world.js'
@@ -259,26 +260,30 @@ export function activityGroupLabel(kind, ref) {
 }
 
 /**
- * Skill-level requirement to start an activity: `{ skill, level }`, or null when the
- * kind carries none the client enforces at start time (combat/raid/gather/minigame
- * gate on their own screens). The World Map hub checks this before starting/queuing
- * an activity — its rows would otherwise bypass the owning screens' level locks.
+ * Every skill-level requirement to start an activity, as `{ skill, level }[]` —
+ * empty for kinds carrying none the client enforces at start time (combat/raid/
+ * gather gate on their own screens). The World Map hub checks these before
+ * starting/queuing an activity — its rows would otherwise bypass the owning
+ * screens' level locks. A minigame section can carry several at once.
  */
-export function activityLevelRequirement(kind, ref) {
+export function activityLevelRequirements(kind, ref) {
   if (kind === 'skill') {
     const i = ref.indexOf(':')
     const level = Number(skillAction(ref)?.level) || 0
-    return i >= 0 && level > 1 ? { skill: ref.slice(0, i), level } : null
+    return i >= 0 && level > 1 ? [{ skill: ref.slice(0, i), level }] : []
   }
   if (kind === 'agility' || kind === 'thieving' || kind === 'hunter') {
     const level = Number(actionInSkill(kind, ref)?.level) || 0
-    return level > 1 ? { skill: kind, level } : null
+    return level > 1 ? [{ skill: kind, level }] : []
   }
-  if (kind === 'minigame') {
-    const req = minigamesById[ref]?.req
-    return req?.skill && Number(req.level) > 1 ? { skill: req.skill, level: Number(req.level) } : null
-  }
-  return null
+  // A minigame section may gate on several skills at once (Lithe Farm needs
+  // Farming AND Herblore), so it reads the shared funnel rather than one `req`.
+  if (kind === 'minigame') return minigameRequirements(ref)
+  return []
+}
+
+export function activityLevelRequirement(kind, ref) {
+  return activityLevelRequirements(kind, ref)[0] || null
 }
 
 /**
@@ -363,9 +368,10 @@ export function describeActivity(kind, ref) {
 export function activityLockReason(kind, ref, ctx = {}) {
   const { stats = {}, completedQuests = new Set(), bossKillCounts = {}, bossKillCountsLoaded = true } = ctx
   const levelOf = (skill) => getLevelFromXP(stats?.[skill]?.xp || 0)
-  const req = activityLevelRequirement(kind, ref)
-  if (req && levelOf(req.skill) < req.level) {
-    return { reason: `Requires ${req.skill.charAt(0).toUpperCase()}${req.skill.slice(1)} level ${req.level}` }
+  for (const req of activityLevelRequirements(kind, ref)) {
+    if (levelOf(req.skill) < req.level) {
+      return { reason: `Requires ${req.skill.charAt(0).toUpperCase()}${req.skill.slice(1)} level ${req.level}` }
+    }
   }
   if (kind === 'combat') {
     const check = checkBossRequirementsPure(monstersById[ref], {

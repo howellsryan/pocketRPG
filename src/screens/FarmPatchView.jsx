@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import { getPatchesForLocation, getPlantableCropOptions, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel, getEffectiveStage, plantCrop, harvestCrop } from '../engine/farming.ts'
+import { getPatchesForLocation, getPlantableCropOptions, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel, getEffectiveStage, plantCrop, harvestCrop, herbYieldMultiplier } from '../engine/farming.ts'
 import { onTick } from '../engine/tick.js'
 import ProgressBar from '../components/ProgressBar.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
@@ -15,7 +15,7 @@ const patchViewTypeLabels = {
 }
 
 export default function FarmPatchView({ locationId, farmingLevel, onBack, backLabel = 'Farms' }) {
-  const { inventory, bank, farming, updateFarming, grantXP, removeFromInventory, updateBankDirect, addToBank, addToast } = useGame()
+  const { inventory, bank, equipment, farming, updateFarming, grantXP, removeFromInventory, updateBankDirect, addToBank, addToast, itemsData } = useGame()
 
   const location = farmingData.locations.find(l => l.id === locationId)
   const [patchStates, setPatchStates] = useState([])
@@ -70,7 +70,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack, backLa
   }
 
   const handleHarvest = () => {
-    const result = harvestCrop(farming, selectedPatch.patchId, farmingLevel)
+    const result = harvestCrop(farming, selectedPatch.patchId, farmingLevel, herbYieldMultiplier(equipment, itemsData))
     if (!result) {
       addToast('Not ready to harvest', 'error')
       return

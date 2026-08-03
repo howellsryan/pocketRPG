@@ -121,7 +121,7 @@ Clue scrolls drop from monsters and come in four tiers: medium, hard, elite and 
 
 ## Minigames
 
-Minigames are timed grinds for specific unique rewards — for example running Viking Assault until you earn a piece of the Fighter set. Each minigame task shows its expected duration and its reward. Minigame uniques are granted server-side when the grind completes and count toward your collection log. The Fletching Guild (Ardounne) is a 2-hour grind for the Bowyer's Knife — an untradeable tool that cuts one tick off the time to fletch any bow while it's in your inventory or equipped. Autumntodt (Catherra, unlocked at Firemaking 80) is a 5-hour grind for the Tomb of Fire.
+Minigames are timed grinds for specific unique rewards — for example running Viking Assault until you earn a piece of the Fighter set. Each minigame task shows its expected duration and its reward. Minigame uniques are granted server-side when the grind completes and count toward your collection log. The Fletching Guild (Ardounne) is a 2-hour grind for the Bowyer's Knife — an untradeable tool that cuts one tick off the time to fletch any bow while it's in your inventory or equipped. Autumntodt (Catherra, unlocked at Firemaking 80) is a 5-hour grind for the Tomb of Fire. Lithe Farm (Seerhold) needs both Farming 50 and Herblore 50 to enter, and every task inside it is gated on the pair; its 2-hour grind earns the Magic Secateurs.
 
 ## Raids and bosses
 
@@ -205,7 +205,7 @@ Zaryth is modelled in 3D, and it is the one boss that animates differently depen
 
 ## Farming
 
-Plant seeds in farming patches (herbs, trees, fruit trees and vegetables) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Vegetable patches (Potato at level 1, Sweetcorn at level 9) yield 1-50 crops per harvest — a higher Farming level just weighs the roll toward a bigger harvest, it never guarantees one. Harvest everything at once with Harvest All. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops; Potato and Sweetcorn seeds are common early drops from low-combat monsters and the Master Farmer.
+Plant seeds in farming patches (herbs, trees, fruit trees and vegetables) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Vegetable patches (Potato at level 1, Sweetcorn at level 9) yield 1-50 crops per harvest — a higher Farming level just weighs the roll toward a bigger harvest, it never guarantees one. Harvest everything at once with Harvest All. Magic Secateurs — the untradeable Lithe Farm reward — double the crop from every herb patch while wielded; they carry no combat stats. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops; Potato and Sweetcorn seeds are common early drops from low-combat monsters and the Master Farmer.
 
 ## Magic
 
