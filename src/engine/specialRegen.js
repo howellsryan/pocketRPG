@@ -1,18 +1,14 @@
-// Special-attack energy that comes back on the clock.
+// Master Rejuvenation (Construction Lv 90): the special bar snaps back to full
+// the moment it empties. One rule, three contexts that each own their own copy
+// of the energy — a solo fight, a co-op/raid member, an open-world session — so
+// the predicate and the refill live here rather than being written out thrice.
 //
-// The open world regenerates it as a session resource (§7); a solo or co-op
-// fight regenerates none at all — it starts full and refills on a kill. The
-// Master Rejuvenation construction perk doubles the world's rate, and because
-// PvE has no rate of its own, the same doubled rate IS the perk out of the
-// world: one number for the player to learn, 20 energy per 30 seconds.
+// The open world is the one place it is switched off: the Wilderness (§10). A
+// free bar every time it empties is a duel decided by who owns a perk.
 
 export const SPECIAL_ENERGY_MAX = 100
-export const SPECIAL_REGEN_INTERVAL_TICKS = 50
-export const SPECIAL_REGEN_AMOUNT = 10
-export const BASE_SPECIAL_REGEN_PER_TICK = SPECIAL_REGEN_AMOUNT / SPECIAL_REGEN_INTERVAL_TICKS
 
 export const MASTER_REJUVENATION_ID = 'master_rejuvenation'
-export const MASTER_REJUVENATION_MULTIPLIER = 2
 
 /** Accepts either shape the unlock list takes: the client's Set or the save's array. */
 export function hasMasterRejuvenation(unlockedFeatures) {
@@ -21,31 +17,17 @@ export function hasMasterRejuvenation(unlockedFeatures) {
   return Array.isArray(unlockedFeatures) && unlockedFeatures.includes(MASTER_REJUVENATION_ID)
 }
 
-/** Energy per tick for one fight context. `baseRegenPerTick` is what the context
- * regenerates without the perk — the world's clock rate, or 0 anywhere in PvE. */
-export function specialRegenPerTick(masterRejuvenation, baseRegenPerTick = 0) {
-  const base = Number(baseRegenPerTick) > 0 ? Number(baseRegenPerTick) : 0
-  if (!masterRejuvenation) return base
-  return (base || BASE_SPECIAL_REGEN_PER_TICK) * MASTER_REJUVENATION_MULTIPLIER
-}
-
-/** Carries the fraction on the energy value itself, as the world already does —
- * every display of it floors (a bar reading 40.400000000000006% is the bug). */
-export function regenSpecialEnergy(current, perTick) {
-  const energy = Math.min(SPECIAL_ENERGY_MAX, Math.max(0, Number(current) || 0))
-  if (!(perTick > 0) || energy >= SPECIAL_ENERGY_MAX) return energy
-  return Math.min(SPECIAL_ENERGY_MAX, energy + perTick)
-}
-
-/** The same regen for a context whose energy crosses a wire: the fraction is
- * carried beside the value instead of on it, so the number only moves when a
- * whole point lands. A co-op room projects a member's combat state every tick
- * and skips the frame when nothing changed (§20) — a value that ticks up by
- * 0.4 changes on every single tick and defeats that. */
-export function accrueSpecialEnergy(current, carry, perTick) {
-  const energy = Math.min(SPECIAL_ENERGY_MAX, Math.max(0, Number(current) || 0))
-  if (!(perTick > 0) || energy >= SPECIAL_ENERGY_MAX) return { energy, carry: 0 }
-  const total = (Number(carry) || 0) + perTick
-  const whole = Math.floor(total)
-  return { energy: Math.min(SPECIAL_ENERGY_MAX, energy + whole), carry: total - whole }
+/** The perk itself: full energy once the bar is spent, the caller's value
+ * otherwise. `enabled` is the perk AND whatever the context adds to it (the
+ * world passes false in the Wilderness).
+ *
+ * Empty is what the BAR reads (every display of the energy floors), not an
+ * exact zero: solo and co-op only ever hold whole points, but the world's
+ * energy carries the fraction of its 0.2/tick clock regen, and a flat cost
+ * debited from 50.2 leaves 0.2 — a spent bar that `=== 0` never catches, so
+ * out there the perk would have fired approximately never. */
+export function refillSpecialOnEmpty(current, enabled) {
+  const energy = Math.max(0, Number(current) || 0)
+  if (!enabled || energy >= 1) return energy
+  return SPECIAL_ENERGY_MAX
 }

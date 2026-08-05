@@ -100,16 +100,29 @@ describe('special energy is a session resource, not a per-fight one', () => {
     expect(player.specialEnergy).toBeCloseTo(10)
   })
 
-  it('recovers 20 in the same 30s for a player with Master Rejuvenation', () => {
-    const player = makePlayer({ specialEnergy: 0, masterRejuvenation: true })
-    for (let tick = 1; tick <= 50; tick++) tickPlayer(player, ctx(tick))
-    expect(player.specialEnergy).toBeCloseTo(20)
-  })
-
-  it('still only recharges — the perk never snaps the bar to full', () => {
+  it('refills an empty bar outright for a player with Master Rejuvenation', () => {
     const player = makePlayer({ specialEnergy: 0, masterRejuvenation: true })
     tickPlayer(player, ctx(1))
-    expect(player.specialEnergy).toBeCloseTo(SPECIAL_REGEN_PER_TICK * 2)
-    expect(player.specialEnergy).toBeLessThan(100)
+    expect(player.specialEnergy).toBe(100)
+  })
+
+  it('refills a bar spent down to the clock fraction the world always leaves', () => {
+    // 50 debited from 50.2 leaves 0.2, not 0 — the bar reads 0% and the perk
+    // has to fire, or it never fires in the world at all.
+    const player = makePlayer({ specialEnergy: 0.2, masterRejuvenation: true })
+    tickPlayer(player, ctx(1))
+    expect(player.specialEnergy).toBe(100)
+  })
+
+  it('leaves a part-spent bar on the clock — the perk only fires at empty', () => {
+    const player = makePlayer({ specialEnergy: 40, masterRejuvenation: true })
+    tickPlayer(player, ctx(1))
+    expect(player.specialEnergy).toBeCloseTo(40 + SPECIAL_REGEN_PER_TICK)
+  })
+
+  it('never refills in the Wilderness, where a free bar would decide the duel', () => {
+    const player = makePlayer({ specialEnergy: 0, masterRejuvenation: true })
+    for (let tick = 1; tick <= 50; tick++) tickPlayer(player, { ...ctx(tick), pvpZone: true })
+    expect(player.specialEnergy).toBeCloseTo(10)
   })
 })

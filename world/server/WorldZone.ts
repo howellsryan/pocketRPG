@@ -1906,6 +1906,7 @@ export class WorldZone extends Server<Env> {
       pathAdjacent: (from, to) => findPathAdjacent(collisionWithMonsters(this.zone.collision, npcs.values(), from), from, to),
       players: positions,
       lair: isInstancedRoom(this.name),
+      pvpZone: this.isPvp,
       // The Wilderness line. One gate for every path source there is or will be
       // (tick.ts takeSteps) — a walk, a follow, an approach path.
       blockStep: this.isPvp
