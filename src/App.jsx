@@ -54,6 +54,7 @@ import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSav
 import { getActiveCoopSession, COOP_SESSION_EVENT } from './cloud/coop.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, resetIdleStateSync } from './cloud/idleState.js'
+import { fetchBootstrap } from './cloud/bootstrap.js'
 import { isBackground, getActivityKey } from './engine/activityRegistry.js'
 import { isBackgroundCombatEligible } from './engine/backgroundCombat.js'
 import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
@@ -1702,12 +1703,22 @@ function GameApp() {
         return
       }
 
+      // Declared out here because the kill-count / daily-task wiring below sits
+      // outside the signed-in block. Only that block can reach it (every other
+      // branch returns), so it is null there only when bootstrap failed.
+      let boot = null
       if (hasToken && hasCharacter) {
         setCloudLoadError(null)
+        // One request for identity + kill counts + the Hard Mode mirror + daily
+        // tasks + idle state + activity progress. The last two are consumed
+        // later, inside loadGame, via the single-use primes fetchBootstrap sets.
+        // A null answer means this server predates the route — every `boot ?`
+        // below then falls through to the per-endpoint fan-out it replaced.
+        boot = await fetchBootstrap()
         // Fetch remove-ads status, Stripe payment links, and character credits
         // (non-fatal if unavailable — shop buttons / Credits pill stay hidden).
         try {
-          const meData = await api.me()
+          const meData = boot ? boot.me : await api.me()
           if (meData?.identity) {
             setRemoveAds(meData.identity.remove_ads === true)
             setIdentityId(meData.identity.id)
@@ -1769,9 +1780,9 @@ function GameApp() {
       setCloudPhase('ready')
       // Kick off KC + daily-tasks fetch in parallel with checkSave to minimise the
       // window where data is missing from the first render.
-      const kcPromise = fetchKillCounts()
-      const hardModePromise = fetchHardModeTargets()
-      const dailyTasksPromise = api.getDailyTasks().catch(() => null)
+      const kcPromise = boot ? Promise.resolve(boot.killCounts) : fetchKillCounts()
+      const hardModePromise = boot ? Promise.resolve(boot.hardModeKeys) : fetchHardModeTargets()
+      const dailyTasksPromise = boot ? Promise.resolve(boot.dailyTasks) : api.getDailyTasks().catch(() => null)
       await checkSave()
       // Pull collection log alongside the save. Fire-and-forget — UI shows a
       // loading state until cache populates.

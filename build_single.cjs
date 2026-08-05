@@ -156,6 +156,9 @@ const sourceFiles = [
   'cloud/collectionLog.js',
   'cloud/killCounts.js',
   'cloud/hardMode.js',
+  // Boot-path only (runs before the cloud phase goes ready), so core — never
+  // the game chunk.
+  'cloud/bootstrap.js',
   'state/gameState.js',
   'components/Modal.js',
   'components/BackLink.js', // -> game chunk (only chunk screens use it)

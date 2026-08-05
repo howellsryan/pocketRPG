@@ -1,61 +1,32 @@
 import { requireAuth, json } from '../../_lib/auth.js'
+import {
+  identityStatement, characterStatement, mapIdentity, mapCharacter,
+  STRIPE_LINKS, STRIPE_SKUS,
+} from '../../_lib/identityPayload.js'
 
+// The identity/character half of a boot. /api/bootstrap returns this same
+// payload alongside the rest of the boot data in one request; this route stays
+// for the character picker (which has no character selected yet) and for
+// clients that predate bootstrap.
 export async function onRequestGet({ request, env }) {
   const auth = await requireAuth(request, env)
   if (auth.error) return json({ error: auth.error }, auth.status)
 
-  // Fetch remove_ads from DB — not stored in JWT so it reflects post-payment updates
-  const row = await env.DB.prepare(
-    'SELECT remove_ads FROM oauth_identities WHERE id = ?',
-  ).bind(auth.identity.id).first()
+  const row = await identityStatement(env, auth.identity.id).first()
 
   // If the client is acting on behalf of a selected character, return its
   // credit balance so the UI can render Credits in the header and refresh
   // after a Stripe webhook has processed a purchase.
-  let character = null
   const charIdHeader = request.headers.get('X-Character-Id')
   const charId = charIdHeader ? parseInt(charIdHeader, 10) : null
-  if (charId) {
-    const charRow = await env.DB.prepare(
-      `SELECT id, credits, is_ironman, is_one_life,
-              COALESCE(total_pvp_kills, 0) AS total_pvp_kills,
-              last_updated_total_pvp_kills
-         FROM characters
-        WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`,
-    ).bind(charId, auth.identity.id).first()
-    if (charRow) {
-      character = {
-        id: charRow.id,
-        credits: charRow.credits ?? 0,
-        // Authoritative account-type flags. The client mirrors these into its
-        // one-life / ironman gates (incl. the One-Life death wipe) at boot, so a
-        // returning session that skips the character picker can't drift out of
-        // sync with the server row and treat a one-life death as a respawn.
-        is_ironman: charRow.is_ironman === 1,
-        is_one_life: charRow.is_one_life === 1,
-        total_pvp_kills: charRow.total_pvp_kills ?? 0,
-        last_updated_total_pvp_kills: charRow.last_updated_total_pvp_kills ?? null,
-      }
-    }
-  }
+  const charRow = charId
+    ? await characterStatement(env, charId, auth.identity.id).first()
+    : null
 
   return json({
-    identity: {
-      ...auth.identity,
-      remove_ads: row?.remove_ads === 1,
-    },
-    character,
-    // Credit / remove-ads purchases now go through POST /api/stripe/
-    // create-session, which authenticates the buyer and produces a
-    // server-issued Checkout Session URL. The four STRIPE_PAYMENT_LINK_*
-    // fields are no longer published; left as `null` so an older client
-    // that still reads them just falls through to the new flow.
-    stripe_links: { remove_ads: null, credits_10: null, credits_100: null, credits_1000: null },
-    stripe_skus: {
-      remove_ads:   'remove_ads',
-      credits_10:   'credits_10',
-      credits_100:  'credits_100',
-      credits_1000: 'credits_1000',
-    },
+    identity: mapIdentity(auth.identity, row),
+    character: mapCharacter(charRow),
+    stripe_links: STRIPE_LINKS,
+    stripe_skus: STRIPE_SKUS,
   })
 }
