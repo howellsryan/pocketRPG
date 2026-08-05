@@ -8,7 +8,7 @@ import { openWorld, worldBetaEnabled } from '../utils/helpers.js'
 import { THEME_OPTIONS } from '../utils/theme.js'
 
 export default function HelpScreen({ onNavigate, onShowIntroTour }) {
-  const { showInfoToasts, updateShowInfoToasts, backgroundCombat, updateBackgroundCombat, theme, updateTheme } = useGame()
+  const { showInfoToasts, updateShowInfoToasts, backgroundCombat, updateBackgroundCombat, hideLootModalForMonsters, updateHideLootModalForMonsters, theme, updateTheme } = useGame()
 
   async function handleEnterWorld() {
     try {
@@ -86,6 +86,28 @@ export default function HelpScreen({ onNavigate, onShowIntroTour }) {
               <span
                 class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
                 style={{ transform: backgroundCombat ? 'translateX(20px)' : 'translateX(0)' }}
+              />
+            </button>
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-[var(--color-parchment)]">Hide loot popup for monsters</div>
+              <div class="text-xs text-[var(--color-parchment)] opacity-50 mt-0.5">Skip the loot popup after a regular monster kill and keep fighting. Bosses and raids always show it.</div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={hideLootModalForMonsters}
+              onClick={() => updateHideLootModalForMonsters(!hideLootModalForMonsters)}
+              class="flex-shrink-0 relative w-11 h-6 rounded-full border-0 cursor-pointer transition-colors duration-200"
+              style={{ background: hideLootModalForMonsters ? 'var(--color-mana)' : '#444' }}
+            >
+              <span
+                class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+                style={{ transform: hideLootModalForMonsters ? 'translateX(20px)' : 'translateX(0)' }}
               />
             </button>
           </div>

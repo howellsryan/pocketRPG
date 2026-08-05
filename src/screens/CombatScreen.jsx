@@ -60,7 +60,7 @@ import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
-import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
+import { shapeLootForModal, lootRowsForModal, shouldSkipMonsterLootModal } from '../utils/lootModal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
@@ -308,7 +308,7 @@ function MonsterAddStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, hideLootModalForMonsters, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget } = useGame()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showWildernessEntry, setShowWildernessEntry] = useState(false)
@@ -416,6 +416,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }
   const [lootModal, setLootModal] = useState(null)
   const [deathModal, setDeathModal] = useState(null)
+  // A monster kill suppressed by hideLootModalForMonsters restarts the fight
+  // via this instead of calling continueFight directly from inside the tick
+  // loop's event handler — that closure is frozen at fight-start (only
+  // resubscribes when combat?.active flips), so it would keep re-fighting
+  // with stale equipment/spell/stance forever. Routing through state picks up
+  // a fresh continueFight closure (current props) on the very next render.
+  const [pendingAutoContinueKill, setPendingAutoContinueKill] = useState(null)
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
   const [monsterSplats, setMonsterSplats] = useState([])
   const [addSplats, setAddSplats] = useState([])
@@ -472,6 +479,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const bossKillCountsRef = useRef(bossKillCounts)
   const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
+  const hideLootModalForMonstersRef = useRef(hideLootModalForMonsters)
   const logRef = useRef(null)
 
   useEffect(() => { hpRef.current = currentHP }, [currentHP])
@@ -506,6 +514,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => { bossKillCountsRef.current = bossKillCounts }, [bossKillCounts])
   useEffect(() => { raidKillCountsRef.current = raidKillCounts }, [raidKillCounts])
   useEffect(() => { unlockedFeaturesRef.current = unlockedFeatures }, [unlockedFeatures])
+  useEffect(() => { hideLootModalForMonstersRef.current = hideLootModalForMonsters }, [hideLootModalForMonsters])
 
   useEffect(() => {
     const updateDesktopLayout = () => {
@@ -1104,6 +1113,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const defeatedHardMode = defeatedMonster?.hardModeActive === true || state.monster?.hardModeActive === true
           const killLoot = Array.isArray(ev.loot) ? ev.loot : []
           const raidId = state.raid?.raidId || null
+          // A regular-monster kill (never a boss, never a raid) with the setting
+          // on auto-continues the fight instead of interrupting it with a modal.
+          const skipKillModal = shouldSkipMonsterLootModal({ hideLootModalForMonsters: hideLootModalForMonstersRef.current, isBossKill: isDefeatedBoss, raidId })
           const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
           // Only bosses and monsters with a collection-logged unique settle
           // server-side (server-rolled loot + grant), so their high-value drops
@@ -1198,15 +1210,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               hardMode: defeatedHardMode,
             })
           } else if (cloudAuthoritativeMonster) {
-            setLootModal({
-              monster: defeatedMonsterData,
-              hardMode: defeatedHardMode,
-              loot: [],
-              slayerXpGained,
-              isBossKill: isDefeatedBoss,
-              raidId,
-              loading: true
-            })
+            if (!skipKillModal) {
+              setLootModal({
+                monster: defeatedMonsterData,
+                hardMode: defeatedHardMode,
+                loot: [],
+                slayerXpGained,
+                isBossKill: isDefeatedBoss,
+                raidId,
+                loading: true
+              })
+            }
             void (async () => {
               // Flush current inventory to server before completing the monster so
               // the server sees consumed food/potions and can correctly route drops
@@ -1259,15 +1273,20 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               // predate a later local-only change (e.g. travel) if the round trip is
               // slow, silently reverting it. The reward itself is already applied above;
               // save_revision stays in sync generically via SAVE_REVISION_EVENT (api.js).
-              setLootModal({
-                monster: defeatedMonsterData,
-                hardMode: defeatedHardMode,
-                loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
-                slayerXpGained,
-                isBossKill: isDefeatedBoss,
-                raidId,
-                loading: false
-              })
+              if (skipKillModal) {
+                const original = monstersTableFor(monstersData, defeatedHardMode === true)[defeatedMonsterData.id]
+                if (original) setPendingAutoContinueKill(original)
+              } else {
+                setLootModal({
+                  monster: defeatedMonsterData,
+                  hardMode: defeatedHardMode,
+                  loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
+                  slayerXpGained,
+                  isBossKill: isDefeatedBoss,
+                  raidId,
+                  loading: false
+                })
+              }
             }).catch((err) => {
               setLootModal(null)
               addToast(`Monster claim failed: ${err?.message || 'server_error'}`, 'error')
@@ -1311,15 +1330,20 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }
           // Show loot modal instead of auto-restarting
           if (!cloudAuthoritativeRaid && !cloudAuthoritativeMonster) {
-            setLootModal({
-              monster: defeatedMonsterData,
-              hardMode: defeatedHardMode,
-              loot: killLoot,
-              slayerXpGained,
-              isBossKill: isDefeatedBoss,
-              raidId,
-              loading: false
-            })
+            if (skipKillModal) {
+              const original = monstersTableFor(monstersData, defeatedHardMode === true)[defeatedMonsterData.id]
+              if (original) setPendingAutoContinueKill(original)
+            } else {
+              setLootModal({
+                monster: defeatedMonsterData,
+                hardMode: defeatedHardMode,
+                loot: killLoot,
+                slayerXpGained,
+                isBossKill: isDefeatedBoss,
+                raidId,
+                loading: false
+              })
+            }
           }
         }
       }
@@ -1875,6 +1899,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
   }
+
+  // Fires continueFight from a normal render (current equipment/spell/stance)
+  // once a hideLootModalForMonsters kill asks for one — see
+  // pendingAutoContinueKill's declaration for why this can't call continueFight
+  // directly from inside the tick loop's event handler.
+  useEffect(() => {
+    if (!pendingAutoContinueKill) return
+    continueFight(pendingAutoContinueKill)
+    setPendingAutoContinueKill(null)
+  }, [pendingAutoContinueKill])
 
   // Claim one full-raid reward roll from the server (the legitimate grant path)
   // and surface it in the loot modal. Used both when a raid is completed live

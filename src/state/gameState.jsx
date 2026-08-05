@@ -76,6 +76,7 @@ export function GameProvider({ children }) {
   const [autoBankExcludedItems, setAutoBankExcludedItemsState] = useState(new Set())
   const [showInfoToasts, setShowInfoToastsState] = useState(false)
   const [backgroundCombat, setBackgroundCombatState] = useState(false)
+  const [hideLootModalForMonsters, setHideLootModalForMonstersState] = useState(false)
   const [theme, setThemeState] = useState(() => readStoredThemePreference() || DEFAULT_THEME_PREFERENCE)
   // Live snapshot of the running fight, published by CombatScreen each tick so the
   // desktop combat indicator can render the monster's HP as a progress bar while
@@ -194,7 +195,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets, savedHideLootModalForMonsters] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -202,7 +203,7 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
-      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets')
+      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets'), getSetting('hideLootModalForMonsters')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -700,6 +701,7 @@ export function GameProvider({ children }) {
     setAutoBankExcludedItemsState(autoBankExcludedItemIdsSet)
     setShowInfoToastsState(savedShowInfoToasts === true) // default false
     setBackgroundCombatState(savedBackgroundCombat === true) // default false
+    setHideLootModalForMonstersState(savedHideLootModalForMonsters === true) // default false
     // Cross-device convenience only: a locally stored choice always wins, so
     // the save mirror can never override what this device is already showing.
     if (!readStoredThemePreference() && savedTheme) {
@@ -1054,6 +1056,11 @@ export function GameProvider({ children }) {
   const updateBackgroundCombat = useCallback((enabled) => {
     setBackgroundCombatState(enabled)
     saveSetting('backgroundCombat', enabled)
+  }, [])
+
+  const updateHideLootModalForMonsters = useCallback((enabled) => {
+    setHideLootModalForMonstersState(enabled)
+    saveSetting('hideLootModalForMonsters', enabled)
   }, [])
 
   // localStorage first: the save is locked during PvP/co-op/world sessions, so
@@ -1478,6 +1485,7 @@ export function GameProvider({ children }) {
       bankConfig,
       showInfoToasts,
       backgroundCombat,
+      hideLootModalForMonsters,
       theme,
       equipmentPresets,
       quickPrayers,
@@ -1646,6 +1654,13 @@ export function GameProvider({ children }) {
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.BACKGROUND_COMBAT_SETTING_CHANGE)
   }, [loaded, backgroundCombat, getSnapshot])
 
+  const hideLootModalForMonstersHydratedRef = useRef(false)
+  useEffect(() => {
+    if (!loaded) return
+    if (!hideLootModalForMonstersHydratedRef.current) { hideLootModalForMonstersHydratedRef.current = true; return }
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HIDE_LOOT_MODAL_SETTING_CHANGE)
+  }, [loaded, hideLootModalForMonsters, getSnapshot])
+
   // Stable identity for the running activity — only the activity itself (not its
   // per-tick progress/session) should restart the heartbeat interval. Without
   // this the interval would reset every 600ms (the runner and the activity
@@ -1748,7 +1763,7 @@ export function GameProvider({ children }) {
     // travel confirm that then navigates) should use this, not `activeTask`.
     getActiveTask: () => activeTaskInternalRef.current,
     activeTask, autoBankLoot, autoBankExcludedItems, toggleAutoBankExclusion, bankConfig, showInfoToasts, updateShowInfoToasts, theme, updateTheme,
-    backgroundCombat, updateBackgroundCombat, combatStatus, publishCombatStatus,
+    backgroundCombat, updateBackgroundCombat, hideLootModalForMonsters, updateHideLootModalForMonsters, combatStatus, publishCombatStatus,
     equipmentPresets, updateEquipmentPresets,
     quickPrayers, updateQuickPrayers,
     unlockedFeatures, unlockFeature,

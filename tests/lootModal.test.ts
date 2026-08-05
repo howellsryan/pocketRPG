@@ -3,7 +3,7 @@
 // biggest pile of coins.
 
 import { describe, it, expect } from 'vitest'
-import { shapeLootForModal, lootRowsForModal } from '../src/utils/lootModal.js'
+import { shapeLootForModal, lootRowsForModal, shouldSkipMonsterLootModal } from '../src/utils/lootModal.js'
 
 const itemsData = {
   coins: { name: 'Coins', shopValue: 1 },
@@ -80,5 +80,27 @@ describe('lootRowsForModal', () => {
   it('returns nothing for an empty list', () => {
     expect(lootRowsForModal([], itemsData)).toEqual([])
     expect(lootRowsForModal(null, itemsData)).toEqual([])
+  })
+})
+
+describe('shouldSkipMonsterLootModal', () => {
+  it('skips a regular monster kill once the setting is on', () => {
+    expect(shouldSkipMonsterLootModal({ hideLootModalForMonsters: true, isBossKill: false, raidId: null })).toBe(true)
+  })
+
+  it('never skips a boss kill, even outside a raid', () => {
+    expect(shouldSkipMonsterLootModal({ hideLootModalForMonsters: true, isBossKill: true, raidId: null })).toBe(false)
+  })
+
+  it('never skips a raid kill, even for a non-boss raid record', () => {
+    expect(shouldSkipMonsterLootModal({ hideLootModalForMonsters: true, isBossKill: false, raidId: 'raid_1' })).toBe(false)
+  })
+
+  it('leaves the modal showing when the setting is off', () => {
+    expect(shouldSkipMonsterLootModal({ hideLootModalForMonsters: false, isBossKill: false, raidId: null })).toBe(false)
+  })
+
+  it('defaults to showing the modal when called with nothing', () => {
+    expect(shouldSkipMonsterLootModal()).toBe(false)
   })
 })

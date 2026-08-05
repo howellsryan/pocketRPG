@@ -26,6 +26,14 @@ export function shapeLootForModal(drops, itemsData) {
   }
 }
 
+// Whether the live per-kill loot modal should be skipped for this kill. Only
+// ever true for a regular monster — a boss (even one fought outside a raid
+// with no logged-drop grant) or any raid kill always shows the modal
+// regardless of the setting.
+export function shouldSkipMonsterLootModal({ hideLootModalForMonsters, isBossKill, raidId } = {}) {
+  return hideLootModalForMonsters === true && isBossKill !== true && !raidId
+}
+
 /** The `loot` rows <LootResultModal> expects, for everything but the hero. */
 export function lootRowsForModal(rest, itemsData) {
   return (rest || []).map((drop, idx) => ({
