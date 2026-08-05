@@ -40,9 +40,9 @@ const expectedMaxMelee = meleeMaxHit(effStr, itemsData.zul_kaars_blade.otherBonu
 describe("Zul-Kaar's Blade Disrupt special attack", () => {
   it('item is registered with a flat 50 energy cost (not percent-of-current)', () => {
     // A percent-of-current cost (50%, 25%, 12%, ...) never hits exactly 0, so
-    // the bar is never spent and the weapon keeps firing weaker and weaker
-    // specials forever. Flat cost drains 100->50->0 in exactly 2 uses like
-    // every other special.
+    // the Master Rejuvenation unlock (refill at specialAttackEnergy === 0,
+    // src/engine/specialRegen.js) almost never triggers with this weapon. Flat
+    // cost drains 100->50->0 in exactly 2 uses like every other special.
     const spec = itemsData.zul_kaars_blade.specialAttack
     expect(spec.type).toBe('disrupt')
     expect(spec.energyCost).toBe(50)

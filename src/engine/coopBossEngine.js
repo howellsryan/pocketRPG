@@ -25,7 +25,7 @@ import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumabl
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers } from './roomWideAttacks.js'
-import { hasMasterRejuvenation, specialRegenPerTick, accrueSpecialEnergy } from './specialRegen.js'
+import { hasMasterRejuvenation, refillSpecialOnEmpty } from './specialRegen.js'
 import { bossAddsOf, getAddSpec, rollRespawnDelay } from './bossAdds.js'
 import { advanceSharedForm, formChangeAttackTimer, isMultiForm, pinFormToSession } from './bossForms.js'
 import {
@@ -442,7 +442,6 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
       potionCooldown: 0,
       comboCooldown: 0,
       specialAttackEnergy: 100,
-      specialRegenCarry: 0,
       specialAttackQueued: false,
       activeProtectionPrayer: null,
       activeCombatPrayer: null,
@@ -1004,11 +1003,11 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
     applyCoopIntent(next, member, intent.action || {}, itemsData, spellsData, prayersData, monstersData, events)
   }
 
-  // Special energy climbs on the clock for a member with Master Rejuvenation,
-  // in every phase — the lobby and the respawn wait are prep time, and nothing
-  // else here regenerates it. Before the fight loop below, whose hydrate copies
-  // this value onto the engine state and dehydrate writes it back.
-  for (const member of Object.values(next.members)) tickSpecialRegen(member)
+  // Master Rejuvenation refills a spent bar for the member who owns the perk,
+  // in every phase — the lobby and the respawn wait are prep time. Before the
+  // fight loop below, whose hydrate copies this value onto the engine state and
+  // dehydrate writes it back.
+  for (const member of Object.values(next.members)) refillMemberSpecial(member)
 
   // A raid lobby is prep time in the same sense the respawn wait is: nothing
   // fights, but the intents above have already run, so the party gears up, eats
@@ -1436,15 +1435,12 @@ function returnPartyToLobby(state, monstersData, events, reason) {
   events.push({ type: 'raidEnded', raidId: raid.raidId, reason })
 }
 
-/** Master Rejuvenation's regen, in WHOLE points with the fraction carried
- * beside them: the room projects this value to every client every tick and
- * skips the frame when nothing moved (§20). */
-function tickSpecialRegen(member) {
-  const perTick = specialRegenPerTick(member?.masterRejuvenation)
-  if (!member?.combat || !(perTick > 0)) return
-  const next = accrueSpecialEnergy(member.combat.specialAttackEnergy, member.combat.specialRegenCarry, perTick)
-  member.combat.specialAttackEnergy = next.energy
-  member.combat.specialRegenCarry = next.carry
+/** Master Rejuvenation, member-side. The value is projected to every client
+ * every tick and the frame is skipped when nothing moved (§20), so the refill
+ * has to leave an already-full bar untouched — which it does. */
+function refillMemberSpecial(member) {
+  if (!member?.combat || !member.masterRejuvenation) return
+  member.combat.specialAttackEnergy = refillSpecialOnEmpty(member.combat.specialAttackEnergy, true)
 }
 
 /** Walks down the timers processCombatTick would have advanced. Only the
