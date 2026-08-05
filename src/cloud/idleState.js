@@ -50,15 +50,24 @@ function canUseCloud() {
 // call sites — so the answer is parked here for the next read instead of being
 // threaded through all of them.
 //
-// SINGLE USE, and that is the whole safety property: `loadGame` also runs on a
-// world return and on conflict resolution, minutes later, where replaying a
-// boot-time snapshot would resume a stale task and mis-measure the idle window.
-// Consumed on first read, and cleared outright by `resetIdleStateSync` so a
-// character switch can never read the previous character's row.
+// Two bounds, and BOTH are needed. Single use stops the same snapshot being
+// replayed; the age check stops one being read long after the boot that took
+// it. They are different failure modes: the brand-new-character branch of
+// initCloudAndSave returns before loadGame ever runs, leaving a prime set with
+// nothing to consume it, and the next reader is whatever calls loadGame next —
+// a world return, a save-conflict resolution — where the row has moved on and
+// serverNow is minutes stale. A stale prime is dropped AND cleared, so the
+// caller falls through to the network read it would have made anyway.
+// `resetIdleStateSync` clears it outright so a character switch can never read
+// the previous character's row.
+const IDLE_PRIME_MAX_AGE_MS = 30_000
+
 let primedIdleState = null
+let primedIdleAt = 0
 
 export function primeIdleState(state) {
   primedIdleState = state && typeof state === 'object' ? state : null
+  primedIdleAt = primedIdleState ? Date.now() : 0
 }
 
 // Read the authoritative idle state from D1.
@@ -72,8 +81,10 @@ export async function fetchIdleState() {
   if (!canUseCloud()) return null
   if (primedIdleState) {
     const primed = primedIdleState
+    const fresh = Date.now() - primedIdleAt <= IDLE_PRIME_MAX_AGE_MS
     primedIdleState = null
-    return primed
+    primedIdleAt = 0
+    if (fresh) return primed
   }
   const res = await withTimeout(api.getIdle(), FETCH_TIMEOUT_MS, null)
   if (!res) return null
@@ -109,4 +120,5 @@ export async function pushIdleState(task) {
 export function resetIdleStateSync() {
   lastPushedTaskIdentity = null
   primedIdleState = null
+  primedIdleAt = 0
 }

@@ -80,13 +80,18 @@ export function clearActivityProgress(activityKey) {
 }
 
 // The boot-time /api/bootstrap response already carries this ledger. Parked
-// here for the next read for the same reason as idleState's prime: the fetch
-// happens inside `loadGame`, which has five call sites. Single use, and cleared
-// by `resetActivityProgressSync` on logout / character switch.
+// here for the next read for the same reason as idleState's prime, and bounded
+// the same two ways — single use, plus an age check so a prime the boot never
+// consumed cannot surface at a later loadGame. See idleState.js for why both
+// are needed.
+const ACTIVITY_PRIME_MAX_AGE_MS = 30_000
+
 let primedActivityProgress = null
+let primedActivityProgressAt = 0
 
 export function primeActivityProgress(progress) {
   primedActivityProgress = progress && typeof progress === 'object' ? progress : null
+  primedActivityProgressAt = primedActivityProgress ? Date.now() : 0
 }
 
 /** Fetch from server and hydrate the local ledger (call on boot). */
@@ -94,9 +99,13 @@ export async function fetchAndHydrateActivityProgress() {
   if (!canUseCloudForActivityProgress()) return
   if (primedActivityProgress) {
     const primed = primedActivityProgress
+    const fresh = Date.now() - primedActivityProgressAt <= ACTIVITY_PRIME_MAX_AGE_MS
     primedActivityProgress = null
-    hydrateActivityLedger(primed)
-    return
+    primedActivityProgressAt = 0
+    if (fresh) {
+      hydrateActivityLedger(primed)
+      return
+    }
   }
   try {
     const result = await api.getActivityProgress()
@@ -110,5 +119,6 @@ export async function fetchAndHydrateActivityProgress() {
 export function resetActivityProgressSync() {
   activityProgressLedger = null
   primedActivityProgress = null
+  primedActivityProgressAt = 0
   if (activityProgressFlushTimer) { clearTimeout(activityProgressFlushTimer); activityProgressFlushTimer = null }
 }

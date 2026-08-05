@@ -48,14 +48,14 @@ export async function fetchBootstrap() {
   if (!res || !res.identity || !res.character) return null
 
   // Primed before returning, so a caller that awaits this call has both ready
-  // by the time loadGame asks for them.
-  if (res.idle) {
-    primeIdleState({
-      lastActiveAt: res.idle.idle?.lastActiveAt ?? null,
-      activeTask: res.idle.idle?.activeTask ?? null,
-      serverNow: typeof res.idle.serverNow === 'number' ? res.idle.serverNow : null,
-    })
-  }
+  // by the time loadGame asks for them. Both assignments are unconditional: a
+  // response missing one of these fields must CLEAR that prime, not leave an
+  // older one standing for the next reader to pick up.
+  primeIdleState(res.idle ? {
+    lastActiveAt: res.idle.idle?.lastActiveAt ?? null,
+    activeTask: res.idle.idle?.activeTask ?? null,
+    serverNow: typeof res.idle.serverNow === 'number' ? res.idle.serverNow : null,
+  } : null)
   primeActivityProgress(res.activityProgress?.progress ?? null)
 
   return {

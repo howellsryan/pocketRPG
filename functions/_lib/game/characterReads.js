@@ -11,7 +11,7 @@
 // bootstrap and /api/kill-counts answering differently for the same character
 // is indistinguishable, from the client, from a save bug.
 
-export function rowsOf(result) {
+function rowsOf(result) {
   return result?.results || []
 }
 

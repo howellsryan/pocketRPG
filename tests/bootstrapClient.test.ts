@@ -139,6 +139,34 @@ describe('fetchBootstrap', () => {
     expect(await fetchIdleState()).toMatchObject({ lastActiveAt: 3 })
   })
 
+  it('a prime the boot never consumed goes stale instead of surfacing much later', async () => {
+    // The brand-new-character branch of initCloudAndSave returns before
+    // loadGame ever runs (App.jsx: startNewGame -> markKillCountsLoaded ->
+    // return), so the prime is left set. Single use bounds how MANY times it is
+    // read, not how long it waits — and the next reader can be a world return
+    // minutes later, which would resume a task the player has since changed and
+    // measure the idle window against a boot-era serverNow.
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date('2026-08-05T12:00:00Z'))
+      apiMock.getBootstrap.mockResolvedValue(PAYLOAD)
+      await fetchBootstrap()
+
+      vi.setSystemTime(new Date('2026-08-05T12:05:00Z'))
+      apiMock.getIdle.mockResolvedValue({ idle: { lastActiveAt: 8888, activeTask: { type: 'skill', skill: 'fishing' } }, serverNow: 9000 })
+      apiMock.getActivityProgress.mockResolvedValue({ progress: { fishing: { progressTicks: 3 } } })
+
+      expect(await fetchIdleState()).toMatchObject({ lastActiveAt: 8888 })
+      expect(apiMock.getIdle).toHaveBeenCalledTimes(1)
+
+      await fetchAndHydrateActivityProgress()
+      expect(apiMock.getActivityProgress).toHaveBeenCalledTimes(1)
+      expect(getActivityProgress('fishing')).toMatchObject({ progressTicks: 3 })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('returns null without a session rather than calling the endpoint', async () => {
     session.signedIn = false
     expect(await fetchBootstrap()).toBeNull()
