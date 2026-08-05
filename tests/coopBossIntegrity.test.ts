@@ -2,6 +2,7 @@
 // against the pre-hardening code — they are the exploits, written down.
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { makeD1, FakeD1 } from './helpers/d1'
+import { fakeCoopRoom } from './helpers/coopRoom'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 import {
   coopBossRequirementFailure,
@@ -22,7 +23,7 @@ import { assertNotInCoopSession } from '../functions/_lib/game/coopBoss.js'
 const BOSS = 'corporeal_horror'
 const QUEST = 'the_heart_of_shadows'
 
-let env: { DB: FakeD1 }
+let env: { DB: FakeD1; COOP_ROOM: ReturnType<typeof fakeCoopRoom> }
 let raw: any
 
 function baseSave(overrides: Record<string, unknown> = {}) {
@@ -80,7 +81,7 @@ async function memberOf(sessionId: number, characterId: number) {
 
 beforeEach(() => {
   const d = makeD1()
-  env = { DB: d.DB }
+  env = { DB: d.DB, COOP_ROOM: fakeCoopRoom(d.raw) }
   raw = d.raw
 })
 

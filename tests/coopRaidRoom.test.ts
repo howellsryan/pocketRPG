@@ -6,7 +6,7 @@ import { makeD1, FakeD1 } from './helpers/d1'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 import { CoopBossRoom } from '../world/server/CoopBossRoom'
 import { joinCoopRaidParty, listOpenRaidParties } from '../functions/_lib/game/coopRaid.js'
-import { readSession, parseSessionState } from '../functions/_lib/game/coopBoss.js'
+import { readSession, parseSessionState, leaveCoopSession } from '../functions/_lib/game/coopBoss.js'
 import { raidBossOrder } from '../src/engine/coopRaidEngine.js'
 
 const RAID = 'cryptbound_champions'
@@ -100,10 +100,12 @@ async function openParty(characterId: number) {
   })
 }
 
-describe('a world Worker that is older than the Pages build', () => {
-  /** A room from before raids: it has no `capabilities` action, so it falls
-   * through to the session lookup the real old room does. */
-  function makeOldRoomBinding() {
+describe('a raid party join that the room refuses', () => {
+  /** A room that rejects every action — evicted mid-start, or throwing on load.
+   * The binding itself can no longer be absent: CoopBossRoom is a local class
+   * of the one Worker, which is what retired the capability probe this block
+   * used to cover. */
+  function makeDeadRoomBinding() {
     return {
       idFromName: (name: string) => name,
       get: () => ({
@@ -112,26 +114,20 @@ describe('a world Worker that is older than the Pages build', () => {
     }
   }
 
-  it('answers the capability probe, so a current room is recognised', async () => {
-    const res = await (env.COOP_ROOM as any)
-      .get('coop:capabilities')
-      .fetch('https://coop-room/capabilities', { method: 'POST', body: '{}' })
-    expect(res.status).toBe(200)
-    expect((await res.json() as any).raids).toBe(true)
-  })
-
-  it('refuses the party rather than farming the raid\'s first boss for its own drop table', async () => {
-    // The failure this prevents: an old room ignores `state.raid`, so it
-    // respawns boss one forever and settles every kill against that boss's
-    // table — server-granted, so it is an economy bug and has to be a refusal.
+  it('does not leave the character locked out of their own save', async () => {
     await seedCharacter(7)
-    env.COOP_ROOM = makeOldRoomBinding()
-    await expect(joinCoopRaidParty(env as never, {
+    const opened = await joinCoopRaidParty(env as never, {
       characterId: 7, identityId: 1, raidId: RAID, username: 'player7',
-    })).rejects.toMatchObject({ code: 'COOP_UNAVAILABLE' })
+    })
+    await leaveCoopSession(env as never, { characterId: 7, identityId: 1, sessionId: opened.sessionId })
 
-    // And it must not leave the character locked out of their own save.
-    const row = raw.prepare('SELECT active_coop_session_id AS id FROM characters WHERE id = 7').all()[0]
+    await seedCharacter(8)
+    env.COOP_ROOM = makeDeadRoomBinding()
+    await expect(joinCoopRaidParty(env as never, {
+      characterId: 8, identityId: 1, raidId: RAID, username: 'player8', sessionId: opened.sessionId,
+    })).rejects.toBeTruthy()
+
+    const row = raw.prepare('SELECT active_coop_session_id AS id FROM characters WHERE id = 8').all()[0]
     expect(row.id).toBeNull()
   })
 })

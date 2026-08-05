@@ -18,14 +18,18 @@
     "check:single": "node scripts/check-single-file-build.cjs",
     "typecheck": "tsc -p tsconfig.typecheck.json",
     "gen:knowledge": "node scripts/gen-chat-knowledge.cjs",
+    "gen:routes": "node scripts/gen-worker-routes.mjs",
     "gen:model": "node scripts/process-3d-model.mjs",
     "check:drops": "node scripts/check-drops.cjs",
     "sync:three": "node scripts/sync-three-vendor.mjs",
     "claude:headroom": "bash scripts/headroom-claude.sh",
     "ci": "npm run typecheck && npm run build && npm run rebuild && npm run check:single",
     "world:check": "cd world && npm run typecheck && npm test && npm run build",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "build:world": "npm --prefix world run build",
+    "build:site": "npm run rebuild && npm run build:world && node scripts/stage-site.mjs",
+    "worker:dev": "wrangler dev --env preview",
+    "deploy": "npm run build:site && wrangler deploy",
+    "deploy:preview": "npm run build:site && wrangler deploy --env preview"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",
@@ -42,10 +46,12 @@
     "@fontsource/spectral": "^5.2.8",
     "@fontsource/spline-sans-mono": "^5.2.8",
     "idb": "^8.0.2",
+    "partyserver": "0.5.8",
     "preact": "^10.25.4"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.3.4",
+    "@cloudflare/workers-types": "4.20260702.1",
     "@capacitor/ios": "^8.3.4",
     "@gltf-transform/core": "^4.4.1",
     "@gltf-transform/extensions": "^4.4.1",
@@ -64,6 +70,7 @@
     "three": "0.185.1",
     "typescript": "^6.0.2",
     "vite": "^6.3.1",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.4",
+    "wrangler": "4.107.1"
   }
 }

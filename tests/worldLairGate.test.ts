@@ -43,8 +43,10 @@ describe('world origin', () => {
     expect(worldOrigin()).toBe('https://world.pocketrpg.co.uk')
   })
 
-  it('falls back to preview, never production, when unbaked', () => {
-    expect(worldOrigin()).toBe('https://pocketrpg-world-preview.rlh.workers.dev')
+  it('falls back to the same origin, never production, when unbaked', () => {
+    // The world ships from this Worker now, so an unbaked build (Vite dev)
+    // resolves to its own /world prefix rather than naming a deployment.
+    expect(worldOrigin()).toBe('/world')
   })
 })
 
@@ -56,8 +58,10 @@ describe('build bake', () => {
     expect(build).toContain('const pocketWorldOrigin = ${JSON.stringify(worldOrigin)}')
   })
 
-  it('sends only a main build at the production world Worker', () => {
-    expect(build).toContain("process.env.CF_PAGES_BRANCH === 'main'\n    ? 'https://world.pocketrpg.co.uk'")
+  it('names the production world domain only for a main build', () => {
+    // Everything else resolves to /world on the Worker's own origin, so a
+    // branch or local build can never hand a player to production world state.
+    expect(build).toContain("isProductionBranch ? 'https://world.pocketrpg.co.uk' : '/world'")
   })
 })
 

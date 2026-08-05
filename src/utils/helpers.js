@@ -1,5 +1,6 @@
 import { combatLevelFromLevels } from '../engine/combatLevel.js'
 import { markWorldHandoff } from '../cloud/worldHandoff.js'
+import { apiUrl } from '../cloud/apiBase.js'
 
 /**
  * Random integer between min and max (inclusive)
@@ -114,14 +115,19 @@ export function calcCombatLevel(stats) {
   return combatLevelFromLevels(stats)
 }
 
-/** Fallback world deployment for Vite dev, where no single-file build runs and
- * nothing is baked. The preview Worker, never production. */
-const WORLD_ORIGIN_FALLBACK = 'https://pocketrpg-world-preview.rlh.workers.dev'
+/** Fallback world location for Vite dev, where no single-file build runs and
+ * nothing is baked. Same-origin, never production. */
+const WORLD_ORIGIN_FALLBACK = '/world'
 
 /**
- * The 3D open-world deployment this build hands off to. Baked by
- * build_single.cjs (main → world.pocketrpg.co.uk, everything else → preview)
- * and read lazily for the same reason as the flags below.
+ * Where the 3D open-world CLIENT is served. Baked by build_single.cjs (main →
+ * the world.pocketrpg.co.uk custom domain, everything else → the same Worker's
+ * own /world prefix) and read lazily for the same reason as the flags below.
+ *
+ * A base, not an origin: the world and the game ship from one Worker now, so
+ * off production this is a PATH. Anything that needs the world's HTTP API wants
+ * apiUrl('/api/world/...') instead — those routes answer on the game's own
+ * origin and prefixing them with this would 404 on preview.
  */
 export function worldOrigin() {
   return typeof pocketWorldOrigin !== 'undefined' ? pocketWorldOrigin : WORLD_ORIGIN_FALLBACK
@@ -185,8 +191,11 @@ export function chatActionCostLine(cost) {
 
 /**
  * How many players are in the Wilderness right now, for the PvP card's live
- * headcount. Served by the world Worker (not Pages, which has no WorldZone
- * binding) and fetched straight from the world origin under CORS.
+ * headcount. The route lives on the game's own origin (one Worker holds both
+ * the API and the WorldZone binding), so it resolves through apiUrl like every
+ * other endpoint — relative in the browser, absolute inside a native shell.
+ * Not through worldOrigin(): that is the world CLIENT's base and is a bare path
+ * off production.
  *
  * Resolves null on any failure — an unreachable count must never be the reason
  * a player can't see the entry card, so callers hide the number rather than
@@ -194,7 +203,7 @@ export function chatActionCostLine(cost) {
  */
 export async function fetchWildernessCount() {
   try {
-    const res = await fetch(`${worldOrigin()}/api/world/pvp-count`)
+    const res = await fetch(apiUrl('/api/world/pvp-count'))
     if (!res.ok) return null
     const body = await res.json()
     const count = Number(body?.count)

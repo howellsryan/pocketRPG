@@ -36,7 +36,7 @@ import { settleActionCompletion } from './actionCompletion.js'
 import { loadCharacterWithSave, writeSave } from './save.js'
 import { isValidEntry } from '../collectionLog.js'
 import { GameApiError } from './errors.js'
-import { callCoopRoom, coopRoomsAvailable } from './coopRoom.js'
+import { callCoopRoom } from './coopRoom.js'
 import { auditLog } from './audit.js'
 
 export const COOP_ENGINE_DEPS = { itemsData, monstersData, prayersData, spellsData }
@@ -422,7 +422,6 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
   // a mirror the room writes, so the picker can hand back a room that is
   // actually full; without this the retry loop would keep choosing it.
   const exhausted = new Set()
-  const useRoom = coopRoomsAvailable(env)
   try {
     // Claiming a slot races other joiners: the optimistic UPDATE fails if the
     // session ticked or filled up in between, so re-pick and try again.
@@ -453,26 +452,9 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
       // holds the fight in memory and overwrites state_json on every
       // checkpoint, so a member added only in D1 is erased within a tick or two
       // and never exists as far as the fight is concerned.
-      if (useRoom) {
-        const { status, body } = await callCoopRoom(env, target.sessionId, 'join', { characterId, member })
-        if (status === 200 && body?.ok) sessionId = target.sessionId
-        else exhausted.add(target.sessionId)
-        continue
-      }
-
-      // No room binding (a Pages deploy ahead of the Worker). Degraded path:
-      // write the member into the session blob and let the room pick them up
-      // when it cold-loads.
-      const row = await readSession(env, target.sessionId)
-      const state = row ? parseSessionState(row) : null
-      if (!state || row.status !== 'active' || memberCount(state) >= COOP_MAX_MEMBERS) continue
-
-      const nextState = addCoopMember(state, member)
-      const res = await env.DB.prepare(
-        `UPDATE coop_boss_sessions SET state_json = ?, member_count = ?
-          WHERE id = ? AND status = 'active' AND current_tick = ? AND member_count < ?`,
-      ).bind(JSON.stringify(nextState), memberCount(nextState), row.id, row.current_tick, COOP_MAX_MEMBERS).run()
-      if (res.meta.changes) sessionId = row.id
+      const { status, body } = await callCoopRoom(env, target.sessionId, 'join', { characterId, member })
+      if (status === 200 && body?.ok) sessionId = target.sessionId
+      else exhausted.add(target.sessionId)
     }
     if (sessionId === null) throw new GameApiError('COOP_JOIN_CONTENDED', 'Could not join the fight — try again', 409)
   } catch (err) {

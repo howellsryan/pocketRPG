@@ -1,6 +1,6 @@
 # Cloudflare Pages → Workers migration
 
-Status: **planned**, phase 1 in progress. Owner: repo maintainer.
+Status: phases 1–3 **built, not yet cut over**. Phase 4 planned. Owner: repo maintainer.
 
 ## Why
 
@@ -110,40 +110,65 @@ but never on a save/grant path, where a stale replica read would defeat the
 
 ---
 
-### Phase 2 — Pages → Workers, API only
+### Phase 2 — Pages → Workers, API only  ✅ built
 
-Keep `pocketrpg-world` exactly as-is, cross-script binding included. Only the
-front door changes.
+Landed together with phase 3 (they were always one project — see the warning
+above), so `pocketrpg-world` was folded in rather than kept.
 
-Work:
-- Root `wrangler.toml` → `wrangler.jsonc` with `assets` + `main`.
-- Router over the 68 handlers. Scope is smaller than it looks: only **3**
-  dynamic segments (`coop/session/[id]`, `coop/session/[id]/*`,
-  `tripo-assets/[[key]]`) and **one** `_middleware.js` (CORS + the per-request
-  quest-gate bypass, which must stay installed on every request including the
-  `false` ones — `functions/api/_middleware.js`).
-- `onRequestGet/Post/Put/Delete` exports become method-dispatched handlers;
-  `context.params` becomes a router param object.
-- `_headers` becomes asset config / response headers in code.
-- Move `functions/` → `src/server/` (or keep the path; the directory name stops
-  being magic either way).
+**What shipped:**
+- `wrangler.jsonc` replaces `wrangler.toml`. The Worker is named
+  **`pocketrpg-app`**, not `pocketrpg`: the Pages project owns that name and has
+  to stay deployed until DNS cuts over (it *is* the rollback), and a Worker that
+  hosts Durable Objects can never be renamed afterwards without abandoning their
+  state — so the permanent name is chosen now rather than inherited later.
+- `worker/router.js` — pure matching and dispatch, no handler imports, so the
+  whole table is exercised in tests without the Workers runtime.
+  `worker/routes.js` is generated from the `functions/` tree by
+  `npm run gen:routes`; `tests/workerRoutes.test.ts` re-derives the same list
+  and fails on drift, so a forgotten route is a red build rather than a 404.
+- `functions/` keeps its path. The directory name simply stopped being magic.
+- `_headers` moves into `dist_site/` unchanged — Workers static assets honours
+  it, so the cache rules did not have to be reimplemented in code.
+- Assets are staged by `scripts/stage-site.mjs` rather than deploying the repo
+  root: a Worker's asset directory is uploaded whole with nothing excluded for
+  it, and `node_modules` alone would blow the 20,000-file limit.
 
-Risks: the §14 integrity boundary is entirely inside these routes. Every route
-must keep `requireAuth`, `assertNotInCoopSession`, and the three `/api/save`
-guards. A route silently unrouted is a 404, but a route that loses its
-middleware is a security regression — the router needs a test asserting every
-handler file is reachable and wrapped.
+**The hazard that was not in the original plan.** Four client flags are baked at
+build time from `CF_PAGES_BRANCH`, which only Pages injects. Workers Builds sets
+`WORKERS_CI_BRANCH`. Three of the four fail safe when the branch is unknown —
+but `worldOrigin` fell back to the *preview* deployment, so the first production
+Workers build would have handed live players to preview world state. All four
+now derive from one `deployBranch` in `build_single.cjs`, reading either var.
 
-Exit criteria: full `npm run ci` green; every `/api/**` path resolves with
-identical status/shape; OAuth discovery under `.well-known/**` still served;
-preview environment parity including `DISABLE_QUEST_REQUIREMENTS` staying out
-of production config (`tests/questGateProduction.test.ts`).
+**Fidelity details worth keeping in mind when touching the router.** The
+middleware applies to `/api/**` only — `/admin` and `/.well-known/*` never had
+it, and giving them CORS now would be a silent change on the admin portal and
+the OAuth discovery documents. `/api/characters` must answer with and without a
+trailing slash. A `[[key]]` catch-all yields an ARRAY of segments, because
+`tripo-assets` joins them back with `/`. An `/api` path with no handler falls
+through to the assets *inside* the middleware, so its 404 still carries CORS,
+exactly as Pages' `next()` did.
 
 ---
 
-### Phase 3 — Fold the world Worker in
+### Phase 3 — Fold the world Worker in  ✅ built
 
-Both DO classes become local exports of the one Worker.
+Both DO classes are local exports of the one Worker (`worker/index.js`).
+`world/server/index.ts` and `world/wrangler.jsonc` are gone; the world's own
+HTTP routes (`/api/world/session`, `/api/world/leave`, `/api/world/pvp-count`,
+`/api/world/editor/*`) and the partyserver upgrade are answered by the same
+`fetch`, ahead of the game API. The quest-gate bypass is installed at the very
+top of that `fetch`, before any routing decision, because those routes are
+answered before the `/api` middleware that used to install it.
+
+**One Worker has one assets directory**, so the world client now builds with
+Vite `base: '/world/'` and stages into `dist_site/world/`.
+`worker/worldHost.js` maps the `world.*` hostname onto that prefix, which keeps
+the existing `world.pocketrpg.co.uk` custom domain working while preview — which
+has a single `workers.dev` URL for the merged Worker — reaches the same files at
+`/world/`. `pocketWorldOrigin` is a *base*, not an origin: off production it is
+a bare path, so `fetchWildernessCount` moved to `apiUrl()`, since
+`/api/world/pvp-count` answers on the game's own origin.
 
 **Durable Object classes cannot be moved between Workers carrying their state.**
 `WorldZone` and `CoopBossRoom` are re-created fresh in the new Worker; in-flight
@@ -155,14 +180,29 @@ hour, announced, not a rolling deploy.
 Compat dates differ (`2025-01-01` API vs `2026-07-01` world). Merging on the
 newer one needs a pass over the API code for behaviour changes.
 
-Then delete, in the same change:
-- `coopRoomSupportsRaids` and its `capabilities` probe,
-- `coopRoomsAvailable` / the `COOP_UNAVAILABLE` degradation path,
-- the two-deploy rule from `CLAUDE.md` §20 and §21, and the raid-mismatch
-  warning in §21.
+Deleted in the same change: `coopRoomSupportsRaids` and the room's
+`capabilities` action, `coopRoomsAvailable` and the whole `COOP_UNAVAILABLE`
+degradation path (including the D1 fallback join, which existed only for a Pages
+deploy that had landed ahead of the Worker), the two-deploy rule from `CLAUDE.md`
+§20, and the raid-mismatch bullet from §21. `COOP_UNAVAILABLE` still exists for
+a room that rejects on fetch — that is a real state; a missing binding is not.
 
-Exit criteria: one deploy command; `world/` tests and API tests in one suite;
-co-op and raids reachable with no capability probe.
+Not done: `world/` keeps its own Vitest project. Merging the suites means
+merging the two dependency trees and TS configs, which is a change of its own
+and buys nothing the two commands don't already give. `npm run world:check`
+still covers it.
+
+**Cutover is a drain, not a rolling deploy.** Durable Object state does not move
+between Workers: `WorldZone` and `CoopBossRoom` are re-created fresh, so
+in-flight fights and world sessions are lost. Bounded — `CoopBossRoom`
+checkpoints to D1 every 15s in a fight and world HP is a session resource no
+flush writes back to the save (§4) — but do it at a quiet hour, announced.
+
+**Before the first deploy**, on the new Worker: set every secret listed in
+`wrangler.jsonc` (including `WORLD_EDITOR_TOKEN`, which the world Worker owned),
+attach `pocketrpg.co.uk` and `world.pocketrpg.co.uk` as custom domains, and
+confirm Workers Builds sets `WORKERS_CI_BRANCH` — without it the branch-derived
+flags all bake to their production values.
 
 ---
 
@@ -177,8 +217,7 @@ degrade to today's behaviour, not to a stuck save lock.
 ## Rollback
 
 - Phase 1: ordinary revert; the old endpoints are never removed.
-- Phase 2: Pages project stays deployed until DNS cuts over. Rollback is a DNS
-  change.
-- Phase 3: the riskiest step. Once DO state is created in the new Worker,
-  rolling back re-loses it. Cut over at a quiet hour and hold the old Worker
-  deployed for a day.
+- Phases 2–3: the Pages project and `pocketrpg-world` stay deployed until DNS
+  cuts over, so rollback is a DNS change. Past that point it gets one-way:
+  once DO state exists in the new Worker, rolling back re-loses it. Cut over at
+  a quiet hour and hold the old deployments for a day.

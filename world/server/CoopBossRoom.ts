@@ -202,14 +202,6 @@ export class CoopBossRoom {
     const body = action === 'socket'
       ? Object.fromEntries(url.searchParams) as Record<string, any>
       : await request.json().catch(() => ({})) as Record<string, any>
-    // Answered before any session lookup, so the Pages side can ask an
-    // arbitrary room object what this Worker understands. Pages and the world
-    // Worker deploy separately, and a Pages build that knows about raids
-    // talking to a Worker that does not is not a harmless mismatch: the old
-    // room ignores `state.raid`, so it respawns the raid's FIRST boss forever
-    // and settles each kill against that boss's drop table.
-    if (action === 'capabilities') return jsonResponse({ ok: true, raids: true, sockets: true })
-
     const sessionId = Number(body?.sessionId)
     const characterId = Number(body?.characterId)
     if (!Number.isInteger(sessionId) || sessionId <= 0) return jsonResponse({ error: 'invalid_session' }, 400)

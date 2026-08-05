@@ -75,7 +75,7 @@ export function actionLabel(tool, args = {}) {
 // however many game-state updates that action performs.
 export const CHAT_ACTION_FEE = 1
 
-// Feature flag (CHAT_ACTION_FEE_ENABLED in wrangler.toml [vars]): lets the fee
+// Feature flag (CHAT_ACTION_FEE_ENABLED in wrangler.jsonc vars): lets the fee
 // be switched off without touching this file's logic, so re-enabling later is
 // just flipping the var back. Anything other than the literal string 'false'
 // is treated as enabled — an unset var (e.g. a deploy target that forgot it)

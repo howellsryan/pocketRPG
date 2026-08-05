@@ -1,6 +1,14 @@
-// Pages-side handle on a co-op boss room (the CoopBossRoom Durable Object,
-// hosted in the pocketrpg-world Worker and bound here cross-script as
-// COOP_ROOM — see wrangler.toml).
+// Handle on a co-op boss room (the CoopBossRoom Durable Object, exported by
+// this same Worker and bound as COOP_ROOM — see wrangler.jsonc).
+//
+// It used to be hosted in a second Worker and bound cross-script, because a
+// Pages project cannot export a DO class. Everything that made co-op fragile
+// grew out of that one constraint: the two-deploy rule, a COOP_UNAVAILABLE
+// degradation for a binding that might not be there, and a capability probe
+// guarding against a stale room settling every raid kill against the first
+// boss's drop table. One Worker owns both now, so the binding cannot be absent
+// and the room cannot be a different version than the route calling it. Don't
+// reintroduce a split.
 //
 // Every room is addressed by its session id, so one session is exactly one
 // object and the fight is single-threaded by construction. The endpoints under
@@ -9,53 +17,9 @@
 
 import { GameApiError } from './errors.js'
 
-/** True when this deployment can reach the rooms at all. A Pages deploy that
- * lands before the Worker one has no binding, and the picker should say group
- * fights are unavailable rather than throw on every tap. */
-export function coopRoomsAvailable(env) {
-  return !!env?.COOP_ROOM?.idFromName
-}
-
 function roomStub(env, sessionId) {
-  if (!coopRoomsAvailable(env)) {
-    throw new GameApiError('COOP_UNAVAILABLE', 'Group boss fights are temporarily unavailable', 503)
-  }
   const id = env.COOP_ROOM.idFromName(`coop:${sessionId}`)
   return env.COOP_ROOM.get(id)
-}
-
-/**
- * Whether the deployed world Worker's rooms can actually run a raid.
- *
- * Pages and the world Worker deploy separately (§20), so a Pages build that
- * knows about raid parties can be pointed at a Worker that does not. That
- * mismatch is not a degraded raid — the old room ignores `state.raid`
- * entirely, so it respawns the raid's FIRST boss forever and settles every
- * kill against that boss's drop table. The server grants those items, so it
- * has to be a refusal, not a fallback.
- *
- * Probed against a throwaway room id: `capabilities` is answered before any
- * session lookup, so this costs no D1 and needs no session to exist. Any other
- * answer — a 404 from a room that has no such action, a 400 for the missing
- * session id it insists on, an unreachable Worker — means no raids.
- */
-export async function coopRoomSupportsRaids(env) {
-  if (!coopRoomsAvailable(env)) return false
-  try {
-    const stub = env.COOP_ROOM.get(env.COOP_ROOM.idFromName('coop:capabilities'))
-    const res = await stub.fetch('https://coop-room/capabilities', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{}',
-    })
-    const body = await res.json().catch(() => null)
-    return res.status === 200 && body?.raids === true
-  } catch (err) {
-    console.error('[PocketRPG][coop] raid capability probe failed', {
-      message: (err && (err.message || String(err))) || 'unknown',
-    })
-    return false
-  }
 }
 
 /**
