@@ -106,6 +106,14 @@ describe('special energy is a session resource, not a per-fight one', () => {
     expect(player.specialEnergy).toBe(100)
   })
 
+  it('refills a bar spent down to the clock fraction the world always leaves', () => {
+    // 50 debited from 50.2 leaves 0.2, not 0 — the bar reads 0% and the perk
+    // has to fire, or it never fires in the world at all.
+    const player = makePlayer({ specialEnergy: 0.2, masterRejuvenation: true })
+    tickPlayer(player, ctx(1))
+    expect(player.specialEnergy).toBe(100)
+  })
+
   it('leaves a part-spent bar on the clock — the perk only fires at empty', () => {
     const player = makePlayer({ specialEnergy: 40, masterRejuvenation: true })
     tickPlayer(player, ctx(1))

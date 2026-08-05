@@ -57,7 +57,16 @@ describe('the Master Rejuvenation refill', () => {
 
   it('only fires at empty, never topping a part-spent bar up', () => {
     expect(refillSpecialOnEmpty(35, true)).toBe(35)
+    expect(refillSpecialOnEmpty(1, true)).toBe(1)
     expect(refillSpecialOnEmpty(SPECIAL_ENERGY_MAX, true)).toBe(SPECIAL_ENERGY_MAX)
+  })
+
+  it('counts a bar the player reads as 0% as empty, fraction and all', () => {
+    // The open world's energy carries the fraction of its 0.2/tick clock regen,
+    // so a flat 50 debited from 50.2 leaves 0.2. An exact-zero test never fires
+    // out there.
+    expect(refillSpecialOnEmpty(0.2, true)).toBe(SPECIAL_ENERGY_MAX)
+    expect(refillSpecialOnEmpty(0.999, true)).toBe(SPECIAL_ENERGY_MAX)
   })
 
   it('reads the unlock from either shape the save takes', () => {

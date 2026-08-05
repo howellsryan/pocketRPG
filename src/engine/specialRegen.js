@@ -19,9 +19,15 @@ export function hasMasterRejuvenation(unlockedFeatures) {
 
 /** The perk itself: full energy once the bar is spent, the caller's value
  * otherwise. `enabled` is the perk AND whatever the context adds to it (the
- * world passes false in the Wilderness). */
+ * world passes false in the Wilderness).
+ *
+ * Empty is what the BAR reads (every display of the energy floors), not an
+ * exact zero: solo and co-op only ever hold whole points, but the world's
+ * energy carries the fraction of its 0.2/tick clock regen, and a flat cost
+ * debited from 50.2 leaves 0.2 — a spent bar that `=== 0` never catches, so
+ * out there the perk would have fired approximately never. */
 export function refillSpecialOnEmpty(current, enabled) {
   const energy = Math.max(0, Number(current) || 0)
-  if (!enabled || energy > 0) return energy
+  if (!enabled || energy >= 1) return energy
   return SPECIAL_ENERGY_MAX
 }
