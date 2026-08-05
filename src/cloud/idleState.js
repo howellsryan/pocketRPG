@@ -45,6 +45,22 @@ function canUseCloud() {
   return !!getToken() && !!getCharacterId()
 }
 
+// A boot-time /api/bootstrap response already carries this character's idle
+// row, but `fetchIdleState` is called from inside `loadGame`, which has five
+// call sites — so the answer is parked here for the next read instead of being
+// threaded through all of them.
+//
+// SINGLE USE, and that is the whole safety property: `loadGame` also runs on a
+// world return and on conflict resolution, minutes later, where replaying a
+// boot-time snapshot would resume a stale task and mis-measure the idle window.
+// Consumed on first read, and cleared outright by `resetIdleStateSync` so a
+// character switch can never read the previous character's row.
+let primedIdleState = null
+
+export function primeIdleState(state) {
+  primedIdleState = state && typeof state === 'object' ? state : null
+}
+
 // Read the authoritative idle state from D1.
 // Returns { lastActiveAt, activeTask, serverNow } or null when no row exists /
 // offline / the request times out. Always resolves within FETCH_TIMEOUT_MS so
@@ -54,6 +70,11 @@ function canUseCloud() {
 // user-manipulable.
 export async function fetchIdleState() {
   if (!canUseCloud()) return null
+  if (primedIdleState) {
+    const primed = primedIdleState
+    primedIdleState = null
+    return primed
+  }
   const res = await withTimeout(api.getIdle(), FETCH_TIMEOUT_MS, null)
   if (!res) return null
   const serverNow = typeof res.serverNow === 'number' ? res.serverNow : null
@@ -87,4 +108,5 @@ export async function pushIdleState(task) {
 // Reset in-memory dedupe state — call on logout / character switch.
 export function resetIdleStateSync() {
   lastPushedTaskIdentity = null
+  primedIdleState = null
 }

@@ -1,4 +1,5 @@
 import { requireAuth, json } from '../_lib/auth.js'
+import { activityProgressStatement, mapActivityProgress } from '../_lib/game/characterReads.js'
 
 const MAX_KEYS = 50
 const MAX_KEY_LENGTH = 128
@@ -34,20 +35,7 @@ export async function onRequestGet({ request, env }) {
     return json({ error: 'Character not found' }, 404)
   }
 
-  const rows = await env.DB.prepare(
-    'SELECT activity_key, progress_ticks, total_ticks, updated_at FROM character_activity_progress WHERE character_id = ?'
-  ).bind(characterId).all()
-
-  const progress = {}
-  for (const row of (rows?.results || [])) {
-    progress[row.activity_key] = {
-      progressTicks: row.progress_ticks,
-      totalTicks: row.total_ticks ?? null,
-      updatedAt: row.updated_at,
-    }
-  }
-
-  return json({ progress })
+  return json({ progress: mapActivityProgress(await activityProgressStatement(env, characterId).all()) })
 }
 
 export async function onRequestPut({ request, env }) {

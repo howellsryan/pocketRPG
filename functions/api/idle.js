@@ -1,5 +1,6 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { verifyJWT } from '../_lib/jwt.js'
+import { idleStateStatement, mapIdleState } from '../_lib/game/characterReads.js'
 
 const MAX_TASK_BYTES = 16 * 1024 // 16 KB — task JSON carries a full monster/action object; 16KB is generous
 
@@ -88,24 +89,12 @@ export async function onRequestGet({ request, env }) {
     return json({ error: 'Character not found' }, 404)
   }
 
-  const row = await env.DB.prepare(
-    'SELECT last_active_at, active_task, updated_at FROM character_idle_state WHERE character_id = ?'
-  ).bind(characterId).first()
+  const idle = mapIdleState(await idleStateStatement(env, characterId).all())
   // Always return the server's current time. The client uses
   // (serverNow - lastActiveAt) as the authoritative elapsed-since-active
   // window for offline idle progress so a player changing their device clock
   // can't inflate idle rewards.
-  const serverNow = Date.now()
-  if (!row) return json({ idle: null, serverNow })
-
-  return json({
-    idle: {
-      lastActiveAt: row.last_active_at,
-      activeTask: row.active_task ? JSON.parse(row.active_task) : null,
-      updatedAt: row.updated_at,
-    },
-    serverNow,
-  })
+  return json({ idle, serverNow: Date.now() })
 }
 
 export async function onRequestPut({ request, env }) {

@@ -13,14 +13,19 @@ export function hardModeKey(sourceType, sourceId) {
   return `${sourceType}:${sourceId}`
 }
 
+/** An { entries } payload as the mirror's key list. Shared with the
+ * `hardMode` field of /api/bootstrap, which returns the identical shape. */
+export function mapHardModeEntries(res) {
+  return (res?.entries || [])
+    .filter((e) => typeof e?.sourceId === 'string' && typeof e?.sourceType === 'string')
+    .map((e) => hardModeKey(e.sourceType, e.sourceId))
+}
+
 /** The character's switches as a key list, or null when signed out. */
 export async function fetchHardModeTargets() {
   if (!getToken() || !getCharacterId()) return null
   try {
-    const res = await api.getHardModeTargets()
-    return (res?.entries || [])
-      .filter((e) => typeof e?.sourceId === 'string' && typeof e?.sourceType === 'string')
-      .map((e) => hardModeKey(e.sourceType, e.sourceId))
+    return mapHardModeEntries(await api.getHardModeTargets())
   } catch (err) {
     if (err?.status !== 401) console.warn('[hardMode] fetch failed', err)
     return null

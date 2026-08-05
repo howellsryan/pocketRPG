@@ -178,6 +178,9 @@ async function request(path, options = {}) {
 
 export const api = {
   me: () => request('/api/auth/me'),
+  // Everything /api/auth/me returns, plus kill counts, the Hard Mode mirror,
+  // daily tasks, idle state and activity progress — one request instead of six.
+  getBootstrap: () => request('/api/bootstrap'),
   listCharacters: () => request('/api/characters'),
   createCharacter: (username, isIronman = false, isOneLife = false) => request('/api/characters', {
     method: 'POST',

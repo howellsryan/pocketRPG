@@ -79,9 +79,25 @@ export function clearActivityProgress(activityKey) {
   scheduleActivityProgressPush()
 }
 
+// The boot-time /api/bootstrap response already carries this ledger. Parked
+// here for the next read for the same reason as idleState's prime: the fetch
+// happens inside `loadGame`, which has five call sites. Single use, and cleared
+// by `resetActivityProgressSync` on logout / character switch.
+let primedActivityProgress = null
+
+export function primeActivityProgress(progress) {
+  primedActivityProgress = progress && typeof progress === 'object' ? progress : null
+}
+
 /** Fetch from server and hydrate the local ledger (call on boot). */
 export async function fetchAndHydrateActivityProgress() {
   if (!canUseCloudForActivityProgress()) return
+  if (primedActivityProgress) {
+    const primed = primedActivityProgress
+    primedActivityProgress = null
+    hydrateActivityLedger(primed)
+    return
+  }
   try {
     const result = await api.getActivityProgress()
     if (result?.progress) hydrateActivityLedger(result.progress)
@@ -93,5 +109,6 @@ export async function fetchAndHydrateActivityProgress() {
 /** Reset in-memory state (call on logout / character switch). */
 export function resetActivityProgressSync() {
   activityProgressLedger = null
+  primedActivityProgress = null
   if (activityProgressFlushTimer) { clearTimeout(activityProgressFlushTimer); activityProgressFlushTimer = null }
 }

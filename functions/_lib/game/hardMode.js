@@ -7,6 +7,7 @@
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 import { supportsHardMode } from '../../../src/engine/hardMode.js'
+import { hardModeTargetsStatement } from './characterReads.js'
 
 export const HARD_MODE_SOURCE_TYPES = new Set(['monsters', 'raids'])
 
@@ -48,15 +49,19 @@ export async function hardModeForKill(env, characterId, sourceType, sourceId, bo
   return isHardModeEnabled(env, characterId, sourceType, sourceId)
 }
 
+/** Rows → the client mirror. Lives here, beside the `hardModeTarget` content
+ * predicate it filters on, while the statement lives in characterReads.js so
+ * /api/bootstrap can batch it. */
+export function mapHardModeTargets(result) {
+  return (result?.results || [])
+    .filter((r) => hardModeTarget(r.source_type, r.source_id))
+    .map((r) => ({ sourceType: r.source_type, sourceId: r.source_id }))
+}
+
 /** Everything this character has switched on, for the client mirror. */
 export async function listHardModeTargets(env, characterId) {
   if (!env?.DB || !characterId) return []
-  const rows = await env.DB.prepare(
-    'SELECT source_type, source_id FROM hard_mode_targets WHERE character_id = ?',
-  ).bind(characterId).all()
-  return (rows.results || [])
-    .filter((r) => hardModeTarget(r.source_type, r.source_id))
-    .map((r) => ({ sourceType: r.source_type, sourceId: r.source_id }))
+  return mapHardModeTargets(await hardModeTargetsStatement(env, characterId).all())
 }
 
 /** Switch one boss/raid on or off. Idempotent in both directions. */
