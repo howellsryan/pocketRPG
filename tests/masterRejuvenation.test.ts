@@ -1,17 +1,13 @@
-// Master Rejuvenation (Construction Lv 90) used to snap the special bar back to
-// 100% every time it emptied, which made specials free in any long fight. It now
-// recharges energy on the clock at twice the open world's rate — and since a
-// solo/co-op fight has no clock regen of its own (§7), that doubled rate is the
-// only regen PvE gets. One number everywhere: 20 energy per 30 seconds.
+// Master Rejuvenation (Construction Lv 90) snaps the special bar back to 100%
+// the moment it empties. One rule shared by every context that owns a copy of
+// the energy — a solo fight, a co-op/raid member, an open-world session — and
+// switched off in exactly one place, the Wilderness (covered by
+// world/tests/specialEnergyRegen.test.ts, which owns the world's clock).
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
-  BASE_SPECIAL_REGEN_PER_TICK,
-  MASTER_REJUVENATION_MULTIPLIER,
   SPECIAL_ENERGY_MAX,
   hasMasterRejuvenation,
-  accrueSpecialEnergy,
-  regenSpecialEnergy,
-  specialRegenPerTick,
+  refillSpecialOnEmpty,
 } from '../src/engine/specialRegen.js'
 import { UNLOCKABLES } from '../src/engine/construction.js'
 import {
@@ -27,8 +23,6 @@ import spellsData from '../src/data/spells.json'
 
 const deps = { itemsData, monstersData, prayersData, spellsData }
 const BOSS = 'corporeal_horror'
-/** 30 seconds of 600ms ticks — the interval both rates are quoted over. */
-const TICKS_PER_30S = 50
 
 afterEach(() => { vi.restoreAllMocks() })
 
@@ -52,36 +46,27 @@ function joined(unlocked: string[] | undefined, characterId = 1) {
   }))
 }
 
-describe('special-energy regen rates', () => {
-  it('does nothing in PvE without the perk — a fight still only refills on a kill', () => {
-    expect(specialRegenPerTick(false)).toBe(0)
-    expect(regenSpecialEnergy(0, specialRegenPerTick(false))).toBe(0)
+describe('the Master Rejuvenation refill', () => {
+  it('fills a spent bar to the cap', () => {
+    expect(refillSpecialOnEmpty(0, true)).toBe(SPECIAL_ENERGY_MAX)
   })
 
-  it('is exactly twice the open world rate, in the world and in PvE alike', () => {
-    const world = specialRegenPerTick(true, BASE_SPECIAL_REGEN_PER_TICK)
-    const pve = specialRegenPerTick(true)
-    expect(world).toBe(BASE_SPECIAL_REGEN_PER_TICK * MASTER_REJUVENATION_MULTIPLIER)
-    expect(pve).toBe(world)
-    expect(pve * TICKS_PER_30S).toBe(20)
+  it('does nothing without the perk — a spent bar stays spent', () => {
+    expect(refillSpecialOnEmpty(0, false)).toBe(0)
   })
 
-  it('leaves the base world rate alone for a player without the perk', () => {
-    expect(specialRegenPerTick(false, BASE_SPECIAL_REGEN_PER_TICK)).toBe(BASE_SPECIAL_REGEN_PER_TICK)
-    expect(BASE_SPECIAL_REGEN_PER_TICK * TICKS_PER_30S).toBe(10)
+  it('only fires at empty, never topping a part-spent bar up', () => {
+    expect(refillSpecialOnEmpty(35, true)).toBe(35)
+    expect(refillSpecialOnEmpty(1, true)).toBe(1)
+    expect(refillSpecialOnEmpty(SPECIAL_ENERGY_MAX, true)).toBe(SPECIAL_ENERGY_MAX)
   })
 
-  it('trickles up from empty instead of snapping to full', () => {
-    let energy = 0
-    const perTick = specialRegenPerTick(true)
-    for (let i = 0; i < TICKS_PER_30S; i++) energy = regenSpecialEnergy(energy, perTick)
-    expect(energy).toBeCloseTo(20, 6)
-    expect(energy).not.toBe(SPECIAL_ENERGY_MAX)
-  })
-
-  it('clamps at the cap and never exceeds it', () => {
-    expect(regenSpecialEnergy(99.9, specialRegenPerTick(true))).toBe(SPECIAL_ENERGY_MAX)
-    expect(regenSpecialEnergy(SPECIAL_ENERGY_MAX, specialRegenPerTick(true))).toBe(SPECIAL_ENERGY_MAX)
+  it('counts a bar the player reads as 0% as empty, fraction and all', () => {
+    // The open world's energy carries the fraction of its 0.2/tick clock regen,
+    // so a flat 50 debited from 50.2 leaves 0.2. An exact-zero test never fires
+    // out there.
+    expect(refillSpecialOnEmpty(0.2, true)).toBe(SPECIAL_ENERGY_MAX)
+    expect(refillSpecialOnEmpty(0.999, true)).toBe(SPECIAL_ENERGY_MAX)
   })
 
   it('reads the unlock from either shape the save takes', () => {
@@ -91,10 +76,9 @@ describe('special-energy regen rates', () => {
     expect(hasMasterRejuvenation(undefined)).toBe(false)
   })
 
-  it('describes the perk as a recharge, not a refill', () => {
+  it('describes the perk as a refill', () => {
     const perk = UNLOCKABLES.find((u: any) => u.id === 'master_rejuvenation')!
-    expect(perk.description).toMatch(/twice as fast/i)
-    expect(perk.description).not.toMatch(/refill/i)
+    expect(perk.description).toMatch(/refills/i)
   })
 })
 
@@ -108,16 +92,12 @@ describe('co-op rooms carry the perk', () => {
     }).masterRejuvenation).toBe(false)
   })
 
-  it('regenerates a member’s energy during the fight, in whole points', () => {
+  it('refills a member’s bar the tick after it empties', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     let state = joined(['master_rejuvenation'])
     state.members['1'].combat.specialAttackEnergy = 0
-    for (let i = 0; i < 10; i++) state = processCoopTick(state, [], deps, Date.now()).stateNext
-    // 10 ticks * 0.4 = 4. The room projects this value to every client every
-    // tick and skips the frame when nothing moved, so it must never be
-    // fractional — that would change on every single tick.
-    expect(state.members['1'].combat.specialAttackEnergy).toBe(4)
-    expect(Number.isInteger(state.members['1'].combat.specialAttackEnergy)).toBe(true)
+    state = processCoopTick(state, [], deps, Date.now()).stateNext
+    expect(state.members['1'].combat.specialAttackEnergy).toBe(SPECIAL_ENERGY_MAX)
   })
 
   it('leaves a member without the perk on the per-fight model', () => {
@@ -128,25 +108,16 @@ describe('co-op rooms carry the perk', () => {
     expect(state.members['1'].combat.specialAttackEnergy).toBe(0)
   })
 
-  it('keeps regenerating through the respawn wait and the raid lobby — both are prep time', () => {
+  it('refills through the respawn wait and the raid lobby — both are prep time', () => {
     let state = joined(['master_rejuvenation'])
     state.members['1'].combat.specialAttackEnergy = 0
     state.boss.respawnCountdown = 20
-    for (let i = 0; i < 5; i++) state = processCoopTick(state, [], deps, Date.now()).stateNext
-    expect(state.members['1'].combat.specialAttackEnergy).toBe(2)
+    state = processCoopTick(state, [], deps, Date.now()).stateNext
+    expect(state.members['1'].combat.specialAttackEnergy).toBe(SPECIAL_ENERGY_MAX)
 
     state.phase = 'lobby'
-    for (let i = 0; i < 5; i++) state = processCoopTick(state, [], deps, Date.now()).stateNext
-    expect(state.members['1'].combat.specialAttackEnergy).toBe(4)
-  })
-
-  it('carries the fraction beside the value, never on it', () => {
-    const first = accrueSpecialEnergy(0, 0, specialRegenPerTick(true))
-    expect(first).toEqual({ energy: 0, carry: 0.4 })
-    const second = accrueSpecialEnergy(first.energy, first.carry, specialRegenPerTick(true))
-    expect(second.energy).toBe(0)
-    const third = accrueSpecialEnergy(second.energy, second.carry, specialRegenPerTick(true))
-    expect(third.energy).toBe(1)
-    expect(accrueSpecialEnergy(100, 0.9, specialRegenPerTick(true))).toEqual({ energy: 100, carry: 0 })
+    state.members['1'].combat.specialAttackEnergy = 0
+    state = processCoopTick(state, [], deps, Date.now()).stateNext
+    expect(state.members['1'].combat.specialAttackEnergy).toBe(SPECIAL_ENERGY_MAX)
   })
 })

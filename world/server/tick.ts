@@ -9,7 +9,7 @@ import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { combatLevelFromLevels } from '../../src/engine/combatLevel.js'
-import { BASE_SPECIAL_REGEN_PER_TICK, specialRegenPerTick, regenSpecialEnergy } from '../../src/engine/specialRegen.js'
+import { refillSpecialOnEmpty } from '../../src/engine/specialRegen.js'
 import { MONSTER_CLIP_ATTACK_RANGED, monsterAttackClipName } from '../../src/engine/monsterClips.js'
 import { startCombat, stepCombat, resumeAggro, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
 import type { NpcState } from './npc'
@@ -80,7 +80,7 @@ export type TickPlayer = {
   specialEnergy: number
   lastSpecSent: number
   /** The Master Rejuvenation construction perk, read from the save at hello:
-   * doubles the regen rate above. Absent on a session that predates it. */
+   * refills a spent bar outright. Absent on a session that predates it. */
   masterRejuvenation?: boolean
   /** Gates the {e:'spec'} echo's `queued` field alongside lastSpecSent. */
   lastSpecQueuedSent: boolean
@@ -131,9 +131,8 @@ export const RUN_DRAIN_PER_TILE = 0.6
 export const RUN_REGEN_PER_TICK = 0.45
 /** Special energy is a session resource out here, not a per-fight one: it only
  * ever comes back on the clock, at 10 points per 30s (50 ticks) — so a spent
- * special stays spent whether you keep fighting, walk away, or kill the thing.
- * Master Rejuvenation doubles it (src/engine/specialRegen.js). */
-export const SPECIAL_REGEN_PER_TICK = BASE_SPECIAL_REGEN_PER_TICK
+ * special stays spent whether you keep fighting, walk away, or kill the thing. */
+export const SPECIAL_REGEN_PER_TICK = 10 / 50
 
 export type TickContext = {
   tick: number
@@ -154,6 +153,9 @@ export type TickContext = {
    * served as many rooms, and it is the private room, not the geography, that
    * makes an unbounded chase fair. */
   lair?: boolean
+  /** This room is the Wilderness, so Master Rejuvenation is off: a bar that
+   * comes back free every time it empties decides a duel by who owns a perk. */
+  pvpZone?: boolean
   /** Refuses a step before it is taken (the Wilderness line: crossing north
    * without having answered the prompt). Gating the STEP rather than each path
    * assignment is deliberate — a walk, a follow, an approach path and anything
@@ -624,8 +626,12 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
 
   // Special energy ticks back up everywhere — mid-fight, walking, standing
   // still — and is pushed onto the live engine state so the fight sees it.
+  // Master Rejuvenation is checked first, on the tick the spend lands
+  // (stepCombat ran above): a clock tick added first leaves the bar off zero
+  // and the refill never fires again.
   if (player.specialEnergy < FULL_SPECIAL_ENERGY) {
-    player.specialEnergy = regenSpecialEnergy(player.specialEnergy, specialRegenPerTick(player.masterRejuvenation, SPECIAL_REGEN_PER_TICK))
+    player.specialEnergy = refillSpecialOnEmpty(player.specialEnergy, !!player.masterRejuvenation && !ctx.pvpZone)
+    if (player.specialEnergy < FULL_SPECIAL_ENERGY) player.specialEnergy = Math.min(FULL_SPECIAL_ENERGY, player.specialEnergy + SPECIAL_REGEN_PER_TICK)
     pinSpecialToSession(player)
     emitSpecIfChanged(player, result.events)
   }

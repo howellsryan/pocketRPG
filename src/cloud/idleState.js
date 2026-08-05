@@ -45,6 +45,31 @@ function canUseCloud() {
   return !!getToken() && !!getCharacterId()
 }
 
+// A boot-time /api/bootstrap response already carries this character's idle
+// row, but `fetchIdleState` is called from inside `loadGame`, which has five
+// call sites — so the answer is parked here for the next read instead of being
+// threaded through all of them.
+//
+// Two bounds, and BOTH are needed. Single use stops the same snapshot being
+// replayed; the age check stops one being read long after the boot that took
+// it. They are different failure modes: the brand-new-character branch of
+// initCloudAndSave returns before loadGame ever runs, leaving a prime set with
+// nothing to consume it, and the next reader is whatever calls loadGame next —
+// a world return, a save-conflict resolution — where the row has moved on and
+// serverNow is minutes stale. A stale prime is dropped AND cleared, so the
+// caller falls through to the network read it would have made anyway.
+// `resetIdleStateSync` clears it outright so a character switch can never read
+// the previous character's row.
+const IDLE_PRIME_MAX_AGE_MS = 30_000
+
+let primedIdleState = null
+let primedIdleAt = 0
+
+export function primeIdleState(state) {
+  primedIdleState = state && typeof state === 'object' ? state : null
+  primedIdleAt = primedIdleState ? Date.now() : 0
+}
+
 // Read the authoritative idle state from D1.
 // Returns { lastActiveAt, activeTask, serverNow } or null when no row exists /
 // offline / the request times out. Always resolves within FETCH_TIMEOUT_MS so
@@ -54,6 +79,13 @@ function canUseCloud() {
 // user-manipulable.
 export async function fetchIdleState() {
   if (!canUseCloud()) return null
+  if (primedIdleState) {
+    const primed = primedIdleState
+    const fresh = Date.now() - primedIdleAt <= IDLE_PRIME_MAX_AGE_MS
+    primedIdleState = null
+    primedIdleAt = 0
+    if (fresh) return primed
+  }
   const res = await withTimeout(api.getIdle(), FETCH_TIMEOUT_MS, null)
   if (!res) return null
   const serverNow = typeof res.serverNow === 'number' ? res.serverNow : null
@@ -87,4 +119,6 @@ export async function pushIdleState(task) {
 // Reset in-memory dedupe state — call on logout / character switch.
 export function resetIdleStateSync() {
   lastPushedTaskIdentity = null
+  primedIdleState = null
+  primedIdleAt = 0
 }

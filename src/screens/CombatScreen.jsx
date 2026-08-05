@@ -40,7 +40,7 @@ import { SUMMONING_CREATURES, getSummoningCreature, createSummonState, getMonste
 import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel, SELF_HEALING_SPEC_TYPES } from '../engine/specialAttackEnergy.js'
-import { hasMasterRejuvenation, specialRegenPerTick, regenSpecialEnergy } from '../engine/specialRegen.js'
+import { hasMasterRejuvenation, refillSpecialOnEmpty } from '../engine/specialRegen.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, lastSaveLockCode } from '../cloud/sync.js'
 import monstersData from '../data/monsters.json'
@@ -667,11 +667,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current, slayerTaskRef.current)
 
-      // Master Rejuvenation: the only special-energy regen a solo fight has —
-      // twice the open world's clock rate (src/engine/specialRegen.js).
-      const specRegen = specialRegenPerTick(hasMasterRejuvenation(unlockedFeaturesRef.current))
-      if (combatState.active && specRegen > 0) {
-        combatState.specialAttackEnergy = regenSpecialEnergy(combatState.specialAttackEnergy, specRegen)
+      // Master Rejuvenation: auto-refill spec bar when it hits 0 mid-fight.
+      if (combatState.active) {
+        combatState.specialAttackEnergy = refillSpecialOnEmpty(
+          combatState.specialAttackEnergy,
+          hasMasterRejuvenation(unlockedFeaturesRef.current),
+        )
       }
 
       combatRef.current = combatState
