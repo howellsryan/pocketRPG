@@ -170,6 +170,7 @@ const MINIGAME_PLACEMENT = {
   mage_arena: 'edgevale',
   warriors_guild: 'barlock',
   autumntodt: 'catherra',
+  lithe_farm: 'seerhold',
 }
 for (const mg of asArray(minigames.minigames)) {
   const placeId = world.places[MINIGAME_PLACEMENT[mg.id]] ? MINIGAME_PLACEMENT[mg.id] : placesOrdered[0]

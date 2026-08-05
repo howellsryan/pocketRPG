@@ -583,6 +583,14 @@
           "items": [
             "bowyers_knife"
           ]
+        },
+        {
+          "id": "lithe_farm",
+          "label": "Lithe Farm",
+          "icon": "\ud83c\udf3f",
+          "items": [
+            "magic_secateurs"
+          ]
         }
       ]
     },

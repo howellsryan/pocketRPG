@@ -240,6 +240,19 @@
       "qty": 1,
       "minigame": "fletching_guild",
       "oneShot": true
+    },
+    {
+      "id": "lf_magic_secateurs",
+      "name": "Work the Lithe Farm Plots",
+      "icon": "✂️",
+      "iconKey": "magic_secateurs",
+      "description": "Sow and reap the Lithe Farm's tithe plots until the farm elders enchant a pair of secateurs for you.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "magic_secateurs",
+      "qty": 1,
+      "minigame": "lithe_farm",
+      "oneShot": true
     }
   ],
   "minigames": [
@@ -298,6 +311,16 @@
       "label": "Fletching Guild",
       "icon": "🏹",
       "iconKey": "bow"
+    },
+    {
+      "id": "lithe_farm",
+      "label": "Lithe Farm",
+      "icon": "🌿",
+      "iconKey": "lithe_farm",
+      "reqs": [
+        { "skill": "farming", "level": 50 },
+        { "skill": "herblore", "level": 50 }
+      ]
     }
   ],
   "itemNames": {
@@ -322,6 +345,7 @@
     "arcane_grimoire": "Arcane Grimoire",
     "archmage_wand": "Archmage Wand",
     "bowyers_knife": "Bowyer's Knife",
-    "tomb_of_fire": "Tomb of Fire"
+    "tomb_of_fire": "Tomb of Fire",
+    "magic_secateurs": "Magic Secateurs"
   }
 }

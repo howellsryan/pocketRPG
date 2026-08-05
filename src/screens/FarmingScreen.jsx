@@ -8,11 +8,12 @@ import FarmLocationPicker from '../screens/FarmLocationPicker.jsx'
 import FarmPatchView from '../screens/FarmPatchView.jsx'
 import farmingData from '../data/farming.json'
 import { getItemUnitValue } from '../utils/itemValue.js'
-import { applyPlantAll, getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, getEffectiveStage, initFarmingState } from '../engine/farming.ts'
+import { applyPlantAll, getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, getEffectiveStage, herbYieldMultiplier, initFarmingState } from '../engine/farming.ts'
 
 export default function FarmingScreen({ initialLocationId, onBack }) {
-  const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast, itemsData } = useGame()
+  const { stats, farming, inventory, bank, equipment, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast, itemsData } = useGame()
   const farmingLevel = getLevelFromXP(stats.farming?.xp || 0)
+  const herbMultiplier = herbYieldMultiplier(equipment, itemsData)
 
   // Entered straight into one farm (from a place map's farming spot): drop into
   // its patch view, and let its Back return to that origin (onBack) instead of
@@ -33,7 +34,7 @@ export default function FarmingScreen({ initialLocationId, onBack }) {
     let harvestedCount = 0
     for (const patchData of allPatches) {
       if (!patchData.patch?.cropId || getEffectiveStage(patchData.patch) < 4) continue
-      const result = harvestCrop(nextState, patchData.patchId, farmingLevel)
+      const result = harvestCrop(nextState, patchData.patchId, farmingLevel, herbMultiplier)
       if (!result) continue
       nextState = result.state
       totalXp += result.harvestXp

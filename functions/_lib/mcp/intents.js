@@ -30,7 +30,7 @@ import { GATHER_TASKS, findGatherTask } from '../../../src/engine/gatherTasks.js
 import { getClueCompletionTicks } from '../../../src/engine/clueScrolls.js'
 import { BUILDING_ACTIONS, UNLOCKABLES as CONSTRUCTION_PERKS, findBuildingAction, findConstructionPerk } from '../../../src/engine/construction.js'
 import farmingData from '../../../src/data/farming.json' assert { type: 'json' }
-import { getCropDef, getCropType, getPatchesForLocation, plantCrop, harvestCrop, getEffectiveStage } from '../../../src/engine/farming.ts'
+import { getCropDef, getCropType, getPatchesForLocation, plantCrop, harvestCrop, getEffectiveStage, herbYieldMultiplier } from '../../../src/engine/farming.ts'
 import { getRunesToConsume } from '../../../src/engine/runes.js'
 import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionItem, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
@@ -477,6 +477,10 @@ function farmingLevelOf(save) {
   return getLevelFromXP(Math.max(0, Math.floor(Number(save?.stats?.farming?.xp) || 0)))
 }
 
+function herbMultiplierOf(save) {
+  return herbYieldMultiplier(save?.equipment, itemsData)
+}
+
 // Locate a patch slot by id across every farm location, returning its declared
 // type and current contents (null patch = empty). Throws on an unknown id.
 function resolvePatchSlot(state, patchId) {
@@ -726,7 +730,7 @@ export function harvestPatch(save, patchId) {
   if (getEffectiveStage(patch) < 4) {
     throw new GameApiError('NOT_READY', `The crop in '${patchId}' is not ready to harvest yet.`, 400)
   }
-  const result = harvestCrop(state, patchId, farmingLevelOf(save))
+  const result = harvestCrop(state, patchId, farmingLevelOf(save), herbMultiplierOf(save))
   if (!result) {
     throw new GameApiError('HARVEST_FAILED', `Could not harvest patch '${patchId}'.`, 400)
   }
@@ -750,7 +754,7 @@ export function harvestAll(save) {
   for (const loc of farmingData.locations) {
     for (const { patchId, patch } of getPatchesForLocation(state, loc.id)) {
       if (!patch?.cropId || getEffectiveStage(patch) < 4) continue
-      const result = harvestCrop(state, patchId, farmingLevelOf(save))
+      const result = harvestCrop(state, patchId, farmingLevelOf(save), herbMultiplierOf(save))
       if (!result) continue
       state = result.state
       produce[result.cropId] = (produce[result.cropId] || 0) + result.quantity

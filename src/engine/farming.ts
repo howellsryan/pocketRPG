@@ -117,10 +117,26 @@ export function rollVegetableYield(farmingLevel: number): number {
   return best
 }
 
+/**
+ * Multiplier a wielded tool applies to herb-patch yield — the Magic Secateurs'
+ * `otherBonus.herbYieldPercent` (100 = double). Herbs only; trees, fruit trees
+ * and vegetables are untouched.
+ */
+export function herbYieldMultiplier(
+  equipment: { weapon?: { itemId?: string } | null } | null | undefined,
+  itemsData: Record<string, any> | null | undefined
+): number {
+  const itemId = equipment?.weapon?.itemId
+  if (!itemId) return 1
+  const pct = Number(itemsData?.[itemId]?.otherBonus?.herbYieldPercent || 0)
+  return pct > 0 ? 1 + pct / 100 : 1
+}
+
 export function harvestCrop(
   state: FarmingState,
   patchId: string,
-  farmingLevel: number = 1
+  farmingLevel: number = 1,
+  herbMultiplier: number = 1
 ): { state: FarmingState; harvestXp: number; cropId: string; quantity: number } | null {
   const patch = state.patchesById[patchId]
   if (!patch || !patch.cropId) return null
@@ -134,7 +150,8 @@ export function harvestCrop(
 
   const safeLevel = Math.max(1, Math.min(99, Math.floor(farmingLevel || 1)))
   const maxHerbYield = 5 + Math.floor(((safeLevel - 1) * 10) / 98)
-  const herbYield = 5 + Math.floor(Math.random() * (Math.max(5, maxHerbYield) - 5 + 1))
+  const herbRoll = 5 + Math.floor(Math.random() * (Math.max(5, maxHerbYield) - 5 + 1))
+  const herbYield = Math.floor(herbRoll * Math.max(1, Number(herbMultiplier) || 1))
   const maxTreeYield = 5 + Math.floor(((safeLevel - 1) * 20) / 98)
   const treeYield = 5 + Math.floor(Math.random() * (Math.max(5, maxTreeYield) - 5 + 1))
 

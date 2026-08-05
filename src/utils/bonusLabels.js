@@ -5,6 +5,7 @@ export const OTHER_BONUS_LABELS = {
   meleeDamage: 'Melee Damage %',
   rangedDamage: 'Ranged Damage %',
   fishingXpPercent: 'Fishing XP Boost %',
+  herbYieldPercent: 'Herb Yield Boost %',
   prayer: 'Prayer Bonus',
   miningLevel: 'Mining Level',
   woodcuttingLevel: 'Woodcutting Level',
@@ -22,7 +23,7 @@ export const OTHER_BONUS_LABELS = {
   prayerDrainReduction: 'Prayer Drain Reduction'
 }
 
-export const OTHER_BONUS_PERCENT_KEYS = new Set(['magicDamage', 'meleeDamage', 'rangedDamage', 'fishingXpPercent', 'slayerTaskAccuracyPercent', 'slayerTaskDamagePercent', 'damageReductionChance', 'damageReductionPercent', 'prayerDrainReduction'])
+export const OTHER_BONUS_PERCENT_KEYS = new Set(['magicDamage', 'meleeDamage', 'rangedDamage', 'fishingXpPercent', 'herbYieldPercent', 'slayerTaskAccuracyPercent', 'slayerTaskDamagePercent', 'damageReductionChance', 'damageReductionPercent', 'prayerDrainReduction'])
 
 /**
  * Label for a conditional, element-only magic damage bonus (`spellRuneDamage`)
