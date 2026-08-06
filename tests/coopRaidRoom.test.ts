@@ -6,7 +6,7 @@ import { makeD1, FakeD1 } from './helpers/d1'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 import { CoopBossRoom } from '../world/server/CoopBossRoom'
 import { joinCoopRaidParty, listOpenRaidParties } from '../functions/_lib/game/coopRaid.js'
-import { readSession, parseSessionState, leaveCoopSession } from '../functions/_lib/game/coopBoss.js'
+import { readSession, parseSessionState } from '../functions/_lib/game/coopBoss.js'
 import { raidBossOrder } from '../src/engine/coopRaidEngine.js'
 
 const RAID = 'cryptbound_champions'
@@ -105,27 +105,34 @@ describe('a raid party join that the room refuses', () => {
    * The binding itself can no longer be absent: CoopBossRoom is a local class
    * of the one Worker, which is what retired the capability probe this block
    * used to cover. */
+  let fetchCalls = 0
   function makeDeadRoomBinding() {
+    fetchCalls = 0
     return {
       idFromName: (name: string) => name,
       get: () => ({
-        fetch: async () => new Response(JSON.stringify({ error: 'invalid_session' }), { status: 400 }),
+        fetch: async () => {
+          fetchCalls++
+          return new Response(JSON.stringify({ error: 'invalid_session' }), { status: 400 })
+        },
       }),
     }
   }
 
   it('does not leave the character locked out of their own save', async () => {
-    await seedCharacter(7)
-    const opened = await joinCoopRaidParty(env as never, {
-      characterId: 7, identityId: 1, raidId: RAID, username: 'player7',
-    })
-    await leaveCoopSession(env as never, { characterId: 7, identityId: 1, sessionId: opened.sessionId })
+    // The party must still be ACTIVE (and under COOP_MAX_MEMBERS) when
+    // character 8 joins, or joinExistingParty's own D1 status/capacity check
+    // throws before ever reaching the room — which is exactly the bug this
+    // test used to have: leaving the party as its only member flips the
+    // session to 'completed', so the dead-room stub below was never called.
+    const opened = await openParty(7)
 
     await seedCharacter(8)
     env.COOP_ROOM = makeDeadRoomBinding()
     await expect(joinCoopRaidParty(env as never, {
       characterId: 8, identityId: 1, raidId: RAID, username: 'player8', sessionId: opened.sessionId,
-    })).rejects.toBeTruthy()
+    })).rejects.toMatchObject({ code: 'COOP_SESSION_UNAVAILABLE' })
+    expect(fetchCalls).toBe(1)
 
     const row = raw.prepare('SELECT active_coop_session_id AS id FROM characters WHERE id = 8').all()[0]
     expect(row.id).toBeNull()
