@@ -25,7 +25,7 @@
     "claude:headroom": "bash scripts/headroom-claude.sh",
     "ci": "npm run typecheck && npm run build && npm run rebuild && npm run check:single",
     "world:check": "cd world && npm run typecheck && npm test && npm run build",
-    "build:world": "npm --prefix world run build",
+    "build:world": "npm --prefix world install --no-audit --no-fund && npm --prefix world run build",
     "build:site": "npm run rebuild && npm run build:world && node scripts/stage-site.mjs",
     "worker:dev": "wrangler dev --env preview",
     "deploy": "npm run build:site && wrangler deploy",
