@@ -622,6 +622,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (combatRef.current?.active && activeTask && activeTask.type !== 'combat') {
       combatRef.current = null
       setCombat(null)
+      // Same race as stopAndBack — an auto-continue queued by a suppressed
+      // monster kill must not resurrect this fight over the activity that
+      // just superseded it.
+      setPendingAutoContinueKill(null)
       setLog([])
     }
   }, [activeTask])
@@ -2075,6 +2079,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const stopAndBack = () => {
     setCombat(null)
+    // A hideLootModalForMonsters kill can leave an auto-continue pending (see
+    // pendingAutoContinueKill's declaration) — cancel it, or the deferred
+    // effect resurrects the fight right after the player left it.
+    setPendingAutoContinueKill(null)
     setLog([])
     setActiveTask(null)
     const back = onStopBack || onBack
