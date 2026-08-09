@@ -23,8 +23,8 @@ import {
   CHAT_CONTEXT_CHUNKS,
   CHAT_MAX_ANSWER_TOKENS,
   CHAT_OPENAI_MAX_OUTPUT_TOKENS,
-  CHAT_MAX_HISTORY_CHARS,
-  CHAT_MAX_HISTORY_MESSAGES,
+  CHAT_HISTORY_DIGEST_CHARS,
+  CHAT_MAX_HISTORY_TOTAL_CHARS,
   CHAT_MAX_QUESTION_CHARS,
   CHAT_MAX_TOOL_RESULT_CHARS,
   CHAT_MAX_TOOL_ROUNDS,
@@ -170,11 +170,14 @@ describe('chat quotas', () => {
       .sort((a, b) => b - a)
       .slice(0, CHAT_CONTEXT_CHUNKS)
       .reduce((a, b) => a + b, 0)
-    // Fixed input re-sent on every call: system prompt, history, question +
-    // retrieved chunks, tool schemas, plus framing slack.
+    // Fixed input re-sent on every call: system prompt (plus the dropped-turn
+    // digest appended to it), the history window — bounded by its TOTAL char
+    // budget, not messages × per-message cap — the question + retrieved chunks,
+    // tool schemas, plus framing slack.
     const baseChars =
       SYSTEM_PROMPT.length +
-      CHAT_MAX_HISTORY_MESSAGES * CHAT_MAX_HISTORY_CHARS +
+      CHAT_HISTORY_DIGEST_CHARS +
+      CHAT_MAX_HISTORY_TOTAL_CHARS +
       CHAT_MAX_QUESTION_CHARS +
       biggestChunksChars +
       toolDefsChars +

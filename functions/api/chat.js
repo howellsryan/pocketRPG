@@ -11,7 +11,7 @@ import { utcDayKey, nextResetMs } from '../_lib/game/dailyTasks.js'
 import { auditLog } from '../_lib/game/audit.js'
 import { callTool } from '../_lib/mcp/tools.js'
 import { KNOWLEDGE_CHUNKS } from '../_lib/chat/knowledge.js'
-import { buildIndex, searchKnowledge } from '../_lib/chat/retrieval.js'
+import { buildIndex, conversationContextTerms, searchKnowledge } from '../_lib/chat/retrieval.js'
 import {
   claimCharacterMessage,
   refundCharacterMessage,
@@ -796,12 +796,17 @@ export async function onRequestPost({ request, env }) {
     })
   }
 
-  const hits = searchKnowledge(question, getIndex(), CHAT_CONTEXT_CHUNKS)
+  // Rank against the conversation, not just this message: a follow-up carries
+  // almost no terms of its own, and retrieving on those alone returns chunks
+  // about whatever generic word survived — which the system prompt then tells
+  // the model to answer from.
+  const history = body?.history
+  const hits = searchKnowledge(question, getIndex(), CHAT_CONTEXT_CHUNKS, conversationContextTerms(history, question))
   const chunks = hits.map((h) => h.chunk)
   const sources = chunks.map((c) => ({ id: c.id, title: c.title }))
 
   const { answer: aiAnswer, pendingWrite, reason } = await resolveAnswer(env, {
-    buildTranscript: () => buildMessages({ question, history: body?.history, chunks, feeEnabled: isChatActionFeeEnabled(env) }),
+    buildTranscript: () => buildMessages({ question, history, chunks, feeEnabled: isChatActionFeeEnabled(env) }),
     characterId,
     authorization,
     identity: auth.identity,

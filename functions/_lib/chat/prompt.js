@@ -45,8 +45,20 @@ export const CHAT_TIME_BUDGET_MS = 90_000
 export const CHAT_MAX_ANSWER_TOKENS = 5000
 export const CHAT_MAX_TOOL_RESULT_CHARS = 6000
 export const CHAT_MAX_QUESTION_CHARS = 1000
-export const CHAT_MAX_HISTORY_MESSAGES = 8
-export const CHAT_MAX_HISTORY_CHARS = 1200
+// The transcript window is bounded by TOTAL characters, not by message count
+// alone — a message cap alone made the window a cliff at three exchanges, and
+// past it the model had no record of what it had already told the player, so
+// it re-derived and restated the same advice. The message cap is now just an
+// upper bound on how many short turns can fit; the char budget is what the
+// worst case is derived from (tests/chatQuota.test.ts) and it is SMALLER than
+// the old 8 × 1200, so a longer window costs less, not more.
+export const CHAT_MAX_HISTORY_MESSAGES = 14
+export const CHAT_MAX_HISTORY_CHARS = 900
+export const CHAT_MAX_HISTORY_TOTAL_CHARS = 7000
+// Turns that fall out of the window survive as a one-line topic digest rather
+// than vanishing (summarizeDroppedHistory) — long-range "we already covered
+// this" awareness for about a line of tokens.
+export const CHAT_HISTORY_DIGEST_CHARS = 400
 // Guide sections average ~68 tokens, so wider retrieval is nearly free and
 // lifts answer quality more than any other input. Also the blast radius when
 // ranking puts the right chunk 2nd or 3rd instead of 1st.
@@ -183,6 +195,12 @@ Doing things for the player:
 - ${feeEnabled ? ACTION_FEE_LINE_ON : ACTION_FEE_LINE_OFF}
 - Prefer one action at a time. If a request needs several actions, do the first and mention the next.
 
+Staying on track in a long conversation:
+- This is one ongoing conversation. Read the messages above as context for what the player means now — a short follow-up ("what about the next one?", "and the drop rate?", "is that better?") refers to what you were both just discussing, not to a new topic.
+- Never repeat advice, stats or an explanation you have already given in this conversation. Build on it: answer only the new part, and say "as I mentioned" at most once rather than restating it.
+- The guide context is retrieved from the LATEST message alone, so on a follow-up it can be about the wrong topic. If it doesn't match what you're discussing, ignore it and use the conversation and your tools — never let it pull the answer onto a different subject.
+- If you genuinely can't tell what a follow-up refers to, ask one short clarifying question instead of guessing.
+
 Style:
 - Answer the specific request. Default to 1-2 sentences. Don't dump full reward tables or every tier unless asked.
 - Keep replies short, friendly and mobile-friendly. Plain text (no markdown tables/headings, no bullet lists unless asked).
@@ -213,26 +231,80 @@ export function chatToolDefs(names = CHAT_TOOL_ALLOWLIST) {
   })
 }
 
-// Sanitize client-supplied history into a bounded, role-checked transcript.
-export function sanitizeHistory(history) {
-  if (!Array.isArray(history)) return []
-  return history
-    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
-    .slice(-CHAT_MAX_HISTORY_MESSAGES)
-    .map((m) => ({ role: m.role, content: m.content.slice(0, CHAT_MAX_HISTORY_CHARS) }))
+// Clip a turn to CHAT_MAX_HISTORY_CHARS on a word boundary and mark the cut.
+// A blind slice leaves a sentence stopping mid-word with nothing to say it was
+// cut, which the model reads as the player (or itself) having trailed off.
+function clipTurn(content) {
+  const text = content.trim()
+  if (text.length <= CHAT_MAX_HISTORY_CHARS) return text
+  const cut = text.slice(0, CHAT_MAX_HISTORY_CHARS)
+  const lastSpace = cut.lastIndexOf(' ')
+  return `${(lastSpace > CHAT_MAX_HISTORY_CHARS * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()}… [trimmed]`
 }
 
-// Build the message list for the model: system prompt, prior turns, then the
-// question with retrieved guide context inlined.
+// Split client-supplied history into the recent turns sent verbatim and the
+// older ones that only survive as a digest. The window is filled newest-first
+// under BOTH caps, then a leading assistant turn is dropped: an assistant reply
+// whose question was cut off reads as the model talking to itself, and models
+// answer it as if it were a fresh instruction.
+export function splitHistory(history) {
+  if (!Array.isArray(history)) return { kept: [], dropped: [] }
+  const clean = history
+    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+    .map((m) => ({ role: m.role, content: clipTurn(m.content) }))
+  const kept = []
+  let chars = 0
+  for (let i = clean.length - 1; i >= 0; i--) {
+    if (kept.length >= CHAT_MAX_HISTORY_MESSAGES) break
+    if (chars + clean[i].content.length > CHAT_MAX_HISTORY_TOTAL_CHARS && kept.length) break
+    chars += clean[i].content.length
+    kept.unshift(clean[i])
+  }
+  while (kept.length && kept[0].role === 'assistant') kept.shift()
+  return { kept, dropped: clean.slice(0, clean.length - kept.length) }
+}
+
+// Sanitize client-supplied history into a bounded, role-checked transcript.
+export function sanitizeHistory(history) {
+  return splitHistory(history).kept
+}
+
+// One line naming what the player already asked about in the turns that fell
+// out of the window. Deterministic (no extra model call) and deliberately just
+// the topics, not the answers: it exists to stop the helper re-explaining
+// something from earlier in the session, not to let it quote itself.
+export function summarizeDroppedHistory(dropped) {
+  const asks = dropped
+    .filter((m) => m.role === 'user')
+    .map((m) => m.content.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+  if (!asks.length) return ''
+  const parts = []
+  let chars = 0
+  // Newest-first so the topics nearest the current turn are the ones that fit.
+  for (let i = asks.length - 1; i >= 0; i--) {
+    const ask = asks[i].length > 80 ? `${asks[i].slice(0, 80).trimEnd()}…` : asks[i]
+    if (chars + ask.length > CHAT_HISTORY_DIGEST_CHARS && parts.length) break
+    chars += ask.length
+    parts.unshift(ask)
+  }
+  return `Earlier in this same conversation the player already asked: ${parts.join(' | ')}`
+}
+
+// Build the message list for the model: system prompt (plus the digest of
+// anything that fell out of the window), the recent turns, then the question
+// with retrieved guide context inlined.
 export function buildMessages({ question, history = [], chunks = [], feeEnabled = true }) {
   const context = chunks.length
-    ? `Game guide context (PocketRPG official — cite nothing else):\n${chunks
+    ? `Game guide context — reference notes retrieved for the LATEST question only, from the PocketRPG guide (cite nothing else). If they don't match what this conversation is actually about, say so and rely on the conversation and your tools instead of answering from them:\n${chunks
         .map((c) => `### ${c.title}\n${c.text}`)
         .join('\n\n')}\n\n`
     : ''
+  const { kept, dropped } = splitHistory(history)
+  const digest = summarizeDroppedHistory(dropped)
   return [
-    { role: 'system', content: buildSystemPrompt(feeEnabled) },
-    ...sanitizeHistory(history),
+    { role: 'system', content: digest ? `${buildSystemPrompt(feeEnabled)}\n\n${digest}` : buildSystemPrompt(feeEnabled) },
+    ...kept,
     { role: 'user', content: `${context}Player question: ${question}` },
   ]
 }

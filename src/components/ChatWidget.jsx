@@ -5,13 +5,15 @@ import { api, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { pauseTicks, resumeTicks } from '../engine/tick.js'
 import { applyCloudSave } from '../cloud/sync.js'
 import { useGame } from '../state/gameState.jsx'
-import { chatActionCostLine } from '../utils/helpers.js'
+import { chatActionCostLine, chatHistoryPayload } from '../utils/helpers.js'
 
 const GREETING = {
   role: 'assistant',
+  local: true,
   content:
     "Hi! I'm the PocketRPG helper. Ask me about game mechanics, items, monsters, quests — or your own character's progress. I can also do things for you (sell an item, get a slayer task, buy gear…) — just ask, and I'll confirm before anything changes.",
 }
+
 
 // In-game help chatbot. Cloud accounts only (the /api/chat endpoint needs an
 // authenticated character); renders nothing in demo mode. The trigger lives in
@@ -54,10 +56,7 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
   const send = () => {
     const question = input.trim()
     if (!question || busy) return
-    const history = messages
-      .filter((m) => m !== GREETING)
-      .slice(-6)
-      .map((m) => ({ role: m.role, content: m.content }))
+    const history = chatHistoryPayload(messages)
     setMessages((prev) => [...prev, { role: 'user', content: question }])
     setInput('')
     setBusy(true)
@@ -70,6 +69,10 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
           {
             role: 'assistant',
             content: res.answer,
+            // The out-of-messages notice is an account receipt, not an answer
+            // about the game — replaying it as conversation context just costs
+            // a turn of the window.
+            local: res.mode === 'quota',
             pendingAction: res.pendingAction || null,
             // The daily cap is spent — offer a paid refill inline.
             refill: res.mode === 'quota' ? { credits: res.refillCredits ?? 10 } : null,
@@ -80,7 +83,7 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
         const content = err?.message === 'request_timeout'
           ? 'Sorry, that question was a bit too much for me — try asking something shorter or simpler.'
           : 'Sorry, I could not reach the helper — check your connection and try again.'
-        setMessages((prev) => [...prev, { role: 'assistant', content }])
+        setMessages((prev) => [...prev, { role: 'assistant', local: true, content }])
       })
       .finally(() => setBusy(false))
   }
@@ -122,7 +125,7 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
       .catch(() => {
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: 'Sorry, I could not complete that — check your connection and try again.' },
+          { role: 'assistant', local: true, content: 'Sorry, I could not complete that — check your connection and try again.' },
         ])
       })
       .finally(() => setBusy(false))
@@ -130,7 +133,7 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
 
   const cancelAction = (idx) => {
     resolve(idx, 'pendingAction')
-    setMessages((prev) => [...prev, { role: 'assistant', content: "Okay, I won't do that. Anything else?" }])
+    setMessages((prev) => [...prev, { role: 'assistant', local: true, content: "Okay, I won't do that. Anything else?" }])
   }
 
   const refill = (idx) => {
@@ -141,12 +144,12 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
       .chat(null, [], { refill: true })
       .then((res) => {
         trackRemaining(res)
-        setMessages((prev) => [...prev, { role: 'assistant', content: res.answer }])
+        setMessages((prev) => [...prev, { role: 'assistant', local: true, content: res.answer }])
       })
       .catch(() => {
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: 'Sorry, I could not refill just now — check your connection and try again.' },
+          { role: 'assistant', local: true, content: 'Sorry, I could not refill just now — check your connection and try again.' },
         ])
       })
       .finally(() => setBusy(false))

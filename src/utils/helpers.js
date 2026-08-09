@@ -183,6 +183,23 @@ export function chatActionCostLine(cost) {
   return `Costs ${fee} credit${fee === 1 ? '' : 's'}`
 }
 
+// Turns the chat widget sends back to /api/chat as conversation context.
+// `local: true` marks a line the widget wrote itself — the greeting, a
+// connection error, the cancel acknowledgement, an account receipt — which is
+// not model output and must never be replayed as one: it teaches the helper an
+// apologetic register, and in a window bounded by what the server can afford it
+// evicts a real turn to do it. How much of the transcript survives is the
+// server's call (CHAT_MAX_HISTORY_* in functions/_lib/chat/prompt.js) — send
+// generously and let it budget, rather than truncating twice by two rules that
+// then have to be kept in step.
+export const CHAT_HISTORY_TURNS = 20
+export function chatHistoryPayload(messages) {
+  return (messages || [])
+    .filter((m) => m && !m.local && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .slice(-CHAT_HISTORY_TURNS)
+    .map((m) => ({ role: m.role, content: m.content }))
+}
+
 /**
  * How many players are in the Wilderness right now, for the PvP card's live
  * headcount. Served by the world Worker (not Pages, which has no WorldZone

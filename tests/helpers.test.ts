@@ -8,7 +8,9 @@ import {
   deepClone,
   debounce,
   calcCombatLevel,
-  chatActionCostLine
+  chatActionCostLine,
+  chatHistoryPayload,
+  CHAT_HISTORY_TURNS
 } from '../src/utils/helpers.js'
 
 describe('Helper Utilities', () => {
@@ -384,6 +386,43 @@ describe('Helper Utilities', () => {
 
     it('falls back to the 1-credit default when no cost is given', () => {
       expect(chatActionCostLine(null)).toBe('Costs 1 credit')
+    })
+  })
+
+  describe('chatHistoryPayload', () => {
+    it('never replays the widget’s own lines back to the helper as its answers', () => {
+      // The greeting, connection errors, the cancel acknowledgement and account
+      // receipts are written by the widget, not the model. Fed back as
+      // assistant turns they teach it an apologetic register and evict real
+      // turns from a window the server pays for.
+      const payload = chatHistoryPayload([
+        { role: 'assistant', local: true, content: "Hi! I'm the PocketRPG helper." },
+        { role: 'user', content: 'how do I train slayer?' },
+        { role: 'assistant', content: 'Talk to a slayer master.' },
+        { role: 'assistant', local: true, content: 'Sorry, I could not reach the helper.' },
+        { role: 'assistant', local: true, content: "Okay, I won't do that. Anything else?" },
+      ])
+      expect(payload).toEqual([
+        { role: 'user', content: 'how do I train slayer?' },
+        { role: 'assistant', content: 'Talk to a slayer master.' },
+      ])
+    })
+
+    it('sends the tail of the conversation and strips the widget’s render-only fields', () => {
+      const messages = Array.from({ length: CHAT_HISTORY_TURNS + 5 }, (_, i) => ({
+        role: i % 2 ? 'assistant' : 'user',
+        content: `m${i}`,
+        pendingAction: { token: 'secret' },
+      }))
+      const payload = chatHistoryPayload(messages)
+      expect(payload.length).toBe(CHAT_HISTORY_TURNS)
+      expect(payload[payload.length - 1].content).toBe(`m${CHAT_HISTORY_TURNS + 4}`)
+      expect(payload.every((m) => Object.keys(m).join() === 'role,content')).toBe(true)
+    })
+
+    it('survives an empty or malformed transcript', () => {
+      expect(chatHistoryPayload(undefined)).toEqual([])
+      expect(chatHistoryPayload([null, { role: 'user' }, { role: 'tool', content: 'x' }])).toEqual([])
     })
   })
 })
