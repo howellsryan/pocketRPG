@@ -528,8 +528,13 @@ function topLevelDeclCounts(source) {
 
 // ── Compile Tailwind CSS ──
 fs.mkdirSync(path.join(__dirname, '.tmp'), { recursive: true });
-const twBin = path.join(__dirname, 'node_modules', '.bin', 'tailwindcss');
-const twResult = spawnSync(twBin, [
+// Run the CLI's entry script directly via `node` rather than spawning the
+// node_modules/.bin shim: on Windows that's a .cmd/.ps1 file, not something
+// spawnSync can exec without shell:true, so this stays cross-platform.
+const twCliDir = path.dirname(require.resolve('@tailwindcss/cli/package.json'));
+const twCliBin = require(path.join(twCliDir, 'package.json')).bin.tailwindcss;
+const twResult = spawnSync(process.execPath, [
+  path.join(twCliDir, twCliBin),
   '-i', path.join(__dirname, 'src', 'index.css'),
   '-o', path.join(__dirname, '.tmp', 'app.css'),
   '--minify',
