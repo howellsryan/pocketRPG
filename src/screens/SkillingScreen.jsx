@@ -13,7 +13,7 @@ import { getActionProgress } from '../hooks/useActionTick.js'
 import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillingActionBlockedByFullInventory, usesShardglassGatherTool, resolveShardglassToolSource, consumeShardglassGatherCharge } from '../engine/skilling.js'
-import { getSkillYieldMultiplier } from '../engine/skillingPerks.js'
+import { applySkillYield } from '../engine/skillingPerks.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -344,7 +344,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
               addToast(`Alchemized ${alchItem.name} for ${alchValue.toLocaleString()} coins`, 'success')
             }
           } else if (action.product) {
-            const qty = Math.floor((action.productQty || 1) * getSkillYieldMultiplier(state.skill, action.id, equipment, itemsData))
+            const qty = applySkillYield(action.productQty, state.skill, action.id, equipment, itemsData)
             // Output (gathered resources or produced goods) fills the inventory;
             // a full inventory triggers a bank trip or stops the action.
             const drops = { [action.product]: qty }

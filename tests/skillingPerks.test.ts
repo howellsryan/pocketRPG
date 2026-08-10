@@ -3,7 +3,7 @@ import items from '../src/data/items.json'
 import skills from '../src/data/skills.json'
 import monsters from '../src/data/monsters.json'
 import collectionLog from '../src/data/collectionLog.json'
-import { getSkillYieldMultiplier } from '../src/engine/skillingPerks.js'
+import { getSkillYieldMultiplier, applySkillYield } from '../src/engine/skillingPerks.js'
 import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
 import { monsterHasLoggedDrop } from '../src/engine/collectionLog.js'
 
@@ -38,6 +38,20 @@ describe('getSkillYieldMultiplier', () => {
 
   it('returns 1 with a null/undefined equipment object', () => {
     expect(getSkillYieldMultiplier('runecraft', 'craft_air_rune', null, items as any)).toBe(1)
+  })
+})
+
+describe('applySkillYield', () => {
+  it('doubles the base quantity when equipped, floors a fractional result, and defaults an unset base to 1', () => {
+    expect(applySkillYield(1, 'runecraft', 'craft_air_rune', EQUIPPED, items as any)).toBe(2)
+    expect(applySkillYield(undefined, 'runecraft', 'craft_air_rune', EQUIPPED, items as any)).toBe(2)
+    expect(applySkillYield(1, 'runecraft', 'craft_air_rune', {}, items as any)).toBe(1)
+    // A hypothetical 50%-yield perk would produce a fractional multiplier;
+    // this is the one place that rounds it down to a valid item count.
+    const halfYieldEquipped = { gloves: { itemId: 'half_yield_test_item' } }
+    const halfYieldItems = { ...items, half_yield_test_item: { otherBonus: { runecraftYieldPercent: 50 } } }
+    expect(applySkillYield(1, 'runecraft', 'craft_air_rune', halfYieldEquipped, halfYieldItems as any)).toBe(1)
+    expect(applySkillYield(3, 'runecraft', 'craft_air_rune', halfYieldEquipped, halfYieldItems as any)).toBe(4)
   })
 })
 

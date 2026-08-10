@@ -41,3 +41,12 @@ export function getSkillYieldMultiplier(skill, actionId, equipment, itemsData) {
   }
   return multiplier
 }
+
+/**
+ * The actual per-action output quantity after every equipped yield perk —
+ * the one call every site should make (rounding lives here once, not
+ * re-derived at each call site).
+ */
+export function applySkillYield(baseQty, skill, actionId, equipment, itemsData) {
+  return Math.floor((baseQty || 1) * getSkillYieldMultiplier(skill, actionId, equipment, itemsData))
+}
