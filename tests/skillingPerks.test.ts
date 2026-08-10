@@ -58,14 +58,14 @@ describe('applySkillYield', () => {
 describe('bracelet_of_runecrafting item data', () => {
   const item = (items as any).bracelet_of_runecrafting
 
-  it('exists, is gloves-slot, untradeable, and requires Runecrafting 70 to equip', () => {
+  it('exists, is gloves-slot, untradeable, and requires Runecrafting 30 to equip', () => {
     expect(item).toBeTruthy()
     expect(item.slot).toBe('gloves')
     expect(item.stackable).toBe(false)
     expect(item.isUntradeable).toBe(true)
     expect(item.isBossUnique).toBe(true)
     expect(item.shopValue).toBe(1000000)
-    expect(item.requirements).toEqual({ runecraft: 70 })
+    expect(item.requirements).toEqual({ runecraft: 30 })
   })
 
   it('carries the two yield-bonus otherBonus keys the engine reads', () => {

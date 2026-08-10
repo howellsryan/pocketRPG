@@ -10108,7 +10108,7 @@
       "essenceYieldPercent": 100
     },
     "requirements": {
-      "runecraft": 70
+      "runecraft": 30
     },
     "shopValue": 1000000,
     "isGeneralStore": false,
