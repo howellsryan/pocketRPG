@@ -17,6 +17,7 @@ import minigamesData from '../data/minigames.json'
 import { isOrderBookItem } from '../engine/storeRules.js'
 import { SLAYER_UNLOCKS } from '../engine/slayerUnlocks.js'
 import { isZestaUnique } from '../engine/pvpBotRewards.js'
+import { SKILLING_YIELD_BONUS_KEYS } from '../engine/skillingPerks.js'
 
 // Lazily built the first time it's needed — never at module-eval time. In the
 // single-file build this module is concatenated ahead of slayerUnlocks.js, so
@@ -122,12 +123,23 @@ export function isSkillingTool(item) {
   return SKILLING_TOOL_KINDS.has(kindOf(item).toLowerCase())
 }
 
+// Jewellery/armour (any slot, not just weapon) that boosts a gathering or
+// production skill's yield while equipped — e.g. the Bracelet of
+// Runecrafting's runecraftYieldPercent/essenceYieldPercent. Driven off
+// skillingPerks.js's own key list so a future ring/amulet perk files
+// correctly with no Armoury change of its own.
+function hasSkillingYieldBonus(item) {
+  const other = item?.otherBonus || {}
+  return SKILLING_YIELD_BONUS_KEYS.some(k => Number(other[k]) > 0)
+}
+
 // The four Armoury type-filter buckets: 'skilling' | 'melee' | 'magic' | 'ranged'.
-// Skilling holds skill capes and gathering-tool weapons (a Dragon Axe used for
-// Woodcutting, a fishing rod, a spade); everything else — combat weapons, all
-// other armour — files by its combat style even when a skill gates equipping it.
+// Skilling holds skill capes, gathering-tool weapons (a Dragon Axe used for
+// Woodcutting, a fishing rod, a spade), and skill-yield jewellery; everything
+// else — combat weapons, all other armour — files by its combat style even
+// when a skill gates equipping it.
 export function typeFilterOf(item) {
-  if (isSkillCape(item) || isSkillingTool(item)) return 'skilling'
+  if (isSkillCape(item) || isSkillingTool(item) || hasSkillingYieldBonus(item)) return 'skilling'
   return categoryOf(item)
 }
 

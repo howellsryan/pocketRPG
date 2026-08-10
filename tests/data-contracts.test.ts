@@ -45,6 +45,7 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'zyrite_shard',
   'amulet_of_torment',
   'afflicted_bracelet',
+  'bracelet_of_runecrafting',
   'necklace_of_agony',
   'ring_of_affliction',
   'zephyra_helmet',

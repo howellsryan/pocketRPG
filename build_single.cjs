@@ -113,6 +113,7 @@ const sourceFiles = [
   'engine/worldLairs.js',
   'engine/lootTransfer.js',
   'engine/skilling.js',
+  'engine/skillingPerks.js',
   'engine/dungeoneeringTokens.js',
   'engine/idleSupplies.js',
   'engine/gatherTasks.js',

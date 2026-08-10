@@ -135,6 +135,13 @@ describe('armoury classifier', () => {
     expect(typeFilterOf({ type: 'weapon', attackStyle: 'magic', requirements: { magic: 90, dungeoneering: 80 } })).toBe('magic')
     expect(typeFilterOf({ type: 'armour', slot: 'shield', requirements: { slayer: 85, attack: 50, strength: 85 } })).toBe('melee')
     expect(typeFilterOf({ type: 'armour', slot: 'gloves', requirements: { attack: 80, strength: 80, defence: 80, slayer: 95 } })).toBe('melee')
+    // Non-weapon skill-yield jewellery (any slot) → Skilling, not Melee, even
+    // though it has zero attack/defence bonus and would otherwise fall
+    // through categoryOf's melee default.
+    expect(typeFilterOf({ type: 'armour', slot: 'gloves', otherBonus: { runecraftYieldPercent: 100 } })).toBe('skilling')
+    expect(typeFilterOf(items.bracelet_of_runecrafting)).toBe('skilling')
+    // A plain gloves item with zero bonuses and no skilling key stays melee.
+    expect(typeFilterOf({ type: 'armour', slot: 'gloves', otherBonus: {} })).toBe('melee')
   })
 
   it('describes how an item is obtained from the live data', () => {

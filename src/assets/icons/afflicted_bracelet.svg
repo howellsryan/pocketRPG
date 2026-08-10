@@ -1,22 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="afflicted_bracelet_b" x1="0.3" y1="0" x2="0.7" y2="1">
-      <stop offset="0" stop-color="#9a8fa0"/><stop offset="0.5" stop-color="#5a4a60"/><stop offset="1" stop-color="#2a1c34"/>
+    <linearGradient id="afflicted_bracelet_b" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#c0b0cc"/><stop offset="0.5" stop-color="#5a4a60"/><stop offset="1" stop-color="#2a1c34"/>
     </linearGradient>
     <radialGradient id="afflicted_bracelet_gem" cx="0.4" cy="0.35" r="0.75">
-      <stop offset="0" stop-color="#c890e0"/><stop offset="0.5" stop-color="#7a3aa0"/><stop offset="1" stop-color="#3a1058"/>
+      <stop offset="0" stop-color="#e8c0ff"/><stop offset="0.5" stop-color="#7a3aa0"/><stop offset="1" stop-color="#3a1058"/>
     </radialGradient>
   </defs>
-  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <!-- Bracelet band (3/4 circle, open) -->
-    <path d="M 256 130 C 340 130 410 196 410 280 C 410 340 376 388 326 410 C 360 380 380 332 380 280 C 380 212 324 158 256 158 C 188 158 132 212 132 280 C 132 332 152 380 186 410 C 136 388 102 340 102 280 C 102 196 172 130 256 130 Z" fill="url(#afflicted_bracelet_b)"/>
-    <!-- Band inner highlight -->
-    <path d="M 256 168 C 196 168 146 214 142 274" fill="none" stroke="#9a8fa0" stroke-width="6"/>
-    <!-- Central setting -->
-    <path d="M 218 110 L 256 70 L 294 110 L 282 156 L 230 156 Z" fill="url(#afflicted_bracelet_b)" stroke="#1a1410" stroke-width="11"/>
-    <!-- Purple gem -->
-    <circle cx="256" cy="108" r="38" fill="url(#afflicted_bracelet_gem)" stroke="#1a1410" stroke-width="10"/>
-    <path d="M 256 76 L 256 140 M 224 108 L 288 108" stroke="#3a1058" stroke-width="5" fill="none"/>
-    <circle cx="244" cy="96" r="9" fill="#e0b0f0" stroke="none"/>
+  <g transform="rotate(-18 256 266)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M 209.4 370.3 A 180 108 0 1 1 302.6 370.3 L 292.8 341.3 A 142 78 0 1 0 219.2 341.3 Z" fill="url(#afflicted_bracelet_b)"/>
+    <path d="M 96 290 A 180 108 0 0 1 220 164" fill="none" stroke="#c0b0cc" stroke-width="7" opacity="0.8"/>
+    <rect x="196" y="358" width="20" height="30" rx="7" fill="#5a4a60" stroke="#1a1410" stroke-width="8" transform="rotate(20 206 373)"/>
+    <rect x="296" y="358" width="20" height="30" rx="7" fill="#5a4a60" stroke="#1a1410" stroke-width="8" transform="rotate(-20 306 373)"/>
+    <circle cx="256" cy="168" r="34" fill="url(#afflicted_bracelet_gem)" stroke="#1a1410" stroke-width="10"/>
+    <path d="M 256 142 L 256 194 M 230 168 L 282 168" stroke="#3a1058" stroke-width="5" fill="none"/>
+    <circle cx="246" cy="158" r="8" fill="#e0b0f0" stroke="none"/>
   </g>
 </svg>
