@@ -13,6 +13,7 @@ import {
 import { poweredStaffMagicBaseDamage } from './combatPrimitives.js'
 import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage, getSpellRuneMagicDamage, chargedScaleArmourSlots } from './equipment.js'
 import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops, usesShardglassGatherTool, resolveShardglassToolSource, consumeShardglassGatherCharge, SHARDGLASS_GATHER_TOOLS } from './skilling.js'
+import { getSkillYieldMultiplier } from './skillingPerks.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { getHighAlchValue } from '../utils/itemValue.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, GATHERING_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
@@ -384,7 +385,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     // require the Construction auto-bank unlock.
     const bankWhenFull = autoBankEnabled && (hasGatherAutoBankUnlock(stats) || IDLE_AUTOBANK_GATHERING_SKILLS.includes(task.skill))
     const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
-    const productQty = task.action.productQty || 1
+    const productQty = Math.floor((task.action.productQty || 1) * getSkillYieldMultiplier(task.skill, task.action.id, equipment, itemsData))
 
     // Shardglass tool identity is fixed for the session (locked like actionTicks);
     // its charge total is snapshotted here too and drained action-by-action below.
@@ -570,7 +571,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   else if (task.action.product) {
     const bankingEnabled = (task.bankingEnabled || false) && autoBankEnabled
     const product = task.action.product
-    const qtyPerAction = task.action.productQty || 1
+    const qtyPerAction = Math.floor((task.action.productQty || 1) * getSkillYieldMultiplier(task.skill, task.action.id, equipment, itemsData))
 
     // Track starting inventory state
     const startingInvState = {}

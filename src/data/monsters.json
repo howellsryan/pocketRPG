@@ -10284,6 +10284,7 @@
       { "itemId": "snapdrake", "quantity": [1, 2], "chance": 0.08 },
       { "itemId": "shroud_robes_top", "quantity": 1, "chance": 0.005 },
       { "itemId": "shroud_staff", "quantity": 1, "chance": 0.005 },
+      { "itemId": "bracelet_of_runecrafting", "quantity": 1, "chance": 0.00390625 },
       { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.025 }
     ]
   },

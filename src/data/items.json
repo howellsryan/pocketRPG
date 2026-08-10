@@ -10079,6 +10079,42 @@
       "itemId": "zenyte_shard"
     }
   },
+  "bracelet_of_runecrafting": {
+    "id": "bracelet_of_runecrafting",
+    "name": "Bracelet of Runecrafting",
+    "description": "A bracelet set with a gemstone that pulses with captured magic. Doubles runes crafted and rune essence mined while equipped.",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "runecraftYieldPercent": 100,
+      "essenceYieldPercent": 100
+    },
+    "requirements": {
+      "runecraft": 70
+    },
+    "shopValue": 1000000,
+    "isGeneralStore": false,
+    "isUntradeable": true,
+    "isBossUnique": true
+  },
   "necklace_of_agony": {
     "id": "necklace_of_agony",
     "legacy_item_id": "necklace_of_anguish",
