@@ -17,9 +17,12 @@ Minimal but explicit about what changed, present tense, player-facing voice — 
 ## Body
 
 - **Split by area into titled sections**: several areas → one `##` heading each, that area's changes underneath. Single-area change → one section or none.
-- Within a section: lead with player impact, short bullets, plain language — no file paths, function names, or internal mechanics unless a player would care.
-- Pure chores with no player-visible effect (deps, refactors, CI) → one honest line; it still posts.
-- Reviewer-only detail goes in PR review comments or an HTML comment, never the visible body.
+- Within a section: lead with player impact, short bullets, plain language — no file paths, function names, endpoint names, internal mechanics, or spec-section references (`§N`) unless a player would care.
+- **No implementation narrative.** Don't explain *how* the change works, *why* it's safe, or what it replaces internally — that's review content, not changelog content. If the honest player-facing summary is one line, stop at one line; don't pad it with the engineering rationale.
+- Pure chores with no player-visible effect (deps, refactors, CI, internal API consolidation) → one honest line; it still posts.
+- Reviewer-only detail (safety reasoning, invariants preserved, migration plans, rollout notes) goes in PR review comments or an HTML comment, never the visible body.
+
+**Known failure mode**: PR #906 ("Boot in one request instead of six") drafted a multi-paragraph body full of endpoint names, function names, call-site counts, and `§14` reasoning — exactly the style this skill forbids — and it published verbatim. A chore with no player-visible effect gets one line, full stop; the technical justification for *why* it's safe never belongs in the body at all, no matter how relevant it felt while writing it.
 
 ## Hard bans (publishes verbatim — no exceptions)
 
