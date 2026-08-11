@@ -37,8 +37,13 @@ A recipe is a shot list. New video = new JSON, no new code.
 }
 ```
 
-**Actions**: `hold` (just record), `nav` / `click` (by accessible name),
-`back`, `scroll` (`deltaY`), `reseed` (jump the character forward).
+**Actions**: `hold` (just record), `nav` / `click` (by accessible name), `text`
+(by visible text), `back`, `scroll` (`deltaY`), `reseed` (jump the character
+forward).
+
+Use `text` when `click` cannot see the control. Parts of this UI hang `onClick`
+on a plain `div` with no role — the mobile monster rows (`cb-mon`) are the ones
+that matter — so `getByRole` finds nothing and `click` times out.
 
 **`target` is an accessible name, not a CSS selector or visible text.** The nav
 buttons label themselves with `aria-label` and visually-hidden text, so matching

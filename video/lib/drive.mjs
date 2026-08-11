@@ -47,6 +47,16 @@ export async function click(page, name) {
 }
 
 /**
+ * Click by visible text. Needed because parts of this UI hang onClick on a
+ * plain div with no role — the mobile monster rows (`cb-mon`) are the ones that
+ * matter here — so getByRole cannot see them. The click lands on the text node
+ * and bubbles to whichever ancestor owns the handler.
+ */
+export async function clickText(page, text) {
+  await page.getByText(text, { exact: false }).first().click({ timeout: CLICK_TIMEOUT })
+}
+
+/**
  * Jump the character forward mid-recipe. This is what makes a progression
  * montage possible: seed, reload, and the app boots at the new state. The
  * reload destroys the overlay, so it is reinstalled and the visible text
@@ -71,6 +81,9 @@ export async function runScene(page, scene, ctx) {
     case 'nav':
     case 'click':
       await click(page, scene.target)
+      break
+    case 'text':
+      await clickText(page, scene.target)
       break
     case 'back':
       await click(page, '← Back')

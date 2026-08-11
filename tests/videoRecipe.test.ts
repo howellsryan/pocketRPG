@@ -30,9 +30,17 @@ describe('validateRecipe', () => {
     expect(() => validateRecipe({ id: 'x', scenes: [{ action: 'teleport' }] })).toThrow(/unknown action/)
   })
 
-  it('requires a target for nav and click', () => {
-    expect(() => validateRecipe({ id: 'x', scenes: [{ action: 'nav' }] })).toThrow(/requires a target/)
-    expect(() => validateRecipe({ id: 'x', scenes: [{ action: 'click' }] })).toThrow(/requires a target/)
+  // `text` exists because parts of the UI hang onClick on a plain div (the
+  // mobile monster rows), where getByRole resolves nothing.
+  it('requires a target for every targeted action', () => {
+    for (const action of ['nav', 'click', 'text']) {
+      expect(() => validateRecipe({ id: 'x', scenes: [{ action }] })).toThrow(/requires a target/)
+    }
+  })
+
+  it('accepts a text action with a target', () => {
+    const r = validateRecipe({ id: 'x', scenes: [{ action: 'text', target: 'Pasture Bull', holdMs: 900 }] })
+    expect(r.scenes[0].action).toBe('text')
   })
 
   it('requires a seed object for reseed', () => {

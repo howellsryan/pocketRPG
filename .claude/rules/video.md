@@ -17,7 +17,10 @@ Path-scoped rule — auto-loads when working on `video/**`. Full usage and ratio
 
 ## Driving the game
 
-- **`target` is an accessible name, never visible text or a CSS selector.** The nav labels itself with `aria-label` + visually-hidden text, so Playwright's `hasText` (rendered text only) matches nothing and fails as a 30s timeout. Top bar is `Map`, `Bank`, `Combat`, `Items`, `Equip`.
+- **`nav`/`click` take an accessible name, never visible text or a CSS selector.** The nav labels itself with `aria-label` + visually-hidden text, so Playwright's `hasText` (rendered text only) matches nothing and fails as a 30s timeout. Top bar is `Map`, `Bank`, `Combat`, `Items`, `Equip`.
+- **Not everything clickable is a button.** The mobile monster rows are a `div` with an `onClick` and no role (`CombatMobileSelect.jsx`), so `getByRole` cannot reach them — that is what the `text` action is for. Reach for it only when `click` genuinely cannot see the control.
+- Useful targets: skill screens open from the home card (`Magic, level`) then `Skill Actions`. Alchemy is `High Alchemy` then the item's name in the "Select item to Alchemize" modal. The bank is `Bank` then `Store and manage your items`.
+- **Alchemy pays into the BANK, not the inventory** (`skilling.js`, "alchemy banks"). A recipe showing alch profit must end on the bank or the payoff is invisible.
 - Every driving failure must throw. Silently filming the wrong screen is worse than a failed render.
 - The overlay must stay click-through at **every** level (`#pr-video-overlay, #pr-video-overlay *`). `pointer-events: none` on the container alone does not stop Playwright's hit-test on children.
 

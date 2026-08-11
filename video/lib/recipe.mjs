@@ -23,7 +23,11 @@ export const HOOK_FONT_SIZE = 76
 // puts the floor higher than feels right when reading it on a desktop.
 export const MIN_CAPTION_MS = 1200
 
-const ACTIONS = new Set(['nav', 'click', 'hold', 'reseed', 'scroll', 'back'])
+const ACTIONS = new Set(['nav', 'click', 'text', 'hold', 'reseed', 'scroll', 'back'])
+// Actions addressed by a string target. `nav`/`click` resolve an accessible
+// name; `text` matches visible text, for the parts of the UI that hang onClick
+// on a plain div (the mobile monster rows) where getByRole finds nothing.
+const TARGETED = new Set(['nav', 'click', 'text'])
 
 /** Usable text box in frame pixels, after TikTok's UI overlays. */
 export function safeBox(frame = FRAME, zone = SAFE_ZONE) {
@@ -79,7 +83,7 @@ export function validateRecipe(input) {
 
     // `target` names an accessible name (getByRole), never a CSS selector — the
     // game's nav labels are visually hidden, so text matching silently misses.
-    if ((action === 'nav' || action === 'click') && typeof scene.target !== 'string') {
+    if (TARGETED.has(action) && typeof scene.target !== 'string') {
       fail(`${at}.target`, `action '${action}' requires a target (accessible name)`)
     }
     if (action === 'reseed' && (!scene.seed || typeof scene.seed !== 'object')) {
