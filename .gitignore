@@ -28,3 +28,6 @@ world/.dev.vars
 
 # terrain preview screenshots
 world/preview-shots/
+
+# video/render.mjs output (rendered MP4s, never committed)
+/video/out

@@ -15,6 +15,7 @@
 const YIELD_BONUS_SOURCES = [
   { skill: 'runecraft', otherBonusKey: 'runecraftYieldPercent' },
   { skill: 'mining', otherBonusKey: 'essenceYieldPercent', actionIds: ['rune_essence'] },
+  { skill: 'smithing', otherBonusKey: 'smithingYieldPercent' },
 ]
 
 export const SKILLING_YIELD_BONUS_KEYS = YIELD_BONUS_SOURCES.map(s => s.otherBonusKey)

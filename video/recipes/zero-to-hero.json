@@ -1,0 +1,88 @@
+{
+  "id": "zero-to-hero",
+  "title": "Zero to max in 30 seconds",
+  "fps": 30,
+  "hook": "Maxing an idle RPG in 30 seconds",
+  "outro": "PocketRPG — free in your browser",
+  "seed": {
+    "levels": { "all": 1 }
+  },
+  "scenes": [
+    {
+      "action": "hold",
+      "holdMs": 3000,
+      "caption": "Every account starts here. Total level 34."
+    },
+    {
+      "action": "reseed",
+      "holdMs": 2600,
+      "caption": "A few hours in.",
+      "seed": { "levels": { "all": 30 } }
+    },
+    {
+      "action": "reseed",
+      "holdMs": 2600,
+      "caption": "A few weeks in.",
+      "seed": { "levels": { "all": 65 } }
+    },
+    {
+      "action": "reseed",
+      "holdMs": 3200,
+      "caption": "Maxed. Every skill, 99.",
+      "seed": {
+        "levels": { "all": 99 },
+        "equipment": {
+          "weapon": "zaryth_godsword",
+          "head": "zaryth_helm",
+          "body": "zaryth_platebody",
+          "legs": "zaryth_platelegs",
+          "shield": "avernal_defender",
+          "cape": "attack_cape",
+          "gloves": "ferocious_gloves",
+          "boots": "primeval_boots",
+          "neck": "2nd_age_amulet",
+          "ring": "berserker_ring"
+        },
+        "bank": {
+          "coins": 250000000,
+          "zaryth_godsword": 1,
+          "zaryth_crossbow": 1,
+          "2nd_age_bow": 1,
+          "2nd_age_amulet": 1,
+          "chaotic_crossbow": 1,
+          "justicar_chestguard": 1,
+          "justicar_legguards": 1,
+          "justicar_faceguard": 1,
+          "serpentine_helm": 1,
+          "primeval_boots": 1,
+          "ferocious_gloves": 1,
+          "berserker_ring": 4,
+          "seers_ring": 3,
+          "archers_ring": 3,
+          "avernal_defender": 2,
+          "attack_cape": 1,
+          "defence_cape": 1,
+          "ranged_cape": 1,
+          "shark": 2000
+        }
+      }
+    },
+    {
+      "action": "nav",
+      "target": "Equip",
+      "holdMs": 4200,
+      "caption": "The kit that got me there."
+    },
+    {
+      "action": "nav",
+      "target": "Bank",
+      "holdMs": 500
+    },
+    {
+      "action": "click",
+      "target": "Store and manage your items",
+      "holdMs": 3400,
+      "caption": "And the bank to prove it."
+    }
+  ]
+}

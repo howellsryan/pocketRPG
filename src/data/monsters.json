@@ -10309,7 +10309,8 @@
       { "itemId": "rynarr_weed", "quantity": [1, 2], "chance": 0.1 },
       { "itemId": "stonegale_bow", "quantity": 1, "chance": 0.005 },
       { "itemId": "stonegale_coif", "quantity": 1, "chance": 0.006 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.025 }
+      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.025 },
+      { "itemId": "bracelet_of_smithing", "quantity": 1, "chance": 0.00390625 }
     ]
   },
   "cindermaw_serpent": {

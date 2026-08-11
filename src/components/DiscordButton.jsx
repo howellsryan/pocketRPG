@@ -1,4 +1,4 @@
-export const DISCORD_INVITE_URL = 'https://discord.gg/trjZRWe2K'
+export const DISCORD_INVITE_URL = 'https://discord.gg/3Qv5fzEtJU'
 
 export function DiscordMark({ size = 18 }) {
   return (

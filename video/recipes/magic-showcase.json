@@ -1,0 +1,127 @@
+{
+  "id": "magic-showcase",
+  "title": "Magic: Fire Strike, crafting and alching",
+  "fps": 30,
+  "hook": "Magic is the best skill in this game",
+  "hookMs": 3800,
+  "outro": "PocketRPG — free in your browser",
+  "seed": {
+    "levels": { "all": 1, "magic": 13, "hitpoints": 15, "attack": 5, "defence": 5 },
+    "equipment": { "weapon": "staff_of_fire" },
+    "inventory": [
+      { "itemId": "air_rune", "quantity": 500 },
+      { "itemId": "mind_rune", "quantity": 500 }
+    ]
+  },
+  "scenes": [
+    {
+      "action": "hold",
+      "holdMs": 2600,
+      "caption": "Magic 13. One Staff of Fire."
+    },
+    {
+      "action": "nav",
+      "target": "Combat",
+      "holdMs": 1500
+    },
+    {
+      "action": "click",
+      "target": "Training",
+      "holdMs": 1600,
+      "caption": "The Staff of Fire pays for every fire rune."
+    },
+    {
+      "action": "text",
+      "target": "Pasture Bull",
+      "holdMs": 2000
+    },
+    {
+      "action": "click",
+      "target": "Cast Spell",
+      "holdMs": 1600,
+      "caption": "Pick your spell mid-fight."
+    },
+    {
+      "action": "text",
+      "target": "Fire Strike",
+      "holdMs": 6000,
+      "caption": "Fire Strike. 8 damage a cast, XP every hit."
+    },
+    {
+      "action": "reseed",
+      "holdMs": 2000,
+      "caption": "Later on, Magic pays for itself.",
+      "seed": {
+        "levels": { "all": 1, "magic": 60, "crafting": 70, "hitpoints": 30 },
+        "equipment": { "weapon": "staff_of_fire" },
+        "inventory": [
+          { "itemId": "green_dragon_leather", "quantity": 24 },
+          { "itemId": "nature_rune", "quantity": 300 }
+        ],
+        "bank": { "green_dragon_leather": 500, "nature_rune": 2000 }
+      }
+    },
+    {
+      "action": "click",
+      "target": "Crafting, level",
+      "holdMs": 1300
+    },
+    {
+      "action": "click",
+      "target": "Skill Actions",
+      "holdMs": 1500
+    },
+    {
+      "action": "click",
+      "target": "Craft green d'hide body",
+      "holdMs": 4000,
+      "caption": "Craft green d'hide bodies from leather."
+    },
+    {
+      "action": "hold",
+      "holdMs": 3500
+    },
+    {
+      "action": "nav",
+      "target": "Home",
+      "holdMs": 1200
+    },
+    {
+      "action": "click",
+      "target": "Magic, level",
+      "holdMs": 1300
+    },
+    {
+      "action": "click",
+      "target": "Skill Actions",
+      "holdMs": 1400
+    },
+    {
+      "action": "click",
+      "target": "High Alchemy",
+      "holdMs": 2200,
+      "caption": "Then High Alchemy turns them into coins."
+    },
+    {
+      "action": "click",
+      "target": "Green D'Hide Body",
+      "holdMs": 2600,
+      "caption": "Craft it, alch it, keep the profit."
+    },
+    {
+      "action": "hold",
+      "holdMs": 7000
+    },
+    {
+      "action": "nav",
+      "target": "Bank",
+      "holdMs": 900
+    },
+    {
+      "action": "click",
+      "target": "Store and manage your items",
+      "holdMs": 4200,
+      "caption": "Alched coins land straight in your bank."
+    }
+  ]
+}
