@@ -1,4 +1,4 @@
-// Thin fetch wrapper over the Cloudflare Pages Functions API.
+// Thin fetch wrapper over the /api routes (functions/, routed by worker/).
 // Token + selected character ID live in localStorage so they survive reloads.
 
 import { apiUrl } from './apiBase.js'

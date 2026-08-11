@@ -4,7 +4,6 @@ import { isWorldSessionLive } from '../../../_lib/game/worldSessions.js'
 import { currentSaveRevision, parseCoopSessionId, parseSessionState, readSession, sweepStaleCoopSessions } from '../../../_lib/game/coopBoss.js'
 import { joinCoopRaidParty } from '../../../_lib/game/coopRaid.js'
 import { projectStateForMember } from '../../../_lib/game/coopProjection.js'
-import { coopRoomsAvailable } from '../../../_lib/game/coopRoom.js'
 import { toErrorResponse } from '../../../_lib/game/errors.js'
 
 /**
@@ -29,10 +28,6 @@ export async function onRequestPost({ request, env }) {
   }
 
   await sweepStaleCoopSessions(env)
-
-  if (!coopRoomsAvailable(env)) {
-    return json({ error: 'Raid parties are temporarily unavailable', code: 'COOP_UNAVAILABLE' }, 503)
-  }
 
   try {
     const body = await request.json().catch(() => null)

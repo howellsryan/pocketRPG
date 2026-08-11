@@ -530,8 +530,13 @@ function topLevelDeclCounts(source) {
 
 // ── Compile Tailwind CSS ──
 fs.mkdirSync(path.join(__dirname, '.tmp'), { recursive: true });
-const twBin = path.join(__dirname, 'node_modules', '.bin', 'tailwindcss');
-const twResult = spawnSync(twBin, [
+// Run the CLI's entry script directly via `node` rather than spawning the
+// node_modules/.bin shim: on Windows that's a .cmd/.ps1 file, not something
+// spawnSync can exec without shell:true, so this stays cross-platform.
+const twCliDir = path.dirname(require.resolve('@tailwindcss/cli/package.json'));
+const twCliBin = require(path.join(twCliDir, 'package.json')).bin.tailwindcss;
+const twResult = spawnSync(process.execPath, [
+  path.join(twCliDir, twCliBin),
   '-i', path.join(__dirname, 'src', 'index.css'),
   '-o', path.join(__dirname, '.tmp', 'app.css'),
   '--minify',
@@ -679,16 +684,26 @@ const SPLIT_MINIFY = {
 // small world.json geography for boot-time location/travel; worldContent.js
 // guards every access with `typeof worldActivitiesData !== 'undefined'`, so a
 // pre-chunk call degrades to "unmapped, never gate".
+// The branch this build is for. Workers Builds injects WORKERS_CI_BRANCH;
+// Pages injected CF_PAGES_BRANCH, still read so the Pages project keeps baking
+// correctly for as long as it stays deployed as the migration's rollback.
+// Every flag below derives from this ONE value: read the raw env var again and
+// a Workers build silently loses whichever flag missed the change — which for
+// the world origin below means production players handed to preview.
+const deployBranch = process.env.WORKERS_CI_BRANCH || process.env.CF_PAGES_BRANCH || '';
+const isProductionBranch = deployBranch === 'main';
+const branchLog = `branch=${deployBranch || 'unset'}`;
+
 // 3D feature flag, baked in at build time. `Enable3dRender` ("true"/anything)
-// is an explicit override when set; otherwise derive from CF_PAGES_BRANCH,
-// which Pages injects into every build (wrangler.toml-managed projects can't
-// set dashboard build vars): any non-main branch = preview = enabled, main =
+// is an explicit override when set; otherwise derive from the deploy branch,
+// which the CI injects into every build (config-managed projects can't set
+// dashboard build vars): any non-main branch = preview = enabled, main =
 // production = disabled. Fail-safe: no branch info (local rebuild) disables.
 // Vite dev is unaffected (no injected global -> three3d.js enables).
 const enable3D = process.env.Enable3dRender != null
   ? process.env.Enable3dRender === 'true'
-  : Boolean(process.env.CF_PAGES_BRANCH) && process.env.CF_PAGES_BRANCH !== 'main';
-console.log(`3D render: ${enable3D ? 'ENABLED' : 'disabled'} (Enable3dRender=${process.env.Enable3dRender ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
+  : Boolean(deployBranch) && !isProductionBranch;
+console.log(`3D render: ${enable3D ? 'ENABLED' : 'disabled'} (Enable3dRender=${process.env.Enable3dRender ?? 'unset'}, ${branchLog})`);
 // Open-world beta button flag, same build-time-bake pattern as enable3D
 // above (and for the same reason: this is a client-bundle toggle, and
 // wrangler.toml [vars] never reach the client build — only functions/**).
@@ -697,8 +712,8 @@ console.log(`3D render: ${enable3D ? 'ENABLED' : 'disabled'} (Enable3dRender=${p
 // production (main) = disabled. Fail-safe: no branch info disables.
 const worldBetaEnabled = process.env.EnableWorldBeta != null
   ? process.env.EnableWorldBeta === 'true'
-  : Boolean(process.env.CF_PAGES_BRANCH) && process.env.CF_PAGES_BRANCH !== 'main';
-console.log(`World beta button: ${worldBetaEnabled ? 'ENABLED' : 'disabled'} (EnableWorldBeta=${process.env.EnableWorldBeta ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
+  : Boolean(deployBranch) && !isProductionBranch;
+console.log(`World beta button: ${worldBetaEnabled ? 'ENABLED' : 'disabled'} (EnableWorldBeta=${process.env.EnableWorldBeta ?? 'unset'}, ${branchLog})`);
 // Boss lairs are a SEPARATE flag from the world beta above, deliberately: a
 // lair is one authored instanced room entered from the boss picker and left by
 // closing the tab, so it ships to production while the beta button — which
@@ -710,14 +725,19 @@ const worldLairsEnabled = process.env.EnableWorldLairs != null
   ? process.env.EnableWorldLairs === 'true'
   : true;
 console.log(`World boss lairs: ${worldLairsEnabled ? 'ENABLED' : 'disabled'} (EnableWorldLairs=${process.env.EnableWorldLairs ?? 'unset'})`);
-// Which world Worker the handoff opens. Fail-safe by design: only an explicit
-// `main` build targets the production Worker, so a local or branch build can
-// never send a player into production world state.
+// Where the handoff opens the open-world client. The world now ships from the
+// same Worker as the game, staged under /world/ (scripts/stage-site.mjs), so a
+// non-production build points at its OWN origin — one merged preview Worker has
+// a single workers.dev URL and cannot give the world a hostname of its own.
+// Production keeps the world.pocketrpg.co.uk custom domain, which the Worker
+// maps onto the same prefix (worker/worldHost.js).
+//
+// Fail-safe by design, and the reason deployBranch above exists: only an
+// explicit `main` build names the production domain, so a local or branch build
+// can never send a player into production world state.
 const worldOrigin = process.env.WorldOrigin
-  || (process.env.CF_PAGES_BRANCH === 'main'
-    ? 'https://world.pocketrpg.co.uk'
-    : 'https://pocketrpg-world-preview.rlh.workers.dev');
-console.log(`World origin: ${worldOrigin} (WorldOrigin=${process.env.WorldOrigin ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
+  || (isProductionBranch ? 'https://world.pocketrpg.co.uk' : '/world');
+console.log(`World origin: ${worldOrigin} (WorldOrigin=${process.env.WorldOrigin ?? 'unset'}, ${branchLog})`);
 // Quest-requirement bypass (src/engine/questGates.js), same build-time-bake
 // pattern as the two flags above — a preview-only testing aid, so main and
 // branch-less local builds bake `false` and the production bundle cannot
@@ -726,12 +746,12 @@ console.log(`World origin: ${worldOrigin} (WorldOrigin=${process.env.WorldOrigin
 // a `typeof`-undefined read there would silently mean "enforced" mid-session.
 // Unlike the two flags above, the `main` branch is an unconditional NO: the
 // override can only turn this on somewhere that is already not production.
-const questGatesDisabled = process.env.CF_PAGES_BRANCH === 'main'
+const questGatesDisabled = isProductionBranch
   ? false
   : process.env.DisableQuestRequirements != null
     ? process.env.DisableQuestRequirements === 'true'
-    : Boolean(process.env.CF_PAGES_BRANCH);
-console.log(`Quest requirements: ${questGatesDisabled ? 'BYPASSED (preview)' : 'enforced'} (DisableQuestRequirements=${process.env.DisableQuestRequirements ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
+    : Boolean(deployBranch);
+console.log(`Quest requirements: ${questGatesDisabled ? 'BYPASSED (preview)' : 'enforced'} (DisableQuestRequirements=${process.env.DisableQuestRequirements ?? 'unset'}, ${branchLog})`);
 const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst creatures3dData = ${creatures3dJSON};\nconst hero3dData = ${hero3dJSON};\nconst biomes3dData = ${biomes3dJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\nconst pocketWorldLairsEnabled = ${worldLairsEnabled};\nconst pocketWorldOrigin = ${JSON.stringify(worldOrigin)};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;

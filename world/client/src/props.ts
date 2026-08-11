@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { tileToWorld } from './scene'
 import type { PropPlacement } from '../../shared/protocol'
+import { modelUrl } from './assetBase'
 
 // Scenery dressing from the zone JSON `props` list: pure visuals — no pick
 // data, no collision (that lives in the ASCII grid under them). Each distinct
@@ -47,7 +48,7 @@ export async function createProps(scene: THREE.Scene, props: PropPlacement[]): P
   await Promise.all(
     urls.map(async (model) => {
       try {
-        templates.set(model, await new GLTFLoader().loadAsync(`/models/props/${model}.glb`))
+        templates.set(model, await new GLTFLoader().loadAsync(modelUrl(`/models/props/${model}.glb`)))
       } catch {
         templates.set(model, null)
       }

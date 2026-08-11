@@ -36,9 +36,6 @@ function fakeCoopRoom() {
     get: () => ({
       fetch: async (url: string, init: any) => {
         const action = new URL(url).pathname.replace('/', '')
-        // The real room answers this before any session lookup; the join path
-        // refuses outright without it, so the fake has to model it.
-        if (action === 'capabilities') return new Response(JSON.stringify({ ok: true, raids: true }), { status: 200 })
         roomCalls.push({ action, body: JSON.parse(init.body) })
         return new Response(JSON.stringify(roomReply.body), { status: roomReply.status })
       },

@@ -3,6 +3,7 @@
 // the room opens, rides state_json, and every monster the tick looks up comes
 // out of the scaled table.
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { fakeCoopRoom } from './helpers/coopRoom'
 import { makeD1 } from './helpers/d1'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 import { joinCoopSession, listOpenSessions, parseSessionState, readSession, settleCoopKill } from '../functions/_lib/game/coopBoss.js'
@@ -116,7 +117,7 @@ describe('co-op hard mode, server side', () => {
 
   beforeEach(() => {
     const d = makeD1()
-    env = { DB: d.DB }
+    env = { DB: d.DB, COOP_ROOM: fakeCoopRoom(d.raw) }
     raw = d.raw
   })
 

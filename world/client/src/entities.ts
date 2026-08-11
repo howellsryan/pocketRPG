@@ -16,6 +16,7 @@ import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCre
 import { getWeaponModel, getGearModel, getMonsterModel, resolveHeadGearModel as resolveHeadGearModelShared } from '../../../src/utils/equipModels.js'
 import { monsterAttackWindup } from '../../../src/utils/combatWindup.js'
 import { TICK_DURATION } from '../../../src/utils/constants.js'
+import { modelUrl } from './assetBase'
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
@@ -206,7 +207,7 @@ export function loadTemplate(url: string): Promise<GLTF> {
   if (!t) {
     const loader = new GLTFLoader()
     loader.setMeshoptDecoder(MeshoptDecoder)
-    t = loader.loadAsync(url)
+    t = loader.loadAsync(modelUrl(url))
     templates.set(url, t)
   }
   return t

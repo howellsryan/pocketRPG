@@ -13,7 +13,7 @@
 // pre-bundle a dynamic import with a computed specifier.
 
 // Candidate deployment prefixes for static assets under public/. The single-file
-// build injects pocketAssetBase='/public/' (Cloudflare Pages serves the repo
+// build injects pocketAssetBase='/public/' (scripts/stage-site.mjs stages the
 // root, so public/ lives at /public/); Vite dev / dist serve public/ at '/'. We
 // don't trust a hardcoded guess though — a wrong prefix 404s to the SPA HTML and
 // a module import then dies with a "text/html" MIME error. So we PROBE the

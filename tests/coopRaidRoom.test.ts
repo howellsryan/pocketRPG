@@ -100,38 +100,41 @@ async function openParty(characterId: number) {
   })
 }
 
-describe('a world Worker that is older than the Pages build', () => {
-  /** A room from before raids: it has no `capabilities` action, so it falls
-   * through to the session lookup the real old room does. */
-  function makeOldRoomBinding() {
+describe('a raid party join that the room refuses', () => {
+  /** A room that rejects every action — evicted mid-start, or throwing on load.
+   * The binding itself can no longer be absent: CoopBossRoom is a local class
+   * of the one Worker, which is what retired the capability probe this block
+   * used to cover. */
+  let fetchCalls = 0
+  function makeDeadRoomBinding() {
+    fetchCalls = 0
     return {
       idFromName: (name: string) => name,
       get: () => ({
-        fetch: async () => new Response(JSON.stringify({ error: 'invalid_session' }), { status: 400 }),
+        fetch: async () => {
+          fetchCalls++
+          return new Response(JSON.stringify({ error: 'invalid_session' }), { status: 400 })
+        },
       }),
     }
   }
 
-  it('answers the capability probe, so a current room is recognised', async () => {
-    const res = await (env.COOP_ROOM as any)
-      .get('coop:capabilities')
-      .fetch('https://coop-room/capabilities', { method: 'POST', body: '{}' })
-    expect(res.status).toBe(200)
-    expect((await res.json() as any).raids).toBe(true)
-  })
+  it('does not leave the character locked out of their own save', async () => {
+    // The party must still be ACTIVE (and under COOP_MAX_MEMBERS) when
+    // character 8 joins, or joinExistingParty's own D1 status/capacity check
+    // throws before ever reaching the room — which is exactly the bug this
+    // test used to have: leaving the party as its only member flips the
+    // session to 'completed', so the dead-room stub below was never called.
+    const opened = await openParty(7)
 
-  it('refuses the party rather than farming the raid\'s first boss for its own drop table', async () => {
-    // The failure this prevents: an old room ignores `state.raid`, so it
-    // respawns boss one forever and settles every kill against that boss's
-    // table — server-granted, so it is an economy bug and has to be a refusal.
-    await seedCharacter(7)
-    env.COOP_ROOM = makeOldRoomBinding()
+    await seedCharacter(8)
+    env.COOP_ROOM = makeDeadRoomBinding()
     await expect(joinCoopRaidParty(env as never, {
-      characterId: 7, identityId: 1, raidId: RAID, username: 'player7',
-    })).rejects.toMatchObject({ code: 'COOP_UNAVAILABLE' })
+      characterId: 8, identityId: 1, raidId: RAID, username: 'player8', sessionId: opened.sessionId,
+    })).rejects.toMatchObject({ code: 'COOP_SESSION_UNAVAILABLE' })
+    expect(fetchCalls).toBe(1)
 
-    // And it must not leave the character locked out of their own save.
-    const row = raw.prepare('SELECT active_coop_session_id AS id FROM characters WHERE id = 7').all()[0]
+    const row = raw.prepare('SELECT active_coop_session_id AS id FROM characters WHERE id = 8').all()[0]
     expect(row.id).toBeNull()
   })
 })
