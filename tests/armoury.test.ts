@@ -140,6 +140,7 @@ describe('armoury classifier', () => {
     // through categoryOf's melee default.
     expect(typeFilterOf({ type: 'armour', slot: 'gloves', otherBonus: { runecraftYieldPercent: 100 } })).toBe('skilling')
     expect(typeFilterOf(items.bracelet_of_runecrafting)).toBe('skilling')
+    expect(typeFilterOf(items.bracelet_of_smithing)).toBe('skilling')
     // A plain gloves item with zero bonuses and no skilling key stays melee.
     expect(typeFilterOf({ type: 'armour', slot: 'gloves', otherBonus: {} })).toBe('melee')
   })

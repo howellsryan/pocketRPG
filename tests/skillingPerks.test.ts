@@ -8,6 +8,7 @@ import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
 import { monsterHasLoggedDrop } from '../src/engine/collectionLog.js'
 
 const EQUIPPED = { gloves: { itemId: 'bracelet_of_runecrafting' } }
+const SMITHING_EQUIPPED = { gloves: { itemId: 'bracelet_of_smithing' } }
 
 describe('getSkillYieldMultiplier', () => {
   it('doubles runecrafting output when the bracelet is equipped', () => {
@@ -140,5 +141,78 @@ describe('mining idle simulation with the bracelet equipped', () => {
     const baseGained = (baseSim?.itemsGained.iron_ore || 0) + (baseSim?.itemsBanked.iron_ore || 0)
     expect(baseGained).toBeGreaterThan(0)
     expect(equippedGained).toBe(baseGained)
+  })
+})
+
+describe('bracelet_of_smithing item data', () => {
+  const item = (items as any).bracelet_of_smithing
+
+  it('exists, is gloves-slot, untradeable, and requires Smithing 30 to equip', () => {
+    expect(item).toBeTruthy()
+    expect(item.slot).toBe('gloves')
+    expect(item.stackable).toBe(false)
+    expect(item.isUntradeable).toBe(true)
+    expect(item.isBossUnique).toBe(true)
+    expect(item.shopValue).toBe(1000000)
+    expect(item.requirements).toEqual({ smithing: 30 })
+  })
+
+  it('carries the smithingYieldPercent otherBonus key the engine reads', () => {
+    expect(item.otherBonus.smithingYieldPercent).toBe(100)
+  })
+})
+
+describe('stonegale_elemental drops the smithing bracelet at 1/256', () => {
+  it('is present with the expected drop chance', () => {
+    const drop = (monsters as any).stonegale_elemental.drops.find((d: any) => d.itemId === 'bracelet_of_smithing')
+    expect(drop).toBeTruthy()
+    expect(drop.chance).toBeCloseTo(1 / 256, 10)
+    expect(drop.quantity).toBe(1)
+  })
+
+  it('has a collection log slot under Stonegale Elemental', () => {
+    expect(monsterHasLoggedDrop('stonegale_elemental')).toBe(true)
+    const monstersCategory = (collectionLog as any).categories.find((c: any) => c.id === 'monsters')
+    const section = monstersCategory.sections.find((s: any) => s.id === 'stonegale_elemental')
+    expect(section.items).toContain('bracelet_of_smithing')
+  })
+})
+
+describe('getSkillYieldMultiplier for smithing', () => {
+  it('doubles every smithing action, both bar-smelting and item-smithing', () => {
+    expect(getSkillYieldMultiplier('smithing', 'smelt_bronze', SMITHING_EQUIPPED, items as any)).toBe(2)
+    expect(getSkillYieldMultiplier('smithing', 'smith_bronze_dagger', SMITHING_EQUIPPED, items as any)).toBe(2)
+  })
+
+  it('does nothing for an unrelated skill', () => {
+    expect(getSkillYieldMultiplier('mining', 'iron', SMITHING_EQUIPPED, items as any)).toBe(1)
+  })
+})
+
+describe('smithing idle simulation with the bracelet equipped', () => {
+  it('doubles bar output from smelting', () => {
+    const action = (skills as any).smithing.actions.find((a: any) => a.id === 'smelt_bronze')
+    const inv = () => [{ itemId: 'tin_ore', quantity: 10 }, { itemId: 'copper_ore', quantity: 10 }, ...Array(26).fill(null)]
+
+    const equippedSim = simulateIdleSkilling({ skill: 'smithing', action } as any, 24_000, {}, SMITHING_EQUIPPED, {}, items as any, inv() as any)
+    const baseSim = simulateIdleSkilling({ skill: 'smithing', action } as any, 24_000, {}, {}, {}, items as any, inv() as any)
+
+    const equippedGained = (equippedSim?.itemsGained.bronze_bar || 0) + (equippedSim?.itemsBanked.bronze_bar || 0)
+    const baseGained = (baseSim?.itemsGained.bronze_bar || 0) + (baseSim?.itemsBanked.bronze_bar || 0)
+    expect(baseGained).toBeGreaterThan(0)
+    expect(equippedGained).toBe(baseGained * 2)
+  })
+
+  it('doubles item output from smithing gear, not just bars', () => {
+    const action = (skills as any).smithing.actions.find((a: any) => a.id === 'smith_bronze_dagger')
+    const inv = () => [{ itemId: 'bronze_bar', quantity: 10 }, ...Array(27).fill(null)]
+
+    const equippedSim = simulateIdleSkilling({ skill: 'smithing', action } as any, 30_000, {}, SMITHING_EQUIPPED, {}, items as any, inv() as any)
+    const baseSim = simulateIdleSkilling({ skill: 'smithing', action } as any, 30_000, {}, {}, {}, items as any, inv() as any)
+
+    const equippedGained = (equippedSim?.itemsGained.bronze_dagger || 0) + (equippedSim?.itemsBanked.bronze_dagger || 0)
+    const baseGained = (baseSim?.itemsGained.bronze_dagger || 0) + (baseSim?.itemsBanked.bronze_dagger || 0)
+    expect(baseGained).toBeGreaterThan(0)
+    expect(equippedGained).toBe(baseGained * 2)
   })
 })

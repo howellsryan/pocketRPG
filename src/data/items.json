@@ -10115,6 +10115,41 @@
     "isUntradeable": true,
     "isBossUnique": true
   },
+  "bracelet_of_smithing": {
+    "id": "bracelet_of_smithing",
+    "name": "Bracelet of Smithing",
+    "description": "A bracelet set with a black gemstone that hums with forge-heat. Doubles the bars and items produced by every Smithing action while equipped.",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "smithingYieldPercent": 100
+    },
+    "requirements": {
+      "smithing": 30
+    },
+    "shopValue": 1000000,
+    "isGeneralStore": false,
+    "isUntradeable": true,
+    "isBossUnique": true
+  },
   "necklace_of_agony": {
     "id": "necklace_of_agony",
     "legacy_item_id": "necklace_of_anguish",
