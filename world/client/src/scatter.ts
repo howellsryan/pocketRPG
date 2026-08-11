@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import type { ScatterLayer } from '../../shared/protocol'
+import { modelUrl } from './assetBase'
 
 // Decorative flora scatter (docs/open-world-terrain-plan.md §7). Adapts
 // THREE.Terrain's ScatterMeshes: seeded, mask-aware, slope-aware placement,
@@ -127,7 +128,7 @@ export async function createScatterLayers(
       if (!instances.length) return
       let gltf
       try {
-        gltf = await new GLTFLoader().loadAsync(`/models/props/${layer.model}.glb`)
+        gltf = await new GLTFLoader().loadAsync(modelUrl(`/models/props/${layer.model}.glb`))
       } catch {
         return
       }

@@ -3,6 +3,7 @@ import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { tileToWorld } from './scene'
 import type { ZoneAmbient, ZoneAmbientCritter } from '../../shared/protocol'
+import { modelUrl } from './assetBase'
 
 // Ambient life (docs/world-design-review-2026-07.md §4.4) — the cheap layer that
 // makes a town feel inhabited: non-combat walkers wandering a patch of ground
@@ -277,7 +278,7 @@ async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, walke
   if (!def) return
   let gltf
   try {
-    gltf = await new GLTFLoader().loadAsync(def.url)
+    gltf = await new GLTFLoader().loadAsync(modelUrl(def.url))
   } catch {
     return
   }
