@@ -15,8 +15,27 @@ Equipment screen: the 3D hero wears the seeded kit, which is far better footage
 than the paper-doll fallback a default build renders. The hero streams in over
 about a second, so give that scene ~4s.
 
-Output is gitignored. Upload it to TikTok yourself and add a trending sound
-in-app — that reaches further than anything bakeable into the file.
+Output is gitignored — a render exists only in that run's `video/out/`, so
+grab it before the container goes away.
+
+## Rendering from a phone
+
+The **Render Video** GitHub Action (`.github/workflows/render-video.yml`) runs
+the same pipeline in CI and publishes the result as a GitHub Release asset —
+a direct file link, so it downloads cleanly from a mobile browser (unlike an
+Actions artifact, which is a zip).
+
+Actions tab → **Render Video** → **Run workflow** → pick a recipe name (no
+`.json`) → run. When it finishes, the run's summary links straight to the
+release with the MP4 attached.
+
+Budget a few minutes, not one: checkout, `npm ci`, a cached-when-possible
+Playwright Chromium install, the game build, and the render itself all happen
+before anything is downloadable. The render step alone is well under a
+minute; the surrounding CI setup is what adds the rest.
+
+Upload the result to TikTok yourself and add a trending sound in-app — that
+reaches further than anything bakeable into the file.
 
 ## Writing a recipe
 

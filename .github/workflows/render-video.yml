@@ -1,0 +1,91 @@
+name: Render Video
+
+# Manual only — this renders a TikTok clip from video/recipes/<recipe>.json and
+# publishes it as a GitHub Release asset (a plain file link, so it downloads
+# cleanly from a phone browser — unlike an Actions artifact, which is a zip and
+# needs a signed-in desktop-ish flow). See video/README.md for what a recipe is.
+on:
+  workflow_dispatch:
+    inputs:
+      recipe:
+        description: 'Recipe file under video/recipes/, without .json'
+        required: true
+        default: 'zero-to-hero'
+      enable_3d:
+        description: 'Build with the 3D arena enabled (needed for Equipment-screen shots)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: render-video-${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write # gh release create needs this on the default GITHUB_TOKEN
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        id: pw-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright's OS deps
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Build game bundle
+        run: npm run rebuild
+        env:
+          Enable3dRender: ${{ inputs.enable_3d && 'true' || '' }}
+
+      - name: Validate recipe exists
+        run: test -f "video/recipes/${{ inputs.recipe }}.json" || { echo "::error::no recipe at video/recipes/${{ inputs.recipe }}.json"; exit 1; }
+
+      - name: Render
+        run: node video/render.mjs "video/recipes/${{ inputs.recipe }}.json"
+
+      - name: Upload failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-failure
+          path: video/out/*-failure.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Publish as a release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="video-${{ inputs.recipe }}-$(date -u +%Y%m%d-%H%M%S)"
+          gh release create "$tag" \
+            "video/out/${{ inputs.recipe }}.mp4" \
+            --title "Video: ${{ inputs.recipe }}" \
+            --notes "Rendered from video/recipes/${{ inputs.recipe }}.json at commit ${{ github.sha }}." \
+            --repo "${{ github.repository }}"
+          echo "### Download" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/${{ github.repository }}/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"

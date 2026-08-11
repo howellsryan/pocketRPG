@@ -38,5 +38,15 @@ Build with `Enable3dRender=true npm run rebuild` for recipes showing the Equipme
 
 - `video/` is outside `tsconfig.typecheck.json` (`src/**/*.js`) and the coverage config (`src/**`, `functions/**`). Keep it that way — it is tooling, not shipped game code.
 - Tests are logic-only: `recipe.mjs` and `seed.mjs` are pure and unit-tested. Do not add browser or ffmpeg work to `npm test`.
-- `video/out` is gitignored. Never commit a rendered MP4.
+- `video/out` is gitignored. Never commit a rendered MP4 — CI publishes the render as a GitHub Release asset instead (below), which is downloadable without touching the repo's history.
 - Seeding writes IndexedDB on a throwaway demo profile only. It is not a save editor — real characters go through skill `save-item-grant`.
+
+## CI (`.github/workflows/render-video.yml`)
+
+Manual (`workflow_dispatch`) only — takes a recipe name and an `enable_3d`
+toggle, runs the same pipeline in CI, and publishes the MP4 as a GitHub
+Release asset (a direct file link — downloads cleanly from a phone browser;
+an Actions artifact is a zip and does not). A run is a few minutes end to end:
+`npm ci` + a cached-when-possible Playwright Chromium install + the game
+build all happen before the render itself, which is the only part under a
+minute. Don't promise sub-minute total time from this workflow.
