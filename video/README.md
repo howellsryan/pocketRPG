@@ -15,8 +15,14 @@ Equipment screen: the 3D hero wears the seeded kit, which is far better footage
 than the paper-doll fallback a default build renders. The hero streams in over
 about a second, so give that scene ~4s.
 
-Output is gitignored. Upload it to TikTok yourself and add a trending sound
-in-app — that reaches further than anything bakeable into the file.
+Output is committed to `video/out/` so it's downloadable straight from GitHub
+(useful from a phone, where the render container isn't reachable). Upload it
+to TikTok yourself and add a trending sound in-app — that reaches further than
+anything bakeable into the file.
+
+Committed MP4s live in git history permanently, so this doesn't scale to heavy
+volume — if renders become routine, switch `video/out/` back to gitignored and
+attach files to a GitHub Release instead.
 
 ## Writing a recipe
 
