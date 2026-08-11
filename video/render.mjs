@@ -182,10 +182,12 @@ function verifyOutput(file, ffmpeg, expectedFps) {
   const { execFileSync } = require('node:child_process')
   let header = ''
   try { execFileSync(ffmpeg, ['-hide_banner', '-i', file], { stdio: 'pipe' }) } catch (e) { header = String(e.stderr) }
-  const stream = /Stream #0:0.*?: Video: (\w+).*?, (\d+)x(\d+).*?, ([\d.]+) fps/s.exec(header)
+  const stream = /Stream #0:0.*?: Video: (\w+).*?, (\d+)x(\d+)(?: \[SAR (\d+):(\d+)[^\]]*\])?.*?, ([\d.]+) fps/s.exec(header)
   if (!stream) throw new Error(`could not read video stream from ${file}`)
-  const [, codec, w, h, fps] = stream
+  const [, codec, w, h, sarN, sarD, fps] = stream
   const width = Number(w); const height = Number(h)
+  // Square pixels, or the frame encodes at 1080x1920 but displays off-ratio.
+  if (sarN && sarN !== sarD) throw new Error(`output has non-square pixels (SAR ${sarN}:${sarD})`)
   if (width !== TIKTOK_FRAME.width || height !== TIKTOK_FRAME.height) {
     throw new Error(`output is ${width}x${height}, expected ${TIKTOK_FRAME.width}x${TIKTOK_FRAME.height}`)
   }

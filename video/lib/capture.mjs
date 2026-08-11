@@ -50,8 +50,10 @@ export function createCapture({ page, cdpSession, fps = 30, out, ffmpegPath, crf
       '-y', '-hide_banner', '-loglevel', 'error',
       '-f', 'image2pipe', '-framerate', String(fps), '-i', 'pipe:0',
       // Chromium sizes screencast frames to fit maxWidth/maxHeight preserving
-      // aspect, so they can land a pixel short. Pin the output exactly.
-      '-vf', `scale=${width}:${height}:flags=lanczos`,
+      // aspect, so they can land a pixel short. Pin the output exactly, and
+      // reset the sample aspect: scaling a slightly-off source leaves a
+      // non-square SAR, which encodes 1080x1920 but *displays* as not-quite-9:16.
+      '-vf', `scale=${width}:${height}:flags=lanczos,setsar=1`,
       '-c:v', 'libx264', '-preset', 'medium', '-crf', String(crf),
       // TikTok re-encodes anyway; yuv420p + faststart is what it expects to get.
       '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-r', String(fps),
