@@ -1,0 +1,148 @@
+{
+  // One Worker: site, API, WorldZone and CoopBossRoom. Replaces the `pocketrpg`
+  // Pages project and the `pocketrpg-world` Worker.
+  //
+  // The name is `pocketrpg-app`, not `pocketrpg`, on purpose. The Pages project
+  // owns that name and has to stay deployed until DNS cuts over (it IS the
+  // rollback), and a Worker that hosts Durable Objects can never be renamed
+  // afterwards without abandoning their state — so the permanent name is
+  // chosen now rather than inherited later.
+  "name": "pocketrpg-app",
+  "main": "worker/index.js",
+  // The newer of the two configs this merges (the API side was 2025-01-01).
+  "compatibility_date": "2026-07-01",
+  "workers_dev": false,
+  "observability": { "enabled": true },
+
+  "assets": {
+    "directory": "dist_site",
+    "binding": "ASSETS",
+    // Mirrors Pages: an unknown path is a 404, not a rewrite to index.html.
+    // The game is one document but routes in memory, so it never asks the
+    // server for a path it did not publish.
+    "not_found_handling": "none",
+    // Static assets are served without invoking the Worker — which is what
+    // keeps the hashed game chunk, fonts, vendored three.js and 3D models free.
+    // Only the documents need the Worker first, because world.pocketrpg.co.uk's
+    // root has to be rewritten onto the /world/ prefix (worker/worldHost.js)
+    // and would otherwise resolve to the idle game's index.html.
+    "run_worker_first": ["/", "/index.html", "/editor", "/editor.html", "/preview", "/preview.html"]
+  },
+
+  "durable_objects": {
+    "bindings": [
+      { "name": "WorldZone", "class_name": "WorldZone" },
+      // Kept as COOP_ROOM so functions/_lib/game/coopRoom.js is unchanged. It
+      // is a local class now — no `script_name`, no cross-script binding, no
+      // two-deploy rule.
+      { "name": "COOP_ROOM", "class_name": "CoopBossRoom" }
+    ]
+  },
+
+  // A Durable Object's state does not move between Workers, so these are new
+  // objects, not the world Worker's. Cutover is a drain at a quiet hour:
+  // in-flight fights and world sessions are lost. CoopBossRoom checkpoints to
+  // D1 every 15s in a fight and world HP is a session resource no flush writes
+  // back to the save, so the cost is bounded — but it is not a rolling deploy.
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["WorldZone", "CoopBossRoom"] }
+  ],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pocketrpg",
+      "database_id": "439e810b-8dce-4697-94c2-a7392520ad8f",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "r2_buckets": [
+    { "binding": "TRIPO_ASSETS", "bucket_name": "pocketrpg-assets" }
+  ],
+
+  "ai": { "binding": "AI" },
+
+  "vars": {
+    "APP_BASE_URL": "https://pocketrpg.co.uk",
+    // Feature flag for the chat helper's 1-credit write-action fee
+    // (CHAT_ACTION_FEE in functions/_lib/chat/actions.js). "false" disables it;
+    // the fee logic stays in place, so flipping this back to "true" (or
+    // removing it — unset defaults to enabled) re-enables charging with no
+    // code change.
+    "CHAT_ACTION_FEE_ENABLED": "false"
+  },
+
+  // NOTE: the 3D-render, world-beta, world-origin and quest-gate client flags
+  // are BUILD-time, not runtime bindings. build_single.cjs derives them from
+  // the deploy branch (WORKERS_CI_BRANCH on Workers Builds, CF_PAGES_BRANCH on
+  // Pages) and bakes them into the game chunk; listing them here would have no
+  // effect. See build_single.cjs and docs/3d-gameplay-investigation.md.
+  //
+  // Secrets to set via the dashboard or `wrangler secret put`:
+  //   JWT_SECRET                — random 32+ byte string used to sign session JWTs
+  //   ADMIN_SECRET              — random 32+ byte string; the ONLY credential for
+  //                               the /admin portal and /api/admin/grant-item.
+  //                               Minimum 16 chars — shorter (or unset) denies all.
+  //   WORLD_EDITOR_TOKEN        — static bearer for the developer-only world
+  //                               editor API. Unset = the whole surface 503s.
+  //   GITHUB_CLIENT_ID          — from GitHub OAuth App
+  //   GITHUB_CLIENT_SECRET      — from GitHub OAuth App
+  //   GOOGLE_CLIENT_ID          — from Google Cloud OAuth 2.0 Client
+  //   GOOGLE_CLIENT_SECRET      — from Google Cloud OAuth 2.0 Client
+  //   STRIPE_API_KEY            — Stripe secret key (sk_live_… in prod)
+  //   STRIPE_WEBHOOK_SECRET     — Stripe webhook signing secret (whsec_…), live
+  //   STRIPE_PRICE_REMOVE_ADS   — Stripe Price ID for the remove-ads product
+  //   STRIPE_PRICE_CREDITS_10   — Stripe Price ID for 10 credits
+  //   STRIPE_PRICE_CREDITS_100  — Stripe Price ID for 100 credits
+  //   STRIPE_PRICE_CREDITS_1000 — Stripe Price ID for 1000 credits
+
+  "env": {
+    "preview": {
+      "name": "pocketrpg-app-preview",
+      "workers_dev": true,
+      "observability": { "enabled": true },
+      // DISABLE_QUEST_REQUIREMENTS is preview-ONLY and must never appear in the
+      // production "vars" above — it bypasses every quest gate so testers can
+      // reach quest-locked content. src/engine/questGates.js refuses it on the
+      // production hostnames as a second lock, and
+      // tests/questGateProduction.test.ts fails the build if it ever lands in
+      // production config.
+      //
+      // ADMIN_SECRET is deliberately NOT set for preview: /admin exists on the
+      // preview URL too, and an unset secret denies every request. If preview
+      // ever needs it, give it its own value — never reuse production's.
+      "vars": {
+        "APP_BASE_URL": "https://pocketrpg-app-preview.rlh.workers.dev",
+        "CHAT_ACTION_FEE_ENABLED": "false",
+        "DISABLE_QUEST_REQUIREMENTS": "true"
+      },
+      "assets": {
+        "directory": "dist_site",
+        "binding": "ASSETS",
+        "not_found_handling": "none",
+        "run_worker_first": ["/", "/index.html", "/editor", "/editor.html", "/preview", "/preview.html"]
+      },
+      // Bindings are NOT inherited from the top level — every one must be
+      // redeclared here even though only the D1 target differs.
+      "durable_objects": {
+        "bindings": [
+          { "name": "WorldZone", "class_name": "WorldZone" },
+          { "name": "COOP_ROOM", "class_name": "CoopBossRoom" }
+        ]
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "pocketrpg-preview",
+          "database_id": "59233295-f492-4113-94da-90034d84a6a4",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [
+        { "binding": "TRIPO_ASSETS", "bucket_name": "pocketrpg-assets-preview" }
+      ],
+      "ai": { "binding": "AI" }
+    }
+  }
+}

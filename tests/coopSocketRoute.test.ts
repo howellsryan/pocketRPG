@@ -4,7 +4,7 @@
 // session JWT is exchanged for a short-lived, single-fight token the URL may
 // carry. Everything here exists so that an unauthenticated socket never reaches
 // a Durable Object — and so that a Pages build ahead of the world Worker
-// degrades to polling instead of breaking the fight (§20's two-deploy rule).
+// degrades to polling instead of breaking the fight.
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { onRequestGet, onRequestPost } from '../functions/api/coop/session/[id]/socket.js'
 import { signJWT } from '../functions/_lib/jwt.js'
@@ -132,10 +132,9 @@ describe('spending it', () => {
     expect((await upgrade(`ticket=${stale}`)).status).toBe(401)
   })
 
-  // The two-deploy case: a Worker with no `socket` action answers 404, and that
-  // has to reach the client as a refusal it can fall back from — not a 101 and
-  // not a 500.
-  it('passes a stale Worker’s refusal through, so the client falls back to polling', async () => {
+  // A refusal from the room has to reach the client as something it can fall
+  // back from — not a 101 and not a 500.
+  it('passes the room’s refusal through, so the client falls back to polling', async () => {
     roomAnswer = async () => new Response(JSON.stringify({ error: 'unknown_action' }), { status: 404 })
     const { body } = await mintTicket()
     const res = await upgrade(`ticket=${body.ticket}`)
@@ -143,7 +142,7 @@ describe('spending it', () => {
     expect(await res.json()).toEqual({ error: 'unknown_action' })
   })
 
-  it('degrades rather than throwing when the world Worker is unreachable', async () => {
+  it('degrades rather than throwing when the room is unreachable', async () => {
     const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
     roomAnswer = async () => { throw new Error('Durable Object class not found') }
     const { body } = await mintTicket()
@@ -151,12 +150,5 @@ describe('spending it', () => {
     expect(res.status).toBe(503)
     expect(logged).toHaveBeenCalled()
     logged.mockRestore()
-  })
-
-  it('says group fights are off when the binding is missing entirely', async () => {
-    const { body } = await mintTicket()
-    delete env.COOP_ROOM
-    const res = await upgrade(`ticket=${body.ticket}`)
-    expect(res.status).toBe(503)
   })
 })

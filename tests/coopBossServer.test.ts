@@ -2,6 +2,7 @@
 // session SQL against the real migrations schema (tests/helpers/d1).
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { makeD1, FakeD1 } from './helpers/d1'
+import { fakeCoopRoom } from './helpers/coopRoom'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 import {
   COOP_SESSION_STALE_MS,
@@ -32,7 +33,7 @@ import itemsJson from '../src/data/items.json'
 const BOSS = 'corporeal_horror'
 const QUEST = 'the_heart_of_shadows'
 
-let env: { DB: FakeD1 }
+let env: { DB: FakeD1; COOP_ROOM: ReturnType<typeof fakeCoopRoom> }
 let raw: any
 
 function baseSave(overrides: Record<string, unknown> = {}) {
@@ -73,7 +74,7 @@ function readSave(id: number) {
 
 beforeEach(() => {
   const d = makeD1()
-  env = { DB: d.DB }
+  env = { DB: d.DB, COOP_ROOM: fakeCoopRoom(d.raw) }
   raw = d.raw
 })
 

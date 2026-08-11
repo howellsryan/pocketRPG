@@ -1,10 +1,8 @@
 // "N in the Wilderness" for the idle game's PvP card.
 //
-// Served by this Worker rather than by Pages because Pages has no binding to
-// WorldZone (it binds only the two DO classes it proxies, CoopBossRoom and
-// CoopBossRoom), and the number is a public, non-sensitive occupancy count —
-// so the idle client fetches it straight from the world origin under CORS
-// instead of paying for a new cross-script binding and a proxy route.
+// Answered outside the /api middleware (the world's routes always were), and
+// CORS-open to `*` on purpose: the number is public and non-sensitive, and a
+// native shell fetching it from capacitor://localhost is cross-origin.
 import { getServerByName } from 'partyserver'
 import { PVP_ZONE_ID } from '../shared/pvpArea'
 import type { WorldZone } from './WorldZone'

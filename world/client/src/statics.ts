@@ -3,6 +3,7 @@ import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { tileToWorld } from './scene'
 import type { StaticObject } from '../../shared/protocol'
 import type { Pickable } from './picking'
+import { modelUrl } from './assetBase'
 
 // Kenney nature-kit boulder tinted per ore; KayKit dungeon chest (both CC0,
 // copied from assets/open-world by hand — see the build guide's asset section).
@@ -60,7 +61,7 @@ type TreeEntry = { tree: THREE.Object3D; stump: THREE.Object3D }
 
 async function tryLoad(url: string): Promise<GLTF | null> {
   try {
-    return await new GLTFLoader().loadAsync(url)
+    return await new GLTFLoader().loadAsync(modelUrl(url))
   } catch {
     return null
   }

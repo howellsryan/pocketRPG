@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --env preview",
     "dev:client": "node scripts/gen-prop-manifest.mjs && vite --config client/vite.config.ts",
     "dev:seed": "node scripts/dev-seed.mjs",
     "gen:props": "node scripts/gen-prop-manifest.mjs",
@@ -12,8 +11,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "ci": "npm run typecheck && npm run test && npm run build",
-    "deploy": "wrangler deploy",
-    "deploy:preview": "wrangler deploy --env preview",
     "shoot:zones": "node scripts/shoot-zone.mjs"
   },
   "dependencies": {

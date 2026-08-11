@@ -5,6 +5,7 @@
 node_modules/
 dist/
 dist_tmp/
+dist_site/
 www/
 .wrangler/
 .dev.vars
