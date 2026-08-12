@@ -3500,55 +3500,64 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             .filter(p => p.bonusType !== 'protection')
             .sort((a, b) => b.level - a.level)
           return (
-            <div class="flex-1 min-h-0 overflow-y-auto bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-xl p-1 flex flex-col justify-center gap-1">
-              <div class="grid grid-cols-3 gap-1">
-                {protectionPrayers.map(prayer => {
-                  const canUse = prayerLevel >= prayer.level
-                  const isActive = combat?.activeProtectionPrayer === prayer.id
-                  const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
-                  return (
-                    <button
-                      key={prayer.id}
-                      onClick={() => canUse && handlePrayer(prayer.id)}
-                      disabled={!canUse}
-                      title={`${prayer.name} · Lv ${prayer.level}`}
-                      class={`px-1 py-0.5 rounded-md border text-center transition-colors ${
-                        isActive
-                          ? 'cb-prayon'
-                          : canUse
-                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
-                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
-                      }`}
-                    >
-                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={13} /></div>
-                      <div class={`text-[8px] opacity-70 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>{protectType}</div>
-                    </button>
-                  )
-                })}
+            <div class="flex-1 min-h-0 overflow-y-auto bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-xl p-1.5 flex flex-col justify-center gap-[clamp(4px,2vh,20px)]">
+              <div>
+                <div class="text-[9px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-50 mb-1 px-0.5">Protection</div>
+                <div class="grid grid-cols-3 gap-[clamp(3px,1.2vh,12px)]">
+                  {protectionPrayers.map(prayer => {
+                    const canUse = prayerLevel >= prayer.level
+                    const isActive = combat?.activeProtectionPrayer === prayer.id
+                    const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && handlePrayer(prayer.id)}
+                        disabled={!canUse}
+                        title={`${prayer.name} · Lv ${prayer.level}`}
+                        class={`h-[clamp(36px,6.5vh,84px)] flex flex-col items-center justify-center gap-1 rounded-md border text-center transition-colors ${
+                          isActive
+                            ? 'cb-prayon'
+                            : canUse
+                              ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
+                              : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
+                        }`}
+                      >
+                        <SkillIcon skill={prayerSkill(prayer)} size={20} />
+                        <div class={`text-[9px] opacity-70 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>{protectType}</div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-              <div class="grid grid-cols-6 gap-1">
-                {combatPrayers.map(prayer => {
-                  const canUse = prayerLevel >= prayer.level
-                  const isActive = combat?.activeCombatPrayer === prayer.id
-                  return (
-                    <button
-                      key={prayer.id}
-                      onClick={() => canUse && handlePrayer(prayer.id)}
-                      disabled={!canUse}
-                      title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
-                      class={`px-1 py-0.5 rounded-md border text-center transition-colors ${
-                        isActive
-                          ? 'cb-prayon'
-                          : canUse
-                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
-                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
-                      }`}
-                    >
-                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={13} /></div>
-                      <div class={`text-[8px] opacity-70 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-gold-dim)]'}`}>Lv {prayer.level}</div>
-                    </button>
-                  )
-                })}
+
+              <div class="border-t border-[var(--color-void-border)]" />
+
+              <div>
+                <div class="text-[9px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-50 mb-1 px-0.5">Enhance</div>
+                <div class="grid grid-cols-6 gap-[clamp(3px,0.8vh,8px)]">
+                  {combatPrayers.map(prayer => {
+                    const canUse = prayerLevel >= prayer.level
+                    const isActive = combat?.activeCombatPrayer === prayer.id
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && handlePrayer(prayer.id)}
+                        disabled={!canUse}
+                        title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
+                        class={`h-[clamp(28px,4.5vh,60px)] flex flex-col items-center justify-center gap-0.5 rounded-md border text-center transition-colors ${
+                          isActive
+                            ? 'cb-prayon'
+                            : canUse
+                              ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
+                              : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
+                        }`}
+                      >
+                        <SkillIcon skill={prayerSkill(prayer)} size={16} />
+                        <div class={`text-[8px] opacity-70 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-gold-dim)]'}`}>Lv {prayer.level}</div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           )
