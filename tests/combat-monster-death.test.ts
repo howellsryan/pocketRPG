@@ -1,10 +1,12 @@
-// Locks the engine half of the kill → loot-modal trigger.
+// Locks the engine half of the kill → loot-presentation trigger.
 //
-// CombatScreen.jsx opens the loot modal inside its `monsterDeath` event
-// handler (src/screens/CombatScreen.jsx). If the engine ever stops emitting
-// that event, or stops attaching `monster` + `loot` to it, the modal silently
-// stops appearing on kill — exactly the regression PR #380 caused indirectly
-// via a broken import in the same handler.
+// CombatScreen.jsx presents a kill inside its `monsterDeath` event handler
+// (src/screens/CombatScreen.jsx) — the full-screen modal for a boss or raid, a
+// reward-reveal card plus an auto-fight restart for everything else. If the
+// engine ever stops emitting that event, or stops attaching `monster` + `loot`
+// to it, a kill silently shows nothing and an ordinary grind stops dead —
+// exactly the regression PR #380 caused indirectly via a broken import in the
+// same handler.
 //
 // We can't unit-test the JSX modal under the project's no-UI-test rule, but
 // we can pin the engine contract the modal depends on.
