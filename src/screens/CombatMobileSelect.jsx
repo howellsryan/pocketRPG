@@ -5,24 +5,7 @@ import { getMonsterArt, getCategoryArt, getRaidArt, getMonsterLocationLabel } fr
 import { getSkillArt } from '../utils/skillArt.js'
 import { scaleMonsterForHardMode } from '../engine/hardMode.js'
 import { HardModeTag } from '../components/HardMode.jsx'
-
-// Mobile section display order (desktop keeps the COMBAT_CATEGORIES order).
-// Categories and raids are interleaved per design; PvP renders last.
-const MOBILE_CATEGORY_ORDER = [
-  'training', 'slayer', 'dragons_lair', 'sunken_crypts', 'ashveil_highlands',
-  'ironhold_fortress', 'verdant_wilds', 'wilderness', 'dagganoth_kings',
-  'bossing', 'venomcoil_matriarch', 'blighted_gauntlet', 'fight_caves',
-]
-const MOBILE_RAID_ORDER = ['cryptbound_champions', 'vaults_of_xyren', 'crimson_night_theatre']
-
-function orderBy(order, keyOf) {
-  return (a, b) => {
-    const ia = order.indexOf(keyOf(a))
-    const ib = order.indexOf(keyOf(b))
-    // Unlisted keys fall to the end, preserving their relative order.
-    return (ia === -1 ? order.length : ia) - (ib === -1 ? order.length : ib)
-  }
-}
+import { COMBAT_CATEGORY_ORDER, COMBAT_RAID_ORDER, orderBy } from '../utils/combatOrder.js'
 
 /**
  * Artsy mobile monster / raid select screen for combat.
@@ -78,10 +61,10 @@ export default function CombatMobileSelect({
           : a.combatLevel - b.combatLevel)
 
   const totalFoes = categories.reduce((sum, c) => sum + sortedMonsters(c).length, 0)
-  const orderedCategories = [...categories].sort(orderBy(MOBILE_CATEGORY_ORDER, c => c.key))
+  const orderedCategories = [...categories].sort(orderBy(COMBAT_CATEGORY_ORDER, c => c.key))
   const uniqueRaids = Object.values(raidsData)
     .filter((raid, i, all) => all.findIndex(r => r.id === raid.id) === i)
-    .sort(orderBy(MOBILE_RAID_ORDER, r => r.id))
+    .sort(orderBy(COMBAT_RAID_ORDER, r => r.id))
 
   const idleToggles = [
     { id: 'food', label: 'Idle Eat', icon: 'meat', on: idleSetup?.food?.length > 0 },

@@ -17,6 +17,52 @@
  * Pure logic, no imports.
  */
 
+/** Lowest a defence bonus can be ground down to. */
+export const DEFENCE_BONUS_FLOOR = -64
+
+/**
+ * The running total of defence bonus a special attack has ground off this
+ * monster (Grondar Godsword's warstrike — "for the rest of the fight").
+ *
+ * It lives beside `defenceBonus` rather than only inside it because a form
+ * change REPLACES that object wholesale with the form's authored numbers.
+ * Without the total, every rotation handed 16 of the game's bosses back
+ * everything a party had spent its special energy taking away — and on a boss
+ * that switches every attack, a warstrike was worth exactly one swing.
+ *
+ * It lives in the forms module because form changes are the only reason it has
+ * to exist: nothing else rebuilds `defenceBonus` mid-fight.
+ */
+export function recordDefenceBonusDrain(monster, amount) {
+  if (!monster?.defenceBonus || !(amount > 0)) return
+  const drain = { ...(monster.defenceBonusDrain || {}) }
+  for (const key of Object.keys(monster.defenceBonus)) {
+    drain[key] = (drain[key] || 0) + amount
+    monster.defenceBonus[key] = Math.max(DEFENCE_BONUS_FLOOR, monster.defenceBonus[key] - amount)
+  }
+  monster.defenceBonusDrain = drain
+}
+
+/** Re-applies the running total over freshly-installed authored numbers. */
+export function applyDefenceBonusDrain(monster) {
+  const drain = monster?.defenceBonusDrain
+  if (!drain || !monster.defenceBonus) return
+  for (const [key, amount] of Object.entries(drain)) {
+    if (!(key in monster.defenceBonus)) continue
+    monster.defenceBonus[key] = Math.max(DEFENCE_BONUS_FLOOR, monster.defenceBonus[key] - amount)
+  }
+}
+
+/**
+ * A new body — a Verzik phase, a double-kill boss's second life — brings its own
+ * defences, so the total does not follow it. Nulled rather than deleted: co-op
+ * carries this field on the shared boss record and its writer skips `undefined`,
+ * so a delete would leave the room holding the drain the new body just shed.
+ */
+export function clearDefenceBonusDrain(monster) {
+  if (monster) monster.defenceBonusDrain = null
+}
+
 /** Attacks a boss holds a form for, when it is not switching every attack. */
 export function randomFormSwitchThreshold(monster, random = Math.random) {
   const min = monster?.formSwitchMin || 1
@@ -44,7 +90,12 @@ export function applyForm(monster, formKey) {
   // Falls back like the two above it: a form authored without defences must
   // inherit the boss's own, never zero them — that would be a form the whole
   // room suddenly hits through, from a field nobody thought to write.
-  monster.defenceBonus = { ...(form.defenceBonus ?? monster.defenceBonus ?? {}) }
+  const formDefence = form.defenceBonus
+  monster.defenceBonus = { ...(formDefence ?? monster.defenceBonus ?? {}) }
+  // Only the authored branch needs the drain put back: the fallback inherits the
+  // numbers already carrying it, and subtracting twice would grind the boss down
+  // a second time for every rotation it happened to make.
+  if (formDefence) applyDefenceBonusDrain(monster)
   monster.formMaxHit = form.maxHit
   // Authored per form, and only ever a hint to the player — but a hint that
   // names the form before last is worse than none.

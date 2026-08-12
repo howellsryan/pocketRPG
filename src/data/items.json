@@ -10587,7 +10587,9 @@
     "otherBonus": {
       "meleeStrength": 142,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "slayerTaskAccuracyPercent": 20,
+      "slayerTaskDamagePercent": 5
     },
     "requirements": {
       "attack": 80
