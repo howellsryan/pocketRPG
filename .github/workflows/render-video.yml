@@ -11,10 +11,6 @@ on:
         description: 'Recipe file under video/recipes/, without .json'
         required: true
         default: 'zero-to-hero'
-      enable_3d:
-        description: 'Build with the 3D arena enabled (needed for Equipment-screen shots)'
-        type: boolean
-        default: false
 
 concurrency:
   group: render-video-${{ github.workflow }}
@@ -57,8 +53,6 @@ jobs:
 
       - name: Build game bundle
         run: npm run rebuild
-        env:
-          Enable3dRender: ${{ inputs.enable_3d && 'true' || '' }}
 
       - name: Validate recipe exists
         run: test -f "video/recipes/${{ inputs.recipe }}.json" || { echo "::error::no recipe at video/recipes/${{ inputs.recipe }}.json"; exit 1; }

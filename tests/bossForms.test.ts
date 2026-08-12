@@ -1,9 +1,13 @@
 // A multi-form boss's rotation is a per-SWING decision, and three runtimes have
 // to agree on when it happens. These pin the shared-record contract that co-op
 // and the open world both lean on.
-import { describe, it, expect } from 'vitest'
-import { applyForm, advanceSharedForm, formChangeAttackTimer, isMultiForm, pickNextForm, pinFormToSession } from '../src/engine/bossForms.js'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { applyForm, advanceSharedForm, clearDefenceBonusDrain, DEFENCE_BONUS_FLOOR, formChangeAttackTimer, isMultiForm, pickNextForm, pinFormToSession, recordDefenceBonusDrain } from '../src/engine/bossForms.js'
 import monstersData from '../src/data/monsters.json'
+import itemsData from '../src/data/items.json'
+import { createCombatState, processCombatTick } from '../src/engine/combat.js'
+
+afterEach(() => { vi.restoreAllMocks() })
 
 const ZARYTH = 'zaryth_the_empty_lord'
 const zaryth = () => JSON.parse(JSON.stringify((monstersData as Record<string, unknown>)[ZARYTH])) as Record<string, any>
@@ -162,5 +166,104 @@ describe('the clock a form change restarts', () => {
     const world = formChangeAttackTimer(monster)
     expect(new Set([solo, coop, world]).size).toBe(1)
     expect(solo).toBe(monster.attackSpeed)
+  })
+})
+
+describe('a defence drain across a form change', () => {
+  // Grondar Godsword's warstrike "permanently weakens the target's defences for
+  // the rest of the fight". A form change replaces defenceBonus wholesale with
+  // the form's authored numbers, so without a running total every rotation
+  // handed all of it back — on a boss switching every attack, a warstrike was
+  // worth exactly one swing.
+  const drainOf = (monster: Record<string, any>, style: string) =>
+    monster.forms[monster.currentForm].defenceBonus[style] - monster.defenceBonus[style]
+
+  it('survives a rotation into a form with its own authored defences', () => {
+    const monster = zaryth()
+    applyForm(monster, 'melee')
+    recordDefenceBonusDrain(monster, 40)
+    expect(drainOf(monster, 'stab')).toBe(40)
+
+    applyForm(monster, 'ranged')
+    expect(monster.currentForm).toBe('ranged')
+    expect(drainOf(monster, 'stab')).toBe(40)
+    expect(monster.defenceBonus).not.toEqual(monster.forms.ranged.defenceBonus)
+  })
+
+  it('accumulates across rotations rather than restarting from each form', () => {
+    const monster = zaryth()
+    applyForm(monster, 'melee')
+    recordDefenceBonusDrain(monster, 30)
+    applyForm(monster, 'magic')
+    recordDefenceBonusDrain(monster, 25)
+    expect(drainOf(monster, 'slash')).toBe(55)
+    applyForm(monster, 'melee')
+    expect(drainOf(monster, 'slash')).toBe(55)
+  })
+
+  it('is applied exactly once when a form inherits the boss\'s defences instead of authoring its own', () => {
+    // The inherited numbers already carry the drain; subtracting again would
+    // grind the boss down a second time for every rotation it happened to make.
+    const monster = zaryth()
+    for (const form of Object.values(monster.forms) as Record<string, any>[]) delete form.defenceBonus
+    applyForm(monster, 'melee')
+    const base = { ...monster.defenceBonus }
+    recordDefenceBonusDrain(monster, 20)
+    applyForm(monster, 'ranged')
+    applyForm(monster, 'magic')
+    for (const style of Object.keys(base)) {
+      expect(monster.defenceBonus[style], style).toBe(base[style] - 20)
+    }
+  })
+
+  it('never grinds a bonus below the floor, however many warstrikes land', () => {
+    const monster = zaryth()
+    applyForm(monster, 'melee')
+    for (let i = 0; i < 20; i++) recordDefenceBonusDrain(monster, 60)
+    applyForm(monster, 'ranged')
+    for (const value of Object.values(monster.defenceBonus) as number[]) {
+      expect(value).toBe(DEFENCE_BONUS_FLOOR)
+    }
+  })
+
+  it('does not follow the boss into a new body', () => {
+    const monster = zaryth()
+    applyForm(monster, 'melee')
+    recordDefenceBonusDrain(monster, 40)
+    clearDefenceBonusDrain(monster)
+    applyForm(monster, 'ranged')
+    expect(monster.defenceBonus).toEqual(monster.forms.ranged.defenceBonus)
+  })
+
+  it('nulls rather than deletes the total, so a shared record cannot keep a shed drain', () => {
+    // co-op's pickMutableMonsterFields skips `undefined`, so a delete would
+    // leave the room holding the drain the new body just shed.
+    const monster = zaryth()
+    recordDefenceBonusDrain(monster, 10)
+    clearDefenceBonusDrain(monster)
+    expect('defenceBonusDrain' in monster).toBe(true)
+    expect(monster.defenceBonusDrain).toBeNull()
+  })
+})
+
+describe('a phase change is a new body', () => {
+  it('sheds a warstrike drain when Verzik moves to her next phase', () => {
+    // Unlike a rotation, a phase hands the boss a fresh health bar and refills
+    // the player's special energy — it is a new fight in all but name, so the
+    // grind taken off the last body does not follow it onto this one.
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const verzik = (monstersData as Record<string, any>).verzik_vitur
+    const state: any = createCombatState(verzik, 'ranged', 'accurate', null, monstersData)
+    state.monster.currentHP = 1
+    state.monster.defenceBonusDrain = { stab: 50, slash: 50, crush: 50, magic: 50, ranged: 50 }
+    state.playerAttackTimer = 0
+
+    const out = processCombatTick(state, { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, hitpoints: 99, currentHP: 99 },
+      { weapon: { itemId: 'bow_of_faerdhinen', charges: 999 } }, itemsData)
+
+    expect(out.events.some((e: any) => e.type === 'verzikPhaseChange')).toBe(true)
+    const monster = out.combatState.monster
+    expect(monster.defenceBonusDrain).toBeNull()
+    expect(monster.defenceBonus).toEqual(verzik.forms[monster.currentForm].defenceBonus)
   })
 })
