@@ -65,11 +65,6 @@ import { emitKillReveal } from '../utils/rewardReveal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
-import CombatArena3D from '../components/CombatArena3D.jsx'
-import { getCreatureSpec } from '../3d/creatures.js'
-import { getArenaBiomeSpec } from '../3d/biomeRegistry.js'
-import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getGearPlacements, getCharacterModel } from '../utils/equipModels.js'
-import { canRender3D } from '../utils/three3d.js'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
@@ -443,25 +438,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [monsterSplats, setMonsterSplats] = useState([])
   const [addSplats, setAddSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
-  // 3D combat arena (Phase 2): renders inline in place of the HP bars for
-  // monsters with a registered model; the 🎥/📊 chip swaps between the two,
-  // and the choice persists. Combat ticks are held until the arena reports
-  // ready (onReady — it self-releases on a load timeout), so a fight never
-  // starts against an invisible scene.
-  const [arenaClosed, setArenaClosed] = useState(() => {
-    try { return localStorage.getItem('pocketrpg_combat3d') === 'off' } catch { return false }
-  })
-  const [arenaSignal, setArenaSignal] = useState(null)
-  // Fired one tick BEFORE the monster's next attack lands (monsterAttackTimer
-  // reaches 1) so the 3D arena can lead a rigged monster's wind-up and have the
-  // swing connect exactly on the hit tick's splat. See CombatArena3D.
-  const [arenaWindup, setArenaWindup] = useState(null)
-  const [arenaReady, setArenaReady] = useState(false)
-  const arenaReadyRef = useRef(false)
-  const arenaClosedRef = useRef(arenaClosed)
-  useEffect(() => { arenaReadyRef.current = arenaReady }, [arenaReady])
-  useEffect(() => { arenaClosedRef.current = arenaClosed }, [arenaClosed])
-  useEffect(() => { setArenaReady(false) }, [combat?.monster?.id, arenaClosed])
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
   const hasAutoStarted = useRef(false)
@@ -678,11 +654,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       const state = combatRef.current
       if (!state || !state.active) return
 
-      // Hold the fight while the 3D arena is still loading its models, so the
-      // opening hits are never invisible (arena onReady/onFail releases this).
-      if (!arenaClosedRef.current && !arenaReadyRef.current &&
-          getMonsterModel(state.monster.id) && getCharacterAssetPath() && canRender3D()) return
-
       const playerStats = {
         attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
         strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
@@ -712,21 +683,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       pushSplats(setMonsterSplats, tickSplats.monster)
       pushSplats(setAddSplats, tickSplats.add)
       pushSplats(setPlayerSplats, tickSplats.player)
-      if (tickSplats.monster.length || tickSplats.add.length || tickSplats.player.length) {
-        setArenaSignal(prev => ({
-          seq: (prev?.seq || 0) + 1,
-          hero: tickSplats.monster.length > 0 || tickSplats.add.length > 0,
-          monster: tickSplats.player.length > 0,
-          special: events.some(ev => ev.type === 'specialHit'),
-        }))
-      }
-
-      // Wind-up lead: broadcast how many ticks until the monster's next attack
-      // so the arena can pre-start a rigged swing early enough (even for clips
-      // longer than one tick) that it ENDS on the hit tick's splat.
-      if (combatState.active && combatState.monster.currentHP > 0 && combatState.monsterAttackTimer >= 1) {
-        setArenaWindup(prev => ({ seq: (prev?.seq || 0) + 1, ticks: combatState.monsterAttackTimer }))
-      }
 
       for (const ev of events) {
         if (ev.type === 'specialHit') {
@@ -3266,38 +3222,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
-  // Combat view — GLB registry entry wins per-monster; a procedural
-  // blend-shell spec (creatures3d.json) covers the rest.
-  const arenaModel = combat?.active && combat.monster ? getMonsterModel(combat.monster.id) : null
-  // currentForm keys multiForm bosses to their per-phase spec (creatures3d
-  // `forms`); the arena swaps the creature in place on form transitions.
-  const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id, combat.monster.currentForm) : null
-  // Hero realism (2026-07 re-scope): the arena hero is the GLB human — the
-  // blend-shell hero capped out at a mannequin read (docs/hero-realism-plan.md).
-  // Passing null here falls back to the GLB hero + bone-attach/skinned gear;
-  // the procedural hero stays authorable via render-proc.mjs --hero.
-  const arenaHeroProc = null
-  const arenaMonsterId = combat?.active && combat.monster ? combat.monster.id : null
-  const arenaBiome = useMemo(() => getArenaBiomeSpec(worldLocation, arenaMonsterId), [worldLocation, arenaMonsterId])
-  const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(arenaHeroProc || getCharacterAssetPath()) && canRender3D()
-  const showArena = arenaAvailable && !arenaClosed
-  const reopenArena = () => {
-    setArenaClosed(false)
-    try { localStorage.removeItem('pocketrpg_combat3d') } catch { /* private mode */ }
-  }
-  const closeArena = () => {
-    setArenaClosed(true)
-    try { localStorage.setItem('pocketrpg_combat3d', 'off') } catch { /* private mode */ }
-  }
-  const arenaChip = arenaAvailable && (
-    <button
-      class="px-2 py-1 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[10px] font-semibold text-[var(--color-gold)] active:bg-[var(--color-void-border)]"
-      onClick={arenaClosed ? reopenArena : closeArena}
-      aria-label={arenaClosed ? 'Switch to 3D battle view' : 'Switch to progress bars'}
-    >
-      {arenaClosed ? '🎥 3D' : '📊 Bars'}
-    </button>
-  )
   // ── Boss adds (e.g. the Dread Core, Zaryth's sentinels) ──
   // Live enemies, not a phase: they attack alongside the boss until killed, so
   // the player needs a way to swing at each and to see the one they are on.
@@ -3346,37 +3270,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     </div>
   )
 
-  // Inline 3D arena — replaces the HP-bar block in whichever layout renders.
-  const heroSpec = getCharacterModel() || {}
-  const arenaPanel = showArena && (
-    <CombatArena3D
-      monsterId={combat.monster.id}
-      monsterName={combat.monster.name}
-      monsterPath={arenaModel ? arenaModel.path : null}
-      monsterProc={arenaProc}
-      monsterHeight={(arenaModel || arenaProc).height}
-      monsterRotationDeg={(arenaModel || arenaProc).rotationDeg}
-      characterPath={getCharacterAssetPath()}
-      characterRotationDeg={heroSpec.rotationDeg}
-      heroProc={arenaHeroProc}
-      biome={arenaBiome}
-      clips={{ idle: heroSpec.combatIdleClip || heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip, hit: heroSpec.hitClip, death: heroSpec.deathClip }}
-      weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
-      gear={getGearPlacements(equipment)}
-      attackSignal={arenaSignal}
-      windupSignal={arenaWindup}
-      monsterAttackImpactSec={arenaModel ? arenaModel.attackImpactSec : null}
-      monsterAttackMaxSec={arenaModel ? arenaModel.attackMaxSec : null}
-      monsterAttackStyle={combat.monster.attackStyle}
-      monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
-      playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}
-      monsterSplats={monsterSplats}
-      playerSplats={playerSplats}
-      onReady={() => setArenaReady(true)}
-      onFail={() => setArenaClosed(true)}
-    />
-  )
-
   return (
     <div class={`forge-shell h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
       {/* Back button */}
@@ -3412,22 +3305,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             })()}
           </span>
           <span class="flex items-center gap-2">
-            {arenaChip}
             <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
           </span>
         </div>
-        {!showArena && (
-          <div class="relative">
-            <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
-            <HitSplatLayer splats={monsterSplats} />
-          </div>
-        )}
+        <div class="relative">
+          <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
+          <HitSplatLayer splats={monsterSplats} />
+        </div>
       </div>
 
       {addPanel}
-
-      {/* Inline 3D arena replaces both HP bars (its own bars ride the scene) */}
-      {arenaPanel && <div class="mb-2">{arenaPanel}</div>}
 
       {/* Raid progress indicator */}
       {combat.raid && (
@@ -3457,15 +3344,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Player HP */}
       <div class="mb-2">
         <div class="flex items-center justify-between mb-0.5">
-          {!showArena && <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>}
+          <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>
           <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
         </div>
-        {!showArena && (
-          <div class="relative">
-            <HPBar current={currentHP} max={getMaxHP()} size="large" />
-            <HitSplatLayer splats={playerSplats} />
-          </div>
-        )}
+        <div class="relative">
+          <HPBar current={currentHP} max={getMaxHP()} size="large" />
+          <HitSplatLayer splats={playerSplats} />
+        </div>
       </div>
 
       {/* Prayer pool — drains while prayers are active; restored by prayer/super restore potions */}
@@ -3834,7 +3719,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 nameColor={getStyleArt(form ? form.attackStyle : m.attackStyle).color}
                 combatLevel={m.combatLevel}
                 onInfo={() => setSelectedMonsterInfo(m)}
-                aside={<>{m.hardModeActive && <HardModeTag />}{arenaChip}</>}
+                aside={m.hardModeActive && <HardModeTag />}
               />
 
               {/* Raid progress */}
@@ -3852,34 +3737,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </div>
               )}
 
-              {/* Inline 3D arena replaces both HP blocks (its own bars +
-                  splats ride the scene); the 📊 chip swaps the bars back. */}
-              {showArena ? (
-                <>
-                  <div class="mb-2">{arenaPanel}</div>
-                  <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
-                </>
-              ) : (
-                <>
-                  {/* Monster HP */}
-                  <CombatHPBlock
-                    label="Enemy Hitpoints"
-                    current={m.currentHP}
-                    max={m.hitpoints}
-                    splats={monsterSplats}
-                  />
+              {/* Monster HP */}
+              <CombatHPBlock
+                label="Enemy Hitpoints"
+                current={m.currentHP}
+                max={m.hitpoints}
+                splats={monsterSplats}
+              />
 
-                  {/* Player HP */}
-                  <CombatHPBlock
-                    label="Your Hitpoints"
-                    current={currentHP}
-                    max={getMaxHP()}
-                    splats={playerSplats}
-                    valueColor="#7ce88a"
-                    right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
-                  />
-                </>
-              )}
+              {/* Player HP */}
+              <CombatHPBlock
+                label="Your Hitpoints"
+                current={currentHP}
+                max={getMaxHP()}
+                splats={playerSplats}
+                valueColor="#7ce88a"
+                right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
+              />
 
               {addPanel}
 
