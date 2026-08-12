@@ -151,14 +151,36 @@ ${SCROLL_CSS}
 }
 :root[data-hud-sheet="closed"] #hud-body { display: none; }
 .hud-sheet-handle { display: none; }
-.hud-pane { display: none; }
-.hud-pane.active { display: block; }
+/* Inventory is the tallest pane by design (28-slot grid), so it's the only
+   one left in normal flow — that makes it (and only it) set #hud-panes'
+   height. Every other pane is absolutely positioned to fill that exact box
+   (never grows past it — each has its own overflow-y scroll as a fallback),
+   so every tab renders at one fixed height instead of shrink-wrapping its
+   own content. Inactive panes stay in the layout (visibility, not
+   display:none) rather than being unmounted, which is what lets an inactive
+   inventory pane still size the box while some other tab is showing. Each
+   pane centers its own content vertically, so a pane shorter than inventory
+   doesn't just leave a dead gap glued to the top. */
+#hud-panes { position: relative; }
+.hud-pane {
+  visibility: hidden; pointer-events: none;
+  display: flex; flex-direction: column; justify-content: center;
+  /* If a pane's own content is taller than inventory's fixed box (e.g. a
+     bigger equip layout), plain center would clip its start behind a
+     negative scroll offset with no obvious way to tell there's more above.
+     "safe center" falls back to top-alignment for exactly that case;
+     unsupported engines just keep the plain center above. */
+  justify-content: safe center;
+}
+.hud-pane:not([data-pane="inventory"]) { position: absolute; inset: 0; overflow-y: auto; }
+.hud-pane.active { visibility: visible; pointer-events: auto; }
 
 /* portrait: sheet docks above the bottom rail, drag handle at the top */
 :root[data-hud-orient="portrait"] #hud-body {
   left: 0; right: 0; bottom: 64px; border-radius: 16px 16px 0 0;
   border-left: none; border-right: none; border-bottom: none;
   padding: 0 12px 10px; box-shadow: 0 -6px 22px rgba(0, 0, 0, 0.35);
+  max-height: 78vh;
 }
 :root[data-hud-orient="portrait"] .hud-sheet-handle {
   display: flex; justify-content: center; padding: 9px 0 6px; cursor: grab;
@@ -168,9 +190,12 @@ ${SCROLL_CSS}
 :root[data-hud-orient="portrait"] .hud-sheet-handle span {
   width: 44px; height: 5px; border-radius: 999px; background: #6a5a3a;
 }
-/* landscape: slide-out beside the rail, full height, no handle */
+/* landscape: slide-out beside the rail, no handle. Height is fixed to
+   inventory's content (see #hud-panes above), not stretched to the
+   viewport — a 3-button Combat pane doesn't need to fill the whole screen. */
 :root[data-hud-orient="landscape"] #hud-body {
-  top: 0; bottom: 0; width: 300px; padding: 12px 12px 14px;
+  top: 12px; width: 300px; padding: 12px 12px 14px;
+  max-height: calc(100% - 24px);
 }
 :root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-body { right: 58px; border-right: none; }
 :root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-body { left: 58px; border-left: none; }
@@ -963,6 +988,13 @@ export function initHud(handlers?: HudHandlers): void {
   paneHead.appendChild(paneClose)
   body.appendChild(paneHead)
 
+  // All panes stack in this one box; inventory (the tallest) stays in normal
+  // flow and sets its height, every other pane overlays it absolutely — see
+  // the #hud-panes/.hud-pane CSS above for the mechanism.
+  const panes = document.createElement('div')
+  panes.id = 'hud-panes'
+  body.appendChild(panes)
+
   const invPane = document.createElement('div')
   invPane.className = 'hud-pane active'
   invPane.setAttribute('data-pane', 'inventory')
@@ -974,7 +1006,7 @@ export function initHud(handlers?: HudHandlers): void {
     inv.appendChild(slot)
   }
   invPane.appendChild(inv)
-  body.appendChild(invPane)
+  panes.appendChild(invPane)
 
   const equipPane = document.createElement('div')
   equipPane.className = 'hud-pane'
@@ -996,7 +1028,7 @@ export function initHud(handlers?: HudHandlers): void {
     equip.appendChild(cell)
   }
   equipPane.appendChild(equip)
-  body.appendChild(equipPane)
+  panes.appendChild(equipPane)
 
   const combatPane = document.createElement('div')
   combatPane.className = 'hud-pane'
@@ -1039,7 +1071,7 @@ export function initHud(handlers?: HudHandlers): void {
   specBtn.addEventListener('click', () => handlers?.onSpecial())
   combat.appendChild(specBtn)
   combatPane.appendChild(combat)
-  body.appendChild(combatPane)
+  panes.appendChild(combatPane)
 
   // Prayer has its own tab (moved off the Combat tab, 2026-07): the pool bar
   // + Protection/Combat toggle grid, built by renderPrayerPanel/setPrayerState.
@@ -1064,7 +1096,7 @@ export function initHud(handlers?: HudHandlers): void {
   prayerGrid.className = SCROLL_CLASS
   prayer.appendChild(prayerGrid)
   prayerPane.appendChild(prayer)
-  body.appendChild(prayerPane)
+  panes.appendChild(prayerPane)
 
   const magicPane = document.createElement('div')
   magicPane.className = 'hud-pane'
@@ -1073,7 +1105,7 @@ export function initHud(handlers?: HudHandlers): void {
   magic.id = 'magic-panel'
   magic.className = SCROLL_CLASS
   magicPane.appendChild(magic)
-  body.appendChild(magicPane)
+  panes.appendChild(magicPane)
 
   document.body.appendChild(body)
   if (handlers) setupInvDrag(inv, handlers)
@@ -1177,7 +1209,7 @@ export function initHud(handlers?: HudHandlers): void {
 
 // The portrait sheet's drag-to-resize handle: press-drag adjusts the sheet
 // height live, release snaps to peek/full or dismisses (sheetSnap). Landscape
-// ignores it (the handle is CSS-hidden and the body is full-height).
+// ignores it (the handle is CSS-hidden and the body is a fixed content height).
 function setupSheetDrag(handle: HTMLElement): void {
   let start: { y: number; h: number } | null = null
   const onMove = (e: PointerEvent): void => {
