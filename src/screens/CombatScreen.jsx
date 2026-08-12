@@ -3384,8 +3384,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Inline gear paperdoll — desktop only. Click an equipped slot to
           unequip directly into inventory (only works if there's space).
           Mobile keeps the ⚙️ Gear button + modal flow. */}
-      <div class={`${isDesktopCombatLayout ? 'block' : 'hidden'} mt-2`}>
-        <div class="grid grid-cols-2 gap-2 mb-2">
+      <div class={`${isDesktopCombatLayout ? 'flex' : 'hidden'} flex-col flex-1 min-h-0 mt-2`}>
+        <div class="grid grid-cols-2 gap-2 mb-1.5 flex-shrink-0">
           {(() => {
             const weaponEntry = equipment?.weapon
             const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
@@ -3398,7 +3398,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <button
                   onClick={canSpec ? handleSpecialAttack : undefined}
                   disabled={!canSpec}
-                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                  class={`py-2 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                   style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                 >
                   ⚡ {hasSpec ? 'Spec' : 'No Spec'}
@@ -3406,7 +3406,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <button
                   onClick={() => isMagic && setShowSpellModal(true)}
                   disabled={!isMagic}
-                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                  class={`py-2 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                   style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                 >
                   🔮 Cast Spell
@@ -3415,13 +3415,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             )
           })()}
         </div>
-        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Gear</div>
-        <EquipmentPaperdoll
-          equipment={equipment}
-          itemsData={itemsData}
-          onSelect={(slotName) => handleUnequipSlot(slotName)}
-          size="mdFixed"
-        />
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1 px-1 flex-shrink-0">Gear</div>
+        <div class="flex-1 min-h-0 overflow-y-auto bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-xl p-2 flex items-center justify-center">
+          <EquipmentPaperdoll
+            equipment={equipment}
+            itemsData={itemsData}
+            onSelect={(slotName) => handleUnequipSlot(slotName)}
+            size="fluidFixed"
+            asCard={false}
+          />
+        </div>
       </div>
 
       </div>{/* /LEFT pane */}
@@ -3432,17 +3435,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           mobile so the existing modal-driven flow is preserved there. */}
       <div class={`${isDesktopCombatLayout ? 'flex' : 'hidden'} flex-col ${isDesktopCombatLayout ? 'col-start-2 row-start-1 overflow-y-auto min-h-0' : ''}`}>
 
-      <div class="flex items-center justify-between mb-2 px-1">
+      <div class="flex items-center justify-between mb-0.5 px-1 flex-shrink-0">
         <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Inventory</div>
         <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
           {freeSlots(inventory)}/28 free
         </span>
       </div>
 
+      <div class="flex-shrink-0">
       <InventoryGrid
         inventory={inventory}
         size="normal"
-        gridClass="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 justify-items-center"
+        gridClass="grid grid-cols-7 gap-1 justify-items-center"
         onReorder={(from, to) => {
           const newInv = [...inventory]
           const tmp = newInv[to]
@@ -3458,12 +3462,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           else if (item.type === 'potion') handlePotion(slot.itemId)
         }}
       />
+      </div>
 
       {/* Inline prayer toggles — desktop only. Mirrors the prayer modal's
           activeProtectionPrayer / activeCombatPrayer toggles, but inline so
           mobile keeps the 🙏 Prayer button + modal flow. */}
-      <div class="mt-4">
-        <div class="flex items-start justify-between gap-2 mb-1.5 px-1">
+      <div class="flex flex-col flex-1 min-h-0 mt-1.5">
+        <div class="flex items-start justify-between gap-2 mb-1 px-1 flex-shrink-0">
           <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Prayers</div>
           {Object.keys(combat?.activePotions || {}).length > 0 && (
             <div class="text-right text-[9px] text-[var(--color-gold)] leading-tight">
@@ -3495,57 +3500,66 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             .filter(p => p.bonusType !== 'protection')
             .sort((a, b) => b.level - a.level)
           return (
-            <>
-              <div class="grid grid-cols-3 gap-1 mb-1.5">
-                {protectionPrayers.map(prayer => {
-                  const canUse = prayerLevel >= prayer.level
-                  const isActive = combat?.activeProtectionPrayer === prayer.id
-                  const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
-                  return (
-                    <button
-                      key={prayer.id}
-                      onClick={() => canUse && handlePrayer(prayer.id)}
-                      disabled={!canUse}
-                      title={`${prayer.name} · Lv ${prayer.level}`}
-                      class={`px-1 py-1.5 rounded-md border text-center transition-colors ${
-                        isActive
-                          ? 'cb-prayon'
-                          : canUse
-                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
-                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
-                      }`}
-                    >
-                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={18} /></div>
-                      <div class={`text-[8px] opacity-70 mt-0.5 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>{protectType}</div>
-                    </button>
-                  )
-                })}
+            <div class="flex-1 min-h-0 overflow-y-auto bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-xl p-1.5 flex flex-col justify-center gap-[clamp(4px,2vh,20px)]">
+              <div>
+                <div class="text-[9px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-50 mb-1 px-0.5">Protection</div>
+                <div class="grid grid-cols-3 gap-[clamp(3px,1.2vh,12px)]">
+                  {protectionPrayers.map(prayer => {
+                    const canUse = prayerLevel >= prayer.level
+                    const isActive = combat?.activeProtectionPrayer === prayer.id
+                    const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && handlePrayer(prayer.id)}
+                        disabled={!canUse}
+                        title={`${prayer.name} · Lv ${prayer.level}`}
+                        class={`h-[clamp(36px,6.5vh,84px)] flex flex-col items-center justify-center gap-1 rounded-md border text-center transition-colors ${
+                          isActive
+                            ? 'cb-prayon'
+                            : canUse
+                              ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
+                              : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
+                        }`}
+                      >
+                        <SkillIcon skill={prayerSkill(prayer)} size={20} />
+                        <div class={`text-[9px] opacity-70 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>{protectType}</div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-              <div class="grid grid-cols-6 gap-1">
-                {combatPrayers.map(prayer => {
-                  const canUse = prayerLevel >= prayer.level
-                  const isActive = combat?.activeCombatPrayer === prayer.id
-                  return (
-                    <button
-                      key={prayer.id}
-                      onClick={() => canUse && handlePrayer(prayer.id)}
-                      disabled={!canUse}
-                      title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
-                      class={`px-1 py-1 rounded-md border text-center transition-colors ${
-                        isActive
-                          ? 'cb-prayon'
-                          : canUse
-                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
-                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
-                      }`}
-                    >
-                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={18} /></div>
-                      <div class={`text-[8px] opacity-70 mt-0.5 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-gold-dim)]'}`}>Lv {prayer.level}</div>
-                    </button>
-                  )
-                })}
+
+              <div class="border-t border-[var(--color-void-border)]" />
+
+              <div>
+                <div class="text-[9px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-50 mb-1 px-0.5">Enhance</div>
+                <div class="grid grid-cols-6 gap-[clamp(3px,0.8vh,8px)]">
+                  {combatPrayers.map(prayer => {
+                    const canUse = prayerLevel >= prayer.level
+                    const isActive = combat?.activeCombatPrayer === prayer.id
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && handlePrayer(prayer.id)}
+                        disabled={!canUse}
+                        title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
+                        class={`h-[clamp(28px,4.5vh,60px)] flex flex-col items-center justify-center gap-0.5 rounded-md border text-center transition-colors ${
+                          isActive
+                            ? 'cb-prayon'
+                            : canUse
+                              ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
+                              : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
+                        }`}
+                      >
+                        <SkillIcon skill={prayerSkill(prayer)} size={16} />
+                        <div class={`text-[8px] opacity-70 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-gold-dim)]'}`}>Lv {prayer.level}</div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </>
+            </div>
           )
         })()}
       </div>
