@@ -19,7 +19,7 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay
   const master = SLAYER_MASTERS.find(m => m.id === masterId)
   const {
     stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot,
-    slayerPerks, completedQuests,
+    slayerPerks, completedQuests, bossKillCounts, killCountsLoaded,
   } = useGame()
   const [busy, setBusy] = useState(false)
   if (!master) return null
@@ -35,7 +35,13 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay
     if (hasTask) return
     if (onGetTask?.() === false) { onClose?.(); return }
     const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
-    const pick = pickSlayerMonster(master, slayerLevel, { completedQuests })
+    // Kill counts are server-owned and land a fetch after the rest of the state;
+    // until they do, a kill-count-gated boss simply isn't offered (isEntryEligible
+    // fails closed) rather than being handed out as a task nothing will start.
+    const pick = pickSlayerMonster(master, slayerLevel, {
+      completedQuests,
+      bossKillCounts: killCountsLoaded ? bossKillCounts : null,
+    })
     if (!pick) {
       addToast('No tasks available — raise your slayer level (or finish required quests) for this master.', 'error')
       return

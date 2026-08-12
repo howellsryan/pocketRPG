@@ -2,6 +2,7 @@ import monstersData from '../data/monsters.json'
 import raidsData from '../data/raids.json'
 import { DAGANNOTH_KINGS_TASK_ID } from './slayerTasks.js'
 import { questRequirementMet } from './questGates.js'
+import { unmetKillCountRequirement } from './combatRequirements.js'
 
 // Zul-Kaar's boss-task pool includes every boss monster EXCEPT these 4, which
 // are raid-final-bosses only reachable via a full raid clear (never independently
@@ -196,13 +197,12 @@ export const SLAYER_MASTERS = [
       // (RAID_MONSTER_IDS — both sub-bosses and final bosses): none of them are
       // individually assignable, only a full raid clear is.
       //
-      // Also excluded: bosses gated on kill counts of OTHER bosses
-      // (`killCountRequirement`). Eligibility here is checked against slayer
-      // level and quests only, so assigning one would hand out a task the
-      // combat screen and the server both refuse to start — a dead end the
-      // player can only pay to skip.
+      // Bosses gated on kill counts of OTHER bosses (Zaryth, the Ashen
+      // Crucible) ARE assignable: isEntryEligible checks those counts and fails
+      // closed when a caller cannot see them, so a player is only ever offered
+      // a boss they can already walk into.
       ...Object.keys(monstersData)
-        .filter(id => monstersData[id]?.boss === true && !RAID_MONSTER_IDS.has(id) && !monstersData[id]?.killCountRequirement)
+        .filter(id => monstersData[id]?.boss === true && !RAID_MONSTER_IDS.has(id))
         .map(id => ({ id, boss: true })),
       // Raid-completion proxy entries: each is the raid's final boss, overridden
       // to a [2,10] task range instead of the master's [5,50] bossTaskRange.
@@ -276,11 +276,19 @@ function meetsQuestRequirement(monster, completedQuests) {
 // A pool entry is eligible only when the player meets the slayer requirement —
 // and, when `completedQuests` is supplied, any quest requirement — of every
 // monster the task resolves to.
-export function isEntryEligible(entry, slayerLevel, completedQuests) {
+//
+// Kill-count prerequisites (Zaryth, the Ashen Crucible) fail CLOSED, unlike the
+// quest check above: quests ride the save and an omitted collection means an
+// older caller, but kill counts live in D1 (§14) and a caller that cannot see
+// them cannot tell an earned boss from an unearned one. Offering it anyway
+// hands out a task the combat screen and the server both refuse to start — a
+// dead end the player can only pay to skip.
+export function isEntryEligible(entry, slayerLevel, completedQuests, bossKillCounts) {
   return resolveTaskMonsterIds(getEntryId(entry)).every(monsterKey => {
     const monster = monstersData[monsterKey]
     if (monster?.slayerRequirement && slayerLevel < monster.slayerRequirement) return false
     if (!meetsQuestRequirement(monster, completedQuests)) return false
+    if (unmetKillCountRequirement({ ...monster, id: monsterKey }, bossKillCounts)) return false
     return true
   })
 }
@@ -293,7 +301,9 @@ const recentTasksByMaster = new Map()
 /**
  * Picks a slayer monster from a master's pool with even distribution.
  *
- * Only monsters whose slayer requirement is met are considered, and any monster
+ * Only monsters whose slayer, quest and kill-count requirements are met (see
+ * isEntryEligible — `options.completedQuests`, `options.bossKillCounts`) are
+ * considered, and any monster
  * assigned recently (tracked per master) is skipped until the rest of the
  * eligible pool has been cycled through. This replaces the previous uniform
  * random pick + deterministic first-match fallback, which caused the same task
@@ -305,8 +315,9 @@ export function pickSlayerMonster(master, slayerLevel, options = {}) {
   const rng = options.rng || Math.random
   const history = options.history || recentTasksByMaster
   const completedQuests = options.completedQuests
+  const bossKillCounts = options.bossKillCounts
 
-  const eligible = master.monsterPool.filter(entry => isEntryEligible(entry, slayerLevel, completedQuests))
+  const eligible = master.monsterPool.filter(entry => isEntryEligible(entry, slayerLevel, completedQuests, bossKillCounts))
   if (eligible.length === 0) return null
 
   const recent = history.get(master.id) || []

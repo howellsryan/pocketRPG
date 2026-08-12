@@ -26,7 +26,7 @@ import { createCombatState, applySpecialAttack } from '../src/engine/combat.js'
 import { checkBossRequirementsPure } from '../src/engine/combatRequirements.js'
 import { SELF_HEALING_SPEC_TYPES } from '../src/engine/specialAttackEnergy.js'
 import { PVP_SPECIAL_ATTACK_LABELS } from '../src/engine/pvpSpecialAttacks.js'
-import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
+import { SLAYER_MASTERS, pickSlayerMonster } from '../src/engine/slayerMasters.js'
 import { createPvpState, processPvpTick } from '../src/engine/pvpEngine.js'
 import { monsterMechanics } from '../functions/_lib/mcp/reference.js'
 import bespokeIcons from '../src/data/bespokeIcons.json'
@@ -165,23 +165,36 @@ describe('Zaryth — entry gate', () => {
 })
 
 describe('Zaryth — slayer assignment', () => {
-  it('is kept out of the boss-only slayer pool, which cannot verify its kill-count gate', () => {
-    const zulKaar = SLAYER_MASTERS.find((m: any) => m.id === 'zul_kaar')!
-    const ids = zulKaar.monsterPool.map((e: any) => (typeof e === 'string' ? e : e.id))
-    expect(ids).not.toContain(BOSS)
+  const zulKaar = () => SLAYER_MASTERS.find((m: any) => m.id === 'zul_kaar')!
+  const poolIds = () => zulKaar().monsterPool.map((e: any) => (typeof e === 'string' ? e : e.id))
+  // Every quest gate satisfied, so this isolates the kill-count gate.
+  const allQuests = new Set<string>(
+    Object.values(monstersData).map((m: any) => m.questRequirement).filter(Boolean))
+  const gateCtx = (bossKillCounts: Record<string, number>) => ({
+    slayerLevel: 99, completedQuests: allQuests, bossKillCounts, questsData: [], monstersData,
   })
 
-  it('still auto-includes bosses with no kill-count gate', () => {
-    const zulKaar = SLAYER_MASTERS.find((m: any) => m.id === 'zul_kaar')!
-    const ids = zulKaar.monsterPool.map((e: any) => (typeof e === 'string' ? e : e.id))
-    expect(ids).toContain('corporeal_horror')
+  it('is in the boss-only slayer pool, alongside the bosses that gate nothing', () => {
+    expect(poolIds()).toContain(BOSS)
+    expect(poolIds()).toContain('corporeal_horror')
   })
 
-  it('never hands out a task the combat gate would refuse outright', () => {
-    const zulKaar = SLAYER_MASTERS.find((m: any) => m.id === 'zul_kaar')!
-    for (const entry of zulKaar.monsterPool) {
-      const id = typeof entry === 'string' ? entry : entry.id
-      expect(monstersData[id]?.killCountRequirement, `${id} is gated on other bosses`).toBeUndefined()
+  it('never hands out a task the combat gate would refuse outright, at any state of progress', () => {
+    // Each stage of a player's boss progress, from nothing killed to everything.
+    const gateBosses = Object.keys(monstersData[BOSS].killCountRequirement)
+    const stages = gateBosses.map((_, i) =>
+      Object.fromEntries(gateBosses.slice(0, i + 1).map(id => [id, 1])))
+    stages.unshift({})
+
+    for (const bossKillCounts of stages) {
+      const history = new Map<string, string[]>()
+      for (let i = 0; i < 200; i++) {
+        const pick = pickSlayerMonster(zulKaar(), 99, { history, bossKillCounts, completedQuests: allQuests })!
+        const monster = monstersData[pick.monsterId]
+        if (!monster) continue
+        const gate = checkBossRequirementsPure({ ...monster, id: pick.monsterId }, gateCtx(bossKillCounts))
+        expect(gate.locked, `${pick.monsterId} assigned but locked: ${gate.reason}`).toBe(false)
+      }
     }
   })
 })

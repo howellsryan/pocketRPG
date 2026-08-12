@@ -47,30 +47,41 @@ export function checkBossRequirementsPure(monster, ctx = {}) {
     return { locked: true, reason: `Complete ${questName} to fight ${monster.name}` }
   }
 
-  // Kill-count prerequisite: the Ashen Crucible unlocks only after a first
-  // Ember Tyrant kill.
-  if (monster.id === 'ashen_crucible' && (!bossKillCounts['ember_tyrant'] || bossKillCounts['ember_tyrant'] < 1)) {
-    return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
-  }
-
-  // Data-driven kill-count prerequisites: `killCountRequirement` maps a monster
-  // id to the kills needed before this boss opens. Names are resolved through
-  // the monster table so the reason reads as a boss name, not an id.
-  //
-  // Kill counts live in D1, not the save (§14), so on the client they arrive a
-  // fetch AFTER the rest of the state. Judging them before they land locks a
-  // boss the player has long since earned — pass `bossKillCountsLoaded: false`
-  // while that fetch is in flight and this gate holds its tongue. The server
-  // never passes it, because there the counts are read before the check.
-  for (const [requiredId, requiredKills] of (bossKillCountsLoaded ? Object.entries(monster.killCountRequirement || {}) : [])) {
-    const needed = Math.max(1, Math.floor(Number(requiredKills) || 1))
-    if ((Number(bossKillCounts[requiredId]) || 0) >= needed) continue
-    const name = monstersData?.[requiredId]?.name || requiredId.replace(/_/g, ' ')
-    const times = needed === 1 ? '' : ` ${needed} times`
+  const unmetKill = bossKillCountsLoaded ? unmetKillCountRequirement(monster, bossKillCounts) : null
+  if (unmetKill) {
+    if (unmetKill.requiredId === 'ember_tyrant' && monster.id === 'ashen_crucible') {
+      return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
+    }
+    const name = monstersData?.[unmetKill.requiredId]?.name || unmetKill.requiredId.replace(/_/g, ' ')
+    const times = unmetKill.needed === 1 ? '' : ` ${unmetKill.needed} times`
     return { locked: true, reason: `Defeat ${name}${times} to challenge ${monster.name}` }
   }
 
   return { locked: false }
+}
+
+/**
+ * The first kill-count prerequisite this monster does not meet, or null when it
+ * is fully unlocked. `killCountRequirement` maps a monster id to the kills
+ * needed; the Ashen Crucible's Ember Tyrant gate predates that field and stays
+ * hardcoded here rather than in the content.
+ *
+ * Kill counts live in D1, not the save (§14), so a caller that cannot see them
+ * must decide for itself what an absent map means: the combat gate treats it as
+ * "not loaded yet" and holds its tongue (bossKillCountsLoaded), while the slayer
+ * pool fails CLOSED — an unverifiable count there would hand out a task the
+ * combat screen and the server both refuse to start.
+ */
+export function unmetKillCountRequirement(monster, bossKillCounts = {}) {
+  const counts = bossKillCounts && typeof bossKillCounts === 'object' ? bossKillCounts : {}
+  const requirements = { ...(monster?.killCountRequirement || {}) }
+  if (monster?.id === 'ashen_crucible' && requirements.ember_tyrant === undefined) requirements.ember_tyrant = 1
+  for (const [requiredId, requiredKills] of Object.entries(requirements)) {
+    const needed = Math.max(1, Math.floor(Number(requiredKills) || 1))
+    if ((Number(counts[requiredId]) || 0) >= needed) continue
+    return { requiredId, needed }
+  }
+  return null
 }
 
 /**

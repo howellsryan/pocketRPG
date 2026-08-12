@@ -702,6 +702,45 @@ describe('prayer slots in a group fight', () => {
   })
 })
 
+describe('coopBossEngine — a defence drain belongs to the ROOM, not to whoever landed it', () => {
+  const smashIntent = [{ tick_number: 1, characterId: 1, characterSeq: 0, action: { type: 'queue_special' } }]
+  const hammer = { equipment: { weapon: { itemId: 'dragon_warhammer', quantity: 1 } } }
+
+  it("carries a Dragon Warhammer smash onto the shared boss record, so a member who never swung it rolls against the drained Defence too", () => {
+    alwaysHit()
+    const state = joinedState([1, 2], { 1: hammer })
+    const baseDefence = (monstersData as any)[BOSS].stats.defence
+    expect(state.boss.monster.stats.defence).toBe(baseDefence)
+
+    const next = processCoopTick(state, smashIntent, deps, Date.now()).stateNext
+    // Members tick in ascending character-id order, so player 2's session is
+    // hydrated from the room AFTER the smash landed and writes the boss record
+    // back last. A drain that lived only on player 1's session would be
+    // restored from monsters.json right here.
+    expect(next.boss.monster.stats.defence).toBe(baseDefence - Math.floor(baseDefence * 0.3))
+  })
+
+  it('never mutates the monsters.json row the room was seeded from', () => {
+    alwaysHit()
+    const baseDefence = (monstersData as any)[BOSS].stats.defence
+    processCoopTick(joinedState([1], { 1: hammer }), smashIntent, deps, Date.now())
+    expect((monstersData as any)[BOSS].stats.defence).toBe(baseDefence)
+  })
+
+  it('resets the drain when the boss respawns — a fresh instance is a fresh Defence', () => {
+    alwaysHit()
+    const baseDefence = (monstersData as any)[BOSS].stats.defence
+    let state = processCoopTick(joinedState([1], { 1: hammer }), smashIntent, deps, Date.now()).stateNext
+    expect(state.boss.monster.stats.defence).toBeLessThan(baseDefence)
+
+    state.boss.currentHP = 0
+    state.boss.killedAt = Date.now()
+    state.boss.respawnCountdown = 1
+    state = processCoopTick(state, [], deps, Date.now()).stateNext
+    expect(state.boss.monster.stats.defence).toBe(baseDefence)
+  })
+})
+
 describe('coopIntentEcho — the client-side preview of a tap', () => {
   const intent = (action: unknown) => ([{ tick_number: 1, characterId: 1, characterSeq: 0, action }])
   const ACTIONS = [

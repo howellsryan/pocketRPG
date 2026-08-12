@@ -114,6 +114,13 @@ const MUTABLE_MONSTER_FIELDS = [
   // A form may change what the boss is weak to, and the room's copy has to move
   // with it or every member keeps rolling against the form before last's.
   'weakness',
+  // Defence-draining specials (Dragon Warhammer's smash, the Cindermaw Maul's
+  // molten crush) lower `stats.defence` on the record they hit. A member's
+  // session is rebuilt from monsters.json every tick, so left off here the drain
+  // was thrown away at the write-back — it did not reach the rest of the room,
+  // and did not even survive for the player who spent the energy. (Warstrike
+  // drains `defenceBonus`, already carried above.)
+  'stats',
 ]
 
 function levelFrom(statValue) {
@@ -298,10 +305,16 @@ function sharedMonsterOf(state, monstersData) {
   return { ...(monstersData?.[state.bossId] || {}), ...(state.boss?.monster || {}) }
 }
 
+// Nested fields (`stats`, `defenceBonus`) are copied, never aliased: the seed
+// for a fresh instance comes straight off the monsters.json row, and a room
+// holding a reference into the content table is one careless in-place mutation
+// away from re-balancing that boss for every fight in the process.
 function pickMutableMonsterFields(monster) {
   const out = {}
   for (const field of MUTABLE_MONSTER_FIELDS) {
-    if (monster?.[field] !== undefined) out[field] = monster[field]
+    const value = monster?.[field]
+    if (value === undefined) continue
+    out[field] = (value && typeof value === 'object' && !Array.isArray(value)) ? { ...value } : value
   }
   return out
 }

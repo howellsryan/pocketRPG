@@ -77,6 +77,14 @@ describe('checkBossRequirements — kill-count prerequisite (Ashen Crucible)', (
     expect(checkBossRequirements(monster, ctx({ bossKillCounts: { ember_tyrant: 1 } })).locked).toBe(false)
     expect(checkBossRequirements(monster, ctx({ bossKillCounts: { ember_tyrant: 50 } })).locked).toBe(false)
   })
+
+  it('holds its tongue while the kill-count fetch is still in flight, exactly as a data-driven gate does', () => {
+    // Counts live in D1 and land after the rest of the state (§14); judging them
+    // early locks a boss the player earned long ago.
+    expect(checkBossRequirements(monster, ctx({ bossKillCountsLoaded: false })).locked).toBe(false)
+    const dataDriven = { id: 'x', name: 'X', killCountRequirement: { ember_tyrant: 1 } }
+    expect(checkBossRequirements(dataDriven, ctx({ bossKillCountsLoaded: false })).locked).toBe(false)
+  })
 })
 
 describe('checkBossRequirements — gate ordering & edges', () => {
