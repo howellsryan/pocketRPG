@@ -151,28 +151,31 @@ ${SCROLL_CSS}
 }
 :root[data-hud-sheet="closed"] #hud-body { display: none; }
 .hud-sheet-handle { display: none; }
-/* Inventory is the tallest pane by design (28-slot grid), so it's the only
-   one left in normal flow — that makes it (and only it) set #hud-panes'
-   height. Every other pane is absolutely positioned to fill that exact box
-   (never grows past it — each has its own overflow-y scroll as a fallback),
-   so every tab renders at one fixed height instead of shrink-wrapping its
-   own content. Inactive panes stay in the layout (visibility, not
-   display:none) rather than being unmounted, which is what lets an inactive
-   inventory pane still size the box while some other tab is showing. Each
-   pane centers its own content vertically, so a pane shorter than inventory
-   doesn't just leave a dead gap glued to the top. */
-#hud-panes { position: relative; }
+/* Every tab renders at one height instead of shrink-wrapping its own content.
+   #hud-panes takes all the room the panel has left below the header, so the
+   panes fill the panel rather than being squeezed into a short scrolling box
+   with dead space under it. Where the panel itself is content-height (the
+   portrait sheet, and the desktop floating panel), there is no "room left" to
+   take, so the inventory pane — the tallest, and the only one kept in normal
+   flow — supplies the height and the rest match it. Inactive panes keep their
+   place in the layout (visibility, not display:none) rather than being
+   unmounted, which is what lets an inactive inventory pane go on setting that
+   height while another tab is showing. */
+#hud-body { display: flex; flex-direction: column; }
+#hud-panes { position: relative; flex: 1 0 auto; }
 .hud-pane {
   visibility: hidden; pointer-events: none;
   display: flex; flex-direction: column; justify-content: center;
-  /* If a pane's own content is taller than inventory's fixed box (e.g. a
-     bigger equip layout), plain center would clip its start behind a
-     negative scroll offset with no obvious way to tell there's more above.
-     "safe center" falls back to top-alignment for exactly that case;
-     unsupported engines just keep the plain center above. */
+  /* Panes only scroll when their content genuinely exceeds the panel. Plain
+     center would then clip the start behind a negative scroll offset with no
+     way to tell there's more above; "safe center" falls back to top-alignment
+     for exactly that case. Engines without it keep the plain center above. */
   justify-content: safe center;
 }
 .hud-pane:not([data-pane="inventory"]) { position: absolute; inset: 0; overflow-y: auto; }
+/* Fills the box when the panel is taller than the grid; ignored (auto) when
+   #hud-panes has no definite height, which is when inventory is sizing it. */
+.hud-pane[data-pane="inventory"] { min-height: 100%; }
 .hud-pane.active { visibility: visible; pointer-events: auto; }
 
 /* portrait: sheet docks above the bottom rail, drag handle at the top */
