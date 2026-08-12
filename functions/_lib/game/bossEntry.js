@@ -18,7 +18,7 @@
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import { getLevelFromXP } from '../../../src/engine/experience.js'
-import { checkBossRequirementsPure } from '../../../src/engine/combatRequirements.js'
+import { checkBossRequirementsPure, hasKillCountGate } from '../../../src/engine/combatRequirements.js'
 import { completedQuestsFromSave } from '../../../src/engine/questGates.js'
 
 /**
@@ -66,7 +66,11 @@ export function slayerLevelOf(saveObject) {
 export function bossHasEntryGate(bossId) {
   const monster = monstersData?.[bossId]
   if (!monster) return true
-  return !!(monster.questRequirement || monster.slayerRequirement || monster.killCountRequirement)
+  // Kill-count gates go through hasKillCountGate rather than the raw field: the
+  // Ashen Crucible's prerequisite is hardcoded in the engine, so a field check
+  // reads "ungated" and skips the very query that would enforce it.
+  return !!(monster.questRequirement || monster.slayerRequirement)
+    || hasKillCountGate({ ...monster, id: bossId })
 }
 
 export function bossEntryFailure(bossId, saveObject, bossKillCounts = {}) {

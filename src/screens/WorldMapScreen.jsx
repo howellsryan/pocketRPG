@@ -195,7 +195,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     // Rows render disabled off the same check; this backstops direct calls.
     const lock = activityLockReason(kind, ref, { stats, completedQuests, bossKillCounts, bossKillCountsLoaded: killCountsLoaded })
     if (lock) {
-      addToast(`${lock.reason}.`, lock.completed ? 'info' : 'error')
+      addToast(`${lock.reason}.`, (lock.completed || lock.pending) ? 'info' : 'error')
       return
     }
     // One master per place: tapping it opens its hub (get / cancel a task)

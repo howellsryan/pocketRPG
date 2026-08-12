@@ -173,6 +173,23 @@ describe('The Great Olm Boss', () => {
       expect(result.combatState.doubleKillCount).toBe(1)
     })
 
+    it('sheds a warstrike drain when it regenerates — round 2 is a new body', () => {
+      const state = createCombatState(the_great_olm, 'ranged', 'accurate')
+      state.monster.currentHP = 1
+      state.monster.defenceBonusDrain = { stab: 40, slash: 40, crush: 40, magic: 40, ranged: 40 }
+
+      const playerStats = { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, hitpoints: 99, currentHP: 99 }
+      const equipment = { weapon: { itemId: 'bow_of_faerdhinen', charges: 999 } }
+      state.playerAttackTimer = 0
+
+      const monster = processCombatTick(state, playerStats, equipment, itemsData).combatState.monster
+      expect(monster.defenceBonusDrain).toBeNull()
+      // Nulled, not deleted: co-op's shared-record writer skips `undefined`, so a
+      // delete would leave the room holding the drain this body just shed.
+      expect('defenceBonusDrain' in monster).toBe(true)
+      expect(monster.defenceBonus).toEqual(the_great_olm.forms[monster.currentForm].defenceBonus)
+    })
+
     it('should grant loot on second kill', () => {
       const state = createCombatState(the_great_olm, 'ranged', 'accurate')
       state.monster.currentHP = 1

@@ -7,6 +7,7 @@ import {
   RAID_TASK_META,
   buildSlayerTask,
   isEntryEligible,
+  meetsEntrySkillAndQuestGates,
   pickSlayerMonster,
 } from '../src/engine/slayerMasters.js'
 
@@ -44,15 +45,27 @@ describe('Zul-Kaar slayer master', () => {
     expect(place.name).toBe(zulKaar.location)
   })
 
-  // Bosses gated on other bosses' kill counts are deliberately absent: this
-  // pool's eligibility check reads slayer level and quests only, so assigning
-  // one would hand out a task the combat gate refuses to start.
-  it('every non-raid boss:true monster without a kill-count gate appears in the pool directly', () => {
+  it('every non-raid boss:true monster appears in the pool directly, kill-count-gated ones included', () => {
     const pooledIds = new Set(zulKaar.monsterPool.map(getEntryId))
     const allBossIds = Object.keys(monsters).filter(id =>
-      monsters[id]?.boss === true && !raidMonsterIds.has(id) && !(monsters[id] as any)?.killCountRequirement)
+      monsters[id]?.boss === true && !raidMonsterIds.has(id))
     const missing = allBossIds.filter(id => !pooledIds.has(id))
     expect(missing, `boss ids missing from zul_kaar pool: ${missing.join(', ')}`).toEqual([])
+  })
+
+  it('offers Zaryth once its four prerequisite bosses are down, and never before', () => {
+    const zaryth = zulKaar.monsterPool.find(e => getEntryId(e) === 'zaryth_the_empty_lord')
+    expect(zaryth, 'Zaryth missing from the boss-only master\'s pool').toBeTruthy()
+
+    const required = Object.keys(monsters.zaryth_the_empty_lord.killCountRequirement)
+    expect(required.length).toBeGreaterThan(0)
+    const earned = Object.fromEntries(required.map(id => [id, 1]))
+    expect(isEntryEligible(zaryth, 99, [], earned)).toBe(true)
+
+    for (const missingId of required) {
+      const short = { ...earned, [missingId]: 0 }
+      expect(isEntryEligible(zaryth, 99, [], short), `eligible with no ${missingId} kill`).toBe(false)
+    }
   })
 
   it('the 4 raid-final-bosses are represented as raid-completion proxy entries', () => {
@@ -88,6 +101,38 @@ describe('Zul-Kaar slayer master', () => {
     }
   })
 
+  it('gates the Ashen Crucible behind an Ember Tyrant kill, even though its prerequisite is not in the content', () => {
+    const crucible = zulKaar.monsterPool.find(e => getEntryId(e) === 'ashen_crucible')!
+    expect(isEntryEligible(crucible, 99, [], {})).toBe(false)
+    expect(isEntryEligible(crucible, 99, [], { ember_tyrant: 1 })).toBe(true)
+  })
+
+  it('keeps the gates a save can answer separable from the kill-count gate, so a display never asserts a lock it cannot check', () => {
+    // The fail-closed default below is an ASSIGNMENT policy. A screen rendering
+    // before the counts land must not use it, or it tells a player who has the
+    // kills that they do not.
+    const zaryth = zulKaar.monsterPool.find(e => getEntryId(e) === 'zaryth_the_empty_lord')!
+    expect(meetsEntrySkillAndQuestGates(zaryth, 99, [])).toBe(true)
+    expect(isEntryEligible(zaryth, 99, [])).toBe(false)
+    // And it still reports the gates it CAN answer.
+    const gated = zulKaar.monsterPool.find(e => monsters[getEntryId(e)]?.questRequirement)!
+    expect(meetsEntrySkillAndQuestGates(gated, 99, [])).toBe(false)
+  })
+
+  it('fails CLOSED on kill-count gates for a caller that cannot see kill counts, rather than assigning a task nothing will start', () => {
+    // Kill counts live in D1, never the save (§14), so a caller without them
+    // cannot tell an earned boss from an unearned one.
+    for (const id of ['zaryth_the_empty_lord', 'ashen_crucible']) {
+      const entry = zulKaar.monsterPool.find(e => getEntryId(e) === id)!
+      expect(isEntryEligible(entry, 99, []), `${id} offered with no kill counts`).toBe(false)
+    }
+    const history = new Map<string, string[]>()
+    for (let i = 0; i < 300; i++) {
+      const pick = pickSlayerMonster(zulKaar, 99, { history })!
+      expect(['zaryth_the_empty_lord', 'ashen_crucible']).not.toContain(pick.monsterId)
+    }
+  })
+
   it('Ashen Crucible is always a single-kill task, like Ember Tyrant', () => {
     expect(buildSlayerTask(zulKaar, 'ashen_crucible', true, { rng: () => 0.999 }).totalCount).toBe(1)
     expect(buildSlayerTask(zulKaar, 'ember_tyrant', true, { rng: () => 0.999 }).totalCount).toBe(1)
@@ -101,11 +146,14 @@ describe('Zul-Kaar slayer master', () => {
 
   it('pickSlayerMonster only ever returns eligible boss entries from a boss-only pool', () => {
     const history = new Map<string, string[]>()
+    // A player who has cleared everything: kill-count gates open, so the whole
+    // pool is in play rather than silently minus its gated bosses.
+    const bossKillCounts = Object.fromEntries(Object.keys(monsters).map(id => [id, 1]))
     for (let i = 0; i < 200; i++) {
-      const pick = pickSlayerMonster(zulKaar, 99, { history })
+      const pick = pickSlayerMonster(zulKaar, 99, { history, bossKillCounts })
       expect(pick).not.toBeNull()
       expect(pick!.isBoss).toBe(true)
-      expect(isEntryEligible(pick!.entry, 99)).toBe(true)
+      expect(isEntryEligible(pick!.entry, 99, undefined, bossKillCounts)).toBe(true)
     }
   })
 })

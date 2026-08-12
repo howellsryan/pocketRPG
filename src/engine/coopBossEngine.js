@@ -20,6 +20,7 @@ import { createCombatState, processCombatTick } from './combat.js'
 import { hardModeDeathLoss, monstersTableFor } from './hardMode.js'
 import { getLevelFromXP } from './experience.js'
 import { resolveSlayerTaskKill } from './slayerTasks.js'
+import { RAID_TASK_META } from './slayerMasters.js'
 import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
@@ -114,6 +115,17 @@ const MUTABLE_MONSTER_FIELDS = [
   // A form may change what the boss is weak to, and the room's copy has to move
   // with it or every member keeps rolling against the form before last's.
   'weakness',
+  // Defence-draining specials (Dragon Warhammer's smash, the Cindermaw Maul's
+  // molten crush) lower `stats.defence` on the record they hit. A member's
+  // session is rebuilt from monsters.json every tick, so left off here the drain
+  // was thrown away at the write-back — it did not reach the rest of the room,
+  // and did not even survive for the player who spent the energy. (Warstrike
+  // drains `defenceBonus`, already carried above.)
+  'stats',
+  // Warstrike's running total, which is what survives a form change. The roll
+  // happens on the shared record (advanceSharedForm), so that is where the
+  // re-apply has to be able to see it.
+  'defenceBonusDrain',
 ]
 
 function levelFrom(statValue) {
@@ -298,10 +310,16 @@ function sharedMonsterOf(state, monstersData) {
   return { ...(monstersData?.[state.bossId] || {}), ...(state.boss?.monster || {}) }
 }
 
+// Nested fields (`stats`, `defenceBonus`) are copied, never aliased: the seed
+// for a fresh instance comes straight off the monsters.json row, and a room
+// holding a reference into the content table is one careless in-place mutation
+// away from re-balancing that boss for every fight in the process.
 function pickMutableMonsterFields(monster) {
   const out = {}
   for (const field of MUTABLE_MONSTER_FIELDS) {
-    if (monster?.[field] !== undefined) out[field] = monster[field]
+    const value = monster?.[field]
+    if (value === undefined) continue
+    out[field] = (value && typeof value === 'object' && !Array.isArray(value)) ? { ...value } : value
   }
   return out
 }
@@ -340,15 +358,26 @@ export function bankMemberItemsLost(banked, lost) {
  * Mutates the member (task, accrued XP, banked credit) and returns what
  * happened so the caller can tell the player.
  */
-export function creditSlayerKill(member, bossId, monstersData) {
+export function creditSlayerKill(member, bossId, monstersData, { fromRaidCompletion = false } = {}) {
   if (!member || member.status !== 'alive') return null
   const task = member.slayerTask
   if (!task) return null
+  // A raid-completion proxy task is paid by the CLEAR and by nothing else — the
+  // same defence-in-depth solo has (CombatScreen's raidTaskCreditBlocked).
+  const raidMeta = RAID_TASK_META[task.monsterId]
+  if (raidMeta && !fromRaidCompletion) return null
   const result = resolveSlayerTaskKill(task, bossId, 1)
   if (!result.onTask) return null
 
   const monster = monstersData?.[bossId] || null
-  const xp = getSlayerTaskXpForKill(monster, monster, monstersData, { doubleXp: member.doubleSlayerXp })
+  const xp = getSlayerTaskXpForKill(monster, monster, monstersData, {
+    doubleXp: member.doubleSlayerXp,
+    // A raid clear is a whole run, not a boss kill: it pays the authored flat
+    // rate, never the final boss's HP through the boss multiplier. Read off the
+    // final boss, the four raid tasks paid between 400 and 8000 instead of the
+    // 2500–10000 they are worth — solo has always passed this.
+    flatXp: raidMeta?.flatSlayerXp,
+  })
   if (xp > 0) member.xpGained.slayer = (member.xpGained.slayer || 0) + xp
 
   if (!member.slayerCredit) member.slayerCredit = emptySlayerCredit()
@@ -1339,7 +1368,7 @@ function resolveRaidBossDeath(state, monstersData, events, now) {
   // walking into the raid and killing the first thing in it.
   const onTaskCharacterIds = []
   for (const member of Object.values(state.members)) {
-    const credited = creditSlayerKill(member, state.bossId, monstersData)
+    const credited = creditSlayerKill(member, state.bossId, monstersData, { fromRaidCompletion: true })
     if (!credited) continue
     onTaskCharacterIds.push(Number(member.characterId))
     events.push({ type: 'slayerCredit', ...credited })
