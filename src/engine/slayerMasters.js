@@ -273,24 +273,34 @@ function meetsQuestRequirement(monster, completedQuests) {
   return questRequirementMet(completedQuests, required)
 }
 
-// A pool entry is eligible only when the player meets the slayer requirement —
-// and, when `completedQuests` is supplied, any quest requirement — of every
-// monster the task resolves to.
-//
-// Kill-count prerequisites (Zaryth, the Ashen Crucible) fail CLOSED, unlike the
-// quest check above: quests ride the save and an omitted collection means an
-// older caller, but kill counts live in D1 (§14) and a caller that cannot see
-// them cannot tell an earned boss from an unearned one. Offering it anyway
-// hands out a task the combat screen and the server both refuse to start — a
-// dead end the player can only pay to skip.
-export function isEntryEligible(entry, slayerLevel, completedQuests, bossKillCounts) {
+// The gates readable from the save alone: the slayer requirement, and — when
+// `completedQuests` is supplied — the quest requirement of every monster the
+// task resolves to. Split out because a caller that cannot yet see kill counts
+// must be able to judge these WITHOUT being told the answer to a question it
+// did not ask (see isEntryEligible).
+export function meetsEntrySkillAndQuestGates(entry, slayerLevel, completedQuests) {
   return resolveTaskMonsterIds(getEntryId(entry)).every(monsterKey => {
     const monster = monstersData[monsterKey]
     if (monster?.slayerRequirement && slayerLevel < monster.slayerRequirement) return false
-    if (!meetsQuestRequirement(monster, completedQuests)) return false
-    if (unmetKillCountRequirement({ ...monster, id: monsterKey }, bossKillCounts)) return false
-    return true
+    return meetsQuestRequirement(monster, completedQuests)
   })
+}
+
+// The full assignment gate. Kill-count prerequisites (Zaryth, the Ashen
+// Crucible) fail CLOSED, unlike the quest check: quests ride the save and an
+// omitted collection means an older caller, but kill counts live in D1 (§14)
+// and a caller that cannot see them cannot tell an earned boss from an unearned
+// one. Offering it anyway hands out a task the combat screen and the server
+// both refuse to start — a dead end the player can only pay to skip.
+//
+// That default is an ASSIGNMENT policy, not a fact about the player, so nothing
+// that merely DISPLAYS a lock may use it — it would tell a player who has the
+// kills that they do not. Those callers compose the two functions themselves,
+// judging the kill-count half only once the fetch has landed.
+export function isEntryEligible(entry, slayerLevel, completedQuests, bossKillCounts) {
+  if (!meetsEntrySkillAndQuestGates(entry, slayerLevel, completedQuests)) return false
+  return resolveTaskMonsterIds(getEntryId(entry))
+    .every(monsterKey => !unmetKillCountRequirement({ ...monstersData[monsterKey], id: monsterKey }, bossKillCounts))
 }
 
 // In-memory per-master history of recently assigned monsters. This keeps the

@@ -121,6 +121,10 @@ const MUTABLE_MONSTER_FIELDS = [
   // and did not even survive for the player who spent the energy. (Warstrike
   // drains `defenceBonus`, already carried above.)
   'stats',
+  // Warstrike's running total, which is what survives a form change. The roll
+  // happens on the shared record (advanceSharedForm), so that is where the
+  // re-apply has to be able to see it.
+  'defenceBonusDrain',
 ]
 
 function levelFrom(statValue) {

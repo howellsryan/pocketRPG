@@ -13,7 +13,7 @@ import raidsData from '../data/raids.json'
 import questsData from '../data/quests.json'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
-import { SLAYER_MASTERS, RAID_TASK_META, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask, isEntryEligible } from '../engine/slayerMasters.js'
+import { SLAYER_MASTERS, RAID_TASK_META, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask, meetsEntrySkillAndQuestGates } from '../engine/slayerMasters.js'
 import { unmetKillCountRequirement } from '../engine/combatRequirements.js'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
@@ -65,6 +65,11 @@ const SLAYER_MONSTER_ICONS = {
 // Composite tasks (e.g. Nagadoth Kings) resolve to several monsters; we surface
 // the highest combat level / slayer requirement among them and use the first
 // resolved monster for art + attack-style derivation.
+// `bossKillCounts` is null until the server's counts land. This path only
+// DISPLAYS a lock, so it must not answer a question it cannot yet check: it
+// judges the slayer/quest gates on their own and leaves the kill-count gate
+// unstated until the fetch resolves. isEntryEligible's fail-closed default is
+// for assignment, and would tell a player who has the kills that they do not.
 function getTaskInfo(entry, slayerLevel, completedQuests, bossKillCounts) {
   const id = typeof entry === 'object' ? entry.id : entry
   const isBoss = typeof entry === 'object' && !!entry.boss
@@ -80,14 +85,16 @@ function getTaskInfo(entry, slayerLevel, completedQuests, bossKillCounts) {
   const combatLevel = resolved.length ? Math.max(...resolved.map(m => m.combatLevel || 0)) : 0
   const slayerReq = resolved.length ? Math.max(...resolved.map(m => m.slayerRequirement || 0)) : 0
   const questReq = resolved.map(m => m.questRequirement).find(Boolean) || null
-  const unmetKill = resolvedIds
-    .map(mid => unmetKillCountRequirement({ ...monstersData[mid], id: mid }, bossKillCounts))
-    .find(Boolean) || null
+  const unmetKill = bossKillCounts
+    ? (resolvedIds
+      .map(mid => unmetKillCountRequirement({ ...monstersData[mid], id: mid }, bossKillCounts))
+      .find(Boolean) || null)
+    : null
   return {
     id, isBoss, name, combatLevel, slayerReq, questReq, unmetKill,
     monster: lead,
     art: getMonsterArt(lead || { id }),
-    eligible: isEntryEligible(entry, slayerLevel, completedQuests, bossKillCounts),
+    eligible: meetsEntrySkillAndQuestGates(entry, slayerLevel, completedQuests) && !unmetKill,
   }
 }
 

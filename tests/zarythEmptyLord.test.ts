@@ -423,26 +423,54 @@ describe('Zaryth special attacks in PvP', () => {
 describe('room-wide attacks in a co-op session', () => {
   const deps = { itemsData, monstersData, prayersData, spellsData }
 
-  function savePayload() {
+  function savePayload(weaponId = 'krylth_spear') {
     return {
       stats: Object.fromEntries(
         ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer'].map((k) => [k, { xp: 13_034_431 }]),
       ),
-      equipment: { weapon: { itemId: 'krylth_spear', quantity: 1 } },
+      equipment: { weapon: { itemId: weaponId, quantity: 1 } },
       inventory: [null, null, null],
       settings: { combatStance: 'aggressive' },
     }
   }
 
-  function joined(bossId: string, ids: number[]) {
+  function joined(bossId: string, ids: number[], weaponId?: string) {
     let state = createCoopBossState(bossId, monstersData)!
     for (const id of ids) {
       state = addCoopMember(state, createCoopMember({
-        characterId: id, username: `player${id}`, savePayload: savePayload(), itemsData,
+        characterId: id, username: `player${id}`, savePayload: savePayload(weaponId), itemsData,
       }))
     }
     return state
   }
+
+  it('keeps a warstrike drain on the shared record, so the rotation cannot hand it back', () => {
+    // Zaryth rotates every attack and each form authors its own defences, so
+    // applyForm replaces the numbers a Grondar Godsword just ground off. Left
+    // un-carried, a warstrike here was worth one swing.
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    let state = joined(BOSS, [1], 'grondar_godsword')
+    const queueSpecial = [{ tick_number: 1, characterId: 1, characterSeq: 0, action: { type: 'queue_special' } }]
+    state = processCoopTick(state, queueSpecial, deps, Date.now()).stateNext
+
+    const drain = state.boss.monster.defenceBonusDrain
+    expect(drain, 'the drain never reached the room').toBeTruthy()
+    expect(Math.min(...(Object.values(drain) as number[]))).toBeGreaterThan(0)
+
+    let rotated = false
+    for (let i = 0; i < 40 && !rotated; i++) {
+      const out = processCoopTick(state, [], deps, Date.now())
+      state = out.stateNext
+      rotated = out.events.some((e: any) => e.type === 'formChange')
+    }
+    expect(rotated, 'the boss never changed form').toBe(true)
+
+    const form = (monstersData as any)[BOSS].forms[state.boss.monster.currentForm]
+    for (const [style, authored] of Object.entries(form.defenceBonus) as [string, number][]) {
+      expect(state.boss.monster.defenceBonus[style], style)
+        .toBe(Math.max(-64, authored - state.boss.monster.defenceBonusDrain[style]))
+    }
+  })
 
   it('flags only bosses whose data asks for it', () => {
     expect(isRoomWideAttacker(boss)).toBe(true)

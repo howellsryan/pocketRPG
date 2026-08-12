@@ -7,6 +7,7 @@ import {
   RAID_TASK_META,
   buildSlayerTask,
   isEntryEligible,
+  meetsEntrySkillAndQuestGates,
   pickSlayerMonster,
 } from '../src/engine/slayerMasters.js'
 
@@ -104,6 +105,18 @@ describe('Zul-Kaar slayer master', () => {
     const crucible = zulKaar.monsterPool.find(e => getEntryId(e) === 'ashen_crucible')!
     expect(isEntryEligible(crucible, 99, [], {})).toBe(false)
     expect(isEntryEligible(crucible, 99, [], { ember_tyrant: 1 })).toBe(true)
+  })
+
+  it('keeps the gates a save can answer separable from the kill-count gate, so a display never asserts a lock it cannot check', () => {
+    // The fail-closed default below is an ASSIGNMENT policy. A screen rendering
+    // before the counts land must not use it, or it tells a player who has the
+    // kills that they do not.
+    const zaryth = zulKaar.monsterPool.find(e => getEntryId(e) === 'zaryth_the_empty_lord')!
+    expect(meetsEntrySkillAndQuestGates(zaryth, 99, [])).toBe(true)
+    expect(isEntryEligible(zaryth, 99, [])).toBe(false)
+    // And it still reports the gates it CAN answer.
+    const gated = zulKaar.monsterPool.find(e => monsters[getEntryId(e)]?.questRequirement)!
+    expect(meetsEntrySkillAndQuestGates(gated, 99, [])).toBe(false)
   })
 
   it('fails CLOSED on kill-count gates for a caller that cannot see kill counts, rather than assigning a task nothing will start', () => {
