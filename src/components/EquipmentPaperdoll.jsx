@@ -19,7 +19,7 @@ const SIZE_PRESETS = {
   mdFixed: { box: 'w-16 h-16', icon: '18px', label: 'text-[7px] max-w-[52px]', emptyIcon: '14px', gap: 'gap-[6px]' },
   // Scales with the viewport's available height (8vh, floored at the
   // desktop combat layout's own 600px minimum so it never overflows there,
-  // capped so it doesn't balloon on very tall monitors).
+  // capped so it doesn't balloon on very tall monitors)
   fluidFixed: { box: 'w-[clamp(46px,8vh,88px)] h-[clamp(46px,8vh,88px)]', icon: '20px', label: 'text-[7px] max-w-[60px]', emptyIcon: '16px', gap: 'gap-[5px]' }
 }
 
