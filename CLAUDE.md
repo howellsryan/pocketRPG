@@ -12,6 +12,7 @@
 - Idle/sim fantasy RPG with OSRS-style combat/skilling (PocketRPG-owned fantasy naming).
 - Tick: 600ms (`TICK_MS = 600`). Goals: mobile-first UI, low-latency local play, deterministic core. Requires an account + server connectivity (auth, characters, rewards, PvP, payments all server-side).
 - Hosting: **one Cloudflare Worker** (`pocketrpg-app`, `wrangler.jsonc`) serving the site, the API and both Durable Object classes. `worker/index.js` is the entry; assets are staged into `dist_site/` by `scripts/stage-site.mjs`.
+- **Workers Builds root directory is the repo root, never `world/`** — `wrangler.jsonc` and every deploy script (`deploy`, `deploy:preview`, `version:preview`) are at root; `world/` has no wrangler config. A `world/` cwd (leftover from the pre-merge `pocketrpg-world` Worker) fails the deploy with `Missing script: "deploy:preview"` and quietly runs the world client's own `ci` instead of the root gate. Preview Worker (`pocketrpg-app-preview`): build `npm run ci`, deploy `npm run deploy:preview` — a full deploy, so the last branch pushed owns that URL; `version:preview` uploads a version instead.
 
 ## 2) Tech Stack
 - **UI**: Preact + JSX (no React). Reuse `src/components/`.
