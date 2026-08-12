@@ -41,6 +41,14 @@ const STORAGE_KEY = 'world_ux'
  * tablet — drives the default minimap mode (full vs compass). */
 export const TABLET_MIN_SIDE = 560
 
+/** A landscape viewport at least this wide and this tall gets the desktop HUD:
+ * a compact panel floating over the world beside the rail, instead of the
+ * full-height slide-out column. The column exists because a phone in landscape
+ * has no room to spare; a desktop window has nothing but room, and the same
+ * column there reads as a sidebar that owns half the screen. */
+export const DESKTOP_MIN_WIDTH = 900
+export const DESKTOP_MIN_HEIGHT = 560
+
 const HUD_SCALE_VALUE: Record<HudScale, number> = { compact: 0.85, normal: 1, large: 1.15 }
 
 // Bottom-sheet snap points as fractions of viewport height: peek shows the
@@ -60,6 +68,14 @@ export function hudScaleValue(scale: HudScale): number {
 
 export function isTabletViewport(minSide: number): boolean {
   return minSide >= TABLET_MIN_SIDE
+}
+
+/** Whether this viewport gets the floating desktop HUD. Size only, no pointer
+ * heuristic: a big landscape screen wants the compact floating panel whether
+ * it is driven by a mouse or a finger, and every control in it stays at the
+ * 44px tap size. */
+export function isDesktopViewport(width: number, height: number): boolean {
+  return width >= height && width >= DESKTOP_MIN_WIDTH && height >= DESKTOP_MIN_HEIGHT
 }
 
 /** The concrete minimap mode: an explicit setting wins; null falls back to the

@@ -5,7 +5,7 @@ import { spellIconSvg } from './spellIcon'
 import { categorisePrayers, type PrayerView } from '../../shared/prayer'
 import { CHAT_MAX_CHARS } from '../../shared/chat'
 import {
-  hudScaleValue, isTabletViewport, loadSettings, resolveMinimapMode, saveSettings,
+  hudScaleValue, isDesktopViewport, isTabletViewport, loadSettings, resolveMinimapMode, saveSettings,
   sheetHeightFor, sheetSnap, type MinimapMode, type UxSettings,
 } from './uxSettings'
 
@@ -49,10 +49,11 @@ export const SCROLL_CSS = `
 `
 
 // Layout is driven by attributes on <html> (set by applyLayout): data-hud-orient
-// (portrait|landscape), data-hud-dock (left|right), data-hud-hidden ("1" when the
-// eye is toggling everything off), data-minimap (full|compass|off), data-hud-sheet
-// (open|closed). This keeps the reflow in CSS — one attribute flip repositions
-// every element instantly, with no per-element JS branching.
+// (portrait|landscape), data-hud-device (desktop|touch), data-hud-dock
+// (left|right), data-hud-hidden ("1" when the eye is toggling everything off),
+// data-minimap (full|compass|off), data-hud-sheet (open|closed). This keeps the
+// reflow in CSS — one attribute flip repositions every element instantly, with
+// no per-element JS branching.
 const HUD_CSS = `
 ${SCROLL_CSS}
 :root { --hud-pop: 0.92; }
@@ -519,6 +520,41 @@ ${SCROLL_CSS}
   background: #c81e1e; border: 1px solid #000; border-radius: 2px; overflow: hidden;
 }
 .hpbar > span { display: block; height: 100%; background: #4fae3f; }
+
+/* ---- desktop: OSRS-style floating panel ----
+   The landscape column above is sized for a phone on its side, where the HUD
+   has to claim the edge to be usable at all. A desktop window has room, so the
+   panel becomes a compact box floating OVER the world in the bottom corner —
+   under a third of the width, only as tall as its contents — and the rail
+   shrinks to its buttons instead of striping the whole screen edge. */
+:root[data-hud-device="desktop"] #hud-rail-l {
+  top: auto; bottom: 12px; padding: 7px; gap: 7px;
+  background: rgba(16, 13, 8, 0.72); border: 1px solid #4a3d26; border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); width: auto; overflow: visible;
+}
+:root[data-hud-device="desktop"][data-hud-dock="right"] #hud-rail-l { right: 12px; }
+:root[data-hud-device="desktop"][data-hud-dock="left"] #hud-rail-l { left: 12px; }
+/* The spacer only exists to push World Map + Settings to the far end of a
+   full-height rail; on an auto-height one it would collapse to nothing and run
+   the two groups together. */
+:root[data-hud-device="desktop"] #hud-rail-l .rail-spacer {
+  flex: none; height: 1px; width: 30px; background: #4a3d26; margin: 3px 0;
+}
+:root[data-hud-device="desktop"] #hud-body {
+  top: auto; bottom: 12px; width: 236px; max-height: min(560px, calc(100% - 24px));
+  padding: 10px; border-radius: 14px; border: 1px solid #5a4a30;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.45);
+}
+:root[data-hud-device="desktop"][data-hud-dock="right"] #hud-body { right: 78px; border-right: 1px solid #5a4a30; }
+:root[data-hud-device="desktop"][data-hud-dock="left"] #hud-body { left: 78px; border-left: 1px solid #5a4a30; }
+/* Four across, as the pack reads everywhere else in PocketRPG — a 7-wide grid
+   in a compact panel is a strip of thumbnails. */
+:root[data-hud-device="desktop"] #inv-panel { grid-template-columns: repeat(4, 1fr); }
+:root[data-hud-device="desktop"] #inv-panel .inv-slot svg { width: 30px; height: 30px; }
+:root[data-hud-device="desktop"] #inv-panel .inv-slot span:not(.qty) { font-size: 21px; }
+:root[data-hud-device="desktop"] .prayer-btn { flex: 0 0 calc((100% - 24px) / 4); }
+:root[data-hud-device="desktop"] #prayer-grid { max-height: 420px; }
+:root[data-hud-device="desktop"] #magic-panel { max-height: 420px; }
 `
 
 let hudReady = false
@@ -751,6 +787,7 @@ function applyLayout(): void {
   tablet = isTabletViewport(Math.min(w, h))
   const root = document.documentElement
   root.setAttribute('data-hud-orient', orientation)
+  root.setAttribute('data-hud-device', isDesktopViewport(w, h) ? 'desktop' : 'touch')
   root.setAttribute('data-hud-dock', settings.dock)
   root.setAttribute('data-hud-scale', settings.hudScale)
   root.setAttribute('data-minimap', resolveMinimapMode(settings, tablet))

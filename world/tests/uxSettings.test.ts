@@ -5,12 +5,15 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_SETTINGS,
   hudScaleValue,
+  isDesktopViewport,
   isTabletViewport,
   mergeSettings,
   resolveMinimapMode,
   sheetHeightFor,
   sheetSnap,
   TABLET_MIN_SIDE,
+  DESKTOP_MIN_WIDTH,
+  DESKTOP_MIN_HEIGHT,
 } from '../client/src/uxSettings'
 
 describe('mergeSettings', () => {
@@ -72,6 +75,28 @@ describe('isTabletViewport', () => {
     expect(isTabletViewport(TABLET_MIN_SIDE)).toBe(true)
     expect(isTabletViewport(393)).toBe(false) // iPhone
     expect(isTabletViewport(768)).toBe(true) // iPad
+  })
+})
+
+describe('isDesktopViewport', () => {
+  it('gives a desktop window the floating panel', () => {
+    expect(isDesktopViewport(1440, 900)).toBe(true)
+    expect(isDesktopViewport(1024, 768)).toBe(true)
+  })
+
+  it('keeps the full-height column on a phone in landscape', () => {
+    expect(isDesktopViewport(844, 390)).toBe(false) // iPhone landscape
+    expect(isDesktopViewport(932, 430)).toBe(false) // large phone landscape: wide, but short
+  })
+
+  it('never applies in portrait, however large the screen', () => {
+    expect(isDesktopViewport(1024, 1366)).toBe(false)
+  })
+
+  it('splits exactly on both thresholds', () => {
+    expect(isDesktopViewport(DESKTOP_MIN_WIDTH, DESKTOP_MIN_HEIGHT)).toBe(true)
+    expect(isDesktopViewport(DESKTOP_MIN_WIDTH - 1, DESKTOP_MIN_HEIGHT)).toBe(false)
+    expect(isDesktopViewport(DESKTOP_MIN_WIDTH, DESKTOP_MIN_HEIGHT - 1)).toBe(false)
   })
 })
 

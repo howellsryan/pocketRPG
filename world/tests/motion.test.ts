@@ -11,6 +11,7 @@ import {
   segmentDurationMs,
   shouldSnap,
   stepYaw,
+  swingStartDelayMs,
   yawDelta,
   yawToward,
 } from '../client/src/motion'
@@ -124,20 +125,45 @@ describe('isAttackAnim', () => {
 
 describe('resolveGltfAnim (one-shot swing latch)', () => {
   it('fires a fresh swing once and holds the base anim off', () => {
-    expect(resolveGltfAnim('attack', false, false, false)).toEqual({ fireSwing: true, latched: true, playBase: false })
+    expect(resolveGltfAnim('idle', 'attack', false, false, false)).toEqual({ fireSwing: true, latched: true, playBase: false })
   })
   it('does not re-fire the same swing while still latched', () => {
-    expect(resolveGltfAnim('attack', false, true, true)).toEqual({ fireSwing: false, latched: true, playBase: false })
+    expect(resolveGltfAnim('idle', 'attack', false, true, true)).toEqual({ fireSwing: false, latched: true, playBase: false })
   })
   it('keeps a landed swing playing when the server drops back to idle mid-clip', () => {
     // The tick after a swing the server sends idle; the attack clip is still
     // running, so the mixer must NOT be handed back to idle yet.
-    expect(resolveGltfAnim('idle', false, true, true)).toEqual({ fireSwing: false, latched: false, playBase: false })
+    expect(resolveGltfAnim('idle', null, false, true, true)).toEqual({ fireSwing: false, latched: false, playBase: false })
   })
   it('returns to the base anim once the swing clip has finished', () => {
-    expect(resolveGltfAnim('idle', false, false, false)).toEqual({ fireSwing: false, latched: false, playBase: true })
+    expect(resolveGltfAnim('idle', null, false, false, false)).toEqual({ fireSwing: false, latched: false, playBase: true })
   })
-  it('lets movement win over a stale attack signal (walk, no swing)', () => {
-    expect(resolveGltfAnim('attack', true, false, false)).toEqual({ fireSwing: false, latched: false, playBase: true })
+  it('fires a swing signalled mid-stride instead of dropping it', () => {
+    // Replaces the old "movement wins over a stale attack signal" expectation,
+    // which was the one-hit-kill bug: the server resolves the first swing on the
+    // very tick the last step lands, so the client is ALWAYS mid-segment when it
+    // arrives. Dropped there, a kill that ends the fight in one blow never
+    // animated at all — the next diff is already back to idle.
+    expect(resolveGltfAnim('run', 'attack', true, false, false)).toEqual({ fireSwing: true, latched: true, playBase: true })
+  })
+  it('keeps the stride clip playing until the deferred swing actually starts', () => {
+    expect(resolveGltfAnim('run', 'attack', true, true, false).playBase).toBe(true)
+    expect(resolveGltfAnim('run', 'attack', true, true, true).playBase).toBe(false)
+  })
+})
+
+describe('swingStartDelayMs', () => {
+  it('starts a standing swing immediately', () => {
+    expect(swingStartDelayMs(0, 0)).toBe(0)
+  })
+  it('waits out the rest of the stride so the blow lands on arrival', () => {
+    expect(swingStartDelayMs(420, 0)).toBe(420)
+  })
+  it('never starts before the monster’s own impact-frame lead', () => {
+    expect(swingStartDelayMs(100, 300)).toBe(300)
+    expect(swingStartDelayMs(500, 300)).toBe(500)
+  })
+  it('clamps a segment that has already overrun', () => {
+    expect(swingStartDelayMs(-80, 0)).toBe(0)
   })
 })

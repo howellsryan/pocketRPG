@@ -16,15 +16,15 @@ const TICK_MS = 600
 
 describe('resolveGltfAnim death precedence', () => {
   it('hands the mixer the death clip even while an attack clip is still running', () => {
-    expect(resolveGltfAnim('die', false, true, true)).toEqual({ fireSwing: false, latched: false, playBase: true })
+    expect(resolveGltfAnim('die', null, false, true, true)).toEqual({ fireSwing: false, latched: false, playBase: true })
   })
 
   it('plays the death clip while the corpse is still finishing a movement segment', () => {
-    expect(resolveGltfAnim('die', true, false, true).playBase).toBe(true)
+    expect(resolveGltfAnim('die', null, true, false, true).playBase).toBe(true)
   })
 
   it('still suppresses the base anim for a non-death state under a running swing', () => {
-    expect(resolveGltfAnim('idle', false, false, true).playBase).toBe(false)
+    expect(resolveGltfAnim('idle', null, false, false, true).playBase).toBe(false)
   })
 })
 

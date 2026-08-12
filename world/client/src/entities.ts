@@ -4,7 +4,7 @@ import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.j
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
-import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
+import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, swingStartDelayMs, yawToward } from './motion'
 import { MONSTER_MODELS, FORM_TINT_MIX, FORM_TINT_EMISSIVE, formTintColor } from '../../shared/monsterModels'
 import { footprintRadius } from '../../shared/monsterSize'
 import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
@@ -973,27 +973,39 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number, 
     // A corpse never keeps walking: death wins over an in-flight movement
     // segment, which otherwise plays walk/run until the queue drains.
     const dying = entity.serverAnim === 'die'
-    const name: AnimName = dying ? 'die' : entity.moving ? entity.segmentAnim : entity.serverAnim === 'walk' ? 'idle' : entity.serverAnim
+    // The server's swing signal is kept SEPARATE from the looping base clip:
+    // it arrives on the same tick as the step that carried the attacker into
+    // reach, so folding it into `name` (which traversal wins) threw it away.
+    const swing: AnimName | null = !dying && isAttackAnim(entity.serverAnim) ? entity.serverAnim : null
+    const standingAnim: AnimName = swing !== null || entity.serverAnim === 'walk' ? 'idle' : entity.serverAnim
+    const name: AnimName = dying ? 'die' : entity.moving ? entity.segmentAnim : standingAnim
     if (entity.animator.kind === 'proc') {
-      updateProcAnimator(entity.animator, name, deltaSeconds)
+      // Proc rigs edge-detect their own trigger, so a swing goes straight
+      // through whether or not the creature is mid-stride.
+      updateProcAnimator(entity.animator, swing ?? name, deltaSeconds)
     } else {
-      // Catch-up segments play faster (segmentDurationMs) than a full 600ms
-      // step; scale playback so a running or catching-up stride doesn't slide
-      // its feet, and reset to normal speed off any movement segment so
-      // attack/die never speed up.
       const anim = entity.animator
-      anim.mixer.timeScale = entity.moving && !dying ? MOVE_DURATION_MS / entity.segmentDuration : 1
-      const attackAction = isAttackAnim(name) ? (anim.actions[name] ?? anim.actions.attack) : undefined
+      const attackAction = swing ? (anim.actions[swing] ?? anim.actions.attack) : undefined
       const playing = anim.current
       const attackPlaying = playing != null && isAttackAction(anim, playing) && playing.isRunning()
-      const decision = resolveGltfAnim(name, entity.moving, anim.swingLatched ?? false, attackPlaying)
+      // Catch-up segments play faster (segmentDurationMs) than a full 600ms
+      // step; scale playback so a running or catching-up stride doesn't slide
+      // its feet, and reset to normal speed off any movement segment — and
+      // whenever a swing owns the mixer, since a swing can now land mid-stride
+      // (a kited fight, or a catch-up segment) and must not speed up with it.
+      anim.mixer.timeScale = entity.moving && !dying && !attackPlaying ? MOVE_DURATION_MS / entity.segmentDuration : 1
+      const decision = resolveGltfAnim(name, swing, entity.moving, anim.swingLatched ?? false, attackPlaying)
       anim.swingLatched = decision.latched
       if (decision.fireSwing && attackAction) {
-        if ((anim.swingDelayMs ?? 0) > 0) {
-          // Defer the clip start by this monster's sub-tick impact delay so the
-          // impact frame coincides with the hit splat (same alignment the arena
-          // does — src/utils/combatWindup.js).
-          anim.pendingSwingAt = now + anim.swingDelayMs!
+        // Two reasons to hold the clip back: this monster's sub-tick impact
+        // delay (so the impact frame coincides with the hit splat, the same
+        // alignment the arena does — src/utils/combatWindup.js), and the rest of
+        // the stride when the swing was signalled on the tick the attacker
+        // stepped into reach.
+        const segmentRemaining = entity.moving ? entity.segmentStart + entity.segmentDuration - now : 0
+        const delay = swingStartDelayMs(segmentRemaining, anim.swingDelayMs ?? 0)
+        if (delay > 0) {
+          anim.pendingSwingAt = now + delay
           anim.pendingSwingAction = attackAction
         } else {
           playSwing(anim, attackAction)

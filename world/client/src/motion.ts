@@ -9,15 +9,23 @@ export function isAttackAnim(name: AnimName): boolean {
   return ATTACK_ANIMS.includes(name)
 }
 
-/** Pure per-frame animation decision for a GLB-rigged entity. `name` is the anim
- * it wants this frame, `attackPlaying` whether a one-shot attack clip is still
- * running. Returns whether to fire a fresh swing (edge-detected via `latched`),
- * the next latch value, and whether to hand the mixer back to the base
- * (idle/walk) anim. The server flags an attack for only the tick a swing lands
- * then returns to idle, so without this the swing would be cut off after ~1
- * tick — this keeps it playing to completion, matching the combat arena. */
+/** Pure per-frame animation decision for a GLB-rigged entity. `base` is the
+ * looping clip this frame (die/run/walk/idle/mine), `swing` the server's
+ * one-shot swing signal if it flagged one, `attackPlaying` whether a one-shot
+ * attack clip is still running. Returns whether to fire a fresh swing
+ * (edge-detected via `latched`), the next latch value, and whether to hand the
+ * mixer back to `base`. The server flags an attack for only the tick a swing
+ * lands then returns to idle, so without this the swing would be cut off after
+ * ~1 tick — this keeps it playing to completion, matching the combat arena.
+ *
+ * A swing signalled MID-STRIDE still fires (the caller delays it to the end of
+ * the traversal): the server resolves the first swing on the very tick the last
+ * step lands, so the client is still interpolating that step when the signal
+ * arrives. Dropping it there cost a run-in kill its entire animation — a one-hit
+ * kill never animated at all, since the next diff is already back to idle. */
 export function resolveGltfAnim(
-  name: AnimName,
+  base: AnimName,
+  swing: AnimName | null,
   moving: boolean,
   latched: boolean,
   attackPlaying: boolean,
@@ -26,9 +34,19 @@ export function resolveGltfAnim(
   // attack cycle (Grondar: 6.6s clip, re-triggered every 3.0s) keeps
   // `attackPlaying` true for the whole fight, so gating `die` behind it meant
   // the death clip was never handed to the mixer at all.
-  if (name === 'die') return { fireSwing: false, latched: false, playBase: true }
-  if (!moving && isAttackAnim(name)) return { fireSwing: !latched, latched: true, playBase: false }
+  if (base === 'die') return { fireSwing: false, latched: false, playBase: true }
+  // While a deferred swing waits out the stride the walk/run clip keeps playing;
+  // it hands over the moment the swing actually starts.
+  if (swing) return { fireSwing: !latched, latched: true, playBase: moving && !attackPlaying }
   return { fireSwing: false, latched: false, playBase: !attackPlaying }
+}
+
+/** How long to hold a fired swing before its clip starts: long enough to finish
+ * the stride it was signalled during (so the blow lands on arrival, not while
+ * sliding into the tile), and never shorter than the monster's own impact-frame
+ * lead. 0 => start it this frame. */
+export function swingStartDelayMs(segmentRemainingMs: number, impactDelayMs: number): number {
+  return Math.max(0, segmentRemainingMs, impactDelayMs)
 }
 
 export const MOVE_DURATION_MS = 600
