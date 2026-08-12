@@ -41,16 +41,7 @@ const sourceFiles = [
   'utils/armoury.js',
   'utils/oneLifeDeath.js',
   'utils/rewardReveal.js',
-  'utils/equipModels.js', // -> game chunk (equip screen 3D model registry)
-  'utils/three3d.js',     // core: lazy three.js loader (landing hero + equip/combat 3D)
-  '3d/heroAttach.js',     // -> game chunk (hero weapon/gear attach + hide-mask runtime)
-  '3d/blendShell.js',     // -> game chunk (procedural blend-shell creature runtime)
-  '3d/rigs.js',           // -> game chunk (procedural animation rigs over blendShell)
-  '3d/creatures.js',      // -> game chunk (creatures3d.json registry resolver)
-  '3d/heroCompose.js',    // -> game chunk (pure hero + equipment spec composition)
-  '3d/heroCreature.js',   // -> game chunk (hero3d.json resolver over heroCompose)
-  '3d/biomes.js',         // -> game chunk (arena set dressing: ground/sky/props from a biome spec)
-  '3d/biomeRegistry.js',  // -> game chunk (biomes3d.json resolver: placeId -> biome spec)
+  'utils/three3d.js',     // core: lazy three.js loader (landing hero only)
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
@@ -225,8 +216,6 @@ const sourceFiles = [
   'components/IntroTourModal.js',
   'components/IdleCombatSetupModal.js',
   'components/EquipmentPaperdoll.js',
-  'components/Model3DViewer.js', // -> game chunk (equip screen 3D hero viewer)
-  'components/CombatArena3D.js', // -> game chunk (Phase 2 3D combat modal)
   'components/CollectionLogPanel.js',
   'components/GildedComplete.js',
   'components/FilterToggleBar.js',
@@ -305,18 +294,7 @@ const GAME_CHUNK_FILES = new Set([
   'components/ActivityIcon.js',
   'components/PlaceMapView.js',
   'components/SlayerMasterModal.js',
-  'components/Model3DViewer.js',
   'utils/combatArt.js', // -> game chunk (reads placeMapsData for monster locations; only combat/place-map screens use it)
-  'components/CombatArena3D.js',
-  'utils/equipModels.js',
-  '3d/heroAttach.js',
-  '3d/blendShell.js',
-  '3d/rigs.js',
-  '3d/creatures.js',
-  '3d/heroCompose.js',
-  '3d/heroCreature.js',
-  '3d/biomes.js',
-  '3d/biomeRegistry.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
@@ -402,10 +380,6 @@ const summoningJSON = readSrc('data/summoning.json');
 const worldJSON = readSrc('data/world.json');
 const worldActivitiesJSON = readSrc('data/worldActivities.json');
 const placeMapsJSON = readSrc('data/placeMaps.json');
-const equipmentModelsJSON = readSrc('data/equipmentModels.json');
-const creatures3dJSON = readSrc('data/creatures3d.json');
-const hero3dJSON = readSrc('data/hero3d.json');
-const biomes3dJSON = readSrc('data/biomes3d.json');
 
 // Landing screen images. Served as external files from /public/landing/ (the
 // Cloudflare Pages output dir is the repo root) and referenced by URL rather
@@ -694,19 +668,10 @@ const deployBranch = process.env.WORKERS_CI_BRANCH || process.env.CF_PAGES_BRANC
 const isProductionBranch = deployBranch === 'main';
 const branchLog = `branch=${deployBranch || 'unset'}`;
 
-// 3D feature flag, baked in at build time. `Enable3dRender` ("true"/anything)
-// is an explicit override when set; otherwise derive from the deploy branch,
-// which the CI injects into every build (config-managed projects can't set
-// dashboard build vars): any non-main branch = preview = enabled, main =
-// production = disabled. Fail-safe: no branch info (local rebuild) disables.
-// Vite dev is unaffected (no injected global -> three3d.js enables).
-const enable3D = process.env.Enable3dRender != null
-  ? process.env.Enable3dRender === 'true'
-  : Boolean(deployBranch) && !isProductionBranch;
-console.log(`3D render: ${enable3D ? 'ENABLED' : 'disabled'} (Enable3dRender=${process.env.Enable3dRender ?? 'unset'}, ${branchLog})`);
-// Open-world beta button flag, same build-time-bake pattern as enable3D
-// above (and for the same reason: this is a client-bundle toggle, and
-// wrangler.toml [vars] never reach the client build — only functions/**).
+// Open-world beta button flag, same build-time-bake pattern as the other
+// deploy-branch-derived flags in this file (and for the same reason: this is
+// a client-bundle toggle, and wrangler.toml [vars] never reach the client
+// build — only functions/**).
 // `EnableWorldBeta` ("true"/anything) is an explicit override when set;
 // otherwise derive from CF_PAGES_BRANCH the same way: preview = enabled,
 // production (main) = disabled. Fail-safe: no branch info disables.
@@ -752,7 +717,7 @@ const questGatesDisabled = isProductionBranch
     ? process.env.DisableQuestRequirements === 'true'
     : Boolean(deployBranch);
 console.log(`Quest requirements: ${questGatesDisabled ? 'BYPASSED (preview)' : 'enforced'} (DisableQuestRequirements=${process.env.DisableQuestRequirements ?? 'unset'}, ${branchLog})`);
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst creatures3dData = ${creatures3dJSON};\nconst hero3dData = ${hero3dJSON};\nconst biomes3dData = ${biomes3dJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\nconst pocketWorldLairsEnabled = ${worldLairsEnabled};\nconst pocketWorldOrigin = ${JSON.stringify(worldOrigin)};\n${gameJS}`;
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst pocketAssetBase = '/public/';\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\nconst pocketWorldLairsEnabled = ${worldLairsEnabled};\nconst pocketWorldOrigin = ${JSON.stringify(worldOrigin)};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);
