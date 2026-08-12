@@ -20,6 +20,7 @@ import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
 import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt, getMonsterAddInfo } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
+import { COMBAT_CATEGORY_ORDER, COMBAT_RAID_ORDER, orderBy } from '../utils/combatOrder.js'
 import { prayerSkill } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
@@ -182,6 +183,10 @@ const COMBAT_CATEGORIES = [
     ids: ['duskmare'],
   },
 ]
+
+// Picker display order, shared by desktop and mobile so the two never drift
+// (mobile used to define its own order — see combatOrder.js).
+const ORDERED_COMBAT_CATEGORIES = [...COMBAT_CATEGORIES].sort(orderBy(COMBAT_CATEGORY_ORDER, c => c.key))
 
 // Resolve which combat category a monster id belongs to (for art accent fallback).
 const MONSTER_CATEGORY_KEY = (() => {
@@ -354,7 +359,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const dungeonPlace = dungeonPlaceId ? worldData.places[dungeonPlaceId] : null
   const isDungeon = !!dungeonPlace
   const dungeon = useMemo(() => (isDungeon ? buildDungeonData(dungeonPlaceId) : null), [dungeonPlaceId, isDungeon])
-  const pickerCategories = isDungeon ? dungeon.categories : COMBAT_CATEGORIES
+  const pickerCategories = isDungeon ? dungeon.categories : ORDERED_COMBAT_CATEGORIES
   const pickerRaids = isDungeon ? dungeon.raids : raidsData
   const pickerTitle = isDungeon ? `${dungeonPlace.name} Dungeon` : 'Choose a Foe'
 
@@ -2684,11 +2689,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         <div class="flex items-center gap-3">
                           <SkillEmblem iconKey={getMonsterArt(monster, category.key).icon} accent={getMonsterArt(monster, category.key).accent} size={36} glow={0} />
                           <div class="text-left">
-                            <div class="flex items-center gap-1.5">
-                              <span class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</span>
-                              {isOnTask && <span class="text-[9px] bg-yellow-500 text-black font-bold px-1 rounded">TASK</span>}
+                            {/* Tags wrap under the name instead of squeezing it — a boss can
+                                carry TASK, GROUP and HARD at once (mirrors .cb-mon__name). */}
+                            <div class="flex items-center flex-wrap gap-1.5">
+                              <span class="flex-shrink-0 text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</span>
+                              {isOnTask && <span class="flex-shrink-0 text-[9px] bg-yellow-500 text-black font-bold px-1 rounded">TASK</span>}
                               {offersCoop(monster) && !isLocked && (
-                                <span class="text-[9px] border border-[var(--color-gold-dim)] text-[var(--color-gold)] font-bold px-1 rounded">GROUP</span>
+                                <span class="flex-shrink-0 text-[9px] border border-[var(--color-gold-dim)] text-[var(--color-gold)] font-bold px-1 rounded">GROUP</span>
                               )}
                               {hardOn && <HardModeTag />}
                             </div>
@@ -2764,7 +2771,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <div class="space-y-2">
             {Object.values(filteredPickerRaids).filter((raid, index, allRaids) =>
               allRaids.findIndex(candidate => candidate.id === raid.id) === index
-            ).map(raid => {
+            ).sort(orderBy(COMBAT_RAID_ORDER, r => r.id)).map(raid => {
               const raidReq = checkRaidRequirements(raid)
               const demoRaidLocked = isDemo
               const isRaidLocked = raidReq.locked || demoRaidLocked
