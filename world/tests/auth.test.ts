@@ -20,25 +20,28 @@ describe('parseHandoffFromHash', () => {
 })
 
 describe('resolvePocketRpgUrl', () => {
-  it('prefers the referring PocketRPG site over the world hostname', () => {
-    expect(resolvePocketRpgUrl('https://preview.pocketrpg.pages.dev/help', 'world.pocketrpg.co.uk')).toBe(
+  it('prefers the referring PocketRPG site over the world hostname heuristic', () => {
+    expect(resolvePocketRpgUrl('https://preview.pocketrpg.pages.dev/help', 'pocketrpg.co.uk')).toBe(
       'https://preview.pocketrpg.pages.dev'
     )
-    expect(resolvePocketRpgUrl('https://pocketrpg.co.uk/', 'pocketrpg-world.rlh.workers.dev')).toBe(
+    expect(resolvePocketRpgUrl('https://pocketrpg.co.uk/', 'pocketrpg-app-preview.rlh.workers.dev')).toBe(
       'https://pocketrpg.co.uk'
     )
   })
 
   it('ignores an unrecognized referrer and falls back to the hostname heuristic', () => {
-    expect(resolvePocketRpgUrl('https://evil.example.com/', 'world.pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
-    expect(resolvePocketRpgUrl('https://evil.example.com/', 'pocketrpg-world.rlh.workers.dev')).toBe(
+    expect(resolvePocketRpgUrl('https://evil.example.com/', 'pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
+    expect(resolvePocketRpgUrl('https://evil.example.com/', 'pocketrpg-app-preview.rlh.workers.dev')).toBe(
       'https://preview.pocketrpg.pages.dev'
     )
   })
 
   it('falls back to the hostname heuristic when there is no referrer at all', () => {
-    expect(resolvePocketRpgUrl('', 'world.pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
-    expect(resolvePocketRpgUrl('', 'pocketrpg-world.rlh.workers.dev')).toBe('https://preview.pocketrpg.pages.dev')
+    // The world client ships from the game's own Worker now — pocketrpg.co.uk
+    // is production, anything else (a preview workers.dev URL, localhost) falls
+    // back to preview.
+    expect(resolvePocketRpgUrl('', 'pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
+    expect(resolvePocketRpgUrl('', 'pocketrpg-app-preview.rlh.workers.dev')).toBe('https://preview.pocketrpg.pages.dev')
     expect(resolvePocketRpgUrl('', 'localhost')).toBe('https://preview.pocketrpg.pages.dev')
   })
 })
