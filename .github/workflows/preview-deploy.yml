@@ -1,0 +1,43 @@
+name: Preview Deploy
+
+# Branch previews. Deploys every non-main branch to the pocketrpg-app-preview
+# Worker, the same target Workers Builds uses.
+on:
+  push:
+    branches-ignore: [main]
+
+concurrency:
+  group: preview-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Build site
+        # build_single.cjs derives the 3D-render and quest-gate client flags
+        # from this variable; without it every flag reads as a production
+        # build and the preview loses the bypasses it exists to provide.
+        env:
+          WORKERS_CI_BRANCH: ${{ github.ref_name }}
+        run: npm run build:site
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.107.1'
+          command: deploy --env preview
