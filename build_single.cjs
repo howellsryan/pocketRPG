@@ -36,6 +36,7 @@ const sourceFiles = [
   'utils/skillArt.js',
   'utils/monsterIcons.js',
   'utils/combatArt.js',
+  'utils/combatOrder.js',
   'utils/prayerIcons.js',
   'utils/bonusLabels.js',
   'utils/armoury.js',
@@ -295,6 +296,7 @@ const GAME_CHUNK_FILES = new Set([
   'components/PlaceMapView.js',
   'components/SlayerMasterModal.js',
   'utils/combatArt.js', // -> game chunk (reads placeMapsData for monster locations; only combat/place-map screens use it)
+  'utils/combatOrder.js', // -> game chunk (only the combat picker screens use it)
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
