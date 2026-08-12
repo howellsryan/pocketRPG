@@ -180,7 +180,6 @@ ${SCROLL_CSS}
   left: 0; right: 0; bottom: 64px; border-radius: 16px 16px 0 0;
   border-left: none; border-right: none; border-bottom: none;
   padding: 0 12px 10px; box-shadow: 0 -6px 22px rgba(0, 0, 0, 0.35);
-  max-height: 78vh;
 }
 :root[data-hud-orient="portrait"] .hud-sheet-handle {
   display: flex; justify-content: center; padding: 9px 0 6px; cursor: grab;
@@ -190,12 +189,9 @@ ${SCROLL_CSS}
 :root[data-hud-orient="portrait"] .hud-sheet-handle span {
   width: 44px; height: 5px; border-radius: 999px; background: #6a5a3a;
 }
-/* landscape: slide-out beside the rail, no handle. Height is fixed to
-   inventory's content (see #hud-panes above), not stretched to the
-   viewport — a 3-button Combat pane doesn't need to fill the whole screen. */
+/* landscape: slide-out beside the rail, full height, no handle */
 :root[data-hud-orient="landscape"] #hud-body {
-  top: 12px; width: 300px; padding: 12px 12px 14px;
-  max-height: calc(100% - 24px);
+  top: 0; bottom: 0; width: 300px; padding: 12px 12px 14px;
 }
 :root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-body { right: 58px; border-right: none; }
 :root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-body { left: 58px; border-left: none; }
@@ -1209,7 +1205,7 @@ export function initHud(handlers?: HudHandlers): void {
 
 // The portrait sheet's drag-to-resize handle: press-drag adjusts the sheet
 // height live, release snaps to peek/full or dismisses (sheetSnap). Landscape
-// ignores it (the handle is CSS-hidden and the body is a fixed content height).
+// ignores it (the handle is CSS-hidden and the body is full-height).
 function setupSheetDrag(handle: HTMLElement): void {
   let start: { y: number; h: number } | null = null
   const onMove = (e: PointerEvent): void => {
