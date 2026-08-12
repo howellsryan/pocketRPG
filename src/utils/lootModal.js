@@ -1,5 +1,28 @@
 import { getItemUnitValue } from './itemValue.js'
 
+// Only a boss or a raid earns the full-screen loot modal. Every other kill
+// announces itself as a reward-reveal card instead and the fight carries on —
+// a grind must not stop dead on a modal once per cow.
+export function killPresentsFullModal({ isBossKill, raidId } = {}) {
+  return isBossKill === true || !!raidId
+}
+
+/**
+ * Kill drops as reward-reveal entries: one chip per item id, so a drop table
+ * that rolled the same item twice reads as a single stack rather than two
+ * chips fighting over the same render key.
+ */
+export function killRevealRewards(drops) {
+  const byId = new Map()
+  for (const drop of (drops || [])) {
+    const itemId = drop?.itemId
+    const quantity = Math.floor(Number(drop?.quantity ?? 1) || 0)
+    if (!itemId || quantity < 1) continue
+    byId.set(itemId, (byId.get(itemId) || 0) + quantity)
+  }
+  return [...byId].map(([itemId, quantity]) => ({ itemId, quantity }))
+}
+
 // Shared shaping for the post-kill loot modal, so a solo kill and a co-op kill
 // present the same way.
 //

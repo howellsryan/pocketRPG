@@ -1,13 +1,76 @@
+import { killRevealRewards } from './lootModal.js'
+
 /**
  * Fire the reward-reveal overlay for a completed clue/minigame/quest. The
  * overlay (RewardRevealOverlay) normalises qty/quantity, so raw reward entries
  * from any source can be passed straight through. `levelUps` (optional —
  * quests only, so far) renders as a "Levels Gained" summary within the same
  * card, alongside the reward chips.
+ *
+ * `mergeKey` (optional) folds a reveal into the queued card carrying the same
+ * key instead of queueing behind it — see mergeRevealQueue.
  */
-export function emitRewardReveal(title, icon, rewards, levelUps = []) {
+export function emitRewardReveal(title, icon, rewards, levelUps = [], mergeKey = null) {
   if (typeof window === 'undefined' || !Array.isArray(rewards) || rewards.length === 0) return
-  window.dispatchEvent(new CustomEvent('pocketrpg:reward-reveal', { detail: { title, icon, rewards, levelUps } }))
+  window.dispatchEvent(new CustomEvent('pocketrpg:reward-reveal', { detail: { title, icon, rewards, levelUps, mergeKey } }))
+}
+
+/**
+ * Announce an ordinary (non-boss, non-raid) kill's loot. This is the whole
+ * post-kill UI for those fights — they no longer stop on the full-screen loot
+ * modal — so it must not queue: a cow dies well inside the card's lifetime, and
+ * a queue would show loot from four kills ago. Merging by monster means a grind
+ * reads as one running "Cow Slain ×7" card instead.
+ *
+ * A kill that dropped nothing shows nothing; the combat log already said so.
+ */
+export function emitKillReveal(monsterId, monsterName, drops) {
+  const rewards = killRevealRewards(drops)
+  if (rewards.length === 0) return
+  emitRewardReveal(`${monsterName || 'Monster'} Slain`, '⚔️', rewards, [], `kill:${monsterId || monsterName}`)
+}
+
+function mergeRewardLists(existing, incoming) {
+  const out = []
+  const index = new Map()
+  for (const reward of [...(existing || []), ...(incoming || [])]) {
+    const key = reward.skill ? `skill:${reward.skill}` : `item:${reward.itemId}`
+    const at = index.get(key)
+    if (at == null) {
+      index.set(key, out.length)
+      out.push({ ...reward })
+    } else if (reward.skill) {
+      out[at] = { ...out[at], xp: out[at].xp + reward.xp }
+    } else {
+      out[at] = { ...out[at], quantity: out[at].quantity + reward.quantity }
+    }
+  }
+  return out
+}
+
+/**
+ * Queue a reveal, folding it into an existing card when both carry the same
+ * `mergeKey`. The merged card keeps its place in the queue (so an older reveal
+ * still shows first) but takes the newcomer's title, a bumped `count`, and a
+ * bumped `rev` — the overlay restarts the dismiss timer off `rev`, so a card
+ * that keeps absorbing kills stays up rather than expiring mid-grind.
+ */
+export function mergeRevealQueue(queue, reveal) {
+  const list = queue || []
+  if (!reveal?.mergeKey) return [...list, reveal]
+  const at = list.findIndex((r) => r.mergeKey === reveal.mergeKey)
+  if (at === -1) return [...list, reveal]
+  const prev = list[at]
+  const merged = {
+    ...prev,
+    title: reveal.title || prev.title,
+    icon: reveal.icon || prev.icon,
+    count: (prev.count || 1) + (reveal.count || 1),
+    rev: (prev.rev || 0) + 1,
+    rewards: mergeRewardLists(prev.rewards, reveal.rewards),
+    levelUps: [...(prev.levelUps || []), ...(reveal.levelUps || [])],
+  }
+  return list.map((r, i) => (i === at ? merged : r))
 }
 
 /**
