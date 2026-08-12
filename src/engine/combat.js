@@ -21,7 +21,7 @@ import { getMonsterCharmDrops, getSummoningCreature, rollSummonAttack, SUMMON_AT
 import { countItem } from './inventory.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
-import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, randomFormSwitchThreshold } from './bossForms.js'
+import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, randomFormSwitchThreshold, recordDefenceBonusDrain, applyDefenceBonusDrain, clearDefenceBonusDrain } from './bossForms.js'
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
 
@@ -168,7 +168,10 @@ function triggerEnrageIfNeeded(state, monster, events) {
   monster.attackStyle = enragedForm.attackStyle ?? monster.attackStyle
   monster.attackBonus = enragedForm.attackBonus ?? monster.attackBonus
   monster.strengthBonus = enragedForm.strengthBonus ?? monster.strengthBonus
-  if (enragedForm.defenceBonus) monster.defenceBonus = { ...enragedForm.defenceBonus }
+  if (enragedForm.defenceBonus) {
+    monster.defenceBonus = { ...enragedForm.defenceBonus }
+    applyDefenceBonusDrain(monster)
+  }
   monster.formMaxHit = enragedForm.maxHit ?? monster.formMaxHit
   if (enragedForm.attackSpeed) monster.attackSpeed = enragedForm.attackSpeed
   events.push({
@@ -299,6 +302,7 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
         monster.attackBonus = nextForm.attackBonus ?? monster.attackBonus
         monster.strengthBonus = nextForm.strengthBonus ?? monster.strengthBonus
         monster.defenceBonus = { ...nextForm.defenceBonus }
+        clearDefenceBonusDrain(monster)
         monster.formMaxHit = nextForm.maxHit
         monster.formAttackCount = 0
         monster.formSwitchThreshold = 9999
@@ -338,6 +342,7 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
         monster.attackBonus = form.attackBonus ?? monster.attackBonus
         monster.strengthBonus = form.strengthBonus ?? monster.strengthBonus
         monster.defenceBonus = { ...form.defenceBonus }
+        clearDefenceBonusDrain(monster)
         monster.formMaxHit = form.maxHit
       }
     }
@@ -1566,11 +1571,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const damage = rollDamage(acc, maxHit)
       const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
-      if (actual > 0) {
-        for (const k of Object.keys(monster.defenceBonus)) {
-          monster.defenceBonus[k] = Math.max(-64, monster.defenceBonus[k] - actual)
-        }
-      }
+      recordDefenceBonusDrain(monster, actual)
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })

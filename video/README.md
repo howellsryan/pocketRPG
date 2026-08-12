@@ -10,11 +10,6 @@ node video/render.mjs video/recipes/zero-to-hero.json
 # -> video/out/zero-to-hero.mp4  (1080x1920, H.264, 30fps)
 ```
 
-Build with `Enable3dRender=true npm run rebuild` when a recipe shows the
-Equipment screen: the 3D hero wears the seeded kit, which is far better footage
-than the paper-doll fallback a default build renders. The hero streams in over
-about a second, so give that scene ~4s.
-
 Output is gitignored — a render exists only in that run's `video/out/`, so
 grab it before the container goes away.
 
@@ -80,10 +75,8 @@ between states instead of showing a boot screen.
 Demo mode locks two things, so neither can appear in a video:
 
 - **Store and Leaderboard** are cloud-only screens.
-- **Every boss is locked** (`CombatScreen.jsx`, `demoBossLocked`). All three
-  monsters with 3D arena models (King Black Dragon, Warlord Grondar, Zaryth) are
-  bosses, so **the 3D combat arena cannot be filmed offline at all**. Lifting
-  that needs a deliberate change to shipped game gating — ask before adding one.
+- **Every boss is locked** (`CombatScreen.jsx`, `demoBossLocked`). Lifting that
+  needs a deliberate change to shipped game gating — ask before adding one.
 
 The 63 non-boss monsters, all skilling, quests, bank, equipment and the world map
 are all fair game.

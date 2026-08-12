@@ -65,11 +65,6 @@ import { emitKillReveal } from '../utils/rewardReveal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
-import CombatArena3D from '../components/CombatArena3D.jsx'
-import { getCreatureSpec } from '../3d/creatures.js'
-import { getArenaBiomeSpec } from '../3d/biomeRegistry.js'
-import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getGearPlacements, getCharacterModel } from '../utils/equipModels.js'
-import { canRender3D } from '../utils/three3d.js'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
@@ -443,25 +438,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [monsterSplats, setMonsterSplats] = useState([])
   const [addSplats, setAddSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
-  // 3D combat arena (Phase 2): renders inline in place of the HP bars for
-  // monsters with a registered model; the 🎥/📊 chip swaps between the two,
-  // and the choice persists. Combat ticks are held until the arena reports
-  // ready (onReady — it self-releases on a load timeout), so a fight never
-  // starts against an invisible scene.
-  const [arenaClosed, setArenaClosed] = useState(() => {
-    try { return localStorage.getItem('pocketrpg_combat3d') === 'off' } catch { return false }
-  })
-  const [arenaSignal, setArenaSignal] = useState(null)
-  // Fired one tick BEFORE the monster's next attack lands (monsterAttackTimer
-  // reaches 1) so the 3D arena can lead a rigged monster's wind-up and have the
-  // swing connect exactly on the hit tick's splat. See CombatArena3D.
-  const [arenaWindup, setArenaWindup] = useState(null)
-  const [arenaReady, setArenaReady] = useState(false)
-  const arenaReadyRef = useRef(false)
-  const arenaClosedRef = useRef(arenaClosed)
-  useEffect(() => { arenaReadyRef.current = arenaReady }, [arenaReady])
-  useEffect(() => { arenaClosedRef.current = arenaClosed }, [arenaClosed])
-  useEffect(() => { setArenaReady(false) }, [combat?.monster?.id, arenaClosed])
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
   const hasAutoStarted = useRef(false)
@@ -678,11 +654,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       const state = combatRef.current
       if (!state || !state.active) return
 
-      // Hold the fight while the 3D arena is still loading its models, so the
-      // opening hits are never invisible (arena onReady/onFail releases this).
-      if (!arenaClosedRef.current && !arenaReadyRef.current &&
-          getMonsterModel(state.monster.id) && getCharacterAssetPath() && canRender3D()) return
-
       const playerStats = {
         attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
         strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
@@ -712,21 +683,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       pushSplats(setMonsterSplats, tickSplats.monster)
       pushSplats(setAddSplats, tickSplats.add)
       pushSplats(setPlayerSplats, tickSplats.player)
-      if (tickSplats.monster.length || tickSplats.add.length || tickSplats.player.length) {
-        setArenaSignal(prev => ({
-          seq: (prev?.seq || 0) + 1,
-          hero: tickSplats.monster.length > 0 || tickSplats.add.length > 0,
-          monster: tickSplats.player.length > 0,
-          special: events.some(ev => ev.type === 'specialHit'),
-        }))
-      }
-
-      // Wind-up lead: broadcast how many ticks until the monster's next attack
-      // so the arena can pre-start a rigged swing early enough (even for clips
-      // longer than one tick) that it ENDS on the hit tick's splat.
-      if (combatState.active && combatState.monster.currentHP > 0 && combatState.monsterAttackTimer >= 1) {
-        setArenaWindup(prev => ({ seq: (prev?.seq || 0) + 1, ticks: combatState.monsterAttackTimer }))
-      }
 
       for (const ev of events) {
         if (ev.type === 'specialHit') {
@@ -3266,38 +3222,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
-  // Combat view — GLB registry entry wins per-monster; a procedural
-  // blend-shell spec (creatures3d.json) covers the rest.
-  const arenaModel = combat?.active && combat.monster ? getMonsterModel(combat.monster.id) : null
-  // currentForm keys multiForm bosses to their per-phase spec (creatures3d
-  // `forms`); the arena swaps the creature in place on form transitions.
-  const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id, combat.monster.currentForm) : null
-  // Hero realism (2026-07 re-scope): the arena hero is the GLB human — the
-  // blend-shell hero capped out at a mannequin read (docs/hero-realism-plan.md).
-  // Passing null here falls back to the GLB hero + bone-attach/skinned gear;
-  // the procedural hero stays authorable via render-proc.mjs --hero.
-  const arenaHeroProc = null
-  const arenaMonsterId = combat?.active && combat.monster ? combat.monster.id : null
-  const arenaBiome = useMemo(() => getArenaBiomeSpec(worldLocation, arenaMonsterId), [worldLocation, arenaMonsterId])
-  const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(arenaHeroProc || getCharacterAssetPath()) && canRender3D()
-  const showArena = arenaAvailable && !arenaClosed
-  const reopenArena = () => {
-    setArenaClosed(false)
-    try { localStorage.removeItem('pocketrpg_combat3d') } catch { /* private mode */ }
-  }
-  const closeArena = () => {
-    setArenaClosed(true)
-    try { localStorage.setItem('pocketrpg_combat3d', 'off') } catch { /* private mode */ }
-  }
-  const arenaChip = arenaAvailable && (
-    <button
-      class="px-2 py-1 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[10px] font-semibold text-[var(--color-gold)] active:bg-[var(--color-void-border)]"
-      onClick={arenaClosed ? reopenArena : closeArena}
-      aria-label={arenaClosed ? 'Switch to 3D battle view' : 'Switch to progress bars'}
-    >
-      {arenaClosed ? '🎥 3D' : '📊 Bars'}
-    </button>
-  )
   // ── Boss adds (e.g. the Dread Core, Zaryth's sentinels) ──
   // Live enemies, not a phase: they attack alongside the boss until killed, so
   // the player needs a way to swing at each and to see the one they are on.
@@ -3346,37 +3270,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     </div>
   )
 
-  // Inline 3D arena — replaces the HP-bar block in whichever layout renders.
-  const heroSpec = getCharacterModel() || {}
-  const arenaPanel = showArena && (
-    <CombatArena3D
-      monsterId={combat.monster.id}
-      monsterName={combat.monster.name}
-      monsterPath={arenaModel ? arenaModel.path : null}
-      monsterProc={arenaProc}
-      monsterHeight={(arenaModel || arenaProc).height}
-      monsterRotationDeg={(arenaModel || arenaProc).rotationDeg}
-      characterPath={getCharacterAssetPath()}
-      characterRotationDeg={heroSpec.rotationDeg}
-      heroProc={arenaHeroProc}
-      biome={arenaBiome}
-      clips={{ idle: heroSpec.combatIdleClip || heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip, hit: heroSpec.hitClip, death: heroSpec.deathClip }}
-      weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
-      gear={getGearPlacements(equipment)}
-      attackSignal={arenaSignal}
-      windupSignal={arenaWindup}
-      monsterAttackImpactSec={arenaModel ? arenaModel.attackImpactSec : null}
-      monsterAttackMaxSec={arenaModel ? arenaModel.attackMaxSec : null}
-      monsterAttackStyle={combat.monster.attackStyle}
-      monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
-      playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}
-      monsterSplats={monsterSplats}
-      playerSplats={playerSplats}
-      onReady={() => setArenaReady(true)}
-      onFail={() => setArenaClosed(true)}
-    />
-  )
-
   return (
     <div class={`forge-shell h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
       {/* Back button */}
@@ -3412,22 +3305,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             })()}
           </span>
           <span class="flex items-center gap-2">
-            {arenaChip}
             <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
           </span>
         </div>
-        {!showArena && (
-          <div class="relative">
-            <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
-            <HitSplatLayer splats={monsterSplats} />
-          </div>
-        )}
+        <div class="relative">
+          <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
+          <HitSplatLayer splats={monsterSplats} />
+        </div>
       </div>
 
       {addPanel}
-
-      {/* Inline 3D arena replaces both HP bars (its own bars ride the scene) */}
-      {arenaPanel && <div class="mb-2">{arenaPanel}</div>}
 
       {/* Raid progress indicator */}
       {combat.raid && (
@@ -3457,15 +3344,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Player HP */}
       <div class="mb-2">
         <div class="flex items-center justify-between mb-0.5">
-          {!showArena && <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>}
+          <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>
           <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
         </div>
-        {!showArena && (
-          <div class="relative">
-            <HPBar current={currentHP} max={getMaxHP()} size="large" />
-            <HitSplatLayer splats={playerSplats} />
-          </div>
-        )}
+        <div class="relative">
+          <HPBar current={currentHP} max={getMaxHP()} size="large" />
+          <HitSplatLayer splats={playerSplats} />
+        </div>
       </div>
 
       {/* Prayer pool — drains while prayers are active; restored by prayer/super restore potions */}
@@ -3499,8 +3384,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Inline gear paperdoll — desktop only. Click an equipped slot to
           unequip directly into inventory (only works if there's space).
           Mobile keeps the ⚙️ Gear button + modal flow. */}
-      <div class={`${isDesktopCombatLayout ? 'block' : 'hidden'} mt-2`}>
-        <div class="grid grid-cols-2 gap-2 mb-2">
+      <div class={`${isDesktopCombatLayout ? 'flex' : 'hidden'} flex-col flex-1 min-h-0 mt-2`}>
+        <div class="grid grid-cols-2 gap-2 mb-1.5 flex-shrink-0">
           {(() => {
             const weaponEntry = equipment?.weapon
             const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
@@ -3513,7 +3398,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <button
                   onClick={canSpec ? handleSpecialAttack : undefined}
                   disabled={!canSpec}
-                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                  class={`py-2 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                   style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                 >
                   ⚡ {hasSpec ? 'Spec' : 'No Spec'}
@@ -3521,7 +3406,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <button
                   onClick={() => isMagic && setShowSpellModal(true)}
                   disabled={!isMagic}
-                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                  class={`py-2 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                   style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                 >
                   🔮 Cast Spell
@@ -3530,13 +3415,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             )
           })()}
         </div>
-        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Gear</div>
-        <EquipmentPaperdoll
-          equipment={equipment}
-          itemsData={itemsData}
-          onSelect={(slotName) => handleUnequipSlot(slotName)}
-          size="mdFixed"
-        />
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1 px-1 flex-shrink-0">Gear</div>
+        <div class="flex-1 min-h-0 overflow-y-auto bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-xl p-2 flex items-center justify-center">
+          <EquipmentPaperdoll
+            equipment={equipment}
+            itemsData={itemsData}
+            onSelect={(slotName) => handleUnequipSlot(slotName)}
+            size="fluidFixed"
+            asCard={false}
+          />
+        </div>
       </div>
 
       </div>{/* /LEFT pane */}
@@ -3547,17 +3435,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           mobile so the existing modal-driven flow is preserved there. */}
       <div class={`${isDesktopCombatLayout ? 'flex' : 'hidden'} flex-col ${isDesktopCombatLayout ? 'col-start-2 row-start-1 overflow-y-auto min-h-0' : ''}`}>
 
-      <div class="flex items-center justify-between mb-2 px-1">
+      <div class="flex items-center justify-between mb-0.5 px-1 flex-shrink-0">
         <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Inventory</div>
         <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
           {freeSlots(inventory)}/28 free
         </span>
       </div>
 
+      <div class="flex-shrink-0">
       <InventoryGrid
         inventory={inventory}
         size="normal"
-        gridClass="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 justify-items-center"
+        gridClass="grid grid-cols-7 gap-1 justify-items-center"
         onReorder={(from, to) => {
           const newInv = [...inventory]
           const tmp = newInv[to]
@@ -3573,12 +3462,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           else if (item.type === 'potion') handlePotion(slot.itemId)
         }}
       />
+      </div>
 
       {/* Inline prayer toggles — desktop only. Mirrors the prayer modal's
           activeProtectionPrayer / activeCombatPrayer toggles, but inline so
           mobile keeps the 🙏 Prayer button + modal flow. */}
-      <div class="mt-4">
-        <div class="flex items-start justify-between gap-2 mb-1.5 px-1">
+      <div class="flex flex-col flex-1 min-h-0 mt-1.5">
+        <div class="flex items-start justify-between gap-2 mb-1 px-1 flex-shrink-0">
           <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Prayers</div>
           {Object.keys(combat?.activePotions || {}).length > 0 && (
             <div class="text-right text-[9px] text-[var(--color-gold)] leading-tight">
@@ -3610,57 +3500,66 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             .filter(p => p.bonusType !== 'protection')
             .sort((a, b) => b.level - a.level)
           return (
-            <>
-              <div class="grid grid-cols-3 gap-1 mb-1.5">
-                {protectionPrayers.map(prayer => {
-                  const canUse = prayerLevel >= prayer.level
-                  const isActive = combat?.activeProtectionPrayer === prayer.id
-                  const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
-                  return (
-                    <button
-                      key={prayer.id}
-                      onClick={() => canUse && handlePrayer(prayer.id)}
-                      disabled={!canUse}
-                      title={`${prayer.name} · Lv ${prayer.level}`}
-                      class={`px-1 py-1.5 rounded-md border text-center transition-colors ${
-                        isActive
-                          ? 'cb-prayon'
-                          : canUse
-                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
-                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
-                      }`}
-                    >
-                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={18} /></div>
-                      <div class={`text-[8px] opacity-70 mt-0.5 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>{protectType}</div>
-                    </button>
-                  )
-                })}
+            <div class="flex-1 min-h-0 overflow-y-auto bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-xl p-1.5 flex flex-col justify-center gap-[clamp(4px,2vh,20px)]">
+              <div>
+                <div class="text-[9px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-50 mb-1 px-0.5">Protection</div>
+                <div class="grid grid-cols-3 gap-[clamp(3px,1.2vh,12px)]">
+                  {protectionPrayers.map(prayer => {
+                    const canUse = prayerLevel >= prayer.level
+                    const isActive = combat?.activeProtectionPrayer === prayer.id
+                    const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && handlePrayer(prayer.id)}
+                        disabled={!canUse}
+                        title={`${prayer.name} · Lv ${prayer.level}`}
+                        class={`h-[clamp(36px,6.5vh,84px)] flex flex-col items-center justify-center gap-1 rounded-md border text-center transition-colors ${
+                          isActive
+                            ? 'cb-prayon'
+                            : canUse
+                              ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
+                              : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
+                        }`}
+                      >
+                        <SkillIcon skill={prayerSkill(prayer)} size={20} />
+                        <div class={`text-[9px] opacity-70 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>{protectType}</div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-              <div class="grid grid-cols-6 gap-1">
-                {combatPrayers.map(prayer => {
-                  const canUse = prayerLevel >= prayer.level
-                  const isActive = combat?.activeCombatPrayer === prayer.id
-                  return (
-                    <button
-                      key={prayer.id}
-                      onClick={() => canUse && handlePrayer(prayer.id)}
-                      disabled={!canUse}
-                      title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
-                      class={`px-1 py-1 rounded-md border text-center transition-colors ${
-                        isActive
-                          ? 'cb-prayon'
-                          : canUse
-                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
-                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
-                      }`}
-                    >
-                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={18} /></div>
-                      <div class={`text-[8px] opacity-70 mt-0.5 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-gold-dim)]'}`}>Lv {prayer.level}</div>
-                    </button>
-                  )
-                })}
+
+              <div class="border-t border-[var(--color-void-border)]" />
+
+              <div>
+                <div class="text-[9px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-50 mb-1 px-0.5">Enhance</div>
+                <div class="grid grid-cols-6 gap-[clamp(3px,0.8vh,8px)]">
+                  {combatPrayers.map(prayer => {
+                    const canUse = prayerLevel >= prayer.level
+                    const isActive = combat?.activeCombatPrayer === prayer.id
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && handlePrayer(prayer.id)}
+                        disabled={!canUse}
+                        title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
+                        class={`h-[clamp(28px,4.5vh,60px)] flex flex-col items-center justify-center gap-0.5 rounded-md border text-center transition-colors ${
+                          isActive
+                            ? 'cb-prayon'
+                            : canUse
+                              ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
+                              : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
+                        }`}
+                      >
+                        <SkillIcon skill={prayerSkill(prayer)} size={16} />
+                        <div class={`text-[8px] opacity-70 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-gold-dim)]'}`}>Lv {prayer.level}</div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </>
+            </div>
           )
         })()}
       </div>
@@ -3834,7 +3733,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 nameColor={getStyleArt(form ? form.attackStyle : m.attackStyle).color}
                 combatLevel={m.combatLevel}
                 onInfo={() => setSelectedMonsterInfo(m)}
-                aside={<>{m.hardModeActive && <HardModeTag />}{arenaChip}</>}
+                aside={m.hardModeActive && <HardModeTag />}
               />
 
               {/* Raid progress */}
@@ -3852,34 +3751,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </div>
               )}
 
-              {/* Inline 3D arena replaces both HP blocks (its own bars +
-                  splats ride the scene); the 📊 chip swaps the bars back. */}
-              {showArena ? (
-                <>
-                  <div class="mb-2">{arenaPanel}</div>
-                  <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
-                </>
-              ) : (
-                <>
-                  {/* Monster HP */}
-                  <CombatHPBlock
-                    label="Enemy Hitpoints"
-                    current={m.currentHP}
-                    max={m.hitpoints}
-                    splats={monsterSplats}
-                  />
+              {/* Monster HP */}
+              <CombatHPBlock
+                label="Enemy Hitpoints"
+                current={m.currentHP}
+                max={m.hitpoints}
+                splats={monsterSplats}
+              />
 
-                  {/* Player HP */}
-                  <CombatHPBlock
-                    label="Your Hitpoints"
-                    current={currentHP}
-                    max={getMaxHP()}
-                    splats={playerSplats}
-                    valueColor="#7ce88a"
-                    right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
-                  />
-                </>
-              )}
+              {/* Player HP */}
+              <CombatHPBlock
+                label="Your Hitpoints"
+                current={currentHP}
+                max={getMaxHP()}
+                splats={playerSplats}
+                valueColor="#7ce88a"
+                right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
+              />
 
               {addPanel}
 

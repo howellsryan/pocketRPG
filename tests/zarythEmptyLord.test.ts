@@ -26,7 +26,7 @@ import { createCombatState, applySpecialAttack } from '../src/engine/combat.js'
 import { checkBossRequirementsPure } from '../src/engine/combatRequirements.js'
 import { SELF_HEALING_SPEC_TYPES } from '../src/engine/specialAttackEnergy.js'
 import { PVP_SPECIAL_ATTACK_LABELS } from '../src/engine/pvpSpecialAttacks.js'
-import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
+import { SLAYER_MASTERS, pickSlayerMonster } from '../src/engine/slayerMasters.js'
 import { createPvpState, processPvpTick } from '../src/engine/pvpEngine.js'
 import { monsterMechanics } from '../functions/_lib/mcp/reference.js'
 import bespokeIcons from '../src/data/bespokeIcons.json'
@@ -165,23 +165,36 @@ describe('Zaryth — entry gate', () => {
 })
 
 describe('Zaryth — slayer assignment', () => {
-  it('is kept out of the boss-only slayer pool, which cannot verify its kill-count gate', () => {
-    const zulKaar = SLAYER_MASTERS.find((m: any) => m.id === 'zul_kaar')!
-    const ids = zulKaar.monsterPool.map((e: any) => (typeof e === 'string' ? e : e.id))
-    expect(ids).not.toContain(BOSS)
+  const zulKaar = () => SLAYER_MASTERS.find((m: any) => m.id === 'zul_kaar')!
+  const poolIds = () => zulKaar().monsterPool.map((e: any) => (typeof e === 'string' ? e : e.id))
+  // Every quest gate satisfied, so this isolates the kill-count gate.
+  const allQuests = new Set<string>(
+    Object.values(monstersData).map((m: any) => m.questRequirement).filter(Boolean))
+  const gateCtx = (bossKillCounts: Record<string, number>) => ({
+    slayerLevel: 99, completedQuests: allQuests, bossKillCounts, questsData: [], monstersData,
   })
 
-  it('still auto-includes bosses with no kill-count gate', () => {
-    const zulKaar = SLAYER_MASTERS.find((m: any) => m.id === 'zul_kaar')!
-    const ids = zulKaar.monsterPool.map((e: any) => (typeof e === 'string' ? e : e.id))
-    expect(ids).toContain('corporeal_horror')
+  it('is in the boss-only slayer pool, alongside the bosses that gate nothing', () => {
+    expect(poolIds()).toContain(BOSS)
+    expect(poolIds()).toContain('corporeal_horror')
   })
 
-  it('never hands out a task the combat gate would refuse outright', () => {
-    const zulKaar = SLAYER_MASTERS.find((m: any) => m.id === 'zul_kaar')!
-    for (const entry of zulKaar.monsterPool) {
-      const id = typeof entry === 'string' ? entry : entry.id
-      expect(monstersData[id]?.killCountRequirement, `${id} is gated on other bosses`).toBeUndefined()
+  it('never hands out a task the combat gate would refuse outright, at any state of progress', () => {
+    // Each stage of a player's boss progress, from nothing killed to everything.
+    const gateBosses = Object.keys(monstersData[BOSS].killCountRequirement)
+    const stages = gateBosses.map((_, i) =>
+      Object.fromEntries(gateBosses.slice(0, i + 1).map(id => [id, 1])))
+    stages.unshift({})
+
+    for (const bossKillCounts of stages) {
+      const history = new Map<string, string[]>()
+      for (let i = 0; i < 200; i++) {
+        const pick = pickSlayerMonster(zulKaar(), 99, { history, bossKillCounts, completedQuests: allQuests })!
+        const monster = monstersData[pick.monsterId]
+        if (!monster) continue
+        const gate = checkBossRequirementsPure({ ...monster, id: pick.monsterId }, gateCtx(bossKillCounts))
+        expect(gate.locked, `${pick.monsterId} assigned but locked: ${gate.reason}`).toBe(false)
+      }
     }
   })
 })
@@ -410,26 +423,54 @@ describe('Zaryth special attacks in PvP', () => {
 describe('room-wide attacks in a co-op session', () => {
   const deps = { itemsData, monstersData, prayersData, spellsData }
 
-  function savePayload() {
+  function savePayload(weaponId = 'krylth_spear') {
     return {
       stats: Object.fromEntries(
         ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer'].map((k) => [k, { xp: 13_034_431 }]),
       ),
-      equipment: { weapon: { itemId: 'krylth_spear', quantity: 1 } },
+      equipment: { weapon: { itemId: weaponId, quantity: 1 } },
       inventory: [null, null, null],
       settings: { combatStance: 'aggressive' },
     }
   }
 
-  function joined(bossId: string, ids: number[]) {
+  function joined(bossId: string, ids: number[], weaponId?: string) {
     let state = createCoopBossState(bossId, monstersData)!
     for (const id of ids) {
       state = addCoopMember(state, createCoopMember({
-        characterId: id, username: `player${id}`, savePayload: savePayload(), itemsData,
+        characterId: id, username: `player${id}`, savePayload: savePayload(weaponId), itemsData,
       }))
     }
     return state
   }
+
+  it('keeps a warstrike drain on the shared record, so the rotation cannot hand it back', () => {
+    // Zaryth rotates every attack and each form authors its own defences, so
+    // applyForm replaces the numbers a Grondar Godsword just ground off. Left
+    // un-carried, a warstrike here was worth one swing.
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    let state = joined(BOSS, [1], 'grondar_godsword')
+    const queueSpecial = [{ tick_number: 1, characterId: 1, characterSeq: 0, action: { type: 'queue_special' } }]
+    state = processCoopTick(state, queueSpecial, deps, Date.now()).stateNext
+
+    const drain = state.boss.monster.defenceBonusDrain
+    expect(drain, 'the drain never reached the room').toBeTruthy()
+    expect(Math.min(...(Object.values(drain) as number[]))).toBeGreaterThan(0)
+
+    let rotated = false
+    for (let i = 0; i < 40 && !rotated; i++) {
+      const out = processCoopTick(state, [], deps, Date.now())
+      state = out.stateNext
+      rotated = out.events.some((e: any) => e.type === 'formChange')
+    }
+    expect(rotated, 'the boss never changed form').toBe(true)
+
+    const form = (monstersData as any)[BOSS].forms[state.boss.monster.currentForm]
+    for (const [style, authored] of Object.entries(form.defenceBonus) as [string, number][]) {
+      expect(state.boss.monster.defenceBonus[style], style)
+        .toBe(Math.max(-64, authored - state.boss.monster.defenceBonusDrain[style]))
+    }
+  })
 
   it('flags only bosses whose data asks for it', () => {
     expect(isRoomWideAttacker(boss)).toBe(true)

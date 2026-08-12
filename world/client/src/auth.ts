@@ -36,7 +36,7 @@ export function getRunPref(): boolean {
 export function storeRunPref(on: boolean): void {
   localStorage.setItem(RUN_KEY, on ? '1' : '0')
 }
-const POCKETRPG_PROD_HOSTNAME = 'world.pocketrpg.co.uk'
+const POCKETRPG_PROD_HOSTNAME = 'pocketrpg.co.uk'
 const POCKETRPG_PROD_URL = 'https://pocketrpg.co.uk'
 const POCKETRPG_PREVIEW_URL = 'https://preview.pocketrpg.pages.dev'
 
@@ -103,7 +103,9 @@ const KNOWN_POCKETRPG_ORIGINS = [POCKETRPG_PROD_URL, POCKETRPG_PREVIEW_URL]
  * open redirect to an arbitrary referrer). Falls back to the world app's own
  * hostname (the production custom domain vs anything else) when the
  * referrer is missing/unrecognized — a bookmarked or reloaded world tab has
- * no referrer at all. Pure — testable without a DOM. */
+ * no referrer at all. The world client ships from the game's own Worker now,
+ * so that hostname fallback is just pocketrpg.co.uk vs anything else. Pure —
+ * testable without a DOM. */
 export function resolvePocketRpgUrl(referrer: string, worldHostname: string): string {
   try {
     const referrerOrigin = referrer ? new URL(referrer).origin : ''

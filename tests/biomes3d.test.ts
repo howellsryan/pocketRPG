@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { validateBiomeSpec } from '../src/3d/biomes.js'
-import { getArenaBiomeSpec, listBiomeIds } from '../src/3d/biomeRegistry.js'
 import registry from '../src/data/biomes3d.json'
 import worldData from '../src/data/world.json'
 
@@ -34,16 +33,6 @@ describe('biomes3d registry', () => {
     }
   })
 
-  it('resolves mapped, unmapped, and unknown places', () => {
-    expect(getArenaBiomeSpec('alkarid')?.id).toBe('desert')
-    expect(getArenaBiomeSpec('lumbright')?.id).toBe(registry.default)
-    expect(getArenaBiomeSpec(undefined)?.id).toBe(registry.default)
-    expect(getArenaBiomeSpec('no_such_place')?.id).toBe(registry.default)
-  })
-
-  it('lists every authored biome', () => {
-    expect(listBiomeIds().sort()).toEqual(Object.keys(registry.biomes).sort())
-  })
 })
 
 describe('validateBiomeSpec', () => {

@@ -91,16 +91,3 @@ export function prefersReducedData() {
   }
 }
 
-// Deployment feature flag. The single-file build ALWAYS injects
-// `pocketEnable3D` (branch-derived: CF_PAGES_BRANCH !== 'main' → true, with
-// `Enable3dRender` as explicit override — see build_single.cjs), so a deployed
-// production build can never enable 3D by accident. Vite dev / dist have no
-// injected global and default to enabled for local work.
-export function is3DEnabled() {
-  return typeof pocketEnable3D !== 'undefined' ? Boolean(pocketEnable3D) : true
-}
-
-// Should we attempt a live 3D view at all?
-export function canRender3D() {
-  return is3DEnabled() && webglAvailable() && !prefersReducedData()
-}
