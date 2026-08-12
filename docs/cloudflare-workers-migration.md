@@ -163,12 +163,15 @@ answered before the `/api` middleware that used to install it.
 
 **One Worker has one assets directory**, so the world client now builds with
 Vite `base: '/world/'` and stages into `dist_site/world/`.
-`worker/worldHost.js` maps the `world.*` hostname onto that prefix, which keeps
-the existing `world.pocketrpg.co.uk` custom domain working while preview — which
-has a single `workers.dev` URL for the merged Worker — reaches the same files at
-`/world/`. `pocketWorldOrigin` is a *base*, not an origin: off production it is
-a bare path, so `fetchWildernessCount` moved to `apiUrl()`, since
-`/api/world/pvp-count` answers on the game's own origin.
+`worker/worldHost.js` can map a `world.*` hostname onto that prefix, which is
+how the standalone `world.pocketrpg.co.uk` custom domain would have kept
+working — but its DNS record went missing across the cutover (broke the world
+handoff link) and was retired rather than reattached, so `worker/worldHost.js`
+is unreachable in practice. Production now reaches the world client the same
+way preview always did: `/world/` on the game's own origin. `pocketWorldOrigin`
+is a *base*, not an origin — always a bare path, so `fetchWildernessCount`
+moved to `apiUrl()`, since `/api/world/pvp-count` answers on the game's own
+origin.
 
 **Durable Object classes cannot be moved between Workers carrying their state.**
 `WorldZone` and `CoopBossRoom` are re-created fresh in the new Worker; in-flight
@@ -200,9 +203,12 @@ flush writes back to the save (§4) — but do it at a quiet hour, announced.
 
 **Before the first deploy**, on the new Worker: set every secret listed in
 `wrangler.jsonc` (including `WORLD_EDITOR_TOKEN`, which the world Worker owned),
-attach `pocketrpg.co.uk` and `world.pocketrpg.co.uk` as custom domains, and
-confirm Workers Builds sets `WORKERS_CI_BRANCH` — without it the branch-derived
-flags all bake to their production values.
+attach `pocketrpg.co.uk` as a custom domain, and confirm Workers Builds sets
+`WORKERS_CI_BRANCH` — without it the branch-derived flags all bake to their
+production values. Do **not** also attach `world.pocketrpg.co.uk`: that
+subdomain was retired (the world client now ships at `/world/` on the same
+origin, §"One Worker has one assets directory" above) — reattaching it would
+just resurrect a second DNS record to keep in sync for no benefit.
 
 ---
 

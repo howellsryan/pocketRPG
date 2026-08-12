@@ -725,18 +725,14 @@ const worldLairsEnabled = process.env.EnableWorldLairs != null
   ? process.env.EnableWorldLairs === 'true'
   : true;
 console.log(`World boss lairs: ${worldLairsEnabled ? 'ENABLED' : 'disabled'} (EnableWorldLairs=${process.env.EnableWorldLairs ?? 'unset'})`);
-// Where the handoff opens the open-world client. The world now ships from the
-// same Worker as the game, staged under /world/ (scripts/stage-site.mjs), so a
-// non-production build points at its OWN origin — one merged preview Worker has
-// a single workers.dev URL and cannot give the world a hostname of its own.
-// Production keeps the world.pocketrpg.co.uk custom domain, which the Worker
-// maps onto the same prefix (worker/worldHost.js).
-//
-// Fail-safe by design, and the reason deployBranch above exists: only an
-// explicit `main` build names the production domain, so a local or branch build
-// can never send a player into production world state.
-const worldOrigin = process.env.WorldOrigin
-  || (isProductionBranch ? 'https://world.pocketrpg.co.uk' : '/world');
+// Where the handoff opens the open-world client. The world ships from the same
+// Worker as the game, staged under /world/ (scripts/stage-site.mjs), so every
+// environment — production included — points at its OWN origin: a bare path,
+// never a hostname. The dedicated world.pocketrpg.co.uk custom domain (which
+// worker/worldHost.js could still map onto the same prefix, if reattached) was
+// retired in favour of this — one fewer DNS record to keep pointed at the
+// right Worker across a migration.
+const worldOrigin = process.env.WorldOrigin || '/world';
 console.log(`World origin: ${worldOrigin} (WorldOrigin=${process.env.WorldOrigin ?? 'unset'}, ${branchLog})`);
 // Quest-requirement bypass (src/engine/questGates.js), same build-time-bake
 // pattern as the two flags above — a preview-only testing aid, so main and
