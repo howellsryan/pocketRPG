@@ -923,7 +923,7 @@ async function prodConfig(): Promise<ProdCfg | null> {
       /* reconfigure */
     }
   }
-  const base = prompt('Production world URL (e.g. https://world.pocketrpg.co.uk):')?.trim()
+  const base = prompt('Production world URL (e.g. https://pocketrpg.co.uk):')?.trim()
   if (!base) return null
   const token = prompt('Production editor token:')?.trim()
   if (!token) return null

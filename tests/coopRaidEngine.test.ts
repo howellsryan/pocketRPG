@@ -8,6 +8,7 @@ import {
   createCoopBossState,
   createCoopMember,
   createCoopRaidState,
+  creditSlayerKill,
   lootEligibleCharacterIds,
   processCoopTick,
   removeCoopMember,
@@ -29,6 +30,7 @@ import { killRewardSource } from '../functions/_lib/game/coopBoss.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 import raidsData from '../src/data/raids.json'
+import { RAID_TASK_META } from '../src/engine/slayerMasters.js'
 import prayersData from '../src/data/prayers.json'
 import spellsData from '../src/data/spells.json'
 
@@ -474,6 +476,88 @@ describe('coopRaidEngine — settling the run', () => {
     state.members['7'].status = 'dead'
     state.members['7'].hp = 0
     expect(lootEligibleCharacterIds(state)).toContain(7)
+  })
+})
+
+describe('coopRaidEngine — slayer credit for a raid clear', () => {
+  const FINAL = 'verin_the_defiled'
+  const raidTask = (remaining = 1) => ({
+    monsterId: FINAL, monsterName: 'Cryptbound Champions',
+    monstersRemaining: remaining, totalCount: remaining, pointsOnComplete: 25, masterId: 'zul_kaar',
+  })
+
+  /** A started party whose members carry the given slayer tasks. */
+  function partyOnTask(tasks: Record<number, unknown>) {
+    let state: any = createCoopRaidState(RAID, monstersData, { hostCharacterId: 7, now: 1_000 })!
+    for (const [i, [id, task]] of Object.entries(tasks).entries()) {
+      const payload: any = savePayload()
+      payload.settings = { ...payload.settings, slayerTask: task }
+      state = addCoopMember(state, createCoopMember({
+        characterId: Number(id), username: `player${id}`, savePayload: payload, itemsData, now: 1_000 + i,
+      }))
+    }
+    for (const member of Object.values(state.members) as any[]) member.ready = true
+    state = tick(state, [startIntent(7)]).stateNext
+    const bosses = raidBossOrder(RAID)
+    for (let i = 0; i < bosses.length - 1; i++) {
+      state = tick(killBoss(state)).stateNext
+      for (let t = 0; t < COOP_RAID_ADVANCE_TICKS; t++) state = tick(state).stateNext
+    }
+    return state
+  }
+
+  it('pays the run its authored flat Slayer XP, not the final boss\'s health bar', () => {
+    // A raid clear is a whole run. Read off the final boss instead, the four
+    // raid tasks paid between 400 and 8000 where solo has always paid the
+    // authored 2500-10000 (getSlayerTaskXpForKill's flatXp).
+    const state = partyOnTask({ 7: raidTask(2) })
+    const { stateNext, events } = tick(killBoss(state))
+
+    const credit = events.find((e: any) => e.type === 'slayerCredit')
+    expect(credit, 'a raid clear credited nobody').toBeTruthy()
+    expect(stateNext.members['7'].xpGained.slayer).toBe(RAID_TASK_META[FINAL].flatSlayerXp)
+    expect(stateNext.members['7'].slayerTask.monstersRemaining).toBe(1)
+  })
+
+  it('credits every living raider on that task, not just the loot winner', () => {
+    const state = partyOnTask({ 7: raidTask(2), 8: raidTask(2), 9: null })
+    state.members['7'].damage = coopLootDamageRequired(coopLootBasisHP(state))
+    const { stateNext, events } = tick(killBoss(state))
+
+    expect(events.filter((e: any) => e.type === 'slayerCredit').map((e: any) => e.characterId).sort())
+      .toEqual([7, 8])
+    expect(stateNext.members['8'].xpGained.slayer).toBe(RAID_TASK_META[FINAL].flatSlayerXp)
+    expect(stateNext.members['9'].xpGained.slayer).toBeUndefined()
+  })
+
+  it('credits nothing for the bosses before the last one', () => {
+    let state = createCoopRaidState(RAID, monstersData, { hostCharacterId: 7, now: 1_000 })!
+    const payload: any = savePayload()
+    payload.settings = { ...payload.settings, slayerTask: raidTask(2) }
+    state = addCoopMember(state, createCoopMember({
+      characterId: 7, username: 'player7', savePayload: payload, itemsData, now: 1_000,
+    }))
+    for (const member of Object.values(state.members) as any[]) member.ready = true
+    state = tick(state, [startIntent(7)]).stateNext
+
+    const { stateNext, events } = tick(killBoss(state))
+    expect(events.some((e: any) => e.type === 'raidBossDefeated')).toBe(true)
+    expect(events.some((e: any) => e.type === 'slayerCredit')).toBe(false)
+    expect(stateNext.members['7'].slayerTask.monstersRemaining).toBe(2)
+  })
+
+  it('refuses a raid task credit for a kill of the same boss reached any other way', () => {
+    // Defence-in-depth, mirroring solo's raidTaskCreditBlocked: the proxy task
+    // is paid by the CLEAR, so a bare kill of the final boss must pay nothing.
+    const member: any = {
+      status: 'alive', characterId: 7, slayerTask: raidTask(2), xpGained: {}, slayerTasksCompleted: 0,
+    }
+    expect(creditSlayerKill(member, FINAL, monstersData)).toBeNull()
+    expect(member.slayerTask.monstersRemaining).toBe(2)
+    expect(member.xpGained.slayer).toBeUndefined()
+
+    expect(creditSlayerKill(member, FINAL, monstersData, { fromRaidCompletion: true })).toBeTruthy()
+    expect(member.slayerTask.monstersRemaining).toBe(1)
   })
 })
 

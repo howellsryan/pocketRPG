@@ -178,6 +178,18 @@ describe('skipping the gate work for a lair that has no gate', () => {
     expect(bossHasEntryGate('no_such_monster')).toBe(true)
   })
 
+  it('does not skip the Ashen Crucible, whose prerequisite is hardcoded rather than authored', () => {
+    // It carries no killCountRequirement field, so a raw field check reads
+    // "ungated" and skips the very query that would enforce its Ember Tyrant
+    // gate. Unreachable while no lair points at it — and that is exactly how
+    // long a wrong answer here stays invisible.
+    expect((monstersData as Record<string, any>).ashen_crucible.killCountRequirement).toBeUndefined()
+    expect(bossHasEntryGate('ashen_crucible')).toBe(true)
+    expect(bossEntryFailure('ashen_crucible', realSave(), {})?.reason)
+      .toBe('Defeat Ember Tyrant first to unlock Ashen Crucible')
+    expect(bossEntryFailure('ashen_crucible', realSave(), { ember_tyrant: 1 })).toBeNull()
+  })
+
   it('never skips a lair whose monster the gate would actually refuse', () => {
     // Derived, not enumerated: any lair monster carrying a requirement must be
     // answered `true`, so adding a gate to an existing lair cannot silently
@@ -185,6 +197,7 @@ describe('skipping the gate work for a lair that has no gate', () => {
     for (const monsterId of Object.keys(WORLD_MONSTER_LAIRS)) {
       const monster = (monstersData as Record<string, Record<string, unknown>>)[monsterId]
       const gated = !!(monster.questRequirement || monster.slayerRequirement || monster.killCountRequirement)
+        || !!bossEntryFailure(monsterId, realSave(), {})
       expect(bossHasEntryGate(monsterId), `${monsterId}`).toBe(gated)
     }
   })

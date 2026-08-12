@@ -60,15 +60,11 @@ import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
-import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
+import { shapeLootForModal, lootRowsForModal, killPresentsFullModal } from '../utils/lootModal.js'
+import { emitKillReveal } from '../utils/rewardReveal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
-import CombatArena3D from '../components/CombatArena3D.jsx'
-import { getCreatureSpec } from '../3d/creatures.js'
-import { getArenaBiomeSpec } from '../3d/biomeRegistry.js'
-import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getGearPlacements, getCharacterModel } from '../utils/equipModels.js'
-import { canRender3D } from '../utils/three3d.js'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
@@ -201,6 +197,9 @@ function getMonsterCategoryKey(monsterId) {
 // picker is cheap, fast enough that a group opened while the player is browsing
 // shows up before they have finished scrolling.
 const COOP_BROWSER_POLL_MS = 15000
+// Auto-fight restart delay after an ordinary kill (CLAUDE.md §6) — long enough
+// to read the kill, short enough that a grind still feels continuous.
+const AUTO_FIGHT_RESTART_MS = 1200
 
 // Dungeon mode (per-place foe list): the place's combat monsters split into
 // Monsters / Bosses plus its raids — the same rows the world-wide picker shows,
@@ -415,30 +414,30 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (!value.trim()) setSearchCollapsedSections({})
   }
   const [lootModal, setLootModal] = useState(null)
+  // An ordinary kill whose loot the server is still rolling. It shows no UI —
+  // it just holds the fight until the grant lands, which is also what keeps two
+  // completeMonster round trips from overlapping.
+  const [pendingKill, setPendingKill] = useState(false)
+  // An ordinary kill re-arms itself after the auto-fight delay rather than
+  // parking the player behind a loot modal (CLAUDE.md §6). The pending restart
+  // is state, not just a ref: between two kills the fight is inactive with no
+  // modal up, and the background-combat host unmounts this screen the moment it
+  // reads `busy: false` — cancelling the very timer that keeps a background
+  // grind going.
+  const [autoFightPending, setAutoFightPending] = useState(false)
+  const autoFightTimerRef = useRef(null)
+  const cancelAutoFight = () => {
+    setAutoFightPending(false)
+    if (!autoFightTimerRef.current) return
+    clearTimeout(autoFightTimerRef.current)
+    autoFightTimerRef.current = null
+  }
+  useEffect(() => cancelAutoFight, [])
   const [deathModal, setDeathModal] = useState(null)
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
   const [monsterSplats, setMonsterSplats] = useState([])
   const [addSplats, setAddSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
-  // 3D combat arena (Phase 2): renders inline in place of the HP bars for
-  // monsters with a registered model; the 🎥/📊 chip swaps between the two,
-  // and the choice persists. Combat ticks are held until the arena reports
-  // ready (onReady — it self-releases on a load timeout), so a fight never
-  // starts against an invisible scene.
-  const [arenaClosed, setArenaClosed] = useState(() => {
-    try { return localStorage.getItem('pocketrpg_combat3d') === 'off' } catch { return false }
-  })
-  const [arenaSignal, setArenaSignal] = useState(null)
-  // Fired one tick BEFORE the monster's next attack lands (monsterAttackTimer
-  // reaches 1) so the 3D arena can lead a rigged monster's wind-up and have the
-  // swing connect exactly on the hit tick's splat. See CombatArena3D.
-  const [arenaWindup, setArenaWindup] = useState(null)
-  const [arenaReady, setArenaReady] = useState(false)
-  const arenaReadyRef = useRef(false)
-  const arenaClosedRef = useRef(arenaClosed)
-  useEffect(() => { arenaReadyRef.current = arenaReady }, [arenaReady])
-  useEffect(() => { arenaClosedRef.current = arenaClosed }, [arenaClosed])
-  useEffect(() => { setArenaReady(false) }, [combat?.monster?.id, arenaClosed])
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
   const hasAutoStarted = useRef(false)
@@ -587,21 +586,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // monster fights are `backgroundable` (bosses/raids/dungeons stay foreground).
   // Gated on the opt-in setting so combat is an exact no-op when it's off.
   useEffect(() => {
-    if (!backgroundCombat || (!combat && !lootModal && !deathModal)) {
+    if (!backgroundCombat || (!combat && !lootModal && !deathModal && !pendingKill && !autoFightPending)) {
       publishCombatStatus?.(null)
       return
     }
     const m = combat?.monster
     publishCombatStatus?.({
       active: combat?.active === true,
-      busy: combat?.active === true || !!lootModal || !!deathModal,
+      busy: combat?.active === true || !!lootModal || !!deathModal || pendingKill || autoFightPending,
       backgroundable: !isDungeon && m?.boss !== true && !combat?.raid,
       monsterId: m?.id || null,
       monsterName: m?.name || null,
       monsterHP: Number.isFinite(m?.currentHP) ? m.currentHP : null,
       monsterMaxHP: Number.isFinite(m?.hitpoints) ? m.hitpoints : null,
     })
-  }, [combat, lootModal, deathModal, backgroundCombat])
+  }, [combat, lootModal, deathModal, pendingKill, autoFightPending, backgroundCombat])
 
   // Clear the published status when the screen unmounts entirely.
   useEffect(() => () => publishCombatStatus?.(null), [])
@@ -610,6 +609,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // it ticks in the background, stop combat cleanly rather than running two
   // activities at once.
   useEffect(() => {
+    // A pending auto-fight restart outlives the fight it belongs to, so anything
+    // that isn't this combat task taking over has to disarm it — otherwise it
+    // fires 1.2s later and hijacks the new activity.
+    if (activeTask?.type !== 'combat') cancelAutoFight()
     if (combatRef.current?.active && activeTask && activeTask.type !== 'combat') {
       combatRef.current = null
       setCombat(null)
@@ -651,11 +654,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       const state = combatRef.current
       if (!state || !state.active) return
 
-      // Hold the fight while the 3D arena is still loading its models, so the
-      // opening hits are never invisible (arena onReady/onFail releases this).
-      if (!arenaClosedRef.current && !arenaReadyRef.current &&
-          getMonsterModel(state.monster.id) && getCharacterAssetPath() && canRender3D()) return
-
       const playerStats = {
         attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
         strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
@@ -685,21 +683,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       pushSplats(setMonsterSplats, tickSplats.monster)
       pushSplats(setAddSplats, tickSplats.add)
       pushSplats(setPlayerSplats, tickSplats.player)
-      if (tickSplats.monster.length || tickSplats.add.length || tickSplats.player.length) {
-        setArenaSignal(prev => ({
-          seq: (prev?.seq || 0) + 1,
-          hero: tickSplats.monster.length > 0 || tickSplats.add.length > 0,
-          monster: tickSplats.player.length > 0,
-          special: events.some(ev => ev.type === 'specialHit'),
-        }))
-      }
-
-      // Wind-up lead: broadcast how many ticks until the monster's next attack
-      // so the arena can pre-start a rigged swing early enough (even for clips
-      // longer than one tick) that it ENDS on the hit tick's splat.
-      if (combatState.active && combatState.monster.currentHP > 0 && combatState.monsterAttackTimer >= 1) {
-        setArenaWindup(prev => ({ seq: (prev?.seq || 0) + 1, ticks: combatState.monsterAttackTimer }))
-      }
 
       for (const ev of events) {
         if (ev.type === 'specialHit') {
@@ -757,6 +740,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             // after HP was reset to full — the player never dies and the boss keeps
             // its damaged HP.
             if (combatRef.current) combatRef.current.active = false
+            cancelAutoFight()
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
             updateHP(getMaxHP())
@@ -776,6 +760,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }])
           if (newHP <= 0) {
             if (combatRef.current) combatRef.current.active = false
+            cancelAutoFight()
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
             updateHP(getMaxHP())
@@ -1104,6 +1089,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const defeatedHardMode = defeatedMonster?.hardModeActive === true || state.monster?.hardModeActive === true
           const killLoot = Array.isArray(ev.loot) ? ev.loot : []
           const raidId = state.raid?.raidId || null
+          // Only a boss or a raid stops the game on the full-screen modal.
+          const fullModal = killPresentsFullModal({ isBossKill: isDefeatedBoss, raidId })
           const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
           // Only bosses and monsters with a collection-logged unique settle
           // server-side (server-rolled loot + grant), so their high-value drops
@@ -1198,15 +1185,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               hardMode: defeatedHardMode,
             })
           } else if (cloudAuthoritativeMonster) {
-            setLootModal({
-              monster: defeatedMonsterData,
-              hardMode: defeatedHardMode,
-              loot: [],
-              slayerXpGained,
-              isBossKill: isDefeatedBoss,
-              raidId,
-              loading: true
-            })
+            if (fullModal) {
+              setLootModal({
+                monster: defeatedMonsterData,
+                hardMode: defeatedHardMode,
+                loot: [],
+                slayerXpGained,
+                isBossKill: isDefeatedBoss,
+                raidId,
+                loading: true
+              })
+            } else {
+              setPendingKill(true)
+            }
             void (async () => {
               // Flush current inventory to server before completing the monster so
               // the server sees consumed food/potions and can correctly route drops
@@ -1259,17 +1250,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               // predate a later local-only change (e.g. travel) if the round trip is
               // slow, silently reverting it. The reward itself is already applied above;
               // save_revision stays in sync generically via SAVE_REVISION_EVENT (api.js).
-              setLootModal({
-                monster: defeatedMonsterData,
-                hardMode: defeatedHardMode,
-                loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
-                slayerXpGained,
-                isBossKill: isDefeatedBoss,
-                raidId,
-                loading: false
-              })
+              const serverLoot = granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity }))
+              if (fullModal) {
+                setLootModal({
+                  monster: defeatedMonsterData,
+                  hardMode: defeatedHardMode,
+                  loot: serverLoot,
+                  slayerXpGained,
+                  isBossKill: isDefeatedBoss,
+                  raidId,
+                  loading: false
+                })
+              } else {
+                setPendingKill(false)
+                announceOrdinaryKill({
+                  monsterId: defeatedMonsterId,
+                  monsterName: defeatedMonsterName,
+                  hardMode: defeatedHardMode,
+                  loot: serverLoot,
+                })
+              }
             }).catch((err) => {
+              // Nothing was granted, so the fight stays stopped rather than
+              // re-arming into a kill whose loot never landed.
               setLootModal(null)
+              setPendingKill(false)
               addToast(`Monster claim failed: ${err?.message || 'server_error'}`, 'error')
             }).finally(() => {
               // Release any boss-skip lock awaiting this completion (no-op for a
@@ -1309,17 +1314,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               time: Date.now()
             }])
           }
-          // Show loot modal instead of auto-restarting
+          // A boss/raid stops on the loot modal; an ordinary kill flashes its
+          // loot as a reveal card and re-arms itself.
           if (!cloudAuthoritativeRaid && !cloudAuthoritativeMonster) {
-            setLootModal({
-              monster: defeatedMonsterData,
-              hardMode: defeatedHardMode,
-              loot: killLoot,
-              slayerXpGained,
-              isBossKill: isDefeatedBoss,
-              raidId,
-              loading: false
-            })
+            if (fullModal) {
+              setLootModal({
+                monster: defeatedMonsterData,
+                hardMode: defeatedHardMode,
+                loot: killLoot,
+                slayerXpGained,
+                isBossKill: isDefeatedBoss,
+                raidId,
+                loading: false
+              })
+            } else {
+              announceOrdinaryKill({
+                monsterId: defeatedMonsterId,
+                monsterName: defeatedMonsterName,
+                hardMode: defeatedHardMode,
+                loot: killLoot,
+              })
+            }
           }
         }
       }
@@ -1778,6 +1793,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
     // Map-driven gating (Phase 3): must be at a place that offers this monster.
     if (!requestActivityStart({ type: 'combat', monster })) return
+    cancelAutoFight()
     const { combatType: weaponCombatType, weaponItem, isPoweredStaff, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
     const combatType = needsSpell ? 'melee' : weaponCombatType
     if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
@@ -1874,6 +1890,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     combatRef.current = state
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
+  }
+
+  const scheduleAutoFight = (monsterId, hardMode) => {
+    cancelAutoFight()
+    setAutoFightPending(true)
+    autoFightTimerRef.current = setTimeout(() => {
+      autoFightTimerRef.current = null
+      setAutoFightPending(false)
+      // The player may have walked away, died, or started another fight during
+      // the delay — every one of those leaves this restart stale.
+      if (!combatRef.current || combatRef.current.active) return
+      if (combatRef.current.monster?.id !== monsterId) return
+      const original = monstersTableFor(monstersData, hardMode === true)[monsterId]
+      if (original) continueFight(original)
+    }, AUTO_FIGHT_RESTART_MS)
+  }
+
+  // Present an ordinary kill: loot as a reward-reveal card, fight re-armed.
+  const announceOrdinaryKill = ({ monsterId, monsterName, hardMode, loot }) => {
+    emitKillReveal(monsterId, monsterName, loot)
+    scheduleAutoFight(monsterId, hardMode)
   }
 
   // Claim one full-raid reward roll from the server (the legitimate grant path)
@@ -2040,6 +2077,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }, [])
 
   const stopAndBack = () => {
+    cancelAutoFight()
     setCombat(null)
     setLog([])
     setActiveTask(null)
@@ -3184,38 +3222,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
-  // Combat view — GLB registry entry wins per-monster; a procedural
-  // blend-shell spec (creatures3d.json) covers the rest.
-  const arenaModel = combat?.active && combat.monster ? getMonsterModel(combat.monster.id) : null
-  // currentForm keys multiForm bosses to their per-phase spec (creatures3d
-  // `forms`); the arena swaps the creature in place on form transitions.
-  const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id, combat.monster.currentForm) : null
-  // Hero realism (2026-07 re-scope): the arena hero is the GLB human — the
-  // blend-shell hero capped out at a mannequin read (docs/hero-realism-plan.md).
-  // Passing null here falls back to the GLB hero + bone-attach/skinned gear;
-  // the procedural hero stays authorable via render-proc.mjs --hero.
-  const arenaHeroProc = null
-  const arenaMonsterId = combat?.active && combat.monster ? combat.monster.id : null
-  const arenaBiome = useMemo(() => getArenaBiomeSpec(worldLocation, arenaMonsterId), [worldLocation, arenaMonsterId])
-  const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(arenaHeroProc || getCharacterAssetPath()) && canRender3D()
-  const showArena = arenaAvailable && !arenaClosed
-  const reopenArena = () => {
-    setArenaClosed(false)
-    try { localStorage.removeItem('pocketrpg_combat3d') } catch { /* private mode */ }
-  }
-  const closeArena = () => {
-    setArenaClosed(true)
-    try { localStorage.setItem('pocketrpg_combat3d', 'off') } catch { /* private mode */ }
-  }
-  const arenaChip = arenaAvailable && (
-    <button
-      class="px-2 py-1 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[10px] font-semibold text-[var(--color-gold)] active:bg-[var(--color-void-border)]"
-      onClick={arenaClosed ? reopenArena : closeArena}
-      aria-label={arenaClosed ? 'Switch to 3D battle view' : 'Switch to progress bars'}
-    >
-      {arenaClosed ? '🎥 3D' : '📊 Bars'}
-    </button>
-  )
   // ── Boss adds (e.g. the Dread Core, Zaryth's sentinels) ──
   // Live enemies, not a phase: they attack alongside the boss until killed, so
   // the player needs a way to swing at each and to see the one they are on.
@@ -3264,37 +3270,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     </div>
   )
 
-  // Inline 3D arena — replaces the HP-bar block in whichever layout renders.
-  const heroSpec = getCharacterModel() || {}
-  const arenaPanel = showArena && (
-    <CombatArena3D
-      monsterId={combat.monster.id}
-      monsterName={combat.monster.name}
-      monsterPath={arenaModel ? arenaModel.path : null}
-      monsterProc={arenaProc}
-      monsterHeight={(arenaModel || arenaProc).height}
-      monsterRotationDeg={(arenaModel || arenaProc).rotationDeg}
-      characterPath={getCharacterAssetPath()}
-      characterRotationDeg={heroSpec.rotationDeg}
-      heroProc={arenaHeroProc}
-      biome={arenaBiome}
-      clips={{ idle: heroSpec.combatIdleClip || heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip, hit: heroSpec.hitClip, death: heroSpec.deathClip }}
-      weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
-      gear={getGearPlacements(equipment)}
-      attackSignal={arenaSignal}
-      windupSignal={arenaWindup}
-      monsterAttackImpactSec={arenaModel ? arenaModel.attackImpactSec : null}
-      monsterAttackMaxSec={arenaModel ? arenaModel.attackMaxSec : null}
-      monsterAttackStyle={combat.monster.attackStyle}
-      monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
-      playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}
-      monsterSplats={monsterSplats}
-      playerSplats={playerSplats}
-      onReady={() => setArenaReady(true)}
-      onFail={() => setArenaClosed(true)}
-    />
-  )
-
   return (
     <div class={`forge-shell h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
       {/* Back button */}
@@ -3330,22 +3305,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             })()}
           </span>
           <span class="flex items-center gap-2">
-            {arenaChip}
             <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
           </span>
         </div>
-        {!showArena && (
-          <div class="relative">
-            <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
-            <HitSplatLayer splats={monsterSplats} />
-          </div>
-        )}
+        <div class="relative">
+          <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
+          <HitSplatLayer splats={monsterSplats} />
+        </div>
       </div>
 
       {addPanel}
-
-      {/* Inline 3D arena replaces both HP bars (its own bars ride the scene) */}
-      {arenaPanel && <div class="mb-2">{arenaPanel}</div>}
 
       {/* Raid progress indicator */}
       {combat.raid && (
@@ -3375,15 +3344,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Player HP */}
       <div class="mb-2">
         <div class="flex items-center justify-between mb-0.5">
-          {!showArena && <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>}
+          <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>
           <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
         </div>
-        {!showArena && (
-          <div class="relative">
-            <HPBar current={currentHP} max={getMaxHP()} size="large" />
-            <HitSplatLayer splats={playerSplats} />
-          </div>
-        )}
+        <div class="relative">
+          <HPBar current={currentHP} max={getMaxHP()} size="large" />
+          <HitSplatLayer splats={playerSplats} />
+        </div>
       </div>
 
       {/* Prayer pool — drains while prayers are active; restored by prayer/super restore potions */}
@@ -3757,7 +3724,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 nameColor={getStyleArt(form ? form.attackStyle : m.attackStyle).color}
                 combatLevel={m.combatLevel}
                 onInfo={() => setSelectedMonsterInfo(m)}
-                aside={<>{m.hardModeActive && <HardModeTag />}{arenaChip}</>}
+                aside={m.hardModeActive && <HardModeTag />}
               />
 
               {/* Raid progress */}
@@ -3775,34 +3742,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </div>
               )}
 
-              {/* Inline 3D arena replaces both HP blocks (its own bars +
-                  splats ride the scene); the 📊 chip swaps the bars back. */}
-              {showArena ? (
-                <>
-                  <div class="mb-2">{arenaPanel}</div>
-                  <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
-                </>
-              ) : (
-                <>
-                  {/* Monster HP */}
-                  <CombatHPBlock
-                    label="Enemy Hitpoints"
-                    current={m.currentHP}
-                    max={m.hitpoints}
-                    splats={monsterSplats}
-                  />
+              {/* Monster HP */}
+              <CombatHPBlock
+                label="Enemy Hitpoints"
+                current={m.currentHP}
+                max={m.hitpoints}
+                splats={monsterSplats}
+              />
 
-                  {/* Player HP */}
-                  <CombatHPBlock
-                    label="Your Hitpoints"
-                    current={currentHP}
-                    max={getMaxHP()}
-                    splats={playerSplats}
-                    valueColor="#7ce88a"
-                    right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
-                  />
-                </>
-              )}
+              {/* Player HP */}
+              <CombatHPBlock
+                label="Your Hitpoints"
+                current={currentHP}
+                max={getMaxHP()}
+                splats={playerSplats}
+                valueColor="#7ce88a"
+                right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
+              />
 
               {addPanel}
 

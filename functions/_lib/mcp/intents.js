@@ -1509,7 +1509,9 @@ function slayerLevelOf(save) {
 // refuse while a task is active, enforce the master's combat/slayer
 // requirements, pick an eligible monster and write settings.slayerTask.
 // `options` (rng/history) is forwarded to the picker so callers can be
-// deterministic.
+// deterministic; `options.bossKillCounts` must come from the kill_counts table
+// (loadBossKillCounts), never the save — the save blob has never carried them
+// (§14), and without them the picker fails closed on kill-count-gated bosses.
 export function assignSlayerTask(save, masterId, options = {}) {
   if (!save.settings || typeof save.settings !== 'object') save.settings = {}
   const master = SLAYER_MASTER_BY_ID.get(masterId)
@@ -1530,7 +1532,7 @@ export function assignSlayerTask(save, masterId, options = {}) {
   const completedQuests = new Set(Array.isArray(save.settings?.completedQuests) ? save.settings.completedQuests : [])
   const pick = pickSlayerMonster(master, slayerLevel, { ...options, completedQuests })
   if (!pick) {
-    throw new GameApiError('NO_SLAYER_TASK', `${master.name} has no eligible task for slayer level ${slayerLevel} and your completed quests. Raise slayer, finish required quests, or pick another master.`, 400)
+    throw new GameApiError('NO_SLAYER_TASK', `${master.name} has no eligible task for slayer level ${slayerLevel}, your completed quests and your boss kill counts. Raise slayer, finish required quests, defeat the prerequisite bosses, or pick another master.`, 400)
   }
   const task = buildSlayerTask(master, pick.monsterId, pick.isBoss, { ...options, entry: pick.entry })
   save.settings.slayerTask = task

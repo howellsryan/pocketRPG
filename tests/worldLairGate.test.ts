@@ -39,8 +39,8 @@ describe('open-world gates', () => {
 
 describe('world origin', () => {
   it('uses the baked origin', () => {
-    globals.pocketWorldOrigin = 'https://world.pocketrpg.co.uk'
-    expect(worldOrigin()).toBe('https://world.pocketrpg.co.uk')
+    globals.pocketWorldOrigin = '/world'
+    expect(worldOrigin()).toBe('/world')
   })
 
   it('falls back to the same origin, never production, when unbaked', () => {
@@ -58,10 +58,11 @@ describe('build bake', () => {
     expect(build).toContain('const pocketWorldOrigin = ${JSON.stringify(worldOrigin)}')
   })
 
-  it('names the production world domain only for a main build', () => {
-    // Everything else resolves to /world on the Worker's own origin, so a
-    // branch or local build can never hand a player to production world state.
-    expect(build).toContain("isProductionBranch ? 'https://world.pocketrpg.co.uk' : '/world'")
+  it('never bakes a world.pocketrpg.co.uk hostname into any build', () => {
+    // The dedicated world subdomain was retired — every environment, including
+    // production, resolves the handoff to /world on the Worker's own origin.
+    expect(build).not.toContain("'https://world.pocketrpg.co.uk'")
+    expect(build).toContain("const worldOrigin = process.env.WorldOrigin || '/world'")
   })
 })
 
