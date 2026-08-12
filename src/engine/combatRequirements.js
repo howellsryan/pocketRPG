@@ -47,7 +47,18 @@ export function checkBossRequirementsPure(monster, ctx = {}) {
     return { locked: true, reason: `Complete ${questName} to fight ${monster.name}` }
   }
 
-  const unmetKill = bossKillCountsLoaded ? unmetKillCountRequirement(monster, bossKillCounts) : null
+  // Kill counts live in D1, not the save (§14), so on the client they arrive a
+  // fetch AFTER the rest of the state. A gate cannot be judged before they land
+  // — that would tell a player who cleared a prerequisite years ago to go and
+  // clear it — but it cannot be waved through either: a hub row that reads as
+  // available invites a tap the fetch then refuses. Say what is actually true.
+  // `pending` marks a transient lock, not a verdict about the player, so a
+  // caller can present it as news rather than as a refusal.
+  if (!bossKillCountsLoaded && hasKillCountGate(monster)) {
+    return { locked: true, pending: true, reason: `Checking your kill counts for ${monster.name}` }
+  }
+
+  const unmetKill = unmetKillCountRequirement(monster, bossKillCounts)
   if (unmetKill) {
     if (unmetKill.requiredId === 'ember_tyrant' && monster.id === 'ashen_crucible') {
       return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
@@ -67,10 +78,10 @@ export function checkBossRequirementsPure(monster, ctx = {}) {
  * hardcoded here rather than in the content.
  *
  * Kill counts live in D1, not the save (§14), so a caller that cannot see them
- * must decide for itself what an absent map means: the combat gate treats it as
- * "not loaded yet" and holds its tongue (bossKillCountsLoaded), while the slayer
- * pool fails CLOSED — an unverifiable count there would hand out a task the
- * combat screen and the server both refuse to start.
+ * must decide for itself what an absent map means: the combat gate answers
+ * "checking" (bossKillCountsLoaded, above), while the slayer pool fails CLOSED
+ * — an unverifiable count there would hand out a task the combat screen and the
+ * server both refuse to start.
  */
 export function unmetKillCountRequirement(monster, bossKillCounts = {}) {
   const counts = bossKillCounts && typeof bossKillCounts === 'object' ? bossKillCounts : {}
@@ -99,4 +110,13 @@ export function checkRaidRequirementsPure(raid, ctx = {}) {
   }
 
   return { locked: false }
+}
+
+/**
+ * Whether this monster is gated on kill counts at all — the data-driven field
+ * or the Ashen Crucible's hardcoded prerequisite. One funnel, so a caller
+ * deciding whether it needs the counts at all cannot miss the hardcoded one.
+ */
+export function hasKillCountGate(monster) {
+  return unmetKillCountRequirement(monster, {}) !== null
 }
