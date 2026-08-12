@@ -16,7 +16,11 @@ export const EQ_SLOT_NAMES = {
 const SIZE_PRESETS = {
   sm: { box: 'w-11 h-11', icon: '14px', label: 'text-[6px] max-w-[40px]', emptyIcon: '12px', gap: 'gap-[4px]' },
   md: { box: 'w-14 h-14 lg:w-20 lg:h-20', icon: '18px', label: 'text-[7px] lg:text-[10px] max-w-[52px] lg:max-w-[72px]', emptyIcon: '14px', gap: 'gap-[6px] lg:gap-3' },
-  mdFixed: { box: 'w-16 h-16', icon: '18px', label: 'text-[7px] max-w-[52px]', emptyIcon: '14px', gap: 'gap-[6px]' }
+  mdFixed: { box: 'w-16 h-16', icon: '18px', label: 'text-[7px] max-w-[52px]', emptyIcon: '14px', gap: 'gap-[6px]' },
+  // Scales with the viewport's available height (8vh, floored at the
+  // desktop combat layout's own 600px minimum so it never overflows there,
+  // capped so it doesn't balloon on very tall monitors).
+  fluidFixed: { box: 'w-[clamp(46px,8vh,88px)] h-[clamp(46px,8vh,88px)]', icon: '20px', label: 'text-[7px] max-w-[60px]', emptyIcon: '16px', gap: 'gap-[5px]' }
 }
 
 function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {

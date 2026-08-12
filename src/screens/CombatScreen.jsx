@@ -3421,7 +3421,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             equipment={equipment}
             itemsData={itemsData}
             onSelect={(slotName) => handleUnequipSlot(slotName)}
-            size="sm"
+            size="fluidFixed"
             asCard={false}
           />
         </div>
@@ -3446,7 +3446,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       <InventoryGrid
         inventory={inventory}
         size="normal"
-        gridClass="grid grid-cols-6 gap-1 justify-items-center"
+        gridClass="grid grid-cols-7 gap-1 justify-items-center"
         onReorder={(from, to) => {
           const newInv = [...inventory]
           const tmp = newInv[to]
