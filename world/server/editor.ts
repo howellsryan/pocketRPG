@@ -27,7 +27,7 @@ function corsOrigin(request: Request): string | null {
   if (!origin) return null
   try {
     const host = new URL(origin).hostname
-    if (host === 'world.pocketrpg.co.uk' || host === 'localhost' || host === '127.0.0.1') return origin
+    if (host === 'pocketrpg.co.uk' || host === 'localhost' || host === '127.0.0.1') return origin
     if (host.endsWith('.workers.dev')) return origin
   } catch {
     /* malformed Origin — no CORS */

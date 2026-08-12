@@ -30,9 +30,9 @@ Safe-zone and font values are **frame pixels** (the 1080x1920 encode) and are di
 
 ## What can be filmed
 
-Demo mode locks Store and Leaderboard, and **locks every boss** (`CombatScreen.jsx`, `demoBossLocked`). All three monsters with 3D arena models are bosses, so **the 3D combat arena cannot be filmed offline at all**. Lifting that means changing shipped game gating — ask the user first, don't add a bypass flag uninstructed.
+Demo mode locks Store and Leaderboard, and **locks every boss** (`CombatScreen.jsx`, `demoBossLocked`). Lifting that means changing shipped game gating — ask the user first, don't add a bypass flag uninstructed.
 
-Build with `Enable3dRender=true npm run rebuild` for recipes showing the Equipment screen; the hero streams in over ~1s, so give that scene ~4s.
+The Combat and Equipment screens have no 3D view (removed) — the Equipment screen always renders the paper doll, so there's no `Enable3dRender` build step to reach for.
 
 ## Boundaries
 

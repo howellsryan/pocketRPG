@@ -40,6 +40,7 @@ import {
 } from '../functions/_lib/mcp/intents.js'
 import { getLevelFromXP } from '../src/engine/experience.js'
 import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
+import monstersData from '../src/data/monsters.json'
 
 // Phase C save intents are pure mutations of a decoded save. These golden tests
 // exercise them directly (no D1), asserting items only relocate and that
@@ -1138,6 +1139,29 @@ describe('slayer intents', () => {
     const save = maxedSlayer()
     save.settings.slayerTask = { monsterId: 'field_chicken', monstersRemaining: 5, totalCount: 5 }
     expect(() => assignSlayerTask(save, 'turael', det())).toThrow(/already active/i)
+  })
+
+  it('will not assign a kill-count-gated boss without the counts, and will once they are supplied', () => {
+    // Kill counts are never in the save (§14) — the caller reads kill_counts and
+    // passes them in, and the picker fails closed when it cannot see them.
+    const gated = 'zaryth_the_empty_lord'
+    const earned = Object.fromEntries(
+      Object.keys((monstersData as any)[gated].killCountRequirement).map((id) => [id, 1]))
+
+    const blind = new Set<string>()
+    for (let i = 0; i < 60; i++) {
+      const save = maxedSlayer()
+      blind.add(assignSlayerTask(save, 'zul_kaar', { rng: Math.random, history: new Map() }).task.monsterId)
+    }
+    expect(blind.has(gated)).toBe(false)
+
+    const seen = new Set<string>()
+    const history = new Map()
+    for (let i = 0; i < 300; i++) {
+      const save = maxedSlayer()
+      seen.add(assignSlayerTask(save, 'zul_kaar', { rng: Math.random, history, bossKillCounts: earned }).task.monsterId)
+    }
+    expect(seen.has(gated)).toBe(true)
   })
 
   it("enforces the master's slayer requirement (nothing written on failure)", () => {

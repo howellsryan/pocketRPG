@@ -12,7 +12,24 @@
   // The newer of the two configs this merges (the API side was 2025-01-01).
   "compatibility_date": "2026-07-01",
   "workers_dev": false,
-  "observability": { "enabled": true },
+  // Mirrors what is configured on the production Worker in the dashboard. The
+  // top-level `enabled` is the legacy logs-only toggle and is superseded by the
+  // explicit `logs`/`traces` blocks — false here does NOT turn logging off.
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true
+    }
+  },
 
   "assets": {
     "directory": "dist_site",
@@ -101,7 +118,21 @@
     "preview": {
       "name": "pocketrpg-app-preview",
       "workers_dev": true,
-      "observability": { "enabled": true },
+      "observability": {
+        "enabled": false,
+        "head_sampling_rate": 1,
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "persist": true,
+          "invocation_logs": true
+        },
+        "traces": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "persist": true
+        }
+      },
       // DISABLE_QUEST_REQUIREMENTS is preview-ONLY and must never appear in the
       // production "vars" above — it bypasses every quest gate so testers can
       // reach quest-locked content. src/engine/questGates.js refuses it on the
