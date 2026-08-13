@@ -98,7 +98,6 @@ let pendingSnapshot = null
 // settling drops them, leaving the save that finally carries them looking
 // unexplained. That is the exact noise this ledger exists to remove.
 let pendingLosses = null
-let pendingKills = null
 let pendingSaveOptions = {}
 let inFlight = false
 // Promise for the push currently on the wire. Callers (pushNow, re-entrant
@@ -164,10 +163,14 @@ function canSync() {
 async function performPush() {
   const snap = pendingSnapshot
   const losses = pendingLosses
-  const kills = pendingKills
+  // Read at SEND time, never captured with the snapshot: the tally is only
+  // settled when a push LANDS, so a batch captured while an earlier push was
+  // still on the wire still contains that push's kills and would report them
+  // twice. Kills need no pairing with the blob the way `losses` does — they
+  // land in their own table — so the latest read is always the right one.
+  const kills = readKillTally()
   pendingSnapshot = null
   pendingLosses = null
-  pendingKills = null
   inFlight = true
   emitCloudSaveStatus('saving')
   try {
@@ -244,7 +247,7 @@ async function performPush() {
       }
       pendingSnapshot = snap
       markUnsynced()
-      schedulePush(snap, LOCK_RETRY_MS, losses, kills)
+      schedulePush(snap, LOCK_RETRY_MS, losses)
       return false
     }
     // save_revision_conflict: our local state diverged from the server's
@@ -265,7 +268,6 @@ async function performPush() {
       conflictPending = true
       pendingSnapshot = null
       pendingLosses = null
-      pendingKills = null
       pendingSaveOptions = {}
       hasUnsyncedChanges = false
       if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
@@ -318,10 +320,9 @@ async function flushNow() {
   }
 }
 
-function schedulePush(snapshot, delay = PUSH_DEBOUNCE_MS, losses = readItemLossLedger(), kills = readKillTally()) {
+function schedulePush(snapshot, delay = PUSH_DEBOUNCE_MS, losses = readItemLossLedger()) {
   pendingSnapshot = snapshot
   pendingLosses = losses
-  pendingKills = kills
   markUnsynced()
   if (pendingTimer) return
   pendingTimer = setTimeout(flushNow, delay)
@@ -427,7 +428,7 @@ export async function pushNow(snapshot, options = {}) {
   // own. We must never abandon the server mid-response — the paid skip-hour
   // flow awaits this to confirm progress is durable before revealing rewards.
   if (inFlight && inFlightPromise) { try { await inFlightPromise } catch { /* re-attempted below */ } }
-  if (snapshot) { pendingSnapshot = snapshot; pendingLosses = readItemLossLedger(); pendingKills = readKillTally() }
+  if (snapshot) { pendingSnapshot = snapshot; pendingLosses = readItemLossLedger() }
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
 
   // Resolve any pending critical-save snapshot synchronously and feed it
@@ -440,7 +441,7 @@ export async function pushNow(snapshot, options = {}) {
     pendingCriticalSnapshotSource = null
     pendingCriticalReasons.clear()
     const criticalSnapshot = resolveSnapshotSource(source)
-    if (criticalSnapshot) { pendingSnapshot = criticalSnapshot; pendingLosses = readItemLossLedger(); pendingKills = readKillTally() }
+    if (criticalSnapshot) { pendingSnapshot = criticalSnapshot; pendingLosses = readItemLossLedger() }
   }
 
   return await flushNow()
@@ -649,7 +650,6 @@ export function resetSyncState() {
   lastInteractionAt = Date.now()
   pendingSnapshot = null
   pendingLosses = null
-  pendingKills = null
   hasUnsyncedChanges = false
   consecutiveFailures = 0
   inFlightPromise = null

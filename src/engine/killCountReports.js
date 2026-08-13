@@ -36,6 +36,16 @@ function prerequisiteIds() {
   return gatePrerequisites
 }
 
+/**
+ * How many distinct monsters one report may carry.
+ *
+ * ONE number, shared by the client's tally and the server's batch: a client cap
+ * above the server's would silently drop the overflow, because the client
+ * settles what it SENT rather than what was accepted, and those kills would
+ * never be retried.
+ */
+export const MAX_REPORTED_MONSTERS = 128
+
 /** True when a client-reported kill count for this monster is safe to accept. */
 export function isClientReportableMonster(monsterId) {
   if (typeof monsterId !== 'string' || !monsterId) return false

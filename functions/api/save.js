@@ -215,6 +215,10 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   const lastInteractiveAt = Number(existing?.last_interactive_at)
   if (!interactive && Number.isFinite(lastInteractiveAt) && lastInteractiveAt > 0 &&
       (now - lastInteractiveAt) > IDLE_WRITE_CEILING_MS) {
+    // This answers ok, so the client settles its kill tally against it. The
+    // ceiling refuses the BLOB, not the counts — dropping them here would lose
+    // every kill an offline catch-up reported past the ceiling.
+    await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
     return json({
       ok: true,
       updatedAt: Number(existing?.updated_at) || now,
@@ -324,10 +328,13 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // any client (old or new) that still ships activeTask-only churn saves.
   // Kill counts reported by the client for this window (src/engine/killTally.js).
   // A side channel like `losses`: nothing is stored in the blob, so the save
-  // format and the no-op key below are untouched. Applied here — past every
-  // guard, before either success path returns — so both the no-op reply and a
-  // full write carry it, and a save the server REFUSES reports nothing (the
-  // client only settles its tally on an ok, so a refusal simply retries).
+  // format and the no-op key below are untouched.
+  //
+  // Placement is the whole correctness argument. It runs past every guard that
+  // REFUSES a write — the client settles its tally only on an ok, so counting a
+  // refused save would double-count everything the retry resends — and before
+  // every remaining success path, of which there are three: the idle ceiling
+  // above (which has its own call), the no-op reply below, and the full write.
   await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
 
   if (save_data !== null && previousJson !== null && parsedNext) {

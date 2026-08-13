@@ -140,6 +140,20 @@ describe('applyDailyTaskEvents', () => {
     }
   })
 
+  // The race this guards: the world flushes while the idle tab syncs, each one
+  // kill short by its own pre-write read. Their increments compose in SQL, so
+  // the row lands ON the target — and if the claim were decided from what each
+  // caller computed, neither would pay it. Decided from the STORED value, the
+  // row is paid by whichever of them reads it next, with nothing to nudge it.
+  it('heals a row left finished and uncredited, even with no events to apply', async () => {
+    await issueTask('kill_green_dragons', 10)
+    raw.prepare('UPDATE character_daily_tasks SET progress = 10 WHERE character_id = 7 AND slot = 0').run()
+    const res = await applyDailyTaskEvents(env, { characterId: 7, identityId: 'identity-1', dateKey: DATE, events: [] })
+    expect(res.creditsGranted).toBe(1)
+    expect(creditsOf()).toBe(1)
+    expect(res.tasks[0]).toMatchObject({ taskId: 'kill_green_dragons', completed: true })
+  })
+
   it('credits a raid completion, which is how a co-op raid clear reaches a daily task', async () => {
     await issueTask('conquer_cryptbound_champions', 1)
     const res = await applyDailyTaskEvents(env, {

@@ -8,12 +8,8 @@
 // own. Nothing here can unlock a door, and nothing here double-counts a kill
 // that _completeShared already counted.
 
-import { filterReportableKills } from '../../../src/engine/killCountReports.js'
+import { filterReportableKills, MAX_REPORTED_MONSTERS } from '../../../src/engine/killCountReports.js'
 import { auditLog } from './audit.js'
-
-/** Beyond this a single push is not a play session. Bounds the batch size, not
- * the counts — those are clamped per monster by filterReportableKills. */
-const MAX_REPORTED_MONSTERS = 64
 
 /**
  * Adds a reported tally to kill_counts, one upsert per monster.

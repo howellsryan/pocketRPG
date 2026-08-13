@@ -123,6 +123,22 @@ describe('PUT /api/save kill-count side channel', () => {
     expect(countOf('green_dragon')).toBe(0)
   })
 
+  it('counts the kills when the idle write ceiling refuses the blob', async () => {
+    // The ceiling answers ok, so the client settles its tally against it —
+    // dropping the counts here would lose every kill an offline catch-up made
+    // past the ceiling.
+    const staleAt = NOW - 48 * 60 * 60 * 1000
+    raw.prepare('INSERT INTO character_idle_state (character_id, last_active_at, last_interactive_at, updated_at) VALUES (42, ?, ?, ?)')
+      .run(staleAt, staleAt, staleAt)
+    const res = await onRequestPut({
+      request: put({ save_data: JSON.stringify(saveWith({ stats: { attack: { xp: 900 } } })), save_revision: 7, interactive: false, kills: { green_dragon: 6 } }),
+      env,
+    } as any)
+    const body = await res.json()
+    expect(body.idle_ceiling).toBe(true)
+    expect(countOf('green_dragon')).toBe(6)
+  })
+
   it('writes the save normally when no tally is reported', async () => {
     const res = await onRequestPut({
       request: put({ save_data: JSON.stringify(saveWith({ stats: { attack: { xp: 500 } } })), save_revision: 7 }),

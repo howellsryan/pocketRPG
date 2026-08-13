@@ -102,6 +102,38 @@ function rowShape(row) {
 }
 
 /**
+ * Pays every issued task that has reached its target and has not been credited.
+ *
+ * Run against rows read AFTER the increments land, never against the numbers a
+ * caller computed from its own pre-write read: the increments compose in SQL,
+ * so two writers each one kill from the end (the world flushing while the idle
+ * tab syncs) both see themselves as short, and the row would sit finished and
+ * unpaid with no later event to nudge it. Sweeping the whole day's list also
+ * heals a row any earlier race left stranded.
+ */
+async function claimFinishedRows(env, { characterId, identityId, dateKey, rows, now }) {
+  let creditsGranted = 0
+  let credits = null
+  const tasks = []
+  for (const row of rows) {
+    const target = Math.max(1, Math.floor(Number(row.target) || 1))
+    if (row.credited || Math.max(0, Math.floor(Number(row.progress) || 0)) < target) {
+      tasks.push(rowShape(row))
+      continue
+    }
+    const claim = await claimDailyTaskCredit(env, {
+      characterId, identityId, dateKey, slot: row.slot, taskId: row.task_id, now,
+    })
+    creditsGranted += claim.creditsGranted
+    if (claim.credits !== null) credits = claim.credits
+    // The claim writes progress = target and stamps the completion; reflect it
+    // rather than paying for a second read.
+    tasks.push({ ...rowShape(row), progress: target, completed: true })
+  }
+  return { tasks, creditsGranted, credits }
+}
+
+/**
  * Applies game events to a character's issued daily tasks.
  *
  * Increments are computed per row and applied as `progress + inc` in SQL so a
@@ -114,7 +146,7 @@ export async function applyDailyTaskEvents(env, { characterId, identityId = null
   const list = normaliseDailyEvents(events)
   const rows = await ensureDailyTasks(env, characterId, dateKey)
   if (list.length === 0) {
-    return { date: dateKey, tasks: rows.map(rowShape), creditsGranted: 0, credits: null }
+    return { date: dateKey, ...await claimFinishedRows(env, { characterId, identityId, dateKey, rows, now }) }
   }
 
   const applied = []
@@ -130,7 +162,7 @@ export async function applyDailyTaskEvents(env, { characterId, identityId = null
     applied.push({ row, inc, target, next: Math.min(target, progress + inc) })
   }
   if (applied.length === 0) {
-    return { date: dateKey, tasks: rows.map(rowShape), creditsGranted: 0, credits: null }
+    return { date: dateKey, ...await claimFinishedRows(env, { characterId, identityId, dateKey, rows, now }) }
   }
 
   await env.DB.batch(applied.map(({ row, inc, target }) => env.DB.prepare(`
@@ -139,23 +171,12 @@ export async function applyDailyTaskEvents(env, { characterId, identityId = null
      WHERE character_id = ?3 AND task_date = ?4 AND slot = ?5 AND credited = 0
   `).bind(target, inc, characterId, dateKey, row.slot)))
 
-  let creditsGranted = 0
-  let credits = null
-  for (const { row, next, target } of applied) {
-    if (next < target) continue
-    const claim = await claimDailyTaskCredit(env, {
-      characterId, identityId, dateKey, slot: row.slot, taskId: row.task_id, now,
-    })
-    creditsGranted += claim.creditsGranted
-    if (claim.credits !== null) credits = claim.credits
-  }
-
-  const refreshed = await env.DB.prepare(
+  const written = await env.DB.prepare(
     `SELECT slot, task_id, tier, target, progress, completed_at, credited
        FROM character_daily_tasks
       WHERE character_id = ? AND task_date = ?
       ORDER BY slot`,
   ).bind(characterId, dateKey).all()
 
-  return { date: dateKey, tasks: (refreshed.results || []).map(rowShape), creditsGranted, credits }
+  return { date: dateKey, ...await claimFinishedRows(env, { characterId, identityId, dateKey, rows: written.results || [], now }) }
 }

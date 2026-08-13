@@ -14,14 +14,14 @@
 // that save's XP is being discarded, so its kills must go with it.
 //
 // What may be reported at all is decided by killCountReports.js, not here.
-import { filterReportableKills } from './killCountReports.js'
+import { filterReportableKills, MAX_REPORTED_MONSTERS } from './killCountReports.js'
 
 const KILL_TALLY_STORAGE_KEY = 'pocketrpg_kill_tally'
 
 // A save window kills a handful of distinct monsters. A bound on malformed
 // state; overflow simply stops tallying, which under-counts rather than
-// corrupting anything.
-const MAX_TALLY_MONSTERS = 128
+// corrupting anything. Deliberately the SERVER's bound (killCountReports.js) —
+// tallying more than one report can carry would silently drop the overflow.
 
 let killTally = new Map()
 let killTallyHydrated = false
@@ -52,7 +52,7 @@ function hydrateKillTally() {
 function addKills(monsterId, count) {
   const n = Math.floor(Number(count) || 0)
   if (n <= 0) return false
-  if (!killTally.has(monsterId) && killTally.size >= MAX_TALLY_MONSTERS) return false
+  if (!killTally.has(monsterId) && killTally.size >= MAX_REPORTED_MONSTERS) return false
   killTally.set(monsterId, (killTally.get(monsterId) || 0) + n)
   return true
 }

@@ -63,6 +63,28 @@ describe('kill tally on a push', () => {
     expect(readKillTally()).toEqual({ green_dragon: 3 })
   })
 
+  it('never re-sends a tally that is still on the wire', async () => {
+    // Captured with the snapshot, a batch scheduled during an in-flight push
+    // still contained that push's kills (it is only settled when the push
+    // LANDS), so D1 recorded them twice.
+    recordKills('green_dragon', 15)
+    let release: () => void = () => {}
+    putSave.mockImplementationOnce(async () => {
+      await new Promise<void>((resolve) => { release = resolve })
+      return { ok: true, updatedAt: 123, save_revision: 1 }
+    })
+    const first = pushNow({ stats: { attack: { xp: 1 } } })
+    // A second push is queued while the first is still open.
+    const second = pushNow({ stats: { attack: { xp: 2 } } })
+    release()
+    await first
+    await second
+
+    expect(killsOf(0)).toEqual({ green_dragon: 15 })
+    expect(killsOf(1)).toBeNull()
+    expect(readKillTally()).toBeNull()
+  })
+
   it('ships the tally on a teardown beacon too', async () => {
     recordKills('green_dragon', 4)
     beaconSaveNow({ stats: { attack: { xp: 1 } } })

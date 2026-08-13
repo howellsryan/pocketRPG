@@ -120,14 +120,21 @@ export function drainSlayerCredit(session: SlayerSession): { slayerTask: SlayerT
   return drained
 }
 
-/** Puts a failed flush's slayer delta back, so the next one carries it. */
+/** Puts a failed flush's slayer delta back, so the next one carries it. Every
+ * field ADDS — a task completed while the failed flush was in flight is already
+ * on the session's own credit, and a merge that overwrote the master counts
+ * would hand back two completions with one master credit. */
 export function restoreSlayerCredit(session: SlayerSession, drained: { slayerCredit: SlayerCredit } | null): void {
   if (!drained) return
   session.dirty = true
+  const masterCompletions = { ...session.credit.masterCompletions }
+  for (const [masterId, count] of Object.entries(drained.slayerCredit.masterCompletions || {})) {
+    masterCompletions[masterId] = (Math.floor(Number(masterCompletions[masterId]) || 0)) + Math.max(0, Math.floor(Number(count) || 0))
+  }
   session.credit = {
     pointsEarned: session.credit.pointsEarned + drained.slayerCredit.pointsEarned,
     tasksCompleted: session.credit.tasksCompleted + drained.slayerCredit.tasksCompleted,
-    masterCompletions: { ...drained.slayerCredit.masterCompletions, ...session.credit.masterCompletions },
+    masterCompletions,
   }
 }
 

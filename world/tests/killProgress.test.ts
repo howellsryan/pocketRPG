@@ -100,6 +100,25 @@ describe('drainSlayerCredit / restoreSlayerCredit', () => {
     expect(again!.slayerCredit).toEqual(drained!.slayerCredit)
   })
 
+  it('ADDS a restored delta to whatever was banked while the flush was failing', () => {
+    // A merge that overwrote the master counts handed back two completions with
+    // one master credit.
+    const session = seedSlayerSession(saveWithTask())
+    creditWorldSlayerKill(session, 'green_dragon')
+    creditWorldSlayerKill(session, 'green_dragon')
+    const drained = drainSlayerCredit(session)
+    // A second task finishes before the failed flush is put back.
+    session.task = { monsterId: 'green_dragon', monstersRemaining: 1, pointsOnComplete: 12, masterId: 'vashka' }
+    creditWorldSlayerKill(session, 'green_dragon')
+    restoreSlayerCredit(session, drained)
+
+    expect(session.credit.tasksCompleted).toBe(2)
+    expect(session.credit.masterCompletions).toEqual({ vashka: 2 })
+    // Both completions' points, not just one — the per-task reward varies with
+    // the running total, so the sum is what matters, never a doubling.
+    expect(session.credit.pointsEarned).toBeGreaterThan(drained!.slayerCredit.pointsEarned)
+  })
+
   it('restoring nothing is a no-op', () => {
     const session = seedSlayerSession(saveWithTask())
     restoreSlayerCredit(session, null)
