@@ -126,7 +126,7 @@ describe('kill tally on a push', () => {
   it('survives the pull that follows a co-op fight, which the lock branch preserved it for', async () => {
     recordKills('green_dragon', 4)
     putSave.mockRejectedValueOnce(Object.assign(new Error('locked'), {
-      status: 409, code: 'CHARACTER_IN_COOP_SESSION',
+      status: 409, body: { code: 'CHARACTER_IN_COOP_SESSION' },
     }))
     await pushNow({ stats: {} })
     expect(readKillTally()).toEqual({ green_dragon: 4 })
@@ -143,6 +143,18 @@ describe('kill tally on a push', () => {
     await applyCloudSave({ version: 1 }, 999, 3)
     await pushNow({ stats: { attack: { xp: 40 } } })
     expect(killsOf(0)).toEqual({ field_chicken: 12 })
+  })
+
+  // The one case where the tally may already have been banked: a push whose ok
+  // was lost still wrote, and the next push 409s on the revision that write
+  // moved. Keeping the tally there would count the same kills twice.
+  it('drops the tally on a save-revision conflict, which is evidence a push landed unseen', async () => {
+    recordKills('field_chicken', 7)
+    putSave.mockRejectedValueOnce(Object.assign(new Error('stale'), {
+      status: 409, body: { code: 'SAVE_REVISION_CONFLICT', current_revision: 9 },
+    }))
+    await pushNow({ stats: { attack: { xp: 40 } } })
+    expect(readKillTally()).toBeNull()
   })
 
   it('is cleared by resetSyncState, which owns logout and character switch', async () => {

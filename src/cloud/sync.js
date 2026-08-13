@@ -268,6 +268,17 @@ async function performPush() {
       conflictPending = true
       pendingSnapshot = null
       pendingLosses = null
+      // A stale revision is the ONE signal that a push of ours may have landed
+      // without us seeing the ok — a response lost on a dying connection banks
+      // the kills, keeps the tally (we settle only on a reply), and the next
+      // push 409s on the revision that write moved. Re-sending would count them
+      // twice. Dropped here rather than in applyCloudSave, which also runs on
+      // the co-op-exit and boot pulls, where nothing suggests a write landed
+      // and the tally is simply the kills still owed. A 409 caused by a foreign
+      // writer instead (a world flush, an action completion) loses this
+      // window's counts; under-counting an ordinary monster is the cheaper
+      // error, and §14 keeps every gated monster off this channel entirely.
+      resetKillTally()
       pendingSaveOptions = {}
       hasUnsyncedChanges = false
       if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
