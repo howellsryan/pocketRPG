@@ -49,7 +49,7 @@ import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks, holdTicks, releaseTicks, SKIP_CONFIRM_HOLD } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
-import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
+import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, getGrindmanMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSave, applyCloudSave, checkCloudNewer, isLocalWriteNewerThanCloud, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { getActiveCoopSession, COOP_SESSION_EVENT } from './cloud/coop.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
@@ -363,7 +363,7 @@ const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the d
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, syncHardModeTargets, hardModeTargets, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, isGrindman, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, syncHardModeTargets, hardModeTargets, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
@@ -1122,6 +1122,7 @@ function GameApp() {
             slayerPerks,
             completedQuests: completedQuestsRef.current,
             autoBankExcludedItemIds: autoBankExcludedItems,
+            isGrindman: getGrindmanMode(),
           })
           else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
@@ -1768,7 +1769,7 @@ function GameApp() {
           // Server authoritatively reported no save row for this character —
           // safe to initialise a new game and push it.
           await wipeLocalSave()
-          await startNewGame(getIronmanMode(), getCharacterName(), getOneLifeMode())
+          await startNewGame(getIronmanMode(), getCharacterName(), getOneLifeMode(), getGrindmanMode())
           await pushNow(getSnapshot())
           // Brand-new character — there are no kill counts to wait for.
           markKillCountsLoaded()
@@ -1934,7 +1935,7 @@ function GameApp() {
     }
   }
 
-  async function startNewGame(isIronman = null, playerName = null, isOneLife = null) {
+  async function startNewGame(isIronman = null, playerName = null, isOneLife = null, isGrindman = null) {
     let name = playerName || getCharacterName()
     // If still no name but we have a cloud character, that's a fallback error.
     // In normal flow, setCharacter() should have already set CHARACTER_NAME_KEY before startNewGame() is called.
@@ -1945,7 +1946,8 @@ function GameApp() {
     const finalIsIronman = isIronman !== null ? isIronman : getIronmanMode()
     // If isOneLife not explicitly provided, check if it was stored (cloud character)
     const finalIsOneLife = isOneLife !== null ? isOneLife : getOneLifeMode()
-    await initNewGame(name, finalIsIronman, finalIsOneLife)
+    const finalIsGrindman = isGrindman !== null ? isGrindman : getGrindmanMode()
+    await initNewGame(name, finalIsIronman, finalIsOneLife, finalIsGrindman)
     // Stamp IDB ownership so the next boot knows these rows belong to the
     // selected character (only applies when signed in — offline leaves null).
     const charId = getCharacterId()
@@ -2834,6 +2836,7 @@ function GameApp() {
             slayerPerks,
             completedQuests: completedQuestsRef.current,
             autoBankExcludedItemIds: autoBankExcludedItems,
+            isGrindman: getGrindmanMode(),
           })
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
@@ -3725,6 +3728,7 @@ function GameApp() {
           characterId={getCharacterId()}
           stripeLinks={stripeLinks}
           credits={credits}
+          isGrindman={isGrindman}
         />
       )}
 

@@ -43,18 +43,20 @@ export function getCharacterId() {
   return v ? parseInt(v, 10) : null
 }
 
-export function setCharacter(id, username, isIronman = null, isOneLife = null) {
+export function setCharacter(id, username, isIronman = null, isOneLife = null, isGrindman = null) {
   const asBool = (value) => value === true || value === 1 || value === '1' || value === 'true'
   if (id) {
     localStorage.setItem(CHARACTER_KEY, String(id))
     if (username) localStorage.setItem(CHARACTER_NAME_KEY, username)
     if (isIronman != null) localStorage.setItem('pocketrpg_ironman_mode', String(asBool(isIronman)))
     if (isOneLife != null) localStorage.setItem('pocketrpg_one_life_mode', String(asBool(isOneLife)))
+    if (isGrindman != null) localStorage.setItem('pocketrpg_grindman_mode', String(asBool(isGrindman)))
   } else {
     localStorage.removeItem(CHARACTER_KEY)
     localStorage.removeItem(CHARACTER_NAME_KEY)
     localStorage.removeItem('pocketrpg_ironman_mode')
     localStorage.removeItem('pocketrpg_one_life_mode')
+    localStorage.removeItem('pocketrpg_grindman_mode')
   }
 }
 
@@ -65,6 +67,11 @@ export function getIronmanMode() {
 
 export function getOneLifeMode() {
   const v = localStorage.getItem('pocketrpg_one_life_mode')
+  return v === 'true' || v === '1'
+}
+
+export function getGrindmanMode() {
+  const v = localStorage.getItem('pocketrpg_grindman_mode')
   return v === 'true' || v === '1'
 }
 
@@ -84,6 +91,9 @@ export function syncAccountModeFlags(player) {
   }
   if ('is_one_life' in player) {
     localStorage.setItem('pocketrpg_one_life_mode', String(player.is_one_life === true))
+  }
+  if ('is_grindman' in player) {
+    localStorage.setItem('pocketrpg_grindman_mode', String(player.is_grindman === true))
   }
 }
 
@@ -182,9 +192,9 @@ export const api = {
   // daily tasks, idle state and activity progress — one request instead of six.
   getBootstrap: () => request('/api/bootstrap'),
   listCharacters: () => request('/api/characters'),
-  createCharacter: (username, isIronman = false, isOneLife = false) => request('/api/characters', {
+  createCharacter: (username, isIronman = false, isOneLife = false, isGrindman = false) => request('/api/characters', {
     method: 'POST',
-    body: JSON.stringify({ username, is_ironman: isIronman, is_one_life: isOneLife }),
+    body: JSON.stringify({ username, is_ironman: isIronman, is_one_life: isOneLife, is_grindman: isGrindman }),
   }),
   purchaseItem: (itemId, quantity = 1, unlockedMinigameItems = []) => request('/api/purchase', {
     method: 'POST',

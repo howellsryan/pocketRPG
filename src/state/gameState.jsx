@@ -13,7 +13,7 @@ import { debounce } from '../utils/helpers.js'
 import { applyTheme, normalizeThemePreference, readStoredThemePreference, storeThemePreference, watchSystemTheme, DEFAULT_THEME_PREFERENCE } from '../utils/theme.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
-import { api, getToken, getCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
+import { api, getToken, getCharacterId, getIronmanMode, getOneLifeMode, getGrindmanMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { resetOneLifeWithRetry } from '../utils/oneLifeDeath.js'
 import { matchTaskProgress, taskById, idleCatchupDailyEvents } from '../engine/dailyTasks.js'
 import { requestCriticalPushSave, schedulePeriodicSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
@@ -23,6 +23,7 @@ import prayersData from '../data/prayers.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
 import { applyTaskResult } from '../engine/applyTaskResult.js'
 import { preserveBankCharges } from '../engine/bankCharges.js'
+import { grindmanXP } from '../engine/grindman.js'
 import { applyBankDeltas, bankUnitsRemoved } from '../engine/bankMutations.js'
 import { recordItemLossEntries, recordItemLosses } from '../engine/lossLedger.js'
 import { createDirtyFlags, claimDirtyFlags, restoreDirtyFlags, hasDirtyFlags } from '../db/dirtyFlags.js'
@@ -269,8 +270,9 @@ export function GameProvider({ children }) {
     if (getToken() && getCharacterId()) {
       const authIronman = getIronmanMode()
       const authOneLife = getOneLifeMode()
-      if (p && (!!p.is_ironman !== authIronman || !!p.is_one_life !== authOneLife)) {
-        p = { ...p, is_ironman: authIronman, is_one_life: authOneLife }
+      const authGrindman = getGrindmanMode()
+      if (p && (!!p.is_ironman !== authIronman || !!p.is_one_life !== authOneLife || !!p.is_grindman !== authGrindman)) {
+        p = { ...p, is_ironman: authIronman, is_one_life: authOneLife, is_grindman: authGrindman }
         await savePlayer(p)
       }
     } else {
@@ -306,6 +308,7 @@ export function GameProvider({ children }) {
               slayerPerks: savedSlayerPerks && typeof savedSlayerPerks === 'object' ? savedSlayerPerks : null,
               completedQuests: savedCompletedQuests || [],
               autoBankExcludedItemIds: autoBankExcludedItemIdsSet,
+              isGrindman: p?.is_grindman === true,
             })
           } else if (savedTask.type === 'agility') {
             sim = simulateIdleAgility(savedTask, elapsedMs)
@@ -345,7 +348,7 @@ export function GameProvider({ children }) {
           // then read back the two primitive fields that may have changed.
           const applySettings = { currentHP: savedHP, dungeoneeringTokens: savedDungeoneeringTokens }
           const applyState = { stats: s, inventory: inv, bank: b, equipment: eq, settings: applySettings }
-          const applied = applyTaskResult(applyState, sim, savedTask.type)
+          const applied = applyTaskResult(applyState, sim, savedTask.type, { isGrindman: p?.is_grindman === true })
           inv = applyState.inventory  // may be sim.finalInventory (new array ref)
           // Offline catch-up burns a whole window's supplies and materials in one
           // write. Declare it, or every return from a long absence reads as an
@@ -846,6 +849,12 @@ export function GameProvider({ children }) {
     // mutators do it: flushLocalSaves reads stateRef and CLEARS the dirty flag,
     // so an unload-time flush that ran before the post-commit effect would
     // persist the pre-XP stats and mark them clean — losing the XP outright.
+    // Grindman's half XP is applied HERE and nowhere else on the client: every
+    // client XP source — live combat, skilling, quests, idle catch-up — funnels
+    // through this callback, so a caller that computes an XP number never has
+    // to know the account type. World and co-op XP are granted server-side and
+    // take the cut there.
+    amount = grindmanXP(amount, stateRef.current.player?.is_grindman === true)
     {
       const prev = stateRef.current.stats
       const cur = prev[skill] || { skill, xp: 0, level: 1 }
@@ -1814,6 +1823,7 @@ export function GameProvider({ children }) {
     kingdom, updateKingdom, settleKingdom, applyKingdomSkip,
     isIronman: player?.is_ironman || false,
     isOneLife: player?.is_one_life || false,
+    isGrindman: player?.is_grindman || false,
     revertOneLifeMode,
     dailyTaskStates, setDailyTasks, recordGameEvent,
   }

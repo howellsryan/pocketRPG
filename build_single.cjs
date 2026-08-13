@@ -89,6 +89,7 @@ const sourceFiles = [
   'engine/monsterClips.js',
   'engine/monsterMaxHit.js',
   'engine/hardMode.js',
+  'engine/grindman.js',
   'engine/roomWideAttacks.js',
   'engine/consumables.js',
   'engine/combat.js',

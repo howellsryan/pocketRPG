@@ -1,5 +1,6 @@
 // @ts-check
 import { getLevelFromXP } from './experience.js'
+import { grindmanXP } from './grindman.js'
 
 /**
  * The result of a task simulation (idle/offline/skip-hour/live-completion),
@@ -95,11 +96,16 @@ function addCoinsInventoryFirst(inventory, bank, qty) {
 }
 
 /**
+ * `isGrindman` halves the XP this result banks. The cut belongs to whatever
+ * funnel writes XP INTO the stats — this one, or the client's grantXP — never
+ * to the simulation, which would double-cut on the paths that use both.
+ *
  * @param {{stats?: any, inventory?: any[], bank?: any, equipment?: any, settings?: any}} state
  * @param {TaskResult} sim
  * @param {string} type
+ * @param {{isGrindman?: boolean}} [options]
  */
-export function applyTaskResult(state, sim, type) {
+export function applyTaskResult(state, sim, type, { isGrindman = false } = {}) {
   if (!state.stats || typeof state.stats !== 'object') state.stats = {}
   if (!state.bank || typeof state.bank !== 'object') state.bank = {}
   if (!state.equipment || typeof state.equipment !== 'object') state.equipment = {}
@@ -128,7 +134,7 @@ export function applyTaskResult(state, sim, type) {
         // this the gain is silently discarded while the claim result still
         // reports it, so levels never rise and requirements never unlock.
         const cur = stats[skill] || { skill, xp: 0, level: 1 }
-        const newXP = Math.min((cur.xp || 0) + Math.floor(xp), XP_CAP)
+        const newXP = Math.min((cur.xp || 0) + Math.floor(grindmanXP(xp, isGrindman)), XP_CAP)
         stats[skill] = { ...cur, xp: newXP, level: getLevelFromXP(newXP) }
       }
     }

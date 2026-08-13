@@ -36,6 +36,7 @@ import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionI
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
 import { applyTaskResult } from '../../../src/engine/applyTaskResult.js'
+import { isGrindmanSave } from '../../../src/engine/grindman.js'
 import { declareItemLosses } from '../game/holdingsDelta.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTokens.js'
@@ -858,7 +859,7 @@ function applyToSave(save, sim, type) {
   if (!save.settings || typeof save.settings !== 'object') save.settings = {}
   const inv28 = toSlotArray(save)
   const state = { stats: save.stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
-  const result = applyTaskResult(state, sim, type)
+  const result = applyTaskResult(state, sim, type, { isGrindman: isGrindmanSave(save) })
   save.inventory = state.inventory  // may be sim.finalInventory or modified inv28
   declareItemLosses(save, result.consumed)
   return result
@@ -915,7 +916,7 @@ export function runIdleTask(save, task, elapsedMs, { isIronman = false } = {}) {
   }
   if (!sim) return { applied: false, reason: 'no_progress' }
   const state = { stats: save.stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
-  const result = applyTaskResult(state, sim, task.type)
+  const result = applyTaskResult(state, sim, task.type, { isGrindman: isGrindmanSave(save) })
   save.inventory = state.inventory
   declareItemLosses(save, result.consumed)
   return {
@@ -1403,10 +1404,11 @@ export function runCombatTask(save, task, elapsedMs) {
     idlePrayers: setup.prayers,
     prayersData,
     autoBankExcludedItemIds: new Set(save.settings.autoBankExcludedItems || []),
+    isGrindman: isGrindmanSave(save),
   })
   if (!sim) return { applied: false, reason: 'no_progress' }
   const state = { stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
-  const result = applyTaskResult(state, sim, 'combat')
+  const result = applyTaskResult(state, sim, 'combat', { isGrindman: isGrindmanSave(save) })
   save.inventory = state.inventory
   declareItemLosses(save, result.consumed)
   const xpGained = {}
