@@ -69,6 +69,96 @@
       "harvestXp": 73.5,
       "growthTimeMs": 4800000,
       "icon": "🌿"
+    },
+    {
+      "id": "sunblossom_seed",
+      "cropId": "sunblossom",
+      "name": "Sunblossom",
+      "level": 56,
+      "plantXp": 74,
+      "harvestXp": 85,
+      "growthTimeMs": 4800000,
+      "icon": "🌻"
+    },
+    {
+      "id": "emberleaf_seed",
+      "cropId": "emberleaf",
+      "name": "Emberleaf",
+      "level": 62,
+      "plantXp": 93,
+      "harvestXp": 107,
+      "growthTimeMs": 4800000,
+      "icon": "🍂"
+    },
+    {
+      "id": "wyrmspice_seed",
+      "cropId": "wyrmspice",
+      "name": "Wyrmspice",
+      "level": 67,
+      "plantXp": 112,
+      "harvestXp": 129,
+      "growthTimeMs": 4800000,
+      "icon": "🌿"
+    },
+    {
+      "id": "snapdrake_seed",
+      "cropId": "snapdrake",
+      "name": "Snapdrake",
+      "level": 72,
+      "plantXp": 135,
+      "harvestXp": 155,
+      "growthTimeMs": 4800000,
+      "icon": "🌸"
+    },
+    {
+      "id": "cinderbloom_seed",
+      "cropId": "cinderbloom",
+      "name": "Cinderbloom",
+      "level": 76,
+      "plantXp": 157,
+      "harvestXp": 180.5,
+      "growthTimeMs": 4800000,
+      "icon": "🔥"
+    },
+    {
+      "id": "stonefern_seed",
+      "cropId": "stonefern",
+      "name": "Stonefern",
+      "level": 80,
+      "plantXp": 182,
+      "harvestXp": 209.5,
+      "growthTimeMs": 4800000,
+      "icon": "🪨"
+    },
+    {
+      "id": "mistvine_seed",
+      "cropId": "mistvine",
+      "name": "Mistvine",
+      "level": 85,
+      "plantXp": 219,
+      "harvestXp": 252,
+      "growthTimeMs": 4800000,
+      "icon": "🌫️"
+    },
+    {
+      "id": "marshflax_seed",
+      "cropId": "marshflax",
+      "name": "Marshflax",
+      "level": 89,
+      "plantXp": 254,
+      "harvestXp": 292,
+      "growthTimeMs": 4800000,
+      "icon": "🌾"
+    },
+    {
+      "id": "thornspire_seed",
+      "cropId": "thornspire",
+      "name": "Thornspire",
+      "level": 94,
+      "plantXp": 306,
+      "harvestXp": 352,
+      "growthTimeMs": 4800000,
+      "icon": "🥀"
     }
   ],
   "vegetables": [

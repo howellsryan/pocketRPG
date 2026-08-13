@@ -27,9 +27,24 @@ export const SEEDS_BY_LEVEL = [
 // raid bosses are excluded — their loot is server-authoritative.
 
 const SEED_WINDOW_WIDTH = 3
-const COMBAT_LEVELS_PER_TIER = 12 // combat levels needed to step up one seed tier
+// Combat levels per point of seed Farming level. The window is anchored to the
+// seed's LEVEL, never its index in the pool: indexing meant every seed added to
+// farming.json pushed the top tier further out of reach (the nine Herblore
+// herbs alone would have moved Magic Saplings from combat 228 to combat 336,
+// off all but two monsters in the game).
+const COMBAT_PER_SEED_LEVEL = 3
 const WINDOW_WEIGHTS = [6, 3, 1]  // lowest → highest tier within the window
 const MONSTER_SEED_CHANCE = 0.04  // total per-kill chance of any seed drop
+
+/** Index of the highest seed whose level a combat level reaches (min 0). */
+function seedTierCap(combatLevel) {
+  const capLevel = combatLevel / COMBAT_PER_SEED_LEVEL
+  let cap = 0
+  for (let i = 0; i < SEEDS_BY_LEVEL.length; i++) {
+    if (SEEDS_BY_LEVEL[i].level <= capLevel) cap = i
+  }
+  return cap
+}
 
 /**
  * Seed drop entries for a monster, shaped like normal monster drops
@@ -45,7 +60,7 @@ export function getMonsterSeedDrops(monster) {
   const n = SEEDS_BY_LEVEL.length
   if (!n || combatLevel <= 0) return []
 
-  const cap = Math.min(n - 1, Math.floor(combatLevel / COMBAT_LEVELS_PER_TIER))
+  const cap = Math.min(n - 1, seedTierCap(combatLevel))
 
   // Build the weighted window, deduping clamped tiers (low combat levels).
   const weightById = {}
@@ -65,16 +80,23 @@ export function getMonsterSeedDrops(monster) {
 
 // ─── Master Farmer seed rewards ────────────────────────────────────────────
 // Every successful pickpocket yields exactly one seed. Rarity decays
-// geometrically by tier rank, so low-level seeds are common and high-level
-// seeds / saplings are rare — but all of them are obtainable.
+// geometrically with the seed's LEVEL, so low-level seeds are common and
+// high-level seeds / saplings are rare — but all of them are obtainable.
+//
+// Decaying by level rather than by rank is what makes the table stable as
+// content grows: a rank-keyed table re-prices every seed above an insertion
+// point, and adding the nine Herblore herbs would have quietly made Magic
+// Saplings four times rarer. 0.945 keeps the table's expected value per seed
+// (~1.1k gp) where it was before those nine herbs joined it, so Master Farmer
+// stays in line with Tzraar, the level-90 thieving target.
 
-const MASTER_FARMER_DECAY = 0.82
+const MASTER_FARMER_DECAY = 0.945
 
 /** Weighted reward table: [{ id, weight }] ordered by ascending seed level. */
 export function masterFarmerSeedWeights() {
-  return SEEDS_BY_LEVEL.map((s, rank) => ({
+  return SEEDS_BY_LEVEL.map((s) => ({
     id: s.id,
-    weight: Math.pow(MASTER_FARMER_DECAY, rank),
+    weight: Math.pow(MASTER_FARMER_DECAY, s.level - 1),
   }))
 }
 
