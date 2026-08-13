@@ -219,6 +219,10 @@ export const api = {
       // A side-channel, never stored: it only tells the server's detector which
       // of this write's removals were deliberate.
       ...(options?.losses ? { losses: options.losses } : {}),
+      // Kill counts tallied for this window (src/engine/killTally.js). Same
+      // side-channel shape: never stored in the blob, so a grind builds kill
+      // counts without a cloud write per kill.
+      ...(options?.kills ? { kills: options.kills } : {}),
     }),
   }),
   getCollectionLog: () => request('/api/collection-log'),
@@ -314,7 +318,7 @@ export const api = {
 // cancelled mid-flight, losing progress since the last debounced push. Routes
 // to POST /api/save (beacon can't set the Authorization / X-Character-Id
 // headers, so token + character_id ride in the body). Returns true if queued.
-export function sendSaveBeacon(save_data, { saveRevision = 0, interactive = true, losses = null } = {}) {
+export function sendSaveBeacon(save_data, { saveRevision = 0, interactive = true, losses = null, kills = null } = {}) {
   try {
     if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return false
     const token = getToken()
@@ -327,6 +331,7 @@ export function sendSaveBeacon(save_data, { saveRevision = 0, interactive = true
       save_revision: Number.isFinite(saveRevision) ? saveRevision : 0,
       ...(interactive === false ? { interactive: false } : {}),
       ...(losses ? { losses } : {}),
+      ...(kills ? { kills } : {}),
     })
     const blob = new Blob([body], { type: 'application/json' })
     return navigator.sendBeacon(apiUrl('/api/save'), blob)

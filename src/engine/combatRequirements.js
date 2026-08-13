@@ -85,9 +85,7 @@ export function checkBossRequirementsPure(monster, ctx = {}) {
  */
 export function unmetKillCountRequirement(monster, bossKillCounts = {}) {
   const counts = bossKillCounts && typeof bossKillCounts === 'object' ? bossKillCounts : {}
-  const requirements = { ...(monster?.killCountRequirement || {}) }
-  if (monster?.id === 'ashen_crucible' && requirements.ember_tyrant === undefined) requirements.ember_tyrant = 1
-  for (const [requiredId, requiredKills] of Object.entries(requirements)) {
+  for (const [requiredId, requiredKills] of Object.entries(killCountRequirementsFor(monster))) {
     const needed = Math.max(1, Math.floor(Number(requiredKills) || 1))
     if ((Number(counts[requiredId]) || 0) >= needed) continue
     return { requiredId, needed }
@@ -119,4 +117,16 @@ export function checkRaidRequirementsPure(raid, ctx = {}) {
  */
 export function hasKillCountGate(monster) {
   return unmetKillCountRequirement(monster, {}) !== null
+}
+
+/**
+ * Every kill-count prerequisite this monster carries, as `{ requiredId: kills }`
+ * — the data-driven field merged with the Ashen Crucible's hardcoded Ember
+ * Tyrant gate. The one place that merge happens: a caller reading
+ * `killCountRequirement` raw sees the Crucible as ungated.
+ */
+export function killCountRequirementsFor(monster) {
+  const requirements = { ...(monster?.killCountRequirement || {}) }
+  if (monster?.id === 'ashen_crucible' && requirements.ember_tyrant === undefined) requirements.ember_tyrant = 1
+  return requirements
 }

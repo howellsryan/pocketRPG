@@ -25,6 +25,7 @@ import { applyTaskResult } from '../engine/applyTaskResult.js'
 import { preserveBankCharges } from '../engine/bankCharges.js'
 import { applyBankDeltas, bankUnitsRemoved } from '../engine/bankMutations.js'
 import { recordItemLossEntries, recordItemLosses } from '../engine/lossLedger.js'
+import { recordKillsFromGameEvent } from '../engine/killTally.js'
 import { createDirtyFlags, claimDirtyFlags, restoreDirtyFlags, hasDirtyFlags } from '../db/dirtyFlags.js'
 import { isBackground, getActivityKey } from '../engine/activityRegistry.js'
 import {
@@ -139,6 +140,7 @@ export function GameProvider({ children }) {
   const pendingDailyPushRef = useRef([])
   const dailyPushTimerRef = useRef(null)
   const recordGameEventRef = useRef(null)
+  const matchDailyEventRef = useRef(null)
   const showInfoToastsRef = useRef(false)
 
   const dirty = useRef(createDirtyFlags())
@@ -1697,7 +1699,7 @@ export function GameProvider({ children }) {
     const pending = pendingGameEventsRef.current
     if (pending.length > 0) {
       pendingGameEventsRef.current = []
-      for (const evt of pending) recordGameEventRef.current?.(evt)
+      for (const evt of pending) matchDailyEventRef.current?.(evt)
     }
   }, [])
 
@@ -1768,7 +1770,7 @@ export function GameProvider({ children }) {
     }
   }, [flushDailyTaskEvents])
 
-  const recordGameEvent = useCallback((evt) => {
+  const matchDailyEvent = useCallback((evt) => {
     // Before daily tasks have loaded, queue events rather than drop them — the
     // boot offline catch-up (loadGame) fires before the /api/daily-tasks fetch
     // lands. Bounded so a non-cloud session that never loads tasks can't grow it.
@@ -1817,6 +1819,24 @@ export function GameProvider({ children }) {
       setDailyTaskStates(next)
     }
   }, [addToast, queueDailyTaskEvent])
+  matchDailyEventRef.current = matchDailyEvent
+
+  /**
+   * One kill, everything a kill is worth. Every path that kills something in
+   * the idle game already reports through this bus — the live combat screen,
+   * offline catch-up and skip-hour alike — so it is also where an ordinary
+   * kill's KILL COUNT is tallied. The tally rides the next save push rather
+   * than costing a cloud write of its own (§6, src/engine/killTally.js), and
+   * the server refuses any monster with an authoritative path of its own, so a
+   * boss counted by its completion is never counted twice.
+   *
+   * Deliberately NOT called on the pre-load replay above: those events were
+   * already tallied when they first arrived.
+   */
+  const recordGameEvent = useCallback((evt) => {
+    recordKillsFromGameEvent(evt)
+    matchDailyEvent(evt)
+  }, [matchDailyEvent])
   recordGameEventRef.current = recordGameEvent
 
   const value = {

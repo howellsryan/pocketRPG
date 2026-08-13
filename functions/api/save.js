@@ -8,6 +8,7 @@ import { isWorldSessionLive } from '../_lib/game/worldSessions.js'
 import { isCoopSessionLive, sweepStaleCoopSessions } from '../_lib/game/coopBoss.js'
 import { auditLog } from '../_lib/game/audit.js'
 import { classifyItemLoss } from '../_lib/game/holdingsDelta.js'
+import { applyReportedKillCountsFromSave } from '../_lib/game/killCounts.js'
 import {
   flaggedSaveHistoryStatement,
   pruneSaveHistory,
@@ -321,6 +322,14 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // unchanged saves on the autosave cadence; together with the client-side dirty
   // check this stops them burning the daily write budget. This backstop catches
   // any client (old or new) that still ships activeTask-only churn saves.
+  // Kill counts reported by the client for this window (src/engine/killTally.js).
+  // A side channel like `losses`: nothing is stored in the blob, so the save
+  // format and the no-op key below are untouched. Applied here — past every
+  // guard, before either success path returns — so both the no-op reply and a
+  // full write carry it, and a save the server REFUSES reports nothing (the
+  // client only settles its tally on an ok, so a refusal simply retries).
+  await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
+
   if (save_data !== null && previousJson !== null && parsedNext) {
     const prevKey = noopSaveKey(previousSave)
     const nextKey = noopSaveKey(parsedNext)

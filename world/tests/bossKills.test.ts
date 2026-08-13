@@ -75,7 +75,23 @@ describe('recordBossKill', () => {
     expect(io.audits[0].payload).toMatchObject({ collectionLog: [] })
   })
 
-  it('records nothing for a non-boss monster', async () => {
+  it('fills a collection-log slot for a NON-boss monster that owns one', async () => {
+    // The bug: gated on `boss`, so a Black Dragon's visage — a logged unique
+    // whose killer is not a boss — could never fill its slot in the world,
+    // while the same kill solo does.
+    const { env, inserts } = makeDb()
+    const io = spyIO()
+    await recordBossKill(env, {
+      monsterId: 'black_dragon',
+      owner: '42',
+      loot: [{ itemId: 'dragon_bones', quantity: 1 }, { itemId: 'dragon_visage', quantity: 1 }],
+    }, io)
+    expect(inserts).toHaveLength(1)
+    expect(inserts[0].args).toEqual([42, 'dragon_visage', 'black_dragon', expect.any(Number)])
+    expect(io.audits[0].payload).toMatchObject({ monsterId: 'black_dragon', boss: false, collectionLog: ['dragon_visage'] })
+  })
+
+  it('records nothing for an ordinary kill that dropped nothing logged', async () => {
     const { env, inserts, upserts } = makeDb()
     const io = spyIO()
     await recordBossKill(env, { monsterId: 'pasture_bull', owner: '42', loot: [{ itemId: 'cowhide', quantity: 1 }] }, io)

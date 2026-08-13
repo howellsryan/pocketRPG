@@ -12,6 +12,7 @@ import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
 import { classifySaveError, saveLockCode } from './saveErrors.js'
 import { readItemLossLedger, resetItemLossLedger, settleItemLossLedger } from '../engine/lossLedger.js'
+import { readKillTally, resetKillTally, settleKillTally } from '../engine/killTally.js'
 import { clearWorldHandoff, hasPendingWorldHandoff } from './worldHandoff.js'
 
 const PUSH_DEBOUNCE_MS = 120_000
@@ -97,6 +98,7 @@ let pendingSnapshot = null
 // settling drops them, leaving the save that finally carries them looking
 // unexplained. That is the exact noise this ledger exists to remove.
 let pendingLosses = null
+let pendingKills = null
 let pendingSaveOptions = {}
 let inFlight = false
 // Promise for the push currently on the wire. Callers (pushNow, re-entrant
@@ -162,8 +164,10 @@ function canSync() {
 async function performPush() {
   const snap = pendingSnapshot
   const losses = pendingLosses
+  const kills = pendingKills
   pendingSnapshot = null
   pendingLosses = null
+  pendingKills = null
   inFlight = true
   emitCloudSaveStatus('saving')
   try {
@@ -191,10 +195,11 @@ async function performPush() {
     // enforce the idle write ceiling; engaged/manual saves omit it (default
     // interactive) and always persist + refresh the freshness stamp.
     const interactive = isEngaged()
-    const res = await api.putSave(json, { ...pendingSaveOptions, saveRevision: lastSaveRevision, interactive, losses })
+    const res = await api.putSave(json, { ...pendingSaveOptions, saveRevision: lastSaveRevision, interactive, losses, kills })
     // Settle by subtracting what THIS payload declared. Anything spent since it
     // was captured stays on the ledger for the save that will carry it.
     if (losses) settleItemLossLedger(losses)
+    if (kills) settleKillTally(kills)
     pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     if (Number.isFinite(res?.save_revision)) lastSaveRevision = res.save_revision
@@ -229,6 +234,9 @@ async function performPush() {
         // ledger describing it goes too — kept, it would declare against a
         // window the room has already superseded.
         resetItemLossLedger()
+        // The kill tally deliberately SURVIVES: those kills happened in the idle
+        // game before the room took the save, they live in their own table, and
+        // nothing about them is superseded by the room's write-back.
         hasUnsyncedChanges = false
         if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
         emitCloudSaveStatus('saved', { updatedAt: lastPushedAt || null, skipped: true })
@@ -236,7 +244,7 @@ async function performPush() {
       }
       pendingSnapshot = snap
       markUnsynced()
-      schedulePush(snap, LOCK_RETRY_MS, losses)
+      schedulePush(snap, LOCK_RETRY_MS, losses, kills)
       return false
     }
     // save_revision_conflict: our local state diverged from the server's
@@ -257,6 +265,7 @@ async function performPush() {
       conflictPending = true
       pendingSnapshot = null
       pendingLosses = null
+      pendingKills = null
       pendingSaveOptions = {}
       hasUnsyncedChanges = false
       if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
@@ -309,9 +318,10 @@ async function flushNow() {
   }
 }
 
-function schedulePush(snapshot, delay = PUSH_DEBOUNCE_MS, losses = readItemLossLedger()) {
+function schedulePush(snapshot, delay = PUSH_DEBOUNCE_MS, losses = readItemLossLedger(), kills = readKillTally()) {
   pendingSnapshot = snapshot
   pendingLosses = losses
+  pendingKills = kills
   markUnsynced()
   if (pendingTimer) return
   pendingTimer = setTimeout(flushNow, delay)
@@ -417,7 +427,7 @@ export async function pushNow(snapshot, options = {}) {
   // own. We must never abandon the server mid-response — the paid skip-hour
   // flow awaits this to confirm progress is durable before revealing rewards.
   if (inFlight && inFlightPromise) { try { await inFlightPromise } catch { /* re-attempted below */ } }
-  if (snapshot) { pendingSnapshot = snapshot; pendingLosses = readItemLossLedger() }
+  if (snapshot) { pendingSnapshot = snapshot; pendingLosses = readItemLossLedger(); pendingKills = readKillTally() }
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
 
   // Resolve any pending critical-save snapshot synchronously and feed it
@@ -430,7 +440,7 @@ export async function pushNow(snapshot, options = {}) {
     pendingCriticalSnapshotSource = null
     pendingCriticalReasons.clear()
     const criticalSnapshot = resolveSnapshotSource(source)
-    if (criticalSnapshot) { pendingSnapshot = criticalSnapshot; pendingLosses = readItemLossLedger() }
+    if (criticalSnapshot) { pendingSnapshot = criticalSnapshot; pendingLosses = readItemLossLedger(); pendingKills = readKillTally() }
   }
 
   return await flushNow()
@@ -459,12 +469,14 @@ export function beaconSaveNow(snapshot) {
   // always persists them (never applies the idle write ceiling), which keeps the
   // optimistic +1 revision bump below correct.
   const losses = readItemLossLedger()
-  const sent = sendSaveBeacon(JSON.stringify(data), { saveRevision: lastSaveRevision, interactive: true, losses })
+  const kills = readKillTally()
+  const sent = sendSaveBeacon(JSON.stringify(data), { saveRevision: lastSaveRevision, interactive: true, losses, kills })
   if (!sent) return false
   // A beacon's outcome is unreadable, so the ledger is settled on the same
   // optimistic assumption as the revision bump below. A beacon that misses
   // leaves the next push under-declaring, which flags — never the reverse.
   if (losses) settleItemLossLedger(losses)
+  if (kills) settleKillTally(kills)
   lastSaveRevision = (Number.isFinite(lastSaveRevision) ? lastSaveRevision : 0) + 1
   lastPushedContentKey = contentKey
   lastPushedAt = Date.now()
@@ -578,6 +590,9 @@ export async function applyCloudSave(payload, updatedAt, saveRevision) {
   // would let the next save's real losses hide behind spends that no longer
   // relate to what the server is comparing against.
   resetItemLossLedger()
+  // Same reasoning for the kill tally: we are discarding the local window whose
+  // XP those kills produced, so its counts go with it.
+  resetKillTally()
   if (updatedAt) lastPushedAt = updatedAt
   // We just adopted the server's copy, so its content is already durably stored.
   // Seed the dirty-check key with it: the next autosave / screen-change push of
@@ -627,12 +642,14 @@ export function isLocalWriteNewerThanCloud(cloudUpdatedAt) {
 // Reset cached state — call on logout / character switch.
 export function resetSyncState() {
   resetItemLossLedger()
+  resetKillTally()
   lastPushedAt = 0
   lastSaveRevision = 0
   lastPushedContentKey = null
   lastInteractionAt = Date.now()
   pendingSnapshot = null
   pendingLosses = null
+  pendingKills = null
   hasUnsyncedChanges = false
   consecutiveFailures = 0
   inFlightPromise = null
