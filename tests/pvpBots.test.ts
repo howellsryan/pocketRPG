@@ -312,9 +312,10 @@ describe('computeBotIntents', () => {
 
   it('swaps back to the highest-DPS weapon when no KO is available', () => {
     // Bot is stuck on the battleaxe but the opponent is at full hp — it
-    // should return to the magic shortbow (its primary DPS weapon).
+    // should return to the magic shortbow, which out-damages the axe per tick
+    // for a bot with 99 ranged.
     const bot = makeCombatant({
-      equipment: { weapon: { itemId: 'dragon_battleaxe' } },
+      equipment: { weapon: { itemId: 'dragon_battleaxe' }, ammo: { itemId: 'dragon_arrow', quantity: 500 } },
       inventory: [
         { itemId: 'magic_shortbow', quantity: 1 },
         { itemId: 'dragon_dagger', quantity: 1 },
@@ -332,6 +333,49 @@ describe('computeBotIntents', () => {
     const equip = intents.find((i: any) => i.type === 'equip')
     expect(equip).toBeDefined()
     expect(bot.inventory[equip.inventorySlot].itemId).toBe('magic_shortbow')
+  })
+
+  it('keeps its own weapon when everything in the pack hits softer', () => {
+    // The regression the hardcoded primary-weapon list caused: a melee bot that
+    // swapped to a dagger for a finisher never swapped back, because the weapon
+    // it was told to return to was a bow it does not carry. A tentacle bot with
+    // daggers in the bag must stay on the tentacle while no KO is on.
+    const bot = makeCombatant({
+      stats: { attack: 99, strength: 99, defence: 45, hitpoints: 99, ranged: 1, magic: 1, prayer: 52 },
+      equipment: { weapon: { itemId: 'abyssal_tentacle' } },
+      inventory: [
+        { itemId: 'dragon_dagger', quantity: 1 },
+        { itemId: 'dragon_battleaxe', quantity: 1 },
+        ...Array.from({ length: 26 }, () => ({ itemId: 'manta_ray', quantity: 1 })),
+      ],
+      activePotions: { super_combat: 50 },
+      activeCombatPrayer: 'piety',
+      specialAttackEnergy: 0,
+      attackTimer: 1,
+      eatCooldown: 0,
+      combatType: 'melee',
+    })
+    const intents = computeBotIntents(makeState(bot, makeOpponent({ hp: 99, attackTimer: 4 })), 99, itemsData)
+    expect(intents.some((i: any) => i.type === 'equip')).toBe(false)
+  })
+
+  it('does not swap to a bow it has no ammunition for', () => {
+    // A bow with an empty ammo slot is a blocked swing, not an upgrade.
+    const bot = makeCombatant({
+      equipment: { weapon: { itemId: 'dragon_battleaxe' } },
+      inventory: [
+        { itemId: 'magic_shortbow', quantity: 1 },
+        ...Array.from({ length: 27 }, () => ({ itemId: 'manta_ray', quantity: 1 })),
+      ],
+      activePotions: { super_combat: 50 },
+      activeCombatPrayer: 'piety',
+      specialAttackEnergy: 0,
+      attackTimer: 1,
+      eatCooldown: 0,
+      combatType: 'melee',
+    })
+    const intents = computeBotIntents(makeState(bot, makeOpponent({ hp: 99, attackTimer: 4 })), 99, itemsData)
+    expect(intents.some((i: any) => i.type === 'equip')).toBe(false)
   })
 
   it('specs to kill through an eat even when a normal hit could kill a non-eating foe', () => {

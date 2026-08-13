@@ -249,7 +249,7 @@ Out there, anyone within 10 combat levels of you can attack you, and you can att
 
 You cannot log out of a fight, and closing the tab is not a fight plan. Anywhere in the open world, leaving is refused while you are in combat — the Log out button tells you so, and if you close the tab or lose connection your character stays standing there, unable to fight back and perfectly killable, until the fight has been over for ten seconds. Run, eat, or die like everyone else.
 
-Outlaws roam the wastes when the map is quiet, so there is always something to fight. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not.
+Outlaws roam the wastes when the map is quiet, so there is always something to fight. Several are out there at once and no two are the same account — pures, zerkers, rangers, mages and maxed mains, each kitted for its own build, and every one of them matched into your attack bracket. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not.
 
 Ironman characters can fight in the Wilderness and keep every outlaw drop, but can never pick up loot dropped by another player.
 
