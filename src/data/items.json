@@ -11071,6 +11071,87 @@
     "shopValue": 24623,
     "isGeneralStore": false
   },
+  "sunblossom_seed": {
+    "id": "sunblossom_seed",
+    "legacy_item_id": "harralander_seed",
+    "name": "Sunblossom Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 900,
+    "isGeneralStore": false
+  },
+  "emberleaf_seed": {
+    "id": "emberleaf_seed",
+    "legacy_item_id": "irit_seed",
+    "name": "Emberleaf Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 3500,
+    "isGeneralStore": false
+  },
+  "wyrmspice_seed": {
+    "id": "wyrmspice_seed",
+    "legacy_item_id": "kwuarm_seed",
+    "name": "Wyrmspice Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 5100,
+    "isGeneralStore": false
+  },
+  "snapdrake_seed": {
+    "id": "snapdrake_seed",
+    "legacy_item_id": "snapdragon_seed",
+    "name": "Snapdrake Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 17100,
+    "isGeneralStore": false
+  },
+  "cinderbloom_seed": {
+    "id": "cinderbloom_seed",
+    "legacy_item_id": "cadantine_seed",
+    "name": "Cinderbloom Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 6100,
+    "isGeneralStore": false
+  },
+  "stonefern_seed": {
+    "id": "stonefern_seed",
+    "legacy_item_id": "dwarf_weed_seed",
+    "name": "Stonefern Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 3700,
+    "isGeneralStore": false
+  },
+  "mistvine_seed": {
+    "id": "mistvine_seed",
+    "legacy_item_id": "lantadyme_seed",
+    "name": "Mistvine Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 3500,
+    "isGeneralStore": false
+  },
+  "marshflax_seed": {
+    "id": "marshflax_seed",
+    "legacy_item_id": "toadflax_seed",
+    "name": "Marshflax Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 4800,
+    "isGeneralStore": false
+  },
+  "thornspire_seed": {
+    "id": "thornspire_seed",
+    "legacy_item_id": "torstol_seed",
+    "name": "Thornspire Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 7300,
+    "isGeneralStore": false
+  },
   "potato_seed": {
     "id": "potato_seed",
     "legacy_item_id": "potato_seed",
