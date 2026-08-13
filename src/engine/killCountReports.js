@@ -46,6 +46,11 @@ function prerequisiteIds() {
  */
 export const MAX_REPORTED_MONSTERS = 128
 
+/** Ceiling on one monster's reported count, for the same reason: the server
+ * clamps the total it accepts, and the client settles what it SENT — so a
+ * client that tallied past this would quietly lose the difference. */
+export const MAX_REPORTED_KILLS_PER_MONSTER = 100000
+
 /** True when a client-reported kill count for this monster is safe to accept. */
 export function isClientReportableMonster(monsterId) {
   if (typeof monsterId !== 'string' || !monsterId) return false
@@ -58,7 +63,7 @@ export function isClientReportableMonster(monsterId) {
 
 /** The reportable part of a tally, with counts floored and bounded. Returns an
  * empty object rather than null so callers can treat it as a plain map. */
-export function filterReportableKills(tally, { maxPerMonster = 100000 } = {}) {
+export function filterReportableKills(tally, { maxPerMonster = MAX_REPORTED_KILLS_PER_MONSTER } = {}) {
   const out = {}
   if (!tally || typeof tally !== 'object') return out
   for (const [monsterId, raw] of Object.entries(tally)) {

@@ -14,7 +14,7 @@
 // that save's XP is being discarded, so its kills must go with it.
 //
 // What may be reported at all is decided by killCountReports.js, not here.
-import { filterReportableKills, MAX_REPORTED_MONSTERS } from './killCountReports.js'
+import { filterReportableKills, MAX_REPORTED_KILLS_PER_MONSTER, MAX_REPORTED_MONSTERS } from './killCountReports.js'
 
 const KILL_TALLY_STORAGE_KEY = 'pocketrpg_kill_tally'
 
@@ -53,7 +53,12 @@ function addKills(monsterId, count) {
   const n = Math.floor(Number(count) || 0)
   if (n <= 0) return false
   if (!killTally.has(monsterId) && killTally.size >= MAX_REPORTED_MONSTERS) return false
-  killTally.set(monsterId, (killTally.get(monsterId) || 0) + n)
+  // Clamped on the ACCUMULATED total, not per call: the server clamps what it
+  // accepts the same way, and settling subtracts what was sent — so tallying
+  // past the ceiling would drop the difference instead of carrying it.
+  const next = Math.min((killTally.get(monsterId) || 0) + n, MAX_REPORTED_KILLS_PER_MONSTER)
+  if (next === killTally.get(monsterId)) return false
+  killTally.set(monsterId, next)
   return true
 }
 

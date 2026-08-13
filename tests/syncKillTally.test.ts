@@ -92,6 +92,24 @@ describe('kill tally on a push', () => {
     expect(readKillTally()).toBeNull()
   })
 
+  it('leaves the tally to the in-flight push rather than beaconing it twice', async () => {
+    // Both would apply on the idle-ceiling path, which answers ok without
+    // bumping the revision — so the guard that 409s one of them is not there.
+    recordKills('green_dragon', 6)
+    let release: () => void = () => {}
+    putSave.mockImplementationOnce(async () => {
+      await new Promise<void>((resolve) => { release = resolve })
+      return { ok: true, updatedAt: 123, save_revision: 1 }
+    })
+    const inFlight = pushNow({ stats: { attack: { xp: 1 } } })
+    beaconSaveNow({ stats: { attack: { xp: 2 } } })
+    expect(sendSaveBeacon.mock.calls[0][1].kills).toBeNull()
+    release()
+    await inFlight
+    expect(killsOf(0)).toEqual({ green_dragon: 6 })
+    expect(readKillTally()).toBeNull()
+  })
+
   it('drops the tally when a server copy is adopted — that window is superseded', async () => {
     recordKills('green_dragon', 9)
     await applyCloudSave({ version: 1 }, 123, 4)

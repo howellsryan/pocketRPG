@@ -104,10 +104,10 @@ export async function recordBossKill(env: { DB: D1Database }, kill: BossKill, io
  *
  * Every monster counts out here, not just bosses: the world resolves its own
  * combat, so this is a server-authoritative count in the same table the boss
- * entry gates read (§14) — nothing about it is client-trusted. The idle game's
- * ordinary kills still go uncounted, because counting them there would mean
- * either a cloud write per cow (§6 forbids it) or a client-reported number
- * feeding a gate.
+ * entry gates read (§14) — nothing about it is client-trusted. The idle game
+ * reaches the same table by a different road, because it has no server-side
+ * engine to count for it: a client-reported tally on the save push, bounded to
+ * monsters that can never answer a gate (src/engine/killCountReports.js).
  */
 export async function recordKillCounts(
   env: { DB: D1Database },

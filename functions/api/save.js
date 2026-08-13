@@ -327,15 +327,13 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // check this stops them burning the daily write budget. This backstop catches
   // any client (old or new) that still ships activeTask-only churn saves.
   // Kill counts reported by the client for this window (src/engine/killTally.js).
-  // A side channel like `losses`: nothing is stored in the blob, so the save
-  // format and the no-op key below are untouched.
-  //
-  // Placement is the whole correctness argument. It runs past every guard that
-  // REFUSES a write — the client settles its tally only on an ok, so counting a
-  // refused save would double-count everything the retry resends — and before
-  // every remaining success path, of which there are three: the idle ceiling
-  // above (which has its own call), the no-op reply below, and the full write.
-  await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
+  // The client settles its tally only against an `ok`, so it must be counted on
+  // every success path and on NO other — a save that is refused, or that throws
+  // on its way to the write, is retried with the same tally, and the retry
+  // passes the revision guard because nothing was written. So the call sits
+  // immediately before each of the three ok replies (the idle ceiling above,
+  // the no-op below, and the full write at the end), never once up front where
+  // anything after it could still fail.
 
   if (save_data !== null && previousJson !== null && parsedNext) {
     const prevKey = noopSaveKey(previousSave)
@@ -346,6 +344,8 @@ async function applySaveWrite({ env, ch, identityId, body }) {
       // stamp last_active_at would never refresh, inflating offline rewards on
       // the next load. This is the regression-critical case — keep it.
       await stampIdleActive(env, ch.id, idleTaskJson, now, interactiveAt)
+      // The blob is a no-op; the kills reported alongside it are not.
+      await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
       // Content-identical to what's stored. Default: write NOTHING else — not
       // the blob, the revision, the summary, NOR updated_at — so a routine no-op
       // save (screen change, AFK tab) costs zero further D1 writes.
@@ -433,6 +433,10 @@ async function applySaveWrite({ env, ch, identityId, body }) {
     )
   }
   await env.DB.batch(statements)
+  // After the write, so a throw on the way here leaves the tally with the
+  // client — the retry passes the revision guard untouched and would otherwise
+  // bank the same kills twice.
+  await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
 
   if (itemLoss?.flagged) {
     // Swallowed: the detector observes, and an audit outage must never turn a

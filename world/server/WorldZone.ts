@@ -2032,9 +2032,11 @@ export class WorldZone extends Server<Env> {
         this.scheduleDirtyFlush(player)
       }
       for (const kill of result.kills) {
-        // Server-authoritative boss side-effects (collection log, audit) —
-        // fire-and-forget D1 like the flushes below. No-op for non-boss
-        // monsters; the kill count is tallied below for every monster.
+        // Server-authoritative side-effects (collection log, audit) —
+        // fire-and-forget D1 like the flushes below. Gated on the DROP, not on
+        // the monster, so a non-boss unique fills its slot too; an ordinary
+        // kill with nothing logged touches no D1. The kill count is separate,
+        // tallied below for every monster.
         void recordBossKill(this.env, kill)
         this.creditKill(kill)
         const isBoss = isBossMonster(kill.monsterId)

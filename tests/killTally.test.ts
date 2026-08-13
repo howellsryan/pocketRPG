@@ -42,6 +42,14 @@ describe('recordKills', () => {
     expect(readKillTally()).toBe(null)
   })
 
+  it('never tallies one monster past what a single report may carry', () => {
+    // The client settles what it SENT and the server clamps what it accepts, so
+    // anything tallied above the ceiling would be silently dropped.
+    recordKills('green_dragon', 100000)
+    recordKills('green_dragon', 500)
+    expect(readKillTally()).toEqual({ green_dragon: 100000 })
+  })
+
   it('is null rather than empty when nothing is pending, so the push omits the field', () => {
     expect(readKillTally()).toBe(null)
   })

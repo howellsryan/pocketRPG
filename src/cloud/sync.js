@@ -470,7 +470,12 @@ export function beaconSaveNow(snapshot) {
   // always persists them (never applies the idle write ceiling), which keeps the
   // optimistic +1 revision bump below correct.
   const losses = readItemLossLedger()
-  const kills = readKillTally()
+  // A push already on the wire read the same tally and has not settled it yet.
+  // The revision guard 409s one of the two writes in most cases, but not on the
+  // idle-ceiling path — which answers ok without bumping the revision, so both
+  // would count. The in-flight push settles them if it lands, and if it dies
+  // with the page they simply ride the next session's first save.
+  const kills = inFlight ? null : readKillTally()
   const sent = sendSaveBeacon(JSON.stringify(data), { saveRevision: lastSaveRevision, interactive: true, losses, kills })
   if (!sent) return false
   // A beacon's outcome is unreadable, so the ledger is settled on the same
