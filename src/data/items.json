@@ -14470,7 +14470,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14504,7 +14505,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14538,7 +14540,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14572,7 +14575,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14606,7 +14610,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14640,7 +14645,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14675,7 +14681,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14710,7 +14717,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14745,7 +14753,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14780,7 +14789,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14815,7 +14825,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14850,7 +14861,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14869,11 +14881,11 @@
     "isGeneralStore": false,
     "slot": "neck",
     "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 15,
-      "ranged": 0
+      "stab": 30,
+      "slash": 30,
+      "crush": 30,
+      "magic": 39,
+      "ranged": 30
     },
     "defenceBonus": {
       "stab": 0,
@@ -14883,14 +14895,15 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
+      "meleeStrength": 25,
+      "rangedStrength": 25,
+      "magicDamage": 15,
+      "meleeDamage": 12,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
-      "magic": 70,
-      "defence": 70
+      "magic": 70
     },
     "isClueReward": true
   },
@@ -14905,13 +14918,14 @@
     "slot": "weapon",
     "attackBonus": {
       "stab": 0,
-      "slash": 124,
+      "slash": 150,
       "crush": 0,
       "magic": 0,
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 84
+      "meleeStrength": 100,
+      "prayer": 20
     },
     "defenceBonus": {
       "stab": 0,
@@ -14922,7 +14936,7 @@
     },
     "isUntradeable": false,
     "requirements": {
-      "attack": 65
+      "attack": 60
     },
     "isClueReward": true
   },
@@ -14956,7 +14970,8 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 65,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -14977,20 +14992,21 @@
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 25,
-      "ranged": 0
+      "magic": 35,
+      "ranged": -3
     },
     "defenceBonus": {
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 0,
+      "magic": 20,
       "ranged": 0
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 15,
+      "prayer": 20
     },
     "isUntradeable": false,
     "requirements": {
@@ -15015,7 +15031,7 @@
       "ranged": 9
     },
     "otherBonus": {
-      "prayer": 5
+      "prayer": 25
     },
     "attackBonus": {
       "stab": 0,
@@ -15540,7 +15556,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "prayer": 6
+      "prayer": 26
     },
     "defenceBonus": {
       "stab": 0,
@@ -15573,7 +15589,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "prayer": 6
+      "prayer": 26
     },
     "defenceBonus": {
       "stab": 0,
@@ -15606,7 +15622,7 @@
       "ranged": 10
     },
     "otherBonus": {
-      "prayer": 6
+      "prayer": 26
     },
     "attackBonus": {
       "stab": 0,
@@ -15634,17 +15650,20 @@
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 20,
-      "ranged": 0
+      "magic": 35,
+      "ranged": -3
     },
     "otherBonus": {
-      "prayer": 10
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 15,
+      "prayer": 20
     },
     "defenceBonus": {
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 0,
+      "magic": 20,
       "ranged": 0
     },
     "isUntradeable": false,
@@ -15672,7 +15691,8 @@
     },
     "otherBonus": {
       "meleeStrength": 38,
-      "miningLevel": 61
+      "miningLevel": 61,
+      "prayer": 20
     },
     "defenceBonus": {
       "stab": 0,
@@ -15706,7 +15726,8 @@
     },
     "otherBonus": {
       "meleeStrength": 42,
-      "woodcuttingLevel": 61
+      "woodcuttingLevel": 61,
+      "prayer": 20
     },
     "toolFor": "woodcutting",
     "defenceBonus": {
