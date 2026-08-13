@@ -110,9 +110,44 @@ describe('kill tally on a push', () => {
     expect(readKillTally()).toBeNull()
   })
 
-  it('drops the tally when a server copy is adopted — that window is superseded', async () => {
+  // Unlike the loss ledger, which describes the very blob the server replaced.
+  // Kill counts live in their own D1 table, and every /api/save path that banks
+  // them answers `ok` — all three refusals return first. So a rolled-back write
+  // banked nothing, and the tally it kept is exactly what still needs sending.
+  it('keeps the tally when a server copy is adopted — kill counts are not in the blob', async () => {
     recordKills('green_dragon', 9)
     await applyCloudSave({ version: 1 }, 123, 4)
+    expect(readKillTally()).toEqual({ green_dragon: 9 })
+  })
+
+  // Co-op exit is leave → pullSave → applyCloudSave, and the co-op lock branch
+  // in performPush deliberately keeps the tally through the refused push. The
+  // adopt that follows a moment later must not undo that.
+  it('survives the pull that follows a co-op fight, which the lock branch preserved it for', async () => {
+    recordKills('green_dragon', 4)
+    putSave.mockRejectedValueOnce(Object.assign(new Error('locked'), {
+      status: 409, code: 'CHARACTER_IN_COOP_SESSION',
+    }))
+    await pushNow({ stats: {} })
+    expect(readKillTally()).toEqual({ green_dragon: 4 })
+    await applyCloudSave({ version: 1 }, 456, 7)
+    expect(readKillTally()).toEqual({ green_dragon: 4 })
+  })
+
+  // A closing tab's beacon skips the tally when a push is already on the wire,
+  // on the documented promise that it "rides the next session's first save".
+  // Boot is pull-then-adopt, so an adopt that reset would break that promise
+  // before the next session ever pushed.
+  it('carries a closing tab\'s unsent kills through the next boot\'s adopt', async () => {
+    recordKills('field_chicken', 12)
+    await applyCloudSave({ version: 1 }, 999, 3)
+    await pushNow({ stats: { attack: { xp: 40 } } })
+    expect(killsOf(0)).toEqual({ field_chicken: 12 })
+  })
+
+  it('is cleared by resetSyncState, which owns logout and character switch', async () => {
+    recordKills('green_dragon', 5)
+    resetSyncState()
     expect(readKillTally()).toBeNull()
   })
 })

@@ -596,9 +596,16 @@ export async function applyCloudSave(payload, updatedAt, saveRevision) {
   // would let the next save's real losses hide behind spends that no longer
   // relate to what the server is comparing against.
   resetItemLossLedger()
-  // Same reasoning for the kill tally: we are discarding the local window whose
-  // XP those kills produced, so its counts go with it.
-  resetKillTally()
+  // The kill tally is deliberately NOT reset here, unlike the ledger above.
+  // The ledger describes this write's holdings and is meaningless against a
+  // blob the server has replaced; kill counts live in their own D1 table, which
+  // adopting a save supersedes nothing about. Every /api/save path that banks
+  // them answers `ok`, and all three refusals return before it — so a rejected
+  // write counted nothing and the tally it kept is exactly what still needs
+  // sending. Resetting cost the kills the co-op lock branch above deliberately
+  // preserves (the client always PULLS on room exit), and, because boot is the
+  // same pull-then-adopt, everything a closing tab left in localStorage.
+  // Character switch and logout clear it through resetSyncState below.
   if (updatedAt) lastPushedAt = updatedAt
   // We just adopted the server's copy, so its content is already durably stored.
   // Seed the dirty-check key with it: the next autosave / screen-change push of

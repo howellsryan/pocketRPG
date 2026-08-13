@@ -2392,20 +2392,6 @@ export class WorldZone extends Server<Env> {
     }
   }
 
-  /** Snapshots and clears the player's pending grant tallies, then applies
-   * them to the save blob. Every flush carries XP, consumed units (eaten,
-   * buried, dropped, equipped), bank deposits, the world-minted units the pack
-   * has picked up (mined, looted, taken off) and — when the player re-geared —
-   * the equipment snapshot. A disconnect additionally returns withdrawn bank
-   * units still held (bank → inventory); remaining save-backed units simply
-   * stay in the save's inventory where they always were. On failure the
-   * snapshot merges back so the next flush retries it.
-   *
-   * Minted units ride EVERY flush, not just the disconnect: they are the one
-   * pool with no copy outside this DO's memory, so deferring them meant a
-   * session that ended without a clean disconnect flush deleted them outright
-   * (see sessionItems.ts). Their reclassification to save-backed happens only
-   * after the grant is known to have landed. */
   /**
    * Everything a kill is worth beyond its loot, for the character it was
    * attributed to: the kill count, their own slayer task, and the daily tasks
@@ -2433,6 +2419,20 @@ export class WorldZone extends Server<Env> {
     }
   }
 
+  /** Snapshots and clears the player's pending grant tallies, then applies
+   * them to the save blob. Every flush carries XP, consumed units (eaten,
+   * buried, dropped, equipped), bank deposits, the world-minted units the pack
+   * has picked up (mined, looted, taken off) and — when the player re-geared —
+   * the equipment snapshot. A disconnect additionally returns withdrawn bank
+   * units still held (bank → inventory); remaining save-backed units simply
+   * stay in the save's inventory where they always were. On failure the
+   * snapshot merges back so the next flush retries it.
+   *
+   * Minted units ride EVERY flush, not just the disconnect: they are the one
+   * pool with no copy outside this DO's memory, so deferring them meant a
+   * session that ended without a clean disconnect flush deleted them outright
+   * (see sessionItems.ts). Their reclassification to save-backed happens only
+   * after the grant is known to have landed. */
   private async flush(player: Player, reason: GrantPayload['reason']): Promise<void> {
     const pools = player.pools
     const drained = drainForFlush(pools, reason)

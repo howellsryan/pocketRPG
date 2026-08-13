@@ -1718,6 +1718,11 @@ export function GameProvider({ children }) {
    * looking at, and the completion call remains the thing that pays the credit.
    */
   const flushDailyTaskEvents = useCallback(async () => {
+    // CLEARED, not just dropped: an early flush (tab-hide, pagehide) leaves the
+    // debounce still armed, and forgetting the handle lets the next event arm a
+    // second one — the orphan then fires a pointless flush and untracks the live
+    // timer, so repeated tab-switching stacks them up.
+    if (dailyPushTimerRef.current) clearTimeout(dailyPushTimerRef.current)
     dailyPushTimerRef.current = null
     const events = pendingDailyPushRef.current
     if (events.length === 0) return
@@ -1767,6 +1772,10 @@ export function GameProvider({ children }) {
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pagehide', flush)
+      if (dailyPushTimerRef.current) {
+        clearTimeout(dailyPushTimerRef.current)
+        dailyPushTimerRef.current = null
+      }
     }
   }, [flushDailyTaskEvents])
 

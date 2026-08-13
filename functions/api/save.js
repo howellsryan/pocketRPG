@@ -215,9 +215,16 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   const lastInteractiveAt = Number(existing?.last_interactive_at)
   if (!interactive && Number.isFinite(lastInteractiveAt) && lastInteractiveAt > 0 &&
       (now - lastInteractiveAt) > IDLE_WRITE_CEILING_MS) {
-    // This answers ok, so the client settles its kill tally against it. The
-    // ceiling refuses the BLOB, not the counts — dropping them here would lose
-    // every kill an offline catch-up reported past the ceiling.
+    // Kill counts reported by the client for this window (src/engine/killTally.js).
+    // The client settles its tally only against an `ok`, so they must be banked on
+    // every success path and on NO other — a save that is refused, or that throws
+    // on its way to the write, is retried with the same tally, and the retry
+    // passes the revision guard because nothing was written. So the call sits
+    // immediately before each of the three ok replies (here, the no-op below, and
+    // the full write at the end), never once up front where anything after it
+    // could still fail. This one answers ok while refusing the BLOB, not the
+    // counts: dropping them would lose every kill an offline catch-up reported
+    // past the ceiling.
     await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
     return json({
       ok: true,
@@ -326,15 +333,6 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // unchanged saves on the autosave cadence; together with the client-side dirty
   // check this stops them burning the daily write budget. This backstop catches
   // any client (old or new) that still ships activeTask-only churn saves.
-  // Kill counts reported by the client for this window (src/engine/killTally.js).
-  // The client settles its tally only against an `ok`, so it must be counted on
-  // every success path and on NO other — a save that is refused, or that throws
-  // on its way to the write, is retried with the same tally, and the retry
-  // passes the revision guard because nothing was written. So the call sits
-  // immediately before each of the three ok replies (the idle ceiling above,
-  // the no-op below, and the full write at the end), never once up front where
-  // anything after it could still fail.
-
   if (save_data !== null && previousJson !== null && parsedNext) {
     const prevKey = noopSaveKey(previousSave)
     const nextKey = noopSaveKey(parsedNext)
