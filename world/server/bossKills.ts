@@ -52,10 +52,14 @@ export function dropBroadcastsFrom(
   return [...ids].map((itemId) => ({ itemId, epic: epic.has(itemId) }))
 }
 
-/** Records a world boss kill: collection-log uniques from the drop (idempotent),
- * the boss kill count (monotonic), and an audit row. No-op for non-boss monsters
- * or an unresolved owner. Mirrors _completeShared's source_type ('monsters') so
- * world kills land in the same rows the main game would write. */
+/** Records a world boss kill's collection-log uniques (idempotent) and an audit
+ * row. No-op for non-boss monsters or an unresolved owner. Mirrors
+ * _completeShared's source_type ('monsters') so world kills land in the same
+ * rows the main game would write.
+ *
+ * The KILL COUNT is deliberately not here: every monster earns one, boss or
+ * not, and one D1 round trip per trash kill per player is not affordable — it
+ * is tallied on the session and flushed in a batch by recordKillCounts below. */
 export async function recordBossKill(env: { DB: D1Database }, kill: BossKill, io: BossKillIO = defaultIO): Promise<void> {
   if (!isBossMonster(kill.monsterId)) return
   const characterId = Number(kill.owner)
@@ -75,19 +79,41 @@ export async function recordBossKill(env: { DB: D1Database }, kill: BossKill, io
     )
   }
 
-  const row = await env.DB.prepare(
-    `INSERT INTO kill_counts (character_id, source_type, source_id, kill_count, updated_at)
-     VALUES (?, 'monsters', ?, 1, ?)
-     ON CONFLICT(character_id, source_type, source_id)
-     DO UPDATE SET kill_count = kill_count + 1, updated_at = excluded.updated_at
-     RETURNING kill_count`
-  ).bind(characterId, kill.monsterId, now).first<{ kill_count: number }>()
-  const killCount = Math.max(0, Math.floor(Number(row?.kill_count) || 0))
-
   await io.auditLog(env, 'world_boss_kill', {
     characterId,
     monsterId: kill.monsterId,
-    killCount,
     collectionLog: uniqueItemIds,
   })
+}
+
+/**
+ * Applies a session's tally of kills to the kill_counts table, one batched
+ * upsert per monster.
+ *
+ * Every monster counts out here, not just bosses: the world resolves its own
+ * combat, so this is a server-authoritative count in the same table the boss
+ * entry gates read (§14) — nothing about it is client-trusted. The idle game's
+ * ordinary kills still go uncounted, because counting them there would mean
+ * either a cloud write per cow (§6 forbids it) or a client-reported number
+ * feeding a gate.
+ */
+export async function recordKillCounts(
+  env: { DB: D1Database },
+  characterId: number,
+  tally: Record<string, number>,
+  now = Date.now(),
+): Promise<void> {
+  if (!Number.isInteger(characterId) || characterId <= 0) return
+  const entries = Object.entries(tally || {}).filter(([, count]) => Math.floor(Number(count) || 0) > 0)
+  if (entries.length === 0) return
+  await env.DB.batch(
+    entries.map(([monsterId, count]) =>
+      env.DB.prepare(
+        `INSERT INTO kill_counts (character_id, source_type, source_id, kill_count, updated_at)
+         VALUES (?, 'monsters', ?, ?, ?)
+         ON CONFLICT(character_id, source_type, source_id)
+         DO UPDATE SET kill_count = kill_count + excluded.kill_count, updated_at = excluded.updated_at`
+      ).bind(characterId, monsterId, Math.floor(Number(count) || 0), now)
+    )
+  )
 }

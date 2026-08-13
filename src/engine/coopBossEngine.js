@@ -19,9 +19,7 @@
 import { createCombatState, processCombatTick } from './combat.js'
 import { hardModeDeathLoss, monstersTableFor } from './hardMode.js'
 import { getLevelFromXP } from './experience.js'
-import { resolveSlayerTaskKill } from './slayerTasks.js'
-import { RAID_TASK_META } from './slayerMasters.js'
-import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
+import { bankSlayerCredit, creditSlayerTaskKill, emptySlayerCredit } from './slayerKillCredit.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
@@ -324,12 +322,7 @@ function pickMutableMonsterFields(monster) {
   return out
 }
 
-/** Slayer progress a member has banked in this session but not yet had written
- * to their save. A DELTA, like xpGained — the write-back adds it and clears it,
- * so a member who is written back twice is not paid twice. */
-export function emptySlayerCredit() {
-  return { pointsEarned: 0, tasksCompleted: 0, masterCompletions: {} }
-}
+export { emptySlayerCredit }
 
 /**
  * Folds a hard-mode death's tally into the member's banked declaration. Also a
@@ -360,52 +353,33 @@ export function bankMemberItemsLost(banked, lost) {
  */
 export function creditSlayerKill(member, bossId, monstersData, { fromRaidCompletion = false } = {}) {
   if (!member || member.status !== 'alive') return null
-  const task = member.slayerTask
-  if (!task) return null
-  // A raid-completion proxy task is paid by the CLEAR and by nothing else — the
-  // same defence-in-depth solo has (CombatScreen's raidTaskCreditBlocked).
-  const raidMeta = RAID_TASK_META[task.monsterId]
-  if (raidMeta && !fromRaidCompletion) return null
-  const result = resolveSlayerTaskKill(task, bossId, 1)
-  if (!result.onTask) return null
-
-  const monster = monstersData?.[bossId] || null
-  const xp = getSlayerTaskXpForKill(monster, monster, monstersData, {
-    doubleXp: member.doubleSlayerXp,
-    // A raid clear is a whole run, not a boss kill: it pays the authored flat
-    // rate, never the final boss's HP through the boss multiplier. Read off the
-    // final boss, the four raid tasks paid between 400 and 8000 instead of the
-    // 2500–10000 they are worth — solo has always passed this.
-    flatXp: raidMeta?.flatSlayerXp,
-  })
-  if (xp > 0) member.xpGained.slayer = (member.xpGained.slayer || 0) + xp
-
+  const credited = creditSlayerTaskKill(
+    { task: member.slayerTask, tasksCompleted: member.slayerTasksCompleted, doubleXp: member.doubleSlayerXp === true },
+    bossId,
+    monstersData,
+    { fromRaidCompletion },
+  )
+  if (!credited) return null
+  if (credited.slayerXp > 0) member.xpGained.slayer = (member.xpGained.slayer || 0) + credited.slayerXp
+  member.slayerTask = credited.task
   if (!member.slayerCredit) member.slayerCredit = emptySlayerCredit()
-  if (!result.completed) {
-    member.slayerTask = result.task
+  if (!credited.completed) {
     return {
       characterId: member.characterId,
       completed: false,
-      slayerXp: xp,
-      monstersRemaining: result.task?.monstersRemaining ?? 0,
+      slayerXp: credited.slayerXp,
+      monstersRemaining: credited.monstersRemaining,
     }
   }
 
-  const reward = getSlayerTaskReward(result.pointsAwarded, member.slayerTasksCompleted)
-  member.slayerTask = null
-  member.slayerTasksCompleted = reward.totalTasks
-  member.slayerCredit.pointsEarned += reward.pointsEarned
-  member.slayerCredit.tasksCompleted += 1
-  if (task.masterId) {
-    member.slayerCredit.masterCompletions[task.masterId] =
-      (member.slayerCredit.masterCompletions[task.masterId] || 0) + 1
-  }
+  member.slayerTasksCompleted = credited.totalTasks
+  member.slayerCredit = bankSlayerCredit(member.slayerCredit, credited)
   return {
     characterId: member.characterId,
     completed: true,
-    slayerXp: xp,
-    pointsEarned: reward.pointsEarned,
-    totalTasks: reward.totalTasks,
+    slayerXp: credited.slayerXp,
+    pointsEarned: credited.pointsEarned,
+    totalTasks: credited.totalTasks,
   }
 }
 
@@ -561,6 +535,21 @@ export function lootEligibleCharacterIds(state) {
     .map((m) => Number(m.characterId))
 }
 
+/**
+ * Everyone whose kill count this kill increments.
+ *
+ * Deliberately NOT the loot list: the 10% damage gate exists to stop a drop
+ * table being farmed by standing in a room, and a kill count is not a drop. A
+ * member who fought the boss killed the boss — so this is the same rule slayer
+ * credit uses (alive at the kill), plus a damage floor of one, because a player
+ * who never swung did not fight it either.
+ */
+export function killCountCharacterIds(state) {
+  return Object.values(state?.members || {})
+    .filter((m) => m.status === 'alive' && (m.damage || 0) > 0)
+    .map((m) => Number(m.characterId))
+}
+
 /** One member's progress toward their loot roll, for the fight HUD. Lives here
  * rather than in the screen so the bar and the server's gate cannot drift. */
 export function coopLootProgress(member, maxHP) {
@@ -594,6 +583,20 @@ export function coopLootProgress(member, maxHP) {
  * build; the legacy single-winner fields are read in that case rather than
  * showing every member a dry kill through a deploy.
  */
+/**
+ * Was this character one of the members who fought the kill an event describes?
+ *
+ * The room names them on the event (killCountCharacterIds); a room deployed
+ * ahead of this build names nobody, and the honest answer there is "yes" — a
+ * missing list must not silently stop crediting the party's daily tasks, and
+ * every member receiving the event is in the room either way.
+ */
+export function foughtThisKill(event, characterId) {
+  const listed = event?.killCountCharacterIds
+  if (!Array.isArray(listed)) return true
+  return listed.some((id) => Number(id) === Number(characterId))
+}
+
 export function coopKillOutcome(event, characterId) {
   const settlements = Array.isArray(event?.settlements)
     ? event.settlements
@@ -1267,6 +1270,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
       ...(kill || { bossId: next.bossId }),
       ownerCharacterId: ownerCharId ? Number(ownerCharId) : null,
       lootCharacterIds: lootEligibleCharacterIds(next),
+      killCountCharacterIds: killCountCharacterIds(next),
       lootDamageRequired: coopLootDamageRequired(next.boss.maxHP),
       contributors: damageTable(next),
       onTaskCharacterIds,
@@ -1276,6 +1280,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
       bossId: next.bossId,
       ownerCharacterId: kill.ownerCharacterId,
       lootCharacterIds: kill.lootCharacterIds,
+      killCountCharacterIds: kill.killCountCharacterIds,
     })
   } else if (next.boss.currentHP > 0) {
     kill = null
@@ -1356,6 +1361,9 @@ function resolveRaidBossDeath(state, monstersData, events, now) {
     bossName: monstersData?.[state.bossId]?.name || state.bossId,
     bossIndex: index,
     totalBosses: bosses.length,
+    // A raid pays out once, at the end, but every boss in it is still a boss
+    // kill for a daily task — the same events solo fires on each one.
+    killCountCharacterIds: killCountCharacterIds(state),
   })
 
   if (index < bosses.length - 1) {
@@ -1382,6 +1390,7 @@ function resolveRaidBossDeath(state, monstersData, events, now) {
     completedAt: now,
     ownerCharacterId: ownerCharId ? Number(ownerCharId) : null,
     lootCharacterIds: lootEligibleCharacterIds(state),
+    killCountCharacterIds: killCountCharacterIds(state),
     lootDamageRequired: coopLootDamageRequired(coopLootBasisHP(state)),
     contributors: damageTable(state),
     onTaskCharacterIds,
@@ -1391,6 +1400,9 @@ function resolveRaidBossDeath(state, monstersData, events, now) {
     raidId: raid.raidId,
     raidName: raid.name || raid.raidId,
     lootCharacterIds: kill.lootCharacterIds,
+    // Who fought the run — the client credits its own daily tasks off this, so
+    // it has to name the same people the kill count does.
+    killCountCharacterIds: kill.killCountCharacterIds,
   })
   // Eligibility is read above, before the reset below clears the damage it is
   // measured from.

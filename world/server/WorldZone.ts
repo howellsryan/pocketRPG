@@ -29,7 +29,19 @@ import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload } from './grants'
-import { dropBroadcastsFrom, isBossMonster, recordBossKill } from './bossKills'
+import { dropBroadcastsFrom, isBossMonster, recordBossKill, recordKillCounts } from './bossKills'
+import {
+  creditWorldSlayerKill, drainSlayerCredit, killDailyEvents, restoreSlayerCredit, seedSlayerSession, xpDailyEvents,
+  type DailyEvent, type SlayerTask,
+} from './killProgress'
+import { applyDailyTaskEvents as applyDailyTaskEventsJs } from '../../functions/_lib/game/dailyTaskProgress.js'
+
+// The lib is plain JS shared with functions/**; its `identityId = null` default
+// is all TS has to infer from, which types the field as null.
+const applyDailyTaskEvents = applyDailyTaskEventsJs as (
+  env: unknown,
+  args: { characterId: number; identityId: string | null; events: DailyEvent[] },
+) => Promise<unknown>
 import { auditLog } from '../../functions/_lib/game/audit.js'
 import monstersDataJson from '../../src/data/monsters.json'
 
@@ -124,6 +136,23 @@ type Player = TickPlayer & {
    * entries are excluded — the world can't preserve charges). */
   bankView: Tally
   completedQuests: Set<string>
+  /** The player's slayer task, seeded from the save at hello and advanced by
+   * world kills. `dirty` is what makes the flush write it: a session that never
+   * killed anything on-task must not write its snapshot over a task the idle
+   * game changed. Points/completions are DELTAS (see grants.ts). */
+  slayer: {
+    task: SlayerTask | null
+    tasksCompleted: number
+    doubleXp: boolean
+    credit: { pointsEarned: number; tasksCompleted: number; masterCompletions: Record<string, number> }
+    dirty: boolean
+  }
+  /** Kills since the last flush, per monster id — batched into kill_counts so a
+   * grind is one upsert per monster rather than one per cow (bossKills.ts). */
+  killTally: Record<string, number>
+  /** Daily-task events since the last flush, replayed server-side against this
+   * character's issued tasks (functions/_lib/game/dailyTaskProgress.js). */
+  dailyEvents: DailyEvent[]
   /** The player re-geared in-world → next flush snapshots equipment to the save. */
   equipmentDirty: boolean
   /** The player changed combat stance in-world → next flush writes it back to
@@ -603,6 +632,7 @@ export class WorldZone extends Server<Env> {
     let maxHp = 10
     let bankView: Tally = {}
     let completedQuests = new Set<string>()
+    let slayer = seedSlayerSession({})
     let masterRejuvenation = false
     let stance: CombatStance = 'accurate'
     let saveForGate: unknown = null
@@ -617,6 +647,7 @@ export class WorldZone extends Server<Env> {
       bankView = bankViewFromSave(saveObject)
       const questList = (saveObject.settings as { completedQuests?: unknown } | undefined)?.completedQuests
       completedQuests = new Set(Array.isArray(questList) ? questList.filter((q): q is string => typeof q === 'string') : [])
+      slayer = seedSlayerSession(saveObject as Record<string, unknown>)
       masterRejuvenation = hasMasterRejuvenation((saveObject.settings as { unlockedFeatures?: unknown } | undefined)?.unlockedFeatures)
       stance = combatStanceFromSave(saveObject)
     } catch {
@@ -677,6 +708,9 @@ export class WorldZone extends Server<Env> {
       pools,
       bankView,
       completedQuests,
+      slayer,
+      killTally: {},
+      dailyEvents: [],
       equipmentDirty: false,
       stanceDirty: false,
       flushAtTick: null,
@@ -1998,10 +2032,11 @@ export class WorldZone extends Server<Env> {
         this.scheduleDirtyFlush(player)
       }
       for (const kill of result.kills) {
-        // Server-authoritative boss side-effects (collection log, kill count,
-        // audit) — fire-and-forget D1 like the flushes below. No-op for
-        // non-boss monsters.
+        // Server-authoritative boss side-effects (collection log, audit) —
+        // fire-and-forget D1 like the flushes below. No-op for non-boss
+        // monsters; the kill count is tallied below for every monster.
         void recordBossKill(this.env, kill)
+        this.creditKill(kill)
         const isBoss = isBossMonster(kill.monsterId)
         const drops = dropBroadcastsFrom(kill.monsterId, kill.loot, itemsData)
         if (!isBoss && drops.length === 0) continue
@@ -2369,6 +2404,33 @@ export class WorldZone extends Server<Env> {
    * session that ended without a clean disconnect flush deleted them outright
    * (see sessionItems.ts). Their reclassification to save-backed happens only
    * after the grant is known to have landed. */
+  /**
+   * Everything a kill is worth beyond its loot, for the character it was
+   * attributed to: the kill count, their own slayer task, and the daily tasks
+   * the kill feeds. All three are tallied on the session and flushed in a batch
+   * — one D1 round trip per kill is not affordable on a grind (killProgress.ts).
+   *
+   * The owner is whoever the drop went to, which is not necessarily the player
+   * whose tick resolved the killing blow. Someone who has already left the zone
+   * takes no credit: their session (and its slayer task) is gone.
+   */
+  private creditKill(kill: { monsterId: string; owner: string }): void {
+    const player = this.players.get(kill.owner)
+    if (!player) return
+    player.killTally[kill.monsterId] = (player.killTally[kill.monsterId] ?? 0) + 1
+
+    const credited = creditWorldSlayerKill(player.slayer, kill.monsterId)
+    if (!credited) return
+    if (credited.slayerXp > 0) player.pendingEvents.push(...grantSessionXp(player, 'slayer', credited.slayerXp))
+    player.pendingEvents.push({ e: 'msg', text: credited.message })
+    if (credited.completed) {
+      player.dailyEvents.push({ kind: 'slayer_task_complete', count: 1 })
+      // A finished task is a milestone: don't leave it sitting in memory until
+      // the 60s checkpoint, where a DO eviction would cost the whole task.
+      this.scheduleDirtyFlush(player)
+    }
+  }
+
   private async flush(player: Player, reason: GrantPayload['reason']): Promise<void> {
     const pools = player.pools
     const drained = drainForFlush(pools, reason)
@@ -2379,6 +2441,12 @@ export class WorldZone extends Server<Env> {
       ...drained,
     }
     player.pendingXp = {}
+    const slayerDrained = drainSlayerCredit(player.slayer)
+    if (slayerDrained) Object.assign(payload, slayerDrained)
+    const killTally = player.killTally
+    player.killTally = {}
+    const dailyEvents = [...player.dailyEvents, ...killDailyEvents(killTally), ...xpDailyEvents(payload.xpBySkill)]
+    player.dailyEvents = []
     const equipmentWasDirty = player.equipmentDirty
     if (equipmentWasDirty) {
       payload.equipment = { ...player.equipment }
@@ -2389,7 +2457,12 @@ export class WorldZone extends Server<Env> {
       payload.combatStance = player.stance
       player.stanceDirty = false
     }
-    if (isEmptyPayload(payload)) return
+    // Kill counts and daily tasks are their own tables, not the save — a flush
+    // carrying nothing but kills still has to land them.
+    if (isEmptyPayload(payload)) {
+      this.flushProgress(player, killTally, dailyEvents)
+      return
+    }
     player.flushSeq += 1
 
     const ok = await flushGrants(this.env, {
@@ -2400,6 +2473,7 @@ export class WorldZone extends Server<Env> {
     }, payload)
     if (ok) {
       commitFlush(pools, drained)
+      this.flushProgress(player, killTally, dailyEvents)
     } else {
       // A dropped payload is real lost progress and is otherwise completely
       // invisible — `wrangler tail` is the only place this surfaces.
@@ -2412,7 +2486,35 @@ export class WorldZone extends Server<Env> {
       restoreFlush(pools, drained)
       if (equipmentWasDirty) player.equipmentDirty = true
       if (stanceWasDirty) player.stanceDirty = true
+      restoreSlayerCredit(player.slayer, slayerDrained)
+      // The XP went back on the pile, so its daily events must too — re-derived
+      // from the restored tally on the next flush rather than double-counted
+      // here. Kills go back the same way.
+      for (const [monsterId, count] of Object.entries(killTally)) {
+        player.killTally[monsterId] = (player.killTally[monsterId] ?? 0) + count
+      }
+      player.dailyEvents.unshift(...dailyEvents.filter((evt) => evt.kind === 'slayer_task_complete'))
     }
+  }
+
+  /** Kill counts + daily-task progress for a flush that has already landed.
+   * Both are additive writes to their own tables, so unlike the grant they need
+   * no revision guard — and both are fire-and-forget: a D1 hiccup here must not
+   * hold up the tick loop or roll back a save write that already succeeded. */
+  private flushProgress(player: Player, killTally: Record<string, number>, dailyEvents: DailyEvent[]): void {
+    if (Object.keys(killTally).length > 0) {
+      void recordKillCounts(this.env, Number(player.charId), killTally).catch((err) => {
+        console.error('[World][flush] kill counts not recorded', { charId: player.charId, err })
+      })
+    }
+    if (dailyEvents.length === 0) return
+    void applyDailyTaskEvents(this.env, {
+      characterId: Number(player.charId),
+      identityId: player.identityId,
+      events: dailyEvents,
+    }).catch((err) => {
+      console.error('[World][flush] daily task progress not applied', { charId: player.charId, err })
+    })
   }
 
   private async flushCheckpoints(): Promise<void> {

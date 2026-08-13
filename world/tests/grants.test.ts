@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { flushGrants, isEmptyPayload, type GrantIO, type GrantPayload } from '../server/grants'
+import { applySlayerCreditToSave } from '../../functions/_lib/game/slayerCredit.js'
 
 const MAX_XP = 200_000_000
 
@@ -88,6 +89,7 @@ function makeIO(save: Record<string, unknown>, overrides: Partial<GrantIO> = {})
       const bank = (saveObject.bank ?? {}) as Record<string, { quantity?: number }>
       return Math.floor(Number(bank[itemId]?.quantity) || 0)
     },
+    applySlayerCreditToSave,
     auditLog: vi.fn(async (_env, _type, payload: Record<string, unknown>) => {
       audits.push(payload)
     }),
@@ -107,6 +109,40 @@ function payload(overrides: Partial<GrantPayload> = {}): GrantPayload {
     ...overrides,
   }
 }
+
+describe('flushGrants — slayer progress', () => {
+  it('writes the advanced task back and adds the banked points as a delta', async () => {
+    const { env } = makeDb()
+    const io = makeIO({
+      stats: {},
+      settings: { slayerTask: { monsterId: 'green_dragon', monstersRemaining: 5 }, slayerPoints: 30, slayerTasksCompleted: 4 },
+    })
+    await flushGrants(env, who, payload({
+      slayerTask: null,
+      slayerCredit: { pointsEarned: 12, tasksCompleted: 1, masterCompletions: { vashka: 1 } },
+      slayerTasksCompleted: 5,
+    }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.settings.slayerTask).toBe(null)
+    expect(saveObject.settings.slayerPoints).toBe(42)
+    expect(saveObject.settings.slayerTasksCompleted).toBe(5)
+    expect(saveObject.settings.slayerMasterTaskCompletions).toEqual({ vashka: 1 })
+  })
+
+  it('leaves the save\'s task alone when the session never touched it', async () => {
+    const { env } = makeDb()
+    const task = { monsterId: 'green_dragon', monstersRemaining: 5 }
+    const io = makeIO({ stats: {}, settings: { slayerTask: task, slayerPoints: 30 } })
+    await flushGrants(env, who, payload(), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.settings.slayerTask).toEqual(task)
+    expect(saveObject.settings.slayerPoints).toBe(30)
+  })
+
+  it('is not an empty payload when the only thing that moved is the task', () => {
+    expect(isEmptyPayload(payload({ xpBySkill: {}, items: [], slayerTask: null }))).toBe(false)
+  })
+})
 
 describe('flushGrants', () => {
   it('applies xp (level re-derived) and banks minted items, then audits', async () => {

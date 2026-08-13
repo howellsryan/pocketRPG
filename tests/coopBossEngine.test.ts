@@ -19,6 +19,8 @@ import {
   coopKillOutcome,
   coopIntentEcho,
   lootEligibleCharacterIds,
+  killCountCharacterIds,
+  foughtThisKill,
   describeCoopEquipRefusal,
   describeCoopActionRefusal,
 } from '../src/engine/coopBossEngine.js'
@@ -961,6 +963,23 @@ describe('coopBossEngine — the 10% loot threshold', () => {
     expect(lootEligibleCharacterIds(state)).toContain(2)
   })
 
+  it('counts the kill for everyone alive who swung, past the loot line or not', () => {
+    const state = joinedState([1, 2, 3])
+    state.members['1'].damage = 1400
+    state.members['2'].damage = 1
+    state.members['3'].damage = 0
+    // 3 never swung; 2 is nowhere near a drop but did fight the thing.
+    expect(killCountCharacterIds(state)).toEqual([1, 2])
+  })
+
+  it('does not count the kill for a member who died before it landed', () => {
+    const state = joinedState([1, 2])
+    state.members['1'].damage = 1000
+    state.members['2'].damage = 500
+    state.members['2'].status = 'dead'
+    expect(killCountCharacterIds(state)).toEqual([1])
+  })
+
   it('ships the eligible list on the kill record', () => {
     const state = joinedState([1, 2, 3])
     state.boss.currentHP = 0
@@ -1206,5 +1225,21 @@ describe('coopBossEngine — what a settled kill means for one member', () => {
   it('does not fall over on an event carrying nothing usable', () => {
     expect(coopKillOutcome({ type: 'killSettled' }, 7).kind).toBe('missed')
     expect(coopKillOutcome(null, 7).kind).toBe('missed')
+  })
+})
+
+// The room names who fought a kill so each client can credit its own daily
+// tasks off it — the room has no idea what today's tasks are.
+describe('foughtThisKill', () => {
+  it('is true for a character the event lists', () => {
+    expect(foughtThisKill({ killCountCharacterIds: [1, 2] }, 2)).toBe(true)
+  })
+
+  it('is false for a character the event leaves out', () => {
+    expect(foughtThisKill({ killCountCharacterIds: [1, 2] }, 3)).toBe(false)
+  })
+
+  it('is true when the room is older than the field, rather than silently paying nobody', () => {
+    expect(foughtThisKill({ bossId: 'warlord_grondar' }, 3)).toBe(true)
   })
 })

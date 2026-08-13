@@ -234,6 +234,7 @@ export const api = {
   }),
   getDailyTasks: () => request('/api/daily-tasks'),
   completeDailyTask: (payload) => request('/api/daily-tasks/complete', { method: 'POST', body: JSON.stringify(payload) }),
+  syncDailyTaskProgress: (payload) => request('/api/daily-tasks/progress', { method: 'POST', body: JSON.stringify(payload) }),
   getIdle: () => request('/api/idle'),
   putIdle: (activeTask) => request('/api/idle', {
     method: 'PUT',

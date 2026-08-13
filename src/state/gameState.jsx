@@ -46,6 +46,9 @@ const normalisePointCurrency = (value) => {
   return n > 0 ? n : 0
 }
 const CLOUD_ACTIVITY_HEARTBEAT_MS = 120_000
+// Long enough that a kill-per-second grind is one request, short enough that a
+// player who closes the tab loses at most this much daily-task progress.
+const DAILY_TASK_PUSH_DEBOUNCE_MS = 8_000
 // 'combat' is included so an auto-fight grind persists on the 120s heartbeat
 // instead of forcing a cloud save on every monster kill (the old per-kill
 // critical save was the main /api/save write-amplifier for idle sessions).
@@ -132,6 +135,9 @@ export function GameProvider({ children }) {
   // here and flushed once setDailyTasks lands, instead of being silently dropped.
   const dailyTasksLoadedRef = useRef(false)
   const pendingGameEventsRef = useRef([])
+  // Matched events awaiting their batched push to /api/daily-tasks/progress.
+  const pendingDailyPushRef = useRef([])
+  const dailyPushTimerRef = useRef(null)
   const recordGameEventRef = useRef(null)
   const showInfoToastsRef = useRef(false)
 
@@ -1674,9 +1680,18 @@ export function GameProvider({ children }) {
   useEffect(() => { dailyTaskStatesRef.current = dailyTaskStates }, [dailyTaskStates])
 
   const setDailyTasks = useCallback((tasks, date) => {
+    // A re-fetch within the same day is a floor, not a replacement: progress
+    // only ever climbs, and events matched locally since the last push would
+    // otherwise be undone by the server's older number.
+    const previous = dailyTaskDateRef.current === date ? dailyTaskStatesRef.current : []
+    const merged = (tasks || []).map((task) => {
+      const prior = previous.find((p) => p.slot === task.slot && p.taskId === task.taskId)
+      if (!prior) return task
+      return { ...task, progress: Math.max(task.progress ?? 0, prior.progress ?? 0), completed: task.completed || prior.completed }
+    })
     dailyTaskDateRef.current = date
-    dailyTaskStatesRef.current = tasks
-    setDailyTaskStates(tasks)
+    dailyTaskStatesRef.current = merged
+    setDailyTaskStates(merged)
     dailyTasksLoadedRef.current = true
     // Replay events that fired before this first load (boot idle catch-up).
     const pending = pendingGameEventsRef.current
@@ -1685,6 +1700,73 @@ export function GameProvider({ children }) {
       for (const evt of pending) recordGameEventRef.current?.(evt)
     }
   }, [])
+
+  /**
+   * Mirrors matched game events to the server, batched.
+   *
+   * Daily-task progress used to live only in this ref: D1 held 0 until a
+   * completion was announced, so a reload lost everything short of a finished
+   * task — and progress made where this client is not running (the open world's
+   * own tab) could never be added to it. Sending the EVENTS rather than a
+   * progress number keeps one matcher in charge on both sides, and lets the
+   * server compose them with whatever the world wrote while we were away.
+   *
+   * Best-effort by design: a failed push drops its batch rather than retrying
+   * forever, because the local optimistic progress above is what the player is
+   * looking at, and the completion call remains the thing that pays the credit.
+   */
+  const flushDailyTaskEvents = useCallback(async () => {
+    dailyPushTimerRef.current = null
+    const events = pendingDailyPushRef.current
+    if (events.length === 0) return
+    pendingDailyPushRef.current = []
+    const date = dailyTaskDateRef.current
+    if (!date || !getCharacterId() || !getToken()) return
+    try {
+      const res = await api.syncDailyTaskProgress({ date, events })
+      const rows = Array.isArray(res?.tasks) ? res.tasks : []
+      if (rows.length > 0) {
+        // The server's row is the floor, never a ceiling: an event still sitting
+        // in the buffer is already in the local progress and would be undone by
+        // taking the server's number outright.
+        const merged = dailyTaskStatesRef.current.map((task) => {
+          const row = rows.find((r) => r.slot === task.slot && r.taskId === task.taskId)
+          if (!row) return task
+          const progress = Math.max(task.progress ?? 0, row.progress ?? 0)
+          return { ...task, progress, completed: task.completed || row.completed }
+        })
+        dailyTaskStatesRef.current = merged
+        setDailyTaskStates(merged)
+      }
+      if (res?.creditsGranted > 0 && typeof res.credits === 'number') {
+        window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: res.credits } }))
+      }
+    } catch (e) {
+      if (e?.status !== 409) console.warn('[DailyTasks] progress sync failed', e)
+    }
+  }, [])
+
+  const queueDailyTaskEvent = useCallback((evt) => {
+    if (!getCharacterId() || !getToken()) return
+    const buf = pendingDailyPushRef.current
+    buf.push(evt)
+    if (buf.length > 200) buf.shift()
+    if (dailyPushTimerRef.current) return
+    dailyPushTimerRef.current = setTimeout(() => { void flushDailyTaskEvents() }, DAILY_TASK_PUSH_DEBOUNCE_MS)
+  }, [flushDailyTaskEvents])
+
+  // A hidden tab runs no timers, so the debounce above would never fire for a
+  // player who tabs away (or straight into the open world) mid-grind.
+  useEffect(() => {
+    const flush = () => { void flushDailyTaskEvents() }
+    const onVisibility = () => { if (document.hidden) flush() }
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('pagehide', flush)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pagehide', flush)
+    }
+  }, [flushDailyTaskEvents])
 
   const recordGameEvent = useCallback((evt) => {
     // Before daily tasks have loaded, queue events rather than drop them — the
@@ -1698,6 +1780,7 @@ export function GameProvider({ children }) {
     }
     const tasks = dailyTaskStatesRef.current
     if (!tasks || tasks.length === 0) return
+    queueDailyTaskEvent(evt)
     let changed = false
     const next = tasks.map(task => {
       if (task.completed || task._completing) return task
@@ -1733,7 +1816,7 @@ export function GameProvider({ children }) {
       dailyTaskStatesRef.current = next
       setDailyTaskStates(next)
     }
-  }, [addToast])
+  }, [addToast, queueDailyTaskEvent])
   recordGameEventRef.current = recordGameEvent
 
   const value = {

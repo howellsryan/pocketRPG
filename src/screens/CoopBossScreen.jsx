@@ -18,7 +18,7 @@ import { openCoopFeed } from '../cloud/coopFeed.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
-import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
+import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal, foughtThisKill } from '../engine/coopBossEngine.js'
 import { coopRaidSummary, raidProgress } from '../engine/coopRaidEngine.js'
 import { appendChatLines, chatLinesFromCoopEvents } from '../utils/coopChat.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
@@ -43,7 +43,7 @@ import monstersData from '../data/monsters.json'
  * way and must not care which.
  */
 export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoin, onDeath, addToast }) {
-  const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell, revertOneLifeMode } = useGame()
+  const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell, revertOneLifeMode, recordGameEvent } = useGame()
   const [state, setState] = useState(null)
   const [error, setError] = useState(null)
   const [bossSplats, setBossSplats] = useState([])
@@ -164,6 +164,15 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     for (const ev of events) {
       if (ev.type === 'raidBossAdvance') addToast?.(`⚔️ ${ev.bossName} — boss ${ev.bossIndex + 1}/${ev.totalBosses}`, 'info')
       else if (ev.type === 'raidWiped') addToast?.('Your party was wiped out. Back to the lobby.', 'error')
+      // A group kill feeds the same daily tasks a solo one does. The room has no
+      // idea what today's tasks are — the idle client owns them — so it names
+      // who fought the kill and each client credits its own. Gated on that list
+      // so a member who sat the fight out in the lobby is not paid for it.
+      else if (ev.type === 'bossDefeated' || ev.type === 'raidBossDefeated') {
+        if (foughtThisKill(ev, characterId)) recordGameEvent?.({ kind: 'boss_kill', monsterId: ev.bossId })
+      } else if (ev.type === 'raidComplete') {
+        if (foughtThisKill(ev, characterId)) recordGameEvent?.({ kind: 'raid_complete', raidId: ev.raidId })
+      }
     }
     for (const ev of events) {
       if (Number(ev.characterId) !== Number(characterId)) continue
@@ -189,6 +198,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       }
       else if (ev.type === 'slayerCredit' && ev.completed) {
         addToast?.(`\u{1F480} Slayer Task #${ev.totalTasks} Completed - ${(ev.pointsEarned || 0).toLocaleString()} points.`, 'levelup')
+        recordGameEvent?.({ kind: 'slayer_task_complete' })
       }
     }
     // Read names off the beat, not the render closure — this callback is

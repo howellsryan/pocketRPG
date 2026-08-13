@@ -15,6 +15,7 @@ import {
 } from '../server/loot'
 import { emptyInventory } from '../server/mining'
 import { flushGrants, type GrantIO, type GrantPayload } from '../server/grants'
+import { applySlayerCreditToSave } from '../../functions/_lib/game/slayerCredit.js'
 
 describe('spawnDrops', () => {
   it('creates one entity per non-empty drop, owned by the killer at the death tile', () => {
@@ -169,6 +170,7 @@ describe('picked-up loot survives a disconnect flush', () => {
       removeItemFromInventory: () => {},
       removeItemFromBank: () => {},
       bankQuantity: () => 0,
+      applySlayerCreditToSave,
       auditLog: async () => {},
     }
   }

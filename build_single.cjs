@@ -68,6 +68,7 @@ const sourceFiles = [
   'engine/slayerRewards.js',
   'engine/slayerTasks.js',
   'engine/slayerMasters.js',
+  'engine/slayerKillCredit.js',
   'engine/slayerUnlocks.js',
   'engine/specialAttackEnergy.js',
   'engine/specialRegen.js',

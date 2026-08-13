@@ -5,6 +5,7 @@
 import { loadCharacterWithSave, writeSave } from '../../functions/_lib/game/save.js'
 import { addItemToBank, addItemToInventory, bankQuantity, removeItemFromBank, removeItemFromInventory } from '../../functions/_lib/game/inventory.js'
 import { auditLog } from '../../functions/_lib/game/audit.js'
+import { applySlayerCreditToSave } from '../../functions/_lib/game/slayerCredit.js'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { isStackable } from './mining'
 
@@ -35,6 +36,15 @@ export type GrantPayload = {
    * `equipment` field above — overwrites settings.combatStance so the main
    * game reflects an in-world stance change). */
   combatStance?: string
+  /** The session's copy of the slayer task after this flush's kills. State, not
+   * a delta — written outright. Present only once a world kill has touched the
+   * task, so a session that never fought never writes over it. */
+  slayerTask?: unknown
+  /** Points/completions earned in-world since the last flush. A DELTA: added to
+   * the save and cleared here, so a re-queued payload never pays twice. */
+  slayerCredit?: { pointsEarned: number; tasksCompleted: number; masterCompletions: Record<string, number> }
+  /** Task completions banked in the session, for the save's monotonic counter. */
+  slayerTasksCompleted?: number
   /** 'transition' (zone change) drains pools exactly like 'disconnect' — the
    * pack re-seeds from the save in the destination zone. */
   reason: 'deposit' | 'disconnect' | 'timer' | 'transition'
@@ -58,10 +68,11 @@ export type GrantIO = {
   removeItemFromInventory: (save: Save, itemId: string, quantity: number) => void
   removeItemFromBank: (save: Save, itemId: string, quantity: number) => void
   bankQuantity: (save: Save, itemId: string) => number
+  applySlayerCreditToSave: (save: Save, session: unknown) => unknown
   auditLog: (env: unknown, eventType: string, payload: Record<string, unknown>) => Promise<void>
 }
 
-const defaultIO: GrantIO = { loadCharacterWithSave, writeSave, addItemToBank, addItemToInventory, removeItemFromInventory, removeItemFromBank, bankQuantity, auditLog }
+const defaultIO: GrantIO = { loadCharacterWithSave, writeSave, addItemToBank, addItemToInventory, removeItemFromInventory, removeItemFromBank, bankQuantity, applySlayerCreditToSave, auditLog }
 
 export function isEmptyPayload(payload: GrantPayload): boolean {
   return (
@@ -73,6 +84,7 @@ export function isEmptyPayload(payload: GrantPayload): boolean {
     (payload.bankToInventory ?? []).length === 0 &&
     payload.equipment === undefined &&
     payload.combatStance === undefined &&
+    payload.slayerTask === undefined &&
     Object.values(payload.xpBySkill).every((v) => !v)
   )
 }
@@ -166,6 +178,13 @@ export async function flushGrants(
       for (const item of payload.mintedToBank ?? []) {
         io.addItemToBank(saveObject, item.itemId, item.quantity)
       }
+      if (payload.slayerTask !== undefined) {
+        io.applySlayerCreditToSave(saveObject, {
+          slayerTask: payload.slayerTask,
+          slayerCredit: payload.slayerCredit,
+          slayerTasksCompleted: payload.slayerTasksCompleted,
+        })
+      }
       if (payload.equipment !== undefined) saveObject.equipment = payload.equipment
       if (payload.combatStance !== undefined) {
         const settings = (saveObject.settings ?? {}) as Record<string, unknown>
@@ -188,6 +207,7 @@ export async function flushGrants(
         bankToInventory: payload.bankToInventory ?? [],
         equipmentChanged: payload.equipment !== undefined,
         combatStanceChanged: payload.combatStance !== undefined,
+        slayerCredit: payload.slayerTask !== undefined ? (payload.slayerCredit ?? null) : null,
       })
       return true
     } catch (err) {
