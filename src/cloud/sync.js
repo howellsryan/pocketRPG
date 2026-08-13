@@ -268,16 +268,22 @@ async function performPush() {
       conflictPending = true
       pendingSnapshot = null
       pendingLosses = null
-      // A stale revision is the ONE signal that a push of ours may have landed
-      // without us seeing the ok — a response lost on a dying connection banks
-      // the kills, keeps the tally (we settle only on a reply), and the next
-      // push 409s on the revision that write moved. Re-sending would count them
-      // twice. Dropped here rather than in applyCloudSave, which also runs on
-      // the co-op-exit and boot pulls, where nothing suggests a write landed
-      // and the tally is simply the kills still owed. A 409 caused by a foreign
-      // writer instead (a world flush, an action completion) loses this
-      // window's counts; under-counting an ordinary monster is the cheaper
-      // error, and §14 keeps every gated monster off this channel entirely.
+      // A stale revision is the only signal we get that a FULL write of ours
+      // landed without us seeing the ok: it banked the kills, we settle only on
+      // a reply so the tally kept them, and the next push 409s on the revision
+      // that write moved. Re-sending would count them twice. Dropped here
+      // rather than in applyCloudSave, which also runs on the co-op-exit and
+      // boot pulls, where nothing suggests a write landed and the tally is
+      // simply the kills still owed.
+      //
+      // This does NOT cover every lost ok. The idle-ceiling and no-op replies
+      // bank kills while leaving the revision alone, so a lost response there
+      // raises no conflict and the retry banks them again — an over-count no
+      // client-side rule can catch, and the reason the real fix is an
+      // idempotency key on the report. Nor is a 409 proof it was us: raised by a
+      // foreign writer (a world flush, an action completion) this loses the
+      // window's counts instead. Both errors are bounded and invisible, and §14
+      // keeps every gated monster off this channel entirely.
       resetKillTally()
       pendingSaveOptions = {}
       hasUnsyncedChanges = false

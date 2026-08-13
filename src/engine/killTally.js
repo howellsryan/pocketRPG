@@ -18,9 +18,13 @@
 // preserves for the pull that follows a fight, and — boot being the same
 // pull-then-adopt — everything a closing tab left in localStorage.
 //
-// It IS reset on a save_revision CONFLICT (sync.js), the one signal that a push
-// may have landed unseen and already banked what is still sitting here, and on
-// logout / character switch via resetSyncState.
+// It IS reset on a save_revision CONFLICT (sync.js), the only signal that a
+// full write landed unseen and already banked what is still sitting here, and
+// on logout / character switch via resetSyncState. That covers the revision-
+// bumping write and nothing else: an idle-ceiling or no-op reply banks kills
+// without moving the revision, so a lost response there is re-sent and counted
+// twice. Closing that needs an idempotency key on the report, not another
+// client-side rule.
 //
 // What may be reported at all is decided by killCountReports.js, not here.
 import { filterReportableKills, MAX_REPORTED_KILLS_PER_MONSTER, MAX_REPORTED_MONSTERS } from './killCountReports.js'

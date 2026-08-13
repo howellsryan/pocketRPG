@@ -138,6 +138,8 @@ export function GameProvider({ children }) {
   const pendingGameEventsRef = useRef([])
   // Matched events awaiting their batched push to /api/daily-tasks/progress.
   const pendingDailyPushRef = useRef([])
+  // The task date the buffered events were matched against — see flushDailyTaskEvents.
+  const pendingDailyPushDateRef = useRef(null)
   const dailyPushTimerRef = useRef(null)
   const recordGameEventRef = useRef(null)
   const matchDailyEventRef = useRef(null)
@@ -1727,7 +1729,13 @@ export function GameProvider({ children }) {
     const events = pendingDailyPushRef.current
     if (events.length === 0) return
     pendingDailyPushRef.current = []
-    const date = dailyTaskDateRef.current
+    // The date these events were MATCHED against, not the one the ref holds
+    // now: a tab open across midnight UTC re-fetches into a new day's tasks, and
+    // sending yesterday's kills under today's date credits tasks they were never
+    // matched against. Stamped at queue time, so the server's own stale-date
+    // check (409 DAILY_TASKS_ROLLED_OVER) can see it and refuse — silently, like
+    // every other dropped batch on this best-effort path.
+    const date = pendingDailyPushDateRef.current
     if (!date || !getCharacterId() || !getToken()) return
     try {
       const res = await api.syncDailyTaskProgress({ date, events })
@@ -1755,6 +1763,12 @@ export function GameProvider({ children }) {
 
   const queueDailyTaskEvent = useCallback((evt) => {
     if (!getCharacterId() || !getToken()) return
+    // One buffer, one day. Rolling over mid-buffer would send a mixed batch
+    // under a single date, so the older half is dropped rather than misfiled.
+    if (pendingDailyPushDateRef.current !== dailyTaskDateRef.current) {
+      pendingDailyPushRef.current = []
+      pendingDailyPushDateRef.current = dailyTaskDateRef.current
+    }
     const buf = pendingDailyPushRef.current
     buf.push(evt)
     if (buf.length > 200) buf.shift()
