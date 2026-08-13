@@ -1719,7 +1719,7 @@ export function GameProvider({ children }) {
    * forever, because the local optimistic progress above is what the player is
    * looking at, and the completion call remains the thing that pays the credit.
    */
-  const flushDailyTaskEvents = useCallback(async () => {
+  const flushDailyTaskEvents = useCallback(async ({ keepalive = false } = {}) => {
     // CLEARED, not just dropped: an early flush (tab-hide, pagehide) leaves the
     // debounce still armed, and forgetting the handle lets the next event arm a
     // second one — the orphan then fires a pointless flush and untracks the live
@@ -1738,7 +1738,7 @@ export function GameProvider({ children }) {
     const date = pendingDailyPushDateRef.current
     if (!date || !getCharacterId() || !getToken()) return
     try {
-      const res = await api.syncDailyTaskProgress({ date, events })
+      const res = await api.syncDailyTaskProgress({ date, events }, { keepalive })
       const rows = Array.isArray(res?.tasks) ? res.tasks : []
       if (rows.length > 0) {
         // The server's row is the floor, never a ceiling: an event still sitting
@@ -1777,9 +1777,11 @@ export function GameProvider({ children }) {
   }, [flushDailyTaskEvents])
 
   // A hidden tab runs no timers, so the debounce above would never fire for a
-  // player who tabs away (or straight into the open world) mid-grind.
+  // player who tabs away (or straight into the open world) mid-grind. Both of
+  // these can be the last thing the document does, so the request has to
+  // outlive it — an ordinary fetch is cancelled on unload.
   useEffect(() => {
-    const flush = () => { void flushDailyTaskEvents() }
+    const flush = () => { void flushDailyTaskEvents({ keepalive: true }) }
     const onVisibility = () => { if (document.hidden) flush() }
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('pagehide', flush)

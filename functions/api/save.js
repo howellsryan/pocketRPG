@@ -342,8 +342,6 @@ async function applySaveWrite({ env, ch, identityId, body }) {
       // stamp last_active_at would never refresh, inflating offline rewards on
       // the next load. This is the regression-critical case — keep it.
       await stampIdleActive(env, ch.id, idleTaskJson, now, interactiveAt)
-      // The blob is a no-op; the kills reported alongside it are not.
-      await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
       // Content-identical to what's stored. Default: write NOTHING else — not
       // the blob, the revision, the summary, NOR updated_at — so a routine no-op
       // save (screen change, AFK tab) costs zero further D1 writes.
@@ -357,8 +355,15 @@ async function applySaveWrite({ env, ch, identityId, body }) {
         await env.DB.prepare(
           'UPDATE saves SET updated_at = ? WHERE character_id = ?'
         ).bind(now, ch.id).run()
+        // The blob is a no-op; the kills reported alongside it are not. After
+        // the touch, never before: a throw between the two banks the kills and
+        // still answers an error, so the client retries the same tally and
+        // counts them twice.
+        await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
         return json({ ok: true, updatedAt: now, save_revision: currentRevision, noop: true })
       }
+      // The blob is a no-op; the kills reported alongside it are not.
+      await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
       return json({
         ok: true,
         updatedAt: Number(existing?.updated_at) || now,

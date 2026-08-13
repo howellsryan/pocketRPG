@@ -2401,8 +2401,14 @@ export class WorldZone extends Server<Env> {
    * The owner is whoever the drop went to, which is not necessarily the player
    * whose tick resolved the killing blow. Someone who has already left the zone
    * takes no credit: their session (and its slayer task) is gone.
+   *
+   * A boss MINION earns none of it (§4: adds count for nothing). Out here they
+   * are real npcs rather than session-local adds, so they reach the kill list
+   * like anything else — and a boss that respawns its sentinels on a timer would
+   * otherwise be a kill-count and daily-task farm that never touches the boss.
    */
-  private creditKill(kill: { monsterId: string; owner: string }): void {
+  private creditKill(kill: { monsterId: string; owner: string; summoned?: boolean }): void {
+    if (kill.summoned) return
     const player = this.players.get(kill.owner)
     if (!player) return
     player.killTally[kill.monsterId] = (player.killTally[kill.monsterId] ?? 0) + 1

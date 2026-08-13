@@ -238,7 +238,12 @@ export const api = {
   }),
   getDailyTasks: () => request('/api/daily-tasks'),
   completeDailyTask: (payload) => request('/api/daily-tasks/complete', { method: 'POST', body: JSON.stringify(payload) }),
-  syncDailyTaskProgress: (payload) => request('/api/daily-tasks/progress', { method: 'POST', body: JSON.stringify(payload) }),
+  // `keepalive` for the tab-hide/pagehide flush: an ordinary fetch is cancelled
+  // when the document unloads, so the last debounce window of daily-task events
+  // died with the tab — and progress is durable server-side now, so the reload
+  // showed the older number. Well under the 64KB keepalive body cap.
+  syncDailyTaskProgress: (payload, { keepalive = false } = {}) =>
+    request('/api/daily-tasks/progress', { method: 'POST', body: JSON.stringify(payload), keepalive }),
   getIdle: () => request('/api/idle'),
   putIdle: (activeTask) => request('/api/idle', {
     method: 'PUT',
