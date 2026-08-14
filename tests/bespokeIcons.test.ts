@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import bespokeIcons from '../src/data/bespokeIcons.json'
 import iconTiers from '../src/assets/icon-tiers.json'
+import { buildBespokeIcons } from '../scripts/build-bespoke-icons.cjs'
 
 // Bespoke, PocketRPG-owned full-color SVG icons (src/assets/icons/*.svg bundled
 // by scripts/build-bespoke-icons.cjs). GameIcon renders these as-authored, keyed
@@ -85,5 +86,18 @@ describe('bespoke icon set', () => {
     for (const idMap of Object.values(tiers.sets)) expected.push(...Object.keys(idMap))
     const missing = expected.filter((id) => !(id in bespokeIcons))
     expect(missing).toEqual([])
+  })
+
+  // The committed JSON must be exactly what the sources on disk produce. An
+  // entry hand-added to it (grindman_helm was, with no src/assets/icons file)
+  // vanishes the next time anyone regenerates — and the icon it belonged to
+  // silently falls back to a glyph or the 📦 placeholder.
+  it('matches a fresh regen from src/assets/icons and the templates', () => {
+    const { icons } = buildBespokeIcons()
+    const fresh = Object.keys(icons)
+    const committed = Object.keys(bespokeIcons)
+    expect(committed.filter((id) => !(id in icons)), 'in bespokeIcons.json with no source — a regen deletes these').toEqual([])
+    expect(fresh.filter((id) => !(id in bespokeIcons)), 'has a source but is missing from bespokeIcons.json — run node scripts/build-bespoke-icons.cjs').toEqual([])
+    expect(icons).toEqual(bespokeIcons)
   })
 })
