@@ -89,6 +89,7 @@ const sourceFiles = [
   'engine/monsterClips.js',
   'engine/monsterMaxHit.js',
   'engine/hardMode.js',
+  'engine/grimReaper.js',
   'engine/grindman.js',
   'engine/xpBank.js',
   'engine/roomWideAttacks.js',
@@ -262,6 +263,7 @@ const sourceFiles = [
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
   'screens/CharacterUnlockScreen.js',
+  'screens/GrimReaperScreen.js',
   'screens/DemoLockedScreen.js',
   'screens/landingContent.js',
   'components/LandingHero3D.js',
@@ -340,6 +342,7 @@ const GAME_CHUNK_FILES = new Set([
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
   'screens/CharacterUnlockScreen.js',
+  'screens/GrimReaperScreen.js',
   'screens/DemoLockedScreen.js',
 ]);
 

@@ -139,6 +139,12 @@ A hard fight doubles the boss's offence — twice the max hit, twice the accurac
 
 Difficulty belongs to the fight, not to you: a group boss room or a raid party is opened at the difficulty the player who opened it chose, everyone in it fights the same boss, and joining a listed group means taking that group's difficulty. Hard Mode applies to solo fights and group fights; open-world boss lairs are always normal.
 
+## Grim Reaper — buying back a Hard Mode death
+
+Everything a Hard Mode death takes is held by the Grim Reaper, reachable from Settings. You can buy it all back with credits: the cost is the total shop value of what you lost, at 5,000,000 gp per credit, rounded up, minimum 1 credit. It's all or nothing — you can't reclaim individual items. Reclaimed items (including any charges left in a scythe, trident, blowpipe or shardglass weapon) go straight to your bank.
+
+The Reaper only ever holds one death. If you die in Hard Mode again before reclaiming, whatever was stashed is lost forever and replaced by the new death's items.
+
 ## Group boss fights
 
 Tap most bosses in the combat picker and you are asked whether to fight solo or join a group. A group holds up to 8 players against one shared boss; you join the fullest group with room, or open a new one. Raid bosses stay inside their raids, and four bosses are solo only: Ember Tyrant, Ashen Crucible, Venomcoil Matriarch and Blighted Gauntlet.

@@ -218,6 +218,14 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Most bosses and every raid can be switched to Hard Mode from the prompt that opens when you tap them in the combat picker. The switch is per boss (and per raid), stays on until you turn it off, and shows as a **HARD** tag wherever that fight is listed. A hard fight doubles the boss's offence — twice the max hit, twice the accuracy. Its health and its defences are untouched, so it dies to the same hits in the same time it always did; the only thing that changes is how much damage it does to you along the way. In exchange every drop rate on its table doubles — a 1-in-500 unique becomes 1-in-250. Guaranteed drops stay one drop, and a boss you skip with credits costs double the credits. **If you die in Hard Mode you lose every tradeable item you are carrying and every tradeable item you are wearing, permanently.** Untradeables — Infernal Cape, quest gear, skill capes, anything you could never buy back — stay with you. Your bank is untouched, so the counter-play is to take in less than you can afford to lose. This applies to solo fights, group fights, raid parties and idle catch-up alike: a hard fight left running while you are away costs the same pack. Turning Hard Mode on asks you to confirm it first. Difficulty belongs to the fight, not to you: a group boss room or a raid party is opened at the difficulty the player who opened it chose, everyone in it fights the same boss, and joining a listed group means taking that group's difficulty. Hard Mode applies to solo fights and group fights; open-world boss lairs are always normal."
  },
  {
+  "id": "guide_grim_reaper_buying_back_a_hard_mode_death",
+  "title": "Grim Reaper — buying back a Hard Mode death",
+  "tags": [
+   "guide"
+  ],
+  "text": "Everything a Hard Mode death takes is held by the Grim Reaper, reachable from Settings. You can buy it all back with credits: the cost is the total shop value of what you lost, at 5,000,000 gp per credit, rounded up, minimum 1 credit. It's all or nothing — you can't reclaim individual items. Reclaimed items (including any charges left in a scythe, trident, blowpipe or shardglass weapon) go straight to your bank. The Reaper only ever holds one death. If you die in Hard Mode again before reclaiming, whatever was stashed is lost forever and replaced by the new death's items."
+ },
+ {
   "id": "guide_group_boss_fights",
   "title": "Group boss fights",
   "tags": [

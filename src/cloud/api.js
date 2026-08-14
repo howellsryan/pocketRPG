@@ -212,6 +212,10 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ unlock_id: unlockId }),
   }),
+  reclaimGrimReaperStash: () => request('/api/grim-reaper/reclaim', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  }),
   getSave: () => request('/api/save'),
   putSave: (save_data, options = {}) => request('/api/save', {
     method: 'PUT',

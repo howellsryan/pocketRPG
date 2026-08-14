@@ -127,7 +127,8 @@ export const SCREENS = {
   ADVENTURES: 'adventures',
   DUNGEONS: 'dungeons',
   KINGDOM: 'kingdom',
-  SUMMONING: 'summoning'
+  SUMMONING: 'summoning',
+  GRIM_REAPER: 'grim_reaper'
 }
 
 // Phase 1 of the map-driven overhaul (docs/map-driven-overhaul-plan.md) ships the

@@ -35,6 +35,7 @@ import CollectionLogScreen from './screens/CollectionLogScreen.jsx'
 import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
 import HelpScreen from './screens/HelpScreen.jsx'
 import CharacterUnlockScreen from './screens/CharacterUnlockScreen.jsx'
+import GrimReaperScreen from './screens/GrimReaperScreen.jsx'
 import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
@@ -88,6 +89,7 @@ import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, o
 import { fetchKillCounts } from './cloud/killCounts.js'
 import { fetchHardModeTargets, hardModeKey } from './cloud/hardMode.js'
 import { hardModeSkipCost, idleTaskDiedHard } from './engine/hardMode.js'
+import { grimReaperStashFromDeath } from './engine/grimReaper.js'
 import { recordItemLossEntries } from './engine/lossLedger.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 import { rollClueRewards } from './engine/clueScrolls.js'
@@ -369,7 +371,7 @@ function GameApp() {
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
     autoBankExcludedItems, backgroundCombat, combatStatus, settleKingdom, applyKingdomSkip,
-    getHoldings, flushLocalSaves } = useGame()
+    getHoldings, flushLocalSaves, updateGrimReaperStash } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
   const [gameReady, setGameReady] = useState(false)
@@ -1269,6 +1271,8 @@ function GameApp() {
               // reads to the detector exactly like the bug it watches for
               // (src/engine/lossLedger.js).
               recordItemLossEntries(writes.hardModeItemsLost)
+              const grimReaperStash = grimReaperStashFromDeath(writes.hardModeItemsLost, { id: savedTask.monster?.id, name: savedTask.monster?.name })
+              if (grimReaperStash) updateGrimReaperStash(grimReaperStash)
               // Losing a pack has to survive a closed tab, so it does not wait
               // for the ordinary debounced flush.
               requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
@@ -2928,6 +2932,8 @@ function GameApp() {
               // reads to the detector exactly like the bug it watches for
               // (src/engine/lossLedger.js).
               recordItemLossEntries(writes.hardModeItemsLost)
+              const grimReaperStash = grimReaperStashFromDeath(writes.hardModeItemsLost, { id: savedTask.monster?.id, name: savedTask.monster?.name })
+              if (grimReaperStash) updateGrimReaperStash(grimReaperStash)
               // Losing a pack has to survive a closed tab, so it does not wait
               // for the ordinary debounced flush.
               requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
@@ -3277,6 +3283,7 @@ function GameApp() {
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={backToPrev} />
       case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} onShowIntroTour={() => setShowIntroTour(true)} />
       case SCREENS.CHARACTER_UNLOCKS:   return <CharacterUnlockScreen onBack={backToPrev || (() => navigate(SCREENS.HOME))} />
+      case SCREENS.GRIM_REAPER:        return <GrimReaperScreen onBack={backToPrev || (() => navigate(SCREENS.HOME))} loadGame={loadGame} />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
