@@ -137,6 +137,20 @@ describe('POST /api/grim-reaper/reclaim', () => {
     expect(out.body.code).toBe('NO_STASH')
   })
 
+  it('clears a stash left with only unresolvable items instead of 404ing forever', async () => {
+    await seedCharacter(42, { credits: 5, save: { settings: { grimReaper: { diedAt: 1, source: null, items: [{ itemId: 'a_removed_item_id', quantity: 1 }] } } } })
+    const first = await reclaim()
+    expect(first.status).toBe(404)
+    expect(first.body.code).toBe('NO_STASH')
+    // The phantom stash is wiped off the save, not left to 404 forever.
+    expect(storedSave(42).settings.grimReaper).toBeUndefined()
+    expect(creditsOf(42)).toMatchObject({ credits: 5, credits_used: 0 })
+
+    const second = await reclaim()
+    expect(second.status).toBe(404)
+    expect(second.body.code).toBe('NO_STASH')
+  })
+
   it("refuses to spend another owner's character's credits", async () => {
     await seedCharacter(7, {
       ownerId: 999,

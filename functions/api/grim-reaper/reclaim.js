@@ -45,7 +45,24 @@ export async function onRequestPost({ request, env }) {
     const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, auth.identity.id)
     const stash = saveObject.settings?.grimReaper
     const stashItems = resolvableStashItems(stash?.items)
-    if (!stash || stashItems.length === 0) {
+    if (!stash) {
+      return json({ error: 'No death stashed with the Grim Reaper', code: 'NO_STASH' }, 404)
+    }
+    if (stashItems.length === 0) {
+      // Every stashed item id has since been removed from items.json — there
+      // is nothing left to price or grant. Clear the phantom stash so it
+      // doesn't 404 forever; this is a cleanup write, not a reclaim, so no
+      // cost/credits are involved.
+      const settings = { ...(saveObject.settings && typeof saveObject.settings === 'object' ? saveObject.settings : {}) }
+      delete settings.grimReaper
+      saveObject.settings = settings
+      await writeSave(env, characterId, saveObject, saveRevision, {
+        auditEvent: {
+          eventType: 'grim_reaper.stash_expired',
+          identityId: auth.identity.id,
+          payload: { characterId },
+        },
+      })
       return json({ error: 'No death stashed with the Grim Reaper', code: 'NO_STASH' }, 404)
     }
 
