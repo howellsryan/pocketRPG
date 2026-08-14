@@ -2033,6 +2033,13 @@ export class WorldZone extends Server<Env> {
         this.scheduleDirtyFlush(player)
       }
       for (const kill of result.kills) {
+        // Snapshot each credited player's task BEFORE crediting it. Completing a
+        // task NULLS it (creditWorldSlayerKill), so read after, the one kill that
+        // finishes a task is the one kill that could never roll the task-only
+        // drops the task exists to unlock.
+        const creditedPlayers = (kill.credited ?? [])
+          .filter((charId) => this.players.has(charId))
+          .map((charId) => ({ charId, slayerTask: this.players.get(charId)!.slayer.task }))
         this.creditKill(kill)
         const isBoss = isBossMonster(kill.monsterId)
         const monsterName = monsterNames[kill.monsterId]?.name ?? kill.monsterId
@@ -2048,13 +2055,7 @@ export class WorldZone extends Server<Env> {
         // task-only drop must not roll for someone who is not on it). Their pile
         // is owned by them, so loot.ts hides it from everyone else for the owner
         // window with nothing new: two piles on one tile, one each.
-        const extra = kill.summoned ? [] : rollLootForCredited(
-          kill.monsterId,
-          (kill.credited ?? [])
-            .filter((charId) => this.players.has(charId))
-            .map((charId) => ({ charId, slayerTask: this.players.get(charId)!.slayer.task })),
-          kill.owner,
-        )
+        const extra = kill.summoned ? [] : rollLootForCredited(kill.monsterId, creditedPlayers, kill.owner)
         for (const share of extra) {
           for (const loot of spawnDrops(share.loot, kill.x, kill.z, share.charId, this.tickCount)) {
             this.loot.set(loot.id, loot)

@@ -558,7 +558,15 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // The pack rides in as the engine's inventory so magic can check runes;
   // consumption is applied below from state.runesConsumed (live-game contract:
   // consume on a landed hit, then clear so the same cast never double-charges).
-  const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, prayersData, player.inventory, null)
+  // THIS player's slayer task, not null: it is what lets the engine roll a
+  // task-only drop (the Imbued Crown and Brain) and apply slayer gear bonuses,
+  // exactly as the solo screen does. Passed as null, the world killer was the
+  // one player who could never roll the drops their own task unlocks — while a
+  // helper past the 10% line could (killLoot.ts rolls theirs on their own task).
+  // It grants no slayer XP: creditWorldSlayerKill owns that, so there is no
+  // double-pay here. Cast because the shared engine is JS and TS infers the
+  // parameter as `null` from its own default.
+  const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, prayersData, player.inventory, (player.slayer?.task ?? null) as Parameters<typeof processCombatTick>[6])
   combat.state = combatState
   // The engine drained the pool / may have switched prayers off on empty — carry
   // that back onto the session and echo the readout when it moved.

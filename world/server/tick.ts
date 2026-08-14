@@ -118,6 +118,11 @@ export type TickPlayer = {
    * Lives on the base session rather than the DO's Player so the entity diff can
    * read it without importing the zone. */
   pvpOpponentId?: string | null
+  /** The player's own slayer session, owned by the DO (killProgress.ts) and
+   * declared here structurally so the combat adapter can hand the engine THIS
+   * player's task: it is what makes a task-only drop roll and a slayer weapon
+   * apply its bonus. Optional because the pure tick fixtures carry no session. */
+  slayer?: { task: { monsterId?: string } | null }
   /** Overhead protection-prayer style last put on the wire. Prayers toggle
    * BETWEEN ticks (a client message), so the tick's own before/after snapshot
    * can't see the change — this is what makes the entity diff go out, the same
