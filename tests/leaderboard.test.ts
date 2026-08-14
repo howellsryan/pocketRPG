@@ -99,6 +99,24 @@ describe('GET /api/leaderboard (denormalized + paginated)', () => {
     ])
   })
 
+  it('scopes the grindman board to is_grindman accounts, ordered by total level', async () => {
+    const { env, prepare, bind } = mockDb([
+      { id: 1, username: 'grindybob', total_level: 900, combat_level: 80, is_one_life: 0, is_ironman: 0, is_grindman: 1 },
+    ])
+    const res = await onRequestGet({ request: reqWith('?metric=grindman'), env } as any)
+    const body = await res.json() as any
+
+    const sql = prepare.mock.calls[0][0] as string
+    expect(sql).toContain('FROM characters')
+    expect(sql).toContain('is_grindman = 1')
+    expect(sql).toMatch(/ORDER BY\s+total_level\s+DESC/i)
+    expect(bind).toHaveBeenCalledWith(100, 0)
+    expect(body.metric).toBe('grindman')
+    expect(body.characters).toEqual([
+      { username: 'grindybob', totalLevel: 900, combatLevel: 80, isOneLife: false, isIronman: false, isGrindman: true },
+    ])
+  })
+
   it('does NOT scope the default total board to Ironman accounts', async () => {
     const { env, prepare } = mockDb([])
     await onRequestGet({ request: reqWith(), env } as any)

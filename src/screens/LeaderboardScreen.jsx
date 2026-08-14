@@ -33,6 +33,7 @@ function filterIconKey(f) {
   if (!f) return null
   if (f.type === 'total') return 'progression'
   if (f.type === 'ironman') return null // rendered via the iron-tinted item icon
+  if (f.type === 'grindman') return null // rendered via the coin-tinted item icon
   if (f.sourceType === 'raids') return getRaidArt(f.sourceId).icon
   if (f.sourceType === 'monsters') return getMonsterArt({ id: f.sourceId }).icon
   return null
@@ -43,13 +44,14 @@ const LEADERBOARD_FILTER_OPTIONS = LEADERBOARD_FILTERS.map(f => ({
   label: f.label,
   iconKey: filterIconKey(f),
   icon: f.icon || null,
-  item: f.type === 'ironman' ? IRON_HELM_ITEM : null,
+  item: f.type === 'ironman' ? IRON_HELM_ITEM : f.type === 'grindman' ? COIN_HELM_ITEM : null,
 }))
 
 function buildLeaderboardUrl(filter, page, pageSize) {
   const params = new URLSearchParams({ limit: String(pageSize), offset: String(page * pageSize) })
   if (!filter || filter.type === 'total') return `/api/leaderboard?${params}`
   if (filter.type === 'ironman') { params.set('metric', 'ironman'); return `/api/leaderboard?${params}` }
+  if (filter.type === 'grindman') { params.set('metric', 'grindman'); return `/api/leaderboard?${params}` }
   params.set('metric', 'kc')
   params.set('source_type', filter.sourceType)
   params.set('source_id', filter.sourceId)
