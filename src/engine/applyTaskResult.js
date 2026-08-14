@@ -1,6 +1,6 @@
 // @ts-check
 import { getLevelFromXP } from './experience.js'
-import { grindmanXP } from './grindman.js'
+import { bankXp } from './xpBank.js'
 
 /**
  * The result of a task simulation (idle/offline/skip-hour/live-completion),
@@ -55,8 +55,6 @@ import { grindmanXP } from './grindman.js'
 // `consumed` is what this call actually took out of holdings — the declared half
 // of the item-loss ledger (src/engine/lossLedger.js); callers route it to the
 // client ledger or to writeSave's declaredLosses.
-
-const XP_CAP = 200_000_000
 
 // `charges` pools an auto-banked item's charges onto the entry. Never write an
 // explicit 0 for an item carrying none: an absent field means "untouched" to
@@ -132,15 +130,7 @@ export function applyTaskResult(state, sim, type, { isGrindman = false } = {}) {
   if (type !== 'quest' && sim.xpGained) {
     for (const [skill, xp] of Object.entries(sim.xpGained)) {
       if (xp > 0) {
-        // Initialize a missing skill rather than dropping the XP. On a fully
-        // browser-seeded save every skill already exists, but a server-side
-        // save (MCP-created character) may not have the entry yet — without
-        // this the gain is silently discarded while the claim result still
-        // reports it, so levels never rise and requirements never unlock.
-        const cur = stats[skill] || { skill, xp: 0, level: 1 }
-        const banked = Math.floor(grindmanXP(xp, isGrindman))
-        const newXP = Math.min((cur.xp || 0) + banked, XP_CAP)
-        stats[skill] = { ...cur, xp: newXP, level: getLevelFromXP(newXP) }
+        const banked = bankXp(stats, skill, xp, { isGrindman })
         if (banked > 0) xpBanked[skill] = banked
       }
     }

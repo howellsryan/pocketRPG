@@ -81,6 +81,7 @@ import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootRes
 import GameIcon from './components/GameIcon.jsx'
 import OneLifeIcon from './components/OneLifeIcon.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
+import { emitXpDrops } from './utils/xpDrops.js'
 import { openWorld } from './utils/helpers.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
@@ -529,8 +530,10 @@ function GameApp() {
       // Award rewards
       const tracker = summary?.levelTracker || createLevelUpTracker(stats)
       for (const [skill, xp] of Object.entries(fixed)) {
-        tracker.apply(skill, xp)
-        grantXP(skill, xp, { silent: true })
+        // The tracker decides which level-ups to announce, so it is fed what
+        // grantXP BANKED — the account cut can be the difference between a
+        // level and a near miss.
+        tracker.apply(skill, grantXP(skill, xp, { silent: true }))
       }
       if (coinReward > 0) updateBankDirect({ coins: coinReward })
       if (summary) {
@@ -619,15 +622,19 @@ function GameApp() {
   // silent toast, instead of the old "Quest complete" toast.
   function handleXpChoiceComplete(chosen) {
     const tracker = createLevelUpTracker(stats)
+    const banked = new Map()
     for (const { skill, xp } of chosen) {
-      tracker.apply(skill, xp)
-      grantXP(skill, xp, { silent: true })
+      const got = grantXP(skill, xp, { silent: true })
+      banked.set(skill, (banked.get(skill) || 0) + got)
+      tracker.apply(skill, got)
     }
 
     setPendingXpChoices(prev => {
       const head = prev[0]
       if (head) {
-        const rewards = chosen.map(({ skill, xp }) => ({ skill, xp: Math.floor(Number(xp) || 0) })).filter(r => r.xp > 0)
+        // The reveal card reports the XP that reached the skill, not the XP the
+        // quest offered — those differ by the account type's cut.
+        const rewards = [...banked.entries()].map(([skill, xp]) => ({ skill, xp })).filter(r => r.xp > 0)
         emitRewardReveal(`Quest Complete: ${head.questName}`, '🏆', rewards, tracker.result())
         emitLevelUpReveal(tracker.result())
       }
@@ -1144,8 +1151,7 @@ function GameApp() {
               const quest = entry.quest
               const { fixed, choices } = splitQuestXpRewards(entry.xpReward || quest.xpReward || {})
               for (const [skill, xp] of Object.entries(fixed)) {
-                levelTracker.apply(skill, xp)
-                grantXP(skill, xp, { silent: true })
+                levelTracker.apply(skill, grantXP(skill, xp, { silent: true }))
               }
               if ((entry.coinReward || 0) > 0) {
                 updateBankDirect({ coins: entry.coinReward })
@@ -2221,13 +2227,12 @@ function GameApp() {
     if (result.xpGained) {
       for (const [skill, xp] of Object.entries(result.xpGained)) {
         if (skill !== 'combat' && skill !== 'any' && xp > 0) {
-          grantXP(skill, xp)
           // XP-drop overlay reflects BACKGROUND progress only. On the activity's
           // own screen the screen shows its own XP feedback, so we don't emit
           // here when a screen is actively driving (it never reaches this path).
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('pocketrpg:xp-gain', { detail: { skill, amount: xp } }))
-          }
+          // The drop shows what grantXP BANKED, not what the sim asked for: the
+          // two differ by the account type's cut.
+          emitXpDrops([{ skill, amount: grantXP(skill, xp) }])
         }
       }
     }
@@ -2607,8 +2612,7 @@ function GameApp() {
           const quest = entry.quest
           const { fixed, choices } = splitQuestXpRewards(entry.xpReward || quest.xpReward || {})
           for (const [skill, xp] of Object.entries(fixed)) {
-            levelTracker.apply(skill, xp)
-            grantXP(skill, xp, { silent: true })
+            levelTracker.apply(skill, grantXP(skill, xp, { silent: true }))
           }
           if ((entry.coinReward || 0) > 0) {
             updateBankDirect({ coins: entry.coinReward })

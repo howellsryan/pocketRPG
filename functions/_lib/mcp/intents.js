@@ -37,6 +37,7 @@ import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
 import { applyTaskResult } from '../../../src/engine/applyTaskResult.js'
 import { isGrindmanSave } from '../../../src/engine/grindman.js'
+import { bankXp } from '../../../src/engine/xpBank.js'
 import { declareItemLosses } from '../game/holdingsDelta.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTokens.js'
@@ -367,13 +368,12 @@ export function trainPrayer(save, actionId, quantity) {
 
   const boneTotal = actions * perAction
   consumeInventoryThenBank(save, boneId, boneTotal)
-  const newXP = Math.min(currentXP + action.xp * actions, XP_CAP)
-  save.stats.prayer = { ...prayerStats, xp: newXP, level: getLevelFromXP(newXP) }
+  const banked = bankXp(save.stats, 'prayer', action.xp * actions, { isGrindman: isGrindmanSave(save) })
   return {
     action: action.name,
     actions,
-    xpGained: { prayer: newXP - currentXP },
-    progress: progressSummary(save, { prayer: newXP - currentXP }),
+    xpGained: { prayer: banked },
+    progress: progressSummary(save, { prayer: banked }),
     itemsConsumed: [{ itemId: boneId, name: itemsData[boneId]?.name || boneId, quantity: boneTotal }],
     bonesRemaining: heldInInventoryAndBank(save, boneId),
   }
@@ -428,13 +428,12 @@ export function trainConstruction(save, actionId, quantity) {
 
   const plankTotal = actions * perBuild
   consumeInventoryThenBank(save, plankId, plankTotal)
-  const newXP = Math.min(currentXP + action.xp * actions, XP_CAP)
-  save.stats.construction = { ...conStats, xp: newXP, level: getLevelFromXP(newXP) }
+  const banked = bankXp(save.stats, 'construction', action.xp * actions, { isGrindman: isGrindmanSave(save) })
   return {
     action: action.name,
     actions,
-    xpGained: { construction: newXP - currentXP },
-    progress: progressSummary(save, { construction: newXP - currentXP }),
+    xpGained: { construction: banked },
+    progress: progressSummary(save, { construction: banked }),
     itemsConsumed: [{ itemId: plankId, name: itemsData[plankId]?.name || plankId, quantity: plankTotal }],
     planksRemaining: heldInInventoryAndBank(save, plankId),
   }
@@ -496,10 +495,7 @@ function resolvePatchSlot(state, patchId) {
 // Add farming XP to the save (capped), returning the actual amount granted.
 function grantFarmingXp(save, amount) {
   if (!save.stats || typeof save.stats !== 'object') save.stats = {}
-  const cur = Math.max(0, Math.floor(Number(save.stats.farming?.xp) || 0))
-  const next = Math.min(cur + Math.floor(Number(amount) || 0), XP_CAP)
-  save.stats.farming = { ...(save.stats.farming || {}), xp: next, level: getLevelFromXP(next) }
-  return next - cur
+  return bankXp(save.stats, 'farming', amount, { isGrindman: isGrindmanSave(save) })
 }
 
 // ── Magic (non-combat utility spells) ────────────────────────────────────────
@@ -640,13 +636,12 @@ export function castMagic(save, actionId, { targetItemId, quantity, isIronman = 
     }
   }
 
-  const newXP = Math.min(currentXP + Math.floor(Number(action.xp) || 0) * casts, XP_CAP)
-  save.stats.magic = { ...magicStats, xp: newXP, level: getLevelFromXP(newXP) }
+  const banked = bankXp(save.stats, 'magic', Math.floor(Number(action.xp) || 0) * casts, { isGrindman: isGrindmanSave(save) })
   return {
     action: action.name,
     casts,
-    xpGained: { magic: newXP - currentXP },
-    progress: progressSummary(save, { magic: newXP - currentXP }),
+    xpGained: { magic: banked },
+    progress: progressSummary(save, { magic: banked }),
     produced,
     target: isAlchemy ? { itemId: targetItemId, name: alchItem.name || targetItemId } : undefined,
   }
@@ -1231,11 +1226,8 @@ export function dropFromQueue(save, questId) {
 }
 
 function addQuestXp(save, skill, rawXp, gained) {
-  const amount = Math.floor(Number(rawXp) || 0)
-  if (amount <= 0 || !save.stats[skill]) return
-  const newXP = Math.min((save.stats[skill].xp || 0) + amount, XP_CAP)
-  save.stats[skill] = { ...save.stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
-  gained[skill] = (gained[skill] || 0) + amount
+  const banked = bankXp(save.stats, skill, rawXp, { isGrindman: isGrindmanSave(save) })
+  if (banked > 0) gained[skill] = (gained[skill] || 0) + banked
 }
 
 // Run a quest idle task over the elapsed window and apply every completion to
@@ -1438,10 +1430,7 @@ export function runCombatTask(save, task, elapsedMs) {
   }
 
   if (Math.floor(Number(sim.slayerXpGained) || 0) > 0) {
-    const slayerStats = save.stats.slayer || { xp: 0 }
-    const newXP = Math.min((slayerStats.xp || 0) + Math.floor(sim.slayerXpGained), XP_CAP)
-    save.stats.slayer = { ...slayerStats, xp: newXP, level: getLevelFromXP(newXP) }
-    xpGained.slayer = Math.floor(sim.slayerXpGained)
+    xpGained.slayer = bankXp(save.stats, 'slayer', sim.slayerXpGained, { isGrindman: isGrindmanSave(save) })
   }
 
   return {

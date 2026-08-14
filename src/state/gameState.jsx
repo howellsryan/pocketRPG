@@ -24,6 +24,7 @@ import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../en
 import { applyTaskResult } from '../engine/applyTaskResult.js'
 import { preserveBankCharges } from '../engine/bankCharges.js'
 import { grindmanXP } from '../engine/grindman.js'
+import { bankXp } from '../engine/xpBank.js'
 import { applyBankDeltas, bankUnitsRemoved } from '../engine/bankMutations.js'
 import { recordItemLossEntries, recordItemLosses } from '../engine/lossLedger.js'
 import { createDirtyFlags, claimDirtyFlags, restoreDirtyFlags, hasDirtyFlags } from '../db/dirtyFlags.js'
@@ -399,12 +400,11 @@ export function GameProvider({ children }) {
             sim.hpRestored = hpRegenSim.hpRegen
           }
 
-          // Slayer XP from combat simulation (client-authoritative; MCP gains this in WO-2)
+          // Slayer XP from combat simulation (client-authoritative; MCP gains this in WO-2).
+          // Through bankXp for the account cut, and reported as what it banked —
+          // the catch-up modal reads this field.
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
-            if (s.slayer) {
-              const newXP = Math.min((s.slayer.xp || 0) + Math.floor(sim.slayerXpGained), 200000000)
-              s.slayer = { ...s.slayer, xp: newXP, level: getLevelFromXP(newXP) }
-            }
+            sim.slayerXpGained = bankXp(s, 'slayer', sim.slayerXpGained, { isGrindman: p?.is_grindman === true })
           }
 
           // Save equipment if ammo or charges changed during combat, or if a
@@ -499,9 +499,8 @@ export function GameProvider({ children }) {
                 if (xp > 0 && s[skill]) {
                   const before = s[skill].xp || 0
                   const from = getLevelFromXP(before)
-                  const newXP = Math.min(before + Math.floor(xp), 200000000)
-                  const to = getLevelFromXP(newXP)
-                  s[skill] = { ...s[skill], xp: newXP, level: to }
+                  bankXp(s, skill, xp, { isGrindman: p?.is_grindman === true })
+                  const to = getLevelFromXP(s[skill].xp || 0)
                   if (to > from) {
                     const existing = levelUpsMap.get(skill)
                     levelUpsMap.set(skill, { skill, from: existing ? existing.from : from, to })
