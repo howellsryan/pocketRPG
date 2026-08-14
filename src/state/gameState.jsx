@@ -288,6 +288,12 @@ export function GameProvider({ children }) {
 
     // ── Idle simulation (runs on raw DB data, before state is set) ──
     let idleResult = null
+    // Overwritten below only if this boot's offline catch-up itself killed the
+    // player on a hard fight — otherwise whatever was already stashed (from a
+    // previous session's death) survives the boot untouched. Declared here,
+    // not inside the simulation branch, because it's read unconditionally
+    // once loadGame reaches setGrimReaperState further down.
+    let nextGrimReaper = savedGrimReaper || null
     console.log('[PocketRPG] loadGame — savedTask:', savedTask, 'savedLastTick:', savedLastTick, 'elapsed:', savedLastTick ? Date.now() - savedLastTick : 0)
     if (savedTask && savedLastTick) {
       // Cap at 24h to limit cross-session clock manipulation; legitimate offline play
@@ -346,10 +352,6 @@ export function GameProvider({ children }) {
           const hpRegenSim = simulateIdleHPRegen(elapsedMs)
           let diedDuringIdle = false
           let hardModeDeathApplied = false
-          // Overwritten below only if this offline catch-up itself killed the
-          // player on a hard fight — otherwise whatever was already stashed
-          // (from a previous session's death) survives the boot untouched.
-          let nextGrimReaper = savedGrimReaper || null
           // Snapshot for the daily-task feed below — savedTask is reassigned by
           // the quest cascade and cleared on an offline death before we emit.
           const idleTask = savedTask
