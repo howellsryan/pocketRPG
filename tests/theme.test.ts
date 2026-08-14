@@ -158,7 +158,11 @@ describe('themed rules do not regain parchment literals', () => {
   // button). A themed rule that reaches back past the semantic layer to a
   // parchment token renders parchment-on-iron in dark. This guard is allowed to
   // shrink, never to grow.
+  // The trailing [),] is load-bearing: `var(--fm-ink-faint, var(--color-parchment-dark))`
+  // is the same dark-on-dark declaration, and the fallback never applies (the
+  // token is always declared) — requiring `)` let that form through the guard.
   const PARCHMENT = String.raw`--fm-(?:ink|ink-soft|ink-faint|rule|parch|parch-hi|parch-lo|parch-face|parch-inset|vellum|tex-parch)`
+  const PARCHMENT_VAR = String.raw`var\(${PARCHMENT}[),]`
 
   function themedRegion(): string {
     // Everything after the .fm-on-iron escape block, minus the pre-login
@@ -195,7 +199,7 @@ describe('themed rules do not regain parchment literals', () => {
 
   it('leaves no parchment token in a themed rule', () => {
     const offenders = rules(themedRegion())
-      .filter((r) => new RegExp(String.raw`var\(${PARCHMENT}\)`).test(r.body))
+      .filter((r) => new RegExp(PARCHMENT_VAR).test(r.body))
       .filter((r) => !ALWAYS_DARK.some((sel) => r.selector.includes(sel)))
       .map((r) => r.selector)
     expect(offenders).toEqual([])
@@ -219,7 +223,7 @@ describe('themed rules do not regain parchment literals', () => {
     const offenders: string[] = []
     for (const file of files) {
       const body = readFileSync(file, 'utf8')
-      for (const m of body.matchAll(new RegExp(String.raw`var\(${PARCHMENT}\)`, 'g'))) {
+      for (const m of body.matchAll(new RegExp(PARCHMENT_VAR, 'g'))) {
         offenders.push(`${file.split('/').slice(-2).join('/')}: ${m[0]}`)
       }
     }
@@ -247,6 +251,21 @@ describe('themed rules do not regain parchment literals', () => {
         if (!declared.has(m[1])) offenders.push(`${file.split('/').slice(-2).join('/')}: ${m[1]}`)
       }
     }
+    expect(offenders).toEqual([])
+  })
+
+  // The world map's chart is painted parchment in BOTH themes (a hardcoded
+  // #e4d6b2 board under world.json's mapImage), so its labels and zoom keys sit
+  // on vellum no matter the theme. Their faces are pinned in CSS, but a pinned
+  // face whose `color` still flips is what shipped: blank cream chips in dark.
+  // The fix is the nested-theme escape hatch, and it only holds while the
+  // containers carry it — same static-asset invariant as the guards above.
+  it('pins the always-vellum world-map containers to a nested light theme', () => {
+    const body = readFileSync(resolve(__dirname, '../src/screens/WorldMapScreen.jsx'), 'utf8')
+    const offenders = ['wm-board', 'wm-ctl'].filter((cls) => {
+      const tag = body.match(new RegExp(String.raw`<div[^>]*\bclass="${cls}"[^>]*>`))
+      return !tag || !/data-theme="light"/.test(tag[0])
+    })
     expect(offenders).toEqual([])
   })
 
