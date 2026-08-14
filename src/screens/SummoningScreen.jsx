@@ -6,6 +6,7 @@ import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
+import { grindmanXP } from '../engine/grindman.js'
 import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -35,7 +36,7 @@ function actionFor(kind, creature, recipe) {
 }
 
 export default function SummoningScreen({ onBack }) {
-  const { stats, inventory, bank, activeTask, setActiveTask, requestActivityStart, addToast } = useGame()
+  const { stats, inventory, bank, activeTask, setActiveTask, requestActivityStart, addToast, isGrindman } = useGame()
   const summoningLevel = getLevelFromXP(stats.summoning?.xp || 0)
 
   const activeAction = (activeTask?.type === 'skill' && activeTask.skill === 'summoning') ? activeTask.action : null
@@ -105,7 +106,7 @@ export default function SummoningScreen({ onBack }) {
         title={kind === 'pouch' ? `${creature.name} Pouch` : `${creature.name} Scroll (${SCROLLS_PER_POUCH})`}
         active={isActive}
         meta={<>
-          <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {creature.level}</span> · {recipe.xp} XP · {formatActionDuration(CRAFT_ACTION_TICKS)}
+          <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {creature.level}</span> · {grindmanXP(recipe.xp, isGrindman)} XP · {formatActionDuration(CRAFT_ACTION_TICKS)}
           <span class="text-[var(--color-gold)]"> · {maxTimes.toLocaleString()} actions</span>
           {available && !isActive && maxTimes <= 0 && <span class="block text-[var(--color-blood-ember)] mt-1">Not enough materials</span>}
         </>}

@@ -5,6 +5,7 @@
 // itself. (The credit-purchase refusal lives in stripeCreateSession.test.ts,
 // beside the endpoint that enforces it.)
 import { describe, it, expect, vi } from 'vitest'
+import { bankXp } from '../src/engine/xpBank.js'
 import {
   GRINDMAN_MULTIPLIERS,
   accountModeConflict,
@@ -190,5 +191,28 @@ describe('grindman drop rolls', () => {
     // 1/12 authored: hard mode alone reaches 1/6, grindman alone 1/4, both 1/2.
     const chance = 1 / 12
     expect(grindmanDropChance(chance * 2, true)).toBeCloseTo(0.5, 10)
+  })
+})
+
+// Every live skill screen tallies its "XP gained" / "XP per hr" panel by adding
+// what grantXP returned, one action at a time — never by cutting the session
+// total at the render. The two are not the same number, and the odometer has to
+// agree with the skill, so this pins the reason those screens look repetitive.
+describe('the cut is taken per gain, never on a running total', () => {
+  const perGain = (gains: number[]) => gains.reduce((sum, xp) => sum + grindmanXP(xp, true), 0)
+  const onTotal = (gains: number[]) => grindmanXP(gains.reduce((a, b) => a + b, 0), true)
+
+  it('diverges once the gains are odd, which is the ordinary case', () => {
+    const oneHundredLaps = new Array(100).fill(25)
+    expect(perGain(oneHundredLaps)).toBe(1200)
+    expect(onTotal(oneHundredLaps)).toBe(1250)
+  })
+
+  it('never over-reports: the per-gain tally is the one that matches the skill', () => {
+    const stats: any = {}
+    const gains = [25, 7, 61, 3, 999, 12]
+    for (const xp of gains) bankXp(stats, 'agility', xp, { isGrindman: true })
+    expect(perGain(gains)).toBe(stats.agility.xp)
+    expect(onTotal(gains)).toBeGreaterThan(stats.agility.xp)
   })
 })

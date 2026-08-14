@@ -7,6 +7,7 @@ import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
+import { grindmanXP } from '../engine/grindman.js'
 import { createSkillingState, processSkillingTick } from '../engine/skilling.js'
 import { emptySession } from '../engine/activitySession.js'
 import { countItem, removeItem } from '../engine/inventory.js'
@@ -52,7 +53,7 @@ function groupActions(actions) {
 export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
   const {
     stats, inventory, bank, equipment, isIronman,
-    grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask
+    grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask, isGrindman
   } = useGame()
 
   const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
@@ -264,7 +265,11 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
             updateInventory(newInv)
           }
 
-          grantXP('magic', ev.xp)
+          // processSkillingTick already added the authored XP to the session
+          // tally; correct it to what was banked, the same way the gear
+          // multiplier is corrected in SkillingScreen.
+          const bankedXp = grantXP('magic', ev.xp)
+          skillingRef.current = { ...skillingRef.current, totalXP: (skillingRef.current.totalXP || 0) - ev.xp + bankedXp }
         }
       }
 
@@ -343,7 +348,7 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
                   icon={productItem ? <GameIcon item={productItem} size={26} /> : <SkillIcon skill="magic" size={26} />}
                   title={action.name}
                   meta={<>
-                    <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {formatActionDuration(action.ticks)}
+                    <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {grindmanXP(action.xp, isGrindman)} XP · {formatActionDuration(action.ticks)}
                     {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) =>
                       staffRuneType === id ? `${staff?.name || 'Staff'} (${itemsData[id]?.name || id})` : `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                     {action.materials && <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}

@@ -1,4 +1,5 @@
 import { useGame } from '../state/gameState.jsx'
+import { grindmanXP } from '../engine/grindman.js'
 import { useState, useEffect } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
 import { isPlaceVaryingSkillRef, autoStartFromTask, placeActivities, activityLockReason } from '../engine/worldContent.js'
@@ -104,7 +105,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     worldLocation, updateWorldLocation, activeTask, setActiveTask, addToast, requestActivityStart,
     inventory, bank, equipment, stats, itemsData, updateInventory, updateBankDirect, grantXP,
     completedQuests, bossKillCounts, killCountsLoaded, questQueue, removeFromQuestQueue,
-    unlockedMinigameItems,
+    unlockedMinigameItems, isGrindman,
   } = useGame()
   const world = getWorld()
   const here = getPlace(worldLocation) ? worldLocation : world.start
@@ -449,7 +450,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
                     class={`wm-travelbar-tele${tele.ok ? '' : ' is-locked'}`}
                     onClick={() => tele.ok ? castTeleport(travel.dest) : null}
                     disabled={!tele.ok}
-                    title={tele.ok ? `Consumes ${formatRuneCost(tele.runes, itemsData)} · +${tele.xp} Magic XP` : tele.reason}
+                    title={tele.ok ? `Consumes ${formatRuneCost(tele.runes, itemsData)} · +${grindmanXP(tele.xp, isGrindman)} Magic XP` : tele.reason}
                   >
                     <span class="wm-travelbar-tele__lead">
                       <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--text-faint)'} size={16} /> Teleport ahead
@@ -513,6 +514,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
 }
 
 function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTravel, onTeleport, onClose, onActivate }) {
+  const { isGrindman } = useGame()
   const tier = getTier(place.tier)
   const isHere = place.id === here
   const route = isHere ? null : shortestPath(here, place.id)
@@ -572,7 +574,7 @@ function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTrave
               class={`wm-tele-btn${tele.ok ? '' : ' is-locked'}`}
               onClick={() => tele.ok ? onTeleport(place.id) : null}
               disabled={!tele.ok}
-              title={tele.ok ? `Teleport — instant, +${tele.xp} Magic XP` : tele.reason}
+              title={tele.ok ? `Teleport — instant, +${grindmanXP(tele.xp, isGrindman)} Magic XP` : tele.reason}
             >
               <span class="wm-tele-btn__lead">
                 <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--text-faint)'} size={16} /> Teleport · Magic {place.teleport.level}

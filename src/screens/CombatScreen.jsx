@@ -26,6 +26,7 @@ import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
 import { hardModeDeathLoss, hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
+import { grindmanXP } from '../engine/grindman.js'
 import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
 import { recordItemLossEntries } from '../engine/lossLedger.js'
 import { HardModeConfirm, HardModeTag, HardModeToggle } from '../components/HardMode.jsx'
@@ -1143,11 +1144,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             // Active combat does not flow through the idle-engine slayer XP handler.
             // Grant XP on the live kill event so active and idle kills stay consistent.
             const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData, { doubleXp: characterUnlocks?.doubleSlayerXp, flatXp: RAID_TASK_META[task.monsterId]?.flatSlayerXp })
-            slayerXpGained += xpForKill
             if (xpForKill > 0) {
-              grantXP('slayer', xpForKill)
+              // The log line and the kill's tally both report what grantXP
+              // BANKED — they are the only place the player reads slayer XP.
+              const bankedSlayerXp = grantXP('slayer', xpForKill)
+              slayerXpGained += bankedSlayerXp
               setLog(prev => [...prev.slice(-20), {
-                text: `💀 Slayer XP +${xpForKill.toLocaleString()}`,
+                text: `💀 Slayer XP +${bankedSlayerXp.toLocaleString()}`,
                 type: 'xp',
                 time: Date.now()
               }])
@@ -4035,7 +4038,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     <div class="flex-1 min-w-0">
                       <div class="text-[13px] font-bold text-[var(--color-parchment)]">{c.name}</div>
                       <div class="text-[10px] text-[var(--color-parchment)] opacity-55">
-                        Max {c.maxHit}{c.hits > 1 ? ` ×${c.hits} hits` : ''} · {c.accuracyTier} accuracy · {c.summonXp} XP
+                        Max {c.maxHit}{c.hits > 1 ? ` ×${c.hits} hits` : ''} · {c.accuracyTier} accuracy · {grindmanXP(c.summonXp, isGrindman)} XP
                       </div>
                       <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
                         {pouches} pouch{pouches === 1 ? '' : 'es'} · {scrolls} scroll{scrolls === 1 ? '' : 's'}

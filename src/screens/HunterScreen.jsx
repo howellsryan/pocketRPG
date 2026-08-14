@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
+import { grindmanXP } from '../engine/grindman.js'
 import Modal from '../components/Modal.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
 import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
@@ -21,7 +22,7 @@ import itemsData from '../data/items.json'
 const hunterData = skillsData.hunter
 
 export default function HunterScreen({ initialActionId, idleResult, onBack, onStopBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, recordGameEvent, signalInventoryFull, resolveInventoryFull } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, recordGameEvent, signalInventoryFull, resolveInventoryFull, isGrindman } = useGame()
 
   // Hunter catches land in the inventory (each needs a free slot).
   const HUNTER_FIT_CHECK = { dropTable: true }
@@ -95,7 +96,8 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
 
       for (const ev of events) {
         if (ev.type === 'hunterSuccess') {
-          grantXP('hunter', ev.xp)
+          // Banked, per catch — see AgilityScreen.
+          const bankedXp = grantXP('hunter', ev.xp)
 
           // Catches fill the inventory (banked as a fallback if a rare multi-item
           // drop overflows the slot the tick-top guard reserved).
@@ -111,7 +113,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
           hunterRef.current = {
             ...hunterRef.current,
             totalActions: (hunterRef.current.totalActions || 0) + 1,
-            totalXP: (hunterRef.current.totalXP || 0) + ev.xp
+            totalXP: (hunterRef.current.totalXP || 0) + bankedXp
           }
           if (ev.actionId) recordGameEvent?.({ kind: 'hunter_hunt', actionId: ev.actionId, count: 1 })
         }
@@ -228,7 +230,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
                   <SkillActionRow
                     icon={<SkillIcon skill="hunter" size={26} />}
                     title={action.name}
-                    meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {action.description}</>}
+                    meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {grindmanXP(action.xp, isGrindman)} XP · {action.description}</>}
                     active={activeTask?.type === 'hunter' && activeTask.action?.id === action.id}
                     locked={!available}
                     lockBadge={`LV ${action.level}`}
@@ -269,7 +271,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Action Info</h4>
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Level Required</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedActionInfo.level}</span></div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>XP Granted</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedActionInfo.xp}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>XP Granted</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{grindmanXP(selectedActionInfo.xp, isGrindman)}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Time per Action</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{(selectedActionInfo.ticks * 0.6).toFixed(1)}s</span></div>
               </div>
             </div>
@@ -389,7 +391,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
             <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Action Info</h4>
             <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
               <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Level Required</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedActionInfo.level}</span></div>
-              <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>XP Granted</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedActionInfo.xp}</span></div>
+              <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>XP Granted</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{grindmanXP(selectedActionInfo.xp, isGrindman)}</span></div>
               <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Time per Action</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{(selectedActionInfo.ticks * 0.6).toFixed(1)}s</span></div>
             </div>
           </div>

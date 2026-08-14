@@ -46,9 +46,11 @@ export default function FarmingScreen({ initialLocationId, onBack }) {
       return
     }
     updateFarming(nextState)
-    if (totalXp > 0) grantXP('farming', totalXp)
+    // The modal reports what grantXP BANKED — one call, so its return is the
+    // whole harvest's XP after the account cut.
+    const bankedXp = totalXp > 0 ? grantXP('farming', totalXp) : 0
     for (const [itemId, qty] of Object.entries(items)) addToBank(itemId, qty)
-    setResultModal({ title: 'Harvest All Complete', xp: totalXp, items, action: 'Harvested' })
+    setResultModal({ title: 'Harvest All Complete', xp: bankedXp, items, action: 'Harvested' })
   }
 
   const cropGroups = {
@@ -95,10 +97,10 @@ export default function FarmingScreen({ initialLocationId, onBack }) {
       }
     }
     for (const [seedId, qty] of Object.entries(bankUsage)) updateBankDirect({ [seedId]: -qty })
-    if (totalXp > 0) grantXP('farming', totalXp)
+    const bankedXp = totalXp > 0 ? grantXP('farming', totalXp) : 0
     setPlantAllOpen(false)
     addToast('Planted all selected crops', 'success')
-    setResultModal({ title: 'Plant All Complete', xp: totalXp, items: consumed, action: 'Planted' })
+    setResultModal({ title: 'Plant All Complete', xp: bankedXp, items: consumed, action: 'Planted' })
   }
 
   if (selectedLocation) {

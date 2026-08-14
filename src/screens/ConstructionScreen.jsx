@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
+import { grindmanXP } from '../engine/grindman.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
@@ -18,7 +19,7 @@ export default function ConstructionScreen({ onBack, onStopBack }) {
   const {
     stats, inventory, bank,
     grantXP, updateInventory, updateBankDirect, addToast,
-    setActiveTask, requestActivityStart, activeTask
+    setActiveTask, requestActivityStart, activeTask, isGrindman
   } = useGame()
 
   const constructionLevel = getLevelFromXP(stats.construction?.xp || 0)
@@ -136,7 +137,9 @@ export default function ConstructionScreen({ onBack, onStopBack }) {
             }
           }
 
-          grantXP('construction', ev.xp)
+          // Tally corrected to the banked figure — see MagicScreen.
+          const bankedXp = grantXP('construction', ev.xp)
+          skillingRef.current = { ...skillingRef.current, totalXP: (skillingRef.current.totalXP || 0) - ev.xp + bankedXp }
         }
       }
 
@@ -196,7 +199,7 @@ export default function ConstructionScreen({ onBack, onStopBack }) {
               icon={<SkillIcon skill="construction" size={26} />}
               title={action.name}
               meta={<>
-                <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {(action.ticks * 0.6).toFixed(1)}s · Needs: {matName}
+                <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {grindmanXP(action.xp, isGrindman)} XP · {(action.ticks * 0.6).toFixed(1)}s · Needs: {matName}
                 {available && !hasMats && <span class="block text-[var(--color-blood-ember)] mt-1">No {matName} in inventory or bank</span>}
               </>}
               chip={<>{totalMats.toLocaleString()} avail</>}

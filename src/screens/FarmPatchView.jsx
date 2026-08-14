@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
+import { grindmanXP } from '../engine/grindman.js'
 import { getPatchesForLocation, getPlantableCropOptions, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel, getEffectiveStage, plantCrop, harvestCrop, herbYieldMultiplier } from '../engine/farming.ts'
 import { onTick } from '../engine/tick.js'
 import ProgressBar from '../components/ProgressBar.jsx'
@@ -15,7 +16,7 @@ const patchViewTypeLabels = {
 }
 
 export default function FarmPatchView({ locationId, farmingLevel, onBack, backLabel = 'Farms' }) {
-  const { inventory, bank, equipment, farming, updateFarming, grantXP, removeFromInventory, updateBankDirect, addToBank, addToast, itemsData } = useGame()
+  const { inventory, bank, equipment, farming, updateFarming, grantXP, removeFromInventory, updateBankDirect, addToBank, addToast, itemsData, isGrindman } = useGame()
 
   const location = farmingData.locations.find(l => l.id === locationId)
   const [patchStates, setPatchStates] = useState([])
@@ -138,7 +139,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack, backLa
                         {crop.icon} {crop.name}
                       </div>
                       <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-                        Lv {crop.level} · {crop.plantXp} XP plant · {crop.harvestXp} XP harvest
+                        Lv {crop.level} · {grindmanXP(crop.plantXp, isGrindman)} XP plant · {grindmanXP(crop.harvestXp, isGrindman)} XP harvest
                       </div>
                       <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
                         Growth: {formatGrowthTime(crop.growthTimeMs)}
@@ -219,6 +220,7 @@ function PatchCard({ patchData, onClick }) {
 }
 
 function PatchDetails({ patch, onHarvest }) {
+  const { isGrindman } = useGame()
   const crop = getCropDef(patch.cropId)
   if (!crop) return null
 
@@ -242,11 +244,11 @@ function PatchDetails({ patch, onHarvest }) {
         </div>
         <div class="flex justify-between text-sm">
           <span class="text-[var(--color-parchment)] opacity-60">Plant XP</span>
-          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{crop.plantXp}</span>
+          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{grindmanXP(crop.plantXp, isGrindman)}</span>
         </div>
         <div class="flex justify-between text-sm">
           <span class="text-[var(--color-parchment)] opacity-60">Harvest XP</span>
-          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{crop.harvestXp}</span>
+          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{grindmanXP(crop.harvestXp, isGrindman)}</span>
         </div>
       </div>
 

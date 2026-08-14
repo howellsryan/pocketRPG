@@ -12,6 +12,7 @@ import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
+import { grindmanXP } from '../engine/grindman.js'
 import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillingActionBlockedByFullInventory, usesShardglassGatherTool, resolveShardglassToolSource, consumeShardglassGatherCharge } from '../engine/skilling.js'
 import { applySkillYield } from '../engine/skillingPerks.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
@@ -65,7 +66,7 @@ function calculateRemainingActions(action, inventory, bank) {
 // `onStopBack` (from App): where Stop & Back returns to — the place-map origin
 // when there is one, otherwise the previous screen.
 export default function SkillingScreen({ initialSkillId, initialActionId, initialMasterId, initialLocationId, idleResult, onNavigate, onBack, onStopBack }) {
-  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateEquipment, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, recordGameEvent, signalInventoryFull, resolveInventoryFull } = useGame()
+  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateEquipment, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, recordGameEvent, signalInventoryFull, resolveInventoryFull, isGrindman } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -384,10 +385,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
           // Grant XP
           const xpMultiplier = getEquippedSkillXpMultiplier(state.skill, equipment, itemsData)
           const multipliedXP = Math.floor(ev.xp * xpMultiplier)
-          grantXP(state.skill, multipliedXP)
-          // Keep totalXP display in sync — processSkillingTick added base ev.xp; correct to multiplied value
-          if (xpMultiplier !== 1) {
-            skillingRef.current = { ...skillingRef.current, totalXP: skillingRef.current.totalXP - ev.xp + multipliedXP }
+          // Keep totalXP in sync — processSkillingTick added the base ev.xp, and
+          // what actually landed is the gear multiplier AND the account cut, so
+          // the banked figure is the only correction that covers both.
+          const bankedXp = grantXP(state.skill, multipliedXP)
+          if (bankedXp !== ev.xp) {
+            skillingRef.current = { ...skillingRef.current, totalXP: skillingRef.current.totalXP - ev.xp + bankedXp }
           }
           if (state.skill === 'dungeoneering' && action.category !== 'reward') {
             const tokenReward = calculateDungeoneeringTokensForAction(action)
@@ -814,7 +817,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
               action,
             )
             const xpMultiplier = getEquippedSkillXpMultiplier(selectedSkill, equipment, itemsData)
-            const displayXP = xpMultiplier !== 1 ? Math.floor(action.xp * xpMultiplier) : action.xp
+            const displayXP = grindmanXP(xpMultiplier !== 1 ? Math.floor(action.xp * xpMultiplier) : action.xp, isGrindman)
             const productItem = action.product ? itemsData[action.product] : null
             // Locked = the level/construction gate isn't met. Disabled = gated by
             // missing materials/runes/items/tokens (the row still explains why).
