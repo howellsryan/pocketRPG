@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import { questRequirementMet } from '../engine/questGates.js'
+import { grindmanXP } from '../engine/grindman.js'
 import GameIcon from './GameIcon.jsx'
 import ActivityIcon from './ActivityIcon.jsx'
 import { useGame } from '../state/gameState.jsx'
@@ -126,7 +127,7 @@ export default function ActivityPickerModal({ kind, refs, label, onClose, onActi
  * quest board's detail view.
  */
 function QuestInfoModal({ questId, onClose }) {
-  const { stats, completedQuests, itemsData } = useGame()
+  const { stats, completedQuests, itemsData, isGrindman } = useGame()
   const quest = questsData.find((q) => q.id === questId)
   if (!quest) return null
 
@@ -156,7 +157,7 @@ function QuestInfoModal({ questId, onClose }) {
           <div class="text-[12px] flex flex-col gap-1">
             <div>🪙 <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{quest.coinReward.toLocaleString()}</span> coins</div>
             {Object.entries(quest.xpReward || {}).map(([skill, xp]) => (
-              <div key={skill}>⭐ <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{xp.toLocaleString()}</span> {skill} XP</div>
+              <div key={skill}>⭐ <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{grindmanXP(xp, isGrindman).toLocaleString()}</span> {skill} XP</div>
             ))}
             {itemUnlockNames.length > 0 && (
               <div>🎁 Unlocks: <span class="text-[var(--color-gold)]">{itemUnlockNames.join(', ')}</span></div>

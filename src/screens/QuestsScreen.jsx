@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { questRequirementMet } from '../engine/questGates.js'
+import { grindmanXP } from '../engine/grindman.js'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import Modal from '../components/Modal.jsx'
@@ -377,6 +378,10 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, worldLoca
 }
 
 function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocation, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
+  // Read here rather than threaded down from QuestsScreen: this body has two
+  // entry points (the desktop pane and the modal), so a prop would be four more
+  // signatures to keep in step for one number.
+  const { isGrindman } = useGame()
   const completed = completedQuests.has(quest.id)
   const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
   const skillEntries = Object.entries(quest.skillRequirements || {})
@@ -415,7 +420,7 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocat
             {Object.entries(quest.xpReward || {}).map(([skill, xp]) => (
               <div key={skill}>
                 ⭐ <span class="font-[var(--font-mono)] text-[var(--color-gold)]">
-                  {xp.toLocaleString()}
+                  {grindmanXP(xp, isGrindman).toLocaleString()}
                 </span> {skill} XP
               </div>
             ))}

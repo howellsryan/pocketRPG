@@ -544,7 +544,7 @@ function GameApp() {
           if (amount > 0) summary.aggregatedXpReward[skill] = (summary.aggregatedXpReward[skill] || 0) + amount
         }
       } else {
-        emitQuestCompletionReveal([quest], xpReward, coinReward, tracker.result())
+        emitQuestCompletionReveal([quest], xpReward, coinReward, tracker.result(), { isGrindman })
       }
     }
 
@@ -1176,7 +1176,7 @@ function GameApp() {
             }
 
             // Quest completions reveal like clue solves (no idle-result modal).
-            emitQuestCompletionReveal(completedQuests, aggregatedXpReward, coinsGained, levelTracker.result())
+            emitQuestCompletionReveal(completedQuests, aggregatedXpReward, coinsGained, levelTracker.result(), { isGrindman })
             schedulePushSave(getSnapshot())
             return
           }
@@ -1886,7 +1886,7 @@ function GameApp() {
     // server's older save) before the debounced autosave lands.
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.QUEST_COMPLETE)
     if (idleResult.questCascade) {
-      emitQuestCompletionReveal(idleResult.completedQuests, idleResult.aggregatedXpReward, idleResult.coinsGained, idleResult.levelUps)
+      emitQuestCompletionReveal(idleResult.completedQuests, idleResult.aggregatedXpReward, idleResult.coinsGained, idleResult.levelUps, { isGrindman })
       return
     }
     setIdleResult(idleResult)
@@ -2640,7 +2640,7 @@ function GameApp() {
         // Persist first, then reveal like a clue solve — no idle-result modal
         // (a conflict rolls the skip back, so nothing to celebrate).
         await persistSkipThenReveal(null)
-        if (!isSaveConflict()) emitQuestCompletionReveal(completedQuests, aggregatedXpReward, coinsGained, levelTracker.result())
+        if (!isSaveConflict()) emitQuestCompletionReveal(completedQuests, aggregatedXpReward, coinsGained, levelTracker.result(), { isGrindman })
         return
       }
 
@@ -2734,7 +2734,7 @@ function GameApp() {
           // Persist first, then reveal quest completions like a clue solve — no
           // idle-result modal (a conflict rolls the skip back).
           await persistSkipThenReveal(null)
-          if (!isSaveConflict()) emitQuestCompletionReveal(questSummary.completedQuests, questSummary.aggregatedXpReward, questSummary.coinsGained, questSummary.levelTracker.result())
+          if (!isSaveConflict()) emitQuestCompletionReveal(questSummary.completedQuests, questSummary.aggregatedXpReward, questSummary.coinsGained, questSummary.levelTracker.result(), { isGrindman })
           return
         }
       }
@@ -3771,6 +3771,7 @@ function GameApp() {
           questName={pendingXpChoices[0].questName}
           stats={stats}
           onComplete={handleXpChoiceComplete}
+          isGrindman={isGrindman}
         />
       )}
 

@@ -1,4 +1,5 @@
 import { killRevealRewards } from './lootModal.js'
+import { grindmanXP } from '../engine/grindman.js'
 
 /**
  * Fire the reward-reveal overlay for a completed clue/minigame/quest. The
@@ -92,8 +93,15 @@ export function emitLevelUpReveal(levelUps) {
  * every quest completion path (live single completions, cascades, skips,
  * offline catch-up) — this reveal (plus the full-screen level-up overlay when
  * `levelUps` is non-empty) is the only completion UI for quests.
+ *
+ * Every caller hands over the quest's AUTHORED reward, so the account cut is
+ * taken here and nowhere else on this route: cutting it at the four call sites
+ * that build the reward map instead would be four rules to keep in step, and
+ * one of them (the boot cascade) builds its map in gameState.jsx, a file away
+ * from the emit. `grindmanXP` is the same function grantXP banks through, so
+ * the number on the card is the number that reached the skill.
  */
-export function emitQuestCompletionReveal(completedQuests, xpReward, coinsGained, levelUps = []) {
+export function emitQuestCompletionReveal(completedQuests, xpReward, coinsGained, levelUps = [], { isGrindman = false } = {}) {
   const count = completedQuests?.length || 0
   if (count === 0) return
   const title = count > 1
@@ -102,7 +110,7 @@ export function emitQuestCompletionReveal(completedQuests, xpReward, coinsGained
   const rewards = []
   if ((coinsGained || 0) > 0) rewards.push({ itemId: 'coins', quantity: coinsGained })
   for (const [skill, xp] of Object.entries(xpReward || {})) {
-    const amount = Math.floor(Number(xp) || 0)
+    const amount = grindmanXP(Math.floor(Number(xp) || 0), isGrindman)
     if (amount > 0) rewards.push({ skill, xp: amount })
   }
   emitRewardReveal(title, '🏆', rewards, levelUps)
