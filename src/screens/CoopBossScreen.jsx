@@ -43,7 +43,7 @@ import monstersData from '../data/monsters.json'
  * way and must not care which.
  */
 export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoin, onDeath, addToast }) {
-  const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell, revertOneLifeMode } = useGame()
+  const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell, revertOneLifeMode, isGrindman } = useGame()
   const [state, setState] = useState(null)
   const [error, setError] = useState(null)
   const [bossSplats, setBossSplats] = useState([])
@@ -125,6 +125,12 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     onDeath?.()
   }, [me?.status, onDeath])
 
+  // Through a ref for the same reason the kill branch reads names off the beat:
+  // onBeat is captured once for the session, so a render value read inside it
+  // is whatever it was at mount.
+  const grindmanRef = useRef(isGrindman)
+  grindmanRef.current = isGrindman
+
   const onBeat = useCallback(({ state: nextState, events }) => {
     const at = Date.now()
     if (nextState) {
@@ -147,7 +153,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     }
     if (!events?.length) return
 
-    emitXpDrops(xpDropsFromCombatEvents(events, characterId))
+    emitXpDrops(xpDropsFromCombatEvents(events, characterId, { isGrindman: grindmanRef.current }))
 
     const chat = chatLinesFromCoopEvents(events, chatIdRef.current)
     if (chat.lines.length > 0) {

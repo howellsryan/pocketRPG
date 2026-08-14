@@ -682,7 +682,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       setCombat({ ...combatState })
 
       // Hit splats replace the chat-style "You hit X" / "Monster hits X" lines.
-      emitXpDrops(xpDropsFromCombatEvents(events))
+      emitXpDrops(xpDropsFromCombatEvents(events, null, { isGrindman }))
 
       const tickSplats = splatsFromCombatEvents(events)
       pushSplats(setMonsterSplats, tickSplats.monster)

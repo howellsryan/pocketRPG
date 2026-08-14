@@ -3,7 +3,8 @@
 // hits were yours, so the characterId filter is load-bearing, not cosmetic.
 
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { xpDropsFromCombatEvents, emitXpDrops } from '../src/utils/xpDrops.js'
+import { xpDropsFromCombatEvents, emitXpDrops, xpDropAmount } from '../src/utils/xpDrops.js'
+import { grindmanXP } from '../src/engine/grindman.js'
 
 afterEach(() => { vi.restoreAllMocks() })
 
@@ -63,6 +64,60 @@ describe('xpDropsFromCombatEvents', () => {
   })
 })
 
+// The engine has no account type, so its events carry the base rate: 4 XP per
+// damage. A Grindman banks half of that, and a drop that reads the base rate is
+// reporting XP the player never got.
+describe('xpDropsFromCombatEvents for a Grindman', () => {
+  it('shows the halved gain, not the base rate', () => {
+    const events = [{ type: 'xp', xpSkills: { attack: 4, hitpoints: 1 } }]
+    expect(xpDropsFromCombatEvents(events, null, { isGrindman: true }))
+      .toEqual([{ skill: 'attack', amount: 2 }])
+  })
+
+  it('cuts each gain before aggregating, matching what grantXP banks per event', () => {
+    const events = [
+      { type: 'xp', xpSkills: { strength: 5 } },
+      { type: 'xp', xpSkills: { strength: 5 } },
+    ]
+    // Per gain: floor(2.5) + floor(2.5) = 4. Halving the 10 total would read 5.
+    expect(xpDropsFromCombatEvents(events, null, { isGrindman: true }))
+      .toEqual([{ skill: 'strength', amount: 4 }])
+  })
+
+  it('shows no drop for a gain the cut rounds away', () => {
+    expect(xpDropsFromCombatEvents([{ type: 'xp', xpSkills: { hitpoints: 1 } }], null, { isGrindman: true }))
+      .toEqual([])
+  })
+
+  it('leaves a standard account untouched', () => {
+    const events = [{ type: 'xp', xpSkills: { attack: 4, hitpoints: 1 } }]
+    expect(xpDropsFromCombatEvents(events, null, { isGrindman: false }))
+      .toEqual(xpDropsFromCombatEvents(events))
+  })
+
+  it("cuts the viewer's own hits in a co-op fight, where events carry a character id", () => {
+    const events = [
+      { type: 'xp', characterId: 1, xpSkills: { magic: 20 } },
+      { type: 'xp', characterId: 2, xpSkills: { magic: 20 } },
+    ]
+    expect(xpDropsFromCombatEvents(events, 1, { isGrindman: true }))
+      .toEqual([{ skill: 'magic', amount: 10 }])
+  })
+})
+
+describe('xpDropAmount', () => {
+  it('is the account grindman cut, floored to what the save stores', () => {
+    expect(xpDropAmount(9, true)).toBe(grindmanXP(9, true))
+    expect(xpDropAmount(9, true)).toBe(4)
+    expect(xpDropAmount(9, false)).toBe(9)
+  })
+
+  it('reads a missing or unusable amount as nothing', () => {
+    expect(xpDropAmount(undefined, true)).toBe(0)
+    expect(xpDropAmount('lots', false)).toBe(0)
+  })
+})
+
 describe('emitXpDrops', () => {
   // Node test environment: no DOM, so stand in for the browser globals the
   // overlay listens on.
@@ -95,6 +150,13 @@ describe('emitXpDrops', () => {
     emitXpDrops([])
     emitXpDrops(null)
     expect(dispatch).not.toHaveBeenCalled()
+  })
+
+  it('skips a drop the account cut rounded away rather than flashing "+0"', () => {
+    const dispatch = stubWindow()
+    emitXpDrops([{ skill: 'hitpoints', amount: 0 }, { skill: 'attack', amount: 2 }])
+    expect(dispatch).toHaveBeenCalledTimes(1)
+    expect((dispatch.mock.calls[0][0] as CustomEvent).detail).toEqual({ skill: 'attack', amount: 2 })
   })
 
   it('does not throw when there is no window at all (SSR/tests)', () => {

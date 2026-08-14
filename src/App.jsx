@@ -81,6 +81,7 @@ import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootRes
 import GameIcon from './components/GameIcon.jsx'
 import OneLifeIcon from './components/OneLifeIcon.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
+import { emitXpDrops } from './utils/xpDrops.js'
 import { openWorld } from './utils/helpers.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
@@ -2221,13 +2222,12 @@ function GameApp() {
     if (result.xpGained) {
       for (const [skill, xp] of Object.entries(result.xpGained)) {
         if (skill !== 'combat' && skill !== 'any' && xp > 0) {
-          grantXP(skill, xp)
           // XP-drop overlay reflects BACKGROUND progress only. On the activity's
           // own screen the screen shows its own XP feedback, so we don't emit
           // here when a screen is actively driving (it never reaches this path).
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('pocketrpg:xp-gain', { detail: { skill, amount: xp } }))
-          }
+          // The drop shows what grantXP BANKED, not what the sim asked for: the
+          // two differ by the account type's cut.
+          emitXpDrops([{ skill, amount: grantXP(skill, xp) }])
         }
       }
     }
