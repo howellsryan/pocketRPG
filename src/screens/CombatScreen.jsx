@@ -60,7 +60,7 @@ import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
-import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
+import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal, killPresentsFullModal } from '../utils/lootModal.js'
 import { emitKillReveal } from '../utils/rewardReveal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
@@ -681,13 +681,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       combatRef.current = combatState
       setCombat({ ...combatState })
 
-      // Hit splats replace the chat-style "You hit X" / "Monster hits X" lines.
-      emitXpDrops(xpDropsFromCombatEvents(events, null, { isGrindman }))
-
       const tickSplats = splatsFromCombatEvents(events)
       pushSplats(setMonsterSplats, tickSplats.monster)
       pushSplats(setAddSplats, tickSplats.add)
       pushSplats(setPlayerSplats, tickSplats.player)
+
+      // Filled from what grantXP BANKED below, so the floating drop and the
+      // skill can never disagree — the engine's number is pre-account-type.
+      const bankedXp = {}
 
       for (const ev of events) {
         if (ev.type === 'specialHit') {
@@ -784,7 +785,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         if (ev.type === 'xp') {
           if (ev.xpSkills && typeof ev.xpSkills === 'object') {
             for (const [skill, xp] of Object.entries(ev.xpSkills)) {
-              if (xp > 0) grantXP(skill, xp)
+              if (xp > 0) bankedXp[skill] = (bankedXp[skill] || 0) + grantXP(skill, xp)
             }
           }
         }
@@ -1344,6 +1345,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
       }
 
+      emitXpDrops(dropsFromBankedXp(bankedXp))
     })
 
     return unsub

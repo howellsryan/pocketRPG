@@ -1000,8 +1000,16 @@ function applyConsumptionEvents(member, engineEvents, engine, itemsData) {
     } else if (ev.type === 'xp' && ev.xpSkills) {
       // The room's XP funnel — Grindman's cut lands here, on the member, because
       // a room can hold a mix of account types against one boss.
+      //
+      // The event is rewritten to the banked figure rather than left carrying
+      // the engine's roll, because this same object is published to the member
+      // (processCoopTick spreads it) and drives their floating XP drop. Left
+      // raw, a Grindman watched +4 Attack float up for XP the room banked 2 of.
+      // The slayer credit below reports `bankedXp` for the same reason.
       for (const [skill, amount] of Object.entries(ev.xpSkills)) {
-        member.xpGained[skill] = (member.xpGained[skill] || 0) + grindmanXP(Number(amount) || 0, member.isGrindman === true)
+        const banked = grindmanXP(Number(amount) || 0, member.isGrindman === true)
+        member.xpGained[skill] = (member.xpGained[skill] || 0) + banked
+        ev.xpSkills[skill] = banked
       }
     }
   }

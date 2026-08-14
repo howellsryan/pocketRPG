@@ -454,6 +454,25 @@ describe('coopBossEngine — XP', () => {
       }
     }
   })
+
+  // The published event drives the member's floating XP drop, so it has to be
+  // the banked figure: a Grindman watching the engine's roll float up sees
+  // twice what the room wrote into their save.
+  it('publishes the XP a grindman banked, not the roll the engine made', () => {
+    alwaysHit()
+    const state = joinedState([1, 2], { 1: { player: { is_grindman: true } } })
+    const out = processCoopTick(state, [], deps, Date.now())
+
+    const xpEventFor = (characterId: number) =>
+      (out.events as any[]).find((ev) => ev.type === 'xp' && ev.characterId === characterId)
+
+    const grindman = xpEventFor(1)
+    const ordinary = xpEventFor(2)
+    expect(grindman?.xpSkills.strength).toBe(Math.floor(ordinary.xpSkills.strength / 2))
+    // Every skill on the event agrees with what the member actually banked.
+    expect(grindman?.xpSkills).toEqual(out.stateNext.members['1'].xpGained)
+    expect(ordinary?.xpSkills).toEqual(out.stateNext.members['2'].xpGained)
+  })
 })
 
 describe('equip intent', () => {

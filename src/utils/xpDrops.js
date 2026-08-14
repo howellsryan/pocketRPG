@@ -9,36 +9,36 @@
 // the viewer's own characterId is what makes an XP drop mean "that hit was
 // mine" — the shared boss HP bar cannot tell you that on its own.
 //
-// Combat events carry the BASE XP: the engine has no account type, and the
-// world server applies its own cut on the way out (world/server/tick.ts). So
-// the account-type cut lands here, at the display, the same as grantXP applies
-// it at the bank — a drop that reads +4 for a Grindman who banked 2 is a lie
-// about the mode the player chose.
+// Every number reaching here is already what the player BANKED, never what the
+// engine rolled: the engine has no account type, so a Grindman's half-XP cut is
+// taken at the funnel that writes the XP (grantXP on the client, the co-op
+// room's applyConsumptionEvents, grantSessionXp in the world) and the event
+// carries the result. Nothing on this side re-derives it — a display that does
+// its own arithmetic is a second rule to keep in step with the first.
 
-import { grindmanXP } from '../engine/grindman.js'
-
-/**
- * The number a drop shows: what this account will actually bank. Applied per
- * gain and never to a total, because grantXP and the co-op room both floor per
- * gain — halving an aggregated 5 + 5 would show +5 against the 4 banked.
- */
-export function xpDropAmount(amount, isGrindman) {
-  return Math.floor(grindmanXP(Number(amount) || 0, isGrindman === true))
-}
-
-export function xpDropsFromCombatEvents(events, selfCharacterId, { isGrindman = false } = {}) {
+export function xpDropsFromCombatEvents(events, selfCharacterId) {
   const totals = new Map()
   const self = selfCharacterId == null ? null : Number(selfCharacterId)
   for (const ev of events || []) {
     if (!ev || ev.type !== 'xp' || !ev.xpSkills || typeof ev.xpSkills !== 'object') continue
     if (self !== null && Number(ev.characterId) !== self) continue
     for (const [skill, amount] of Object.entries(ev.xpSkills)) {
-      const gained = xpDropAmount(amount, isGrindman)
+      const gained = Math.floor(Number(amount) || 0)
       if (gained <= 0) continue
       totals.set(skill, (totals.get(skill) || 0) + gained)
     }
   }
   return [...totals.entries()].map(([skill, amount]) => ({ skill, amount }))
+}
+
+/**
+ * Drops from a tick's banked XP, keyed by skill — the solo fight's route, where
+ * grantXP hands back what it wrote and nothing has to read the events twice.
+ */
+export function dropsFromBankedXp(bankedXp) {
+  return Object.entries(bankedXp || {})
+    .map(([skill, amount]) => ({ skill, amount: Math.floor(Number(amount) || 0) }))
+    .filter((drop) => drop.amount > 0)
 }
 
 export function emitXpDrops(drops) {
