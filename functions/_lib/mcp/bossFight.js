@@ -15,9 +15,9 @@ import { combatTypeFromEquipment } from '../../../src/engine/combatant.js'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { normaliseIdleCombatSetup, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
 import { GameApiError } from '../game/errors.js'
-import { grindmanXP, isGrindmanSave } from '../../../src/engine/grindman.js'
+import { isGrindmanSave } from '../../../src/engine/grindman.js'
+import { bankXp } from '../../../src/engine/xpBank.js'
 
-const XP_CAP = 200000000
 // Safety bound on the loop. A single boss dies in well under this many ticks
 // for any viable setup; the cap only stops a hopeless (0-damage) stalemate.
 const MAX_FIGHT_TICKS = 20000
@@ -216,11 +216,7 @@ export function applyBossFightOutcome(save, outcome) {
 
   const isGrindman = isGrindmanSave(save)
   for (const [skill, xp] of Object.entries(outcome.xpGained || {})) {
-    const amount = Math.floor(grindmanXP(Number(xp) || 0, isGrindman))
-    if (amount > 0 && save.stats[skill]) {
-      const newXP = Math.min((save.stats[skill].xp || 0) + amount, XP_CAP)
-      save.stats[skill] = { ...save.stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
-    }
+    bankXp(save.stats, skill, xp, { isGrindman })
   }
 
   save.settings.currentHP = outcome.died
