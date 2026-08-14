@@ -4,6 +4,7 @@ import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/a
 import { pullSave, applyCloudSave } from '../cloud/sync.js'
 import BackLink from '../components/BackLink.jsx'
 import Card from '../components/Card.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import { LootResultRow } from '../components/LootResultModal.jsx'
 import { getLootTotalValue, getItemUnitValue } from '../utils/itemValue.js'
 import { grimReaperCost } from '../engine/grimReaper.js'
@@ -77,7 +78,7 @@ export default function GrimReaperScreen({ onBack, loadGame }) {
       <BackLink onClick={onBack} className="mb-3" />
 
       <h2 class="flex items-center gap-2 font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-0.5">
-        <span class="text-xl leading-none">💀</span>
+        <GameIcon iconKey="grim_reaper_reclaim" size={30} title="Grim Reaper" />
         Grim Reaper
       </h2>
       <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-4">
@@ -86,7 +87,7 @@ export default function GrimReaperScreen({ onBack, loadGame }) {
 
       {!stash && (
         <Card className="p-6 text-center">
-          <div class="text-3xl mb-2">💀</div>
+          <div class="flex justify-center mb-2"><GameIcon iconKey="grim_reaper_reclaim" size={64} title="Grim Reaper" /></div>
           <div class="text-sm text-[var(--color-parchment)] opacity-60">The Reaper holds nothing of yours.</div>
         </Card>
       )}
