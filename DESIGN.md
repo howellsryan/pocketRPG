@@ -72,6 +72,7 @@ Rules:
 - *The Accent Has Two Registers Rule.* `--accent` is the deep ember (stat values on parchment); `--accent-bright` is the plain ember. They differ in light and converge in dark. `--fm-ember-deep` reads **1.8:1** on iron and `--fm-ink-faint` **4.2:1** — neither may be used as text there.
 - *The Texture Multiplies Rule.* `parchment.webp` *is* the vellum tone so it can sit opaque; `iron.webp` is a mid-brown and would erase whatever surface it covers, so dark blends it (`--surface-blend: multiply`). Any rule pairing `--surface-tex` with a colour needs `background-blend-mode: var(--surface-blend)`.
 - *The Always-Dark Exception.* Panels that are dark in **both** themes — the combat log, royal raid tags, the ember chat badge, `.clog-sheet.is-done`, `.fm-btn--iron`, `.fm-on-iron` — keep literal parchment text. They are allowlisted in `tests/theme.test.ts`; that list may shrink, never grow.
+- *The Always-Vellum Exception.* The mirror case: chrome sitting on the painted world-map board (`.wm-plate` name plates, `.wm-ctl` zoom keys) is on vellum art in **both** themes, so it pins ink, face and accent in one escape block beside `.fm-on-iron` and reads `--fm-btn-*` from there. A rule that hard-codes a light face must never take its ink from `--text-strong`.
 - The pre-login landing/auth screens and the admin portal stay light-only and off the semantic layer.
 
 **Game-data tints.** Equipment-tier (`--tier-*`) and potion (`--potion-*`) variables color item icons — they are data encodings, not brand colors; never repurpose them for chrome.

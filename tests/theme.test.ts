@@ -250,6 +250,26 @@ describe('themed rules do not regain parchment literals', () => {
     expect(offenders).toEqual([])
   })
 
+  // The inverse offender the guards above cannot see: a rule that hard-codes a
+  // LIGHT face and then takes its ink from the themed layer. In dark that is
+  // parchment ink on a parchment plate — the world map's city names and zoom
+  // keys rendered as blank vellum boxes. They pin their ink instead.
+  it('keeps the world map board on pinned vellum ink, not the page ramp', () => {
+    const rule = (selector: string) => {
+      const start = css.indexOf(`\n${selector} {`)
+      expect(start, `missing rule: ${selector}`).toBeGreaterThan(-1)
+      return css.slice(start, css.indexOf('}', start))
+    }
+    for (const selector of ['.wm-name', '.wm-ctl button']) {
+      const body = rule(selector)
+      expect(body, `${selector} must pin its ink`).toContain('var(--fm-btn-ink)')
+      expect(body, `${selector} must not follow the page ramp`).not.toContain('var(--text-strong)')
+    }
+    const pin = rule('.wm-plate,\n.wm-ctl')
+    expect(declaredTokens(pin).has('--fm-btn-ink')).toBe(true)
+    expect(pin).toContain('--accent: var(--fm-ember-deep)')
+  })
+
   it('leaves no raw vellum hex in a themed rule', () => {
     const offenders = Array.from(
       themedRegion().matchAll(/^.*#(?:e6d8b6|e9dcbd|f3ead0|d8c69e)\b.*$/gim),
