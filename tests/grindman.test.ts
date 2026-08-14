@@ -107,6 +107,30 @@ describe('grindman XP lands once, where XP enters the stats', () => {
     applyTaskResult(state, { xpGained: { mining: 1000 } } as any, 'skill')
     expect(state.stats.mining.xp).toBe(1000)
   })
+
+  // The catch-up modal, the daily-task feed and the MCP claim all report the
+  // result of a claim. Reporting the SIM's number while banking half is a
+  // discrepancy the player reads on screen, so the applier hands back what it
+  // actually wrote.
+  it('reports the XP it banked, not the XP it was offered', () => {
+    const state: any = { stats: { mining: { skill: 'mining', xp: 0, level: 1 } } }
+    const applied: any = applyTaskResult(state, { xpGained: { mining: 999 } } as any, 'skill', { isGrindman: true })
+    expect(applied.xpBanked).toEqual({ mining: 499 })
+    expect(state.stats.mining.xp).toBe(499)
+  })
+
+  it('reports the full amount for an ordinary account', () => {
+    const state: any = { stats: { mining: { skill: 'mining', xp: 0, level: 1 } } }
+    const applied: any = applyTaskResult(state, { xpGained: { mining: 999 } } as any, 'skill')
+    expect(applied.xpBanked).toEqual({ mining: 999 })
+  })
+
+  it('omits a skill whose halved gain rounds away, so nothing is reported as earned', () => {
+    const state: any = { stats: { mining: { skill: 'mining', xp: 0, level: 1 } } }
+    const applied: any = applyTaskResult(state, { xpGained: { mining: 1 } } as any, 'skill', { isGrindman: true })
+    expect(applied.xpBanked).toEqual({})
+    expect(state.stats.mining.xp).toBe(0)
+  })
 })
 
 // The drop roll is the half of the mode that moves value, so it is checked on

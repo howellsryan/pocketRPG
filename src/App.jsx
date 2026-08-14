@@ -1223,15 +1223,21 @@ function GameApp() {
             }
           }
 
-          // Apply XP (skip combat/any — those require player choice via modal)
+          // Apply XP (skip combat/any — those require player choice via modal).
+          // grantXP returns what it BANKED, and sim.xpGained becomes that, because
+          // the same object is spread into the catch-up modal below: a Grindman's
+          // halved XP has to be the number the summary shows.
           if (savedTask.type !== 'quest' && sim.xpGained) {
+            const bankedXp = {}
             for (const [skill, xp] of Object.entries(sim.xpGained)) {
-              if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
+              if (skill !== 'combat' && skill !== 'any' && xp > 0) bankedXp[skill] = grantXP(skill, xp)
+              else bankedXp[skill] = xp
             }
+            sim.xpGained = bankedXp
           }
           // Apply slayer XP from combat simulation
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
-            grantXP('slayer', sim.slayerXpGained)
+            sim.slayerXpGained = grantXP('slayer', sim.slayerXpGained)
           }
           // Apply items. The simulation ran on the IDB snapshot read above;
           // resolving its result against LIVE holdings is what stops a stale
@@ -2878,15 +2884,21 @@ function GameApp() {
             }
           }
 
-          // Apply XP (skip combat/any — those require player choice via modal)
+          // Apply XP (skip combat/any — those require player choice via modal).
+          // grantXP returns what it BANKED, and sim.xpGained becomes that, because
+          // the same object is spread into the catch-up modal below: a Grindman's
+          // halved XP has to be the number the summary shows.
           if (savedTask.type !== 'quest' && sim.xpGained) {
+            const bankedXp = {}
             for (const [skill, xp] of Object.entries(sim.xpGained)) {
-              if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
+              if (skill !== 'combat' && skill !== 'any' && xp > 0) bankedXp[skill] = grantXP(skill, xp)
+              else bankedXp[skill] = xp
             }
+            sim.xpGained = bankedXp
           }
           // Apply slayer XP from combat simulation
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
-            grantXP('slayer', sim.slayerXpGained)
+            sim.slayerXpGained = grantXP('slayer', sim.slayerXpGained)
           }
           // Apply items. The simulation ran on the IDB snapshot read above;
           // resolving its result against LIVE holdings is what stops a stale

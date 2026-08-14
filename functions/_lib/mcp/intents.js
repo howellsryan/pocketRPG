@@ -873,9 +873,9 @@ export function applyIdleResult(save, sim, type) {
     skill: sim.skill,
     action: sim.actionName,
     actions: sim.actions || sim.laps || 0,
-    xpGained: sim.xpGained || {},
+    xpGained: result.xpBanked,
     coinsGained: Number(sim.coinsGained) || 0,
-    progress: progressSummary(save, sim.xpGained || {}),
+    progress: progressSummary(save, result.xpBanked),
     itemsBanked: named(result.banked),
     rewards: type === 'hunter'
       ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity }))
@@ -924,9 +924,9 @@ export function runIdleTask(save, task, elapsedMs, { isIronman = false } = {}) {
     skill: sim.skill,
     action: sim.actionName,
     actions: sim.actions || sim.laps || 0,
-    xpGained: sim.xpGained || {},
+    xpGained: result.xpBanked,
     coinsGained: Number(sim.coinsGained) || 0,
-    progress: progressSummary(save, sim.xpGained || {}),
+    progress: progressSummary(save, result.xpBanked),
     itemsBanked: named(result.banked),
     rewards: task.type === 'hunter'
       ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity }))
@@ -1411,10 +1411,9 @@ export function runCombatTask(save, task, elapsedMs) {
   const result = applyTaskResult(state, sim, 'combat', { isGrindman: isGrindmanSave(save) })
   save.inventory = state.inventory
   declareItemLosses(save, result.consumed)
-  const xpGained = {}
-  for (const [skill, xp] of Object.entries(sim.xpGained || {})) {
-    if (Math.floor(Number(xp) || 0) > 0) xpGained[skill] = Math.floor(Number(xp))
-  }
+  // What the save actually took, not what the sim proposed: applyTaskResult
+  // applies the Grindman cut, and this number IS the tool's answer.
+  const xpGained = { ...result.xpBanked }
 
   let slayerCredit = null
   if (task.slayerTask && sim.slayerTaskUpdate) {

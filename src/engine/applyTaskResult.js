@@ -119,6 +119,10 @@ export function applyTaskResult(state, sim, type, { isGrindman = false } = {}) {
   // asked for: every debit below is clamped by what the container held.
   /** @type {Record<string, number>} */
   const consumed = {}
+  // What this call actually WROTE into the stats, per skill — the Grindman cut
+  // makes it differ from sim.xpGained, and the caller reports one of the two.
+  /** @type {Record<string, number>} */
+  const xpBanked = {}
   /** @param {string} itemId @param {number} qty */
   const tally = (itemId, qty) => {
     if (itemId && qty > 0) consumed[itemId] = (consumed[itemId] || 0) + qty
@@ -134,8 +138,10 @@ export function applyTaskResult(state, sim, type, { isGrindman = false } = {}) {
         // this the gain is silently discarded while the claim result still
         // reports it, so levels never rise and requirements never unlock.
         const cur = stats[skill] || { skill, xp: 0, level: 1 }
-        const newXP = Math.min((cur.xp || 0) + Math.floor(grindmanXP(xp, isGrindman)), XP_CAP)
+        const banked = Math.floor(grindmanXP(xp, isGrindman))
+        const newXP = Math.min((cur.xp || 0) + banked, XP_CAP)
         stats[skill] = { ...cur, xp: newXP, level: getLevelFromXP(newXP) }
+        if (banked > 0) xpBanked[skill] = banked
       }
     }
   }
@@ -219,6 +225,7 @@ export function applyTaskResult(state, sim, type, { isGrindman = false } = {}) {
   return {
     banked,
     consumed,
+    xpBanked,
     stoppedReason: sim.stoppedReason || null,
     ...(type === 'combat' ? {
       died: sim.died === true,

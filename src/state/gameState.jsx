@@ -349,6 +349,10 @@ export function GameProvider({ children }) {
           const applySettings = { currentHP: savedHP, dungeoneeringTokens: savedDungeoneeringTokens }
           const applyState = { stats: s, inventory: inv, bank: b, equipment: eq, settings: applySettings }
           const applied = applyTaskResult(applyState, sim, savedTask.type, { isGrindman: p?.is_grindman === true })
+          // The catch-up modal and the daily-task feed both read sim.xpGained, so it
+          // becomes what was BANKED — a Grindman's cut would otherwise be invisible
+          // in the summary and double-counted against daily XP tasks.
+          if (savedTask.type !== 'quest' && sim.xpGained) sim.xpGained = applied.xpBanked
           inv = applyState.inventory  // may be sim.finalInventory (new array ref)
           // Offline catch-up burns a whole window's supplies and materials in one
           // write. Declare it, or every return from a long absence reads as an
@@ -891,6 +895,10 @@ export function GameProvider({ children }) {
     // through grantXP). Floor to keep task progress integer-aligned with displayed XP.
     const gained = Math.floor(amount)
     if (gained > 0) recordGameEventRef.current?.({ kind: 'skill_xp', skill, xp: gained })
+    // Returned so a caller that also REPORTS the gain (the idle catch-up modal)
+    // can show what was banked rather than what it asked for — the two differ by
+    // the Grindman cut, and a summary that over-reports is a bug the player sees.
+    return gained
     // addToast is deliberately NOT a dep: it is declared below this callback, so
     // naming it here evaluates in its temporal dead zone and whites out the app.
     // Calling it from the body resolves at call time and is fine.

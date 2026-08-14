@@ -49,8 +49,9 @@ export type TickPlayer = {
   stats: SessionStats
   /** From characters.is_grindman, stamped at hello: half XP, triple drop rates.
    * On the SESSION because a zone holds a mix of account types and one npc is
-   * fought by all of them. */
-  isGrindman: boolean
+   * fought by all of them. Optional like masterRejuvenation below — absent on a
+   * session that predates the mode, which reads as an ordinary account. */
+  isGrindman?: boolean
   inventory: InvSlot[]
   pendingXp: Record<string, number>
   /** Units created in-world this session (mined ore, killed-for loot, …) — the
