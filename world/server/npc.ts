@@ -9,7 +9,7 @@ import { reachAgainst } from '../shared/monsterSize'
 import type { Tile } from './pathfind'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer } from '../../src/engine/roomWideAttacks.js'
 import { getAddSpec } from '../../src/engine/bossAdds.js'
-import { advanceSharedForm, applyForm, formChangeAttackTimer, isMultiForm, randomFormSwitchThreshold } from '../../src/engine/bossForms.js'
+import { advanceSharedForm, applyDefenceBonusDrain, applyForm, formChangeAttackTimer, isMultiForm, randomFormSwitchThreshold } from '../../src/engine/bossForms.js'
 
 type Monsters = Record<string, { name?: string; hitpoints?: number; boss?: boolean; attackSpeed?: number; roomWideAttacks?: boolean }>
 
@@ -87,10 +87,52 @@ export type NpcState = {
    * npc rounds obstacles instead of wedging on them (the old greedy step). */
   chasePath: Tile[]
   chaseGoal: { x: number; z: number } | null
+  /** Defence this fight's specials have ground off this npc — the level (Dragon
+   * Warhammer smash, Cindermaw molten crush) and warstrike's running bonus
+   * total. Shared like `hp`, and for the same reason: each attacker runs its own
+   * combat session, so a drain left on the session that landed it lowered the
+   * boss for one player and nobody else. Null until something drains it. */
+  defenceDrain?: NpcDefenceDrain | null
   /** Tiles within which this npc aggresses idle passers-by (0 = passive). */
   /** Serialized key of the last {e:'threat'} broadcast for this npc, so the
    * damage-contribution readout (item 11) only re-sends on an actual change. */
   lastThreatSent: string | null
+}
+
+/** The absolute drained Defence level (null = untouched) and warstrike's
+ * running bonus total, which is re-applied over the authored numbers rather
+ * than stored as them — a form change replaces `defenceBonus` wholesale. */
+export type NpcDefenceDrain = { defence: number | null; bonus: Record<string, number> | null }
+
+type SessionMonster = { stats?: Record<string, number>; defenceBonus?: Record<string, number>; defenceBonusDrain?: Record<string, number> | null }
+
+/** Reads back what a combat session's copy of this npc has had drained off it.
+ * Measured against the authored row, so an undrained fight stores nothing. */
+export function captureDefenceDrain(npc: NpcState, sessionMonster: SessionMonster | undefined): NpcDefenceDrain | null {
+  const level = Number(sessionMonster?.stats?.defence)
+  const authored = Number((monstersData as Record<string, { stats?: Record<string, number> }>)[npc.monsterId]?.stats?.defence)
+  const defence = Number.isFinite(level) && level !== authored ? level : null
+  const drain = sessionMonster?.defenceBonusDrain
+  const bonus = drain && Object.keys(drain).length > 0 ? { ...drain } : null
+  if (defence === null && !bonus) return null
+  return { defence, bonus }
+}
+
+/** Pins the npc's shared drain onto one session's copy, ahead of its tick — the
+ * same contract pinFormToSession has, and for the same reason. The bonus half
+ * is rebuilt from the authored numbers for the form the npc is currently in, so
+ * re-pinning a total this session already carries can never subtract it twice. */
+export function pinDefenceDrainToSession(sessionMonster: SessionMonster | undefined, npc: NpcState): void {
+  const drain = npc.defenceDrain
+  if (!sessionMonster || !drain) return
+  if (drain.defence !== null && sessionMonster.stats) {
+    sessionMonster.stats = { ...sessionMonster.stats, defence: drain.defence }
+  }
+  if (drain.bonus) {
+    sessionMonster.defenceBonusDrain = { ...drain.bonus }
+    sessionMonster.defenceBonus = { ...((sharedMonsterState(npc).defenceBonus as Record<string, number>) ?? {}) }
+    applyDefenceBonusDrain(sessionMonster)
+  }
 }
 
 export type ThreatContributor = { charId: string; name: string; dmg: number }
@@ -394,6 +436,10 @@ function giveUpPursuit(npc: NpcState): void {
   npc.z = npc.home.z
   npc.wanderCooldown = randInt(WANDER_MIN_TICKS, WANDER_MAX_TICKS)
   npc.damageByChar.clear()
+  // Full health means full defences too: a fight that healed away is over, so
+  // the next party through gets the boss the content authored, not one the last
+  // group left half-shattered.
+  npc.defenceDrain = null
   clearChase(npc)
 }
 
@@ -512,6 +558,7 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
       npc.formAttackCount = 0
       npc.formSwitchThreshold = undefined
       npc.formAdvancePending = false
+      npc.defenceDrain = null
       clearChase(npc)
       result.npcChanged.push(npc.id)
     }

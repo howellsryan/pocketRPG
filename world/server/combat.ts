@@ -11,7 +11,7 @@ import monstersData from '../../src/data/monsters.json'
 import spellsData from '../../src/data/spells.json'
 import prayersData from '../../src/data/prayers.json'
 import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRangeAndSight, type TickPlayer } from './tick'
-import { ensureForm, isRoomWideFamily, recordDamage, sharedMonsterState, topDamageContributor, usesSharedClock, type NpcState } from './npc'
+import { captureDefenceDrain, ensureForm, isRoomWideFamily, pinDefenceDrainToSession, recordDamage, sharedMonsterState, topDamageContributor, usesSharedClock, type NpcState } from './npc'
 import { reachAgainst } from '../shared/monsterSize'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
@@ -530,6 +530,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
     ensureForm(npc)
     pinFormToSession(combat.state.monster, sharedMonsterState(npc))
   }
+  // A defence drain is shared boss state exactly as its HP is, so it is pinned
+  // onto this session the same way and just as unconditionally — after the form,
+  // whose authored numbers the bonus half is re-applied over. Left on whoever
+  // fired the special, a Dragon Warhammer smash lowered the boss for one player
+  // and for nobody else fighting it (co-op settled this in MUTABLE_MONSTER_FIELDS).
+  pinDefenceDrainToSession(combat.state.monster, npc)
   const sharedClock = usesSharedClock(npc)
   if (sharedClock) {
     // This npc's swing is resolved in several sessions at once, so hold every
@@ -550,6 +556,10 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // consume on a landed hit, then clear so the same cast never double-charges).
   const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, prayersData, player.inventory, null)
   combat.state = combatState
+  // Back onto the npc before any other player's session reads it: players tick
+  // sequentially, so a smash landed here is already in force for the rest of
+  // the room this same tick.
+  npc.defenceDrain = captureDefenceDrain(npc, combatState.monster)
   // The engine drained the pool / may have switched prayers off on empty — carry
   // that back onto the session and echo the readout when it moved.
   syncStateBuffsToSession(player, combat.state as EngineState)
