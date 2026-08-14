@@ -1206,9 +1206,13 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 }
 
 /**
- * Roll monster drops
+ * Roll monster drops.
+ *
+ * Exported because the open world rolls it once per player who earned the kill
+ * (world/server/killLoot.ts) — each gets their own independent roll of the same
+ * table, the way a co-op room pays its winners.
  */
-function rollDrops(monster, isOnTask = false) {
+export function rollDrops(monster, isOnTask = false) {
   const loot = []
   const rolls = monster.dropRolls || 1
   for (const drop of (monster.drops || [])) {

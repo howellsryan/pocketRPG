@@ -191,9 +191,10 @@ export type TickResult = {
   /** Kills resolved this tick, for the DO to record server-authoritatively
    * (collection log + kill count + audit for bosses). `owner` is the top-damage
    * contributor; `loot` is what was rolled for them. */
-  /** `owner` takes the ground loot — one physical pile, so exactly one player.
-   * `credited` is everyone who earned the kill on the shared 10% damage share
-   * (killCredit.js): kill count, slayer task and daily tasks go to all of them.
+  /** `owner` is the top-damage player, whose roll came off the death event and
+   * is already on the floor. `credited` is everyone who earned the kill on the
+   * shared 10% damage share (killCredit.js) — kill count, slayer task, daily
+   * tasks and a drop-table roll of their own (killLoot.ts) go to all of them.
    * `summoned` marks a boss minion, which earns none of it (§4: adds count for
    * nothing) despite being a real npc out here that dies like any other. */
   kills: {
@@ -201,6 +202,9 @@ export type TickResult = {
     owner: string
     credited: string[]
     loot: { itemId: string; quantity: number }[]
+    /** The death tile: every credited player's pile is spawned here. */
+    x: number
+    z: number
     summoned?: boolean
   }[]
 }

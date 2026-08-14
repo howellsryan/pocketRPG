@@ -30,6 +30,7 @@ import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable,
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload } from './grants'
 import { dropBroadcastsFrom, isBossMonster, recordBossKill, recordKillCounts } from './bossKills'
+import { rollLootForCredited } from './killLoot'
 import {
   creditWorldSlayerKill, drainSlayerCredit, killDailyEvents, restoreSlayerCredit, seedSlayerSession, xpDailyEvents,
   type DailyEvent, type SlayerTask,
@@ -2032,27 +2033,49 @@ export class WorldZone extends Server<Env> {
         this.scheduleDirtyFlush(player)
       }
       for (const kill of result.kills) {
-        // Server-authoritative side-effects (collection log, audit) —
-        // fire-and-forget D1 like the flushes below. Gated on the DROP, not on
-        // the monster, so a non-boss unique fills its slot too; an ordinary
-        // kill with nothing logged touches no D1. The kill count is separate,
-        // tallied below for every monster.
-        void recordBossKill(this.env, kill)
         this.creditKill(kill)
         const isBoss = isBossMonster(kill.monsterId)
-        const drops = dropBroadcastsFrom(kill.monsterId, kill.loot, itemsData)
-        if (!isBoss && drops.length === 0) continue
         const monsterName = monsterNames[kill.monsterId]?.name ?? kill.monsterId
-        const killerName = this.players.get(kill.owner)?.name ?? 'Someone'
-        if (isBoss) broadcastEvents.push({ e: 'kill', monster: monsterName, killer: killerName })
-        for (const drop of drops) {
-          broadcastEvents.push({
-            e: 'uniqueDrop',
-            monster: monsterName,
-            player: killerName,
-            item: itemNameOf(drop.itemId),
-            epic: drop.epic,
-          })
+        if (isBoss) {
+          const killerName = this.players.get(kill.owner)?.name ?? 'Someone'
+          broadcastEvents.push({ e: 'kill', monster: monsterName, killer: killerName })
+        }
+
+        // Everyone past the 10% line rolls the table INDEPENDENTLY, the way a
+        // co-op room pays its winners — not a share of one drop. The killer's
+        // roll rode the death event and is already on the floor; the rest are
+        // rolled here, where each player's own slayer task is visible (a
+        // task-only drop must not roll for someone who is not on it). Their pile
+        // is owned by them, so loot.ts hides it from everyone else for the owner
+        // window with nothing new: two piles on one tile, one each.
+        const extra = kill.summoned ? [] : rollLootForCredited(
+          kill.monsterId,
+          (kill.credited ?? [])
+            .filter((charId) => this.players.has(charId))
+            .map((charId) => ({ charId, slayerTask: this.players.get(charId)!.slayer.task })),
+          kill.owner,
+        )
+        for (const share of extra) {
+          for (const loot of spawnDrops(share.loot, kill.x, kill.z, share.charId, this.tickCount)) {
+            this.loot.set(loot.id, loot)
+          }
+        }
+
+        // Collection log and audit per player, on their OWN roll: a unique is
+        // logged for whoever actually pulled it. Gated on the drop rather than
+        // the monster, so an ordinary kill with nothing logged reaches no D1.
+        for (const share of [{ charId: kill.owner, loot: kill.loot }, ...extra]) {
+          void recordBossKill(this.env, { ...kill, owner: share.charId, loot: share.loot })
+          const playerName = this.players.get(share.charId)?.name ?? 'Someone'
+          for (const drop of dropBroadcastsFrom(kill.monsterId, share.loot, itemsData)) {
+            broadcastEvents.push({
+              e: 'uniqueDrop',
+              monster: monsterName,
+              player: playerName,
+              item: itemNameOf(drop.itemId),
+              epic: drop.epic,
+            })
+          }
         }
       }
       if (result.events.length > 0) eventsByChar.set(player.charId, result.events)
@@ -2401,8 +2424,8 @@ export class WorldZone extends Server<Env> {
    * Paid to EVERY player who earned the kill on the shared 10% damage share
    * (`kill.credited`, killCredit.js), not just the one the loot pile went to —
    * the same rule a co-op room pays on, so a boss fought by three people counts
-   * for three slayer tasks in both places. Ground loot stays single-owner
-   * because a pile sits on one tile; credit does not.
+   * for three slayer tasks in both places. Their drops are rolled separately
+   * (the kill loop above), one pile each on the same tile.
    *
    * Someone who has already left the zone takes no credit: their session (and
    * its slayer task) is gone.
