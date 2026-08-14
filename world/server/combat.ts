@@ -24,6 +24,7 @@ import { getMonsterModel } from '../../src/utils/equipModels.js'
 import { MONSTER_MODELS } from '../shared/monsterModels'
 import { monsterAttackWindup } from '../../src/utils/combatWindup.js'
 import { resolveSpecialEnergyCost } from '../../src/engine/specialAttackEnergy.js'
+import { killCreditIds } from '../../src/engine/killCredit.js'
 import { TICK_DURATION } from '../../src/utils/constants.js'
 
 type Items = Record<string, { specialAttack?: Record<string, unknown> } | undefined>
@@ -448,11 +449,20 @@ function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quan
   // broadcast the attack). The next idle tick returns to idle upstream (tick.ts),
   // and the client latch plays the broadcast swing through to completion.
   const owner = topDamageContributor(npc) ?? player.charId
+  // Everyone who earned this kill, on the same 10% share co-op pays loot at
+  // (killCredit.js) — read BEFORE the clear below, which is the only copy of
+  // who did what. The owner is kept separately because ground loot is one
+  // physical pile on one tile: it can have exactly one owner, where the credit
+  // below is per player. A solo killer is both.
+  const credited = killCreditIds(
+    [...npc.damageByChar].map(([id, { dmg, tick }]) => ({ id, damage: dmg, tick })),
+    (monstersData as Record<string, { hitpoints?: number }>)[npc.monsterId]?.hitpoints ?? 0,
+  )
   npc.damageByChar.clear()
   result.newLoot.push(...spawnDrops(loot, npc.x, npc.z, owner, ctx.tick))
   // Surface the kill so the DO can record boss collection-log / kill-count /
   // audit server-side (§14) — the loot itself still rides the trusted save blob.
-  result.kills.push({ monsterId: npc.monsterId, owner, loot, summoned: !!npc.summonerId })
+  result.kills.push({ monsterId: npc.monsterId, owner, credited, loot, summoned: !!npc.summonerId })
   result.npcChanged.push(npc.id)
 }
 

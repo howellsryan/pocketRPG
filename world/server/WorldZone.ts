@@ -2398,30 +2398,37 @@ export class WorldZone extends Server<Env> {
    * the kill feeds. All three are tallied on the session and flushed in a batch
    * — one D1 round trip per kill is not affordable on a grind (killProgress.ts).
    *
-   * The owner is whoever the drop went to, which is not necessarily the player
-   * whose tick resolved the killing blow. Someone who has already left the zone
-   * takes no credit: their session (and its slayer task) is gone.
+   * Paid to EVERY player who earned the kill on the shared 10% damage share
+   * (`kill.credited`, killCredit.js), not just the one the loot pile went to —
+   * the same rule a co-op room pays on, so a boss fought by three people counts
+   * for three slayer tasks in both places. Ground loot stays single-owner
+   * because a pile sits on one tile; credit does not.
+   *
+   * Someone who has already left the zone takes no credit: their session (and
+   * its slayer task) is gone.
    *
    * A boss MINION earns none of it (§4: adds count for nothing). Out here they
    * are real npcs rather than session-local adds, so they reach the kill list
    * like anything else — and a boss that respawns its sentinels on a timer would
    * otherwise be a kill-count and daily-task farm that never touches the boss.
    */
-  private creditKill(kill: { monsterId: string; owner: string; summoned?: boolean }): void {
+  private creditKill(kill: { monsterId: string; owner: string; credited: string[]; summoned?: boolean }): void {
     if (kill.summoned) return
-    const player = this.players.get(kill.owner)
-    if (!player) return
-    player.killTally[kill.monsterId] = (player.killTally[kill.monsterId] ?? 0) + 1
+    for (const charId of kill.credited ?? []) {
+      const player = this.players.get(charId)
+      if (!player) continue
+      player.killTally[kill.monsterId] = (player.killTally[kill.monsterId] ?? 0) + 1
 
-    const credited = creditWorldSlayerKill(player.slayer, kill.monsterId)
-    if (!credited) return
-    if (credited.slayerXp > 0) player.pendingEvents.push(...grantSessionXp(player, 'slayer', credited.slayerXp))
-    player.pendingEvents.push({ e: 'msg', text: credited.message })
-    if (credited.completed) {
-      player.dailyEvents.push({ kind: 'slayer_task_complete', count: 1 })
-      // A finished task is a milestone: don't leave it sitting in memory until
-      // the 60s checkpoint, where a DO eviction would cost the whole task.
-      this.scheduleDirtyFlush(player)
+      const credited = creditWorldSlayerKill(player.slayer, kill.monsterId)
+      if (!credited) continue
+      if (credited.slayerXp > 0) player.pendingEvents.push(...grantSessionXp(player, 'slayer', credited.slayerXp))
+      player.pendingEvents.push({ e: 'msg', text: credited.message })
+      if (credited.completed) {
+        player.dailyEvents.push({ kind: 'slayer_task_complete', count: 1 })
+        // A finished task is a milestone: don't leave it sitting in memory until
+        // the 60s checkpoint, where a DO eviction would cost the whole task.
+        this.scheduleDirtyFlush(player)
+      }
     }
   }
 

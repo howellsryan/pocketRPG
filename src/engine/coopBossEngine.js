@@ -20,6 +20,7 @@ import { createCombatState, processCombatTick } from './combat.js'
 import { hardModeDeathLoss, monstersTableFor } from './hardMode.js'
 import { getLevelFromXP } from './experience.js'
 import { bankSlayerCredit, creditSlayerTaskKill, emptySlayerCredit } from './slayerKillCredit.js'
+import { KILL_CREDIT_DAMAGE_SHARE, earnedKillCredit, killCreditDamageRequired, killCreditIds } from './killCredit.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
@@ -343,16 +344,21 @@ export function bankMemberItemsLost(banked, lost) {
 /**
  * Credits one boss kill against a member's own slayer task.
  *
- * Deliberately independent of damage: a group kill counts for everyone who was
- * in the fight for it, not just the top-damage member who takes the loot. The
- * one thing it is gated on is being ALIVE at the kill — otherwise dying on
- * purpose in an eight-player room is the cheapest slayer task in the game.
+ * Gated on the same 10% damage share as the loot and the kill count
+ * (killCredit.js) — one kill, one rule. It was alive-and-any-damage, which
+ * meant a member could be paid slayer progress for a boss they contributed
+ * almost nothing to; the damage gate replaces the alive check outright, because
+ * a member who earned their share and then died is paid everywhere else too.
+ *
+ * `basisHP` is the pool the share is measured against: a boss's max HP, or the
+ * whole run's for a raid. Absent, nothing is credited — a caller that cannot say
+ * what the fight was worth cannot say who earned it.
  *
  * Mutates the member (task, accrued XP, banked credit) and returns what
  * happened so the caller can tell the player.
  */
-export function creditSlayerKill(member, bossId, monstersData, { fromRaidCompletion = false } = {}) {
-  if (!member || member.status !== 'alive') return null
+export function creditSlayerKill(member, bossId, monstersData, { fromRaidCompletion = false, basisHP = 0 } = {}) {
+  if (!member || !earnedKillCredit(member.damage, basisHP)) return null
   const credited = creditSlayerTaskKill(
     { task: member.slayerTask, tasksCompleted: member.slayerTasksCompleted, doubleXp: member.doubleSlayerXp === true },
     bossId,
@@ -494,19 +500,12 @@ export function memberCount(state) {
 /** Share of the boss's max HP a member has to deal PERSONALLY to earn a loot
  * roll. Everyone past the line rolls the drop table independently — a group kill
  * is not one prize handed to the top attacker. */
-export const COOP_LOOT_DAMAGE_SHARE = 0.1
+export { KILL_CREDIT_DAMAGE_SHARE as COOP_LOOT_DAMAGE_SHARE }
 
-/**
- * Damage that qualifies a member for loot on this boss instance.
- *
- * Ceil, against the §4 house rule, for two reasons: the HUD advertises "10%" and
- * must not pay out at 9.6%, and a boss small enough to floor to 0 would
- * otherwise hand a drop to a member who never swung. The floor of 1 is what
- * makes `damage >= required` imply `damage > 0`.
- */
+/** Damage that earns a member this kill — loot, kill count, slayer and daily
+ * tasks alike. The arithmetic lives in killCredit.js, shared with the world. */
 export function coopLootDamageRequired(maxHP) {
-  const hp = Math.max(0, Math.floor(Number(maxHP) || 0))
-  return Math.max(1, Math.ceil(hp * COOP_LOOT_DAMAGE_SHARE))
+  return killCreditDamageRequired(maxHP)
 }
 
 /**
@@ -524,30 +523,25 @@ export function coopLootBasisHP(state) {
   return Number(state?.boss?.maxHP) || 0
 }
 
-/** Everyone owed a loot roll for the kill, biggest contributor first. Damage —
- * not survival: a member who earned their share and then died is still paid, the
- * same way the top-damage owner used to be. */
+/** Everyone this kill is credited to, biggest contributor first — the one list
+ * behind loot, kill counts, slayer progress and daily tasks (killCredit.js). */
 export function lootEligibleCharacterIds(state) {
-  const required = coopLootDamageRequired(coopLootBasisHP(state))
-  return Object.values(state?.members || {})
-    .filter((m) => (m.damage || 0) >= required)
-    .sort((a, b) => b.damage - a.damage || (a.damageTick || 0) - (b.damageTick || 0))
-    .map((m) => Number(m.characterId))
+  const entries = Object.values(state?.members || {})
+    .map((m) => ({ id: Number(m.characterId), damage: m.damage || 0, tick: m.damageTick || 0 }))
+  return killCreditIds(entries, coopLootBasisHP(state))
 }
 
 /**
- * Everyone whose kill count this kill increments.
+ * Everyone whose kill count this kill increments — the same list, by design.
  *
- * Deliberately NOT the loot list: the 10% damage gate exists to stop a drop
- * table being farmed by standing in a room, and a kill count is not a drop. A
- * member who fought the boss killed the boss — so this is the same rule slayer
- * credit uses (alive at the kill), plus a damage floor of one, because a player
- * who never swung did not fight it either.
+ * It used to be its own rule (alive, any damage), which meant one fight paid
+ * three different ways: loot at 10%, kill counts and daily tasks to anyone
+ * alive who swung, slayer to anyone alive at all. Kept as a named function
+ * because the kill record and the daily-task gate read it under this name, and
+ * a room mid-deploy can still emit the older, wider list.
  */
 export function killCountCharacterIds(state) {
-  return Object.values(state?.members || {})
-    .filter((m) => m.status === 'alive' && (m.damage || 0) > 0)
-    .map((m) => Number(m.characterId))
+  return lootEligibleCharacterIds(state)
 }
 
 /** One member's progress toward their loot roll, for the fight HUD. Lives here
@@ -1256,12 +1250,12 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
     next.boss.killedAt = now
     next.boss.respawnCountdown = coopRespawnTicks(next.bossId)
     const ownerCharId = topDamageCharacterId(next)
-    // Slayer credit is per member and independent of damage, so it is settled
-    // here rather than in the loot path — the loot goes to one player, the task
-    // progress goes to everyone still standing.
+    // Slayer rides the same 10% share as the loot and the kill count, so this
+    // list is the loot list — settled here rather than in the loot path only
+    // because the task has to advance on the member before it is written back.
     const onTaskCharacterIds = []
     for (const member of Object.values(next.members)) {
-      const credited = creditSlayerKill(member, next.bossId, monstersData)
+      const credited = creditSlayerKill(member, next.bossId, monstersData, { basisHP: next.boss.maxHP })
       if (!credited) continue
       onTaskCharacterIds.push(Number(member.characterId))
       events.push({ type: 'slayerCredit', ...credited })
@@ -1376,7 +1370,7 @@ function resolveRaidBossDeath(state, monstersData, events, now) {
   // walking into the raid and killing the first thing in it.
   const onTaskCharacterIds = []
   for (const member of Object.values(state.members)) {
-    const credited = creditSlayerKill(member, state.bossId, monstersData, { fromRaidCompletion: true })
+    const credited = creditSlayerKill(member, state.bossId, monstersData, { fromRaidCompletion: true, basisHP: coopLootBasisHP(state) })
     if (!credited) continue
     onTaskCharacterIds.push(Number(member.characterId))
     events.push({ type: 'slayerCredit', ...credited })

@@ -191,10 +191,18 @@ export type TickResult = {
   /** Kills resolved this tick, for the DO to record server-authoritatively
    * (collection log + kill count + audit for bosses). `owner` is the top-damage
    * contributor; `loot` is what was rolled for them. */
-  /** `summoned` marks a boss minion. It is a real npc out here, so it reaches
-   * this list like any other death — but §4 is explicit that adds count for
-   * nothing, so nothing that tallies progress may treat it as a kill. */
-  kills: { monsterId: string; owner: string; loot: { itemId: string; quantity: number }[]; summoned?: boolean }[]
+  /** `owner` takes the ground loot — one physical pile, so exactly one player.
+   * `credited` is everyone who earned the kill on the shared 10% damage share
+   * (killCredit.js): kill count, slayer task and daily tasks go to all of them.
+   * `summoned` marks a boss minion, which earns none of it (§4: adds count for
+   * nothing) despite being a real npc out here that dies like any other. */
+  kills: {
+    monsterId: string
+    owner: string
+    credited: string[]
+    loot: { itemId: string; quantity: number }[]
+    summoned?: boolean
+  }[]
 }
 
 export function emptyResult(): TickResult {
