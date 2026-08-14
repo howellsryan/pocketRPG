@@ -208,11 +208,20 @@ export function survivesHardModeDeath(itemId, itemsData) {
  */
 export function hardModeDeathLoss(inventory, equipment, itemsData) {
   const lost = []
-  const tally = (itemId, quantity) => {
+  // `charges` is carried so the Grim Reaper stash (src/engine/grimReaper.js)
+  // can hand a reclaimed scythe/trident/blowpipe back with what was left in
+  // it — omitted rather than zeroed when there's nothing to carry, the same
+  // absent-means-untouched shape as the bank's own charge pool (§4).
+  const tally = (itemId, quantity, charges) => {
     const qty = Math.max(0, Math.floor(Number(quantity) || 0)) || 1
+    const chg = Math.max(0, Math.floor(Number(charges) || 0))
     const existing = lost.find((entry) => entry.itemId === itemId)
-    if (existing) existing.quantity += qty
-    else lost.push({ itemId, quantity: qty })
+    if (existing) {
+      existing.quantity += qty
+      if (chg > 0) existing.charges = (existing.charges || 0) + chg
+    } else {
+      lost.push(chg > 0 ? { itemId, quantity: qty, charges: chg } : { itemId, quantity: qty })
+    }
   }
   const slots = Array.isArray(inventory) ? inventory : []
   // A fixed-length pack, not a shorter array: the inventory is indexed by slot
@@ -221,7 +230,7 @@ export function hardModeDeathLoss(inventory, equipment, itemsData) {
     const itemId = slot?.itemId
     if (typeof itemId !== 'string' || !itemId) return null
     if (survivesHardModeDeath(itemId, itemsData)) return slot
-    tally(itemId, slot?.quantity)
+    tally(itemId, slot?.quantity, slot?.charges)
     return null
   })
   const keptEquipment = {}
@@ -229,7 +238,7 @@ export function hardModeDeathLoss(inventory, equipment, itemsData) {
     const itemId = worn?.itemId
     if (typeof itemId !== 'string' || !itemId) continue
     if (survivesHardModeDeath(itemId, itemsData)) keptEquipment[slotName] = worn
-    else tally(itemId, worn?.quantity)
+    else tally(itemId, worn?.quantity, worn?.charges)
   }
   return { inventory: keptInventory, equipment: keptEquipment, lost }
 }

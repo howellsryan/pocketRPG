@@ -26,6 +26,7 @@ import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
 import { hardModeDeathLoss, hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
+import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
 import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
 import { recordItemLossEntries } from '../engine/lossLedger.js'
 import { HardModeConfirm, HardModeTag, HardModeToggle } from '../components/HardMode.jsx'
@@ -312,7 +313,7 @@ function MonsterAddStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, isGrindman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, isGrindman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget, updateGrimReaperStash } = useGame()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showWildernessEntry, setShowWildernessEntry] = useState(false)
@@ -499,6 +500,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // one the item-loss detector cannot tell from the bug it watches for
     // (src/engine/lossLedger.js).
     recordItemLossEntries(loss.lost)
+    // Stashed with the Grim Reaper (Settings) so it can be bought back for
+    // credits — overwrites whatever was stashed from an earlier death.
+    const stash = grimReaperStashFromDeath(loss.lost, { id: state.monster?.id, name: state.monster?.name })
+    if (stash) updateGrimReaperStash(stash)
     // Losing a pack has to survive a closed tab, so it does not wait for the
     // ordinary idle flush.
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
@@ -4200,7 +4205,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           // A hard-mode death is the one death that costs items, so the screen
           // has to name what went with it rather than leave the player to work
           // out why their pack is empty.
-          sub={deathModal.itemsLost ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined}
+          sub={deathModal.itemsLost?.length > 0
+            ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you. Reclaim it from Grim Reaper in Settings.'
+            : (deathModal.itemsLost ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined)}
           loot={deathModal.itemsLost?.length > 0 ? lootRowsForModal(shapeLootForModal(deathModal.itemsLost, itemsData).valued, itemsData) : undefined}
           lootTitle={deathModal.itemsLost?.length > 0 ? 'Lost Forever' : undefined}
           lootSigned="-"

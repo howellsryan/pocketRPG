@@ -351,7 +351,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       // authority until the write-back), so this only reports it. Derived
       // from the death EVENT because only that carries the tally — a
       // reload falls back to the plain modal rather than an empty list.
-      sub={state?.hardMode ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined}
+      sub={state?.hardMode
+        ? (itemsLost.length > 0
+          ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you. Reclaim it from Grim Reaper in Settings.'
+          : 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.')
+        : undefined}
       loot={itemsLost.length > 0 ? lootRowsForModal(shapeLootForModal(itemsLost, itemsData).valued, itemsData) : undefined}
       lootTitle={itemsLost.length > 0 ? 'Lost Forever' : undefined}
       lootSigned="-"

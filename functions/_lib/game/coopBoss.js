@@ -544,6 +544,21 @@ export function applyQuickPrayersToSave(saveObject, member) {
   return saveObject
 }
 
+/**
+ * Writes a hard-mode death's Grim Reaper stash onto the save, same as any
+ * other in-fight setting change (§20). `member.grimReaperStash` is only ever
+ * set by the death itself (coopBossEngine.js) and cleared after this
+ * write-back lands, so an ordinary tick's write-back — no death this fight —
+ * leaves any stash already on the save (from a previous session) untouched.
+ */
+export function applyGrimReaperStashToSave(saveObject, member) {
+  if (!member?.grimReaperStash) return saveObject
+  const settings = { ...(saveObject.settings && typeof saveObject.settings === 'object' ? saveObject.settings : {}) }
+  settings.grimReaper = member.grimReaperStash
+  saveObject.settings = settings
+  return saveObject
+}
+
 /** Writes a member's session state (supplies, HP, XP, slayer progress) back
  * onto their save. */
 export function applyMemberToSave(saveObject, member) {
@@ -555,6 +570,7 @@ export function applyMemberToSave(saveObject, member) {
   applyXpGainedToSave(next, member.xpGained)
   applySlayerCreditToSave(next, member)
   applyQuickPrayersToSave(next, member)
+  applyGrimReaperStashToSave(next, member)
   // Dying in a group has to cost exactly what dying to the same boss alone
   // costs. The solo screen restores HP to full on death; writing the member's
   // literal 0 back would leave a corpse regenerating at +1/60s, so a group
@@ -614,6 +630,10 @@ export async function writeBackMember(env, { characterId, identityId, member, se
   member.saveRevision = write.saveRevision
   member.xpGained = {}
   member.itemsLost = {}
+  // Written to the save above (applyGrimReaperStashToSave) — cleared so a
+  // second write-back this session doesn't re-stamp a stash the player may
+  // have already reclaimed.
+  member.grimReaperStash = null
   // Banked slayer points/completions are deltas — clearing them is what stops a
   // second write-back paying the same completed task again.
   member.slayerCredit = emptySlayerCredit()
@@ -871,6 +891,7 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
   member.inventory = Array.isArray(withSession.inventory) ? withSession.inventory.map((s) => (s ? { ...s } : null)) : []
   member.xpGained = {}
   member.itemsLost = {}
+  member.grimReaperStash = null
   member.slayerCredit = emptySlayerCredit()
   member.saveRevision = write.saveRevision
 
