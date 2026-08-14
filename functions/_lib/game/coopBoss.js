@@ -814,10 +814,11 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
     return empty
   }
 
+  let characterRow
   let saveObject
   let saveRevision
   try {
-    ({ saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId))
+    ({ row: characterRow, saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId))
   } catch (err) {
     await releaseClaim()
     throw err
@@ -843,9 +844,12 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
   // room is fighting so it leads; the column says the same for a caller holding
   // only the row.
   const hardMode = state?.hardMode === true || session?.hard_mode === 1
+  // Grindman is the opposite: an ACCOUNT type, so it is per winner. A room can
+  // hold a mix, and each member's table is rolled against their own row.
+  const grindman = characterRow?.is_grindman === 1
   const rewards = sourceType === 'raids'
-    ? rollRaidRewardsById(sourceId, Math.random, hardMode)
-    : rollMonsterRewardsById(sourceId, Math.random, onTask, hardMode)
+    ? rollRaidRewardsById(sourceId, Math.random, hardMode, grindman)
+    : rollMonsterRewardsById(sourceId, Math.random, onTask, hardMode, grindman)
   const withSession = applyMemberToSave(saveObject, member)
   let settled
   let write

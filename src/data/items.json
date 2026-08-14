@@ -647,6 +647,21 @@
     "isGeneralStore": true,
     "requiresAccount": "ironman_onelife"
   },
+  "grindman_helm": {
+    "id": "grindman_helm",
+    "legacy_item_id": "grindman_helm",
+    "name": "Grindman Full Helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": -6, "ranged": -3 },
+    "defenceBonus": { "stab": 7, "slash": 8, "crush": 6, "magic": -1, "ranged": 7 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "defence": 1 },
+    "shopValue": 1000,
+    "isGeneralStore": true,
+    "requiresAccount": "grindman"
+  },
   "iron_platebody": {
     "id": "iron_platebody",
     "legacy_item_id": "iron_platebody",

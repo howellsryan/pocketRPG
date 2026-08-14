@@ -14,7 +14,7 @@ export function identityStatement(env, identityId) {
 
 export function characterStatement(env, characterId, identityId) {
   return env.DB.prepare(
-    `SELECT id, username, credits, is_ironman, is_one_life,
+    `SELECT id, username, credits, is_ironman, is_one_life, is_grindman,
             COALESCE(total_pvp_kills, 0) AS total_pvp_kills,
             last_updated_total_pvp_kills
        FROM characters
@@ -39,6 +39,7 @@ export function mapCharacter(row) {
     // sync with the server row and treat a one-life death as a respawn.
     is_ironman: row.is_ironman === 1,
     is_one_life: row.is_one_life === 1,
+    is_grindman: row.is_grindman === 1,
     total_pvp_kills: row.total_pvp_kills ?? 0,
     last_updated_total_pvp_kills: row.last_updated_total_pvp_kills ?? null,
   }

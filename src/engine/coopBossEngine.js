@@ -29,6 +29,7 @@ import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers 
 import { hasMasterRejuvenation, refillSpecialOnEmpty } from './specialRegen.js'
 import { bossAddsOf, getAddSpec, rollRespawnDelay } from './bossAdds.js'
 import { advanceSharedForm, formChangeAttackTimer, isMultiForm, pinFormToSession } from './bossForms.js'
+import { grindmanXP, isGrindmanSave } from './grindman.js'
 import {
   COOP_RAID_ADVANCE_TICKS,
   coopRaidData,
@@ -378,7 +379,8 @@ export function creditSlayerKill(member, bossId, monstersData, { fromRaidComplet
     // 2500–10000 they are worth — solo has always passed this.
     flatXp: raidMeta?.flatSlayerXp,
   })
-  if (xp > 0) member.xpGained.slayer = (member.xpGained.slayer || 0) + xp
+  const bankedXp = grindmanXP(xp, member.isGrindman === true)
+  if (bankedXp > 0) member.xpGained.slayer = (member.xpGained.slayer || 0) + bankedXp
 
   if (!member.slayerCredit) member.slayerCredit = emptySlayerCredit()
   if (!result.completed) {
@@ -386,7 +388,7 @@ export function creditSlayerKill(member, bossId, monstersData, { fromRaidComplet
     return {
       characterId: member.characterId,
       completed: false,
-      slayerXp: xp,
+      slayerXp: bankedXp,
       monstersRemaining: result.task?.monstersRemaining ?? 0,
     }
   }
@@ -403,7 +405,7 @@ export function creditSlayerKill(member, bossId, monstersData, { fromRaidComplet
   return {
     characterId: member.characterId,
     completed: true,
-    slayerXp: xp,
+    slayerXp: bankedXp,
     pointsEarned: reward.pointsEarned,
     totalTasks: reward.totalTasks,
   }
@@ -427,6 +429,10 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     maxHP,
     stats,
     levels: allStatLevels(savePayload),
+    // Half XP for this member only — a room holds a mix of account types, and
+    // the flag rides the member the same way every other save-derived field
+    // does. Their tripled drops are rolled server-side off characters.is_grindman.
+    isGrindman: isGrindmanSave(savePayload),
     completedQuests: [...completedQuestsFromSave(savePayload)],
     equipment,
     inventory,
@@ -992,8 +998,18 @@ function applyConsumptionEvents(member, engineEvents, engine, itemsData) {
     } else if (ev.type === 'consumeScroll' && ev.itemId) {
       removeFromInventory(member.inventory, ev.itemId, ev.qty || 1)
     } else if (ev.type === 'xp' && ev.xpSkills) {
+      // The room's XP funnel — Grindman's cut lands here, on the member, because
+      // a room can hold a mix of account types against one boss.
+      //
+      // The event is rewritten to the banked figure rather than left carrying
+      // the engine's roll, because this same object is published to the member
+      // (processCoopTick spreads it) and drives their floating XP drop. Left
+      // raw, a Grindman watched +4 Attack float up for XP the room banked 2 of.
+      // The slayer credit below reports `bankedXp` for the same reason.
       for (const [skill, amount] of Object.entries(ev.xpSkills)) {
-        member.xpGained[skill] = (member.xpGained[skill] || 0) + (Number(amount) || 0)
+        const banked = grindmanXP(Number(amount) || 0, member.isGrindman === true)
+        member.xpGained[skill] = (member.xpGained[skill] || 0) + banked
+        ev.xpSkills[skill] = banked
       }
     }
   }

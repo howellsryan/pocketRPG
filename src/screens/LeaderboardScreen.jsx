@@ -22,6 +22,9 @@ const PAGE_SIZE = 50
 // that are both Ironman and One Life. No need to pull in the full items.json.
 const IRON_HELM_ITEM = { id: 'iron_full_helm', slot: 'head', type: 'armour', name: 'Iron Full Helm' }
 const DRAGON_HELM_ITEM = { id: 'dragon_full_helm', slot: 'head', type: 'armour', name: 'Dragon Full Helm' }
+// The Grindman badge is the account's own starter helm, so the board shows the
+// coin art the player is actually wearing rather than a stand-in.
+const COIN_HELM_ITEM = { id: 'grindman_helm', slot: 'head', type: 'armour', name: 'Grindman Full Helm' }
 
 // Resolve a game-icons glyph for each filter chip so none render blank/wrong:
 // total → the progression (total level) icon, raids → their raid art, bosses →
@@ -59,6 +62,9 @@ function AccountBadge({ char, size = 26 }) {
   }
   if (char.isIronman) return <GameIcon item={IRON_HELM_ITEM} size={size} class="flex-shrink-0" title="Ironman" />
   if (char.isOneLife) return <OneLifeIcon size={size - 6} class="flex-shrink-0" title="One Life" />
+  // Grindman never stacks with the two above (accountModeConflict), so it needs
+  // no combined case — it is only ever reached on its own.
+  if (char.isGrindman) return <GameIcon item={COIN_HELM_ITEM} size={size} class="flex-shrink-0" title="Grindman" />
   return null
 }
 

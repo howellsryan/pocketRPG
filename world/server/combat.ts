@@ -256,7 +256,9 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
     result?.events.push({ e: 'msg', text: 'You need to select a spell to fight with that weapon.' })
     return
   }
-  const state = createCombatState(monster, setup.combatType, player.stance, setup.spell as null) as unknown as EngineState
+  // Per player, not per npc: the zone's npc record is shared by everyone
+  // fighting it, and only this session's drops triple.
+  const state = createCombatState(monster, setup.combatType, player.stance, setup.spell as null, null, { grindman: player.isGrindman === true }) as unknown as EngineState
   state.monster.currentHP = npc.hp
   // Carry the session prayer pool + toggles onto this fight's engine state, so
   // the engine drains the same pool and applies bonuses/protection. Persists

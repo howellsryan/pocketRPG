@@ -57,6 +57,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     itemsData,
     isIronman,
     isOneLife,
+    isGrindman,
     unlockedFeatures,
     unlockedMinigameItems,
     slayerStoreUnlocks,
@@ -148,6 +149,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
       // type: standard Ironman vs One Life Ironman never see each other's helm.
       if (item.requiresAccount === 'ironman' && !(isIronman && !isOneLife)) continue
       if (item.requiresAccount === 'ironman_onelife' && !(isIronman && isOneLife)) continue
+      if (item.requiresAccount === 'grindman' && !isGrindman) continue
       const section = getStoreSection(id, item)
       sections[section].push({ id, item })
     }
@@ -155,7 +157,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
       sections[s].sort((a, b) => (a.item.name || '').localeCompare(b.item.name || ''))
     }
     return sections
-  }, [itemsData, minigameProductIds, isIronman, isOneLife])
+  }, [itemsData, minigameProductIds, isIronman, isOneLife, isGrindman])
 
   const refreshMyOffers = async () => {
     try {
@@ -316,7 +318,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
         closeModal()
       } else {
         // General-store path -- legacy /api/purchase endpoint.
-        const r = getPurchaseRestriction(selected, { isIronman, isOneLife, allowMinigameUnlockPurchase: minigameProductIds.has(selected.id) && unlockedMinigameItems.has(selected.id), allowSlayerStorePurchase: isSlayerStoreItem(selected.id) && slayerStoreUnlockSet.has(selected.id) })
+        const r = getPurchaseRestriction(selected, { isIronman, isOneLife, isGrindman, allowMinigameUnlockPurchase: minigameProductIds.has(selected.id) && unlockedMinigameItems.has(selected.id), allowSlayerStorePurchase: isSlayerStoreItem(selected.id) && slayerStoreUnlockSet.has(selected.id) })
         if (!r.allowed) {
           addToast(r.message || 'This item cannot be purchased here.', 'error')
           setBusy(false)
@@ -494,7 +496,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     const orderBook = isOrderBookItem(item)
     const isMinigameUnlocked = minigameProductIds.has(item.id) && unlockedMinigameItems.has(item.id)
     const slayerUnlocked = isSlayerStoreItem(item.id) && slayerStoreUnlockSet.has(item.id)
-    const restriction = getPurchaseRestriction(item, { isIronman, isOneLife, allowMinigameUnlockPurchase: isMinigameUnlocked, allowSlayerStorePurchase: slayerUnlocked })
+    const restriction = getPurchaseRestriction(item, { isIronman, isOneLife, isGrindman, allowMinigameUnlockPurchase: isMinigameUnlocked, allowSlayerStorePurchase: slayerUnlocked })
     const buyDisabledReason = (() => {
       if (!questRequirementMet(completedQuests, item.questUnlock)) return `🔒 ${questMap[item.questUnlock] || 'Quest required'}`
       if (isSlayerStoreItem(item.id) && !slayerUnlocked) return '🔒 Unlock with Slayer points first'

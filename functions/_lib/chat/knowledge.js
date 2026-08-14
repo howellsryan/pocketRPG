@@ -346,12 +346,12 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "The public leaderboard ranks characters by total level, and separately by kill counts for each boss and raid. Tap any player to view their profile and skill levels. It is a fun comparison, not a competition with prizes."
  },
  {
-  "id": "guide_ironman_and_one_life_modes",
-  "title": "Ironman and one-life modes",
+  "id": "guide_account_modes",
+  "title": "Account modes",
   "tags": [
    "guide"
   ],
-  "text": "When creating a character you can pick special modes. Ironman characters are self-sufficient: no Trading Post trading with other players, and in the open world they can only pick up loot they earned themselves — another player's kill drops and dropped items never become visible to them. That extends to the Wilderness: an Ironman can fight there and keep every outlaw drop, but the pile a defeated player leaves behind stays on the ground. Fighting alongside others is fine, boss lairs included: a kill's drop belongs to whoever dealt the most damage, so an Ironman who leads the damage keeps the drop no matter how many people helped. One-life characters are hardcore — dying loses the one-life badge for good, reverting the character to a standard account (or a standard Ironman, if it was also an Ironman). Both modes are badges of honour on the leaderboard."
+  "text": "When creating a character you can pick special modes. Ironman characters are self-sufficient: no Trading Post trading with other players, and in the open world they can only pick up loot they earned themselves — another player's kill drops and dropped items never become visible to them. That extends to the Wilderness: an Ironman can fight there and keep every outlaw drop, but the pile a defeated player leaves behind stays on the ground. Fighting alongside others is fine, boss lairs included: a kill's drop belongs to whoever dealt the most damage, so an Ironman who leads the damage keeps the drop no matter how many people helped. One-life characters are hardcore — dying loses the one-life badge for good, reverting the character to a standard account (or a standard Ironman, if it was also an Ironman). Both modes are badges of honour on the leaderboard. Grindman is a third mode, and it stands alone — it cannot be combined with Ironman or one-life. A Grindman earns half XP and rolls every monster and raid drop at three times the normal rate: every level is slower, but the drops come three times as often. Credits cannot be bought — a Grindman keeps the credits the account starts with and earns one for each daily task completed, and that is the whole supply. Skips, Slayer-task cancels and everything else credits pay for work normally; you just have to earn the credit first. Grindman characters start in a Grindman Full Helm, minted from coins."
  },
  {
   "id": "guide_account_characters_and_saving",

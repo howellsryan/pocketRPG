@@ -60,7 +60,7 @@ import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
-import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
+import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal, killPresentsFullModal } from '../utils/lootModal.js'
 import { emitKillReveal } from '../utils/rewardReveal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
@@ -312,7 +312,7 @@ function MonsterAddStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, isGrindman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget } = useGame()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showWildernessEntry, setShowWildernessEntry] = useState(false)
@@ -681,13 +681,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       combatRef.current = combatState
       setCombat({ ...combatState })
 
-      // Hit splats replace the chat-style "You hit X" / "Monster hits X" lines.
-      emitXpDrops(xpDropsFromCombatEvents(events))
-
       const tickSplats = splatsFromCombatEvents(events)
       pushSplats(setMonsterSplats, tickSplats.monster)
       pushSplats(setAddSplats, tickSplats.add)
       pushSplats(setPlayerSplats, tickSplats.player)
+
+      // Filled from what grantXP BANKED below, so the floating drop and the
+      // skill can never disagree — the engine's number is pre-account-type.
+      const bankedXp = {}
 
       for (const ev of events) {
         if (ev.type === 'specialHit') {
@@ -784,7 +785,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         if (ev.type === 'xp') {
           if (ev.xpSkills && typeof ev.xpSkills === 'object') {
             for (const [skill, xp] of Object.entries(ev.xpSkills)) {
-              if (xp > 0) grantXP(skill, xp)
+              if (xp > 0) bankedXp[skill] = (bankedXp[skill] || 0) + grantXP(skill, xp)
             }
           }
         }
@@ -1344,6 +1345,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
       }
 
+      emitXpDrops(dropsFromBankedXp(bankedXp))
     })
 
     return unsub
@@ -1812,7 +1814,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // one, and hard mode can be turned off behind it. Going back to the authored
     // record is the only way back down: scaling has no inverse.
     else if (monster.hardModeActive) monster = monstersData[monster.id] || monster
-    const state = createCombatState(monster, combatType, combatStance, spell, monstersTableFor(monstersData, hard))
+    const state = createCombatState(monster, combatType, combatStance, spell, monstersTableFor(monstersData, hard), { grindman: isGrindman })
     // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
     state.specialAttackEnergy = 100
     // Prayer pool starts full (= Prayer level) at the start of a combat session.
@@ -1848,7 +1850,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // A hard raid scales the TABLE, so every boss in the run — including the
     // ones the engine looks up as it advances — comes out doubled.
     const hardRaid = offersHardMode(raidData) && isHardMode('raids', raidData.id)
-    const state = createRaidCombatState(raidData, monstersTableFor(monstersData, hardRaid), combatType, combatStance, spell)
+    const state = createRaidCombatState(raidData, monstersTableFor(monstersData, hardRaid), combatType, combatStance, spell, { grindman: isGrindman })
     if (!state) {
       addToast('Failed to start raid — missing boss data', 'error')
       return
@@ -1879,7 +1881,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // fight arrives already scaled — scaleMonsterForHardMode is idempotent, and
     // the table has to match it or the next add spawns at normal strength.
     const hard = monster?.hardModeActive === true
-    const state = createCombatState(monster, combatType, combatStance, spell, monstersTableFor(monstersData, hard))
+    const state = createCombatState(monster, combatType, combatStance, spell, monstersTableFor(monstersData, hard), { grindman: isGrindman })
     // Reset special attack energy on kill; preserve active potions and prayers so they last their full duration
     state.specialAttackEnergy = 100
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}

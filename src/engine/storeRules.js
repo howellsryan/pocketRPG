@@ -23,7 +23,7 @@ export function isOrderBookItem(item) {
   return Math.floor(Number(item.shopValue) || 0) > 0
 }
 
-export function getPurchaseRestriction(item, { isIronman = false, isOneLife = false, allowMinigameUnlockPurchase = false, allowSlayerStorePurchase = false } = {}) {
+export function getPurchaseRestriction(item, { isIronman = false, isOneLife = false, isGrindman = false, allowMinigameUnlockPurchase = false, allowSlayerStorePurchase = false } = {}) {
   if (!item) {
     return { allowed: false, code: 'ITEM_NOT_FOUND', message: 'Item not found' }
   }
@@ -44,6 +44,13 @@ export function getPurchaseRestriction(item, { isIronman = false, isOneLife = fa
       allowed: false,
       code: 'ACCOUNT_TYPE_RESTRICTED',
       message: 'Only One Life Ironman characters can buy this item.',
+    }
+  }
+  if (item.requiresAccount === 'grindman' && !isGrindman) {
+    return {
+      allowed: false,
+      code: 'ACCOUNT_TYPE_RESTRICTED',
+      message: 'Only Grindman characters can buy this item.',
     }
   }
 
