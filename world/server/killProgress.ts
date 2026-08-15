@@ -110,6 +110,19 @@ export function creditWorldSlayerKill(session: SlayerSession, monsterId: string)
   }
 }
 
+/** Whether a credited kill should re-arm the flush debounce rather than
+ * waiting on the periodic ~60s checkpoint alone. Every credited kill does —
+ * not just a completion — because the world shows no in-progress task UI: the
+ * player's only way to see the count move is switching back to the idle tab,
+ * whose one-shot foreground sync check routinely loses a 60s race. A
+ * completion used to be the only case that flushed early; a plain progress
+ * tick (7→6) sat in memory exactly like the DO-eviction risk the completion
+ * path was already written to avoid. (A kill streak faster than the debounce
+ * window keeps deferring it — same worst case as before, not worse.) */
+export function slayerCreditNeedsFlush(credited: SlayerKillCredit | null): boolean {
+  return credited !== null
+}
+
 /** The slayer fields a flush carries, or null when nothing has moved. Taking
  * them CLEARS the banked delta: the caller restores it if the grant fails. */
 export function drainSlayerCredit(session: SlayerSession): { slayerTask: SlayerTask; slayerCredit: SlayerCredit; slayerTasksCompleted: number } | null {

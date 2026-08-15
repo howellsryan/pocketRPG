@@ -4,7 +4,8 @@
 // not running while a player is out here.
 import { describe, expect, it } from 'vitest'
 import {
-  creditWorldSlayerKill, drainSlayerCredit, killDailyEvents, restoreSlayerCredit, seedSlayerSession, xpDailyEvents,
+  creditWorldSlayerKill, drainSlayerCredit, killDailyEvents, restoreSlayerCredit, seedSlayerSession,
+  slayerCreditNeedsFlush, xpDailyEvents,
 } from '../server/killProgress'
 
 function saveWithTask(overrides: Record<string, unknown> = {}) {
@@ -123,6 +124,27 @@ describe('drainSlayerCredit / restoreSlayerCredit', () => {
     const session = seedSlayerSession(saveWithTask())
     restoreSlayerCredit(session, null)
     expect(session.dirty).toBe(false)
+  })
+})
+
+describe('slayerCreditNeedsFlush', () => {
+  it('flushes immediately for a plain progress kill, not just a completion', () => {
+    const session = seedSlayerSession(saveWithTask())
+    const credited = creditWorldSlayerKill(session, 'green_dragon')
+    expect(credited).toMatchObject({ completed: false })
+    expect(slayerCreditNeedsFlush(credited)).toBe(true)
+  })
+
+  it('flushes immediately for a completion too', () => {
+    const session = seedSlayerSession(saveWithTask())
+    creditWorldSlayerKill(session, 'green_dragon')
+    const done = creditWorldSlayerKill(session, 'green_dragon')
+    expect(done).toMatchObject({ completed: true })
+    expect(slayerCreditNeedsFlush(done)).toBe(true)
+  })
+
+  it('never flushes for an off-task kill', () => {
+    expect(slayerCreditNeedsFlush(null)).toBe(false)
   })
 })
 

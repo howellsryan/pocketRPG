@@ -32,7 +32,8 @@ import { flushGrants, isEmptyPayload, type GrantPayload } from './grants'
 import { dropBroadcastsFrom, isBossMonster, recordBossKill, recordKillCounts } from './bossKills'
 import { rollLootForCredited } from './killLoot'
 import {
-  creditWorldSlayerKill, drainSlayerCredit, killDailyEvents, restoreSlayerCredit, seedSlayerSession, xpDailyEvents,
+  creditWorldSlayerKill, drainSlayerCredit, killDailyEvents, restoreSlayerCredit, seedSlayerSession,
+  slayerCreditNeedsFlush, xpDailyEvents,
   type DailyEvent, type SlayerTask,
 } from './killProgress'
 import { applyDailyTaskEvents as applyDailyTaskEventsJs } from '../../functions/_lib/game/dailyTaskProgress.js'
@@ -2458,12 +2459,16 @@ export class WorldZone extends Server<Env> {
       if (!credited) continue
       if (credited.slayerXp > 0) player.pendingEvents.push(...grantSessionXp(player, 'slayer', credited.slayerXp))
       player.pendingEvents.push({ e: 'msg', text: credited.message })
-      if (credited.completed) {
-        player.dailyEvents.push({ kind: 'slayer_task_complete', count: 1 })
-        // A finished task is a milestone: don't leave it sitting in memory until
-        // the 60s checkpoint, where a DO eviction would cost the whole task.
-        this.scheduleDirtyFlush(player)
-      }
+      if (credited.completed) player.dailyEvents.push({ kind: 'slayer_task_complete', count: 1 })
+      // Every credited kill re-arms the flush debounce, not just a completion —
+      // it used to be the one case that flushed early, leaving a plain progress
+      // tick (7→6) waiting on the 60s checkpoint, where a DO eviction would cost
+      // it and — with no in-progress task UI in the world at all — a player
+      // checking the idle tab would see nothing move. A kill streak faster than
+      // DIRTY_FLUSH_DELAY_TICKS keeps re-arming this and rides the checkpoint
+      // instead, same worst case as before; the debounce only helps once kills
+      // (or any other flush-triggering change) stop landing that fast.
+      if (slayerCreditNeedsFlush(credited)) this.scheduleDirtyFlush(player)
     }
   }
 
