@@ -48,11 +48,20 @@ function ctx(tick: number, npcs: Map<string, NpcState>, players: TickPlayer[]): 
 }
 
 /** Runs the DO's real per-tick order: every npc, then every player. */
-function runTicks(count: number, npcs: Map<string, NpcState>, players: TickPlayer[]) {
+function runTicks(count: number, npcs: Map<string, NpcState>, players: TickPlayer[], swings?: { n: number }) {
   const damage = new Map(players.map((p) => [p.charId, 0]))
+  let prevTimer: number | undefined
   for (let tick = 1; tick <= count; tick++) {
     const c = ctx(tick, npcs, players)
     for (const npc of npcs.values()) tickNpc(npc, c, { npcChanged: [], npcRemoved: [] } as never)
+    if (swings) {
+      // The clock counts down and is reset to attackSpeed on the tick it fires
+      // (advanceRoomWideAttackTimer), so a rise in the timer IS a swing — and
+      // unlike damage it is a countdown, not a roll, so counting it is exact.
+      const timer = npcs.get('boss_1')?.attackTimer
+      if (prevTimer != null && timer != null && timer > prevTimer) swings.n++
+      prevTimer = timer
+    }
     for (const p of players) {
       const before = p.hp
       tickPlayer(p, c)
@@ -93,19 +102,29 @@ describe('a room-wide boss in the open world', () => {
   it('swings on the npc\'s own clock, so more players never means more swings', () => {
     // The trap: each player runs their own session with its own attack timer.
     // Left alone, a room of N players takes N times the swings.
+    //
+    // Counted as SWINGS, not damage. Damage compares two independent runs of
+    // unseeded accuracy and max-hit rolls, and the spread on that is wide
+    // enough on its own to break any ratio you pick — this asserted
+    // `< solo * 2` and failed on the sample, not on the behaviour.
+    const soloSwings = { n: 0 }
     const solo = bossAt(ZARYTH, 10, 10)
-    const soloDamage = runTicks(60, solo.npcs, [makePlayer('1', 10, 11)])
+    const soloDamage = runTicks(60, solo.npcs, [makePlayer('1', 10, 11)], soloSwings)
 
+    const groupSwings = { n: 0 }
     const group = bossAt(ZARYTH, 10, 10)
     const groupPlayers = [makePlayer('1', 10, 11), makePlayer('2', 9, 10), makePlayer('3', 11, 10)]
-    const groupDamage = runTicks(60, group.npcs, groupPlayers)
+    const groupDamage = runTicks(60, group.npcs, groupPlayers, groupSwings)
 
-    const solo1 = soloDamage.get('1')!
+    expect(soloSwings.n).toBeGreaterThan(0)
+    // The whole point: the clock belongs to the npc, so three players in the
+    // room buy it no extra swings. Per-session timers made this 3x (29 vs 9).
+    expect(groupSwings.n, 'a room of three bought the boss extra swings').toBe(soloSwings.n)
+    // And every one of those swings reaches everybody, which is what makes it
+    // room-wide rather than merely fair.
+    expect(soloDamage.get('1')!).toBeGreaterThan(0)
     for (const p of groupPlayers) {
-      // Each player takes their own rolls, so allow spread — but nobody may
-      // take anything like the 3x a per-session clock would deal.
-      expect(groupDamage.get(p.charId)!, `player ${p.charId} took far more in a group`)
-        .toBeLessThan(solo1 * 2)
+      expect(groupDamage.get(p.charId)!, `player ${p.charId} was never hit`).toBeGreaterThan(0)
     }
   })
 
