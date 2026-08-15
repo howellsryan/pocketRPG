@@ -963,8 +963,7 @@ const SCRIPT = `
   }
 
   document.addEventListener('DOMContentLoaded', function(){
-    $('unlock-btn').addEventListener('click', unlock);
-    $('secret').addEventListener('keydown', function(e){ if (e.key === 'Enter') unlock(); });
+    $('gate-form').addEventListener('submit', function(e){ e.preventDefault(); unlock(); });
     $('lock-btn').addEventListener('click', function(){ lock(null); });
     $('item-filter').addEventListener('input', refreshLists);
     $('character-filter').addEventListener('input', refreshLists);
@@ -1018,15 +1017,17 @@ const BODY = `
         <p class="fm-eyebrow">PocketRPG</p>
         <h1 class="fm-banner gate__banner">Quartermaster</h1>
         <p class="fm-lore">The stores are sealed. Only the bearer of the seal may open the ledger.</p>
-        <div class="field">
-          <label for="secret">Admin secret</label>
-          <input id="secret" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="•••••••••••••••••">
-          <p class="field__hint">Held in this tab only — never stored. Reloading re-seals the door.</p>
-        </div>
-        <div class="actions">
-          <button id="unlock-btn" type="button" class="fm-btn fm-btn--ember fm-btn--lg">Break the seal</button>
-        </div>
-        <p id="gate-msg" class="msg" hidden></p>
+        <form id="gate-form" autocomplete="on">
+          <div class="field">
+            <label for="secret">Admin secret</label>
+            <input id="secret" name="secret" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false" placeholder="•••••••••••••••••">
+            <p class="field__hint">Not stored by this app — your browser may offer to save it.</p>
+          </div>
+          <div class="actions">
+            <button id="unlock-btn" type="submit" class="fm-btn fm-btn--ember fm-btn--lg">Break the seal</button>
+          </div>
+          <p id="gate-msg" class="msg" hidden></p>
+        </form>
       </div>
     </div>
   </section>
