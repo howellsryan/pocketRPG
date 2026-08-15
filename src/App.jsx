@@ -908,7 +908,11 @@ function GameApp() {
         // clock, hides the tab, then rolls it back, we'll catch the negative
         // delta on return and clamp elapsed to 0.
         updateMaxObservedAt(now)
-        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+        // getActiveTask(), not activeTaskRef: that ref is useEffect-synced, and
+        // Preact runs effects after paint — which a hiding tab never reaches. An
+        // action started in the moments before backgrounding would be mirrored
+        // here as whatever preceded it.
+        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(getActiveTask()))
         // Flush progress before the tab is suspended/killed. Use a sendBeacon
         // save (survives teardown) rather than pushNow's fetch, which the browser
         // cancels when the page actually goes away — that cancellation was
@@ -1440,7 +1444,7 @@ function GameApp() {
       const now = Date.now()
       localStorage.setItem('pocketrpg_hiddenAt', String(now))
       updateMaxObservedAt(now)
-      localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+      localStorage.setItem('pocketrpg_activeTask', JSON.stringify(getActiveTask()))
       // Folds the idle heartbeat into the same /api/save write — see the
       // visibilitychange handler above.
       try { beaconSaveNow(getSnapshot()) } catch { /* non-fatal */ }
@@ -1488,8 +1492,9 @@ function GameApp() {
       // suspended tab we compare Date.now() against this; if it dropped, the
       // device clock rolled backwards and we can't trust idle elapsed math.
       updateMaxObservedAt(now)
-      if (activeTaskRef.current) {
-        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+      const liveTask = getActiveTask()
+      if (liveTask) {
+        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(liveTask))
       }
       // Snapshot full save to localStorage every 100 ticks (~60s) as IDB failover
       // Uses getSnapshot() to read live refs — avoids stale closure values

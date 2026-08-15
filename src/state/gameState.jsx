@@ -17,7 +17,7 @@ import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { api, getToken, getCharacterId, getIronmanMode, getOneLifeMode, getGrindmanMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { resetOneLifeWithRetry } from '../utils/oneLifeDeath.js'
 import { matchTaskProgress, taskById, idleCatchupDailyEvents } from '../engine/dailyTasks.js'
-import { requestCriticalPushSave, schedulePeriodicSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
+import { requestCriticalPushSave, schedulePeriodicSave, pushNow, suspendSaves, resumeSaves, isSaveConflict, setLiveActiveTaskProvider } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -741,6 +741,11 @@ export function GameProvider({ children }) {
     setEquipmentPresetsState(Array.isArray(savedEquipmentPresets) ? savedEquipmentPresets : [])
     setQuickPrayersState(Array.isArray(savedQuickPrayers) ? savedQuickPrayers : [])
     setUnlockedFeatures(new Set(savedUnlocks || []))
+    // Ref in lockstep with the state, same reason as stateRef/worldLocationRef
+    // above: it is what getSnapshot() and the live push override read, so leaving
+    // it to the post-render effect lets a teardown beacon fired straight after
+    // boot stamp `no task` over the row the boot just resumed from.
+    activeTaskInternalRef.current = savedTask ?? null
     setActiveTaskState(savedTask ?? null)
     // Update slayer task if idle simulation modified it
     const finalSlayerTask = idleResult && idleResult.slayerTaskUpdate
@@ -1508,8 +1513,9 @@ export function GameProvider({ children }) {
   // hold it for the session, so the exported identity must be stable while the
   // values stay current: each render re-points getSnapshotImplRef at a closure
   // over this render's state, and the stable wrapper delegates through the ref.
-  // worldLocation additionally reads its ref so a snapshot taken in the same
-  // tick as a travel arrival (before the re-render commits) sees the new place.
+  // worldLocation and activeTask additionally read their refs so a snapshot taken
+  // in the same tick as a travel arrival or an action start (before the re-render
+  // commits) sees the new place / the task the player actually started.
   const getSnapshotImplRef = useRef(null)
   getSnapshotImplRef.current = () => ({
     player: stateRef.current.player,
@@ -1532,7 +1538,7 @@ export function GameProvider({ children }) {
       worldLocation: worldLocationRef.current,
       idleCombatSetup,
       unlockedFeatures: [...unlockedFeatures],
-      activeTask,
+      activeTask: activeTaskInternalRef.current,
       activeCombatSpell,
       slayerTask: slayerTaskRef.current,
       slayerPoints: slayerPointsRef.current,
@@ -1553,6 +1559,14 @@ export function GameProvider({ children }) {
     },
   })
   const getSnapshot = useCallback(() => getSnapshotImplRef.current(), [])
+
+  // A queued save can be flushed from a snapshot older than the action the player
+  // just started, and /api/save stamps settings.activeTask onto the server's idle
+  // row — so the sync layer reads the task live at push time through this.
+  useEffect(() => {
+    setLiveActiveTaskProvider(() => activeTaskInternalRef.current)
+    return () => setLiveActiveTaskProvider(null)
+  }, [])
 
 
   // ---- Shared game lock --------------------------------------------------
