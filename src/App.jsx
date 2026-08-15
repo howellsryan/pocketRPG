@@ -1982,7 +1982,7 @@ function GameApp() {
    // token) and bounce back to AuthScreen so the user can pick or create
    // another character under the same GitHub login.
   // Shown when a player taps a cloud-only feature while in the offline demo.
-  const notifyDemoLocked = () => addToast(DEMO_LOCKED_MESSAGE, 'info')
+  const notifyDemoLocked = () => addToast(DEMO_LOCKED_MESSAGE, 'warning')
 
   // Enter the offline demo from the landing page. Persists the demo flag and
   // re-runs boot, which takes the no-token demo branch in initCloudAndSave.
@@ -2173,7 +2173,7 @@ function GameApp() {
   async function executeBossSkip(bossId) {
     const killHandler = combatSkipHandlerRef?.current
     if (!killHandler) {
-      addToast('Open the fight to skip a kill.', 'info')
+      addToast('Open the fight to skip a kill.', 'warning')
       return
     }
     // Freeze the game for the WHOLE skip: charge → arm the kill → server
@@ -2482,7 +2482,7 @@ function GameApp() {
     activeTaskRef.current = null
     setActionData(null)
     try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-    addToast(reason || 'This action can no longer progress.', 'info')
+    addToast(reason || 'This action can no longer progress.', 'warning')
   }
 
   // Skip 1 hour handler — preflight first, charge only after meaningful outcome exists
@@ -2501,7 +2501,7 @@ function GameApp() {
     if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.raidId) {
       const raidSkip = raidSkipHandlerRef?.current
       if (!raidSkip) {
-        addToast('Open the raid to skip it.', 'info')
+        addToast('Open the raid to skip it.', 'warning')
         isSkippingRef.current = false
         return
       }
@@ -2519,7 +2519,7 @@ function GameApp() {
       const monster = activeTaskRef.current?.monster
       const killHandler = combatSkipHandlerRef?.current
       if (!killHandler) {
-        addToast('Open the fight to skip a kill.', 'info')
+        addToast('Open the fight to skip a kill.', 'warning')
         isSkippingRef.current = false
         return
       }
@@ -2578,7 +2578,7 @@ function GameApp() {
       const preflight = getSkipPreflight(task, context, SKIP_HOUR_MS)
       if (!preflight.canSkip) {
         if (preflight.shouldStopTask) clearExhaustedActiveTask(preflight.reason)
-        else addToast(preflight.reason || 'Cannot skip this action right now.', 'info')
+        else addToast(preflight.reason || 'Cannot skip this action right now.', 'warning')
         return
       }
       // Commit to the skip: freeze the game until the server confirms. Pausing

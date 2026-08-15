@@ -135,7 +135,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   const castTeleport = (destId) => {
     if (destId === here && !travel) return
     if (travel?.journey?.phase === 'search') {
-      addToast(`You're searching ${travelDestName(travel)} — finish or abandon the journey first.`, 'info')
+      addToast(`You're searching ${travelDestName(travel)} — finish or abandon the journey first.`, 'warning')
       return
     }
     const chk = teleCheckFor(destId)
@@ -195,7 +195,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     // Rows render disabled off the same check; this backstops direct calls.
     const lock = activityLockReason(kind, ref, { stats, completedQuests, bossKillCounts, bossKillCountsLoaded: killCountsLoaded })
     if (lock) {
-      addToast(`${lock.reason}.`, (lock.completed || lock.pending) ? 'info' : 'error')
+      addToast(`${lock.reason}.`, (lock.completed || lock.pending) ? 'warning' : 'error')
       return
     }
     // One master per place: tapping it opens its hub (get / cancel a task)
@@ -253,7 +253,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     const quest = questsData.find((q) => q.id === questId)
     if (!quest) return
     if (activeTask?.type === 'travel') {
-      addToast('Finish or turn back your current journey first.', 'info')
+      addToast('Finish or turn back your current journey first.', 'warning')
       return
     }
     const jt = planQuestJourney(quest, here)

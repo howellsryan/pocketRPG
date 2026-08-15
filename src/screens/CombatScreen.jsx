@@ -1590,7 +1590,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // still only in the local client would be lost.
   const startCoopFight = async (monster, sessionId = null) => {
     if (isDemo) {
-      addToast('🔒 Group bossing is available with a free account.', 'info')
+      addToast('🔒 Group bossing is available with a free account.', 'warning')
       return
     }
     const req = checkBossRequirements(monster)
@@ -1683,7 +1683,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // it on join and owns the pack from that moment.
   const startRaidParty = async (raid, sessionId = null) => {
     if (isDemo) {
-      addToast('\u{1F512} Raid parties are available with a free account.', 'info')
+      addToast('\u{1F512} Raid parties are available with a free account.', 'warning')
       return
     }
     const req = checkRaidRequirements(raid)
@@ -1850,7 +1850,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const startFight = (monster) => {
     if (isDemo && monster.boss === true) {
-      addToast('🔒 Bosses are available with a free account.', 'info')
+      addToast('🔒 Bosses are available with a free account.', 'warning')
       return
     }
     const req = checkBossRequirements(monster)
@@ -1892,7 +1892,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const startRaid = (raidData) => {
     if (isDemo) {
-      addToast('🔒 Raids are available with a free account.', 'info')
+      addToast('🔒 Raids are available with a free account.', 'warning')
       return
     }
     const req = checkRaidRequirements(raidData)
