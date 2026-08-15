@@ -52,7 +52,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
   // onto the map to walk the trail — or teleport between its waypoints.
   const startQuestJourney = (quest) => {
     if (activeTask?.type === 'travel') {
-      addToast('Finish or turn back your current journey first.', 'info')
+      addToast('Finish or turn back your current journey first.', 'warning')
       return
     }
     const jt = planQuestJourney(quest, worldLocation)

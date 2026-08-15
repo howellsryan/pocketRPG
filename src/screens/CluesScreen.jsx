@@ -112,7 +112,7 @@ export default function CluesScreen({ onNavigate, onBack } = {}) {
   // final search, so abandoning costs nothing but time.
   const startJourney = (task) => {
     if (activeTask?.type === 'travel') {
-      addToast('Finish or turn back your current journey first.', 'info')
+      addToast('Finish or turn back your current journey first.', 'warning')
       return
     }
     const jt = planClueJourney(task, worldLocation)

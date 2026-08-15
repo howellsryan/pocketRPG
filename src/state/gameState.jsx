@@ -12,6 +12,7 @@ import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../util
 import { debounce } from '../utils/helpers.js'
 import { applyTheme, normalizeThemePreference, readStoredThemePreference, storeThemePreference, watchSystemTheme, DEFAULT_THEME_PREFERENCE } from '../utils/theme.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
+import { isSuppressibleToastType } from '../utils/toastTypes.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { api, getToken, getCharacterId, getIronmanMode, getOneLifeMode, getGrindmanMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { resetOneLifeWithRetry } from '../utils/oneLifeDeath.js'
@@ -1435,7 +1436,7 @@ export function GameProvider({ children }) {
 
   // ── Toasts ──
   const addToast = useCallback((message, type = 'info', icon = null) => {
-    if (type === 'info' && !showInfoToastsRef.current) return
+    if (isSuppressibleToastType(type) && !showInfoToastsRef.current) return
     const id = Date.now() + Math.random()
     // Reward-style toasts (level ups, collection-log unlocks) linger a little
     // longer so the player can read the richer card before it auto-clears.
@@ -1478,7 +1479,7 @@ export function GameProvider({ children }) {
     const res = resolveTaskStart(task, { location: worldLocationRef.current, travel: travelActive })
     if (res.status === 'start') return true
     if (res.status === 'blocked-transit') {
-      addToast("You can't start that while travelling.", 'info')
+      addToast("You can't start that while travelling.", 'warning')
       return false
     }
     setTravelPrompt({ task, ...(activityRef(task) || {}), places: res.places })

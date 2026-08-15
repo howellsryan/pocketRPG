@@ -1,21 +1,5 @@
 import { useGame } from '../state/gameState.jsx'
-
-// Per-type visual treatment. Every type uses the same compact, colour-coded
-// system style — rewards and level-ups get the gold accent rather than a
-// separate see-through reward card, so all notifications read as one family.
-const TOAST_STYLES = {
-  levelup: { accent: 'var(--color-gold-light)', bar: 'var(--color-gold)' },
-  reward:  { accent: 'var(--color-gold-light)', bar: 'var(--color-gold)' },
-  error:   { accent: 'var(--color-blood-ember)', bar: 'var(--color-blood)' },
-  combat:  { accent: 'var(--color-blood-light)', bar: 'var(--color-blood-light)' },
-  drop:    { accent: 'var(--color-emerald-light)', bar: 'var(--color-emerald)' },
-  success: { accent: 'var(--color-emerald-light)', bar: 'var(--color-emerald)' },
-  info:    { accent: 'var(--color-mana-light)', bar: 'var(--color-mana)' },
-}
-
-const DEFAULT_ICONS = {
-  levelup: '⭐', reward: '🏆', error: '⚠️', combat: '⚔️', drop: '✨', success: '✓', info: 'ℹ️',
-}
+import { TOAST_STYLES, TOAST_ICONS as DEFAULT_ICONS } from '../utils/toastTypes.js'
 
 const DismissBtn = ({ onClick, accent, size = 26 }) => (
   <button

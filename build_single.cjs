@@ -29,6 +29,7 @@ const sourceFiles = [
   'utils/coopChat.js',
   'utils/coopPolling.js',
   'utils/killCountMerge.js',
+  'utils/toastTypes.js',
   'utils/idleElapsed.js',
   'utils/itemIcons.js',
   'utils/iconTints.js',
