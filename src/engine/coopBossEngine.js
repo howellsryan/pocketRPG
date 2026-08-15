@@ -127,6 +127,10 @@ const MUTABLE_MONSTER_FIELDS = [
   // happens on the shared record (advanceSharedForm), so that is where the
   // re-apply has to be able to see it.
   'defenceBonusDrain',
+  // Smash/molten-crush have no running total of their own — they mutate
+  // `stats.defence` in place — so the info panel's "what it was" needs this
+  // fight-start stamp (prepareMonster) carried the same way defenceBonusDrain is.
+  'baseDefenceLevel',
 ]
 
 function levelFrom(statValue) {

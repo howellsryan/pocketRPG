@@ -337,6 +337,37 @@ export function getMonsterMaxHitLabel(monster) {
   return monsterMaxHitLabel(monster)
 }
 
+/** The five defence-bonus styles, in display order. Was hand-duplicated at
+ * every render site that lists them. */
+export const DEFENCE_STYLES = ['stab', 'slash', 'crush', 'magic', 'ranged']
+
+/**
+ * Defence LEVEL vs its value when the fight started (`baseDefenceLevel`,
+ * stamped once by `prepareMonster`/`prepareAdd` — see combat.js). A
+ * Dragon Warhammer smash or Cindermaw Maul molten crush mutates
+ * `stats.defence` in place with no running total of its own, unlike a
+ * defence-BONUS drain (below), so this is a straight before/after compare.
+ */
+export function getDefenceLevelInfo(monster) {
+  const current = monster?.stats?.defence
+  if (!Number.isFinite(current)) return { current: 0, base: 0, reduced: false }
+  const base = Number.isFinite(monster?.baseDefenceLevel) ? monster.baseDefenceLevel : current
+  return { current, base, reduced: base > current }
+}
+
+/**
+ * Defence BONUS for one style vs what it was before a Grondar Godsword
+ * warstrike ground it down. `defenceBonusDrain` (bossForms.js) already tracks
+ * the running total taken off every style, so "what it was" is just adding it
+ * back — and that stays correct across a form change, where the drain is
+ * re-applied onto the new form's own authored numbers.
+ */
+export function getDefenceBonusInfo(monster, style) {
+  const current = monster?.defenceBonus?.[style] ?? 0
+  const drained = monster?.defenceBonusDrain?.[style] || 0
+  return { current, base: current + drained, reduced: drained > 0 }
+}
+
 // A boss's mid-fight add (`spawnsAdd`), resolved for the info surfaces. The add
 // is a second live monster the player can target, so its stat block appears
 // nowhere in the boss's own numbers and has to be surfaced alongside them.

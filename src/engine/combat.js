@@ -117,6 +117,13 @@ export function setCombatTarget(combatState, target) {
  */
 function prepareMonster(monster) {
   let preparedMonster = { ...monster, currentHP: monster.hitpoints }
+  // The Defence LEVEL at the moment the fight (or a raid's next boss) starts —
+  // stamped once, never touched again by a form switch or a phase reset (only
+  // `defenceBonus` and HP move on those). A smash/molten-crush special mutates
+  // `stats.defence` in place with no running total of its own the way
+  // `defenceBonusDrain` tracks bonus drains, so this is what "what it was" is
+  // measured against on the info panel.
+  preparedMonster.baseDefenceLevel = preparedMonster.stats?.defence
   if (isMultiForm(monster)) {
     const formKey = monster.initialForm || Object.keys(monster.forms)[0]
     const form = applyForm(preparedMonster, formKey)

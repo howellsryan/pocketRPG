@@ -17,8 +17,8 @@ import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
-import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
-import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt, getMonsterAddInfo } from '../utils/combatArt.js'
+import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip, WasIs } from './CombatMobileSheets.jsx'
+import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt, getMonsterAddInfo, getDefenceLevelInfo, getDefenceBonusInfo, DEFENCE_STYLES } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { COMBAT_CATEGORY_ORDER, COMBAT_RAID_ORDER, orderBy } from '../utils/combatOrder.js'
 import { prayerSkill } from '../utils/prayerIcons.js'
@@ -224,8 +224,6 @@ function buildDungeonData(placeId) {
   for (const id of raidIds) raids[id] = raidsData[id]
   return { categories, raids }
 }
-
-const DEFENCE_STYLES = ['stab', 'slash', 'crush', 'magic', 'ranged']
 
 // Per-phase attack/defence breakdown for multiForm bosses (e.g. Venomcoil
 // Matriarch) — the monster's own top-level stats/defenceBonus only mirror its
@@ -2893,7 +2891,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>HP</span><span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{selectedMonsterInfo.hitpoints}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Attack</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.attack}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Strength</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.strength}</span></div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Defence</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.defence}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Defence</span><span class="font-[var(--font-mono)]"><WasIs info={getDefenceLevelInfo(selectedMonsterInfo)} /></span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Magic</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.magic}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Ranged</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.ranged}</span></div>
               </div>
@@ -2901,14 +2899,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Defence Bonuses</h4>
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
-                {['stab', 'slash', 'crush', 'magic', 'ranged'].map(style => (
-                  <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                    <span class="capitalize">{style}</span>
-                    <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus[style] >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {selectedMonsterInfo.defenceBonus[style] >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus[style]}
-                    </span>
-                  </div>
-                ))}
+                {DEFENCE_STYLES.map(style => {
+                  const info = getDefenceBonusInfo(selectedMonsterInfo, style)
+                  return (
+                    <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                      <span class="capitalize">{style}</span>
+                      <span class={`font-[var(--font-mono)] ${info.current >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <WasIs info={info} format={(n) => `${n >= 0 ? '+' : ''}${n}`} />
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
             <MonsterPhaseStats monster={selectedMonsterInfo} />
@@ -4212,12 +4213,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         />
       )}
 
-      {/* Monster Info Modal */}
-      {selectedMonsterInfo && (
+      {/* Monster Info Modal — in-fight only (this Modal only ever renders once
+          combat exists, guarded by the earlier `if (!combat) return` above), so
+          it reads combat.monster directly rather than the tap-time snapshot
+          selectedMonsterInfo held before: combat.monster is the SAME object a
+          special attack mutates in place, and re-reading it here on every
+          render is what makes a Dragon Warhammer smash or a Grondar Godsword
+          warstrike show up live instead of frozen at the moment "i" was tapped.
+          selectedMonsterInfo now only gates whether the modal is open. */}
+      {selectedMonsterInfo && (() => {
+        const liveMonster = combat.monster
+        return (
         <Modal onClose={() => setSelectedMonsterInfo(null)}>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] flex items-center gap-2">
-              <SkillEmblem iconKey={getMonsterArt(selectedMonsterInfo).icon} accent={getMonsterArt(selectedMonsterInfo).accent} size={28} glow={0} /> {selectedMonsterInfo.name}
+              <SkillEmblem iconKey={getMonsterArt(liveMonster).icon} accent={getMonsterArt(liveMonster).accent} size={28} glow={0} /> {liveMonster.name}
             </h3>
             <button
               onClick={() => setSelectedMonsterInfo(null)}
@@ -4230,11 +4240,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           <div class="space-y-4 max-h-96 overflow-y-auto">
             <div class="cb-fight__chips">
-              <MultiStyleChip chip={getMonsterAttackStyles(selectedMonsterInfo)} prefix="Uses " />
-              <MultiStyleChip chip={getMonsterWeakness(selectedMonsterInfo)} prefix="Weak: " kind="!" />
+              <MultiStyleChip chip={getMonsterAttackStyles(liveMonster)} prefix="Uses " />
+              <MultiStyleChip chip={getMonsterWeakness(liveMonster)} prefix="Weak: " kind="!" />
             </div>
-            {getMonsterLocationLabel(selectedMonsterInfo) && (
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">📍 {getMonsterLocationLabel(selectedMonsterInfo)}</div>
+            {getMonsterLocationLabel(liveMonster) && (
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">📍 {getMonsterLocationLabel(liveMonster)}</div>
             )}
             {/* Combat Stats */}
             <div>
@@ -4242,31 +4252,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Combat Level</span>
-                  <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedMonsterInfo.combatLevel}</span>
+                  <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{liveMonster.combatLevel}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>HP</span>
-                  <span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{selectedMonsterInfo.hitpoints}</span>
+                  <span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{liveMonster.hitpoints}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Attack</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.attack}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.attack}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Strength</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.strength}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.strength}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Defence</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.defence}</span>
+                  <span class="font-[var(--font-mono)]"><WasIs info={getDefenceLevelInfo(liveMonster)} /></span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Magic</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.magic}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.magic}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Ranged</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.ranged}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.ranged}</span>
                 </div>
               </div>
             </div>
@@ -4275,48 +4285,29 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Defence Bonuses</h4>
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Stab</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.stab >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.stab >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.stab}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Slash</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.slash >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.slash >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.slash}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Crush</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.crush >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.crush >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.crush}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Magic</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.magic >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.magic >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.magic}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Ranged</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.ranged >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.ranged >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.ranged}
-                  </span>
-                </div>
+                {DEFENCE_STYLES.map(style => {
+                  const info = getDefenceBonusInfo(liveMonster, style)
+                  return (
+                    <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                      <span class="capitalize">{style}</span>
+                      <span class={`font-[var(--font-mono)] ${info.current >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <WasIs info={info} format={(n) => `${n >= 0 ? '+' : ''}${n}`} />
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
-            <MonsterPhaseStats monster={selectedMonsterInfo} />
-            <MonsterAddStats monster={selectedMonsterInfo} />
+            <MonsterPhaseStats monster={liveMonster} />
+            <MonsterAddStats monster={liveMonster} />
 
             {/* Drops */}
-            {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
+            {liveMonster.drops && liveMonster.drops.length > 0 && (
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
                 <div class="space-y-1">
-                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo), ...getMonsterCharmDrops(selectedMonsterInfo)].map(drop => {
+                  {[...(liveMonster.drops || []), ...getMonsterSeedDrops(liveMonster), ...getMonsterCharmDrops(liveMonster)].map(drop => {
                     const item = itemsData[drop.itemId]
                     return (
                       <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
@@ -4343,7 +4334,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             )}
           </div>
         </Modal>
-      )}
+        )
+      })()}
     </div>
   )
 }

@@ -15,6 +15,9 @@ import {
   getMonsterAttackStyles,
   getMonsterMaxHit,
   getMonsterAddInfo,
+  getDefenceLevelInfo,
+  getDefenceBonusInfo,
+  DEFENCE_STYLES,
 } from '../src/utils/combatArt.js'
 import monsters from '../src/data/monsters.json' assert { type: 'json' }
 
@@ -161,6 +164,52 @@ describe('combatArt', () => {
       const info = getMonsterAddInfo(monster as any)
       expect(info, `${(monster as any).id} add must resolve`).not.toBeNull()
       expect(info!.add.isAdd).toBe(true)
+    }
+  })
+})
+
+describe('getDefenceLevelInfo — the info panel\'s "what Defence was" for a smash/molten-crush drain', () => {
+  it('reports no reduction when the live level still matches the fight-start baseline', () => {
+    const info = getDefenceLevelInfo({ stats: { defence: 100 }, baseDefenceLevel: 100 })
+    expect(info).toEqual({ current: 100, base: 100, reduced: false })
+  })
+
+  it('reports the drop once a special has lowered the live level below the baseline', () => {
+    const info = getDefenceLevelInfo({ stats: { defence: 70 }, baseDefenceLevel: 100 })
+    expect(info).toEqual({ current: 70, base: 100, reduced: true })
+  })
+
+  it('treats a missing baseline as "no drain known" rather than fabricating a reduction', () => {
+    const info = getDefenceLevelInfo({ stats: { defence: 70 } })
+    expect(info).toEqual({ current: 70, base: 70, reduced: false })
+  })
+
+  it('defaults to zero for a monster with no stats block', () => {
+    expect(getDefenceLevelInfo(null as any)).toEqual({ current: 0, base: 0, reduced: false })
+    expect(getDefenceLevelInfo({} as any)).toEqual({ current: 0, base: 0, reduced: false })
+  })
+})
+
+describe('getDefenceBonusInfo — the info panel\'s "what it was" for a warstrike drain', () => {
+  it('reports no reduction with an empty or absent defenceBonusDrain', () => {
+    const monster = { defenceBonus: { crush: 240 } }
+    expect(getDefenceBonusInfo(monster, 'crush')).toEqual({ current: 240, base: 240, reduced: false })
+  })
+
+  it('adds the running drain total back onto the live value for "what it was"', () => {
+    const monster = { defenceBonus: { crush: 212 }, defenceBonusDrain: { crush: 28 } }
+    expect(getDefenceBonusInfo(monster, 'crush')).toEqual({ current: 212, base: 240, reduced: true })
+  })
+
+  it('is per-style — a drain on one style does not leak onto another', () => {
+    const monster = { defenceBonus: { crush: 212, stab: 240 }, defenceBonusDrain: { crush: 28 } }
+    expect(getDefenceBonusInfo(monster, 'stab')).toEqual({ current: 240, base: 240, reduced: false })
+  })
+
+  it('covers every DEFENCE_STYLES entry, so a new style added there is not silently unread', () => {
+    for (const style of DEFENCE_STYLES) {
+      const monster = { defenceBonus: { [style]: 10 }, defenceBonusDrain: { [style]: 5 } }
+      expect(getDefenceBonusInfo(monster, style)).toEqual({ current: 10, base: 15, reduced: true })
     }
   })
 })
