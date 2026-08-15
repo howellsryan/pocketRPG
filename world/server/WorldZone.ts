@@ -24,7 +24,7 @@ import { stepMinions } from './minions'
 import { lairEntryFailure } from './lairEntry'
 import { collisionWithMonsters } from '../shared/monsterSize'
 import { computeAoi, type AoiEntity } from './aoi'
-import { KILL_DROP_OWNER_TICKS, PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
+import { KILL_DROP_OWNER_TICKS, PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, ownLootOnlyMessage, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
 import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
@@ -107,10 +107,13 @@ type Player = TickPlayer & {
   conn: Connection
   lastMsgTimes: number[]
   identityId: string
-  /** From characters.is_ironman, stamped at hello: gates floor loot to this
-   * player's own drops (see loot.ts). Lives on the session so a reconnect keeps
-   * it without a second D1 read. */
+  /** From characters.is_ironman / is_grindman, stamped at hello: both gate floor
+   * loot to this player's own drops (see loot.ts). Narrowed to required over
+   * TickPlayer's optional isGrindman, so a session can never be built without
+   * the flag the rule is only as good as. Live on the session so a reconnect
+   * keeps them without a second D1 read. */
   isIronman: boolean
+  isGrindman: boolean
   /** From characters.is_one_life, stamped at hello. Dying in the world revokes
    * it exactly as dying in the idle game does; cleared once the D1 flip lands,
    * restored on failure so the next death retries. */
@@ -201,7 +204,7 @@ type Player = TickPlayer & {
 }
 
 function lootViewer(player: Player): LootViewer {
-  return { charId: player.charId, isIronman: player.isIronman }
+  return { charId: player.charId, isIronman: player.isIronman, isGrindman: player.isGrindman }
 }
 
 type Items = Record<string, { name?: string; slot?: string | null; type?: string } | undefined>
@@ -723,9 +726,9 @@ export class WorldZone extends Server<Env> {
       isBot: false,
     }
     // One line per login so `wrangler tail` can answer "does the world think
-    // this character is an Ironman?" without a D1 query — the floor-loot rule
-    // is only as good as this flag.
-    console.log('[World][hello]', { charId, zone: this.name, isIronman: player.isIronman })
+    // this character is an Ironman or a Grindman?" without a D1 query — the
+    // floor-loot rule is only as good as these flags.
+    console.log('[World][hello]', { charId, zone: this.name, isIronman: player.isIronman, isGrindman: player.isGrindman })
     this.players.set(charId, player)
     void beginWorldSession(this.env, row.id, player.sessionId)
     this.sendWelcome(player)
@@ -1387,14 +1390,15 @@ export class WorldZone extends Server<Env> {
     if (message.kind === 'loot' && message.action === 'take') {
       const loot = this.loot.get(message.id)
       if (!loot) return
-      // Refuse before the walk, not silently on arrival: an Ironman asking for
+      const viewer = lootViewer(player)
+      // Refuse before the walk, not silently on arrival: an account asking for
       // loot they were never shown gets told why instead of pathing across the
       // zone for nothing.
-      if (!mayTake(loot, lootViewer(player))) {
-        player.pendingEvents.push({ e: 'msg', text: 'Ironman characters can only take their own loot.' })
+      if (!mayTake(loot, viewer)) {
+        player.pendingEvents.push({ e: 'msg', text: ownLootOnlyMessage(viewer) })
         return
       }
-      if (!isVisibleTo(loot, lootViewer(player), this.tickCount)) return
+      if (!isVisibleTo(loot, viewer, this.tickCount)) return
       const path = findPath(this.zone.collision, { x: player.x, z: player.z }, { x: loot.x, z: loot.z })
       if (!path) return
       player.path = path.slice(1)
@@ -2260,16 +2264,18 @@ export class WorldZone extends Server<Env> {
     const pending = player.pendingLoot
     if (!pending || player.path.length > 0) return
     const loot = this.loot.get(pending.id)
-    if (!loot || !isVisibleTo(loot, lootViewer(player), this.tickCount) || player.x !== loot.x || player.z !== loot.z) {
+    const viewer = lootViewer(player)
+    if (!loot || !isVisibleTo(loot, viewer, this.tickCount) || player.x !== loot.x || player.z !== loot.z) {
       player.pendingLoot = null
       return
     }
     const events = eventsByChar.get(player.charId) ?? []
-    if (!mayTake(loot, lootViewer(player))) {
-      console.warn('[World][loot] refused ironman pickup of unowned loot', {
-        charId: player.charId, isIronman: player.isIronman, lootId: loot.id, itemId: loot.itemId, ownerCharId: loot.ownerCharId,
+    if (!mayTake(loot, viewer)) {
+      console.warn('[World][loot] refused restricted-account pickup of unowned loot', {
+        charId: player.charId, isIronman: player.isIronman, isGrindman: player.isGrindman,
+        lootId: loot.id, itemId: loot.itemId, ownerCharId: loot.ownerCharId,
       })
-      events.push({ e: 'msg', text: 'Ironman characters can only take their own loot.' })
+      events.push({ e: 'msg', text: ownLootOnlyMessage(viewer) })
       player.pendingLoot = null
       if (!eventsByChar.has(player.charId)) eventsByChar.set(player.charId, events)
       return
