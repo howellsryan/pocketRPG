@@ -15,7 +15,24 @@ import {
   getMonsterMaxHitLabel,
   getMonsterLocationLabel,
   getMonsterAddInfo,
+  getDefenceLevelInfo,
+  getDefenceBonusInfo,
+  DEFENCE_STYLES,
 } from '../utils/combatArt.js'
+
+/** A stat that a special attack may have drained shows a dim strikethrough
+ * "what it was" ahead of the live number — plain text, no colour of its own,
+ * so it inherits whatever the call site already wired for +/- (mobile's inline
+ * hex, desktop's Tailwind classes stay exactly as authored). */
+export function WasIs({ info, format = (n) => n }) {
+  if (!info.reduced) return format(info.current)
+  return (
+    <>
+      <span style={{ opacity: 0.55, textDecoration: 'line-through', marginRight: 4 }}>{format(info.base)}</span>
+      {format(info.current)}
+    </>
+  )
+}
 
 // Rarity colour bucket from a 0–1 drop chance (mirrors the design's tiers).
 function rarityClass(chance) {
@@ -196,20 +213,28 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, grindm
           {location && <div class="cb-mon__location" style={{ marginBottom: '8px' }}>📍 {location}</div>}
           <div class="cb-statgrid">
             {stats.map(([k, v]) => (
-              <div key={k} class="cb-stat"><span class="cb-stat__k">{k}</span><span class="cb-stat__v">{v}</span></div>
+              <div key={k} class="cb-stat">
+                <span class="cb-stat__k">{k}</span>
+                <span class="cb-stat__v">
+                  {k === 'Defence' ? <WasIs info={getDefenceLevelInfo(monster)} /> : v}
+                </span>
+              </div>
             ))}
           </div>
 
           <div class="cb-sheet__sec">Defence Bonuses</div>
           <div class="cb-statgrid">
-            {['stab', 'slash', 'crush', 'magic', 'ranged'].map(s => (
-              <div key={s} class="cb-stat">
-                <span class="cb-stat__k">{s}</span>
-                <span class="cb-stat__v" style={{ color: (monster.defenceBonus?.[s] ?? 0) >= 0 ? '#2e7d32' : '#a93226' }}>
-                  {(monster.defenceBonus?.[s] ?? 0) >= 0 ? '+' : ''}{monster.defenceBonus?.[s] ?? 0}
-                </span>
-              </div>
-            ))}
+            {DEFENCE_STYLES.map(s => {
+              const info = getDefenceBonusInfo(monster, s)
+              return (
+                <div key={s} class="cb-stat">
+                  <span class="cb-stat__k">{s}</span>
+                  <span class="cb-stat__v" style={{ color: info.current >= 0 ? '#2e7d32' : '#a93226' }}>
+                    <WasIs info={info} format={(n) => `${n >= 0 ? '+' : ''}${n}`} />
+                  </span>
+                </div>
+              )
+            })}
           </div>
 
           {monster.multiForm && monster.forms && (

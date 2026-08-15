@@ -17,8 +17,24 @@
  * Pure logic, no imports.
  */
 
-/** Lowest a defence bonus can be ground down to. */
-export const DEFENCE_BONUS_FLOOR = -64
+/**
+ * A style's own fight-start (or current-form) authored bonus, before any
+ * warstrike has touched it — captured once by `prepareMonster`/`prepareAdd`
+ * and re-stamped by `applyForm` whenever a form authors its own defences (see
+ * `defenceBonusBaseline` on the monster).
+ *
+ * A warstrike must never grind a style's bonus below zero — that is the
+ * player-facing floor — but a boss deliberately authored weak to a style
+ * (a negative bonus baked into its data, not caused by any special) is
+ * already "below zero" by design, and the special must not heal it back up
+ * toward zero on its way to draining something else. So the real floor is
+ * per style, per form: zero, unless the style's own baseline started lower,
+ * in which case the baseline itself is the floor — the special simply cannot
+ * touch it any further.
+ */
+function defenceBonusFloor(baselineValue) {
+  return Math.min(0, baselineValue ?? 0)
+}
 
 /**
  * The running total of defence bonus a special attack has ground off this
@@ -32,13 +48,24 @@ export const DEFENCE_BONUS_FLOOR = -64
  *
  * It lives in the forms module because form changes are the only reason it has
  * to exist: nothing else rebuilds `defenceBonus` mid-fight.
+ *
+ * The recorded total is the RAW, uncapped damage dealt — "permanently
+ * weakens... by the amount of damage dealt" is the whole tooltip, and capping
+ * the bookkeeping at whatever one form's floor allowed would let a detour
+ * through a low-headroom form quietly erase drain a party earned on a
+ * different one. Only the VISIBLE `defenceBonus` value is floor-clamped, and
+ * always from the style's own baseline, never by subtracting further off an
+ * already-clamped number — so a later form with more headroom still reflects
+ * the true total.
  */
 export function recordDefenceBonusDrain(monster, amount) {
   if (!monster?.defenceBonus || !(amount > 0)) return
   const drain = { ...(monster.defenceBonusDrain || {}) }
+  const baseline = monster.defenceBonusBaseline || monster.defenceBonus
   for (const key of Object.keys(monster.defenceBonus)) {
     drain[key] = (drain[key] || 0) + amount
-    monster.defenceBonus[key] = Math.max(DEFENCE_BONUS_FLOOR, monster.defenceBonus[key] - amount)
+    const base = baseline[key] ?? monster.defenceBonus[key]
+    monster.defenceBonus[key] = Math.max(defenceBonusFloor(base), base - drain[key])
   }
   monster.defenceBonusDrain = drain
 }
@@ -47,9 +74,11 @@ export function recordDefenceBonusDrain(monster, amount) {
 export function applyDefenceBonusDrain(monster) {
   const drain = monster?.defenceBonusDrain
   if (!drain || !monster.defenceBonus) return
+  const baseline = monster.defenceBonusBaseline || monster.defenceBonus
   for (const [key, amount] of Object.entries(drain)) {
     if (!(key in monster.defenceBonus)) continue
-    monster.defenceBonus[key] = Math.max(DEFENCE_BONUS_FLOOR, monster.defenceBonus[key] - amount)
+    const base = baseline[key] ?? monster.defenceBonus[key]
+    monster.defenceBonus[key] = Math.max(defenceBonusFloor(base), base - amount)
   }
 }
 
@@ -94,8 +123,13 @@ export function applyForm(monster, formKey) {
   monster.defenceBonus = { ...(formDefence ?? monster.defenceBonus ?? {}) }
   // Only the authored branch needs the drain put back: the fallback inherits the
   // numbers already carrying it, and subtracting twice would grind the boss down
-  // a second time for every rotation it happened to make.
-  if (formDefence) applyDefenceBonusDrain(monster)
+  // a second time for every rotation it happened to make. Same reasoning for the
+  // baseline the floor is measured against — the fallback form has none of its
+  // own, so the previous form's baseline (and floor) stays in force.
+  if (formDefence) {
+    monster.defenceBonusBaseline = { ...monster.defenceBonus }
+    applyDefenceBonusDrain(monster)
+  }
   monster.formMaxHit = form.maxHit
   // Authored per form, and only ever a hint to the player — but a hint that
   // names the form before last is worse than none.
