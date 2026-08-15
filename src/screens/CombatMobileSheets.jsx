@@ -3,6 +3,7 @@ import SkillEmblem from '../components/SkillEmblem.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import collectionLogData from '../data/collectionLog.json'
 import { formatDropChance } from '../utils/constants.js'
+import { displayedDropChance, dropRateBoostLabel, monsterDropBoost } from '../engine/dropRateDisplay.js'
 import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getMonsterCharmDrops } from '../engine/summoning.js'
 import {
@@ -54,9 +55,10 @@ export function MultiStyleChip({ chip, prefix = '', kind }) {
   )
 }
 
-function DropRow({ drop, itemsData, accent }) {
+function DropRow({ drop, itemsData, accent, boost }) {
   const item = itemsData[drop.itemId]
   const key = item?.iconId || (item ? undefined : 'crossed_swords')
+  const chance = displayedDropChance(drop.chance, boost)
   return (
     <div class="cb-droprow">
       <div class="cb-droprow__l">
@@ -64,8 +66,8 @@ function DropRow({ drop, itemsData, accent }) {
         <span class="cb-droprow__name">{item?.name || drop.itemId}</span>
       </div>
       <div class="cb-droprow__r">
-        <span class={'cb-droprow__rate ' + rarityClass(drop.chance)}>
-          {formatDropChance(drop.chance)}{drop.taskOnly ? ' · task only' : ''}
+        <span class={'cb-droprow__rate ' + rarityClass(chance)}>
+          {formatDropChance(chance)}{drop.taskOnly ? ' · task only' : ''}
         </span>
         <span class="cb-droprow__qty">{qtyLabel(drop.quantity)}</span>
       </div>
@@ -73,13 +75,14 @@ function DropRow({ drop, itemsData, accent }) {
   )
 }
 
-function UniquePanel({ items, itemsData, sharedChance, drops }) {
+function UniquePanel({ items, itemsData, sharedChance, drops, boost }) {
   if (!items || items.length === 0) return null
   const [showRates, setShowRates] = useState(false)
   // Per-unique drop rate sourced from the monster's drop table (when supplied).
   const chanceById = {}
   for (const d of (drops || [])) chanceById[d.itemId] = d.chance
   const hasRates = (drops || []).length > 0
+  const boostLabel = dropRateBoostLabel(boost)
   return (
     <div class="cb-unique">
       <div class="cb-unique__head">
@@ -113,12 +116,13 @@ function UniquePanel({ items, itemsData, sharedChance, drops }) {
               </button>
             </div>
             {sharedChance != null && (
-              <div class="cb-rates__note">Any unique: {formatDropChance(sharedChance)}</div>
+              <div class="cb-rates__note">Any unique: {formatDropChance(displayedDropChance(sharedChance, boost))}</div>
             )}
+            {boostLabel && <div class="cb-rates__note">{boostLabel}</div>}
             <div class="cb-rates__list">
               {items.map(itemId => {
                 const item = itemsData[itemId]
-                const chance = chanceById[itemId]
+                const chance = chanceById[itemId] == null ? null : displayedDropChance(chanceById[itemId], boost)
                 const taskOnly = (drops || []).find(d => d.itemId === itemId)?.taskOnly
                 return (
                   <div key={itemId} class="cb-rates__row">
@@ -143,13 +147,18 @@ function UniquePanel({ items, itemsData, sharedChance, drops }) {
 }
 
 /** Mobile monster bestiary sheet (slide-up). Desktop keeps the <Modal>. */
-export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClose }) {
+export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, grindman = false, onClose }) {
   const art = getMonsterArt(monster, categoryKey)
   const attackStyles = getMonsterAttackStyles(monster)
   const weakness = getMonsterWeakness(monster)
   const maxHit = getMonsterMaxHitLabel(monster)
   const uniques = loggedUniques('monsters', monster.id)
   const addInfo = getMonsterAddInfo(monster)
+  // The sheet is opened with the record the fight would be built from, so its
+  // own flag is what monsterDropBoost reads. One boost covers every row: seeds
+  // and charms are empty for a boss, and hard mode is boss-only.
+  const boost = monsterDropBoost(monster, grindman)
+  const boostLabel = dropRateBoostLabel(boost)
   const regularDrops = [
     ...(monster.drops || []).filter(d => !uniques.includes(d.itemId)),
     ...getMonsterSeedDrops(monster),
@@ -272,8 +281,11 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
           {regularDrops.length > 0 && (
             <>
               <div class="cb-sheet__sec">Drop Table</div>
+              {boostLabel && <div class="cb-rates__note">{boostLabel}</div>}
               <div class="cb-drops">
-                {regularDrops.map((d, i) => <DropRow key={i} drop={d} itemsData={itemsData} accent={art.accent} />)}
+                {regularDrops.map((d, i) => (
+                  <DropRow key={i} drop={d} boost={boost} itemsData={itemsData} accent={art.accent} />
+                ))}
               </div>
             </>
           )}
@@ -281,7 +293,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
           {uniques.length > 0 && (
             <>
               <div class="cb-sheet__sec">Collection Log</div>
-              <UniquePanel items={uniques} itemsData={itemsData} drops={monster.drops} />
+              <UniquePanel items={uniques} itemsData={itemsData} drops={monster.drops} boost={boost} />
             </>
           )}
         </div>
@@ -291,12 +303,13 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
 }
 
 /** Mobile raid sheet (slide-up). Desktop keeps the <Modal>. */
-export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCounts, onStartRaid, onClose }) {
+export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCounts, boost, onStartRaid, onClose }) {
   const art = getRaidArt(raid.id)
   const kc = raidKillCounts?.[raid.id] || 0
   const uniques = loggedUniques('raids', raid.id)
   const alwaysDrops = raid.rewards?.always || []
   const uniqueChance = raid.rewards?.unique?.chance ?? null
+  const boostLabel = dropRateBoostLabel(boost)
 
   return (
     <div class="cb-overlay" onClick={onClose}>
@@ -350,8 +363,9 @@ export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCou
           {alwaysDrops.length > 0 && (
             <>
               <div class="cb-sheet__sec">Reward Table</div>
+              {boostLabel && <div class="cb-rates__note">{boostLabel}</div>}
               <div class="cb-drops">
-                {alwaysDrops.map((d, i) => <DropRow key={i} drop={d} itemsData={itemsData} accent={art.accent} />)}
+                {alwaysDrops.map((d, i) => <DropRow key={i} drop={d} boost={boost} itemsData={itemsData} accent={art.accent} />)}
               </div>
             </>
           )}
@@ -359,7 +373,7 @@ export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCou
           {uniques.length > 0 && (
             <>
               <div class="cb-sheet__sec">Unique Rewards</div>
-              <UniquePanel items={uniques} itemsData={itemsData} sharedChance={uniqueChance} />
+              <UniquePanel items={uniques} itemsData={itemsData} sharedChance={uniqueChance} boost={boost} />
             </>
           )}
         </div>
