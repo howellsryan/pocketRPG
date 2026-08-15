@@ -307,7 +307,7 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
                     <CoinHelmIcon size={16} /> Grindman Mode
                   </div>
                   <div class="text-[11px] text-[var(--fm-ink-soft)] mt-0.5 leading-snug">
-                    Half XP and triple drop rates. Credits cannot be bought — you keep what you start with and earn one a day from daily tasks. Cannot be combined with Ironman or One Life. Permanent once set.
+                    Half XP and triple drop rates. Collection log uniques — and the gear built from them — have to drop for you, not be bought. Credits cannot be bought — you keep what you start with and earn one a day from daily tasks. Cannot be combined with Ironman or One Life. Permanent once set.
                   </div>
                 </div>
               </label>
