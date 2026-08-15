@@ -21,6 +21,7 @@ import {
   lootEligibleCharacterIds,
   killCountCharacterIds,
   foughtThisKill,
+  isRaidPayingBoss,
   describeCoopEquipRefusal,
   describeCoopActionRefusal,
 } from '../src/engine/coopBossEngine.js'
@@ -1320,5 +1321,28 @@ describe('foughtThisKill', () => {
 
   it('is true when the room is older than the field, rather than silently paying nobody', () => {
     expect(foughtThisKill({ bossId: 'warlord_grondar' }, 3)).toBe(true)
+  })
+})
+
+// A raid pays its boss kill once, on the last boss, because that is the only
+// one solo pays: combat.js emits `monsterDeath` there and nowhere else, so
+// crediting each boss in the run handed a group raider five kills for a run a
+// solo raider gets one from.
+describe('isRaidPayingBoss', () => {
+  it('pays the final boss of the run', () => {
+    expect(isRaidPayingBoss({ bossIndex: 4, totalBosses: 5 })).toBe(true)
+  })
+
+  it('pays none of the bosses before it', () => {
+    expect(isRaidPayingBoss({ bossIndex: 0, totalBosses: 5 })).toBe(false)
+    expect(isRaidPayingBoss({ bossIndex: 3, totalBosses: 5 })).toBe(false)
+  })
+
+  it('pays a one-boss raid on its only boss', () => {
+    expect(isRaidPayingBoss({ bossIndex: 0, totalBosses: 1 })).toBe(true)
+  })
+
+  it('pays an event with no run shape at all, rather than silently paying nobody', () => {
+    expect(isRaidPayingBoss({ bossId: 'the_great_olm' })).toBe(true)
   })
 })

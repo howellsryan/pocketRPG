@@ -19,7 +19,7 @@ import { openCoopFeed } from '../cloud/coopFeed.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
-import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal, foughtThisKill } from '../engine/coopBossEngine.js'
+import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal, foughtThisKill, isRaidPayingBoss } from '../engine/coopBossEngine.js'
 import { coopRaidSummary, raidProgress } from '../engine/coopRaidEngine.js'
 import { appendChatLines, chatLinesFromCoopEvents } from '../utils/coopChat.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
@@ -171,6 +171,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       // who fought the kill and each client credits its own. Gated on that list
       // so a member who sat the fight out in the lobby is not paid for it.
       else if (ev.type === 'bossDefeated' || ev.type === 'raidBossDefeated') {
+        // A raid pays its boss kill on the final boss and nowhere else, which is
+        // where solo fires its one (isRaidPayingBoss).
+        if (ev.type === 'raidBossDefeated' && !isRaidPayingBoss(ev)) continue
         if (foughtThisKill(ev, characterId)) recordGameEvent?.({ kind: 'boss_kill', monsterId: ev.bossId })
       } else if (ev.type === 'raidComplete') {
         if (foughtThisKill(ev, characterId)) recordGameEvent?.({ kind: 'raid_complete', raidId: ev.raidId })

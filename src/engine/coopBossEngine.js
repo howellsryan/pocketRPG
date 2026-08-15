@@ -612,6 +612,22 @@ export function foughtThisKill(event, characterId) {
   return listed.some((id) => Number(id) === Number(characterId))
 }
 
+/**
+ * Does a `raidBossDefeated` event describe a boss kill a player is paid for?
+ *
+ * Only the last boss of the run. Solo raids fire their boss kill from
+ * `monsterDeath`, which combat.js emits ONCE, on the final boss — the ones
+ * before it advance the run and pay nothing at all. Crediting each of them
+ * here would hand a group raider five boss kills for a run a solo raider gets
+ * one from, and the intermediate lists are measured against the whole run's HP
+ * anyway (coopLootBasisHP), so early in a raid they name nobody.
+ */
+export function isRaidPayingBoss(event) {
+  const total = Number(event?.totalBosses)
+  if (!Number.isFinite(total) || total <= 0) return true
+  return Number(event?.bossIndex) === total - 1
+}
+
 export function coopKillOutcome(event, characterId) {
   const settlements = Array.isArray(event?.settlements)
     ? event.settlements
@@ -1391,8 +1407,10 @@ function resolveRaidBossDeath(state, monstersData, events, now) {
     bossName: monstersData?.[state.bossId]?.name || state.bossId,
     bossIndex: index,
     totalBosses: bosses.length,
-    // A raid pays out once, at the end, but every boss in it is still a boss
-    // kill for a daily task — the same events solo fires on each one.
+    // Who is paid the boss kill — read by the client only on the FINAL boss
+    // (isRaidPayingBoss), which is the one solo pays too. Sent on the others so
+    // an intermediate event is never mistaken for the older, listless shape
+    // foughtThisKill answers "yes" to.
     killCountCharacterIds: killCountCharacterIds(state),
   })
 

@@ -453,18 +453,31 @@ function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quan
   const owner = topDamageContributor(npc) ?? player.charId
   // Everyone who earned this kill, on the same 10% share co-op pays loot at
   // (killCredit.js) — read BEFORE the clear below, which is the only copy of
-  // who did what. The owner is kept separately because ground loot is one
-  // physical pile on one tile: it can have exactly one owner, where the credit
-  // below is per player. A solo killer is both.
+  // who did what. `owner` is who the kill is announced under, and is kept
+  // separately because it is the biggest contributor rather than whoever landed
+  // the last blow. A solo killer is both.
   const credited = killCreditIds(
     [...npc.damageByChar].map(([id, { dmg, tick }]) => ({ id, damage: dmg, tick })),
     (monstersData as Record<string, { hitpoints?: number }>)[npc.monsterId]?.hitpoints ?? 0,
   )
   npc.damageByChar.clear()
-  result.newLoot.push(...spawnDrops(loot, npc.x, npc.z, owner, ctx.tick))
+  // The engine rolled `loot` under THIS player's slayer task and Grindman flag,
+  // so the pile it produced is theirs and nobody else's. Spawned under the
+  // top-damage player it paid them someone else's rates — an on-task top
+  // contributor could never roll the task-only drops their task exists to
+  // unlock, because rollLootForCredited skips the pile's owner — while an
+  // off-task one could be handed them. Everyone else past the line is rolled
+  // separately in WorldZone, under their own flags. A last-hit sniper who never
+  // reached the line gets nothing, exactly as before.
+  const killerEarned = credited.includes(player.charId)
+  const killerLoot = killerEarned ? loot : []
+  result.newLoot.push(...spawnDrops(killerLoot, npc.x, npc.z, player.charId, ctx.tick))
   // Surface the kill so the DO can record boss collection-log / kill-count /
   // audit server-side (§14) — the loot itself still rides the trusted save blob.
-  result.kills.push({ monsterId: npc.monsterId, owner, credited, loot, x: npc.x, z: npc.z, summoned: !!npc.summonerId })
+  result.kills.push({
+    monsterId: npc.monsterId, owner, killer: player.charId, credited,
+    loot: killerLoot, x: npc.x, z: npc.z, summoned: !!npc.summonerId,
+  })
   result.npcChanged.push(npc.id)
 }
 

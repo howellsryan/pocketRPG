@@ -2054,12 +2054,13 @@ export class WorldZone extends Server<Env> {
 
         // Everyone past the 10% line rolls the table INDEPENDENTLY, the way a
         // co-op room pays its winners — not a share of one drop. The killer's
-        // roll rode the death event and is already on the floor; the rest are
-        // rolled here, where each player's own slayer task is visible (a
-        // task-only drop must not roll for someone who is not on it). Their pile
-        // is owned by them, so loot.ts hides it from everyone else for the owner
-        // window with nothing new: two piles on one tile, one each.
-        const extra = kill.summoned ? [] : rollLootForCredited(kill.monsterId, creditedPlayers, kill.owner)
+        // roll rode the death event and is already on the floor under their own
+        // name; the rest are rolled here, where each player's own slayer task
+        // and Grindman flag are visible (a task-only drop must not roll for
+        // someone who is not on it). Their pile is owned by them, so loot.ts
+        // hides it from everyone else for the owner window with nothing new:
+        // two piles on one tile, one each.
+        const extra = kill.summoned ? [] : rollLootForCredited(kill.monsterId, creditedPlayers, kill.killer)
         for (const share of extra) {
           for (const loot of spawnDrops(share.loot, kill.x, kill.z, share.charId, this.tickCount)) {
             this.loot.set(loot.id, loot)
@@ -2069,7 +2070,7 @@ export class WorldZone extends Server<Env> {
         // Collection log and audit per player, on their OWN roll: a unique is
         // logged for whoever actually pulled it. Gated on the drop rather than
         // the monster, so an ordinary kill with nothing logged reaches no D1.
-        for (const share of [{ charId: kill.owner, loot: kill.loot }, ...extra]) {
+        for (const share of [{ charId: kill.killer, loot: kill.loot }, ...extra]) {
           void recordBossKill(this.env, { ...kill, owner: share.charId, loot: share.loot })
           const playerName = this.players.get(share.charId)?.name ?? 'Someone'
           for (const drop of dropBroadcastsFrom(kill.monsterId, share.loot, itemsData)) {

@@ -20,6 +20,7 @@ const MONSTER = 'green_dragon'
 const MAX_HP = (monstersData as Record<string, { hitpoints: number }>)[MONSTER].hitpoints
 // A slayer-gated monster, which is where the task-only drops live.
 const TASK_MONSTER = 'nether_demon'
+const TASK_MAX_HP = (monstersData as Record<string, { hitpoints: number }>)[TASK_MONSTER].hitpoints
 const TASK_ONLY_IDS = new Set(['imbued_crown', 'imbued_brain'])
 
 function makePlayer(charId: string, x: number, z: number): TickPlayer {
@@ -46,8 +47,8 @@ function ctx(tick: number, npcs: Map<string, NpcState>, players: TickPlayer[]): 
 
 /** Stands `killer` on the monster and lets them land the fatal blow, after the
  * given damage has already been booked against it by other players. */
-function killWith(damageByChar: Record<string, number>, killerDamage: number) {
-  const npcs = npcsFromZone([{ id: 'm1', monsterId: MONSTER, x: 10, z: 10, wander: { x: 0, z: 0, w: 24, h: 24 } }])
+function killWith(damageByChar: Record<string, number>, killerDamage: number, monsterId = MONSTER) {
+  const npcs = npcsFromZone([{ id: 'm1', monsterId, x: 10, z: 10, wander: { x: 0, z: 0, w: 24, h: 24 } }])
   const npc = npcs.get('m1')!
   const killer = makePlayer('killer', 10, 11)
   for (const [charId, dmg] of Object.entries(damageByChar)) recordDamage(npc, charId, dmg, 1)
@@ -58,7 +59,7 @@ function killWith(damageByChar: Record<string, number>, killerDamage: number) {
     if (npc.state !== 'dead') npc.hp = 1
     killer.hp = killer.maxHp
     const result = tickPlayer(killer, ctx(t, npcs, [killer]))
-    const kill = result.kills.find((k) => k.monsterId === MONSTER)
+    const kill = result.kills.find((k) => k.monsterId === monsterId)
     if (kill) return kill
   }
   throw new Error('the monster never died')
@@ -101,6 +102,36 @@ describe('a world kill credits everyone who earned it', () => {
   })
 })
 
+// The engine rolls the death event's loot under the KILLER's slayer task and
+// Grindman flag, so that pile belongs to the killer. Spawned under the
+// top-damage player it paid them someone else's rates, and left the top-damage
+// player unable to roll their own — rollLootForCredited skips the pile's owner.
+describe('who the engine\'s own roll belongs to', () => {
+  it('names the killer separately from the announced owner', () => {
+    const line = killCreditDamageRequired(MAX_HP)
+    const kill = killWith({ helper: line * 4 }, line)
+
+    expect(kill.owner).toBe('helper')
+    expect(kill.killer).toBe('killer')
+  })
+
+  it('gives that roll to a killer who earned it', () => {
+    const kill = killWith({}, MAX_HP)
+    expect(kill.killer).toBe('killer')
+    expect(kill.loot.map((l) => l.itemId)).toContain('dragon_bones')
+  })
+
+  // Last-hitting a monster somebody else brought down is not a kill you earned.
+  // A 150 HP monster puts the line at 15, which is past this player's max hit,
+  // so the one blow they land cannot carry them over it.
+  it('gives a last-hit sniper below the line nothing at all', () => {
+    const kill = killWith({ grinder: TASK_MAX_HP }, 0, TASK_MONSTER)
+
+    expect(kill.credited).toEqual(['grinder'])
+    expect(kill.loot).toEqual([])
+  })
+})
+
 // The engine only rolls a taskOnly drop when it is handed the player's task.
 // The world passed null, so the killer was the one player who could never roll
 // the drops their own slayer task exists to unlock — while a helper past the
@@ -111,11 +142,14 @@ describe('the killer fights on their own slayer task', () => {
     const npc = npcs.get('m1')!
     const killer = makePlayer('killer', 10, 11)
     ;(killer as unknown as { slayer: unknown }).slayer = { task }
+    // The killer only gets a pile at all once they are past the credit line, so
+    // let them earn it before hurrying the kill along.
+    const line = killCreditDamageRequired(TASK_MAX_HP)
     let seen = false
     const spy = vi.spyOn(Math, 'random').mockReturnValue(0)
     killer.pendingInteract = { kind: 'npc', id: 'm1', action: 'attack' } as never
     for (let t = 3; t < 400 && !seen; t++) {
-      if (npc.state !== 'dead') npc.hp = 1
+      if (npc.state !== 'dead' && (npc.damageByChar.get('killer')?.dmg ?? 0) >= line) npc.hp = 1
       killer.hp = killer.maxHp
       const result = tickPlayer(killer, ctx(t, npcs, [killer]))
       const kill = result.kills.find((k) => k.monsterId === TASK_MONSTER)

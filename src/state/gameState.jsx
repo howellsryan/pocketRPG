@@ -1853,7 +1853,15 @@ export function GameProvider({ children }) {
     }
     const tasks = dailyTaskStatesRef.current
     if (!tasks || tasks.length === 0) return
-    queueDailyTaskEvent(evt)
+    // Only events that move one of today's own tasks are worth sending. The
+    // server matches with this same matcher against these same five rows, so
+    // anything matching nothing here would match nothing there — and a grind
+    // fires skill_xp on every gain, which unfiltered is a POST every 8s
+    // carrying events no task will ever read.
+    if (tasks.some(task => {
+      const def = taskById(task.taskId)
+      return def ? matchTaskProgress(def, evt) > 0 : false
+    })) queueDailyTaskEvent(evt)
     let changed = false
     const next = tasks.map(task => {
       if (task.completed || task._completing) return task

@@ -210,8 +210,12 @@ export type TickResult = {
    * nothing) despite being a real npc out here that dies like any other. */
   kills: {
     monsterId: string
+    /** Biggest contributor — who the kill is announced under. */
     owner: string
+    /** Who landed the last blow, and so whose flags rolled `loot`. */
+    killer: string
     credited: string[]
+    /** The killer's own roll, empty when they never reached the credit line. */
     loot: { itemId: string; quantity: number }[]
     /** The death tile: every credited player's pile is spawned here. */
     x: number

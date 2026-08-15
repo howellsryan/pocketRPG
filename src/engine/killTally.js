@@ -20,11 +20,17 @@
 //
 // It IS reset on a save_revision CONFLICT (sync.js), the only signal that a
 // full write landed unseen and already banked what is still sitting here, and
-// on logout / character switch via resetSyncState. That covers the revision-
-// bumping write and nothing else: an idle-ceiling or no-op reply banks kills
-// without moving the revision, so a lost response there is re-sent and counted
-// twice. Closing that needs an idempotency key on the report, not another
-// client-side rule.
+// on logout / character switch via resetSyncState. Specifically that code —
+// the bank-wipe rejection classifies as a conflict too and refused the write
+// outright, so it banked nothing and the tally is simply what is still owed.
+// That covers the revision-bumping write and nothing else: an idle-ceiling or
+// no-op reply banks kills without moving the revision, so a lost response there
+// is re-sent and counted twice. Closing that needs an idempotency key on the
+// report, not another client-side rule.
+//
+// A tally the server failed to write is a different case and IS reported back:
+// the kill_counts write is swallowed rather than failing an otherwise good
+// save, and the reply carries killsApplied: false so this survives the ok.
 //
 // What may be reported at all is decided by killCountReports.js, not here.
 import { filterReportableKills, MAX_REPORTED_KILLS_PER_MONSTER, MAX_REPORTED_MONSTERS } from './killCountReports.js'

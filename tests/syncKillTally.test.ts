@@ -157,6 +157,35 @@ describe('kill tally on a push', () => {
     expect(readKillTally()).toBeNull()
   })
 
+  // The other 409 that classifies as a conflict takes the same rollback path but
+  // means the opposite thing: nothing was written at all, so the tally is simply
+  // the kills still owed.
+  it('keeps the tally when the bank-wipe guard refuses the write', async () => {
+    recordKills('field_chicken', 7)
+    putSave.mockRejectedValueOnce(Object.assign(new Error('wipe'), {
+      status: 409, body: { code: 'BANK_WIPE_REJECTED' },
+    }))
+    await pushNow({ stats: { attack: { xp: 40 } } })
+    expect(readKillTally()).toEqual({ field_chicken: 7 })
+  })
+
+  // The server swallows a failed kill_counts write so it can never turn a
+  // legitimate save into a failure, and says so in the reply. Settling on that
+  // ok would drop the window's kills with nothing to show for them.
+  it('keeps the tally when the reply says the counts did not land', async () => {
+    recordKills('green_dragon', 5)
+    putSave.mockResolvedValueOnce({ ok: true, updatedAt: 1, save_revision: 2, killsApplied: false })
+    await pushNow({ stats: { attack: { xp: 40 } } })
+    expect(readKillTally()).toEqual({ green_dragon: 5 })
+  })
+
+  it('settles it when the reply says they did', async () => {
+    recordKills('green_dragon', 5)
+    putSave.mockResolvedValueOnce({ ok: true, updatedAt: 1, save_revision: 2, killsApplied: true })
+    await pushNow({ stats: { attack: { xp: 40 } } })
+    expect(readKillTally()).toBeNull()
+  })
+
   it('is cleared by resetSyncState, which owns logout and character switch', async () => {
     recordKills('green_dragon', 5)
     resetSyncState()

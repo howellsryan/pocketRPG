@@ -225,13 +225,14 @@ async function applySaveWrite({ env, ch, identityId, body }) {
     // could still fail. This one answers ok while refusing the BLOB, not the
     // counts: dropping them would lose every kill an offline catch-up reported
     // past the ceiling.
-    await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
+    const killsApplied = await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
     return json({
       ok: true,
       updatedAt: Number(existing?.updated_at) || now,
       save_revision: currentRevision,
       noop: true,
       idle_ceiling: true,
+      killsApplied,
     })
   }
 
@@ -359,16 +360,17 @@ async function applySaveWrite({ env, ch, identityId, body }) {
         // the touch, never before: a throw between the two banks the kills and
         // still answers an error, so the client retries the same tally and
         // counts them twice.
-        await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
-        return json({ ok: true, updatedAt: now, save_revision: currentRevision, noop: true })
+        const killsApplied = await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
+        return json({ ok: true, updatedAt: now, save_revision: currentRevision, noop: true, killsApplied })
       }
       // The blob is a no-op; the kills reported alongside it are not.
-      await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
+      const killsApplied = await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
       return json({
         ok: true,
         updatedAt: Number(existing?.updated_at) || now,
         save_revision: currentRevision,
         noop: true,
+        killsApplied,
       })
     }
   }
@@ -439,7 +441,7 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // After the write, so a throw on the way here leaves the tally with the
   // client — the retry passes the revision guard untouched and would otherwise
   // bank the same kills twice.
-  await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
+  const killsApplied = await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
 
   if (itemLoss?.flagged) {
     // Swallowed: the detector observes, and an audit outage must never turn a
@@ -459,7 +461,7 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // currentRevision is 0) or COALESCE(save_revision,0)+1 on update — so the new
   // revision is currentRevision + 1 in both cases. Compute it instead of issuing
   // a post-write SELECT.
-  return json({ ok: true, updatedAt: now, save_revision: currentRevision + 1 })
+  return json({ ok: true, updatedAt: now, save_revision: currentRevision + 1, killsApplied })
 }
 
 // Hard-delete the saves row for this character. Used on One-Life death so

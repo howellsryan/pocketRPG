@@ -10,7 +10,7 @@ import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.j
 import { LOCAL_WRITE_MARKER_KEY } from '../db/stores.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
-import { classifySaveError, saveLockCode } from './saveErrors.js'
+import { classifySaveError, isRevisionConflict, saveLockCode } from './saveErrors.js'
 import { readItemLossLedger, resetItemLossLedger, settleItemLossLedger } from '../engine/lossLedger.js'
 import { readKillTally, resetKillTally, settleKillTally } from '../engine/killTally.js'
 import { clearWorldHandoff, hasPendingWorldHandoff } from './worldHandoff.js'
@@ -202,7 +202,11 @@ async function performPush() {
     // Settle by subtracting what THIS payload declared. Anything spent since it
     // was captured stays on the ledger for the save that will carry it.
     if (losses) settleItemLossLedger(losses)
-    if (kills) settleKillTally(kills)
+    // `killsApplied: false` is the server saying the reply is ok but the counts
+    // are not in D1 — the tally write is swallowed so a failed one can never
+    // turn a legitimate save into a failure. Settling on that would drop the
+    // window's kills silently; kept, they ride the next push.
+    if (kills && res?.killsApplied !== false) settleKillTally(kills)
     pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     if (Number.isFinite(res?.save_revision)) lastSaveRevision = res.save_revision
@@ -284,7 +288,11 @@ async function performPush() {
       // foreign writer (a world flush, an action completion) this loses the
       // window's counts instead. Both errors are bounded and invisible, and §14
       // keeps every gated monster off this channel entirely.
-      resetKillTally()
+      //
+      // The OTHER conflict code lands here too and must not reset: a bank-wipe
+      // rejection refused the write outright, so it banked nothing and the tally
+      // is simply the kills still owed.
+      if (isRevisionConflict(err)) resetKillTally()
       pendingSaveOptions = {}
       hasUnsyncedChanges = false
       if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
