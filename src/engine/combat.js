@@ -137,6 +137,15 @@ function prepareMonster(monster) {
       }
     }
   }
+  // A Grondar Godsword warstrike must never grind a defence bonus below zero
+  // (or, for a style a boss is deliberately authored weak to, below that
+  // authored baseline) — bossForms.js measures the floor from this stamp.
+  // applyForm above already sets it when the initial form authors its own
+  // defences; this covers a monster with no forms at all, and the inherit
+  // fallback on a first form that authors none of its own.
+  if (!preparedMonster.defenceBonusBaseline) {
+    preparedMonster.defenceBonusBaseline = { ...preparedMonster.defenceBonus }
+  }
   return preparedMonster
 }
 
@@ -316,6 +325,10 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
         monster.strengthBonus = nextForm.strengthBonus ?? monster.strengthBonus
         monster.defenceBonus = { ...nextForm.defenceBonus }
         clearDefenceBonusDrain(monster)
+        // A new phase's own numbers are the floor a future warstrike measures
+        // against — the last phase's baseline (and any headroom it had left)
+        // does not follow it in, same as the drain itself doesn't.
+        monster.defenceBonusBaseline = { ...monster.defenceBonus }
         monster.formMaxHit = nextForm.maxHit
         monster.formAttackCount = 0
         monster.formSwitchThreshold = 9999
@@ -356,6 +369,7 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
         monster.strengthBonus = form.strengthBonus ?? monster.strengthBonus
         monster.defenceBonus = { ...form.defenceBonus }
         clearDefenceBonusDrain(monster)
+        monster.defenceBonusBaseline = { ...monster.defenceBonus }
         monster.formMaxHit = form.maxHit
       }
     }

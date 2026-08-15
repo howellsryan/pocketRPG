@@ -131,6 +131,12 @@ const MUTABLE_MONSTER_FIELDS = [
   // `stats.defence` in place — so the info panel's "what it was" needs this
   // fight-start stamp (prepareMonster) carried the same way defenceBonusDrain is.
   'baseDefenceLevel',
+  // The per-style value warstrike's floor is measured from (bossForms.js) —
+  // without this, a fresh hydrate each tick would re-derive it from
+  // monsters.json's raw record instead of the current form's own numbers, and
+  // a form switch mid-fight would silently reset the floor a party had
+  // already ground a style down to.
+  'defenceBonusBaseline',
 ]
 
 function levelFrom(statValue) {

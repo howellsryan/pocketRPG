@@ -357,15 +357,16 @@ export function getDefenceLevelInfo(monster) {
 
 /**
  * Defence BONUS for one style vs what it was before a Grondar Godsword
- * warstrike ground it down. `defenceBonusDrain` (bossForms.js) already tracks
- * the running total taken off every style, so "what it was" is just adding it
- * back — and that stays correct across a form change, where the drain is
- * re-applied onto the new form's own authored numbers.
+ * warstrike ground it down. Reads `defenceBonusBaseline` (bossForms.js)
+ * directly rather than adding `defenceBonusDrain` back onto the live value —
+ * the drain is an uncapped running total (raw damage dealt) while the live
+ * value is floor-clamped, so once a style hits its floor the two no longer
+ * sum back to the truth, and the baseline is what does.
  */
 export function getDefenceBonusInfo(monster, style) {
   const current = monster?.defenceBonus?.[style] ?? 0
-  const drained = monster?.defenceBonusDrain?.[style] || 0
-  return { current, base: current + drained, reduced: drained > 0 }
+  const base = monster?.defenceBonusBaseline?.[style] ?? current
+  return { current, base, reduced: base > current }
 }
 
 // A boss's mid-fight add (`spawnsAdd`), resolved for the info surfaces. The add

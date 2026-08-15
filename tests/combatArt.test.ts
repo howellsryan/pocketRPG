@@ -191,25 +191,34 @@ describe('getDefenceLevelInfo — the info panel\'s "what Defence was" for a sma
 })
 
 describe('getDefenceBonusInfo — the info panel\'s "what it was" for a warstrike drain', () => {
-  it('reports no reduction with an empty or absent defenceBonusDrain', () => {
+  it('reports no reduction with no baseline stamped at all', () => {
     const monster = { defenceBonus: { crush: 240 } }
     expect(getDefenceBonusInfo(monster, 'crush')).toEqual({ current: 240, base: 240, reduced: false })
   })
 
-  it('adds the running drain total back onto the live value for "what it was"', () => {
-    const monster = { defenceBonus: { crush: 212 }, defenceBonusDrain: { crush: 28 } }
+  it('reads "what it was" from the stamped baseline, not the live value plus a drain total', () => {
+    // getDefenceBonusInfo reads defenceBonusBaseline directly (bossForms.js
+    // stamps it) rather than reconstructing it from defenceBonusDrain — the
+    // drain is an uncapped running total once a style has hit its floor, so
+    // current+drain would over-report "what it was" past that point.
+    const monster = { defenceBonus: { crush: 212 }, defenceBonusBaseline: { crush: 240 } }
     expect(getDefenceBonusInfo(monster, 'crush')).toEqual({ current: 212, base: 240, reduced: true })
   })
 
   it('is per-style — a drain on one style does not leak onto another', () => {
-    const monster = { defenceBonus: { crush: 212, stab: 240 }, defenceBonusDrain: { crush: 28 } }
+    const monster = { defenceBonus: { crush: 212, stab: 240 }, defenceBonusBaseline: { crush: 240, stab: 240 } }
     expect(getDefenceBonusInfo(monster, 'stab')).toEqual({ current: 240, base: 240, reduced: false })
   })
 
   it('covers every DEFENCE_STYLES entry, so a new style added there is not silently unread', () => {
     for (const style of DEFENCE_STYLES) {
-      const monster = { defenceBonus: { [style]: 10 }, defenceBonusDrain: { [style]: 5 } }
+      const monster = { defenceBonus: { [style]: 10 }, defenceBonusBaseline: { [style]: 15 } }
       expect(getDefenceBonusInfo(monster, style)).toEqual({ current: 10, base: 15, reduced: true })
     }
+  })
+
+  it('still holds once a style is floor-clamped at zero — the baseline reports the true authored number, not an inflated one', () => {
+    const monster = { defenceBonus: { crush: 0 }, defenceBonusBaseline: { crush: 240 } }
+    expect(getDefenceBonusInfo(monster, 'crush')).toEqual({ current: 0, base: 240, reduced: true })
   })
 })
