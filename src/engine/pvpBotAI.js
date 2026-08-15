@@ -12,7 +12,8 @@
 //           opponent (or energy is capped on a cheap spec), queue it.
 //        b. Weapon swap — if a finisher weapon in the bag could KO when
 //           the equipped one can't, swap to it (the spec fires once it's
-//           ready). Falls back to the highest-DPS weapon when no KO is on.
+//           ready). With no KO on, holds whichever weapon it owns lands the
+//           most damage per tick against this opponent.
 //   4. Prayer + stance — keep them matched to the weapon we'll be wielding.
 //
 // Why the off-by-one matters: the engine decrements attackTimer AFTER
@@ -23,13 +24,16 @@
 
 import { getEquippedPvpSpecialAttack, clampPvpSpecialEnergy } from './pvpSpecialAttacks.js'
 import { rollMeleeAttack, rollRangedAttack, rollMagicAttack } from './combatPrimitives.js'
-import { getCombatType } from './equipment.js'
+import { getCombatType, getRangedAmmoRequirementFailure } from './equipment.js'
 
-// Highest-DPS weapon(s) the bot returns to when no KO is being pursued,
-// in preference order. Finisher weapons it swaps to for a kill attempt,
-// cheapest / highest-burst first.
-const PRIMARY_DPS_WEAPONS = ['magic_shortbow']
-const KO_WEAPONS          = ['dragon_dagger', 'dragon_battleaxe']
+// Finisher weapons it swaps to for a kill attempt, cheapest / highest-burst
+// first. What it returns to afterwards is measured, not listed — see
+// bestEverydayWeapon.
+const KO_WEAPONS = ['dragon_dagger', 'dragon_battleaxe']
+
+// A swap has to beat the weapon in hand by this much to be worth the tick.
+// Without it two near-identical weapons trade places every tick forever.
+const WEAPON_SWAP_MARGIN = 1.05
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -86,6 +90,75 @@ function estimateWeaponBurst(weaponId, bot, opponent, itemsData) {
     case 'overpower':  return Math.floor(base * (dmgMult || 1.5))
     default:           return base
   }
+}
+
+// Damage per tick `weaponId` would land, wielded the way the bot would wield it
+// (own style, own damage prayer, own offensive stance). Speed matters as much as
+// the hit: a godsword that swings every 5 ticks is not an upgrade on a whip.
+function estimateWeaponDps(weaponId, bot, opponent, itemsData) {
+  const item = itemsData?.[weaponId]
+  if (!item) return 0
+  const fakeEquip = { ...bot.equipment, weapon: { itemId: weaponId } }
+  const combatType = getCombatType(fakeEquip, itemsData)
+  // A bow with the wrong ammo (or none) is a blocked swing, not a weapon.
+  if (getRangedAmmoRequirementFailure(fakeEquip, itemsData)) return 0
+  const fakeBot = {
+    ...bot,
+    equipment: fakeEquip,
+    combatType,
+    stance: bestOffensiveStance(combatType),
+    activeCombatPrayer: bestDamagePrayer(combatType),
+  }
+  const snap = combatType === 'ranged' ? rollRangedAttack(fakeBot, opponent, itemsData)
+    : combatType === 'magic' ? rollMagicAttack(fakeBot, opponent, itemsData)
+    : rollMeleeAttack(fakeBot, opponent, itemsData)
+  const maxHit = snap?.maxHit || 0
+  if (maxHit <= 0) return 0
+  const base = Math.max(1, Number(item.attackSpeed) || 4)
+  const speed = combatType === 'ranged' ? Math.max(1, base - 1) : base   // rapid
+  return ((snap.accuracy || 0) * (maxHit + 1) / 2) / speed
+}
+
+// Every distinct weapon the bot could be holding this tick: the one in hand
+// plus anything in the pack.
+function weaponChoices(bot, itemsData) {
+  const out = []
+  const current = bot.equipment?.weapon?.itemId
+  if (current && itemsData?.[current]) out.push({ weaponId: current, inventorySlot: -1 })
+  const inv = bot.inventory || []
+  for (let i = 0; i < inv.length; i++) {
+    const slot = inv[i]
+    if (!slot?.itemId || itemsData?.[slot.itemId]?.slot !== 'weapon') continue
+    if (out.some((c) => c.weaponId === slot.itemId)) continue
+    out.push({ weaponId: slot.itemId, inventorySlot: i })
+  }
+  return out
+}
+
+/**
+ * The best weapon the bot owns for the fight in front of it, by damage per tick.
+ *
+ * This is what a bot returns to once a KO push is over. It used to be a
+ * hardcoded id, which meant a bot that had swapped to a dagger for a finisher
+ * kept the dagger for the rest of the fight — every melee bot ended its fights
+ * holding the worst weapon it owned. Returns null when the weapon in hand is
+ * already the best one.
+ */
+export function bestEverydayWeapon(bot, opponent, itemsData) {
+  const current = bot.equipment?.weapon?.itemId
+  const currentDps = current ? estimateWeaponDps(current, bot, opponent, itemsData) : 0
+  let best = null
+  let bestDps = currentDps * WEAPON_SWAP_MARGIN
+  for (const choice of weaponChoices(bot, itemsData)) {
+    if (choice.inventorySlot < 0) continue
+    // Two-handed swap with a shield on needs a free slot for the shield; the
+    // engine refuses the equip outright when the pack has none, so proposing it
+    // would only burn the decision every tick.
+    if (itemsData[choice.weaponId]?.twoHanded && bot.equipment?.shield && !(bot.inventory || []).some((s) => !s)) continue
+    const dps = estimateWeaponDps(choice.weaponId, bot, opponent, itemsData)
+    if (dps > bestDps) { best = choice; bestDps = dps }
+  }
+  return best
 }
 
 // Find a weapon in the bot's inventory by itemId; returns { inventorySlot, item }.
@@ -261,15 +334,12 @@ export function computeBotIntents(state, botId, itemsData) {
       decided = true
     }
 
-    // No KO being pursued — return to the highest-DPS weapon if we drifted off it.
-    if (!decided && !PRIMARY_DPS_WEAPONS.includes(current)) {
-      for (const weaponId of PRIMARY_DPS_WEAPONS) {
-        const inv = findInventoryWeapon(bot, weaponId, itemsData)
-        if (inv) {
-          intents.push({ type: 'equip', inventorySlot: inv.inventorySlot })
-          plannedWeapon = weaponId
-          break
-        }
+    // No KO being pursued — hold the best weapon we own for this fight.
+    if (!decided) {
+      const swap = bestEverydayWeapon(bot, opponent, itemsData)
+      if (swap) {
+        intents.push({ type: 'equip', inventorySlot: swap.inventorySlot })
+        plannedWeapon = swap.weaponId
       }
     }
   }

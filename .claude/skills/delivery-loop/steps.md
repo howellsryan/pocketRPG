@@ -63,6 +63,12 @@ Scope-fence applies throughout: flag adjacent issues, never fix them.
 
 World and content design decisions: new or updated places (`src/data/world.json`, incl. `teleport` entries — geography stays in core, §12), world activities (`src/data/worldActivities.json` — chunk-loaded, keep the typeof guards), slayer master placement, journey/clue routing (`src/engine/journeys.js`), 3D creature/hero specs (`procgen-creature` — mandatory screenshot review, never commit a spec unseen), and place art direction per `DESIGN.md`/`PRODUCT.md`. Content invariants via `add-content`.
 
+## Code Review (always, after Engineer/World Designer, before QA)
+
+Independent of QA: reviews the diff itself, not the diff against Plan's success criteria. Invoke the `code-review` skill against the working diff at `medium` effort (raise to `high` for §14-boundary or save-format changes). It finds correctness bugs and reuse/simplification/efficiency issues; it does not verify gameplay behaviour or write tests — that's QA.
+
+Verdict: PASS or FAIL with findings ranked by severity, each with file:line and the concrete failure scenario. FAIL → back to the Engineer step to address every finding (fix, or state why not — scope-fence applies: don't fix unrelated issues surfaced along the way), then Code Review again. Loop until PASS before QA starts.
+
 ## QA (always)
 
 Adversarial: find where the change is wrong, untested, or invariant-violating — do not confirm it works.

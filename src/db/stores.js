@@ -155,7 +155,7 @@ export async function saveSetting(key, value) {
 
 // ── New Game Initialization ──
 
-export async function initNewGame(playerName, isIronman = false, isOneLife = false) {
+export async function initNewGame(playerName, isIronman = false, isOneLife = false, isGrindman = false) {
   const db = await getDB()
 
   // Player profile
@@ -163,6 +163,7 @@ export async function initNewGame(playerName, isIronman = false, isOneLife = fal
     name: playerName,
     is_ironman: isIronman,
     is_one_life: isOneLife,
+    is_grindman: isGrindman,
     created: Date.now(),
     totalPlayTime: 0
   }, 'profile')
@@ -186,6 +187,6 @@ export async function initNewGame(playerName, isIronman = false, isOneLife = fal
   // Give starter items — shared source of truth with the server's
   // createDefaultSave, including the account-type-specific head slot.
   const starterInv = new Array(INVENTORY_SIZE).fill(null)
-  getStarterKit({ isIronman, isOneLife }).forEach((item, i) => { starterInv[i] = { ...item } })
+  getStarterKit({ isIronman, isOneLife, isGrindman }).forEach((item, i) => { starterInv[i] = { ...item } })
   await saveInventory(starterInv)
 }

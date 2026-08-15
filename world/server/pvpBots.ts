@@ -34,7 +34,12 @@ const items = itemsData as unknown as Record<string, Record<string, unknown> | u
 
 /** How many bots may roam at once. Enough that a player always has someone to
  * hunt without the zone reading as a bot farm. */
-export const MAX_WILDERNESS_BOTS = 4
+export const MAX_WILDERNESS_BOTS = 6
+/** How many a single player is worth. One each was the whole roster a lone
+ * player ever saw — the wastes read as empty between kills. Every extra one is
+ * still inside that player's bracket, so it is someone they may actually
+ * attack rather than scenery. */
+export const BOTS_PER_PLAYER = 3
 /** Ticks between a bot's death and a replacement walking in. */
 export const BOT_RESPAWN_TICKS = 50
 /** Ticks a roaming bot waits at its destination before picking a new one. */
@@ -46,6 +51,10 @@ type BotTemplate = {
   stats: Record<string, number>
   equipment: Record<string, { itemId: string; quantity?: number } | undefined>
   inventory: { itemId: string; quantity: number }[]
+  /** Combat spell id, for a template whose staff is not a powered one. Without
+   * it such a bot refuses every swing ("you need to select a spell") — the
+   * powered staves are the only magic weapon that needs no spell. */
+  spell?: string
 }
 
 const TEMPLATES: BotTemplate[] = (botsData as unknown as { bots: BotTemplate[] }).bots
@@ -120,7 +129,7 @@ export function createBot(template: BotTemplate, tile: Tile): BotState {
     inventory: inventoryFrom(template),
     gear: gearFromEquipment(equipment),
     stance: 'aggressive',
-    spell: null,
+    spell: template.spell ?? null,
     prayerPoints: maxPrayer,
     maxPrayerPoints: maxPrayer,
     prayerDrainAccumulator: 0,
@@ -175,10 +184,13 @@ export type BotRosterInput = {
 /**
  * Decides which bots should exist right now.
  *
- * The rule is "every player in the danger half can find something to fight":
- * for each such player with no live bot inside their bracket, spawn the
- * closest-matching template. With nobody north of the line no bot is spawned at
- * all, and `despawnAll` (below) empties the roster the moment the zone does.
+ * Two passes. The first is the floor — "every player in the danger half can
+ * find something to fight": for each such player with no live bot inside their
+ * bracket, spawn the closest-matching template. The second populates the wastes
+ * up to `BOTS_PER_PLAYER` each, capped at MAX_WILDERNESS_BOTS, taking a
+ * different template every time so the zone reads as several people out there
+ * rather than one opponent and a lot of dirt. With nobody north of the line no
+ * bot is spawned at all.
  *
  * Returns the bots to ADD; the caller owns the map.
  */
@@ -186,19 +198,40 @@ export function botsToSpawn(bots: Iterable<BotState>, input: BotRosterInput): Bo
   const live = [...bots].filter((b) => b.state === 'alive')
   const spawned: BotState[] = []
   const used = new Set(live.map((b) => b.templateId))
+  const ceiling = Math.min(MAX_WILDERNESS_BOTS, input.dangerPlayerLevels.length * BOTS_PER_PLAYER)
+
+  const spawnFor = (template: BotTemplate | null): boolean => {
+    if (!template) return false
+    const tile = input.randomDangerTile()
+    if (!tile) return false
+    used.add(template.id)
+    spawned.push(createBot(template, tile))
+    return true
+  }
+
+  // The coverage pass answers to the hard cap only, never to the per-player
+  // ceiling: bots outlive the player they were spawned for, so a zone holding
+  // three bots in a departed player's bracket would otherwise leave whoever is
+  // still out there with nothing they may legally attack.
   for (const level of input.dangerPlayerLevels) {
     if (live.length + spawned.length >= MAX_WILDERNESS_BOTS) break
     const covered = [...live, ...spawned].some((b) => withinPvpBracket(b.combatLevel, level))
     if (covered) continue
-    const template = templateForCombatLevel(level, used)
+    spawnFor(templateForCombatLevel(level, used)
       // Every template already spawned is still better than nothing when a
       // second player of a similar level turns up.
-      ?? templateForCombatLevel(level)
-    if (!template) continue
-    const tile = input.randomDangerTile()
-    if (!tile) continue
-    used.add(template.id)
-    spawned.push(createBot(template, tile))
+      ?? templateForCombatLevel(level))
+  }
+
+  // Top up, one per player per round, so two players in the zone get company
+  // in both their brackets rather than three bots in the first one's.
+  for (let round = 1; round < BOTS_PER_PLAYER; round += 1) {
+    for (const level of input.dangerPlayerLevels) {
+      if (live.length + spawned.length >= ceiling) return spawned
+      // Unused templates only: a second bot wearing the first one's name and
+      // kit is the thing that reads as a farm.
+      spawnFor(templateForCombatLevel(level, used))
+    }
   }
   return spawned
 }

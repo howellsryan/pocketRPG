@@ -1,6 +1,6 @@
 ---
 name: delivery-loop
-description: Use at the START of every implementation task, before the first edit - runs the single-agent stepped delivery workflow: triage (checklist vs stepped), then Plan, optional Architect, Engineer / World Designer as needed, QA - all inside this one session, spawning no builder/QA agents. Do not use for pure questions or research, and do not re-invoke mid-task once the loop has started.
+description: Use at the START of every implementation task, before the first edit - runs the single-agent stepped delivery workflow: triage (checklist vs stepped), then Plan, optional Architect, Engineer / World Designer as needed, Code Review, QA - all inside this one session, spawning no builder/QA agents. Do not use for pure questions or research, and do not re-invoke mid-task once the loop has started.
 ---
 
 # delivery-loop: one agent, dedicated steps
@@ -26,8 +26,9 @@ Read `steps.md` (this skill's directory) once for the step charters. Announce ea
 2. **Architect** (optional) — required when the work trips `plan-gate` territory: §14 integrity boundary, save format, migrations, single-file build pipeline, multi-system or novel design. Settles ownership boundaries and sequencing before any edit.
 3. **Engineer** (as needed) — all code: engine, UI, server. One step, no frontend/backend handoffs.
 4. **World Designer** (as needed) — world/content design: places, map, activities, 3D specs, place art direction.
-5. **QA** (always) — adversarial verification of the diff against Plan's success criteria; missing regression tests written here; visual check for player-visible changes; the §11 gate.
+5. **Code Review** (always, after Engineer/World Designer, before QA) — reviews the diff for correctness bugs and reuse/simplification/efficiency issues, independent of Plan's success criteria (that's QA's job).
+6. **QA** (always) — adversarial verification of the diff against Plan's success criteria; missing regression tests written here; visual check for player-visible changes; the §11 gate.
 
 End every step with a **≤5-line handoff note** (decisions made, files touched, open findings). Later steps — and post-compaction context — rely on these notes instead of re-reading.
 
-QA FAIL → back to the Engineer step, then QA again. After QA passes: commit and write the PR (`pr-changelog`).
+Code Review FAIL → back to the Engineer step to fix the findings, then Code Review again — loop until it passes; only then does QA start. QA FAIL → back to the Engineer step, then QA again. After QA passes: commit and write the PR (`pr-changelog`).

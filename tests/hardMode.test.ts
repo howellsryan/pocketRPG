@@ -237,6 +237,27 @@ describe('a hard-mode death', () => {
     expect(loss.lost).toEqual([{ itemId: 'not_an_item', quantity: 1 }])
   })
 
+  it('carries banked charges along with a lost chargeable weapon, but never a bare zero', () => {
+    const loss = hardModeDeathLoss(
+      [{ itemId: 'shark', quantity: 1 }],
+      { weapon: { itemId: 'venom_blowpipe', quantity: 1, charges: 240 } },
+      itemsData,
+    )
+    expect(loss.lost).toEqual([
+      { itemId: 'shark', quantity: 1 },
+      { itemId: 'venom_blowpipe', quantity: 1, charges: 240 },
+    ])
+  })
+
+  it('sums charges across a stack lost from both slots and inventory', () => {
+    const loss = hardModeDeathLoss(
+      [{ itemId: 'venom_blowpipe', quantity: 1, charges: 100 }],
+      { weapon: { itemId: 'venom_blowpipe', quantity: 1, charges: 50 } },
+      itemsData,
+    )
+    expect(loss.lost).toEqual([{ itemId: 'venom_blowpipe', quantity: 2, charges: 150 }])
+  })
+
   it('survives an empty or missing pack', () => {
     expect(hardModeDeathLoss([], {}, itemsData)).toEqual({ inventory: [], equipment: {}, lost: [] })
     expect(hardModeDeathLoss(undefined as any, undefined as any, itemsData))

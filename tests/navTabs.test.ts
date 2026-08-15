@@ -18,13 +18,14 @@ describe('navigation tabs', () => {
     for (const id of ids) expect(known.has(id)).toBe(true)
   })
 
-  it('moves Unlocks, Armoury, Collection Log and Leaderboard into Settings', () => {
+  it('moves Unlocks, Armoury, Collection Log, Leaderboard and Grim Reaper into Settings', () => {
     const settingsIds = SETTINGS_NAV_LINKS.map((l) => l.id)
     expect(settingsIds).toEqual([
       SCREENS.CHARACTER_UNLOCKS,
       SCREENS.ARMOURY,
       SCREENS.COLLECTION_LOG,
       SCREENS.LEADERBOARD,
+      SCREENS.GRIM_REAPER,
     ])
     // The moved screens must not also appear on the frame rails — Settings is
     // their only entry point.

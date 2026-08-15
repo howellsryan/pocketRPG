@@ -9,9 +9,10 @@
 // without anything new: two players who fought the same dragon walk away with
 // two piles on one tile and never see each other's.
 //
-// On task is decided PER PLAYER, which is the whole reason this is not a single
-// roll copied N times: a task-only drop (the Imbued Crown and Brain) must roll
-// only for someone who actually has this monster assigned.
+// On task and Grindman are decided PER PLAYER, which is the whole reason this is
+// not a single roll copied N times: a task-only drop (the Imbued Crown and
+// Brain) must roll only for someone who actually has this monster assigned, and
+// Grindman's tripled rates are an account type, not a property of the fight.
 import { rollDrops } from '../../src/engine/combat.js'
 import { doesSlayerTaskMatchMonster } from '../../src/engine/slayerTasks.js'
 import monstersData from '../../src/data/monsters.json'
@@ -23,6 +24,8 @@ export type CreditedPlayer = {
   charId: string
   /** Their own slayer task, or null — never the killer's. */
   slayerTask: { monsterId?: string } | null
+  /** Their own account type, from characters.is_grindman. */
+  isGrindman?: boolean
 }
 
 export type CreditedRoll = { charId: string; loot: Drop[] }
@@ -47,7 +50,7 @@ export function rollLootForCredited(
   monsterId: string,
   credited: CreditedPlayer[],
   ownerCharId: string,
-  roll: (monster: unknown, isOnTask: boolean) => Drop[] = rollDrops as never,
+  roll: (monster: unknown, isOnTask: boolean, grindman: boolean) => Drop[] = rollDrops as never,
 ): CreditedRoll[] {
   const monster = (monstersData as Record<string, unknown>)[monsterId]
   if (!monster) return []
@@ -56,7 +59,7 @@ export function rollLootForCredited(
   for (const player of credited) {
     if (!player?.charId || seen.has(player.charId)) continue
     seen.add(player.charId)
-    const loot = roll(monster, isOnTaskFor(player.slayerTask, monsterId)) || []
+    const loot = roll(monster, isOnTaskFor(player.slayerTask, monsterId), player.isGrindman === true) || []
     if (loot.length > 0) out.push({ charId: player.charId, loot })
   }
   return out

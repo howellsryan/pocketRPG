@@ -5,20 +5,22 @@ import {
   isValidKcSource,
   TOTAL_LEVEL_FILTER,
   IRONMAN_FILTER,
+  GRINDMAN_FILTER,
 } from '../src/engine/leaderboardFilters.js'
 import raidsData from '../src/data/raids.json'
 import monstersData from '../src/data/monsters.json'
 
 describe('leaderboard filters (shared client/server)', () => {
-  it('puts total level first, then ironman, then raids, then bosses', () => {
+  it('puts total level first, then ironman, then grindman, then raids, then bosses', () => {
     const filters = getLeaderboardFilters()
     expect(filters[0]).toEqual(TOTAL_LEVEL_FILTER)
     expect(filters[1]).toEqual(IRONMAN_FILTER)
+    expect(filters[2]).toEqual(GRINDMAN_FILTER)
 
     const firstKcIdx = filters.findIndex(f => f.type === 'kc')
     const lastRaidIdx = filters.map(f => f.sourceType).lastIndexOf('raids')
     const firstBossIdx = filters.findIndex(f => f.sourceType === 'monsters')
-    expect(firstKcIdx).toBe(2)
+    expect(firstKcIdx).toBe(3)
     expect(lastRaidIdx).toBeLessThan(firstBossIdx)
   })
 
@@ -26,6 +28,12 @@ describe('leaderboard filters (shared client/server)', () => {
     expect(getLeaderboardFilterById('ironman')).toEqual(IRONMAN_FILTER)
     expect(IRONMAN_FILTER.type).toBe('ironman')
     expect(isValidKcSource('ironman', 'ironman')).toBe(false)
+  })
+
+  it('exposes a grindman filter resolvable by id, excluded from KC sources', () => {
+    expect(getLeaderboardFilterById('grindman')).toEqual(GRINDMAN_FILTER)
+    expect(GRINDMAN_FILTER.type).toBe('grindman')
+    expect(isValidKcSource('grindman', 'grindman')).toBe(false)
   })
 
   it('includes only canonical raids (legacy aliases excluded)', () => {

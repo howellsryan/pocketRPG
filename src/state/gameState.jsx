@@ -13,7 +13,7 @@ import { debounce } from '../utils/helpers.js'
 import { applyTheme, normalizeThemePreference, readStoredThemePreference, storeThemePreference, watchSystemTheme, DEFAULT_THEME_PREFERENCE } from '../utils/theme.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
-import { api, getToken, getCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
+import { api, getToken, getCharacterId, getIronmanMode, getOneLifeMode, getGrindmanMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { resetOneLifeWithRetry } from '../utils/oneLifeDeath.js'
 import { matchTaskProgress, taskById, idleCatchupDailyEvents } from '../engine/dailyTasks.js'
 import { requestCriticalPushSave, schedulePeriodicSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
@@ -23,6 +23,8 @@ import prayersData from '../data/prayers.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
 import { applyTaskResult } from '../engine/applyTaskResult.js'
 import { preserveBankCharges } from '../engine/bankCharges.js'
+import { grindmanXP } from '../engine/grindman.js'
+import { bankXp } from '../engine/xpBank.js'
 import { applyBankDeltas, bankUnitsRemoved } from '../engine/bankMutations.js'
 import { recordItemLossEntries, recordItemLosses } from '../engine/lossLedger.js'
 import { recordKillsFromGameEvent } from '../engine/killTally.js'
@@ -34,6 +36,7 @@ import {
 } from '../cloud/activityProgress.js'
 import { getSlayerTaskReward, resolveSlayerLoopRewards } from '../engine/slayerRewards.js'
 import { hardModeDeathLoss, idleTaskDiedHard } from '../engine/hardMode.js'
+import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
 import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
@@ -108,6 +111,10 @@ export function GameProvider({ children }) {
   // hard_mode_targets — the server decides the doubled drop rates, this only
   // decides what the picker renders and which monster the client scales.
   const [hardModeTargets, setHardModeTargetsState] = useState([])
+  // What a hard-mode death stashed with the Grim Reaper (src/engine/grimReaper.js),
+  // or null when nothing is stashed. One slot — a second hard-mode death
+  // overwrites it outright.
+  const [grimReaper, setGrimReaperState] = useState(null)
   const [raidKillCounts, setRaidKillCountsState] = useState({})
   // True once the per-character server KC fetch has settled (success or fail).
   // The combat screen gates its first render on this so a cold cache never
@@ -204,7 +211,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets, savedGrimReaper] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -212,7 +219,8 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
-      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets')
+      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets'),
+      getSetting('grimReaper')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -279,8 +287,9 @@ export function GameProvider({ children }) {
     if (getToken() && getCharacterId()) {
       const authIronman = getIronmanMode()
       const authOneLife = getOneLifeMode()
-      if (p && (!!p.is_ironman !== authIronman || !!p.is_one_life !== authOneLife)) {
-        p = { ...p, is_ironman: authIronman, is_one_life: authOneLife }
+      const authGrindman = getGrindmanMode()
+      if (p && (!!p.is_ironman !== authIronman || !!p.is_one_life !== authOneLife || !!p.is_grindman !== authGrindman)) {
+        p = { ...p, is_ironman: authIronman, is_one_life: authOneLife, is_grindman: authGrindman }
         await savePlayer(p)
       }
     } else {
@@ -289,6 +298,12 @@ export function GameProvider({ children }) {
 
     // ── Idle simulation (runs on raw DB data, before state is set) ──
     let idleResult = null
+    // Overwritten below only if this boot's offline catch-up itself killed the
+    // player on a hard fight — otherwise whatever was already stashed (from a
+    // previous session's death) survives the boot untouched. Declared here,
+    // not inside the simulation branch, because it's read unconditionally
+    // once loadGame reaches setGrimReaperState further down.
+    let nextGrimReaper = savedGrimReaper || null
     console.log('[PocketRPG] loadGame — savedTask:', savedTask, 'savedLastTick:', savedLastTick, 'elapsed:', savedLastTick ? Date.now() - savedLastTick : 0)
     if (savedTask && savedLastTick) {
       // Cap at 24h to limit cross-session clock manipulation; legitimate offline play
@@ -316,6 +331,7 @@ export function GameProvider({ children }) {
               slayerPerks: savedSlayerPerks && typeof savedSlayerPerks === 'object' ? savedSlayerPerks : null,
               completedQuests: savedCompletedQuests || [],
               autoBankExcludedItemIds: autoBankExcludedItemIdsSet,
+              isGrindman: p?.is_grindman === true,
             })
           } else if (savedTask.type === 'agility') {
             sim = simulateIdleAgility(savedTask, elapsedMs)
@@ -355,7 +371,11 @@ export function GameProvider({ children }) {
           // then read back the two primitive fields that may have changed.
           const applySettings = { currentHP: savedHP, dungeoneeringTokens: savedDungeoneeringTokens }
           const applyState = { stats: s, inventory: inv, bank: b, equipment: eq, settings: applySettings }
-          const applied = applyTaskResult(applyState, sim, savedTask.type)
+          const applied = applyTaskResult(applyState, sim, savedTask.type, { isGrindman: p?.is_grindman === true })
+          // The catch-up modal and the daily-task feed both read sim.xpGained, so it
+          // becomes what was BANKED — a Grindman's cut would otherwise be invisible
+          // in the summary and double-counted against daily XP tasks.
+          if (savedTask.type !== 'quest' && sim.xpGained) sim.xpGained = applied.xpBanked
           inv = applyState.inventory  // may be sim.finalInventory (new array ref)
           // Offline catch-up burns a whole window's supplies and materials in one
           // write. Declare it, or every return from a long absence reads as an
@@ -392,6 +412,8 @@ export function GameProvider({ children }) {
               hardModeDeathApplied = true
               sim.hardModeItemsLost = loss.lost
               recordItemLossEntries(loss.lost)
+              const stash = grimReaperStashFromDeath(loss.lost, { id: savedTask.monster?.id, name: savedTask.monster?.name })
+              if (stash) nextGrimReaper = stash
             }
           } else if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
             savedHP = applySettings.currentHP
@@ -402,12 +424,11 @@ export function GameProvider({ children }) {
             sim.hpRestored = hpRegenSim.hpRegen
           }
 
-          // Slayer XP from combat simulation (client-authoritative; MCP gains this in WO-2)
+          // Slayer XP from combat simulation (client-authoritative; MCP gains this in WO-2).
+          // Through bankXp for the account cut, and reported as what it banked —
+          // the catch-up modal reads this field.
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
-            if (s.slayer) {
-              const newXP = Math.min((s.slayer.xp || 0) + Math.floor(sim.slayerXpGained), 200000000)
-              s.slayer = { ...s.slayer, xp: newXP, level: getLevelFromXP(newXP) }
-            }
+            sim.slayerXpGained = bankXp(s, 'slayer', sim.slayerXpGained, { isGrindman: p?.is_grindman === true })
           }
 
           // Save equipment if ammo or charges changed during combat, or if a
@@ -487,7 +508,7 @@ export function GameProvider({ children }) {
             // instead of a toast (this boot path never shows toasts anyway).
             const levelUpsMap = new Map()
             const applyQuestCompletionToRawState = async (quest, pendingChoices) => {
-              if (!quest?.id) return
+              if (!quest?.id) return {}
 
               const merged = new Set(savedCompletedQuests || [])
               if (!merged.has(quest.id)) {
@@ -498,13 +519,17 @@ export function GameProvider({ children }) {
 
               const { fixed, choices } = splitQuestXpRewards(quest.xpReward || {})
 
+              // Reported back as what was actually BANKED, not what the quest
+              // offered — a Grindman's cut would otherwise show as the full
+              // pre-cut amount on the reward-reveal card.
+              const banked = {}
               for (const [skill, xp] of Object.entries(fixed)) {
                 if (xp > 0 && s[skill]) {
                   const before = s[skill].xp || 0
                   const from = getLevelFromXP(before)
-                  const newXP = Math.min(before + Math.floor(xp), 200000000)
-                  const to = getLevelFromXP(newXP)
-                  s[skill] = { ...s[skill], xp: newXP, level: to }
+                  const got = bankXp(s, skill, xp, { isGrindman: p?.is_grindman === true })
+                  if (got > 0) banked[skill] = (banked[skill] || 0) + got
+                  const to = getLevelFromXP(s[skill].xp || 0)
                   if (to > from) {
                     const existing = levelUpsMap.get(skill)
                     levelUpsMap.set(skill, { skill, from: existing ? existing.from : from, to })
@@ -521,6 +546,8 @@ export function GameProvider({ children }) {
               if (choices.length > 0) {
                 pendingChoices.push({ rewards: choices, questId: quest.id, questName: quest.name })
               }
+
+              return banked
             }
 
             const cascade = simulateQuestIdleCascade({
@@ -539,13 +566,11 @@ export function GameProvider({ children }) {
               const quest = entry.quest
               completedQuestsList.push(quest)
 
-              for (const [skill, xp] of Object.entries(quest.xpReward || {})) {
-                const amount = Math.floor(Number(xp) || 0)
-                if (amount > 0) aggregatedXp[skill] = (aggregatedXp[skill] || 0) + amount
-              }
-
               totalCoinsGained += Number(quest.coinReward || 0) || 0
-              await applyQuestCompletionToRawState(quest, pendingChoices)
+              const banked = await applyQuestCompletionToRawState(quest, pendingChoices)
+              for (const [skill, xp] of Object.entries(banked)) {
+                aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
+              }
             }
 
             savedTask = cascade.finalTask
@@ -742,6 +767,8 @@ export function GameProvider({ children }) {
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
     setHardModeTargetsState(Array.isArray(savedHardModeTargets) ? savedHardModeTargets : [])
+    setGrimReaperState(nextGrimReaper)
+    if (nextGrimReaper !== (savedGrimReaper || null)) saveSetting('grimReaper', nextGrimReaper)
     setRaidKillCountsState(savedRaidKillCounts ?? {})
     setFarmingState(savedFarming ?? { patchesById: {} })
     const initialCompletedQuests = new Set(savedCompletedQuests || [])
@@ -856,6 +883,12 @@ export function GameProvider({ children }) {
     // mutators do it: flushLocalSaves reads stateRef and CLEARS the dirty flag,
     // so an unload-time flush that ran before the post-commit effect would
     // persist the pre-XP stats and mark them clean — losing the XP outright.
+    // Grindman's half XP is applied HERE and nowhere else on the client: every
+    // client XP source — live combat, skilling, quests, idle catch-up — funnels
+    // through this callback, so a caller that computes an XP number never has
+    // to know the account type. World and co-op XP are granted server-side and
+    // take the cut there.
+    amount = grindmanXP(amount, stateRef.current.player?.is_grindman === true)
     {
       const prev = stateRef.current.stats
       const cur = prev[skill] || { skill, xp: 0, level: 1 }
@@ -892,6 +925,10 @@ export function GameProvider({ children }) {
     // through grantXP). Floor to keep task progress integer-aligned with displayed XP.
     const gained = Math.floor(amount)
     if (gained > 0) recordGameEventRef.current?.({ kind: 'skill_xp', skill, xp: gained })
+    // Returned so a caller that also REPORTS the gain (the idle catch-up modal)
+    // can show what was banked rather than what it asked for — the two differ by
+    // the Grindman cut, and a summary that over-reports is a bug the player sees.
+    return gained
     // addToast is deliberately NOT a dep: it is declared below this callback, so
     // naming it here evaluates in its temporal dead zone and whites out the app.
     // Calling it from the body resolves at call time and is fine.
@@ -1254,6 +1291,14 @@ export function GameProvider({ children }) {
     saveSetting('raidKillCounts', counts)
   }, [])
 
+  // Replaces the stash wholesale — a hard-mode death overwrites whatever was
+  // there (only one death is ever stashed), and a successful reclaim clears
+  // it by passing null. Never merged.
+  const updateGrimReaperStash = useCallback((stash) => {
+    setGrimReaperState(stash || null)
+    saveSetting('grimReaper', stash || null)
+  }, [])
+
   // Merges server-authoritative KC into local state using max(local, server) per
   // id. This prevents a transient empty server response from zeroing local KC.
   const syncServerKillCounts = useCallback((serverBoss, serverRaid) => {
@@ -1505,6 +1550,7 @@ export function GameProvider({ children }) {
       dungeoneeringTokens: dungeoneeringTokensRef.current,
       bossKillCounts,
       raidKillCounts,
+      grimReaper,
       farming,
       completedQuests: [...completedQuestsRef.current],
       unlockedMinigameItems: [...unlockedMinigameItems],
@@ -1915,6 +1961,7 @@ export function GameProvider({ children }) {
     bossKillCounts, updateBossKillCounts,
     hardModeTargets, syncHardModeTargets, applyHardModeTarget,
     raidKillCounts, updateRaidKillCounts,
+    grimReaper, updateGrimReaperStash,
     syncServerKillCounts,
     killCountsLoaded, markKillCountsLoaded,
     farming, updateFarming,
@@ -1942,6 +1989,7 @@ export function GameProvider({ children }) {
     kingdom, updateKingdom, settleKingdom, applyKingdomSkip,
     isIronman: player?.is_ironman || false,
     isOneLife: player?.is_one_life || false,
+    isGrindman: player?.is_grindman || false,
     revertOneLifeMode,
     dailyTaskStates, setDailyTasks, recordGameEvent,
   }

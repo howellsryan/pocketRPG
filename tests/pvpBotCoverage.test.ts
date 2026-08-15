@@ -10,6 +10,8 @@ import { combatLevelFromLevels } from '../src/engine/combatLevel.js'
 import { PVP_LEVEL_BRACKET } from '../world/shared/pvpArea'
 import pvpBots from '../src/data/pvpBots.json' assert { type: 'json' }
 import itemsData from '../src/data/items.json' assert { type: 'json' }
+import spellsData from '../src/data/spells.json' assert { type: 'json' }
+import { EQUIPMENT_SLOTS } from '../src/utils/constants.js'
 
 // Fresh character (all level 1, HP 10) floors at CB 3; all-99 caps at 126.
 const MIN_PLAYER_CB = 3
@@ -58,6 +60,60 @@ describe('pvp bot template integrity', () => {
           const have = (bot.stats as any)[skill] ?? 1
           expect(have, `${bot.id} ${entry.itemId} needs ${skill} ${required}`).toBeGreaterThanOrEqual(required as number)
         }
+      }
+    }
+  })
+
+  it('every bot wears its kit in a real equipment slot', () => {
+    // `hands` / `feet` are not slots: getEquipmentBonuses walks EQUIPMENT_SLOTS,
+    // so gear filed under any other key is worn for show and adds nothing.
+    for (const bot of pvpBots.bots) {
+      for (const [slot, entry] of Object.entries(bot.equipment as Record<string, any>)) {
+        expect(EQUIPMENT_SLOTS, `${bot.id} ${slot}`).toContain(slot)
+        expect((itemsData as any)[entry.itemId].slot, `${bot.id} ${entry.itemId}`).toBe(slot)
+      }
+    }
+  })
+
+  it('every bot meets the requirements of the weapons it carries to swap to', () => {
+    for (const bot of pvpBots.bots) {
+      for (const slot of bot.inventory) {
+        const item = slot ? (itemsData as any)[(slot as any).itemId] : null
+        if (item?.slot !== 'weapon') continue
+        for (const [skill, required] of Object.entries(item.requirements || {})) {
+          expect((bot.stats as any)[skill] ?? 1, `${bot.id} ${item.id} needs ${skill} ${required}`)
+            .toBeGreaterThanOrEqual(required as number)
+        }
+      }
+    }
+  })
+
+  it('every ranged bot carries ammunition its own weapon accepts', () => {
+    for (const bot of pvpBots.bots) {
+      const weapon = (itemsData as any)[bot.equipment.weapon?.itemId]
+      if (weapon?.attackStyle !== 'ranged' || !weapon.ammoType || weapon.scaleCharged) continue
+      const ammo = (bot.equipment as any).ammo
+      expect(ammo, `${bot.id} wields ${weapon.id} with no ammo`).toBeDefined()
+      const ammoItem = (itemsData as any)[ammo.itemId]
+      expect(ammoItem.ammoKind, `${bot.id} ${ammo.itemId} vs ${weapon.id}`).toBe(weapon.ammoType)
+      expect(ammo.quantity).toBeGreaterThan(0)
+      const required = weapon.requiredAmmoIds ?? (weapon.requiredAmmoId ? [weapon.requiredAmmoId] : null)
+      if (required) expect(required).toContain(ammo.itemId)
+    }
+  })
+
+  it('every magic bot can actually cast — a powered staff, or a spell it has the runes and level for', () => {
+    // A magic weapon that is not a powered staff needs a selected spell, or the
+    // world refuses every swing it takes ("you need to select a spell").
+    for (const bot of pvpBots.bots) {
+      const weapon = (itemsData as any)[bot.equipment.weapon?.itemId]
+      if (weapon?.attackStyle !== 'magic' || weapon.poweredStaff) continue
+      const spell = (spellsData as any)[(bot as any).spell]
+      expect(spell, `${bot.id} wields ${weapon.id} with no castable spell`).toBeDefined()
+      expect(bot.stats.magic, `${bot.id} cannot cast ${spell.id}`).toBeGreaterThanOrEqual(spell.levelReq ?? 1)
+      for (const [runeId, qty] of Object.entries(spell.runeReq || {})) {
+        const carried = bot.inventory.reduce((sum: number, s: any) => sum + (s?.itemId === runeId ? s.quantity : 0), 0)
+        expect(carried, `${bot.id} carries no ${runeId} for ${spell.id}`).toBeGreaterThanOrEqual(qty as number)
       }
     }
   })

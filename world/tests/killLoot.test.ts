@@ -60,6 +60,24 @@ describe('rolling a world kill for everyone who earned it', () => {
     expect(seen).toEqual([true, false, false])
   })
 
+  // Grindman is an account type, not a property of the fight — the killer's roll
+  // reads it off their own combat state, so a helper's must read off theirs, or
+  // a Grindman past the line silently rolls at ordinary rates.
+  it('passes each player their OWN Grindman flag', () => {
+    const seen: boolean[] = []
+    rollLootForCredited(
+      MONSTER,
+      [
+        { charId: 'grindman', slayerTask: null, isGrindman: true },
+        { charId: 'ordinary', slayerTask: null, isGrindman: false },
+        { charId: 'unstamped', slayerTask: null },
+      ],
+      'killer',
+      (_m, _t, grindman) => { seen.push(grindman); return [{ itemId: 'bones', quantity: 1 }] },
+    )
+    expect(seen).toEqual([true, false, false])
+  })
+
   it('drops a player who rolled nothing rather than spawning an empty pile', () => {
     const rolls = rollLootForCredited(MONSTER, [{ charId: 'b', slayerTask: null }], 'a', () => [])
     expect(rolls).toEqual([])

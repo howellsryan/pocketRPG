@@ -24,11 +24,11 @@ function makeEnv(extra: any = {}) {
   raw = d.raw
   return { DB: d.DB as FakeD1, STRIPE_API_KEY: 'sk_test', APP_BASE_URL: 'https://app', ...PRICES, ...extra }
 }
-function seedChar(id = 7, ownerId = 1) {
+function seedChar(id = 7, ownerId = 1, isGrindman = 0) {
   raw.prepare(
-    `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
-     VALUES (?, ?, 'c', 0, 0, 0, 0, 0, 0, 1, 3, 0, 0)`,
-  ).run(id, ownerId)
+    `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, is_grindman, credits, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
+     VALUES (?, ?, 'c', 0, 0, 0, ?, 0, 0, 0, 1, 3, 0, 0)`,
+  ).run(id, ownerId, isGrindman)
 }
 function req(body: any) {
   return new Request('https://x', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -80,6 +80,26 @@ describe('POST /api/stripe/create-session', () => {
     expect(lastForm!.get('line_items[0][price]')).toBe('price_c100')
     expect(lastForm!.get('client_reference_id')).toBe('1:7')
     expect(lastForm!.get('metadata[amount]')).toBe('100')
+  })
+
+  // Grindman earns its credits. This endpoint is the only place a paid grant can
+  // begin, so refusing here is what makes the rule hold — the webhook credits
+  // whichever character the SERVER wrote into the session metadata.
+  it('403s a credit purchase for a grindman character and opens no checkout', async () => {
+    const env = makeEnv()
+    seedChar(7, 1, 1)
+    const res = await onRequestPost({ request: req({ sku: 'credits_100', character_id: 7 }), env } as any)
+    expect(res.status).toBe(403)
+    expect((await res.json()).code).toBe('GRINDMAN_NO_CREDIT_PURCHASE')
+    expect(lastForm).toBeNull()
+  })
+
+  it('still sells the ad removal to a grindman — only credits are blocked', async () => {
+    const env = makeEnv()
+    seedChar(7, 1, 1)
+    const res = await onRequestPost({ request: req({ sku: 'remove_ads', character_id: 7 }), env } as any)
+    expect(res.status).toBe(200)
+    expect(lastForm!.get('line_items[0][price]')).toBe('price_ads')
   })
 
   it('502s when Stripe rejects the request', async () => {
