@@ -2070,7 +2070,13 @@ export class WorldZone extends Server<Env> {
         // Collection log and audit per player, on their OWN roll: a unique is
         // logged for whoever actually pulled it. Gated on the drop rather than
         // the monster, so an ordinary kill with nothing logged reaches no D1.
-        for (const share of [{ charId: kill.killer, loot: kill.loot }, ...extra]) {
+        // The killer's own share only counts when they earned the kill — a boss
+        // audits even on an empty roll, so a last-hit sniper below the line
+        // would otherwise be filed as having killed it.
+        const killerShare = (kill.credited ?? []).includes(kill.killer)
+          ? [{ charId: kill.killer, loot: kill.loot }]
+          : []
+        for (const share of [...killerShare, ...extra]) {
           void recordBossKill(this.env, { ...kill, owner: share.charId, loot: share.loot })
           const playerName = this.players.get(share.charId)?.name ?? 'Someone'
           for (const drop of dropBroadcastsFrom(kill.monsterId, share.loot, itemsData)) {
