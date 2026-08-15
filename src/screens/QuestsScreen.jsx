@@ -19,6 +19,7 @@ import {
 import { QUEST_QUEUE_MAX, SCREENS } from '../utils/constants.js'
 import { planQuestJourney } from '../engine/journeys.js'
 import { getPlace } from '../engine/world.js'
+import { grindmanXP } from '../engine/grindman.js'
 import questsData from '../data/quests.json'
 import { COMPLEXITY_COLORS, COMPLEXITY_ORDER } from '../utils/complexityColors.js'
 import BackLink from '../components/BackLink.jsx'
@@ -29,7 +30,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
   const {
     stats, completedQuests, activeTask, setActiveTask,
     addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
-    worldLocation,
+    worldLocation, isGrindman,
   } = useGame()
 
   const [hideCompleted, setHideCompleted] = useState(false)
@@ -320,6 +321,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
                 completedQuests={completedQuests}
                 itemsData={itemsData}
                 worldLocation={worldLocation}
+                isGrindman={isGrindman}
                 onClose={() => setSelectedQuest(null)}
                 onStartJourney={startQuestJourney}
                 onAddToQueue={addToQueue}
@@ -343,6 +345,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
           completedQuests={completedQuests}
           itemsData={itemsData}
           worldLocation={worldLocation}
+          isGrindman={isGrindman}
           onClose={() => setSelectedQuest(null)}
           onStartJourney={startQuestJourney}
           onAddToQueue={addToQueue}
@@ -356,7 +359,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-function QuestDetailsModal({ quest, stats, completedQuests, itemsData, worldLocation, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull }) {
+function QuestDetailsModal({ quest, stats, completedQuests, itemsData, worldLocation, isGrindman, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull }) {
   return (
     <Modal title={quest.name} onClose={onClose}>
       <QuestDetailsBody
@@ -365,6 +368,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, worldLoca
         completedQuests={completedQuests}
         itemsData={itemsData}
         worldLocation={worldLocation}
+        isGrindman={isGrindman}
         onClose={onClose}
         onStartJourney={onStartJourney}
         onAddToQueue={onAddToQueue}
@@ -376,7 +380,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, worldLoca
   )
 }
 
-function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocation, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
+function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocation, isGrindman, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
   const completed = completedQuests.has(quest.id)
   const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
   const skillEntries = Object.entries(quest.skillRequirements || {})
@@ -415,7 +419,7 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocat
             {Object.entries(quest.xpReward || {}).map(([skill, xp]) => (
               <div key={skill}>
                 ⭐ <span class="font-[var(--font-mono)] text-[var(--color-gold)]">
-                  {xp.toLocaleString()}
+                  {grindmanXP(xp, isGrindman).toLocaleString()}
                 </span> {skill} XP
               </div>
             ))}

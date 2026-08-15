@@ -17,6 +17,8 @@ import { rollMonsterRewardsById } from '../functions/_lib/game/monsterRewards.js
 import { createDefaultSave, starterHelmetId } from '../src/engine/createDefaultSave.js'
 import { getPurchaseRestriction } from '../src/engine/storeRules.js'
 import { applyTaskResult } from '../src/engine/applyTaskResult.js'
+import { splitQuestXpRewards } from '../src/engine/questIdleCascade.js'
+import { bankXp } from '../src/engine/xpBank.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 
@@ -130,6 +132,30 @@ describe('grindman XP lands once, where XP enters the stats', () => {
     const applied: any = applyTaskResult(state, { xpGained: { mining: 1 } } as any, 'skill', { isGrindman: true })
     expect(applied.xpBanked).toEqual({})
     expect(state.stats.mining.xp).toBe(0)
+  })
+
+  // Quests go through a different funnel (split then bankXp/grantXP directly,
+  // never applyTaskResult — see its top-of-file note) but the cut must land the
+  // same way, since the completion reveal and every quest-reward preview now
+  // read this composition's result rather than the quest's raw xpReward.
+  it('halves a quest\'s fixed xpReward through split + bankXp, the same composition the completion reveal reports', () => {
+    const { fixed, choices } = splitQuestXpRewards({ mining: 1000, woodcutting: 3, combat: 500 })
+    expect(fixed).toEqual({ mining: 1000, woodcutting: 3 })
+    expect(choices).toEqual([{ type: 'combat', amount: 500 }])
+
+    const stats: any = { mining: { skill: 'mining', xp: 0, level: 1 }, woodcutting: { skill: 'woodcutting', xp: 0, level: 1 } }
+    const banked: Record<string, number> = {}
+    for (const [skill, xp] of Object.entries(fixed)) {
+      const got = bankXp(stats, skill, xp as number, { isGrindman: true })
+      if (got > 0) banked[skill] = got
+    }
+
+    // woodcutting's 3 XP floors to 1 (not rounded to 2) while mining's 1000
+    // halves cleanly — both differ from the raw xpReward a stale display would
+    // have shown a Grindman.
+    expect(banked).toEqual({ mining: 500, woodcutting: 1 })
+    expect(stats.mining.xp).toBe(500)
+    expect(stats.woodcutting.xp).toBe(1)
   })
 })
 

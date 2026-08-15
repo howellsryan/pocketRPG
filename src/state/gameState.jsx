@@ -498,7 +498,7 @@ export function GameProvider({ children }) {
             // instead of a toast (this boot path never shows toasts anyway).
             const levelUpsMap = new Map()
             const applyQuestCompletionToRawState = async (quest, pendingChoices) => {
-              if (!quest?.id) return
+              if (!quest?.id) return {}
 
               const merged = new Set(savedCompletedQuests || [])
               if (!merged.has(quest.id)) {
@@ -509,11 +509,16 @@ export function GameProvider({ children }) {
 
               const { fixed, choices } = splitQuestXpRewards(quest.xpReward || {})
 
+              // Reported back as what was actually BANKED, not what the quest
+              // offered — a Grindman's cut would otherwise show as the full
+              // pre-cut amount on the reward-reveal card.
+              const banked = {}
               for (const [skill, xp] of Object.entries(fixed)) {
                 if (xp > 0 && s[skill]) {
                   const before = s[skill].xp || 0
                   const from = getLevelFromXP(before)
-                  bankXp(s, skill, xp, { isGrindman: p?.is_grindman === true })
+                  const got = bankXp(s, skill, xp, { isGrindman: p?.is_grindman === true })
+                  if (got > 0) banked[skill] = (banked[skill] || 0) + got
                   const to = getLevelFromXP(s[skill].xp || 0)
                   if (to > from) {
                     const existing = levelUpsMap.get(skill)
@@ -531,6 +536,8 @@ export function GameProvider({ children }) {
               if (choices.length > 0) {
                 pendingChoices.push({ rewards: choices, questId: quest.id, questName: quest.name })
               }
+
+              return banked
             }
 
             const cascade = simulateQuestIdleCascade({
@@ -549,13 +556,11 @@ export function GameProvider({ children }) {
               const quest = entry.quest
               completedQuestsList.push(quest)
 
-              for (const [skill, xp] of Object.entries(quest.xpReward || {})) {
-                const amount = Math.floor(Number(xp) || 0)
-                if (amount > 0) aggregatedXp[skill] = (aggregatedXp[skill] || 0) + amount
-              }
-
               totalCoinsGained += Number(quest.coinReward || 0) || 0
-              await applyQuestCompletionToRawState(quest, pendingChoices)
+              const banked = await applyQuestCompletionToRawState(quest, pendingChoices)
+              for (const [skill, xp] of Object.entries(banked)) {
+                aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
+              }
             }
 
             savedTask = cascade.finalTask

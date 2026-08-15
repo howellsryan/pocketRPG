@@ -531,22 +531,26 @@ function GameApp() {
     if (!alreadyCounted) {
       // Award rewards
       const tracker = summary?.levelTracker || createLevelUpTracker(stats)
+      // What the reveal card shows — the XP that actually reached each skill,
+      // not what the quest offered (those differ by the account type's cut).
+      const banked = {}
       for (const [skill, xp] of Object.entries(fixed)) {
         // The tracker decides which level-ups to announce, so it is fed what
         // grantXP BANKED — the account cut can be the difference between a
         // level and a near miss.
-        tracker.apply(skill, grantXP(skill, xp, { silent: true }))
+        const got = grantXP(skill, xp, { silent: true })
+        if (got > 0) banked[skill] = (banked[skill] || 0) + got
+        tracker.apply(skill, got)
       }
       if (coinReward > 0) updateBankDirect({ coins: coinReward })
       if (summary) {
         summary.completedQuests.push(quest)
         if (coinReward > 0) summary.coinsGained += coinReward
-        for (const [skill, xp] of Object.entries(xpReward || {})) {
-          const amount = Math.floor(Number(xp) || 0)
-          if (amount > 0) summary.aggregatedXpReward[skill] = (summary.aggregatedXpReward[skill] || 0) + amount
+        for (const [skill, xp] of Object.entries(banked)) {
+          summary.aggregatedXpReward[skill] = (summary.aggregatedXpReward[skill] || 0) + xp
         }
       } else {
-        emitQuestCompletionReveal([quest], xpReward, coinReward, tracker.result())
+        emitQuestCompletionReveal([quest], banked, coinReward, tracker.result())
       }
     }
 
@@ -1153,7 +1157,9 @@ function GameApp() {
               const quest = entry.quest
               const { fixed, choices } = splitQuestXpRewards(entry.xpReward || quest.xpReward || {})
               for (const [skill, xp] of Object.entries(fixed)) {
-                levelTracker.apply(skill, grantXP(skill, xp, { silent: true }))
+                const got = grantXP(skill, xp, { silent: true })
+                if (got > 0) aggregatedXpReward[skill] = (aggregatedXpReward[skill] || 0) + got
+                levelTracker.apply(skill, got)
               }
               if ((entry.coinReward || 0) > 0) {
                 updateBankDirect({ coins: entry.coinReward })
@@ -1161,10 +1167,6 @@ function GameApp() {
               }
               finaliseQuest(quest.id, quest.name, choices, { quiet: true })
               completedQuests.push(quest)
-              for (const [skill, xp] of Object.entries(entry.xpReward || quest.xpReward || {})) {
-                const amount = Math.floor(Number(xp) || 0)
-                if (amount > 0) aggregatedXpReward[skill] = (aggregatedXpReward[skill] || 0) + amount
-              }
             }
 
             setActiveTask(cascade.finalTask)
@@ -2616,7 +2618,9 @@ function GameApp() {
           const quest = entry.quest
           const { fixed, choices } = splitQuestXpRewards(entry.xpReward || quest.xpReward || {})
           for (const [skill, xp] of Object.entries(fixed)) {
-            levelTracker.apply(skill, grantXP(skill, xp, { silent: true }))
+            const got = grantXP(skill, xp, { silent: true })
+            if (got > 0) aggregatedXpReward[skill] = (aggregatedXpReward[skill] || 0) + got
+            levelTracker.apply(skill, got)
           }
           if ((entry.coinReward || 0) > 0) {
             updateBankDirect({ coins: entry.coinReward })
@@ -2624,10 +2628,6 @@ function GameApp() {
           }
           finaliseQuest(quest.id, quest.name, choices, { quiet: true })
           completedQuests.push(quest)
-          for (const [skill, xp] of Object.entries(entry.xpReward || quest.xpReward || {})) {
-            const amount = Math.floor(Number(xp) || 0)
-            if (amount > 0) aggregatedXpReward[skill] = (aggregatedXpReward[skill] || 0) + amount
-          }
         }
 
         setActiveTask(cascade.finalTask)
@@ -3777,6 +3777,7 @@ function GameApp() {
           rewards={pendingXpChoices[0].rewards}
           questName={pendingXpChoices[0].questName}
           stats={stats}
+          isGrindman={isGrindman}
           onComplete={handleXpChoiceComplete}
         />
       )}
