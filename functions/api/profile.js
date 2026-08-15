@@ -20,7 +20,7 @@ export async function onRequestGet({ request, env }) {
   }
 
   const char = await env.DB.prepare(
-    `SELECT id, username, total_level, combat_level, is_ironman, is_one_life, created_at
+    `SELECT id, username, total_level, combat_level, is_ironman, is_one_life, is_grindman, created_at
        FROM characters
       WHERE username = ? COLLATE NOCASE AND deleted_at IS NULL AND is_bot = 0`
   ).bind(username).first()
@@ -63,6 +63,7 @@ export async function onRequestGet({ request, env }) {
       combatLevel,
       isIronman: !!char.is_ironman,
       isOneLife: !!char.is_one_life,
+      isGrindman: !!char.is_grindman,
       createdAt: char.created_at,
       updatedAt: saveRow?.updated_at ?? null,
       skills,

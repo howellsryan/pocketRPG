@@ -139,6 +139,12 @@ A hard fight doubles the boss's offence — twice the max hit, twice the accurac
 
 Difficulty belongs to the fight, not to you: a group boss room or a raid party is opened at the difficulty the player who opened it chose, everyone in it fights the same boss, and joining a listed group means taking that group's difficulty. Hard Mode applies to solo fights and group fights; open-world boss lairs are always normal.
 
+## Grim Reaper — buying back a Hard Mode death
+
+Everything a Hard Mode death takes is held by the Grim Reaper, reachable from Settings. You can buy it all back with credits: the cost is the total shop value of what you lost, at 5,000,000 gp per credit, rounded up, minimum 1 credit. It's all or nothing — you can't reclaim individual items. Reclaimed items (including any charges left in a scythe, trident, blowpipe or shardglass weapon) go straight to your bank.
+
+The Reaper only ever holds one death. If you die in Hard Mode again before reclaiming, whatever was stashed is lost forever and replaced by the new death's items.
+
 ## Group boss fights
 
 Tap most bosses in the combat picker and you are asked whether to fight solo or join a group. A group holds up to 8 players against one shared boss; you join the fullest group with room, or open a new one. Raid bosses stay inside their raids, and four bosses are solo only: Ember Tyrant, Ashen Crucible, Venomcoil Matriarch and Blighted Gauntlet.
@@ -205,7 +211,7 @@ Zaryth is modelled in 3D, and it is the one boss that animates differently depen
 
 ## Farming
 
-Plant seeds in farming patches (herbs, trees, fruit trees and vegetables) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Vegetable patches (Potato at level 1, Sweetcorn at level 9) yield 1-50 crops per harvest — a higher Farming level just weighs the roll toward a bigger harvest, it never guarantees one. Harvest everything at once with Harvest All. Magic Secateurs — the untradeable Lithe Farm reward — double the crop from every herb patch while wielded; they carry no combat stats. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops; Potato and Sweetcorn seeds are common early drops from low-combat monsters and the Master Farmer.
+Plant seeds in farming patches (herbs, trees, fruit trees and vegetables) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Vegetable patches (Potato at level 1, Sweetcorn at level 9) yield 1-50 crops per harvest — a higher Farming level just weighs the roll toward a bigger harvest, it never guarantees one. Harvest everything at once with Harvest All. Magic Secateurs — the untradeable Lithe Farm reward — double the crop from every herb patch while wielded; they carry no combat stats. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops; Potato and Sweetcorn seeds are common early drops from low-combat monsters and the Master Farmer. Every herb a potion needs is farmable, from Greenthorn at level 1 up to Thornspire at 94 — the higher the Herblore level of the potion it goes into, the higher the Farming level to plant it. Pickpocketing the Master Farmer rewards one seed per steal from that whole ladder, and the higher a seed's level the rarer it is: Greenthorn and Potato seeds pour in, a Thornspire seed is roughly one steal in a thousand.
 
 ## Magic
 
@@ -249,9 +255,9 @@ Out there, anyone within 10 combat levels of you can attack you, and you can att
 
 You cannot log out of a fight, and closing the tab is not a fight plan. Anywhere in the open world, leaving is refused while you are in combat — the Log out button tells you so, and if you close the tab or lose connection your character stays standing there, unable to fight back and perfectly killable, until the fight has been over for ten seconds. Run, eat, or die like everyone else.
 
-Outlaws roam the wastes when the map is quiet, so there is always something to fight. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not.
+Outlaws roam the wastes when the map is quiet, so there is always something to fight. Several are out there at once and no two are the same account — pures, zerkers, rangers, mages and maxed mains, each kitted for its own build, and every one of them matched into your attack bracket. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not.
 
-Ironman characters can fight in the Wilderness and keep every outlaw drop, but can never pick up loot dropped by another player.
+Ironman and Grindman characters can fight in the Wilderness and keep every outlaw drop, but can never pick up loot dropped by another player.
 
 ## Collection log
 
@@ -261,9 +267,11 @@ The collection log tracks every rare unique in the game — boss drops, raid uni
 
 The public leaderboard ranks characters by total level, and separately by kill counts for each boss and raid. Tap any player to view their profile and skill levels. It is a fun comparison, not a competition with prizes.
 
-## Ironman and one-life modes
+## Account modes
 
 When creating a character you can pick special modes. Ironman characters are self-sufficient: no Trading Post trading with other players, and in the open world they can only pick up loot they earned themselves — another player's kill drops and dropped items never become visible to them. That extends to the Wilderness: an Ironman can fight there and keep every outlaw drop, but the pile a defeated player leaves behind stays on the ground. Fighting alongside others is fine, boss lairs included: a kill's drop belongs to whoever dealt the most damage, so an Ironman who leads the damage keeps the drop no matter how many people helped. One-life characters are hardcore — dying loses the one-life badge for good, reverting the character to a standard account (or a standard Ironman, if it was also an Ironman). Both modes are badges of honour on the leaderboard.
+
+Grindman is a third mode, and it stands alone — it cannot be combined with Ironman or one-life. A Grindman earns half XP and rolls every monster and raid drop at three times the normal rate: every level is slower, but the drops come three times as often. Every collection log unique has to drop for you, and so does anything forged from one — an Amulet of Fury is made from an Onyx, so it counts as the Onyx. A Grindman can sell what they grind, but the Trading Post refuses their buy offers on those items. In the open world they take the same loot rule as an Ironman: only loot they earned themselves, so nothing another player drops or leaves behind on death can be picked up — in the Wilderness they keep every outlaw drop, but a defeated player's pile stays on the ground. Credits cannot be bought — a Grindman keeps the credits the account starts with and earns one for each daily task completed, and that is the whole supply. Skips, Slayer-task cancels and everything else credits pay for work normally; you just have to earn the credit first. Grindman characters start in a Grindman Full Helm, minted from coins.
 
 ## Account, characters and saving
 

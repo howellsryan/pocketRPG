@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import itemsData from '../data/items.json'
 import GameIcon from './GameIcon.jsx'
 import { getSkillArt } from '../utils/skillArt.js'
+import { mergeRevealQueue } from '../utils/rewardReveal.js'
 
 /**
  * Reward-reveal card shown when a clue scroll, minigame or quest completes,
@@ -18,6 +19,9 @@ export default function RewardRevealOverlay() {
   const [queue, setQueue] = useState([])
   const current = queue[0] || null
   const currentId = current?.id
+  // Bumped every time the head card absorbs another reveal, so the dismiss
+  // timer below restarts instead of expiring mid-grind.
+  const currentRev = current?.rev
 
   useEffect(() => {
     const handler = (event) => {
@@ -37,10 +41,13 @@ export default function RewardRevealOverlay() {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         title: detail.title || 'Reward',
         icon: detail.icon || '🎁',
+        mergeKey: detail.mergeKey || null,
+        count: 1,
+        rev: 0,
         rewards,
         levelUps,
       }
-      setQueue(prev => [...prev, reveal])
+      setQueue(prev => mergeRevealQueue(prev, reveal))
     }
     window.addEventListener('pocketrpg:reward-reveal', handler)
     return () => window.removeEventListener('pocketrpg:reward-reveal', handler)
@@ -50,7 +57,7 @@ export default function RewardRevealOverlay() {
     if (!currentId) return
     const timer = setTimeout(() => setQueue(prev => prev.slice(1)), REVEAL_LIFETIME_MS)
     return () => clearTimeout(timer)
-  }, [currentId])
+  }, [currentId, currentRev])
 
   if (!current) return null
 
@@ -76,6 +83,9 @@ export default function RewardRevealOverlay() {
             {current.icon}
           </div>
           <div class="flex-1 min-w-0 text-[14px] font-semibold text-[var(--color-parchment)] leading-snug">{current.title}</div>
+          {current.count > 1 && (
+            <div class="flex-shrink-0 text-[13px] font-bold text-[var(--color-gold)]">×{current.count.toLocaleString()}</div>
+          )}
         </div>
         {current.levelUps.length > 0 && (
           <div class="mt-2.5 pt-2.5 border-t border-[rgba(255,255,255,0.08)]">
@@ -121,6 +131,7 @@ export default function RewardRevealOverlay() {
         </div>
         )}
         <div
+          key={`bar:${current.id}:${current.rev}`}
           class="absolute left-0 bottom-0 h-[3px] w-full skill-toast-shrink bg-[var(--color-gold)]"
           style={{ animationDuration: `${REVEAL_LIFETIME_MS}ms` }}
         />

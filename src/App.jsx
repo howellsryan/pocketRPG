@@ -35,6 +35,7 @@ import CollectionLogScreen from './screens/CollectionLogScreen.jsx'
 import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
 import HelpScreen from './screens/HelpScreen.jsx'
 import CharacterUnlockScreen from './screens/CharacterUnlockScreen.jsx'
+import GrimReaperScreen from './screens/GrimReaperScreen.jsx'
 import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
@@ -49,7 +50,7 @@ import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks, holdTicks, releaseTicks, SKIP_CONFIRM_HOLD } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
-import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
+import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, getGrindmanMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSave, applyCloudSave, checkCloudNewer, isLocalWriteNewerThanCloud, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { getActiveCoopSession, COOP_SESSION_EVENT } from './cloud/coop.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
@@ -81,12 +82,14 @@ import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootRes
 import GameIcon from './components/GameIcon.jsx'
 import OneLifeIcon from './components/OneLifeIcon.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
+import { emitXpDrops } from './utils/xpDrops.js'
 import { openWorld } from './utils/helpers.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
 import { fetchKillCounts } from './cloud/killCounts.js'
 import { fetchHardModeTargets, hardModeKey } from './cloud/hardMode.js'
 import { hardModeSkipCost, idleTaskDiedHard } from './engine/hardMode.js'
+import { grimReaperStashFromDeath } from './engine/grimReaper.js'
 import { recordItemLossEntries } from './engine/lossLedger.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 import { rollClueRewards } from './engine/clueScrolls.js'
@@ -363,12 +366,12 @@ const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the d
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, syncHardModeTargets, hardModeTargets, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, isGrindman, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, syncHardModeTargets, hardModeTargets, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
     autoBankExcludedItems, backgroundCombat, combatStatus, settleKingdom, applyKingdomSkip,
-    getHoldings, flushLocalSaves } = useGame()
+    getHoldings, flushLocalSaves, updateGrimReaperStash } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
   const [gameReady, setGameReady] = useState(false)
@@ -528,20 +531,26 @@ function GameApp() {
     if (!alreadyCounted) {
       // Award rewards
       const tracker = summary?.levelTracker || createLevelUpTracker(stats)
+      // What the reveal card shows — the XP that actually reached each skill,
+      // not what the quest offered (those differ by the account type's cut).
+      const banked = {}
       for (const [skill, xp] of Object.entries(fixed)) {
-        tracker.apply(skill, xp)
-        grantXP(skill, xp, { silent: true })
+        // The tracker decides which level-ups to announce, so it is fed what
+        // grantXP BANKED — the account cut can be the difference between a
+        // level and a near miss.
+        const got = grantXP(skill, xp, { silent: true })
+        if (got > 0) banked[skill] = (banked[skill] || 0) + got
+        tracker.apply(skill, got)
       }
       if (coinReward > 0) updateBankDirect({ coins: coinReward })
       if (summary) {
         summary.completedQuests.push(quest)
         if (coinReward > 0) summary.coinsGained += coinReward
-        for (const [skill, xp] of Object.entries(xpReward || {})) {
-          const amount = Math.floor(Number(xp) || 0)
-          if (amount > 0) summary.aggregatedXpReward[skill] = (summary.aggregatedXpReward[skill] || 0) + amount
+        for (const [skill, xp] of Object.entries(banked)) {
+          summary.aggregatedXpReward[skill] = (summary.aggregatedXpReward[skill] || 0) + xp
         }
       } else {
-        emitQuestCompletionReveal([quest], xpReward, coinReward, tracker.result())
+        emitQuestCompletionReveal([quest], banked, coinReward, tracker.result())
       }
     }
 
@@ -619,15 +628,19 @@ function GameApp() {
   // silent toast, instead of the old "Quest complete" toast.
   function handleXpChoiceComplete(chosen) {
     const tracker = createLevelUpTracker(stats)
+    const banked = new Map()
     for (const { skill, xp } of chosen) {
-      tracker.apply(skill, xp)
-      grantXP(skill, xp, { silent: true })
+      const got = grantXP(skill, xp, { silent: true })
+      banked.set(skill, (banked.get(skill) || 0) + got)
+      tracker.apply(skill, got)
     }
 
     setPendingXpChoices(prev => {
       const head = prev[0]
       if (head) {
-        const rewards = chosen.map(({ skill, xp }) => ({ skill, xp: Math.floor(Number(xp) || 0) })).filter(r => r.xp > 0)
+        // The reveal card reports the XP that reached the skill, not the XP the
+        // quest offered — those differ by the account type's cut.
+        const rewards = [...banked.entries()].map(([skill, xp]) => ({ skill, xp })).filter(r => r.xp > 0)
         emitRewardReveal(`Quest Complete: ${head.questName}`, '🏆', rewards, tracker.result())
         emitLevelUpReveal(tracker.result())
       }
@@ -895,7 +908,11 @@ function GameApp() {
         // clock, hides the tab, then rolls it back, we'll catch the negative
         // delta on return and clamp elapsed to 0.
         updateMaxObservedAt(now)
-        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+        // getActiveTask(), not activeTaskRef: that ref is useEffect-synced, and
+        // Preact runs effects after paint — which a hiding tab never reaches. An
+        // action started in the moments before backgrounding would be mirrored
+        // here as whatever preceded it.
+        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(getActiveTask()))
         // Flush progress before the tab is suspended/killed. Use a sendBeacon
         // save (survives teardown) rather than pushNow's fetch, which the browser
         // cancels when the page actually goes away — that cancellation was
@@ -1122,6 +1139,7 @@ function GameApp() {
             slayerPerks,
             completedQuests: completedQuestsRef.current,
             autoBankExcludedItemIds: autoBankExcludedItems,
+            isGrindman: getGrindmanMode(),
           })
           else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
@@ -1143,8 +1161,9 @@ function GameApp() {
               const quest = entry.quest
               const { fixed, choices } = splitQuestXpRewards(entry.xpReward || quest.xpReward || {})
               for (const [skill, xp] of Object.entries(fixed)) {
-                levelTracker.apply(skill, xp)
-                grantXP(skill, xp, { silent: true })
+                const got = grantXP(skill, xp, { silent: true })
+                if (got > 0) aggregatedXpReward[skill] = (aggregatedXpReward[skill] || 0) + got
+                levelTracker.apply(skill, got)
               }
               if ((entry.coinReward || 0) > 0) {
                 updateBankDirect({ coins: entry.coinReward })
@@ -1152,10 +1171,6 @@ function GameApp() {
               }
               finaliseQuest(quest.id, quest.name, choices, { quiet: true })
               completedQuests.push(quest)
-              for (const [skill, xp] of Object.entries(entry.xpReward || quest.xpReward || {})) {
-                const amount = Math.floor(Number(xp) || 0)
-                if (amount > 0) aggregatedXpReward[skill] = (aggregatedXpReward[skill] || 0) + amount
-              }
             }
 
             setActiveTask(cascade.finalTask)
@@ -1222,15 +1237,21 @@ function GameApp() {
             }
           }
 
-          // Apply XP (skip combat/any — those require player choice via modal)
+          // Apply XP (skip combat/any — those require player choice via modal).
+          // grantXP returns what it BANKED, and sim.xpGained becomes that, because
+          // the same object is spread into the catch-up modal below: a Grindman's
+          // halved XP has to be the number the summary shows.
           if (savedTask.type !== 'quest' && sim.xpGained) {
+            const bankedXp = {}
             for (const [skill, xp] of Object.entries(sim.xpGained)) {
-              if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
+              if (skill !== 'combat' && skill !== 'any' && xp > 0) bankedXp[skill] = grantXP(skill, xp)
+              else bankedXp[skill] = xp
             }
+            sim.xpGained = bankedXp
           }
           // Apply slayer XP from combat simulation
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
-            grantXP('slayer', sim.slayerXpGained)
+            sim.slayerXpGained = grantXP('slayer', sim.slayerXpGained)
           }
           // Apply items. The simulation ran on the IDB snapshot read above;
           // resolving its result against LIVE holdings is what stops a stale
@@ -1256,6 +1277,8 @@ function GameApp() {
               // reads to the detector exactly like the bug it watches for
               // (src/engine/lossLedger.js).
               recordItemLossEntries(writes.hardModeItemsLost)
+              const grimReaperStash = grimReaperStashFromDeath(writes.hardModeItemsLost, { id: savedTask.monster?.id, name: savedTask.monster?.name })
+              if (grimReaperStash) updateGrimReaperStash(grimReaperStash)
               // Losing a pack has to survive a closed tab, so it does not wait
               // for the ordinary debounced flush.
               requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
@@ -1421,7 +1444,7 @@ function GameApp() {
       const now = Date.now()
       localStorage.setItem('pocketrpg_hiddenAt', String(now))
       updateMaxObservedAt(now)
-      localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+      localStorage.setItem('pocketrpg_activeTask', JSON.stringify(getActiveTask()))
       // Folds the idle heartbeat into the same /api/save write — see the
       // visibilitychange handler above.
       try { beaconSaveNow(getSnapshot()) } catch { /* non-fatal */ }
@@ -1469,8 +1492,9 @@ function GameApp() {
       // suspended tab we compare Date.now() against this; if it dropped, the
       // device clock rolled backwards and we can't trust idle elapsed math.
       updateMaxObservedAt(now)
-      if (activeTaskRef.current) {
-        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+      const liveTask = getActiveTask()
+      if (liveTask) {
+        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(liveTask))
       }
       // Snapshot full save to localStorage every 100 ticks (~60s) as IDB failover
       // Uses getSnapshot() to read live refs — avoids stale closure values
@@ -1768,7 +1792,7 @@ function GameApp() {
           // Server authoritatively reported no save row for this character —
           // safe to initialise a new game and push it.
           await wipeLocalSave()
-          await startNewGame(getIronmanMode(), getCharacterName(), getOneLifeMode())
+          await startNewGame(getIronmanMode(), getCharacterName(), getOneLifeMode(), getGrindmanMode())
           await pushNow(getSnapshot())
           // Brand-new character — there are no kill counts to wait for.
           markKillCountsLoaded()
@@ -1934,7 +1958,7 @@ function GameApp() {
     }
   }
 
-  async function startNewGame(isIronman = null, playerName = null, isOneLife = null) {
+  async function startNewGame(isIronman = null, playerName = null, isOneLife = null, isGrindman = null) {
     let name = playerName || getCharacterName()
     // If still no name but we have a cloud character, that's a fallback error.
     // In normal flow, setCharacter() should have already set CHARACTER_NAME_KEY before startNewGame() is called.
@@ -1945,7 +1969,8 @@ function GameApp() {
     const finalIsIronman = isIronman !== null ? isIronman : getIronmanMode()
     // If isOneLife not explicitly provided, check if it was stored (cloud character)
     const finalIsOneLife = isOneLife !== null ? isOneLife : getOneLifeMode()
-    await initNewGame(name, finalIsIronman, finalIsOneLife)
+    const finalIsGrindman = isGrindman !== null ? isGrindman : getGrindmanMode()
+    await initNewGame(name, finalIsIronman, finalIsOneLife, finalIsGrindman)
     // Stamp IDB ownership so the next boot knows these rows belong to the
     // selected character (only applies when signed in — offline leaves null).
     const charId = getCharacterId()
@@ -1962,7 +1987,7 @@ function GameApp() {
    // token) and bounce back to AuthScreen so the user can pick or create
    // another character under the same GitHub login.
   // Shown when a player taps a cloud-only feature while in the offline demo.
-  const notifyDemoLocked = () => addToast(DEMO_LOCKED_MESSAGE, 'info')
+  const notifyDemoLocked = () => addToast(DEMO_LOCKED_MESSAGE, 'warning')
 
   // Enter the offline demo from the landing page. Persists the demo flag and
   // re-runs boot, which takes the no-token demo branch in initCloudAndSave.
@@ -2153,7 +2178,7 @@ function GameApp() {
   async function executeBossSkip(bossId) {
     const killHandler = combatSkipHandlerRef?.current
     if (!killHandler) {
-      addToast('Open the fight to skip a kill.', 'info')
+      addToast('Open the fight to skip a kill.', 'warning')
       return
     }
     // Freeze the game for the WHOLE skip: charge → arm the kill → server
@@ -2213,13 +2238,12 @@ function GameApp() {
     if (result.xpGained) {
       for (const [skill, xp] of Object.entries(result.xpGained)) {
         if (skill !== 'combat' && skill !== 'any' && xp > 0) {
-          grantXP(skill, xp)
           // XP-drop overlay reflects BACKGROUND progress only. On the activity's
           // own screen the screen shows its own XP feedback, so we don't emit
           // here when a screen is actively driving (it never reaches this path).
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('pocketrpg:xp-gain', { detail: { skill, amount: xp } }))
-          }
+          // The drop shows what grantXP BANKED, not what the sim asked for: the
+          // two differ by the account type's cut.
+          emitXpDrops([{ skill, amount: grantXP(skill, xp) }])
         }
       }
     }
@@ -2463,7 +2487,7 @@ function GameApp() {
     activeTaskRef.current = null
     setActionData(null)
     try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-    addToast(reason || 'This action can no longer progress.', 'info')
+    addToast(reason || 'This action can no longer progress.', 'warning')
   }
 
   // Skip 1 hour handler — preflight first, charge only after meaningful outcome exists
@@ -2482,7 +2506,7 @@ function GameApp() {
     if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.raidId) {
       const raidSkip = raidSkipHandlerRef?.current
       if (!raidSkip) {
-        addToast('Open the raid to skip it.', 'info')
+        addToast('Open the raid to skip it.', 'warning')
         isSkippingRef.current = false
         return
       }
@@ -2500,7 +2524,7 @@ function GameApp() {
       const monster = activeTaskRef.current?.monster
       const killHandler = combatSkipHandlerRef?.current
       if (!killHandler) {
-        addToast('Open the fight to skip a kill.', 'info')
+        addToast('Open the fight to skip a kill.', 'warning')
         isSkippingRef.current = false
         return
       }
@@ -2559,7 +2583,7 @@ function GameApp() {
       const preflight = getSkipPreflight(task, context, SKIP_HOUR_MS)
       if (!preflight.canSkip) {
         if (preflight.shouldStopTask) clearExhaustedActiveTask(preflight.reason)
-        else addToast(preflight.reason || 'Cannot skip this action right now.', 'info')
+        else addToast(preflight.reason || 'Cannot skip this action right now.', 'warning')
         return
       }
       // Commit to the skip: freeze the game until the server confirms. Pausing
@@ -2599,8 +2623,9 @@ function GameApp() {
           const quest = entry.quest
           const { fixed, choices } = splitQuestXpRewards(entry.xpReward || quest.xpReward || {})
           for (const [skill, xp] of Object.entries(fixed)) {
-            levelTracker.apply(skill, xp)
-            grantXP(skill, xp, { silent: true })
+            const got = grantXP(skill, xp, { silent: true })
+            if (got > 0) aggregatedXpReward[skill] = (aggregatedXpReward[skill] || 0) + got
+            levelTracker.apply(skill, got)
           }
           if ((entry.coinReward || 0) > 0) {
             updateBankDirect({ coins: entry.coinReward })
@@ -2608,10 +2633,6 @@ function GameApp() {
           }
           finaliseQuest(quest.id, quest.name, choices, { quiet: true })
           completedQuests.push(quest)
-          for (const [skill, xp] of Object.entries(entry.xpReward || quest.xpReward || {})) {
-            const amount = Math.floor(Number(xp) || 0)
-            if (amount > 0) aggregatedXpReward[skill] = (aggregatedXpReward[skill] || 0) + amount
-          }
         }
 
         setActiveTask(cascade.finalTask)
@@ -2834,6 +2855,7 @@ function GameApp() {
             slayerPerks,
             completedQuests: completedQuestsRef.current,
             autoBankExcludedItemIds: autoBankExcludedItems,
+            isGrindman: getGrindmanMode(),
           })
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
@@ -2875,15 +2897,21 @@ function GameApp() {
             }
           }
 
-          // Apply XP (skip combat/any — those require player choice via modal)
+          // Apply XP (skip combat/any — those require player choice via modal).
+          // grantXP returns what it BANKED, and sim.xpGained becomes that, because
+          // the same object is spread into the catch-up modal below: a Grindman's
+          // halved XP has to be the number the summary shows.
           if (savedTask.type !== 'quest' && sim.xpGained) {
+            const bankedXp = {}
             for (const [skill, xp] of Object.entries(sim.xpGained)) {
-              if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
+              if (skill !== 'combat' && skill !== 'any' && xp > 0) bankedXp[skill] = grantXP(skill, xp)
+              else bankedXp[skill] = xp
             }
+            sim.xpGained = bankedXp
           }
           // Apply slayer XP from combat simulation
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
-            grantXP('slayer', sim.slayerXpGained)
+            sim.slayerXpGained = grantXP('slayer', sim.slayerXpGained)
           }
           // Apply items. The simulation ran on the IDB snapshot read above;
           // resolving its result against LIVE holdings is what stops a stale
@@ -2909,6 +2937,8 @@ function GameApp() {
               // reads to the detector exactly like the bug it watches for
               // (src/engine/lossLedger.js).
               recordItemLossEntries(writes.hardModeItemsLost)
+              const grimReaperStash = grimReaperStashFromDeath(writes.hardModeItemsLost, { id: savedTask.monster?.id, name: savedTask.monster?.name })
+              if (grimReaperStash) updateGrimReaperStash(grimReaperStash)
               // Losing a pack has to survive a closed tab, so it does not wait
               // for the ordinary debounced flush.
               requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
@@ -3258,6 +3288,7 @@ function GameApp() {
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={backToPrev} />
       case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} onShowIntroTour={() => setShowIntroTour(true)} />
       case SCREENS.CHARACTER_UNLOCKS:   return <CharacterUnlockScreen onBack={backToPrev || (() => navigate(SCREENS.HOME))} />
+      case SCREENS.GRIM_REAPER:        return <GrimReaperScreen onBack={backToPrev || (() => navigate(SCREENS.HOME))} loadGame={loadGame} />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
@@ -3725,6 +3756,7 @@ function GameApp() {
           characterId={getCharacterId()}
           stripeLinks={stripeLinks}
           credits={credits}
+          isGrindman={isGrindman}
         />
       )}
 
@@ -3750,6 +3782,7 @@ function GameApp() {
           rewards={pendingXpChoices[0].rewards}
           questName={pendingXpChoices[0].questName}
           stats={stats}
+          isGrindman={isGrindman}
           onComplete={handleXpChoiceComplete}
         />
       )}

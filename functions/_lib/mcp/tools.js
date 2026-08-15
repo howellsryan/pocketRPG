@@ -5,6 +5,7 @@ import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInCoopSession } from '../game/coopBoss.js'
+import { loadBossKillCounts } from '../game/bossEntry.js'
 import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, skipSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
@@ -88,9 +89,11 @@ export async function assertCharacterFree(env, id) {
 // Apply a Phase C save intent: resolve + own the character, refuse while a
 // room owns it, load → mutate (throws abort the write) → save → audit. No
 // value is created; intents only relocate items the character already owns.
-async function applySaveIntent({ env, authorization, identity }, characterIdArg, intentFn, auditType) {
+// `resolvedId` skips the character lookup for a caller that already needed the
+// id before it could build its intent.
+async function applySaveIntent({ env, authorization, identity }, characterIdArg, intentFn, auditType, resolvedId = null) {
   if (!identity?.id) throw new Error('Not authenticated.')
-  const id = await resolveCharacterId(env, authorization, characterIdArg)
+  const id = resolvedId ?? await resolveCharacterId(env, authorization, characterIdArg)
   await assertCharacterFree(env, id)
   const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
   const result = intentFn(saveObject, { isIronman: !!row?.is_ironman })
@@ -266,15 +269,16 @@ const TOOLS = {
     return ok(res.data)
   },
 
-  // Create a new character on the account. The endpoint validates the username
-  // and uniqueness; the ironman / one-life flags are permanent once set.
-  async create_character({ username, is_ironman, is_one_life }, { env, authorization, identity }) {
+  // Create a new character on the account. The endpoint validates the username,
+  // uniqueness and the mode combination; the account-type flags are permanent
+  // once set.
+  async create_character({ username, is_ironman, is_one_life, is_grindman }, { env, authorization, identity }) {
     if (!identity?.id) throw new Error('Not authenticated.')
     if (!username) throw new Error('username is required.')
     const res = await callHandler(createCharacter, env, {
       method: 'POST',
       authorization,
-      body: { username, is_ironman: !!is_ironman, is_one_life: !!is_one_life },
+      body: { username, is_ironman: !!is_ironman, is_one_life: !!is_one_life, is_grindman: !!is_grindman },
     })
     if (!res.ok) throw httpError(res)
     // The browser seeds a fresh character's save locally (db/stores.js
@@ -294,6 +298,7 @@ const TOOLS = {
           name: res.data?.character?.username || username,
           isIronman: !!res.data?.character?.is_ironman,
           isOneLife: !!res.data?.character?.is_one_life,
+          isGrindman: !!res.data?.character?.is_grindman,
         }), 0)
         saveSeeded = true
       } catch {
@@ -510,9 +515,14 @@ const TOOLS = {
     return ok({ characterId: id, ...slayerStatus(state) })
   },
 
-  assign_slayer_task({ master_id, character_id }, ctx) {
+  async assign_slayer_task({ master_id, character_id }, ctx) {
     if (!master_id) throw new Error('master_id is required.')
-    return applySaveIntent(ctx, character_id, (save) => assignSlayerTask(save, master_id), 'mcp_assign_slayer_task')
+    // Kill counts are never in the save (§14), and the picker fails closed
+    // without them — read the authoritative table so a player who has earned a
+    // kill-count-gated boss can actually be assigned it.
+    const id = await resolveCharacterId(ctx.env, ctx.authorization, character_id)
+    const bossKillCounts = await loadBossKillCounts(ctx.env, id)
+    return applySaveIntent(ctx, id, (save) => assignSlayerTask(save, master_id, { bossKillCounts }), 'mcp_assign_slayer_task', id)
   },
 
   // ── Trading post (Phase B) ─────────────────────────────────────────────────

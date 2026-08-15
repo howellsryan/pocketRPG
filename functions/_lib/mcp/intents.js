@@ -36,6 +36,8 @@ import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionI
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
 import { applyTaskResult } from '../../../src/engine/applyTaskResult.js'
+import { isGrindmanSave } from '../../../src/engine/grindman.js'
+import { bankXp } from '../../../src/engine/xpBank.js'
 import { declareItemLosses } from '../game/holdingsDelta.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTokens.js'
@@ -366,13 +368,12 @@ export function trainPrayer(save, actionId, quantity) {
 
   const boneTotal = actions * perAction
   consumeInventoryThenBank(save, boneId, boneTotal)
-  const newXP = Math.min(currentXP + action.xp * actions, XP_CAP)
-  save.stats.prayer = { ...prayerStats, xp: newXP, level: getLevelFromXP(newXP) }
+  const banked = bankXp(save.stats, 'prayer', action.xp * actions, { isGrindman: isGrindmanSave(save) })
   return {
     action: action.name,
     actions,
-    xpGained: { prayer: newXP - currentXP },
-    progress: progressSummary(save, { prayer: newXP - currentXP }),
+    xpGained: { prayer: banked },
+    progress: progressSummary(save, { prayer: banked }),
     itemsConsumed: [{ itemId: boneId, name: itemsData[boneId]?.name || boneId, quantity: boneTotal }],
     bonesRemaining: heldInInventoryAndBank(save, boneId),
   }
@@ -427,13 +428,12 @@ export function trainConstruction(save, actionId, quantity) {
 
   const plankTotal = actions * perBuild
   consumeInventoryThenBank(save, plankId, plankTotal)
-  const newXP = Math.min(currentXP + action.xp * actions, XP_CAP)
-  save.stats.construction = { ...conStats, xp: newXP, level: getLevelFromXP(newXP) }
+  const banked = bankXp(save.stats, 'construction', action.xp * actions, { isGrindman: isGrindmanSave(save) })
   return {
     action: action.name,
     actions,
-    xpGained: { construction: newXP - currentXP },
-    progress: progressSummary(save, { construction: newXP - currentXP }),
+    xpGained: { construction: banked },
+    progress: progressSummary(save, { construction: banked }),
     itemsConsumed: [{ itemId: plankId, name: itemsData[plankId]?.name || plankId, quantity: plankTotal }],
     planksRemaining: heldInInventoryAndBank(save, plankId),
   }
@@ -495,10 +495,7 @@ function resolvePatchSlot(state, patchId) {
 // Add farming XP to the save (capped), returning the actual amount granted.
 function grantFarmingXp(save, amount) {
   if (!save.stats || typeof save.stats !== 'object') save.stats = {}
-  const cur = Math.max(0, Math.floor(Number(save.stats.farming?.xp) || 0))
-  const next = Math.min(cur + Math.floor(Number(amount) || 0), XP_CAP)
-  save.stats.farming = { ...(save.stats.farming || {}), xp: next, level: getLevelFromXP(next) }
-  return next - cur
+  return bankXp(save.stats, 'farming', amount, { isGrindman: isGrindmanSave(save) })
 }
 
 // ── Magic (non-combat utility spells) ────────────────────────────────────────
@@ -639,13 +636,12 @@ export function castMagic(save, actionId, { targetItemId, quantity, isIronman = 
     }
   }
 
-  const newXP = Math.min(currentXP + Math.floor(Number(action.xp) || 0) * casts, XP_CAP)
-  save.stats.magic = { ...magicStats, xp: newXP, level: getLevelFromXP(newXP) }
+  const banked = bankXp(save.stats, 'magic', Math.floor(Number(action.xp) || 0) * casts, { isGrindman: isGrindmanSave(save) })
   return {
     action: action.name,
     casts,
-    xpGained: { magic: newXP - currentXP },
-    progress: progressSummary(save, { magic: newXP - currentXP }),
+    xpGained: { magic: banked },
+    progress: progressSummary(save, { magic: banked }),
     produced,
     target: isAlchemy ? { itemId: targetItemId, name: alchItem.name || targetItemId } : undefined,
   }
@@ -858,7 +854,7 @@ function applyToSave(save, sim, type) {
   if (!save.settings || typeof save.settings !== 'object') save.settings = {}
   const inv28 = toSlotArray(save)
   const state = { stats: save.stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
-  const result = applyTaskResult(state, sim, type)
+  const result = applyTaskResult(state, sim, type, { isGrindman: isGrindmanSave(save) })
   save.inventory = state.inventory  // may be sim.finalInventory or modified inv28
   declareItemLosses(save, result.consumed)
   return result
@@ -872,9 +868,9 @@ export function applyIdleResult(save, sim, type) {
     skill: sim.skill,
     action: sim.actionName,
     actions: sim.actions || sim.laps || 0,
-    xpGained: sim.xpGained || {},
+    xpGained: result.xpBanked,
     coinsGained: Number(sim.coinsGained) || 0,
-    progress: progressSummary(save, sim.xpGained || {}),
+    progress: progressSummary(save, result.xpBanked),
     itemsBanked: named(result.banked),
     rewards: type === 'hunter'
       ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity }))
@@ -915,7 +911,7 @@ export function runIdleTask(save, task, elapsedMs, { isIronman = false } = {}) {
   }
   if (!sim) return { applied: false, reason: 'no_progress' }
   const state = { stats: save.stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
-  const result = applyTaskResult(state, sim, task.type)
+  const result = applyTaskResult(state, sim, task.type, { isGrindman: isGrindmanSave(save) })
   save.inventory = state.inventory
   declareItemLosses(save, result.consumed)
   return {
@@ -923,9 +919,9 @@ export function runIdleTask(save, task, elapsedMs, { isIronman = false } = {}) {
     skill: sim.skill,
     action: sim.actionName,
     actions: sim.actions || sim.laps || 0,
-    xpGained: sim.xpGained || {},
+    xpGained: result.xpBanked,
     coinsGained: Number(sim.coinsGained) || 0,
-    progress: progressSummary(save, sim.xpGained || {}),
+    progress: progressSummary(save, result.xpBanked),
     itemsBanked: named(result.banked),
     rewards: task.type === 'hunter'
       ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity }))
@@ -1230,11 +1226,8 @@ export function dropFromQueue(save, questId) {
 }
 
 function addQuestXp(save, skill, rawXp, gained) {
-  const amount = Math.floor(Number(rawXp) || 0)
-  if (amount <= 0 || !save.stats[skill]) return
-  const newXP = Math.min((save.stats[skill].xp || 0) + amount, XP_CAP)
-  save.stats[skill] = { ...save.stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
-  gained[skill] = (gained[skill] || 0) + amount
+  const banked = bankXp(save.stats, skill, rawXp, { isGrindman: isGrindmanSave(save) })
+  if (banked > 0) gained[skill] = (gained[skill] || 0) + banked
 }
 
 // Run a quest idle task over the elapsed window and apply every completion to
@@ -1403,16 +1396,16 @@ export function runCombatTask(save, task, elapsedMs) {
     idlePrayers: setup.prayers,
     prayersData,
     autoBankExcludedItemIds: new Set(save.settings.autoBankExcludedItems || []),
+    isGrindman: isGrindmanSave(save),
   })
   if (!sim) return { applied: false, reason: 'no_progress' }
   const state = { stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
-  const result = applyTaskResult(state, sim, 'combat')
+  const result = applyTaskResult(state, sim, 'combat', { isGrindman: isGrindmanSave(save) })
   save.inventory = state.inventory
   declareItemLosses(save, result.consumed)
-  const xpGained = {}
-  for (const [skill, xp] of Object.entries(sim.xpGained || {})) {
-    if (Math.floor(Number(xp) || 0) > 0) xpGained[skill] = Math.floor(Number(xp))
-  }
+  // What the save actually took, not what the sim proposed: applyTaskResult
+  // applies the Grindman cut, and this number IS the tool's answer.
+  const xpGained = { ...result.xpBanked }
 
   let slayerCredit = null
   if (task.slayerTask && sim.slayerTaskUpdate) {
@@ -1437,10 +1430,7 @@ export function runCombatTask(save, task, elapsedMs) {
   }
 
   if (Math.floor(Number(sim.slayerXpGained) || 0) > 0) {
-    const slayerStats = save.stats.slayer || { xp: 0 }
-    const newXP = Math.min((slayerStats.xp || 0) + Math.floor(sim.slayerXpGained), XP_CAP)
-    save.stats.slayer = { ...slayerStats, xp: newXP, level: getLevelFromXP(newXP) }
-    xpGained.slayer = Math.floor(sim.slayerXpGained)
+    xpGained.slayer = bankXp(save.stats, 'slayer', sim.slayerXpGained, { isGrindman: isGrindmanSave(save) })
   }
 
   return {
@@ -1509,7 +1499,9 @@ function slayerLevelOf(save) {
 // refuse while a task is active, enforce the master's combat/slayer
 // requirements, pick an eligible monster and write settings.slayerTask.
 // `options` (rng/history) is forwarded to the picker so callers can be
-// deterministic.
+// deterministic; `options.bossKillCounts` must come from the kill_counts table
+// (loadBossKillCounts), never the save — the save blob has never carried them
+// (§14), and without them the picker fails closed on kill-count-gated bosses.
 export function assignSlayerTask(save, masterId, options = {}) {
   if (!save.settings || typeof save.settings !== 'object') save.settings = {}
   const master = SLAYER_MASTER_BY_ID.get(masterId)
@@ -1530,7 +1522,7 @@ export function assignSlayerTask(save, masterId, options = {}) {
   const completedQuests = new Set(Array.isArray(save.settings?.completedQuests) ? save.settings.completedQuests : [])
   const pick = pickSlayerMonster(master, slayerLevel, { ...options, completedQuests })
   if (!pick) {
-    throw new GameApiError('NO_SLAYER_TASK', `${master.name} has no eligible task for slayer level ${slayerLevel} and your completed quests. Raise slayer, finish required quests, or pick another master.`, 400)
+    throw new GameApiError('NO_SLAYER_TASK', `${master.name} has no eligible task for slayer level ${slayerLevel}, your completed quests and your boss kill counts. Raise slayer, finish required quests, defeat the prerequisite bosses, or pick another master.`, 400)
   }
   const task = buildSlayerTask(master, pick.monsterId, pick.isBoss, { ...options, entry: pick.entry })
   save.settings.slayerTask = task

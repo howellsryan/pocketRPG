@@ -454,6 +454,25 @@ describe('coopBossEngine — XP', () => {
       }
     }
   })
+
+  // The published event drives the member's floating XP drop, so it has to be
+  // the banked figure: a Grindman watching the engine's roll float up sees
+  // twice what the room wrote into their save.
+  it('publishes the XP a grindman banked, not the roll the engine made', () => {
+    alwaysHit()
+    const state = joinedState([1, 2], { 1: { player: { is_grindman: true } } })
+    const out = processCoopTick(state, [], deps, Date.now())
+
+    const xpEventFor = (characterId: number) =>
+      (out.events as any[]).find((ev) => ev.type === 'xp' && ev.characterId === characterId)
+
+    const grindman = xpEventFor(1)
+    const ordinary = xpEventFor(2)
+    expect(grindman?.xpSkills.strength).toBe(Math.floor(ordinary.xpSkills.strength / 2))
+    // Every skill on the event agrees with what the member actually banked.
+    expect(grindman?.xpSkills).toEqual(out.stateNext.members['1'].xpGained)
+    expect(ordinary?.xpSkills).toEqual(out.stateNext.members['2'].xpGained)
+  })
 })
 
 describe('equip intent', () => {
@@ -699,6 +718,76 @@ describe('prayer slots in a group fight', () => {
       state, intent({ type: 'toggle_prayer', prayerId: 'protection_from_magic' }), deps, Date.now(),
     ).stateNext
     expect(state.members['1'].combat.activeProtectionPrayer).toBe('protection_from_magic')
+  })
+})
+
+describe('coopBossEngine — a defence drain belongs to the ROOM, not to whoever landed it', () => {
+  const smashIntent = [{ tick_number: 1, characterId: 1, characterSeq: 0, action: { type: 'queue_special' } }]
+  const hammer = { equipment: { weapon: { itemId: 'dragon_warhammer', quantity: 1 } } }
+
+  it("carries a Dragon Warhammer smash onto the shared boss record, so a member who never swung it rolls against the drained Defence too", () => {
+    alwaysHit()
+    const state = joinedState([1, 2], { 1: hammer })
+    const baseDefence = (monstersData as any)[BOSS].stats.defence
+    expect(state.boss.monster.stats.defence).toBe(baseDefence)
+
+    const next = processCoopTick(state, smashIntent, deps, Date.now()).stateNext
+    // Members tick in ascending character-id order, so player 2's session is
+    // hydrated from the room AFTER the smash landed and writes the boss record
+    // back last. A drain that lived only on player 1's session would be
+    // restored from monsters.json right here.
+    expect(next.boss.monster.stats.defence).toBe(baseDefence - Math.floor(baseDefence * 0.3))
+  })
+
+  it('never mutates the monsters.json row the room was seeded from', () => {
+    alwaysHit()
+    const baseDefence = (monstersData as any)[BOSS].stats.defence
+    processCoopTick(joinedState([1], { 1: hammer }), smashIntent, deps, Date.now())
+    expect((monstersData as any)[BOSS].stats.defence).toBe(baseDefence)
+  })
+
+  it('resets the drain when the boss respawns — a fresh instance is a fresh Defence', () => {
+    alwaysHit()
+    const baseDefence = (monstersData as any)[BOSS].stats.defence
+    let state = processCoopTick(joinedState([1], { 1: hammer }), smashIntent, deps, Date.now()).stateNext
+    expect(state.boss.monster.stats.defence).toBeLessThan(baseDefence)
+
+    state.boss.currentHP = 0
+    state.boss.killedAt = Date.now()
+    state.boss.respawnCountdown = 1
+    state = processCoopTick(state, [], deps, Date.now()).stateNext
+    expect(state.boss.monster.stats.defence).toBe(baseDefence)
+  })
+
+  it('carries baseDefenceLevel onto the shared boss record, so the info panel can show what Defence was even for a member who never swung the hammer', () => {
+    // Mirrors the stats.defence assertions above: baseDefenceLevel is the
+    // other half of the info panel's before/after — captured once at boss
+    // creation (createCoopBossState -> createCombatState -> prepareMonster),
+    // and it has to survive the same hydrate/write-back round trip
+    // defenceBonusDrain already does, or the panel shows a live number with no
+    // baseline to diff it against.
+    alwaysHit()
+    const baseDefence = (monstersData as any)[BOSS].stats.defence
+    const state = joinedState([1, 2], { 1: hammer })
+    expect(state.boss.monster.baseDefenceLevel).toBe(baseDefence)
+
+    const next = processCoopTick(state, smashIntent, deps, Date.now()).stateNext
+    expect(next.boss.monster.baseDefenceLevel).toBe(baseDefence)
+    expect(next.boss.monster.stats.defence).toBeLessThan(next.boss.monster.baseDefenceLevel)
+  })
+
+  it('resets baseDefenceLevel on respawn along with the Defence it baselines', () => {
+    alwaysHit()
+    const baseDefence = (monstersData as any)[BOSS].stats.defence
+    let state = processCoopTick(joinedState([1], { 1: hammer }), smashIntent, deps, Date.now()).stateNext
+    expect(state.boss.monster.baseDefenceLevel).toBe(baseDefence)
+
+    state.boss.currentHP = 0
+    state.boss.killedAt = Date.now()
+    state.boss.respawnCountdown = 1
+    state = processCoopTick(state, [], deps, Date.now()).stateNext
+    expect(state.boss.monster.baseDefenceLevel).toBe(baseDefence)
+    expect(state.boss.monster.stats.defence).toBe(baseDefence)
   })
 })
 

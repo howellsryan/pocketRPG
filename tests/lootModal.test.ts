@@ -3,7 +3,7 @@
 // biggest pile of coins.
 
 import { describe, it, expect } from 'vitest'
-import { shapeLootForModal, lootRowsForModal } from '../src/utils/lootModal.js'
+import { shapeLootForModal, lootRowsForModal, killPresentsFullModal, killRevealRewards } from '../src/utils/lootModal.js'
 
 const itemsData = {
   coins: { name: 'Coins', shopValue: 1 },
@@ -80,5 +80,59 @@ describe('lootRowsForModal', () => {
   it('returns nothing for an empty list', () => {
     expect(lootRowsForModal([], itemsData)).toEqual([])
     expect(lootRowsForModal(null, itemsData)).toEqual([])
+  })
+})
+
+// Which kills stop the game. A boss or a raid earns the full-screen takeover;
+// everything else announces itself on a card and keeps fighting, so a slayer
+// grind isn't a modal every ten seconds.
+describe('killPresentsFullModal', () => {
+  it('stops on a boss', () => {
+    expect(killPresentsFullModal({ isBossKill: true, raidId: null })).toBe(true)
+  })
+
+  it('stops on a raid completion even though the final boss is the kill', () => {
+    expect(killPresentsFullModal({ isBossKill: true, raidId: 'chambers' })).toBe(true)
+    expect(killPresentsFullModal({ isBossKill: false, raidId: 'chambers' })).toBe(true)
+  })
+
+  it('lets an ordinary monster through', () => {
+    expect(killPresentsFullModal({ isBossKill: false, raidId: null })).toBe(false)
+  })
+
+  it('lets a non-boss with a collection-logged drop through too — a gargoyle is a grind', () => {
+    expect(killPresentsFullModal({ isBossKill: false, raidId: undefined })).toBe(false)
+  })
+
+  it('treats a missing flag as an ordinary kill rather than a takeover', () => {
+    expect(killPresentsFullModal({})).toBe(false)
+    expect(killPresentsFullModal()).toBe(false)
+    expect(killPresentsFullModal({ isBossKill: 'yes' as any })).toBe(false)
+  })
+})
+
+describe('killRevealRewards', () => {
+  it('collapses a drop table that rolled the same item twice into one chip', () => {
+    expect(killRevealRewards([
+      { itemId: 'bones', quantity: 1 },
+      { itemId: 'coins', quantity: 30 },
+      { itemId: 'bones', quantity: 2 },
+    ])).toEqual([
+      { itemId: 'bones', quantity: 3 },
+      { itemId: 'coins', quantity: 30 },
+    ])
+  })
+
+  it('defaults a missing quantity to one', () => {
+    expect(killRevealRewards([{ itemId: 'bones' }])).toEqual([{ itemId: 'bones', quantity: 1 }])
+  })
+
+  it('drops junk rather than rendering an empty chip', () => {
+    expect(killRevealRewards([{ itemId: '', quantity: 5 }, { itemId: 'bones', quantity: 0 }, null as any])).toEqual([])
+  })
+
+  it('handles a kill that dropped nothing', () => {
+    expect(killRevealRewards([])).toEqual([])
+    expect(killRevealRewards(null as any)).toEqual([])
   })
 })

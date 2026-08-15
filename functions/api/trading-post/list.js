@@ -7,6 +7,8 @@ import { auditLog } from '../../_lib/game/audit.js'
 import { canonicalItemId, normalizeSaveItemIds } from '../../_lib/game/inventory.js'
 import { addCoins } from '../../_lib/game/economy.js'
 import { addItemToBank } from '../../_lib/game/inventory.js'
+import { isCollectionLogLineageItem } from '../../_lib/collectionLog.js'
+import { GRINDMAN_UNIQUES_GRINDED } from '../../../src/engine/grindman.js'
 import {
   isTradingPostListable,
   isOrderBookItem,
@@ -61,6 +63,13 @@ export async function onRequestPost({ request, env }) {
     const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, auth.identity.id)
     if (row.is_ironman) {
       return json({ error: 'Ironman characters cannot use the trading post.', code: 'IRONMAN_RESTRICTED' }, 403)
+    }
+    // A Grindman's uniques come from their own drop rate, and so does anything
+    // built out of one — buying the amulet of fury is buying the onyx. Buy side
+    // only (they still sell what they grind), and refused here, above the slot
+    // reservation and the escrow, so a refusal costs neither a slot nor coins.
+    if (row.is_grindman && offerType === 'buy' && isCollectionLogLineageItem(itemId)) {
+      return json({ error: GRINDMAN_UNIQUES_GRINDED, code: 'GRINDMAN_UNIQUE_RESTRICTED' }, 403)
     }
 
     normalizeSaveItemIds(saveObject, itemsData)

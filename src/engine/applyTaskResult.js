@@ -1,5 +1,6 @@
 // @ts-check
 import { getLevelFromXP } from './experience.js'
+import { bankXp } from './xpBank.js'
 
 /**
  * The result of a task simulation (idle/offline/skip-hour/live-completion),
@@ -55,8 +56,6 @@ import { getLevelFromXP } from './experience.js'
 // of the item-loss ledger (src/engine/lossLedger.js); callers route it to the
 // client ledger or to writeSave's declaredLosses.
 
-const XP_CAP = 200_000_000
-
 // `charges` pools an auto-banked item's charges onto the entry. Never write an
 // explicit 0 for an item carrying none: an absent field means "untouched" to
 // preserveBankCharges, an explicit 0 would wipe a pool this call knows nothing
@@ -95,11 +94,16 @@ function addCoinsInventoryFirst(inventory, bank, qty) {
 }
 
 /**
+ * `isGrindman` halves the XP this result banks. The cut belongs to whatever
+ * funnel writes XP INTO the stats — this one, or the client's grantXP — never
+ * to the simulation, which would double-cut on the paths that use both.
+ *
  * @param {{stats?: any, inventory?: any[], bank?: any, equipment?: any, settings?: any}} state
  * @param {TaskResult} sim
  * @param {string} type
+ * @param {{isGrindman?: boolean}} [options]
  */
-export function applyTaskResult(state, sim, type) {
+export function applyTaskResult(state, sim, type, { isGrindman = false } = {}) {
   if (!state.stats || typeof state.stats !== 'object') state.stats = {}
   if (!state.bank || typeof state.bank !== 'object') state.bank = {}
   if (!state.equipment || typeof state.equipment !== 'object') state.equipment = {}
@@ -113,6 +117,10 @@ export function applyTaskResult(state, sim, type) {
   // asked for: every debit below is clamped by what the container held.
   /** @type {Record<string, number>} */
   const consumed = {}
+  // What this call actually WROTE into the stats, per skill — the Grindman cut
+  // makes it differ from sim.xpGained, and the caller reports one of the two.
+  /** @type {Record<string, number>} */
+  const xpBanked = {}
   /** @param {string} itemId @param {number} qty */
   const tally = (itemId, qty) => {
     if (itemId && qty > 0) consumed[itemId] = (consumed[itemId] || 0) + qty
@@ -122,14 +130,8 @@ export function applyTaskResult(state, sim, type) {
   if (type !== 'quest' && sim.xpGained) {
     for (const [skill, xp] of Object.entries(sim.xpGained)) {
       if (xp > 0) {
-        // Initialize a missing skill rather than dropping the XP. On a fully
-        // browser-seeded save every skill already exists, but a server-side
-        // save (MCP-created character) may not have the entry yet — without
-        // this the gain is silently discarded while the claim result still
-        // reports it, so levels never rise and requirements never unlock.
-        const cur = stats[skill] || { skill, xp: 0, level: 1 }
-        const newXP = Math.min((cur.xp || 0) + Math.floor(xp), XP_CAP)
-        stats[skill] = { ...cur, xp: newXP, level: getLevelFromXP(newXP) }
+        const banked = bankXp(stats, skill, xp, { isGrindman })
+        if (banked > 0) xpBanked[skill] = banked
       }
     }
   }
@@ -213,6 +215,7 @@ export function applyTaskResult(state, sim, type) {
   return {
     banked,
     consumed,
+    xpBanked,
     stoppedReason: sim.stoppedReason || null,
     ...(type === 'combat' ? {
       died: sim.died === true,

@@ -1,0 +1,52 @@
+name: Preview Deploy
+
+# Branch previews. Deploys every non-main branch to the pocketrpg-app-preview
+# Worker, the same target Workers Builds uses.
+on:
+  push:
+    branches-ignore: [main]
+
+concurrency:
+  group: preview-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        # --ignore-scripts skips the ffmpeg-static and playwright postinstall
+        # downloads, which fetch large binaries this deploy never runs and
+        # fail the job on any network blip. esbuild is the one dependency
+        # whose install script the build genuinely needs.
+        run: |
+          npm ci --no-audit --no-fund --ignore-scripts
+          npm rebuild esbuild
+
+      - name: Build site
+        # build_single.cjs derives the world-beta and quest-gate client flags
+        # from this variable; without it they read as a production build and
+        # the preview loses the bypasses it exists to provide.
+        env:
+          WORKERS_CI_BRANCH: ${{ github.ref_name }}
+          # build:world runs its own npm install, and the world subproject
+          # also depends on playwright.
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm run build:site
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.107.1'
+          command: deploy --env preview

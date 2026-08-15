@@ -7,9 +7,42 @@ import {
   rollMasterFarmerSeeds,
 } from '../src/engine/seedDrops.js'
 import farmingData from '../src/data/farming.json'
+import itemsData from '../src/data/items.json'
+import skillsData from '../src/data/skills.json'
+import monstersData from '../src/data/monsters.json'
 
 const maxSeedLevel = (drops: { itemId: string }[]) =>
   Math.max(0, ...drops.map((d) => SEEDS_BY_LEVEL.find((s) => s.id === d.itemId)!.level))
+
+// Herblore level of the cheapest potion each herb goes into, derived from the
+// live recipe table so a new potion joins this ladder without a test edit.
+const herbloreLevelByCrop = () => {
+  const levels: Record<string, number> = {}
+  for (const action of (skillsData as any).herblore.actions) {
+    for (const material of Object.keys(action.materials || {})) {
+      if (levels[material] === undefined || action.level < levels[material]) {
+        levels[material] = action.level
+      }
+    }
+  }
+  return levels
+}
+
+// Every herb seed whose crop a potion actually consumes, paired with that
+// potion's Herblore requirement.
+const herbSeedsByHerbloreLevel = () => {
+  const levels = herbloreLevelByCrop()
+  return farmingData.herbs
+    .filter((h) => levels[h.cropId] !== undefined)
+    .map((h) => ({ id: h.id, herbloreLevel: levels[h.cropId] }))
+    .sort((a, b) => a.herbloreLevel - b.herbloreLevel)
+}
+
+const masterFarmerChances = () => {
+  const weights = masterFarmerSeedWeights()
+  const total = weights.reduce((sum, w) => sum + w.weight, 0)
+  return Object.fromEntries(weights.map((w) => [w.id, w.weight / total]))
+}
 
 describe('seed pool', () => {
   it('includes every plantable seed/sapling, ascending by level', () => {
@@ -24,7 +57,18 @@ describe('seed pool', () => {
       expect(SEEDS_BY_LEVEL[i].level).toBeGreaterThanOrEqual(SEEDS_BY_LEVEL[i - 1].level)
     }
     expect(SEEDS_BY_LEVEL[0].id).toBe('greenthorn_seed')
-    expect(SEEDS_BY_LEVEL[SEEDS_BY_LEVEL.length - 1].id).toBe('magic_sapling')
+    expect(SEEDS_BY_LEVEL[SEEDS_BY_LEVEL.length - 1].id).toBe('thornspire_seed')
+  })
+
+  it('has a plantable seed for every herb a potion consumes', () => {
+    const seeds = herbSeedsByHerbloreLevel()
+    // Thornspire (super combat, Herblore 90) is the top of the potion ladder;
+    // before this existed the seed pool stopped at Rynarr.
+    expect(seeds.some((s) => s.id === 'thornspire_seed')).toBe(true)
+    for (const seed of seeds) {
+      expect(SEEDS_BY_LEVEL.some((s) => s.id === seed.id)).toBe(true)
+      expect((itemsData as Record<string, any>)[seed.id]).toBeDefined()
+    }
   })
 
   it('includes the new vegetable seeds among the cheapest, lowest-tier seeds', () => {
@@ -67,6 +111,19 @@ describe('monster seed drops', () => {
     expect(dropIds.has('sweetcorn_seed')).toBe(true)
   })
 
+  it('keeps the top seed tier reachable by the strongest ordinary monster', () => {
+    // The window is anchored to the seed's level, not its index in the pool, so
+    // adding seeds can never push the top tier past the strongest monster in
+    // the game the way a rank-indexed window did.
+    const strongest = Math.max(
+      ...Object.values(monstersData as Record<string, any>)
+        .filter((m) => m.boss !== true && m.raidBoss !== true)
+        .map((m) => Number(m.combatLevel) || 0),
+    )
+    const drops = getMonsterSeedDrops({ combatLevel: strongest })
+    expect(maxSeedLevel(drops)).toBe(SEEDS_BY_LEVEL[SEEDS_BY_LEVEL.length - 1].level)
+  })
+
   it('within a window the highest-tier seed is the rarest', () => {
     const drops = getMonsterSeedDrops({ combatLevel: 120 })
     const sorted = [...drops].sort(
@@ -87,15 +144,43 @@ describe('master farmer seed rewards', () => {
     const weights = masterFarmerSeedWeights()
     expect(weights).toHaveLength(SEEDS_BY_LEVEL.length)
     for (let i = 1; i < weights.length; i++) {
-      expect(weights[i].weight).toBeLessThan(weights[i - 1].weight)
+      // Keyed off the seed's level, so two seeds of the same level tie rather
+      // than the later one being arbitrarily rarer for its position.
+      const stepsUp = SEEDS_BY_LEVEL[i].level > SEEDS_BY_LEVEL[i - 1].level
+      if (stepsUp) expect(weights[i].weight).toBeLessThan(weights[i - 1].weight)
+      else expect(weights[i].weight).toBe(weights[i - 1].weight)
     }
   })
 
-  it('makes potato and sweetcorn seeds the 2nd and 3rd most common rewards', () => {
+  it('rewards every herb seed, rarest at the top of the Herblore ladder', () => {
+    const chances = masterFarmerChances()
+    const herbs = herbSeedsByHerbloreLevel()
+    for (const herb of herbs) expect(chances[herb.id]).toBeGreaterThan(0)
+    // Ordered by the Herblore level of the potion each herb makes: the herb a
+    // Super Combat needs is the rarest reward, the Attack potion's the commonest.
+    for (let i = 1; i < herbs.length; i++) {
+      expect(chances[herbs[i].id]).toBeLessThan(chances[herbs[i - 1].id])
+    }
+  })
+
+  it('pays no better per seed than the level-90 thieving target does per steal', () => {
+    const expectedValue = Object.entries(masterFarmerChances()).reduce(
+      (sum, [id, chance]) => sum + chance * ((itemsData as Record<string, any>)[id].shopValue || 0),
+      0,
+    )
+    const tzraar = (skillsData as any).thieving.npcs.find((n: any) => n.id === 'tzraar')
+    const tzraarValue = tzraar.gems.reduce(
+      (sum: number, gem: any) => sum + gem.chance * ((itemsData as Record<string, any>)[gem.itemId].shopValue || 0),
+      0,
+    )
+    expect(expectedValue).toBeLessThan(tzraarValue)
+  })
+
+  it('makes potato and sweetcorn seeds among the most common rewards', () => {
     const weights = masterFarmerSeedWeights()
     const byId = Object.fromEntries(weights.map((w) => [w.id, w.weight]))
-    // Greenthorn is rank 0 (most common); potato and sweetcorn immediately follow.
-    expect(byId.potato_seed).toBeLessThan(byId.greenthorn_seed)
+    // Potato ties level-1 Greenthorn; Sweetcorn (level 9) sits just behind them.
+    expect(byId.potato_seed).toBe(byId.greenthorn_seed)
     expect(byId.sweetcorn_seed).toBeLessThan(byId.potato_seed)
     // Still far more common than the rest of the herb/tree/fruit ladder.
     expect(byId.sweetcorn_seed).toBeGreaterThan(byId.miremint_seed)
@@ -103,7 +188,7 @@ describe('master farmer seed rewards', () => {
 
   it('rolls a single seed, biased toward the rng position', () => {
     expect(rollMasterFarmerSeed(() => 0)).toBe('greenthorn_seed')
-    expect(rollMasterFarmerSeed(() => 0.999999)).toBe('magic_sapling')
+    expect(rollMasterFarmerSeed(() => 0.999999)).toBe('thornspire_seed')
   })
 
   it('aggregates rolled seeds into a quantity map', () => {

@@ -45,20 +45,35 @@ describe('action completion authority helpers', () => {
     })).toThrow(/Reward item not valid for source/)
   })
 
+  // A monster/raid source notes anything past one copy (notedDrops.test.ts), so
+  // the split lands on a source that does not note.
   it('routes non-stackable rewards to bank when inventory fills during completion', () => {
     const save = makeSave()
     save.inventory = Array.from({ length: 27 }, (_, i) => ({ itemId: `filler_${i}`, quantity: 1 }))
     const out = settleActionCompletion(save, {
-      sourceType: 'monsters',
-      sourceId: 'field_chicken',
-      nonce: 'monster:field_chicken:3',
-      rewards: [{ itemId: 'raw_chicken', quantity: 2 }],
+      sourceType: 'clues',
+      sourceId: 'medium',
+      nonce: 'clue:medium:3',
+      rewards: [{ itemId: 'mithril_platebody', quantity: 2 }],
     })
 
     expect(out.granted).toEqual([
-      { itemId: 'raw_chicken', quantity: 1, destination: 'inventory' },
-      { itemId: 'raw_chicken', quantity: 1, destination: 'bank' },
+      { itemId: 'mithril_platebody', quantity: 1, destination: 'inventory' },
+      { itemId: 'mithril_platebody', quantity: 1, destination: 'bank' },
     ])
+  })
+
+  it('routes a single non-stackable monster drop to bank when the pack is full', () => {
+    const save = makeSave()
+    save.inventory = Array.from({ length: 28 }, (_, i) => ({ itemId: `filler_${i}`, quantity: 1 }))
+    const out = settleActionCompletion(save, {
+      sourceType: 'monsters',
+      sourceId: 'field_chicken',
+      nonce: 'monster:field_chicken:3',
+      rewards: [{ itemId: 'raw_chicken', quantity: 1 }],
+    })
+
+    expect(out.granted).toEqual([{ itemId: 'raw_chicken', quantity: 1, destination: 'bank' }])
   })
 
   it('keeps stackable rewards in inventory when stack already exists even if full', () => {

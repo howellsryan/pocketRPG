@@ -3,6 +3,7 @@ import { GameApiError } from './errors.js'
 import { addItemToInventory, addItemToBank, removeItemFromInventory, removeItemFromBank, bankQuantity, getInventory } from './inventory.js'
 import { VALID_CLUE_REWARD_ITEMS } from './clueRewards.js'
 import { isSlayerStoreItem } from '../../../src/engine/slayerUnlocks.js'
+import { dropArrivesNoted } from '../../../src/engine/notedDrops.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
@@ -105,6 +106,12 @@ function isStackableItem(itemId) {
   return itemsData?.[itemId]?.stackable === true
 }
 
+// Only combat drop tables note. A clue casket / minigame / slayer-store grant
+// hands over the item itself whatever the quantity. Derived here from the
+// server's own source type and items.json — never read off the request body,
+// which would let a caller note its way past the 28-slot check.
+const NOTING_SOURCE_TYPES = new Set(['monsters', 'boss', 'raids', 'raid'])
+
 // Pre-step-6 callers passed `nonce` for in-blob replay defence. The new
 // flow claims the nonce via claimActionNonce(env, characterId, nonce)
 // BEFORE calling this — that path is atomic at the DB level. The `nonce`
@@ -174,6 +181,21 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
       if (hasExistingStack || inv.length < 28) {
         addItemToInventory(saveObject, itemId, qty)
         granted.push({ itemId, quantity: qty, destination: 'inventory' })
+      } else {
+        addItemToBank(saveObject, itemId, qty)
+        granted.push({ itemId, quantity: qty, destination: 'bank' })
+      }
+      continue
+    }
+
+    // More than one of a non-stackable drop arrives as a note: one slot, or an
+    // existing noted stack of the same item. The bank holds no notes, so an
+    // overflow to the bank is the plain item either way.
+    if (NOTING_SOURCE_TYPES.has(sourceType) && dropArrivesNoted(itemId, qty, itemsData)) {
+      const existingNote = inv.find(s => s?.itemId === itemId && s.noted)
+      if (existingNote || inv.length < 28) {
+        addItemToInventory(saveObject, itemId, qty, { noted: true })
+        granted.push({ itemId, quantity: qty, destination: 'inventory', noted: true })
       } else {
         addItemToBank(saveObject, itemId, qty)
         granted.push({ itemId, quantity: qty, destination: 'bank' })

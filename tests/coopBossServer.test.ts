@@ -28,6 +28,7 @@ import { validateCoopAction } from '../functions/api/coop/session/[id]/intent.js
 import { MAX_XP } from '../src/utils/constants.js'
 import { COOP_MAX_MEMBERS, bankMemberItemsLost } from '../src/engine/coopBossEngine.js'
 import { hardModeDeathLoss } from '../src/engine/hardMode.js'
+import { grimReaperStashFromDeath } from '../src/engine/grimReaper.js'
 import itemsJson from '../src/data/items.json'
 
 const BOSS = 'corporeal_horror'
@@ -1023,5 +1024,54 @@ describe('a hard-mode death declares itself to the item-loss detector', () => {
   it('clears the banked declaration so a second write-back cannot cover a real loss', async () => {
     const { member } = await killAndWriteBack({ declare: true })
     expect(member.itemsLost).toEqual({})
+  })
+})
+
+describe('a co-op hard-mode death stashes with the Grim Reaper on write-back', () => {
+  const PACK = [{ itemId: 'twisted_bow', quantity: 1 }]
+  const WORN = { weapon: { itemId: 'nether_demon_whip', quantity: 1 } }
+
+  it('lands the stash on the save and clears the member copy', async () => {
+    const save = baseSave()
+    ;(save as any).inventory = [...PACK, ...new Array(27).fill(null)]
+    ;(save as any).equipment = WORN
+    await seedCharacter(7, { save })
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId: 7, identityId: 1, bossId: BOSS, username: 'player7',
+    })
+    const member = parseSessionState(await readSession(env as never, sessionId)).members['7']
+
+    const loss = hardModeDeathLoss(member.inventory, member.equipment, itemsJson as never)
+    member.inventory = loss.inventory
+    member.equipment = loss.equipment
+    member.status = 'dead'
+    member.itemsLost = bankMemberItemsLost({}, loss.lost)
+    member.grimReaperStash = grimReaperStashFromDeath(loss.lost, { id: BOSS, name: 'Corporeal Horror' })
+
+    await writeBackMember(env as never, { characterId: 7, identityId: 1, member, sessionId })
+
+    expect(readSave(7).settings.grimReaper).toEqual({
+      diedAt: expect.any(Number),
+      source: { id: BOSS, name: 'Corporeal Horror' },
+      items: loss.lost,
+    })
+    // Cleared so a later ordinary write-back this session (no new death)
+    // doesn't re-stamp a stash the player may have already reclaimed.
+    expect(member.grimReaperStash).toBeNull()
+  })
+
+  it('leaves an existing stash untouched on a write-back with no new death', async () => {
+    const save = baseSave()
+    save.settings = { ...save.settings, grimReaper: { diedAt: 1, source: null, items: [{ itemId: 'shark', quantity: 1 }] } }
+    await seedCharacter(7, { save })
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId: 7, identityId: 1, bossId: BOSS, username: 'player7',
+    })
+    const member = parseSessionState(await readSession(env as never, sessionId)).members['7']
+    expect(member.grimReaperStash).toBeNull()
+
+    await writeBackMember(env as never, { characterId: 7, identityId: 1, member, sessionId })
+
+    expect(readSave(7).settings.grimReaper).toEqual({ diedAt: 1, source: null, items: [{ itemId: 'shark', quantity: 1 }] })
   })
 })

@@ -1,6 +1,6 @@
 # Delivery Workflow — single-agent stepped delivery
 
-Every implementation task is delivered by **one agent** (the session itself) moving through dedicated steps — Plan → optional Architect → Engineer / World Designer → QA — instead of spawning a squad of role agents. This doc is the design record; the operational protocol lives in the `delivery-loop` skill (`.claude/skills/delivery-loop/`, step charters in its `steps.md`).
+Every implementation task is delivered by **one agent** (the session itself) moving through dedicated steps — Plan → optional Architect → Engineer / World Designer → Code Review → QA — instead of spawning a squad of role agents. Code Review and QA are both mandatory and both loop back to Engineer on FAIL, but they judge different things: Code Review judges the diff itself (correctness bugs, reuse/simplification/efficiency), QA judges the diff against Plan's written success criteria (behaviour, tests, invariants). Code Review must pass before QA starts. This doc is the design record; the operational protocol lives in the `delivery-loop` skill (`.claude/skills/delivery-loop/`, step charters in its `steps.md`).
 
 Supersedes the squad workflow (2026-07-16; previous design record `docs/squad-workflow.md`, in git history). The squad's output quality was good; its token bill was not.
 
@@ -22,6 +22,7 @@ The squad's quality came from **role discipline**, not from process isolation �
 | `architect` | **Architect** step (optional) | File-level ownership/sequencing decisions before edits, gated to plan-gate territory |
 | `gameplay-engineer` / `frontend-designer` / `backend-developer` | **Engineer** step (one step, all code) | Each domain's hard constraints, folded into per-domain sections of the charter |
 | — (was spread across roles) | **World Designer** step (optional) | World/place/activity/3D-spec design as a named discipline |
+| — (net-new, added 2026-08-14) | **Code Review** step (always) | Diff-only review via the `code-review` skill: correctness bugs, reuse/simplification/efficiency findings, FAIL loops back to Engineer until it passes — independent of, and gating, QA |
 | `senior-qa` | **QA** step (always) | Adversarial framing, diff-vs-criteria judgment, regression tests, the §11 gate, plus a visual gate (render scripts / Playwright screenshots) |
 
 New mechanics that replace inter-agent plumbing:
@@ -45,5 +46,5 @@ Read-only **Explore**-type fan-out searches remain allowed: they move file dumps
 ## Rollout
 
 1. This change: `delivery-loop` skill + step charters, CLAUDE.md/SKILLS.md rewiring, squad artifacts removed (one PR).
-2. Next few stepped tasks: watch for skipped steps (Plan/QA are non-optional), over-triage to `checklist`, and handoff-note quality.
+2. Next few stepped tasks: watch for skipped steps (Plan/Code Review/QA are non-optional), over-triage to `checklist`, and handoff-note quality.
 3. Later, if warranted: a committed Playwright screenshot script for UI QA; a `TaskCompleted`-style hook enforcing `npm run ci` mechanically.

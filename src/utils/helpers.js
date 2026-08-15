@@ -120,14 +120,14 @@ export function calcCombatLevel(stats) {
 const WORLD_ORIGIN_FALLBACK = '/world'
 
 /**
- * Where the 3D open-world CLIENT is served. Baked by build_single.cjs (main →
- * the world.pocketrpg.co.uk custom domain, everything else → the same Worker's
- * own /world prefix) and read lazily for the same reason as the flags below.
+ * Where the 3D open-world CLIENT is served. Baked by build_single.cjs (a bare
+ * path in every environment, including production — WorldOrigin env var can
+ * override it) and read lazily for the same reason as the flags below.
  *
- * A base, not an origin: the world and the game ship from one Worker now, so
- * off production this is a PATH. Anything that needs the world's HTTP API wants
- * apiUrl('/api/world/...') instead — those routes answer on the game's own
- * origin and prefixing them with this would 404 on preview.
+ * A base, not an origin: the world and the game ship from one Worker, so this
+ * is always a PATH, never a hostname. Anything that needs the world's HTTP API
+ * wants apiUrl('/api/world/...') instead — those routes answer on the game's
+ * own origin and prefixing them with this would 404.
  */
 export function worldOrigin() {
   return typeof pocketWorldOrigin !== 'undefined' ? pocketWorldOrigin : WORLD_ORIGIN_FALLBACK

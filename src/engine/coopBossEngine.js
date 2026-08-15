@@ -18,8 +18,10 @@
 
 import { createCombatState, processCombatTick } from './combat.js'
 import { hardModeDeathLoss, monstersTableFor } from './hardMode.js'
+import { grimReaperStashFromDeath } from './grimReaper.js'
 import { getLevelFromXP } from './experience.js'
 import { resolveSlayerTaskKill } from './slayerTasks.js'
+import { RAID_TASK_META } from './slayerMasters.js'
 import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
@@ -28,6 +30,7 @@ import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers 
 import { hasMasterRejuvenation, refillSpecialOnEmpty } from './specialRegen.js'
 import { bossAddsOf, getAddSpec, rollRespawnDelay } from './bossAdds.js'
 import { advanceSharedForm, formChangeAttackTimer, isMultiForm, pinFormToSession } from './bossForms.js'
+import { grindmanXP, isGrindmanSave } from './grindman.js'
 import {
   COOP_RAID_ADVANCE_TICKS,
   coopRaidData,
@@ -114,6 +117,27 @@ const MUTABLE_MONSTER_FIELDS = [
   // A form may change what the boss is weak to, and the room's copy has to move
   // with it or every member keeps rolling against the form before last's.
   'weakness',
+  // Defence-draining specials (Dragon Warhammer's smash, the Cindermaw Maul's
+  // molten crush) lower `stats.defence` on the record they hit. A member's
+  // session is rebuilt from monsters.json every tick, so left off here the drain
+  // was thrown away at the write-back — it did not reach the rest of the room,
+  // and did not even survive for the player who spent the energy. (Warstrike
+  // drains `defenceBonus`, already carried above.)
+  'stats',
+  // Warstrike's running total, which is what survives a form change. The roll
+  // happens on the shared record (advanceSharedForm), so that is where the
+  // re-apply has to be able to see it.
+  'defenceBonusDrain',
+  // Smash/molten-crush have no running total of their own — they mutate
+  // `stats.defence` in place — so the info panel's "what it was" needs this
+  // fight-start stamp (prepareMonster) carried the same way defenceBonusDrain is.
+  'baseDefenceLevel',
+  // The per-style value warstrike's floor is measured from (bossForms.js) —
+  // without this, a fresh hydrate each tick would re-derive it from
+  // monsters.json's raw record instead of the current form's own numbers, and
+  // a form switch mid-fight would silently reset the floor a party had
+  // already ground a style down to.
+  'defenceBonusBaseline',
 ]
 
 function levelFrom(statValue) {
@@ -298,10 +322,16 @@ function sharedMonsterOf(state, monstersData) {
   return { ...(monstersData?.[state.bossId] || {}), ...(state.boss?.monster || {}) }
 }
 
+// Nested fields (`stats`, `defenceBonus`) are copied, never aliased: the seed
+// for a fresh instance comes straight off the monsters.json row, and a room
+// holding a reference into the content table is one careless in-place mutation
+// away from re-balancing that boss for every fight in the process.
 function pickMutableMonsterFields(monster) {
   const out = {}
   for (const field of MUTABLE_MONSTER_FIELDS) {
-    if (monster?.[field] !== undefined) out[field] = monster[field]
+    const value = monster?.[field]
+    if (value === undefined) continue
+    out[field] = (value && typeof value === 'object' && !Array.isArray(value)) ? { ...value } : value
   }
   return out
 }
@@ -340,16 +370,28 @@ export function bankMemberItemsLost(banked, lost) {
  * Mutates the member (task, accrued XP, banked credit) and returns what
  * happened so the caller can tell the player.
  */
-export function creditSlayerKill(member, bossId, monstersData) {
+export function creditSlayerKill(member, bossId, monstersData, { fromRaidCompletion = false } = {}) {
   if (!member || member.status !== 'alive') return null
   const task = member.slayerTask
   if (!task) return null
+  // A raid-completion proxy task is paid by the CLEAR and by nothing else — the
+  // same defence-in-depth solo has (CombatScreen's raidTaskCreditBlocked).
+  const raidMeta = RAID_TASK_META[task.monsterId]
+  if (raidMeta && !fromRaidCompletion) return null
   const result = resolveSlayerTaskKill(task, bossId, 1)
   if (!result.onTask) return null
 
   const monster = monstersData?.[bossId] || null
-  const xp = getSlayerTaskXpForKill(monster, monster, monstersData, { doubleXp: member.doubleSlayerXp })
-  if (xp > 0) member.xpGained.slayer = (member.xpGained.slayer || 0) + xp
+  const xp = getSlayerTaskXpForKill(monster, monster, monstersData, {
+    doubleXp: member.doubleSlayerXp,
+    // A raid clear is a whole run, not a boss kill: it pays the authored flat
+    // rate, never the final boss's HP through the boss multiplier. Read off the
+    // final boss, the four raid tasks paid between 400 and 8000 instead of the
+    // 2500–10000 they are worth — solo has always passed this.
+    flatXp: raidMeta?.flatSlayerXp,
+  })
+  const bankedXp = grindmanXP(xp, member.isGrindman === true)
+  if (bankedXp > 0) member.xpGained.slayer = (member.xpGained.slayer || 0) + bankedXp
 
   if (!member.slayerCredit) member.slayerCredit = emptySlayerCredit()
   if (!result.completed) {
@@ -357,7 +399,7 @@ export function creditSlayerKill(member, bossId, monstersData) {
     return {
       characterId: member.characterId,
       completed: false,
-      slayerXp: xp,
+      slayerXp: bankedXp,
       monstersRemaining: result.task?.monstersRemaining ?? 0,
     }
   }
@@ -374,7 +416,7 @@ export function creditSlayerKill(member, bossId, monstersData) {
   return {
     characterId: member.characterId,
     completed: true,
-    slayerXp: xp,
+    slayerXp: bankedXp,
     pointsEarned: reward.pointsEarned,
     totalTasks: reward.totalTasks,
   }
@@ -398,6 +440,10 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     maxHP,
     stats,
     levels: allStatLevels(savePayload),
+    // Half XP for this member only — a room holds a mix of account types, and
+    // the flag rides the member the same way every other save-derived field
+    // does. Their tripled drops are rolled server-side off characters.is_grindman.
+    isGrindman: isGrindmanSave(savePayload),
     completedQuests: [...completedQuestsFromSave(savePayload)],
     equipment,
     inventory,
@@ -411,6 +457,10 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     // save — and the client ledger that explains a solo hard-mode death to the
     // item-loss detector cannot see a loss it never made.
     itemsLost: {},
+    // A hard-mode death's Grim Reaper stash, set only at the death itself and
+    // cleared the moment a write-back lands it on the save (functions/_lib/game/
+    // coopBoss.js applyGrimReaperStashToSave) — same lifecycle as itemsLost above.
+    grimReaperStash: null,
     // Slayer state rides the session so a group kill credits the member's own
     // task. The running completion total comes along because the task-reward
     // multiplier keys off it (every 5th task ×10, every 50th ×50) — snapshotting
@@ -963,8 +1013,18 @@ function applyConsumptionEvents(member, engineEvents, engine, itemsData) {
     } else if (ev.type === 'consumeScroll' && ev.itemId) {
       removeFromInventory(member.inventory, ev.itemId, ev.qty || 1)
     } else if (ev.type === 'xp' && ev.xpSkills) {
+      // The room's XP funnel — Grindman's cut lands here, on the member, because
+      // a room can hold a mix of account types against one boss.
+      //
+      // The event is rewritten to the banked figure rather than left carrying
+      // the engine's roll, because this same object is published to the member
+      // (processCoopTick spreads it) and drives their floating XP drop. Left
+      // raw, a Grindman watched +4 Attack float up for XP the room banked 2 of.
+      // The slayer credit below reports `bankedXp` for the same reason.
       for (const [skill, amount] of Object.entries(ev.xpSkills)) {
-        member.xpGained[skill] = (member.xpGained[skill] || 0) + (Number(amount) || 0)
+        const banked = grindmanXP(Number(amount) || 0, member.isGrindman === true)
+        member.xpGained[skill] = (member.xpGained[skill] || 0) + banked
+        ev.xpSkills[skill] = banked
       }
     }
   }
@@ -1211,6 +1271,11 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
         member.equipment = loss.equipment
         itemsLost = loss.lost
         member.itemsLost = bankMemberItemsLost(member.itemsLost, loss.lost)
+        // Stashed with the Grim Reaper on write-back (functions/_lib/game/coopBoss.js
+        // applyGrimReaperStashToSave) — overwrites whatever was stashed from an
+        // earlier death, same as a solo one.
+        const stash = grimReaperStashFromDeath(loss.lost, { id: next.bossId, name: monstersData?.[next.bossId]?.name })
+        if (stash) member.grimReaperStash = stash
       }
       events.push({ type: 'memberDeath', characterId: member.characterId, itemsLost })
       reselectTarget(next)
@@ -1339,7 +1404,7 @@ function resolveRaidBossDeath(state, monstersData, events, now) {
   // walking into the raid and killing the first thing in it.
   const onTaskCharacterIds = []
   for (const member of Object.values(state.members)) {
-    const credited = creditSlayerKill(member, state.bossId, monstersData)
+    const credited = creditSlayerKill(member, state.bossId, monstersData, { fromRaidCompletion: true })
     if (!credited) continue
     onTaskCharacterIds.push(Number(member.characterId))
     events.push({ type: 'slayerCredit', ...credited })

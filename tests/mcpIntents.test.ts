@@ -40,6 +40,7 @@ import {
 } from '../functions/_lib/mcp/intents.js'
 import { getLevelFromXP } from '../src/engine/experience.js'
 import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
+import monstersData from '../src/data/monsters.json'
 
 // Phase C save intents are pure mutations of a decoded save. These golden tests
 // exercise them directly (no D1), asserting items only relocate and that
@@ -358,6 +359,20 @@ describe('quest intents', () => {
     expect(save.bank.coins).toEqual({ itemId: 'coins', quantity: 1000 })
   })
 
+  // Every other XP path in this file passes isGrindmanSave(save) down; quest
+  // XP was banking the full amount, so completing quests was the one way to
+  // earn at ordinary rates on a half-XP account.
+  it('halves quest XP for a grindman, and reports what it banked', () => {
+    const save = makeSave({
+      stats: { slayer: { xp: 0, level: 1 } },
+      player: { is_grindman: true },
+    })
+    const task = buildQuestTask(save, 'a_boarborn_of_interest', undefined)
+    const r = applyQuestTask(save, task, 300_000)
+    expect(save.stats.slayer.xp).toBe(500)
+    expect(r.completed[0].xpGained).toEqual({ slayer: 500 })
+  })
+
   it('routes a chosen XP reward to the picked skill', () => {
     const save = makeSave({ stats: { cooking: { xp: 0, level: 1 } } })
     const task = buildQuestTask(save, 'cross_marks_the_spot', 'cooking')
@@ -665,6 +680,47 @@ describe('minigame intents', () => {
     expect(inBank.minigameTask.product).toBe('dragon_defender')
     const equipped = buildMinigameTask(makeSave({ equipment: { shield: { itemId: 'runeforged_defender' } } }), 'wg_dragon_defender')
     expect(equipped.type).toBe('minigame')
+  })
+})
+
+// Every skill the MCP surface trains banks XP into the save directly, so each
+// one needs the account cut — the mode is half XP from EVERY source, and an
+// assistant-driven training session was the way around it.
+describe('MCP skill training respects the account type', () => {
+  const grindman = (stats: Record<string, unknown>, rest: Record<string, unknown> = {}) =>
+    makeSave({ stats, player: { is_grindman: true }, ...rest })
+
+  it('halves prayer XP for a grindman', () => {
+    const save = grindman({ prayer: { xp: 0 } }, { bank: { bones: { itemId: 'bones', quantity: 10 } } })
+    const r = trainPrayer(save, 'bury_bones', undefined)
+    expect(r.xpGained.prayer).toBe(25)
+    expect(save.stats.prayer.xp).toBe(25)
+  })
+
+  it('halves construction XP for a grindman', () => {
+    const planks = () => ({ bank: { plank: { itemId: 'plank', quantity: 10 } } })
+    const save = grindman({ construction: { xp: 0 } }, planks())
+    const r = trainConstruction(save, 'build_plank', undefined)
+    expect(save.stats.construction.xp).toBe(r.xpGained.construction)
+
+    const ordinary = makeSave({ stats: { construction: { xp: 0 } }, ...planks() })
+    const full = trainConstruction(ordinary, 'build_plank', undefined)
+    expect(r.xpGained.construction).toBe(Math.floor(full.xpGained.construction / 2))
+  })
+
+  it('halves magic XP for a grindman', () => {
+    // high_alch: 65 XP a cast, one cast on the single oak log held.
+    const save = grindman(
+      { magic: { xp: 200_000 } },
+      {
+        inventory: [{ itemId: 'oak_logs', quantity: 1 }],
+        bank: { nature_rune: { itemId: 'nature_rune', quantity: 10 }, fire_rune: { itemId: 'fire_rune', quantity: 50 } },
+      },
+    )
+    const before = save.stats.magic.xp
+    const r = castMagic(save, 'high_alch', { targetItemId: 'oak_logs' })
+    expect(r.xpGained.magic).toBe(Math.floor(65 / 2))
+    expect(save.stats.magic.xp - before).toBe(r.xpGained.magic)
   })
 })
 
@@ -1138,6 +1194,29 @@ describe('slayer intents', () => {
     const save = maxedSlayer()
     save.settings.slayerTask = { monsterId: 'field_chicken', monstersRemaining: 5, totalCount: 5 }
     expect(() => assignSlayerTask(save, 'turael', det())).toThrow(/already active/i)
+  })
+
+  it('will not assign a kill-count-gated boss without the counts, and will once they are supplied', () => {
+    // Kill counts are never in the save (§14) — the caller reads kill_counts and
+    // passes them in, and the picker fails closed when it cannot see them.
+    const gated = 'zaryth_the_empty_lord'
+    const earned = Object.fromEntries(
+      Object.keys((monstersData as any)[gated].killCountRequirement).map((id) => [id, 1]))
+
+    const blind = new Set<string>()
+    for (let i = 0; i < 60; i++) {
+      const save = maxedSlayer()
+      blind.add(assignSlayerTask(save, 'zul_kaar', { rng: Math.random, history: new Map() }).task.monsterId)
+    }
+    expect(blind.has(gated)).toBe(false)
+
+    const seen = new Set<string>()
+    const history = new Map()
+    for (let i = 0; i < 300; i++) {
+      const save = maxedSlayer()
+      seen.add(assignSlayerTask(save, 'zul_kaar', { rng: Math.random, history, bossKillCounts: earned }).task.monsterId)
+    }
+    expect(seen.has(gated)).toBe(true)
   })
 
   it("enforces the master's slayer requirement (nothing written on failure)", () => {

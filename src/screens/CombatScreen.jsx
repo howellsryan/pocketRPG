@@ -17,14 +17,17 @@ import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
-import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
-import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt, getMonsterAddInfo } from '../utils/combatArt.js'
+import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip, WasIs } from './CombatMobileSheets.jsx'
+import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt, getMonsterAddInfo, getDefenceLevelInfo, getDefenceBonusInfo, DEFENCE_STYLES } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
+import { COMBAT_CATEGORY_ORDER, COMBAT_RAID_ORDER, orderBy } from '../utils/combatOrder.js'
 import { prayerSkill } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
 import { hardModeDeathLoss, hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
+import { displayedDropChance, dropRateBoostLabel, monsterDropBoost } from '../engine/dropRateDisplay.js'
+import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
 import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
 import { recordItemLossEntries } from '../engine/lossLedger.js'
 import { HardModeConfirm, HardModeTag, HardModeToggle } from '../components/HardMode.jsx'
@@ -35,7 +38,7 @@ import { checkBossRequirementsPure, checkRaidRequirementsPure } from '../engine/
 import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
-import { addItem, removeItem, freeSlots, countItem } from '../engine/inventory.js'
+import { addLootEntry, removeItem, freeSlots, countItem } from '../engine/inventory.js'
 import { SUMMONING_CREATURES, getSummoningCreature, createSummonState, getMonsterCharmDrops } from '../engine/summoning.js'
 import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
@@ -59,16 +62,12 @@ import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
-import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
-import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
+import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
+import { shapeLootForModal, lootRowsForModal, killPresentsFullModal } from '../utils/lootModal.js'
+import { emitKillReveal } from '../utils/rewardReveal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
-import CombatArena3D from '../components/CombatArena3D.jsx'
-import { getCreatureSpec } from '../3d/creatures.js'
-import { getArenaBiomeSpec } from '../3d/biomeRegistry.js'
-import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getGearPlacements, getCharacterModel } from '../utils/equipModels.js'
-import { canRender3D } from '../utils/three3d.js'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
@@ -187,6 +186,10 @@ const COMBAT_CATEGORIES = [
   },
 ]
 
+// Picker display order, shared by desktop and mobile so the two never drift
+// (mobile used to define its own order — see combatOrder.js).
+const ORDERED_COMBAT_CATEGORIES = [...COMBAT_CATEGORIES].sort(orderBy(COMBAT_CATEGORY_ORDER, c => c.key))
+
 // Resolve which combat category a monster id belongs to (for art accent fallback).
 const MONSTER_CATEGORY_KEY = (() => {
   const map = {}
@@ -201,6 +204,9 @@ function getMonsterCategoryKey(monsterId) {
 // picker is cheap, fast enough that a group opened while the player is browsing
 // shows up before they have finished scrolling.
 const COOP_BROWSER_POLL_MS = 15000
+// Auto-fight restart delay after an ordinary kill (CLAUDE.md §6) — long enough
+// to read the kill, short enough that a grind still feels continuous.
+const AUTO_FIGHT_RESTART_MS = 1200
 
 // Dungeon mode (per-place foe list): the place's combat monsters split into
 // Monsters / Bosses plus its raids — the same rows the world-wide picker shows,
@@ -220,8 +226,6 @@ function buildDungeonData(placeId) {
   for (const id of raidIds) raids[id] = raidsData[id]
   return { categories, raids }
 }
-
-const DEFENCE_STYLES = ['stab', 'slash', 'crush', 'magic', 'ranged']
 
 // Per-phase attack/defence breakdown for multiForm bosses (e.g. Venomcoil
 // Matriarch) — the monster's own top-level stats/defenceBonus only mirror its
@@ -307,8 +311,58 @@ function MonsterAddStats({ monster }) {
   )
 }
 
+/**
+ * The desktop drop table, shared by the picker's info modal and the in-fight
+ * one — the two are the same list and drifted apart is how one of them would
+ * end up still printing authored rates.
+ *
+ * Rates are what the player is actually rolling against (monsterDropBoost). One
+ * boost covers every row — seeds and charms are empty for a boss, and hard mode
+ * is boss-only.
+ */
+function MonsterDropList({ monster, itemsData, grindman = false }) {
+  if (!monster?.drops || monster.drops.length === 0) return null
+  const boost = monsterDropBoost(monster, grindman)
+  const boostLabel = dropRateBoostLabel(boost)
+  const drops = [
+    ...monster.drops,
+    ...getMonsterSeedDrops(monster),
+    ...getMonsterCharmDrops(monster),
+  ]
+  return (
+    <div>
+      <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
+      {boostLabel && (
+        <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-2">{boostLabel}</div>
+      )}
+      <div class="space-y-1">
+        {drops.map(drop => {
+          const item = itemsData[drop.itemId]
+          return (
+            <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
+                  <GameIcon item={item} iconKey={item?.iconId} size={16} />
+                  <div class="min-w-0">
+                    <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.name || drop.itemId}</div>
+                    <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                      {formatDropChance(displayedDropChance(drop.chance, boost))}
+                      {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                      {drop.taskOnly ? ' · Slayer task only' : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, isGrindman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget, updateGrimReaperStash } = useGame()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showWildernessEntry, setShowWildernessEntry] = useState(false)
@@ -355,7 +409,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const dungeonPlace = dungeonPlaceId ? worldData.places[dungeonPlaceId] : null
   const isDungeon = !!dungeonPlace
   const dungeon = useMemo(() => (isDungeon ? buildDungeonData(dungeonPlaceId) : null), [dungeonPlaceId, isDungeon])
-  const pickerCategories = isDungeon ? dungeon.categories : COMBAT_CATEGORIES
+  const pickerCategories = isDungeon ? dungeon.categories : ORDERED_COMBAT_CATEGORIES
   const pickerRaids = isDungeon ? dungeon.raids : raidsData
   const pickerTitle = isDungeon ? `${dungeonPlace.name} Dungeon` : 'Choose a Foe'
 
@@ -415,30 +469,30 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (!value.trim()) setSearchCollapsedSections({})
   }
   const [lootModal, setLootModal] = useState(null)
+  // An ordinary kill whose loot the server is still rolling. It shows no UI —
+  // it just holds the fight until the grant lands, which is also what keeps two
+  // completeMonster round trips from overlapping.
+  const [pendingKill, setPendingKill] = useState(false)
+  // An ordinary kill re-arms itself after the auto-fight delay rather than
+  // parking the player behind a loot modal (CLAUDE.md §6). The pending restart
+  // is state, not just a ref: between two kills the fight is inactive with no
+  // modal up, and the background-combat host unmounts this screen the moment it
+  // reads `busy: false` — cancelling the very timer that keeps a background
+  // grind going.
+  const [autoFightPending, setAutoFightPending] = useState(false)
+  const autoFightTimerRef = useRef(null)
+  const cancelAutoFight = () => {
+    setAutoFightPending(false)
+    if (!autoFightTimerRef.current) return
+    clearTimeout(autoFightTimerRef.current)
+    autoFightTimerRef.current = null
+  }
+  useEffect(() => cancelAutoFight, [])
   const [deathModal, setDeathModal] = useState(null)
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
   const [monsterSplats, setMonsterSplats] = useState([])
   const [addSplats, setAddSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
-  // 3D combat arena (Phase 2): renders inline in place of the HP bars for
-  // monsters with a registered model; the 🎥/📊 chip swaps between the two,
-  // and the choice persists. Combat ticks are held until the arena reports
-  // ready (onReady — it self-releases on a load timeout), so a fight never
-  // starts against an invisible scene.
-  const [arenaClosed, setArenaClosed] = useState(() => {
-    try { return localStorage.getItem('pocketrpg_combat3d') === 'off' } catch { return false }
-  })
-  const [arenaSignal, setArenaSignal] = useState(null)
-  // Fired one tick BEFORE the monster's next attack lands (monsterAttackTimer
-  // reaches 1) so the 3D arena can lead a rigged monster's wind-up and have the
-  // swing connect exactly on the hit tick's splat. See CombatArena3D.
-  const [arenaWindup, setArenaWindup] = useState(null)
-  const [arenaReady, setArenaReady] = useState(false)
-  const arenaReadyRef = useRef(false)
-  const arenaClosedRef = useRef(arenaClosed)
-  useEffect(() => { arenaReadyRef.current = arenaReady }, [arenaReady])
-  useEffect(() => { arenaClosedRef.current = arenaClosed }, [arenaClosed])
-  useEffect(() => { setArenaReady(false) }, [combat?.monster?.id, arenaClosed])
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
   const hasAutoStarted = useRef(false)
@@ -495,6 +549,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // one the item-loss detector cannot tell from the bug it watches for
     // (src/engine/lossLedger.js).
     recordItemLossEntries(loss.lost)
+    // Stashed with the Grim Reaper (Settings) so it can be bought back for
+    // credits — overwrites whatever was stashed from an earlier death.
+    const stash = grimReaperStashFromDeath(loss.lost, { id: state.monster?.id, name: state.monster?.name })
+    if (stash) updateGrimReaperStash(stash)
     // Losing a pack has to survive a closed tab, so it does not wait for the
     // ordinary idle flush.
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
@@ -587,21 +645,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // monster fights are `backgroundable` (bosses/raids/dungeons stay foreground).
   // Gated on the opt-in setting so combat is an exact no-op when it's off.
   useEffect(() => {
-    if (!backgroundCombat || (!combat && !lootModal && !deathModal)) {
+    if (!backgroundCombat || (!combat && !lootModal && !deathModal && !pendingKill && !autoFightPending)) {
       publishCombatStatus?.(null)
       return
     }
     const m = combat?.monster
     publishCombatStatus?.({
       active: combat?.active === true,
-      busy: combat?.active === true || !!lootModal || !!deathModal,
+      busy: combat?.active === true || !!lootModal || !!deathModal || pendingKill || autoFightPending,
       backgroundable: !isDungeon && m?.boss !== true && !combat?.raid,
       monsterId: m?.id || null,
       monsterName: m?.name || null,
       monsterHP: Number.isFinite(m?.currentHP) ? m.currentHP : null,
       monsterMaxHP: Number.isFinite(m?.hitpoints) ? m.hitpoints : null,
     })
-  }, [combat, lootModal, deathModal, backgroundCombat])
+  }, [combat, lootModal, deathModal, pendingKill, autoFightPending, backgroundCombat])
 
   // Clear the published status when the screen unmounts entirely.
   useEffect(() => () => publishCombatStatus?.(null), [])
@@ -610,6 +668,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // it ticks in the background, stop combat cleanly rather than running two
   // activities at once.
   useEffect(() => {
+    // A pending auto-fight restart outlives the fight it belongs to, so anything
+    // that isn't this combat task taking over has to disarm it — otherwise it
+    // fires 1.2s later and hijacks the new activity.
+    if (activeTask?.type !== 'combat') cancelAutoFight()
     if (combatRef.current?.active && activeTask && activeTask.type !== 'combat') {
       combatRef.current = null
       setCombat(null)
@@ -651,11 +713,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       const state = combatRef.current
       if (!state || !state.active) return
 
-      // Hold the fight while the 3D arena is still loading its models, so the
-      // opening hits are never invisible (arena onReady/onFail releases this).
-      if (!arenaClosedRef.current && !arenaReadyRef.current &&
-          getMonsterModel(state.monster.id) && getCharacterAssetPath() && canRender3D()) return
-
       const playerStats = {
         attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
         strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
@@ -678,28 +735,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       combatRef.current = combatState
       setCombat({ ...combatState })
 
-      // Hit splats replace the chat-style "You hit X" / "Monster hits X" lines.
-      emitXpDrops(xpDropsFromCombatEvents(events))
-
       const tickSplats = splatsFromCombatEvents(events)
       pushSplats(setMonsterSplats, tickSplats.monster)
       pushSplats(setAddSplats, tickSplats.add)
       pushSplats(setPlayerSplats, tickSplats.player)
-      if (tickSplats.monster.length || tickSplats.add.length || tickSplats.player.length) {
-        setArenaSignal(prev => ({
-          seq: (prev?.seq || 0) + 1,
-          hero: tickSplats.monster.length > 0 || tickSplats.add.length > 0,
-          monster: tickSplats.player.length > 0,
-          special: events.some(ev => ev.type === 'specialHit'),
-        }))
-      }
 
-      // Wind-up lead: broadcast how many ticks until the monster's next attack
-      // so the arena can pre-start a rigged swing early enough (even for clips
-      // longer than one tick) that it ENDS on the hit tick's splat.
-      if (combatState.active && combatState.monster.currentHP > 0 && combatState.monsterAttackTimer >= 1) {
-        setArenaWindup(prev => ({ seq: (prev?.seq || 0) + 1, ticks: combatState.monsterAttackTimer }))
-      }
+      // Filled from what grantXP BANKED below, so the floating drop and the
+      // skill can never disagree — the engine's number is pre-account-type.
+      const bankedXp = {}
 
       for (const ev of events) {
         if (ev.type === 'specialHit') {
@@ -757,6 +800,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             // after HP was reset to full — the player never dies and the boss keeps
             // its damaged HP.
             if (combatRef.current) combatRef.current.active = false
+            cancelAutoFight()
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
             updateHP(getMaxHP())
@@ -776,6 +820,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }])
           if (newHP <= 0) {
             if (combatRef.current) combatRef.current.active = false
+            cancelAutoFight()
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
             updateHP(getMaxHP())
@@ -794,7 +839,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         if (ev.type === 'xp') {
           if (ev.xpSkills && typeof ev.xpSkills === 'object') {
             for (const [skill, xp] of Object.entries(ev.xpSkills)) {
-              if (xp > 0) grantXP(skill, xp)
+              if (xp > 0) bankedXp[skill] = (bankedXp[skill] || 0) + grantXP(skill, xp)
             }
           }
         }
@@ -1104,6 +1149,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const defeatedHardMode = defeatedMonster?.hardModeActive === true || state.monster?.hardModeActive === true
           const killLoot = Array.isArray(ev.loot) ? ev.loot : []
           const raidId = state.raid?.raidId || null
+          // Only a boss or a raid stops the game on the full-screen modal.
+          const fullModal = killPresentsFullModal({ isBossKill: isDefeatedBoss, raidId })
           const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
           // Only bosses and monsters with a collection-logged unique settle
           // server-side (server-rolled loot + grant), so their high-value drops
@@ -1198,15 +1245,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               hardMode: defeatedHardMode,
             })
           } else if (cloudAuthoritativeMonster) {
-            setLootModal({
-              monster: defeatedMonsterData,
-              hardMode: defeatedHardMode,
-              loot: [],
-              slayerXpGained,
-              isBossKill: isDefeatedBoss,
-              raidId,
-              loading: true
-            })
+            if (fullModal) {
+              setLootModal({
+                monster: defeatedMonsterData,
+                hardMode: defeatedHardMode,
+                loot: [],
+                slayerXpGained,
+                isBossKill: isDefeatedBoss,
+                raidId,
+                loading: true
+              })
+            } else {
+              setPendingKill(true)
+            }
             void (async () => {
               // Flush current inventory to server before completing the monster so
               // the server sees consumed food/potions and can correctly route drops
@@ -1229,7 +1280,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   const itemId = reward?.itemId
                   const quantity = Math.floor(Number(reward?.quantity) || 0)
                   if (!itemId || quantity < 1) continue
-                  const item = itemsData[itemId]
                   if (reward?.destination === 'bank') {
                     const existing = newBank[itemId]
                     const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
@@ -1239,7 +1289,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       quantity: existingQty + quantity,
                     }
                   } else {
-                    addItem(newInv, itemId, quantity, item?.stackable || false)
+                    addLootEntry(newInv, reward, itemsData)
                   }
                 }
                 updateInventory(newInv)
@@ -1259,17 +1309,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               // predate a later local-only change (e.g. travel) if the round trip is
               // slow, silently reverting it. The reward itself is already applied above;
               // save_revision stays in sync generically via SAVE_REVISION_EVENT (api.js).
-              setLootModal({
-                monster: defeatedMonsterData,
-                hardMode: defeatedHardMode,
-                loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
-                slayerXpGained,
-                isBossKill: isDefeatedBoss,
-                raidId,
-                loading: false
-              })
+              const serverLoot = granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity }))
+              if (fullModal) {
+                setLootModal({
+                  monster: defeatedMonsterData,
+                  hardMode: defeatedHardMode,
+                  loot: serverLoot,
+                  slayerXpGained,
+                  isBossKill: isDefeatedBoss,
+                  raidId,
+                  loading: false
+                })
+              } else {
+                setPendingKill(false)
+                announceOrdinaryKill({
+                  monsterId: defeatedMonsterId,
+                  monsterName: defeatedMonsterName,
+                  hardMode: defeatedHardMode,
+                  loot: serverLoot,
+                })
+              }
             }).catch((err) => {
+              // Nothing was granted, so the fight stays stopped rather than
+              // re-arming into a kill whose loot never landed.
               setLootModal(null)
+              setPendingKill(false)
               addToast(`Monster claim failed: ${err?.message || 'server_error'}`, 'error')
             }).finally(() => {
               // Release any boss-skip lock awaiting this completion (no-op for a
@@ -1278,21 +1342,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             })
           } else if (killLoot.length > 0) {
             const newInv = [...inventoryRef.current]
-            for (const drop of killLoot) {
-                const item = itemsData[drop.itemId]
-                if (drop.noted) {
-                  const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted)
-                  if (existingIdx !== -1) newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity }
-                  else {
-                    const empty = newInv.indexOf(null)
-                    if (empty !== -1) newInv[empty] = { itemId: drop.itemId, quantity: drop.quantity, noted: true }
-                  }
-                } else {
-                  addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
-                }
-              }
-              updateInventory(newInv)
-            }
+            for (const drop of killLoot) addLootEntry(newInv, drop, itemsData)
+            updateInventory(newInv)
+          }
 
           if (hasCriticalDrop(killLoot, defeatedMonsterData, itemsData)) {
             requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.RARE_DROP)
@@ -1309,21 +1361,32 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               time: Date.now()
             }])
           }
-          // Show loot modal instead of auto-restarting
+          // A boss/raid stops on the loot modal; an ordinary kill flashes its
+          // loot as a reveal card and re-arms itself.
           if (!cloudAuthoritativeRaid && !cloudAuthoritativeMonster) {
-            setLootModal({
-              monster: defeatedMonsterData,
-              hardMode: defeatedHardMode,
-              loot: killLoot,
-              slayerXpGained,
-              isBossKill: isDefeatedBoss,
-              raidId,
-              loading: false
-            })
+            if (fullModal) {
+              setLootModal({
+                monster: defeatedMonsterData,
+                hardMode: defeatedHardMode,
+                loot: killLoot,
+                slayerXpGained,
+                isBossKill: isDefeatedBoss,
+                raidId,
+                loading: false
+              })
+            } else {
+              announceOrdinaryKill({
+                monsterId: defeatedMonsterId,
+                monsterName: defeatedMonsterName,
+                hardMode: defeatedHardMode,
+                loot: killLoot,
+              })
+            }
           }
         }
       }
 
+      emitXpDrops(dropsFromBankedXp(bankedXp))
     })
 
     return unsub
@@ -1390,6 +1453,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const hardModeSet = useMemo(() => new Set(hardModeTargets || []), [hardModeTargets])
   const offersHardMode = (entity) => supportsHardMode(entity) && !isDemo
   const isHardMode = (sourceType, sourceId) => hardModeSet.has(hardModeKey(sourceType, sourceId))
+  // A raid carries no scaled record for the info surfaces to read a flag off, so
+  // both of them (mobile sheet, desktop modal) ask here.
+  const raidDropBoost = (raid) => ({
+    hardMode: offersHardMode(raid) && isHardMode('raids', raid.id),
+    grindman: isGrindman,
+  })
   const [hardModePending, setHardModePending] = useState(null)
   // Switching hard mode ON is what puts a player's whole pack at risk, so it
   // asks first. Switching it OFF costs nothing and asks nothing.
@@ -1508,7 +1577,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // still only in the local client would be lost.
   const startCoopFight = async (monster, sessionId = null) => {
     if (isDemo) {
-      addToast('🔒 Group bossing is available with a free account.', 'info')
+      addToast('🔒 Group bossing is available with a free account.', 'warning')
       return
     }
     const req = checkBossRequirements(monster)
@@ -1601,7 +1670,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // it on join and owns the pack from that moment.
   const startRaidParty = async (raid, sessionId = null) => {
     if (isDemo) {
-      addToast('\u{1F512} Raid parties are available with a free account.', 'info')
+      addToast('\u{1F512} Raid parties are available with a free account.', 'warning')
       return
     }
     const req = checkRaidRequirements(raid)
@@ -1768,7 +1837,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const startFight = (monster) => {
     if (isDemo && monster.boss === true) {
-      addToast('🔒 Bosses are available with a free account.', 'info')
+      addToast('🔒 Bosses are available with a free account.', 'warning')
       return
     }
     const req = checkBossRequirements(monster)
@@ -1778,6 +1847,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
     // Map-driven gating (Phase 3): must be at a place that offers this monster.
     if (!requestActivityStart({ type: 'combat', monster })) return
+    cancelAutoFight()
     const { combatType: weaponCombatType, weaponItem, isPoweredStaff, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
     const combatType = needsSpell ? 'melee' : weaponCombatType
     if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
@@ -1791,7 +1861,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // one, and hard mode can be turned off behind it. Going back to the authored
     // record is the only way back down: scaling has no inverse.
     else if (monster.hardModeActive) monster = monstersData[monster.id] || monster
-    const state = createCombatState(monster, combatType, combatStance, spell, monstersTableFor(monstersData, hard))
+    const state = createCombatState(monster, combatType, combatStance, spell, monstersTableFor(monstersData, hard), { grindman: isGrindman })
     // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
     state.specialAttackEnergy = 100
     // Prayer pool starts full (= Prayer level) at the start of a combat session.
@@ -1809,7 +1879,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const startRaid = (raidData) => {
     if (isDemo) {
-      addToast('🔒 Raids are available with a free account.', 'info')
+      addToast('🔒 Raids are available with a free account.', 'warning')
       return
     }
     const req = checkRaidRequirements(raidData)
@@ -1827,7 +1897,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // A hard raid scales the TABLE, so every boss in the run — including the
     // ones the engine looks up as it advances — comes out doubled.
     const hardRaid = offersHardMode(raidData) && isHardMode('raids', raidData.id)
-    const state = createRaidCombatState(raidData, monstersTableFor(monstersData, hardRaid), combatType, combatStance, spell)
+    const state = createRaidCombatState(raidData, monstersTableFor(monstersData, hardRaid), combatType, combatStance, spell, { grindman: isGrindman })
     if (!state) {
       addToast('Failed to start raid — missing boss data', 'error')
       return
@@ -1858,7 +1928,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // fight arrives already scaled — scaleMonsterForHardMode is idempotent, and
     // the table has to match it or the next add spawns at normal strength.
     const hard = monster?.hardModeActive === true
-    const state = createCombatState(monster, combatType, combatStance, spell, monstersTableFor(monstersData, hard))
+    const state = createCombatState(monster, combatType, combatStance, spell, monstersTableFor(monstersData, hard), { grindman: isGrindman })
     // Reset special attack energy on kill; preserve active potions and prayers so they last their full duration
     state.specialAttackEnergy = 100
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
@@ -1874,6 +1944,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     combatRef.current = state
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
+  }
+
+  const scheduleAutoFight = (monsterId, hardMode) => {
+    cancelAutoFight()
+    setAutoFightPending(true)
+    autoFightTimerRef.current = setTimeout(() => {
+      autoFightTimerRef.current = null
+      setAutoFightPending(false)
+      // The player may have walked away, died, or started another fight during
+      // the delay — every one of those leaves this restart stale.
+      if (!combatRef.current || combatRef.current.active) return
+      if (combatRef.current.monster?.id !== monsterId) return
+      const original = monstersTableFor(monstersData, hardMode === true)[monsterId]
+      if (original) continueFight(original)
+    }, AUTO_FIGHT_RESTART_MS)
+  }
+
+  // Present an ordinary kill: loot as a reward-reveal card, fight re-armed.
+  const announceOrdinaryKill = ({ monsterId, monsterName, hardMode, loot }) => {
+    emitKillReveal(monsterId, monsterName, loot)
+    scheduleAutoFight(monsterId, hardMode)
   }
 
   // Claim one full-raid reward roll from the server (the legitimate grant path)
@@ -1895,7 +1986,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const itemId = reward?.itemId
           const quantity = Math.floor(Number(reward?.quantity) || 0)
           if (!itemId || quantity < 1) continue
-          const item = itemsData[itemId]
           if (reward?.destination === 'bank') {
             const existing = newBank[itemId]
             const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
@@ -1905,7 +1995,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               quantity: existingQty + quantity,
             }
           } else {
-            addItem(newInv, itemId, quantity, item?.stackable || false)
+            addLootEntry(newInv, reward, itemsData)
           }
         }
         updateInventory(newInv)
@@ -2040,6 +2130,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }, [])
 
   const stopAndBack = () => {
+    cancelAutoFight()
     setCombat(null)
     setLog([])
     setActiveTask(null)
@@ -2646,11 +2737,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         <div class="flex items-center gap-3">
                           <SkillEmblem iconKey={getMonsterArt(monster, category.key).icon} accent={getMonsterArt(monster, category.key).accent} size={36} glow={0} />
                           <div class="text-left">
-                            <div class="flex items-center gap-1.5">
-                              <span class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</span>
-                              {isOnTask && <span class="text-[9px] bg-yellow-500 text-black font-bold px-1 rounded">TASK</span>}
+                            {/* Tags wrap under the name instead of squeezing it — a boss can
+                                carry TASK, GROUP and HARD at once (mirrors .cb-mon__name). */}
+                            <div class="flex items-center flex-wrap gap-1.5">
+                              <span class="flex-shrink-0 text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</span>
+                              {isOnTask && <span class="flex-shrink-0 text-[9px] bg-yellow-500 text-black font-bold px-1 rounded">TASK</span>}
                               {offersCoop(monster) && !isLocked && (
-                                <span class="text-[9px] border border-[var(--color-gold-dim)] text-[var(--color-gold)] font-bold px-1 rounded">GROUP</span>
+                                <span class="flex-shrink-0 text-[9px] border border-[var(--color-gold-dim)] text-[var(--color-gold)] font-bold px-1 rounded">GROUP</span>
                               )}
                               {hardOn && <HardModeTag />}
                             </div>
@@ -2726,7 +2819,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <div class="space-y-2">
             {Object.values(filteredPickerRaids).filter((raid, index, allRaids) =>
               allRaids.findIndex(candidate => candidate.id === raid.id) === index
-            ).map(raid => {
+            ).sort(orderBy(COMBAT_RAID_ORDER, r => r.id)).map(raid => {
               const raidReq = checkRaidRequirements(raid)
               const demoRaidLocked = isDemo
               const isRaidLocked = raidReq.locked || demoRaidLocked
@@ -2816,6 +2909,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monster={selectedMonsterInfo}
           categoryKey={getMonsterCategoryKey(selectedMonsterInfo.id)}
           itemsData={itemsData}
+          grindman={isGrindman}
           onClose={() => setSelectedMonsterInfo(null)}
         />
       )}
@@ -2846,7 +2940,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>HP</span><span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{selectedMonsterInfo.hitpoints}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Attack</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.attack}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Strength</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.strength}</span></div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Defence</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.defence}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Defence</span><span class="font-[var(--font-mono)]"><WasIs info={getDefenceLevelInfo(selectedMonsterInfo)} /></span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Magic</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.magic}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Ranged</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.ranged}</span></div>
               </div>
@@ -2854,45 +2948,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Defence Bonuses</h4>
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
-                {['stab', 'slash', 'crush', 'magic', 'ranged'].map(style => (
-                  <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                    <span class="capitalize">{style}</span>
-                    <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus[style] >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {selectedMonsterInfo.defenceBonus[style] >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus[style]}
-                    </span>
-                  </div>
-                ))}
+                {DEFENCE_STYLES.map(style => {
+                  const info = getDefenceBonusInfo(selectedMonsterInfo, style)
+                  return (
+                    <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                      <span class="capitalize">{style}</span>
+                      <span class={`font-[var(--font-mono)] ${info.current >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <WasIs info={info} format={(n) => `${n >= 0 ? '+' : ''}${n}`} />
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
             <MonsterPhaseStats monster={selectedMonsterInfo} />
             <MonsterAddStats monster={selectedMonsterInfo} />
-            {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
-              <div>
-                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
-                <div class="space-y-1">
-                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo), ...getMonsterCharmDrops(selectedMonsterInfo)].map(drop => {
-                    const item = itemsData[drop.itemId]
-                    return (
-                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
-                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
-                            <div class="min-w-0">
-                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.name || drop.itemId}</div>
-                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                                {formatDropChance(drop.chance)}
-                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
-                                {drop.taskOnly ? ' · Slayer task only' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  </div>
-              </div>
-            )}
+            <MonsterDropList monster={selectedMonsterInfo} itemsData={itemsData} grindman={isGrindman} />
           </div>
         </Modal>
       )}
@@ -2904,6 +2975,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monstersData={monstersData}
           itemsData={itemsData}
           raidKillCounts={raidKillCounts}
+          boost={raidDropBoost(selectedRaidInfo)}
           onStartRaid={(raid) => { setSelectedRaidInfo(null); pickRaidForFight(raid) }}
           onClose={() => setSelectedRaidInfo(null)}
         />
@@ -2950,9 +3022,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 })}
               </div>
             </div>
-            {selectedRaidInfo.rewards && (
+            {selectedRaidInfo.rewards && (() => {
+              const raidBoost = raidDropBoost(selectedRaidInfo)
+              const raidBoostLabel = dropRateBoostLabel(raidBoost)
+              return (
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Rewards</h4>
+                {raidBoostLabel && (
+                  <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-2">{raidBoostLabel}</div>
+                )}
                 <div class="space-y-1">
                   {selectedRaidInfo.rewards.always?.map(drop => {
                     const item = itemsData[drop.itemId]
@@ -2962,7 +3040,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                           <GameIcon item={item} iconKey={item?.iconId} size={16} /> {item?.name || drop.itemId}
                         </div>
                         <div class="text-[9px] text-[var(--color-parchment)] opacity-50">
-                          {formatDropChance(drop.chance)}
+                          {formatDropChance(displayedDropChance(drop.chance, raidBoost))}
                           {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]}` : ` · ${drop.quantity}`}
                         </div>
                       </div>
@@ -2971,7 +3049,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {selectedRaidInfo.rewards.unique && (
                     <div class="bg-[var(--surface-raised)] border border-[var(--color-gold-dim)] rounded-lg p-2 mt-1">
                       <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-1">
-                        ✨ Unique Drop ({(selectedRaidInfo.rewards.unique.chance * 100).toFixed(1)}% chance)
+                        ✨ Unique Drop ({(displayedDropChance(selectedRaidInfo.rewards.unique.chance, raidBoost) * 100).toFixed(1)}% chance)
                       </div>
                       <div class="space-y-0.5">
                         {selectedRaidInfo.rewards.unique.items.map(u => {
@@ -2987,7 +3065,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   )}
                 </div>
               </div>
-            )}
+              )
+            })()}
           </div>
         </Modal>
       )}
@@ -3184,38 +3263,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
-  // Combat view — GLB registry entry wins per-monster; a procedural
-  // blend-shell spec (creatures3d.json) covers the rest.
-  const arenaModel = combat?.active && combat.monster ? getMonsterModel(combat.monster.id) : null
-  // currentForm keys multiForm bosses to their per-phase spec (creatures3d
-  // `forms`); the arena swaps the creature in place on form transitions.
-  const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id, combat.monster.currentForm) : null
-  // Hero realism (2026-07 re-scope): the arena hero is the GLB human — the
-  // blend-shell hero capped out at a mannequin read (docs/hero-realism-plan.md).
-  // Passing null here falls back to the GLB hero + bone-attach/skinned gear;
-  // the procedural hero stays authorable via render-proc.mjs --hero.
-  const arenaHeroProc = null
-  const arenaMonsterId = combat?.active && combat.monster ? combat.monster.id : null
-  const arenaBiome = useMemo(() => getArenaBiomeSpec(worldLocation, arenaMonsterId), [worldLocation, arenaMonsterId])
-  const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(arenaHeroProc || getCharacterAssetPath()) && canRender3D()
-  const showArena = arenaAvailable && !arenaClosed
-  const reopenArena = () => {
-    setArenaClosed(false)
-    try { localStorage.removeItem('pocketrpg_combat3d') } catch { /* private mode */ }
-  }
-  const closeArena = () => {
-    setArenaClosed(true)
-    try { localStorage.setItem('pocketrpg_combat3d', 'off') } catch { /* private mode */ }
-  }
-  const arenaChip = arenaAvailable && (
-    <button
-      class="px-2 py-1 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[10px] font-semibold text-[var(--color-gold)] active:bg-[var(--color-void-border)]"
-      onClick={arenaClosed ? reopenArena : closeArena}
-      aria-label={arenaClosed ? 'Switch to 3D battle view' : 'Switch to progress bars'}
-    >
-      {arenaClosed ? '🎥 3D' : '📊 Bars'}
-    </button>
-  )
   // ── Boss adds (e.g. the Dread Core, Zaryth's sentinels) ──
   // Live enemies, not a phase: they attack alongside the boss until killed, so
   // the player needs a way to swing at each and to see the one they are on.
@@ -3264,37 +3311,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     </div>
   )
 
-  // Inline 3D arena — replaces the HP-bar block in whichever layout renders.
-  const heroSpec = getCharacterModel() || {}
-  const arenaPanel = showArena && (
-    <CombatArena3D
-      monsterId={combat.monster.id}
-      monsterName={combat.monster.name}
-      monsterPath={arenaModel ? arenaModel.path : null}
-      monsterProc={arenaProc}
-      monsterHeight={(arenaModel || arenaProc).height}
-      monsterRotationDeg={(arenaModel || arenaProc).rotationDeg}
-      characterPath={getCharacterAssetPath()}
-      characterRotationDeg={heroSpec.rotationDeg}
-      heroProc={arenaHeroProc}
-      biome={arenaBiome}
-      clips={{ idle: heroSpec.combatIdleClip || heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip, hit: heroSpec.hitClip, death: heroSpec.deathClip }}
-      weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
-      gear={getGearPlacements(equipment)}
-      attackSignal={arenaSignal}
-      windupSignal={arenaWindup}
-      monsterAttackImpactSec={arenaModel ? arenaModel.attackImpactSec : null}
-      monsterAttackMaxSec={arenaModel ? arenaModel.attackMaxSec : null}
-      monsterAttackStyle={combat.monster.attackStyle}
-      monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
-      playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}
-      monsterSplats={monsterSplats}
-      playerSplats={playerSplats}
-      onReady={() => setArenaReady(true)}
-      onFail={() => setArenaClosed(true)}
-    />
-  )
-
   return (
     <div class={`forge-shell h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
       {/* Back button */}
@@ -3330,22 +3346,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             })()}
           </span>
           <span class="flex items-center gap-2">
-            {arenaChip}
             <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
           </span>
         </div>
-        {!showArena && (
-          <div class="relative">
-            <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
-            <HitSplatLayer splats={monsterSplats} />
-          </div>
-        )}
+        <div class="relative">
+          <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
+          <HitSplatLayer splats={monsterSplats} />
+        </div>
       </div>
 
       {addPanel}
-
-      {/* Inline 3D arena replaces both HP bars (its own bars ride the scene) */}
-      {arenaPanel && <div class="mb-2">{arenaPanel}</div>}
 
       {/* Raid progress indicator */}
       {combat.raid && (
@@ -3375,15 +3385,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Player HP */}
       <div class="mb-2">
         <div class="flex items-center justify-between mb-0.5">
-          {!showArena && <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>}
+          <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>
           <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
         </div>
-        {!showArena && (
-          <div class="relative">
-            <HPBar current={currentHP} max={getMaxHP()} size="large" />
-            <HitSplatLayer splats={playerSplats} />
-          </div>
-        )}
+        <div class="relative">
+          <HPBar current={currentHP} max={getMaxHP()} size="large" />
+          <HitSplatLayer splats={playerSplats} />
+        </div>
       </div>
 
       {/* Prayer pool — drains while prayers are active; restored by prayer/super restore potions */}
@@ -3417,8 +3425,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Inline gear paperdoll — desktop only. Click an equipped slot to
           unequip directly into inventory (only works if there's space).
           Mobile keeps the ⚙️ Gear button + modal flow. */}
-      <div class={`${isDesktopCombatLayout ? 'block' : 'hidden'} mt-2`}>
-        <div class="grid grid-cols-2 gap-2 mb-2">
+      <div class={`${isDesktopCombatLayout ? 'flex' : 'hidden'} flex-col flex-1 min-h-0 mt-2`}>
+        <div class="grid grid-cols-2 gap-2 mb-1.5 flex-shrink-0">
           {(() => {
             const weaponEntry = equipment?.weapon
             const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
@@ -3431,7 +3439,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <button
                   onClick={canSpec ? handleSpecialAttack : undefined}
                   disabled={!canSpec}
-                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                  class={`py-2 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                   style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                 >
                   ⚡ {hasSpec ? 'Spec' : 'No Spec'}
@@ -3439,7 +3447,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <button
                   onClick={() => isMagic && setShowSpellModal(true)}
                   disabled={!isMagic}
-                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                  class={`py-2 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                   style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                 >
                   🔮 Cast Spell
@@ -3448,13 +3456,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             )
           })()}
         </div>
-        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Gear</div>
-        <EquipmentPaperdoll
-          equipment={equipment}
-          itemsData={itemsData}
-          onSelect={(slotName) => handleUnequipSlot(slotName)}
-          size="mdFixed"
-        />
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1 px-1 flex-shrink-0">Gear</div>
+        <div class="flex-1 min-h-0 overflow-y-auto bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-xl p-2 flex items-center justify-center">
+          <EquipmentPaperdoll
+            equipment={equipment}
+            itemsData={itemsData}
+            onSelect={(slotName) => handleUnequipSlot(slotName)}
+            size="fluidFixed"
+            asCard={false}
+          />
+        </div>
       </div>
 
       </div>{/* /LEFT pane */}
@@ -3465,17 +3476,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           mobile so the existing modal-driven flow is preserved there. */}
       <div class={`${isDesktopCombatLayout ? 'flex' : 'hidden'} flex-col ${isDesktopCombatLayout ? 'col-start-2 row-start-1 overflow-y-auto min-h-0' : ''}`}>
 
-      <div class="flex items-center justify-between mb-2 px-1">
+      <div class="flex items-center justify-between mb-0.5 px-1 flex-shrink-0">
         <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Inventory</div>
         <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
           {freeSlots(inventory)}/28 free
         </span>
       </div>
 
+      <div class="flex-shrink-0">
       <InventoryGrid
         inventory={inventory}
         size="normal"
-        gridClass="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 justify-items-center"
+        gridClass="grid grid-cols-7 gap-1 justify-items-center"
         onReorder={(from, to) => {
           const newInv = [...inventory]
           const tmp = newInv[to]
@@ -3491,12 +3503,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           else if (item.type === 'potion') handlePotion(slot.itemId)
         }}
       />
+      </div>
 
       {/* Inline prayer toggles — desktop only. Mirrors the prayer modal's
           activeProtectionPrayer / activeCombatPrayer toggles, but inline so
           mobile keeps the 🙏 Prayer button + modal flow. */}
-      <div class="mt-4">
-        <div class="flex items-start justify-between gap-2 mb-1.5 px-1">
+      <div class="flex flex-col flex-1 min-h-0 mt-1.5">
+        <div class="flex items-start justify-between gap-2 mb-1 px-1 flex-shrink-0">
           <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Prayers</div>
           {Object.keys(combat?.activePotions || {}).length > 0 && (
             <div class="text-right text-[9px] text-[var(--color-gold)] leading-tight">
@@ -3528,57 +3541,66 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             .filter(p => p.bonusType !== 'protection')
             .sort((a, b) => b.level - a.level)
           return (
-            <>
-              <div class="grid grid-cols-3 gap-1 mb-1.5">
-                {protectionPrayers.map(prayer => {
-                  const canUse = prayerLevel >= prayer.level
-                  const isActive = combat?.activeProtectionPrayer === prayer.id
-                  const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
-                  return (
-                    <button
-                      key={prayer.id}
-                      onClick={() => canUse && handlePrayer(prayer.id)}
-                      disabled={!canUse}
-                      title={`${prayer.name} · Lv ${prayer.level}`}
-                      class={`px-1 py-1.5 rounded-md border text-center transition-colors ${
-                        isActive
-                          ? 'cb-prayon'
-                          : canUse
-                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
-                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
-                      }`}
-                    >
-                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={18} /></div>
-                      <div class={`text-[8px] opacity-70 mt-0.5 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>{protectType}</div>
-                    </button>
-                  )
-                })}
+            <div class="flex-1 min-h-0 overflow-y-auto bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-xl p-1.5 flex flex-col justify-center gap-[clamp(4px,2vh,20px)]">
+              <div>
+                <div class="text-[9px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-50 mb-1 px-0.5">Protection</div>
+                <div class="grid grid-cols-3 gap-[clamp(3px,1.2vh,12px)]">
+                  {protectionPrayers.map(prayer => {
+                    const canUse = prayerLevel >= prayer.level
+                    const isActive = combat?.activeProtectionPrayer === prayer.id
+                    const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && handlePrayer(prayer.id)}
+                        disabled={!canUse}
+                        title={`${prayer.name} · Lv ${prayer.level}`}
+                        class={`h-[clamp(36px,6.5vh,84px)] flex flex-col items-center justify-center gap-1 rounded-md border text-center transition-colors ${
+                          isActive
+                            ? 'cb-prayon'
+                            : canUse
+                              ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
+                              : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
+                        }`}
+                      >
+                        <SkillIcon skill={prayerSkill(prayer)} size={20} />
+                        <div class={`text-[9px] opacity-70 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>{protectType}</div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-              <div class="grid grid-cols-6 gap-1">
-                {combatPrayers.map(prayer => {
-                  const canUse = prayerLevel >= prayer.level
-                  const isActive = combat?.activeCombatPrayer === prayer.id
-                  return (
-                    <button
-                      key={prayer.id}
-                      onClick={() => canUse && handlePrayer(prayer.id)}
-                      disabled={!canUse}
-                      title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
-                      class={`px-1 py-1 rounded-md border text-center transition-colors ${
-                        isActive
-                          ? 'cb-prayon'
-                          : canUse
-                            ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
-                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
-                      }`}
-                    >
-                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={18} /></div>
-                      <div class={`text-[8px] opacity-70 mt-0.5 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-gold-dim)]'}`}>Lv {prayer.level}</div>
-                    </button>
-                  )
-                })}
+
+              <div class="border-t border-[var(--color-void-border)]" />
+
+              <div>
+                <div class="text-[9px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-50 mb-1 px-0.5">Enhance</div>
+                <div class="grid grid-cols-6 gap-[clamp(3px,0.8vh,8px)]">
+                  {combatPrayers.map(prayer => {
+                    const canUse = prayerLevel >= prayer.level
+                    const isActive = combat?.activeCombatPrayer === prayer.id
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && handlePrayer(prayer.id)}
+                        disabled={!canUse}
+                        title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
+                        class={`h-[clamp(28px,4.5vh,60px)] flex flex-col items-center justify-center gap-0.5 rounded-md border text-center transition-colors ${
+                          isActive
+                            ? 'cb-prayon'
+                            : canUse
+                              ? 'bg-[var(--surface-raised)] border-[var(--color-emerald)] active:bg-[var(--surface-panel)]'
+                              : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
+                        }`}
+                      >
+                        <SkillIcon skill={prayerSkill(prayer)} size={16} />
+                        <div class={`text-[8px] opacity-70 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-gold-dim)]'}`}>Lv {prayer.level}</div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </>
+            </div>
           )
         })()}
       </div>
@@ -3752,7 +3774,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 nameColor={getStyleArt(form ? form.attackStyle : m.attackStyle).color}
                 combatLevel={m.combatLevel}
                 onInfo={() => setSelectedMonsterInfo(m)}
-                aside={<>{m.hardModeActive && <HardModeTag />}{arenaChip}</>}
+                aside={m.hardModeActive && <HardModeTag />}
               />
 
               {/* Raid progress */}
@@ -3770,34 +3792,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </div>
               )}
 
-              {/* Inline 3D arena replaces both HP blocks (its own bars +
-                  splats ride the scene); the 📊 chip swaps the bars back. */}
-              {showArena ? (
-                <>
-                  <div class="mb-2">{arenaPanel}</div>
-                  <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
-                </>
-              ) : (
-                <>
-                  {/* Monster HP */}
-                  <CombatHPBlock
-                    label="Enemy Hitpoints"
-                    current={m.currentHP}
-                    max={m.hitpoints}
-                    splats={monsterSplats}
-                  />
+              {/* Monster HP */}
+              <CombatHPBlock
+                label="Enemy Hitpoints"
+                current={m.currentHP}
+                max={m.hitpoints}
+                splats={monsterSplats}
+              />
 
-                  {/* Player HP */}
-                  <CombatHPBlock
-                    label="Your Hitpoints"
-                    current={currentHP}
-                    max={getMaxHP()}
-                    splats={playerSplats}
-                    valueColor="#7ce88a"
-                    right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
-                  />
-                </>
-              )}
+              {/* Player HP */}
+              <CombatHPBlock
+                label="Your Hitpoints"
+                current={currentHP}
+                max={getMaxHP()}
+                splats={playerSplats}
+                valueColor="#7ce88a"
+                right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
+              />
 
               {addPanel}
 
@@ -4221,7 +4232,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           // A hard-mode death is the one death that costs items, so the screen
           // has to name what went with it rather than leave the player to work
           // out why their pack is empty.
-          sub={deathModal.itemsLost ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined}
+          sub={deathModal.itemsLost?.length > 0
+            ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you. Reclaim it from Grim Reaper in Settings.'
+            : (deathModal.itemsLost ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined)}
           loot={deathModal.itemsLost?.length > 0 ? lootRowsForModal(shapeLootForModal(deathModal.itemsLost, itemsData).valued, itemsData) : undefined}
           lootTitle={deathModal.itemsLost?.length > 0 ? 'Lost Forever' : undefined}
           lootSigned="-"
@@ -4233,12 +4246,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         />
       )}
 
-      {/* Monster Info Modal */}
-      {selectedMonsterInfo && (
+      {/* Monster Info Modal — in-fight only (this Modal only ever renders once
+          combat exists, guarded by the earlier `if (!combat) return` above), so
+          it reads combat.monster directly rather than the tap-time snapshot
+          selectedMonsterInfo held before: combat.monster is the SAME object a
+          special attack mutates in place, and re-reading it here on every
+          render is what makes a Dragon Warhammer smash or a Grondar Godsword
+          warstrike show up live instead of frozen at the moment "i" was tapped.
+          selectedMonsterInfo now only gates whether the modal is open. */}
+      {selectedMonsterInfo && (() => {
+        const liveMonster = combat.monster
+        return (
         <Modal onClose={() => setSelectedMonsterInfo(null)}>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] flex items-center gap-2">
-              <SkillEmblem iconKey={getMonsterArt(selectedMonsterInfo).icon} accent={getMonsterArt(selectedMonsterInfo).accent} size={28} glow={0} /> {selectedMonsterInfo.name}
+              <SkillEmblem iconKey={getMonsterArt(liveMonster).icon} accent={getMonsterArt(liveMonster).accent} size={28} glow={0} /> {liveMonster.name}
             </h3>
             <button
               onClick={() => setSelectedMonsterInfo(null)}
@@ -4251,11 +4273,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           <div class="space-y-4 max-h-96 overflow-y-auto">
             <div class="cb-fight__chips">
-              <MultiStyleChip chip={getMonsterAttackStyles(selectedMonsterInfo)} prefix="Uses " />
-              <MultiStyleChip chip={getMonsterWeakness(selectedMonsterInfo)} prefix="Weak: " kind="!" />
+              <MultiStyleChip chip={getMonsterAttackStyles(liveMonster)} prefix="Uses " />
+              <MultiStyleChip chip={getMonsterWeakness(liveMonster)} prefix="Weak: " kind="!" />
             </div>
-            {getMonsterLocationLabel(selectedMonsterInfo) && (
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">📍 {getMonsterLocationLabel(selectedMonsterInfo)}</div>
+            {getMonsterLocationLabel(liveMonster) && (
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">📍 {getMonsterLocationLabel(liveMonster)}</div>
             )}
             {/* Combat Stats */}
             <div>
@@ -4263,31 +4285,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Combat Level</span>
-                  <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedMonsterInfo.combatLevel}</span>
+                  <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{liveMonster.combatLevel}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>HP</span>
-                  <span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{selectedMonsterInfo.hitpoints}</span>
+                  <span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{liveMonster.hitpoints}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Attack</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.attack}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.attack}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Strength</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.strength}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.strength}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Defence</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.defence}</span>
+                  <span class="font-[var(--font-mono)]"><WasIs info={getDefenceLevelInfo(liveMonster)} /></span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Magic</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.magic}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.magic}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Ranged</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.ranged}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.ranged}</span>
                 </div>
               </div>
             </div>
@@ -4296,75 +4318,28 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Defence Bonuses</h4>
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Stab</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.stab >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.stab >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.stab}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Slash</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.slash >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.slash >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.slash}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Crush</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.crush >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.crush >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.crush}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Magic</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.magic >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.magic >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.magic}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Ranged</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.ranged >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.ranged >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.ranged}
-                  </span>
-                </div>
+                {DEFENCE_STYLES.map(style => {
+                  const info = getDefenceBonusInfo(liveMonster, style)
+                  return (
+                    <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                      <span class="capitalize">{style}</span>
+                      <span class={`font-[var(--font-mono)] ${info.current >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <WasIs info={info} format={(n) => `${n >= 0 ? '+' : ''}${n}`} />
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
-            <MonsterPhaseStats monster={selectedMonsterInfo} />
-            <MonsterAddStats monster={selectedMonsterInfo} />
+            <MonsterPhaseStats monster={liveMonster} />
+            <MonsterAddStats monster={liveMonster} />
 
-            {/* Drops */}
-            {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
-              <div>
-                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
-                <div class="space-y-1">
-                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo), ...getMonsterCharmDrops(selectedMonsterInfo)].map(drop => {
-                    const item = itemsData[drop.itemId]
-                    return (
-                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
-                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
-                            <div class="min-w-0">
-                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">
-                                {item?.name || drop.itemId}
-                              </div>
-                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                                {formatDropChance(drop.chance)}
-                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
-                                {drop.taskOnly ? ' · Slayer task only' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  </div>
-              </div>
-            )}
+            <MonsterDropList monster={liveMonster} itemsData={itemsData} grindman={isGrindman} />
           </div>
         </Modal>
-      )}
+        )
+      })()}
     </div>
   )
 }

@@ -198,6 +198,11 @@ describe('boss adds are data-driven', () => {
     expect(add.attackTimer).toBe(3)
     expect(prepareAdd(null)).toBeNull()
   })
+
+  it('stamps the add with its own baseDefenceLevel, mirroring prepareMonster — an add can be the target of a Defence-draining special too', () => {
+    const add = prepareAdd({ id: 'a', name: 'A', hitpoints: 90, attackSpeed: 3, stats: { defence: 42 } })!
+    expect(add.baseDefenceLevel).toBe(42)
+  })
 })
 
 describe('hit splats follow the target', () => {

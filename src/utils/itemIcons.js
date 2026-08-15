@@ -204,6 +204,7 @@ const ITEM_TINT = {
   // Ironman variant reads iron-grey and the One Life Ironman variant dragon-red.
   ironman_helm:          'var(--tier-iron)',
   onelife_ironman_helm:  'var(--tier-dragon)',
+  grindman_helm:         'var(--tier-gold)',
   // Jewellery
   amulet_of_torment:  'var(--tier-jewel-red)',
   necklace_of_agony:  'var(--tier-jewel-green)',

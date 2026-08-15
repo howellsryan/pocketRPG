@@ -98,6 +98,38 @@ export function addItem(inventory, itemId, quantity, stackable = false) {
 }
 
 /**
+ * Add a note to the inventory. A note is one slot whatever its quantity, and
+ * merges only with an existing NOTED stack of the same item — merging it into
+ * the un-noted copies would turn usable items into paper.
+ */
+export function addNotedItem(inventory, itemId, quantity) {
+  const qty = Math.max(1, Math.floor(Number(quantity) || 1))
+  const existing = inventory.findIndex(s => s && s.itemId === itemId && s.noted)
+  if (existing !== -1) {
+    inventory[existing] = { ...inventory[existing], quantity: inventory[existing].quantity + qty }
+    return true
+  }
+  const empty = inventory.indexOf(null)
+  if (empty === -1) return false
+  inventory[empty] = { itemId, quantity: qty, noted: true }
+  return true
+}
+
+/**
+ * Add one rolled loot / granted-reward entry, routing a `noted` entry to the
+ * single-slot path. Every place that lands combat rewards in the pack goes
+ * through here so the noted branch can't be forgotten on one of them.
+ */
+export function addLootEntry(inventory, entry, itemsData = {}) {
+  const itemId = entry?.itemId
+  if (typeof itemId !== 'string' || !itemId) return false
+  const qty = Math.floor(Number(entry.quantity) || 0)
+  if (qty < 1) return false
+  if (entry.noted) return addNotedItem(inventory, itemId, qty)
+  return addItem(inventory, itemId, qty, itemsData?.[itemId]?.stackable || false)
+}
+
+/**
  * Remove quantity of an item. Returns true if successful.
  */
 export function removeItem(inventory, itemId, quantity = 1) {

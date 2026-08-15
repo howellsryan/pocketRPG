@@ -14,6 +14,23 @@ function IronHelmIcon({ size = 16 }) {
   )
 }
 
+// Inline coin-helm SVG for the same reason as IronHelmIcon above (no game chunk
+// yet, so no bespoke icon set). A pared-back version of the bespoke art: at
+// 16px only three shapes survive legibly, so it keeps the brow coin, the visor
+// slot and one chin coin rather than the full six-coin face.
+function CoinHelmIcon({ size = 16 }) {
+  return (
+    <svg viewBox="0 0 512 512" width={size} height={size} style={{ flexShrink: 0 }} aria-label="Grindman Full Helm">
+      <path fill="#c99a17" d="M164 254 C 164 156 348 156 348 254 L348 320 C 348 372 304 398 256 398 C 208 398 164 372 164 320 Z"/>
+      <circle cx="256" cy="214" r="42" fill="#ffe9a3"/>
+      <circle cx="256" cy="214" r="19" fill="#c99a17"/>
+      <rect x="194" y="288" width="124" height="34" rx="17" fill="#4a3a12"/>
+      <circle cx="256" cy="356" r="28" fill="#ffe9a3"/>
+      <circle cx="256" cy="356" r="12" fill="#c99a17"/>
+    </svg>
+  )
+}
+
 // Three internal modes:
 //   login      — no token, show OAuth login options
 //   characters — token present, listing characters, picking or creating
@@ -27,6 +44,7 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
   const [newName, setNewName] = useState('')
   const [isIronman, setIsIronman] = useState(false)
   const [isOneLife, setIsOneLife] = useState(false)
+  const [isGrindman, setIsGrindman] = useState(false)
   const [oneLifeAck, setOneLifeAck] = useState(false)
   const [embedded] = useState(() => isEmbeddedBrowser())
   const [hosted] = useState(() => isHosted())
@@ -58,7 +76,7 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
 
   function selectCharacter(ch) {
     resetSyncState()
-    setCharacter(ch.id, ch.username, ch.is_ironman, ch.is_one_life)
+    setCharacter(ch.id, ch.username, ch.is_ironman, ch.is_one_life, ch.is_grindman)
     onCloudReady(ch)
   }
 
@@ -69,7 +87,7 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
     if (!name) return
     setBusy(true)
     try {
-      const res = await api.createCharacter(name, isIronman, isOneLife)
+      const res = await api.createCharacter(name, isIronman, isOneLife, isGrindman)
       selectCharacter(res.character)
     } catch (err) {
       setError(err.message)
@@ -230,7 +248,8 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
                 <input
                   type="checkbox"
                   checked={isIronman}
-                  onChange={(e) => setIsIronman(e.target.checked)}
+                  disabled={isGrindman}
+                  onChange={(e) => { setIsIronman(e.target.checked); if (e.target.checked) setIsGrindman(false) }}
                   class="w-[18px] h-[18px] mt-0.5 flex-shrink-0 cursor-pointer accent-[var(--fm-ember)]"
                 />
                 <div>
@@ -250,9 +269,11 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
                 <input
                   type="checkbox"
                   checked={isOneLife}
+                  disabled={isGrindman}
                   onChange={(e) => {
                     const checked = e.target.checked
                     setIsOneLife(checked)
+                    if (checked) setIsGrindman(false)
                     if (!checked) setOneLifeAck(false)
                   }}
                   class="w-[18px] h-[18px] mt-0.5 flex-shrink-0 cursor-pointer accent-[var(--fm-ember)]"
@@ -263,6 +284,30 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
                   </div>
                   <div class="text-[11px] text-[var(--fm-ink-soft)] mt-0.5 leading-snug">
                     Die once and your account is permanently deleted.
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            {/* Grindman Mode Toggle — stands alone (accountModeConflict) */}
+            <div class="rounded-[var(--fm-r-sm)] border border-[var(--fm-rule)] bg-[var(--fm-parch-lo)] p-3 mb-3">
+              <label class="flex items-start gap-2.5 cursor-pointer m-0">
+                <input
+                  type="checkbox"
+                  checked={isGrindman}
+                  onChange={(e) => {
+                    const checked = e.target.checked
+                    setIsGrindman(checked)
+                    if (checked) { setIsIronman(false); setIsOneLife(false); setOneLifeAck(false) }
+                  }}
+                  class="w-[18px] h-[18px] mt-0.5 flex-shrink-0 cursor-pointer accent-[var(--fm-ember)]"
+                />
+                <div>
+                  <div class="flex items-center gap-1.5 text-[13px] font-bold text-[var(--fm-ink)]">
+                    <CoinHelmIcon size={16} /> Grindman Mode
+                  </div>
+                  <div class="text-[11px] text-[var(--fm-ink-soft)] mt-0.5 leading-snug">
+                    Half XP and triple drop rates. Collection log uniques — and the gear built from them — have to drop for you, not be bought. Credits cannot be bought — you keep what you start with and earn one a day from daily tasks. Cannot be combined with Ironman or One Life. Permanent once set.
                   </div>
                 </div>
               </label>

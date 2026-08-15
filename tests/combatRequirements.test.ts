@@ -7,6 +7,7 @@ import { describe, it, expect } from 'vitest'
 import {
   checkBossRequirementsPure as checkBossRequirements,
   checkRaidRequirementsPure as checkRaidRequirements,
+  hasKillCountGate,
 } from '../src/engine/combatRequirements.js'
 
 const QUESTS = [
@@ -76,6 +77,29 @@ describe('checkBossRequirements — kill-count prerequisite (Ashen Crucible)', (
   it('unlocks after at least one Ember Tyrant kill', () => {
     expect(checkBossRequirements(monster, ctx({ bossKillCounts: { ember_tyrant: 1 } })).locked).toBe(false)
     expect(checkBossRequirements(monster, ctx({ bossKillCounts: { ember_tyrant: 50 } })).locked).toBe(false)
+  })
+
+  it('answers "checking" while the fetch is in flight rather than passing a verdict either way', () => {
+    // Counts live in D1 and land after the rest of the state (§14). Claiming the
+    // prerequisite is unmet tells a player who cleared it years ago to go and
+    // clear it; claiming it is met dresses a hub row as available and the tap is
+    // then refused. `pending` is a transient lock, and reads as one.
+    for (const m of [monster, { id: 'x', name: 'X', killCountRequirement: { ember_tyrant: 1 } }]) {
+      const r = checkBossRequirements(m, ctx({ bossKillCountsLoaded: false, bossKillCounts: { ember_tyrant: 9 } }))
+      expect(r.locked, m.id).toBe(true)
+      expect(r.pending, m.id).toBe(true)
+      expect(r.reason).toContain('Checking your kill counts')
+    }
+  })
+
+  it('says nothing about kill counts for a boss that has none, loaded or not', () => {
+    // Only a gated boss waits: everything else must stay tappable through the
+    // whole fetch, which is most of the bestiary.
+    const plain = { id: 'goblin', name: 'Goblin' }
+    expect(checkBossRequirements(plain, ctx({ bossKillCountsLoaded: false })).locked).toBe(false)
+    expect(hasKillCountGate(plain)).toBe(false)
+    expect(hasKillCountGate(monster)).toBe(true)
+    expect(hasKillCountGate({ id: 'x', name: 'X', killCountRequirement: { ember_tyrant: 1 } })).toBe(true)
   })
 })
 

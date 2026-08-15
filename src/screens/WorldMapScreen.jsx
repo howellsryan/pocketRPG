@@ -135,7 +135,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   const castTeleport = (destId) => {
     if (destId === here && !travel) return
     if (travel?.journey?.phase === 'search') {
-      addToast(`You're searching ${travelDestName(travel)} — finish or abandon the journey first.`, 'info')
+      addToast(`You're searching ${travelDestName(travel)} — finish or abandon the journey first.`, 'warning')
       return
     }
     const chk = teleCheckFor(destId)
@@ -195,7 +195,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     // Rows render disabled off the same check; this backstops direct calls.
     const lock = activityLockReason(kind, ref, { stats, completedQuests, bossKillCounts, bossKillCountsLoaded: killCountsLoaded })
     if (lock) {
-      addToast(`${lock.reason}.`, lock.completed ? 'info' : 'error')
+      addToast(`${lock.reason}.`, (lock.completed || lock.pending) ? 'warning' : 'error')
       return
     }
     // One master per place: tapping it opens its hub (get / cancel a task)
@@ -253,7 +253,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     const quest = questsData.find((q) => q.id === questId)
     if (!quest) return
     if (activeTask?.type === 'travel') {
-      addToast('Finish or turn back your current journey first.', 'info')
+      addToast('Finish or turn back your current journey first.', 'warning')
       return
     }
     const jt = planQuestJourney(quest, here)
@@ -357,7 +357,10 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
         class="wm-stage absolute inset-0"
         {...stageProps}
       >
-        <div ref={boardRef} class="wm-board" style={{ width: world.board.w + 'px', height: world.board.h + 'px' }}>
+        {/* The chart is painted parchment in BOTH themes, so its labels must not
+            read the flipping text tokens — a nested data-theme pins the whole
+            board to the vellum side. */}
+        <div ref={boardRef} class="wm-board" data-theme="light" style={{ width: world.board.w + 'px', height: world.board.h + 'px' }}>
           <div class="wm-chart" />
           {world.mapImage && mapArtOk
             ? <img class="wm-map-img" src={world.mapImage} alt="" draggable={false} onError={() => setMapArtOk(false)} />
@@ -415,7 +418,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
         </aside>
 
         {/* controls */}
-        <div class="wm-ctl">
+        <div class="wm-ctl" data-theme="light">
           <button onClick={() => zoomBy(1.25)} title="Zoom in" aria-label="Zoom in">+</button>
           <button onClick={() => zoomBy(0.8)} title="Zoom out" aria-label="Zoom out">−</button>
           <button onClick={fitAll} title="Fit map" aria-label="Fit map">⤢</button>
