@@ -8,6 +8,7 @@ import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, ty
 import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
+import { grindmanXP } from '../../src/engine/grindman.js'
 import { combatLevelFromLevels } from '../../src/engine/combatLevel.js'
 import { refillSpecialOnEmpty } from '../../src/engine/specialRegen.js'
 import { MONSTER_CLIP_ATTACK_RANGED, monsterAttackClipName } from '../../src/engine/monsterClips.js'
@@ -46,6 +47,11 @@ export type TickPlayer = {
   path: Tile[]
   anim: TickAnim
   stats: SessionStats
+  /** From characters.is_grindman, stamped at hello: half XP, triple drop rates.
+   * On the SESSION because a zone holds a mix of account types and one npc is
+   * fought by all of them. Optional like masterRejuvenation below — absent on a
+   * session that predates the mode, which reads as an ordinary account. */
+  isGrindman?: boolean
   inventory: InvSlot[]
   pendingXp: Record<string, number>
   /** Units created in-world this session (mined ore, killed-for loot, …) — the
@@ -330,7 +336,11 @@ function ensureSkill(stats: SessionStats, skill: string): { xp: number; level: n
 
 /** Applies an in-session XP gain: session stats (level-ups apply live) plus the
  * pending flush tally. Returns the events to send to this player. */
-export function grantSessionXp(player: TickPlayer, skill: string, amount: number): ZoneEvent[] {
+export function grantSessionXp(player: TickPlayer, skill: string, rawAmount: number): ZoneEvent[] {
+  // The world's XP funnel, so Grindman's cut lands here — before the event that
+  // shows the number and before the tally that flushes to the save, or the two
+  // would disagree with what the player actually banked.
+  const amount = grindmanXP(rawAmount, player.isGrindman === true)
   const events: ZoneEvent[] = [{ e: 'xp', skill, amount }]
   const entry = ensureSkill(player.stats, skill)
   entry.xp = clampXP(entry.xp + amount)

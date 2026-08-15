@@ -560,8 +560,8 @@ export class WorldZone extends Server<Env> {
     }
 
     const row = await this.env.DB.prepare(
-      'SELECT id, username, is_ironman, is_one_life FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
-    ).bind(payload.character_id, payload.sub).first<{ id: number; username: string; is_ironman: number | null; is_one_life: number | null }>()
+      'SELECT id, username, is_ironman, is_one_life, is_grindman FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    ).bind(payload.character_id, payload.sub).first<{ id: number; username: string; is_ironman: number | null; is_one_life: number | null; is_grindman: number | null }>()
     if (!row) {
       connection.close(1008, 'character_not_found')
       return
@@ -703,6 +703,7 @@ export class WorldZone extends Server<Env> {
       identityId: String(payload.sub),
       isIronman: !!row.is_ironman,
       isOneLife: !!row.is_one_life,
+      isGrindman: !!row.is_grindman,
       sessionId: crypto.randomUUID(),
       flushSeq: 0,
       pools,

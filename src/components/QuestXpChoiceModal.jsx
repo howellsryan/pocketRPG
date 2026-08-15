@@ -2,17 +2,21 @@ import { h } from 'preact'
 import { useState } from 'preact/hooks'
 import { COMBAT_SKILLS, ALL_SKILLS } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
+import { grindmanXP } from '../engine/grindman.js'
 import SkillIcon from './SkillIcon.jsx'
 
 const UNIQUE_ALL_SKILLS = [...new Set(ALL_SKILLS)]
 
-export default function QuestXpChoiceModal({ rewards, questName, stats, onComplete }) {
+export default function QuestXpChoiceModal({ rewards, questName, stats, isGrindman, onComplete }) {
   const [step, setStep] = useState(0)
   const [chosen, setChosen] = useState([])
 
   const current = rewards[step]
   const isLast = step === rewards.length - 1
   const skillList = current.type === 'combat' ? COMBAT_SKILLS : UNIQUE_ALL_SKILLS
+  // Preview only — the offer amount is what's actually banked when picked
+  // (grantXP applies the same cut), so this must match what the player gets.
+  const displayAmount = grindmanXP(current.amount, isGrindman)
 
   function pick(skill) {
     const updated = [...chosen, { skill, xp: current.amount }]
@@ -41,7 +45,7 @@ export default function QuestXpChoiceModal({ rewards, questName, stats, onComple
         <div class="px-4 py-3 text-center border-b border-[var(--color-void-border)]">
           <p class="text-sm text-[var(--color-parchment)]">
             Choose {label} to receive{' '}
-            <span class="text-[var(--color-gold)] font-bold">{current.amount.toLocaleString()} XP</span>
+            <span class="text-[var(--color-gold)] font-bold">{displayAmount.toLocaleString()} XP</span>
           </p>
           {rewards.length > 1 && (
             <p class="text-xs text-[var(--color-parchment)] opacity-40 mt-1">

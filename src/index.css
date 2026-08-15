@@ -2989,7 +2989,9 @@ background-blend-mode: var(--surface-blend);
 .wm-node:hover .wm-medal { transform: translateY(-2px) scale(1.05); }
 .wm-node--here .wm-medal { box-shadow: 0 0 0 3px rgba(240,116,42,0.5), 0 0 24px 2px rgba(240,116,42,0.45), 0 5px 14px -4px #000; }
 /* Name plates read as chart labels: vellum tags with engraved ink over the painted
-   terrain (the old dark-iron plates fought the parchment map). */
+   terrain (the old dark-iron plates fought the parchment map). The tag is vellum
+   in both themes because the chart is; the ink follows from .wm-board's nested
+   data-theme="light", never from the surrounding screen's tokens. */
 .wm-plate { display: flex; flex-direction: column; align-items: center; padding: 3px 10px; border-radius: 4px;
   background: rgba(243,234,208,0.92); border: 1px solid rgba(122,95,55,0.55); box-shadow: 0 2px 7px -3px rgba(50,32,8,0.75); white-space: nowrap; }
 .wm-name { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--text-strong); line-height: 1.1; }
@@ -3009,7 +3011,9 @@ background-blend-mode: var(--surface-blend);
 .wm-ctl { position: absolute; right: 14px; bottom: 14px; z-index: 20; display: flex; flex-direction: column; gap: 8px; }
 /* The map desk is always hammered iron, so these are pinned to the vellum face
    rather than inheriting the surrounding token set — an iron key on an iron
-   desk is the dark-on-dark case this avoids. */
+   desk is the dark-on-dark case this avoids. The face is pinned in CSS but the
+   INK is pinned by the container's nested data-theme="light" (WorldMapScreen):
+   a vellum key whose colour still flips is blank in dark. */
 .wm-ctl button { width: 44px; height: 44px; border-radius: var(--fm-r-sm); cursor: pointer; color: var(--text-strong);
   background: var(--fm-btn-vellum); border: 1px solid var(--hairline); box-shadow: var(--fm-btn-relief-vellum);
   font-size: 20px; font-family: var(--fm-display); display: grid; place-items: center;
@@ -3200,11 +3204,11 @@ background-blend-mode: var(--surface-blend);
    town map instead) keep the ledger look minus the affordances. */
 .wm-actmodal-row--static { cursor: default; }
 .wm-actmodal-row--static:hover, .wm-actmodal-row--static:active { background: transparent; }
-.wm-actmodal-note { margin: 0 0 12px; font-style: italic; font-size: 12.5px; color: var(--fm-ink-faint, var(--color-parchment-dark)); }
+.wm-actmodal-note { margin: 0 0 12px; font-style: italic; font-size: 12.5px; color: var(--text-faint); }
 /* Locked activity rows: the row is visibly out of reach, the lock chip says why. */
 .wm-actmodal-row--locked .wm-actmodal-row__icon,
 .wm-actmodal-row--locked .wm-actmodal-row__name { opacity: 0.45; }
 .wm-actmodal-row__lock {
   flex-shrink: 1; min-width: 0; text-align: right;
-  font-size: 11px; font-style: italic; color: var(--fm-ink-faint, var(--color-parchment-dark));
+  font-size: 11px; font-style: italic; color: var(--text-faint);
 }

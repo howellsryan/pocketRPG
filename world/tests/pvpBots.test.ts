@@ -9,14 +9,17 @@ import {
   templateForCombatLevel,
   toBotDiff,
   MAX_WILDERNESS_BOTS,
+  BOTS_PER_PLAYER,
   type BotState,
 } from '../server/pvpBots'
 import { withinPvpBracket, PVP_LINE_Z } from '../shared/pvpArea'
+import botsData from '../../src/data/pvpBots.json'
 import type { PvpFighter } from '../server/pvpCombat'
 import type { InvSlot } from '../shared/protocol'
 
 const tile = () => ({ x: 20, z: PVP_LINE_Z - 10 })
 const noTile = () => null
+const templates = (botsData as { bots: any[] }).bots
 
 function opponent(over: Partial<PvpFighter> = {}): PvpFighter {
   return {
@@ -48,12 +51,26 @@ describe('the roster', () => {
     expect(withinPvpBracket(bot.combatLevel, 56)).toBe(true)
   })
 
-  it('spawns nothing more once the player already has someone to fight', () => {
+  it('gives a lone player a handful of opponents, not one', () => {
+    const bots = spawn([56])
+    expect(bots).toHaveLength(BOTS_PER_PLAYER)
+    for (const bot of bots) expect(withinPvpBracket(bot.combatLevel, 56), bot.templateId).toBe(true)
+  })
+
+  it('spawns nothing more once that player has their share', () => {
     const first = spawn([56])
     expect(spawn([56], first)).toEqual([])
   })
 
+  it('never spawns the same template twice, so the wastes read as different people', () => {
+    const ids = spawn([56]).map((b) => b.templateId)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
   it('covers a second player of a very different level', () => {
+    // Bots outlive the player they were spawned for, so the roster arrives at
+    // this call already full of somebody else's bracket. The per-player ceiling
+    // must never be what leaves a player with nothing they may legally attack.
     const first = spawn([25])
     const second = spawn([112], first)
     expect(second).toHaveLength(1)
@@ -75,7 +92,22 @@ describe('the roster', () => {
   it('ignores dead bots when deciding whether a player is covered', () => {
     const [bot] = spawn([56])
     bot.state = 'dead'
-    expect(spawn([56], [bot])).toHaveLength(1)
+    expect(spawn([56], [bot])).toHaveLength(BOTS_PER_PLAYER)
+  })
+})
+
+describe('a template with a spell', () => {
+  it('arms the bot with it', () => {
+    // Anything but a powered staff needs a selected spell, or the world refuses
+    // every swing the bot takes — magic resolves exactly as it does in PvE.
+    const caster = templates.find((t) => t.spell)!
+    expect(caster, 'no spell-casting template in the roster').toBeDefined()
+    expect(createBot(caster, tile()).spell).toBe(caster.spell)
+  })
+
+  it('leaves a bot without one holding no spell at all', () => {
+    const plain = templates.find((t) => !t.spell)!
+    expect(createBot(plain, tile()).spell).toBeNull()
   })
 })
 

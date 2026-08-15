@@ -15,6 +15,9 @@ import {
   getMonsterAttackStyles,
   getMonsterMaxHit,
   getMonsterAddInfo,
+  getDefenceLevelInfo,
+  getDefenceBonusInfo,
+  DEFENCE_STYLES,
 } from '../src/utils/combatArt.js'
 import monsters from '../src/data/monsters.json' assert { type: 'json' }
 
@@ -162,5 +165,60 @@ describe('combatArt', () => {
       expect(info, `${(monster as any).id} add must resolve`).not.toBeNull()
       expect(info!.add.isAdd).toBe(true)
     }
+  })
+})
+
+describe('getDefenceLevelInfo — the info panel\'s "what Defence was" for a smash/molten-crush drain', () => {
+  it('reports no reduction when the live level still matches the fight-start baseline', () => {
+    const info = getDefenceLevelInfo({ stats: { defence: 100 }, baseDefenceLevel: 100 })
+    expect(info).toEqual({ current: 100, base: 100, reduced: false })
+  })
+
+  it('reports the drop once a special has lowered the live level below the baseline', () => {
+    const info = getDefenceLevelInfo({ stats: { defence: 70 }, baseDefenceLevel: 100 })
+    expect(info).toEqual({ current: 70, base: 100, reduced: true })
+  })
+
+  it('treats a missing baseline as "no drain known" rather than fabricating a reduction', () => {
+    const info = getDefenceLevelInfo({ stats: { defence: 70 } })
+    expect(info).toEqual({ current: 70, base: 70, reduced: false })
+  })
+
+  it('defaults to zero for a monster with no stats block', () => {
+    expect(getDefenceLevelInfo(null as any)).toEqual({ current: 0, base: 0, reduced: false })
+    expect(getDefenceLevelInfo({} as any)).toEqual({ current: 0, base: 0, reduced: false })
+  })
+})
+
+describe('getDefenceBonusInfo — the info panel\'s "what it was" for a warstrike drain', () => {
+  it('reports no reduction with no baseline stamped at all', () => {
+    const monster = { defenceBonus: { crush: 240 } }
+    expect(getDefenceBonusInfo(monster, 'crush')).toEqual({ current: 240, base: 240, reduced: false })
+  })
+
+  it('reads "what it was" from the stamped baseline, not the live value plus a drain total', () => {
+    // getDefenceBonusInfo reads defenceBonusBaseline directly (bossForms.js
+    // stamps it) rather than reconstructing it from defenceBonusDrain — the
+    // drain is an uncapped running total once a style has hit its floor, so
+    // current+drain would over-report "what it was" past that point.
+    const monster = { defenceBonus: { crush: 212 }, defenceBonusBaseline: { crush: 240 } }
+    expect(getDefenceBonusInfo(monster, 'crush')).toEqual({ current: 212, base: 240, reduced: true })
+  })
+
+  it('is per-style — a drain on one style does not leak onto another', () => {
+    const monster = { defenceBonus: { crush: 212, stab: 240 }, defenceBonusBaseline: { crush: 240, stab: 240 } }
+    expect(getDefenceBonusInfo(monster, 'stab')).toEqual({ current: 240, base: 240, reduced: false })
+  })
+
+  it('covers every DEFENCE_STYLES entry, so a new style added there is not silently unread', () => {
+    for (const style of DEFENCE_STYLES) {
+      const monster = { defenceBonus: { [style]: 10 }, defenceBonusBaseline: { [style]: 15 } }
+      expect(getDefenceBonusInfo(monster, style)).toEqual({ current: 10, base: 15, reduced: true })
+    }
+  })
+
+  it('still holds once a style is floor-clamped at zero — the baseline reports the true authored number, not an inflated one', () => {
+    const monster = { defenceBonus: { crush: 0 }, defenceBonusBaseline: { crush: 240 } }
+    expect(getDefenceBonusInfo(monster, 'crush')).toEqual({ current: 0, base: 240, reduced: true })
   })
 })

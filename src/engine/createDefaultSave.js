@@ -25,9 +25,11 @@ export function createDefaultStats() {
 }
 
 // The head slot every new character starts with depends on account type:
-// Ironman and One Life Ironman get their exclusive horned full helm, everyone
-// else the bronze full helm.
-export function starterHelmetId({ isIronman = false, isOneLife = false } = {}) {
+// Ironman and One Life Ironman get their exclusive horned full helm, Grindman
+// its coin helm, everyone else the bronze full helm. Grindman never stacks with
+// the other two (accountModeConflict), so the order here carries no ambiguity.
+export function starterHelmetId({ isIronman = false, isOneLife = false, isGrindman = false } = {}) {
+  if (isGrindman) return 'grindman_helm'
   if (isIronman && isOneLife) return 'onelife_ironman_helm'
   if (isIronman) return 'ironman_helm'
   return 'bronze_full_helm'
@@ -37,11 +39,11 @@ export function starterHelmetId({ isIronman = false, isOneLife = false } = {}) {
 // truth shared with initNewGame's browser path. Not RNG, so granting it
 // server-side carries no integrity concern (it is the baseline). The head slot
 // varies by account type; everything else is identical for every account.
-export function getStarterKit({ isIronman = false, isOneLife = false } = {}) {
+export function getStarterKit({ isIronman = false, isOneLife = false, isGrindman = false } = {}) {
   return [
     { itemId: 'bronze_dagger', quantity: 1 },
     { itemId: 'bronze_scimitar', quantity: 1 },
-    { itemId: starterHelmetId({ isIronman, isOneLife }), quantity: 1 },
+    { itemId: starterHelmetId({ isIronman, isOneLife, isGrindman }), quantity: 1 },
     { itemId: 'bronze_platebody', quantity: 1 },
     { itemId: 'bronze_platelegs', quantity: 1 },
     { itemId: 'bronze_kiteshield', quantity: 1 },
@@ -75,16 +77,17 @@ export function createDefaultEquipment() {
 // with an empty "Welcome," and the in-game ironman/one-life gates (which read
 // `player.is_ironman` / `player.is_one_life` from the save) default to off — so
 // an MCP-created character must carry its username and flags here.
-export function createDefaultSave({ withStarterKit = true, name = null, isIronman = false, isOneLife = false } = {}) {
+export function createDefaultSave({ withStarterKit = true, name = null, isIronman = false, isOneLife = false, isGrindman = false } = {}) {
   const inventory = new Array(INVENTORY_SIZE).fill(null)
   if (withStarterKit) {
-    getStarterKit({ isIronman, isOneLife }).forEach((item, i) => { inventory[i] = { ...item } })
+    getStarterKit({ isIronman, isOneLife, isGrindman }).forEach((item, i) => { inventory[i] = { ...item } })
   }
   return {
     player: {
       ...(name ? { name } : {}),
       is_ironman: !!isIronman,
       is_one_life: !!isOneLife,
+      is_grindman: !!isGrindman,
       created: Date.now(),
       totalPlayTime: 0,
       currentHP: 10,

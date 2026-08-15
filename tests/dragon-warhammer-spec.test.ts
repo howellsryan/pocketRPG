@@ -60,6 +60,26 @@ describe('Dragon Warhammer smash special attack', () => {
     })
   })
 
+  it('stamps baseDefenceLevel at fight start and never moves it, so the info panel can show what Defence was', () => {
+    // Smash mutates stats.defence in place with no running total of its own
+    // (unlike a defence-BONUS drain, which bossForms.js tracks in
+    // defenceBonusDrain) — baseDefenceLevel is the fight-start snapshot the UI
+    // diffs the live value against.
+    let state: any = setupState(75)
+    expect(state.monster.baseDefenceLevel).toBe(75)
+    withRng([0, 0.5], () => {
+      const r1 = applySpecialAttack(state, playerStats, equipment, itemsData)
+      state = r1.combatState
+      expect(state.monster.stats.defence).toBe(53)
+      expect(state.monster.baseDefenceLevel).toBe(75)
+
+      const r2 = applySpecialAttack(state, playerStats, equipment, itemsData)
+      state = r2.combatState
+      expect(state.monster.stats.defence).toBe(38)
+      expect(state.monster.baseDefenceLevel).toBe(75)
+    })
+  })
+
   it('emits a specialHit event with specType "smash" and a defenceReducedBy field', () => {
     const state = setupState(100)
     withRng([0, 0.5], () => {

@@ -53,6 +53,10 @@ function parseSvg(raw, label) {
   return entry
 }
 
+// Builds the whole map from the sources on disk, writing nothing — so a test
+// can regenerate and compare against the committed JSON. An entry hand-added to
+// bespokeIcons.json with no source here does not survive the next regen.
+function buildBespokeIcons() {
 const result = {}
 const warnings = []
 function add(id, entry, source) {
@@ -109,11 +113,18 @@ if (fs.existsSync(ICON_DIR)) {
 
 const ordered = {}
 for (const k of Object.keys(result).sort()) ordered[k] = result[k]
-fs.writeFileSync(OUT_PATH, JSON.stringify(ordered, null, 2) + '\n')
+return { icons: ordered, warnings }
+}
 
-const totalBytes = Buffer.byteLength(JSON.stringify(ordered), 'utf-8')
-console.log(`✅ Wrote ${Object.keys(ordered).length} bespoke icons to src/data/bespokeIcons.json (${(totalBytes / 1024).toFixed(1)} KiB)`)
-if (warnings.length) {
-  console.warn('⚠️  warnings:')
-  warnings.forEach((w) => console.warn('  ', w))
+module.exports = { buildBespokeIcons, OUT_PATH }
+
+if (require.main === module) {
+  const { icons, warnings } = buildBespokeIcons()
+  fs.writeFileSync(OUT_PATH, JSON.stringify(icons, null, 2) + '\n')
+  const totalBytes = Buffer.byteLength(JSON.stringify(icons), 'utf-8')
+  console.log(`✅ Wrote ${Object.keys(icons).length} bespoke icons to src/data/bespokeIcons.json (${(totalBytes / 1024).toFixed(1)} KiB)`)
+  if (warnings.length) {
+    console.warn('⚠️  warnings:')
+    warnings.forEach((w) => console.warn('  ', w))
+  }
 }

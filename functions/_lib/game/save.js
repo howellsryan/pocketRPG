@@ -6,7 +6,7 @@ import { auditLog } from './audit.js'
 import { classifyItemLossFromHoldings, mergeDeclaredLosses, readDeclaredLosses, readHoldingsBaseline, rememberHoldingsBaseline } from './holdingsDelta.js'
 import { flaggedSaveHistoryStatement, forcedSaveHistoryStatement, routineSaveHistoryStatement } from './saveHistory.js'
 
-const CHARACTER_SAVE_COLUMNS = `c.id, c.owner_id, c.username, c.is_ironman, c.is_one_life, c.credits, s.save_data, s.save_blob, s.updated_at, s.save_revision`
+const CHARACTER_SAVE_COLUMNS = `c.id, c.owner_id, c.username, c.is_ironman, c.is_one_life, c.is_grindman, c.credits, s.save_data, s.save_blob, s.updated_at, s.save_revision`
 
 export async function loadCharacterWithSave(env, characterId, identityId) {
   const row = await env.DB.prepare(`SELECT ${CHARACTER_SAVE_COLUMNS} FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ? AND c.owner_id = ? AND c.deleted_at IS NULL`).bind(characterId, identityId).first()

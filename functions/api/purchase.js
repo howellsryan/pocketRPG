@@ -47,7 +47,7 @@ export async function onRequestPost({ request, env }) {
     // the unlock is recorded only when the item was bought with slayer points
     // (settleActionCompletion). Never trust a client-supplied flag here.
     const allowSlayerStorePurchase = hasSlayerStoreUnlock(saveObject.settings?.slayerStoreUnlocks, itemId)
-    const restriction = assertPurchasable(item, { isIronman: Boolean(row.is_ironman), isOneLife: Boolean(row.is_one_life), allowMinigameUnlockPurchase, allowSlayerStorePurchase })
+    const restriction = assertPurchasable(item, { isIronman: Boolean(row.is_ironman), isOneLife: Boolean(row.is_one_life), isGrindman: Boolean(row.is_grindman), allowMinigameUnlockPurchase, allowSlayerStorePurchase })
     if (!restriction.allowed) return json({ error: restriction.message, code: restriction.code }, 403)
 
     // Quest-unlock items are server-authoritative too: the client disables the

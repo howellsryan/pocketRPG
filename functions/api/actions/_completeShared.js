@@ -85,14 +85,17 @@ export function makeCompletionHandler(sourceType, deps = {}) {
       // The DB-side claim is atomic and independent of save state, so a
       // client that PUTs a stale save cannot resurrect a used nonce.
       await (deps.claimActionNonce || claimActionNonce)(env, characterId, body?.actionNonce)
-      const { saveObject, saveRevision } = await (deps.loadCharacterWithSave || loadCharacterWithSave)(env, characterId, auth.identity.id)
+      const { row, saveObject, saveRevision } = await (deps.loadCharacterWithSave || loadCharacterWithSave)(env, characterId, auth.identity.id)
       // Rewards are resolved after the save loads so server-side reward tables
       // can gate on save state (e.g. task-only drops requiring the character's
       // active slayer task to match the killed monster).
       // env + characterId are handed over so a reward table can gate on state the
       // SERVER owns (hard mode's doubled drop rates, §14) rather than on the body.
+      // isGrindman rides the row this load already fetched — the account type is
+      // server state too, and a second query for it would be one per kill.
+      const isGrindman = row?.is_grindman === 1
       const resolvedRewards = typeof deps.resolveRewards === 'function'
-        ? await deps.resolveRewards({ sourceType, sourceId, body, saveObject, env, characterId })
+        ? await deps.resolveRewards({ sourceType, sourceId, body, saveObject, env, characterId, isGrindman })
         : (Array.isArray(body?.rewards) ? body.rewards : [])
       const settled = settleActionCompletion(saveObject, {
         sourceType,

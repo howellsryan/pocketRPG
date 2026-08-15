@@ -31,6 +31,7 @@ import { getMonsterSeedDrops } from './seedDrops.js'
 import { monsterDamageMultiplier } from './monsterDamageRules.js'
 import { getDamageReductionPerk, expectedDamageMultiplier, getPrayerDrainMultiplier } from './damageReduction.js'
 import { getMonsterCharmDrops } from './summoning.js'
+import { grindmanDropChance } from './grindman.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import {
@@ -1025,12 +1026,12 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
  * Roll drops for one monster kill.
  * Returns array of { itemId, quantity }
  */
-function idleRollDrops(monster, isOnTask = false) {
+function idleRollDrops(monster, isOnTask = false, grindman = false) {
   const drops = []
   for (const drop of (monster.drops || [])) {
     // Task-only drops (e.g. Imbued Crown/Brain) never roll off-task.
     if (drop.taskOnly && !isOnTask) continue
-    if (Math.random() < drop.chance) {
+    if (Math.random() < grindmanDropChance(drop.chance, grindman)) {
       const qty = Array.isArray(drop.quantity)
         ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
         : drop.quantity
@@ -1039,11 +1040,11 @@ function idleRollDrops(monster, isOnTask = false) {
   }
   // Seeds / saplings — universal bonus drop scaled by combat level.
   for (const drop of getMonsterSeedDrops(monster)) {
-    if (Math.random() < drop.chance) drops.push({ itemId: drop.itemId, quantity: drop.quantity })
+    if (Math.random() < grindmanDropChance(drop.chance, grindman)) drops.push({ itemId: drop.itemId, quantity: drop.quantity })
   }
   // Summoning charms — universal, combat-level tiered.
   for (const drop of getMonsterCharmDrops(monster)) {
-    if (Math.random() < drop.chance) drops.push({ itemId: drop.itemId, quantity: drop.quantity })
+    if (Math.random() < grindmanDropChance(drop.chance, grindman)) drops.push({ itemId: drop.itemId, quantity: drop.quantity })
   }
   return drops
 }
@@ -1089,6 +1090,9 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
 
   const RESPAWN_TICKS = 2
   const prayersData = options.prayersData || null
+  // Idle loot is client-trusted (§14), same as the XP this sim computes, so the
+  // account type comes from the save mirror the caller already holds.
+  const isGrindman = options.isGrindman === true
 
   // ── Idle-supply pre-processing ────────────────────────────────────────────
   // Configured-vs-available is computed up front against the snapshot of
@@ -1480,7 +1484,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
 
     // Loot for this kill — place items into inventory, overflow to lost/banked
-    for (const drop of idleRollDrops(monster, isOnTask)) {
+    for (const drop of idleRollDrops(monster, isOnTask, isGrindman)) {
       const item = itemsData[drop.itemId]
       const stackable = item?.stackable || false
 

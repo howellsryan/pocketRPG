@@ -269,15 +269,16 @@ const TOOLS = {
     return ok(res.data)
   },
 
-  // Create a new character on the account. The endpoint validates the username
-  // and uniqueness; the ironman / one-life flags are permanent once set.
-  async create_character({ username, is_ironman, is_one_life }, { env, authorization, identity }) {
+  // Create a new character on the account. The endpoint validates the username,
+  // uniqueness and the mode combination; the account-type flags are permanent
+  // once set.
+  async create_character({ username, is_ironman, is_one_life, is_grindman }, { env, authorization, identity }) {
     if (!identity?.id) throw new Error('Not authenticated.')
     if (!username) throw new Error('username is required.')
     const res = await callHandler(createCharacter, env, {
       method: 'POST',
       authorization,
-      body: { username, is_ironman: !!is_ironman, is_one_life: !!is_one_life },
+      body: { username, is_ironman: !!is_ironman, is_one_life: !!is_one_life, is_grindman: !!is_grindman },
     })
     if (!res.ok) throw httpError(res)
     // The browser seeds a fresh character's save locally (db/stores.js
@@ -297,6 +298,7 @@ const TOOLS = {
           name: res.data?.character?.username || username,
           isIronman: !!res.data?.character?.is_ironman,
           isOneLife: !!res.data?.character?.is_one_life,
+          isGrindman: !!res.data?.character?.is_grindman,
         }), 0)
         saveSeeded = true
       } catch {

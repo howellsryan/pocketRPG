@@ -3,7 +3,7 @@ import Modal from './Modal.jsx'
 import { api } from '../cloud/api.js'
 import { pauseTicks, resumeTicks } from '../engine/tick.js'
 
-export default function BuyCreditsModal({ onClose, characterId, credits = 0 }) {
+export default function BuyCreditsModal({ onClose, characterId, credits = 0, isGrindman = false }) {
   const [busySku, setBusySku] = useState(null)
   const [error, setError] = useState(null)
 
@@ -38,15 +38,21 @@ export default function BuyCreditsModal({ onClose, characterId, credits = 0 }) {
     }
   }
 
+  // A Grindman still opens this from the credits pill — it just answers the
+  // question the pill raises (where do more come from?) instead of selling any.
+  // The server refuses the checkout regardless; this is the explanation.
   return (
-    <Modal title="Buy Credits" onClose={onClose}>
+    <Modal title={isGrindman ? 'Credits' : 'Buy Credits'} onClose={onClose}>
       <div class="space-y-3">
         <p class="text-[var(--color-parchment)] text-sm opacity-70 text-center">
-          Get more credits to unlock premium features
+          {isGrindman
+            ? 'Grindman credits are earned, never bought. You keep what your account started with, plus one credit for every daily task you finish.'
+            : 'Get more credits to unlock premium features'}
         </p>
         <p class="text-[var(--color-gold)] text-sm font-semibold text-center">
           Current Credits: {credits.toLocaleString()}
         </p>
+        {!isGrindman && (
         <div class="grid grid-cols-1 gap-2">
           {creditOptions.map((opt) => (
             <button
@@ -65,6 +71,7 @@ export default function BuyCreditsModal({ onClose, characterId, credits = 0 }) {
             </button>
           ))}
         </div>
+        )}
         {error && (
           <div class="text-[12px] text-red-400 text-center" role="alert">{error}</div>
         )}

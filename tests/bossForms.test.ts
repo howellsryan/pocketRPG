@@ -2,7 +2,7 @@
 // to agree on when it happens. These pin the shared-record contract that co-op
 // and the open world both lean on.
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { applyForm, advanceSharedForm, clearDefenceBonusDrain, DEFENCE_BONUS_FLOOR, formChangeAttackTimer, isMultiForm, pickNextForm, pinFormToSession, recordDefenceBonusDrain } from '../src/engine/bossForms.js'
+import { applyForm, advanceSharedForm, clearDefenceBonusDrain, formChangeAttackTimer, isMultiForm, pickNextForm, pinFormToSession, recordDefenceBonusDrain } from '../src/engine/bossForms.js'
 import monstersData from '../src/data/monsters.json'
 import itemsData from '../src/data/items.json'
 import { createCombatState, processCombatTick } from '../src/engine/combat.js'
@@ -216,14 +216,37 @@ describe('a defence drain across a form change', () => {
     }
   })
 
-  it('never grinds a bonus below the floor, however many warstrikes land', () => {
+  it('never grinds a bonus below zero, however many warstrikes land', () => {
     const monster = zaryth()
     applyForm(monster, 'melee')
     for (let i = 0; i < 20; i++) recordDefenceBonusDrain(monster, 60)
     applyForm(monster, 'ranged')
     for (const value of Object.values(monster.defenceBonus) as number[]) {
-      expect(value).toBe(DEFENCE_BONUS_FLOOR)
+      expect(value).toBe(0)
     }
+  })
+
+  it('floors each style at zero independently, once its own baseline has been fully drained', () => {
+    // Zaryth's ranged form has different headroom per style (170-210) — with
+    // enough total damage every one hits its own floor, but a smaller drain
+    // proves the floor is per-style, not a single number applied to all five.
+    const monster = zaryth()
+    applyForm(monster, 'melee')
+    recordDefenceBonusDrain(monster, 180) // clears melee's 170 stab, not its 200 crush
+    expect(monster.defenceBonus.stab).toBe(0)
+    expect(monster.defenceBonus.crush).toBe(20)
+  })
+
+  it('does not heal a style a boss is authored weak to back up toward zero', () => {
+    // A monster deliberately weak to a style (a negative bonus baked into its
+    // data, not caused by any special) is already "below zero" by design — a
+    // warstrike must not treat that as headroom to erase.
+    const monster = zaryth()
+    monster.forms.melee.defenceBonus = { ...monster.forms.melee.defenceBonus, crush: -20 }
+    applyForm(monster, 'melee')
+    recordDefenceBonusDrain(monster, 500)
+    expect(monster.defenceBonus.crush).toBe(-20)
+    expect(monster.defenceBonus.stab).toBe(0) // an ordinary (non-negative) style on the same hit still floors at zero
   })
 
   it('does not follow the boss into a new body', () => {

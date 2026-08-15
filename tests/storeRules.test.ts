@@ -99,7 +99,7 @@ describe('store rules', () => {
       'fishing_net', 'harpoon', 'lobster_cage', 'fishing_rod',
       'empty_bird_s_nest', 'empty_pouch',
       // Account-identity helms — store-sold, gated to the matching account type.
-      'ironman_helm', 'onelife_ironman_helm',
+      'ironman_helm', 'onelife_ironman_helm', 'grindman_helm',
     ])
     const flagged = new Set(Object.keys(itemsData).filter((id) => itemsData[id].isGeneralStore === true))
     expect([...flagged].sort()).toEqual([...expected].sort())
