@@ -24,6 +24,7 @@ import { getMonsterModel } from '../../src/utils/equipModels.js'
 import { MONSTER_MODELS } from '../shared/monsterModels'
 import { monsterAttackWindup } from '../../src/utils/combatWindup.js'
 import { resolveSpecialEnergyCost } from '../../src/engine/specialAttackEnergy.js'
+import { killCreditIds } from '../../src/engine/killCredit.js'
 import { TICK_DURATION } from '../../src/utils/constants.js'
 
 type Items = Record<string, { specialAttack?: Record<string, unknown> } | undefined>
@@ -256,7 +257,9 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
     result?.events.push({ e: 'msg', text: 'You need to select a spell to fight with that weapon.' })
     return
   }
-  const state = createCombatState(monster, setup.combatType, player.stance, setup.spell as null) as unknown as EngineState
+  // Per player, not per npc: the zone's npc record is shared by everyone
+  // fighting it, and only this session's drops triple.
+  const state = createCombatState(monster, setup.combatType, player.stance, setup.spell as null, null, { grindman: player.isGrindman === true }) as unknown as EngineState
   state.monster.currentHP = npc.hp
   // Carry the session prayer pool + toggles onto this fight's engine state, so
   // the engine drains the same pool and applies bonuses/protection. Persists
@@ -448,11 +451,33 @@ function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quan
   // broadcast the attack). The next idle tick returns to idle upstream (tick.ts),
   // and the client latch plays the broadcast swing through to completion.
   const owner = topDamageContributor(npc) ?? player.charId
+  // Everyone who earned this kill, on the same 10% share co-op pays loot at
+  // (killCredit.js) — read BEFORE the clear below, which is the only copy of
+  // who did what. `owner` is who the kill is announced under, and is kept
+  // separately because it is the biggest contributor rather than whoever landed
+  // the last blow. A solo killer is both.
+  const credited = killCreditIds(
+    [...npc.damageByChar].map(([id, { dmg, tick }]) => ({ id, damage: dmg, tick })),
+    (monstersData as Record<string, { hitpoints?: number }>)[npc.monsterId]?.hitpoints ?? 0,
+  )
   npc.damageByChar.clear()
-  result.newLoot.push(...spawnDrops(loot, npc.x, npc.z, owner, ctx.tick))
+  // The engine rolled `loot` under THIS player's slayer task and Grindman flag,
+  // so the pile it produced is theirs and nobody else's. Spawned under the
+  // top-damage player it paid them someone else's rates — an on-task top
+  // contributor could never roll the task-only drops their task exists to
+  // unlock, because rollLootForCredited skips the pile's owner — while an
+  // off-task one could be handed them. Everyone else past the line is rolled
+  // separately in WorldZone, under their own flags. A last-hit sniper who never
+  // reached the line gets nothing, exactly as before.
+  const killerEarned = credited.includes(player.charId)
+  const killerLoot = killerEarned ? loot : []
+  result.newLoot.push(...spawnDrops(killerLoot, npc.x, npc.z, player.charId, ctx.tick))
   // Surface the kill so the DO can record boss collection-log / kill-count /
   // audit server-side (§14) — the loot itself still rides the trusted save blob.
-  result.kills.push({ monsterId: npc.monsterId, owner, loot })
+  result.kills.push({
+    monsterId: npc.monsterId, owner, killer: player.charId, credited,
+    loot: killerLoot, x: npc.x, z: npc.z, summoned: !!npc.summonerId,
+  })
   result.npcChanged.push(npc.id)
 }
 
@@ -548,7 +573,15 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // The pack rides in as the engine's inventory so magic can check runes;
   // consumption is applied below from state.runesConsumed (live-game contract:
   // consume on a landed hit, then clear so the same cast never double-charges).
-  const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, prayersData, player.inventory, null)
+  // THIS player's slayer task, not null: it is what lets the engine roll a
+  // task-only drop (the Imbued Crown and Brain) and apply slayer gear bonuses,
+  // exactly as the solo screen does. Passed as null, the world killer was the
+  // one player who could never roll the drops their own task unlocks — while a
+  // helper past the 10% line could (killLoot.ts rolls theirs on their own task).
+  // It grants no slayer XP: creditWorldSlayerKill owns that, so there is no
+  // double-pay here. Cast because the shared engine is JS and TS infers the
+  // parameter as `null` from its own default.
+  const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, prayersData, player.inventory, (player.slayer?.task ?? null) as Parameters<typeof processCombatTick>[6])
   combat.state = combatState
   // The engine drained the pool / may have switched prayers off on empty — carry
   // that back onto the session and echo the readout when it moved.

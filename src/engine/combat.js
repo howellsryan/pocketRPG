@@ -24,6 +24,7 @@ import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
 import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, randomFormSwitchThreshold, recordDefenceBonusDrain, applyDefenceBonusDrain, clearDefenceBonusDrain } from './bossForms.js'
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
+import { grindmanDropChance } from './grindman.js'
 
 
 function getAvasAmmoSaveChance(equipment) {
@@ -44,7 +45,7 @@ function hasSunbearerRing(equipment) {
 /**
  * Create a new combat state
  */
-export function createCombatState(monster, combatType = 'melee', stance = 'accurate', spell = null, monstersData = null) {
+export function createCombatState(monster, combatType = 'melee', stance = 'accurate', spell = null, monstersData = null, { grindman = false } = {}) {
   // Apply initial form for multi-form bosses (e.g. Venomcoil Matriarch)
   let preparedMonster = prepareMonster(monster)
   const addSpec = getAddSpec(monster)
@@ -88,7 +89,12 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     // swing for every session at once (co-op, the open world) — see bossForms.js.
     formPinned: false,
     addsSpawned: 0,                // lifetime count, so the variant selection can cycle
-    addsDefeated: 0
+    addsDefeated: 0,
+    // Grindman's tripled drop rates. On the STATE rather than the monster
+    // record, because the record is shared (a raid's boss list, a zone's npc)
+    // while the account type belongs to whoever is swinging — the open world
+    // rebuilds one of these per player against the same npc.
+    grindman: grindman === true
   }
 }
 
@@ -111,6 +117,13 @@ export function setCombatTarget(combatState, target) {
  */
 function prepareMonster(monster) {
   let preparedMonster = { ...monster, currentHP: monster.hitpoints }
+  // The Defence LEVEL at the moment the fight (or a raid's next boss) starts —
+  // stamped once, never touched again by a form switch or a phase reset (only
+  // `defenceBonus` and HP move on those). A smash/molten-crush special mutates
+  // `stats.defence` in place with no running total of its own the way
+  // `defenceBonusDrain` tracks bonus drains, so this is what "what it was" is
+  // measured against on the info panel.
+  preparedMonster.baseDefenceLevel = preparedMonster.stats?.defence
   if (isMultiForm(monster)) {
     const formKey = monster.initialForm || Object.keys(monster.forms)[0]
     const form = applyForm(preparedMonster, formKey)
@@ -124,17 +137,26 @@ function prepareMonster(monster) {
       }
     }
   }
+  // A Grondar Godsword warstrike must never grind a defence bonus below zero
+  // (or, for a style a boss is deliberately authored weak to, below that
+  // authored baseline) — bossForms.js measures the floor from this stamp.
+  // applyForm above already sets it when the initial form authors its own
+  // defences; this covers a monster with no forms at all, and the inherit
+  // fallback on a first form that authors none of its own.
+  if (!preparedMonster.defenceBonusBaseline) {
+    preparedMonster.defenceBonusBaseline = { ...preparedMonster.defenceBonus }
+  }
   return preparedMonster
 }
 
 /**
  * Create a combat state for a raid (sequential boss fights).
  */
-export function createRaidCombatState(raidData, monstersData, combatType = 'melee', stance = 'accurate', spell = null) {
+export function createRaidCombatState(raidData, monstersData, combatType = 'melee', stance = 'accurate', spell = null, { grindman = false } = {}) {
   const firstBossId = raidData.bosses[0]
   const firstBoss = monstersData[firstBossId]
   if (!firstBoss) return null
-  const state = createCombatState(firstBoss, combatType, stance, spell)
+  const state = createCombatState(firstBoss, combatType, stance, spell, null, { grindman })
   state.raid = {
     raidId: raidData.id,
     name: raidData.name,
@@ -303,6 +325,10 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
         monster.strengthBonus = nextForm.strengthBonus ?? monster.strengthBonus
         monster.defenceBonus = { ...nextForm.defenceBonus }
         clearDefenceBonusDrain(monster)
+        // A new phase's own numbers are the floor a future warstrike measures
+        // against — the last phase's baseline (and any headroom it had left)
+        // does not follow it in, same as the drain itself doesn't.
+        monster.defenceBonusBaseline = { ...monster.defenceBonus }
         monster.formMaxHit = nextForm.maxHit
         monster.formAttackCount = 0
         monster.formSwitchThreshold = 9999
@@ -343,6 +369,7 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
         monster.strengthBonus = form.strengthBonus ?? monster.strengthBonus
         monster.defenceBonus = { ...form.defenceBonus }
         clearDefenceBonusDrain(monster)
+        monster.defenceBonusBaseline = { ...monster.defenceBonus }
         monster.formMaxHit = form.maxHit
       }
     }
@@ -390,7 +417,7 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
     // Final raid boss died — roll raid rewards
     state.active = false
     state.specialAttackEnergy = 100
-    state.loot = rollRaidRewards(raid.rewards)
+    state.loot = rollRaidRewards(raid.rewards, state.grindman === true)
     events.push({
       type: 'raidComplete',
       raidId: raid.raidId,
@@ -414,7 +441,7 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
   state.adds = []
   state.addTargetIndex = null
   state.specialAttackEnergy = 100
-  state.loot = rollDrops(monster, isOnTask)
+  state.loot = rollDrops(monster, isOnTask, state.grindman === true)
   events.push({
     type: 'monsterDeath',
     monster: { id: monster.id, name: monster.name, boss: monster.boss === true },
@@ -1206,18 +1233,25 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 }
 
 /**
- * Roll monster drops
+ * Roll monster drops.
+ *
+ * Exported because the open world rolls it once per player who earned the kill
+ * (world/server/killLoot.ts) — each gets their own independent roll of the same
+ * table, the way a co-op room pays its winners.
  */
-function rollDrops(monster, isOnTask = false) {
+export function rollDrops(monster, isOnTask = false, grindman = false) {
   const loot = []
   const rolls = monster.dropRolls || 1
   for (const drop of (monster.drops || [])) {
     // Task-only drops (e.g. Imbued Crown/Brain) never roll off-task.
     if (drop.taskOnly && !isOnTask) continue
-    // Always drops (chance === 1.0) are rolled once regardless of dropRolls
+    // Always drops (chance === 1.0) are rolled once regardless of dropRolls.
+    // Grindman's tripling never changes the roll COUNT — a chance it lifts to 1
+    // must not also collapse the table's extra rolls (same rule as hard mode).
     const timesToRoll = (drop.chance >= 1.0) ? 1 : rolls
+    const chance = grindmanDropChance(drop.chance, grindman)
     for (let r = 0; r < timesToRoll; r++) {
-      if (Math.random() < drop.chance) {
+      if (Math.random() < chance) {
         const qty = Array.isArray(drop.quantity)
           ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
           : drop.quantity
@@ -1228,12 +1262,12 @@ function rollDrops(monster, isOnTask = false) {
   // Seeds / saplings — universal bonus drop scaled by combat level. Rolled once
   // each (independent of dropRolls) so high-multi-roll monsters don't inflate it.
   for (const drop of getMonsterSeedDrops(monster)) {
-    if (Math.random() < drop.chance) loot.push({ itemId: drop.itemId, quantity: drop.quantity })
+    if (Math.random() < grindmanDropChance(drop.chance, grindman)) loot.push({ itemId: drop.itemId, quantity: drop.quantity })
   }
   // Summoning charms — universal, combat-level tiered. Rolled once, independent
   // of dropRolls, same as seeds.
   for (const drop of getMonsterCharmDrops(monster)) {
-    if (Math.random() < drop.chance) loot.push({ itemId: drop.itemId, quantity: drop.quantity })
+    if (Math.random() < grindmanDropChance(drop.chance, grindman)) loot.push({ itemId: drop.itemId, quantity: drop.quantity })
   }
   return loot
 }
@@ -1241,13 +1275,13 @@ function rollDrops(monster, isOnTask = false) {
 /**
  * Roll raid rewards (always drops + unique chance with weighted selection).
  */
-function rollRaidRewards(rewards) {
+function rollRaidRewards(rewards, grindman = false) {
   if (!rewards) return []
   const loot = []
   // Roll always/standard drops
   if (rewards.always) {
     for (const drop of rewards.always) {
-      if (Math.random() < drop.chance) {
+      if (Math.random() < grindmanDropChance(drop.chance, grindman)) {
         const qty = Array.isArray(drop.quantity)
           ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
           : drop.quantity
@@ -1256,7 +1290,7 @@ function rollRaidRewards(rewards) {
     }
   }
   // Roll for a unique item
-  if (rewards.unique && Math.random() < rewards.unique.chance) {
+  if (rewards.unique && Math.random() < grindmanDropChance(rewards.unique.chance, grindman)) {
     const items = rewards.unique.items
     const totalWeight = items.reduce((sum, i) => sum + i.weight, 0)
     let roll = Math.random() * totalWeight

@@ -1,5 +1,6 @@
 import { requireAuth, json } from '../../_lib/auth.js'
 import { auditLog } from '../../_lib/game/audit.js'
+import { GRINDMAN_CREDITS_BLOCKED } from '../../../src/engine/grindman.js'
 
 // Map of SKU → Stripe Price ID + product semantics. Price IDs live in
 // the Stripe Dashboard and are referenced here by environment binding
@@ -36,9 +37,16 @@ export async function onRequestPost({ request, env }) {
       return json({ error: 'character_id required for credit purchases' }, 400)
     }
     const owns = await env.DB.prepare(
-      'SELECT id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+      'SELECT id, is_grindman FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
     ).bind(characterId, auth.identity.id).first()
     if (!owns) return json({ error: 'Character not found' }, 404)
+    // A Grindman earns every credit it spends. This is the only place a paid
+    // credit grant can begin — the webhook credits the character named in
+    // SERVER-written session metadata, and the account type is fixed at
+    // creation, so a session for a Grindman can never exist to be honoured.
+    if (owns.is_grindman === 1) {
+      return json({ error: GRINDMAN_CREDITS_BLOCKED, code: 'GRINDMAN_NO_CREDIT_PURCHASE' }, 403)
+    }
   }
 
   // Server-issued client_reference_id. The webhook handler verifies the

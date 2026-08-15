@@ -21,7 +21,7 @@ Every skill goes from level 1 to 99, and XP in a skill is capped at 200,000,000.
 
 Combat is tick-based. Your max hit and accuracy come from your effective levels and equipment bonuses: melee max hit is floor(0.5 + effectiveStrength × (strengthBonus + 64) / 640), and hit chance compares your attack roll against the target's defence roll. Choose a combat style before fighting: Accurate (+3 effective Attack), Aggressive (+3 effective Strength), Defensive (+3 effective Defence), or Controlled (+1 to Attack, Strength and Defence). Auto-fight keeps killing the same monster, banking loot as you go.
 
-In the open world, any monster you have engaged keeps chasing you if you back away instead of resetting on the spot — and if it catches up, it starts swinging again on its own. Stepping back buys distance, not a free reset; only leaving its reach for good, or leaving the area, actually ends the fight. Walking away yourself still stops your own attacks until you tap Attack again — only the monster's swings resume automatically. Kills out there count for everything a kill in the idle game counts for: your slayer task advances, your daily tasks fill, and rare drops fill their collection log slot. Every monster you kill builds a kill count, in the open world and in the idle game alike — not just bosses — so the grind is on record wherever you do it.
+In the open world, any monster you have engaged keeps chasing you if you back away instead of resetting on the spot — and if it catches up, it starts swinging again on its own. Stepping back buys distance, not a free reset; only leaving its reach for good, or leaving the area, actually ends the fight. Walking away yourself still stops your own attacks until you tap Attack again — only the monster's swings resume automatically. Kills out there count for everything a kill in the idle game counts for: your slayer task advances, your daily tasks fill, and rare drops fill their collection log slot. Every monster you kill builds a kill count, in the open world and in the idle game alike — not just bosses — so the grind is on record wherever you do it. Fighting something alongside another player follows the same rule a group boss does: deal at least 10% of its hitpoints and the kill is yours — its drops, the kill count, your slayer task and your daily tasks. You each roll the drop table for yourself, so two people who both cleared the line get two separate piles on the same tile, and neither of you can see or take the other's. After about a minute anything still lying there goes public and the first person to reach it can take it.
 
 ## Combat level
 
@@ -139,6 +139,12 @@ A hard fight doubles the boss's offence — twice the max hit, twice the accurac
 
 Difficulty belongs to the fight, not to you: a group boss room or a raid party is opened at the difficulty the player who opened it chose, everyone in it fights the same boss, and joining a listed group means taking that group's difficulty. Hard Mode applies to solo fights and group fights; open-world boss lairs are always normal.
 
+## Grim Reaper — buying back a Hard Mode death
+
+Everything a Hard Mode death takes is held by the Grim Reaper, reachable from Settings. You can buy it all back with credits: the cost is the total shop value of what you lost, at 5,000,000 gp per credit, rounded up, minimum 1 credit. It's all or nothing — you can't reclaim individual items. Reclaimed items (including any charges left in a scythe, trident, blowpipe or shardglass weapon) go straight to your bank.
+
+The Reaper only ever holds one death. If you die in Hard Mode again before reclaiming, whatever was stashed is lost forever and replaced by the new death's items.
+
 ## Group boss fights
 
 Tap most bosses in the combat picker and you are asked whether to fight solo or join a group. A group holds up to 8 players against one shared boss; you join the fullest group with room, or open a new one. Raid bosses stay inside their raids, and four bosses are solo only: Ember Tyrant, Ashen Crucible, Venomcoil Matriarch and Blighted Gauntlet.
@@ -149,7 +155,7 @@ After a kill the boss comes back 5 seconds later, shown as a countdown. That wai
 
 ## Group boss loot and the 10% rule
 
-Every player who personally deals at least 10% of the boss's maximum hitpoints gets their own roll of its drop table — not a share of one drop. Two players over the line means two independent rolls, each with its own collection log entries. Miss the line and you get no loot from that kill — but the kill count is yours either way: everyone who was alive and fought the boss gets it, and your own slayer task advances too, whether or not your damage earned a drop.
+Every player who personally deals at least 10% of the boss's maximum hitpoints gets their own roll of its drop table — not a share of one drop. Two players over the line means two independent rolls, each with its own collection log entries. That same 10% is what earns you the kill count and your slayer task progress, and what makes the kill count toward your daily tasks. One line, everything behind it: clear it and the kill is yours in every sense, miss it and it counts for nothing. Being defeated after you have already cleared it costs you none of it.
 
 Damage from any source counts, including specials and summons, and it resets each time the boss respawns. The bar under the boss's name tracks your own progress toward the threshold: it fills as you deal the 10% you need and turns green when your drop is secured. With the group capped at 8, the top contributor always clears the line, so a kill never comes out empty for everyone. Being defeated does not cancel a drop you had already earned.
 
@@ -165,7 +171,7 @@ The lobby lists everyone who has joined, with their combat level, and you can op
 
 Everyone but the host has a Ready button, and the roster shows who has pressed it. The host cannot start until the whole party is ready — the Start button counts who is still getting set. The host's own answer is pressing Start, and a member who died on the last run is not waited on. Readiness clears when the run starts and again when the party lands back in the lobby. Chat works in the lobby exactly as it does in the fight.
 
-The raid itself is the group boss fight: the server runs every swing, and it plays exactly like a solo run — same tick speed, prayers, specials and combo eating. The bosses come in order, and only the last one pays. Deal at least 10% of the whole raid's hitpoints — counted across every boss, not reset between them — and you roll the raid's reward table yourself, with your own collection log entries. Miss the line and you get no loot from the clear, but the raid kill count still goes to everyone who fought it.
+The raid itself is the group boss fight: the server runs every swing, and it plays exactly like a solo run — same tick speed, prayers, specials and combo eating. The bosses come in order, and only the last one pays. Deal at least 10% of the whole raid's hitpoints — counted across every boss, not reset between them — and you roll the raid's reward table yourself, with your own collection log entries, the raid kill count and your slayer task progress. Miss the line and the clear counts for nothing.
 
 Finishing the raid puts the party back in its lobby, so the host can start another run without everyone regrouping. If the whole party is wiped out, the run ends the same way. Dying costs what dying in a solo raid costs.
 ## Talking in a group fight
@@ -249,7 +255,7 @@ Out there, anyone within 10 combat levels of you can attack you, and you can att
 
 You cannot log out of a fight, and closing the tab is not a fight plan. Anywhere in the open world, leaving is refused while you are in combat — the Log out button tells you so, and if you close the tab or lose connection your character stays standing there, unable to fight back and perfectly killable, until the fight has been over for ten seconds. Run, eat, or die like everyone else.
 
-Outlaws roam the wastes when the map is quiet, so there is always something to fight. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not.
+Outlaws roam the wastes when the map is quiet, so there is always something to fight. Several are out there at once and no two are the same account — pures, zerkers, rangers, mages and maxed mains, each kitted for its own build, and every one of them matched into your attack bracket. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not.
 
 Ironman characters can fight in the Wilderness and keep every outlaw drop, but can never pick up loot dropped by another player.
 
@@ -261,9 +267,11 @@ The collection log tracks every rare unique in the game — boss drops, raid uni
 
 The public leaderboard ranks characters by total level, and separately by kill counts for each boss and raid. Tap any player to view their profile and skill levels. It is a fun comparison, not a competition with prizes.
 
-## Ironman and one-life modes
+## Account modes
 
 When creating a character you can pick special modes. Ironman characters are self-sufficient: no Trading Post trading with other players, and in the open world they can only pick up loot they earned themselves — another player's kill drops and dropped items never become visible to them. That extends to the Wilderness: an Ironman can fight there and keep every outlaw drop, but the pile a defeated player leaves behind stays on the ground. Fighting alongside others is fine, boss lairs included: a kill's drop belongs to whoever dealt the most damage, so an Ironman who leads the damage keeps the drop no matter how many people helped. One-life characters are hardcore — dying loses the one-life badge for good, reverting the character to a standard account (or a standard Ironman, if it was also an Ironman). Both modes are badges of honour on the leaderboard.
+
+Grindman is a third mode, and it stands alone — it cannot be combined with Ironman or one-life. A Grindman earns half XP and rolls every monster and raid drop at three times the normal rate: every level is slower, but the drops come three times as often. Credits cannot be bought — a Grindman keeps the credits the account starts with and earns one for each daily task completed, and that is the whole supply. Skips, Slayer-task cancels and everything else credits pay for work normally; you just have to earn the credit first. Grindman characters start in a Grindman Full Helm, minted from coins.
 
 ## Account, characters and saving
 

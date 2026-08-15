@@ -41,6 +41,7 @@ import * as route_apiCoopSessionPId from '../functions/api/coop/session/[id].js'
 import * as route_apiDailyTasksComplete from '../functions/api/daily-tasks/complete.js'
 import * as route_apiDailyTasksIndex from '../functions/api/daily-tasks/index.js'
 import * as route_apiDailyTasksProgress from '../functions/api/daily-tasks/progress.js'
+import * as route_apiGrimReaperReclaim from '../functions/api/grim-reaper/reclaim.js'
 import * as route_apiHardMode from '../functions/api/hard-mode.js'
 import * as route_apiIdle from '../functions/api/idle.js'
 import * as route_apiKillCounts from '../functions/api/kill-counts.js'
@@ -113,6 +114,7 @@ export const ROUTE_MODULES = [
   { file: "api/daily-tasks/complete.js", module: route_apiDailyTasksComplete },
   { file: "api/daily-tasks/index.js", module: route_apiDailyTasksIndex },
   { file: "api/daily-tasks/progress.js", module: route_apiDailyTasksProgress },
+  { file: "api/grim-reaper/reclaim.js", module: route_apiGrimReaperReclaim },
   { file: "api/hard-mode.js", module: route_apiHardMode },
   { file: "api/idle.js", module: route_apiIdle },
   { file: "api/kill-counts.js", module: route_apiKillCounts },

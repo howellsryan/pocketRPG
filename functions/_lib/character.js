@@ -10,7 +10,7 @@ export async function getOwnedCharacter(request, env, identityId) {
   if (!Number.isFinite(id)) return { error: 'Invalid character id', status: 400 }
 
   const row = await env.DB.prepare(
-    'SELECT id, username, is_ironman, is_one_life FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    'SELECT id, username, is_ironman, is_one_life, is_grindman FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
   ).bind(id, identityId).first()
   if (!row) return { error: 'Character not found', status: 404 }
   return {
@@ -18,5 +18,6 @@ export async function getOwnedCharacter(request, env, identityId) {
     username: row.username,
     isIronman: !!row.is_ironman,
     isOneLife: !!row.is_one_life,
+    isGrindman: !!row.is_grindman,
   }
 }

@@ -468,7 +468,32 @@ describe('room-wide attacks in a co-op session', () => {
     const form = (monstersData as any)[BOSS].forms[state.boss.monster.currentForm]
     for (const [style, authored] of Object.entries(form.defenceBonus) as [string, number][]) {
       expect(state.boss.monster.defenceBonus[style], style)
-        .toBe(Math.max(-64, authored - state.boss.monster.defenceBonusDrain[style]))
+        .toBe(Math.max(0, authored - state.boss.monster.defenceBonusDrain[style]))
+    }
+  })
+
+  it('never grinds a defence bonus below zero in a group fight, however many warstrikes have already landed', () => {
+    // Energy (50/use, no refill mid-fight without a kill) makes firing dozens
+    // of real warstrikes in one test slow and indirect — seed the shared
+    // record as if many already landed instead, exactly as
+    // MUTABLE_MONSTER_FIELDS would carry it in from a prior tick, then fire
+    // one more through the real pipeline. Proves hydrateCombatState picks up
+    // defenceBonusBaseline from the ROOM (not a fresh unfloored copy off
+    // monsters.json) and the write-back persists the still-floored result.
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    let state = joined(BOSS, [1], 'grondar_godsword')
+    const baseline = { ...state.boss.monster.defenceBonus }
+    state.boss.monster.defenceBonusBaseline = baseline
+    state.boss.monster.defenceBonusDrain = Object.fromEntries(
+      Object.keys(baseline).map((k) => [k, baseline[k] + 500]),
+    )
+    for (const k of Object.keys(baseline)) state.boss.monster.defenceBonus[k] = 0
+
+    const queueSpecial = [{ tick_number: 1, characterId: 1, characterSeq: 0, action: { type: 'queue_special' } }]
+    state = processCoopTick(state, queueSpecial, deps, Date.now()).stateNext
+
+    for (const value of Object.values(state.boss.monster.defenceBonus) as number[]) {
+      expect(value).toBeGreaterThanOrEqual(0)
     }
   })
 

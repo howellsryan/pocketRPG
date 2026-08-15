@@ -38,14 +38,21 @@ export async function applyReportedKillCounts(env, characterId, tally, now = Dat
  * The save endpoint's wrapper: applies the report and audits it, swallowing
  * every failure. A kill count is a tally, not a grant — it must never turn a
  * legitimate save into a failed one.
+ *
+ * Returns false when the write threw, so the reply can say so and the client
+ * keeps the tally instead of settling it by subtraction against an `ok` that
+ * banked nothing. True covers "nothing was reportable" as well as a clean
+ * write: both mean the client owes these kills to nobody.
  */
 export async function applyReportedKillCountsFromSave(env, { characterId, identityId, kills }, now = Date.now()) {
-  if (!kills || typeof kills !== 'object') return
+  if (!kills || typeof kills !== 'object') return true
   try {
     const applied = await applyReportedKillCounts(env, characterId, kills, now)
-    if (Object.keys(applied).length === 0) return
+    if (Object.keys(applied).length === 0) return true
     await auditLog(env, 'kill_counts_reported', { characterId, identityId, kills: applied }, { swallow: true })
+    return true
   } catch (err) {
     console.error('[PocketRPG][killCounts] reported tally not applied', { characterId, message: err?.message || err })
+    return false
   }
 }

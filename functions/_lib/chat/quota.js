@@ -34,7 +34,7 @@ export const CHAT_NEURON_BUDGET_MILLI = 6_600_000
 // against each other under a fixed ceiling, and the reserve is held only for
 // the duration of one in-flight call: with daily usage sitting far below the
 // allocation, per-message capacity is worth more than day-wide headroom.
-export const CHAT_MESSAGE_RESERVE_MILLI = 3_301_000
+export const CHAT_MESSAGE_RESERVE_MILLI = 3_310_000
 
 // Daily token pool for the OpenAI primary against the ~2.5M/day complimentary
 // data-sharing allotment. Metered locally because OpenAI doesn't hard-stop at

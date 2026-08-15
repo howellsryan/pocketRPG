@@ -521,6 +521,21 @@ export function applyQuickPrayersToSave(saveObject, member) {
   return saveObject
 }
 
+/**
+ * Writes a hard-mode death's Grim Reaper stash onto the save, same as any
+ * other in-fight setting change (§20). `member.grimReaperStash` is only ever
+ * set by the death itself (coopBossEngine.js) and cleared after this
+ * write-back lands, so an ordinary tick's write-back — no death this fight —
+ * leaves any stash already on the save (from a previous session) untouched.
+ */
+export function applyGrimReaperStashToSave(saveObject, member) {
+  if (!member?.grimReaperStash) return saveObject
+  const settings = { ...(saveObject.settings && typeof saveObject.settings === 'object' ? saveObject.settings : {}) }
+  settings.grimReaper = member.grimReaperStash
+  saveObject.settings = settings
+  return saveObject
+}
+
 /** Writes a member's session state (supplies, HP, XP, slayer progress) back
  * onto their save. */
 export function applyMemberToSave(saveObject, member) {
@@ -532,6 +547,7 @@ export function applyMemberToSave(saveObject, member) {
   applyXpGainedToSave(next, member.xpGained)
   applySlayerCreditToSave(next, member)
   applyQuickPrayersToSave(next, member)
+  applyGrimReaperStashToSave(next, member)
   // Dying in a group has to cost exactly what dying to the same boss alone
   // costs. The solo screen restores HP to full on death; writing the member's
   // literal 0 back would leave a corpse regenerating at +1/60s, so a group
@@ -591,6 +607,10 @@ export async function writeBackMember(env, { characterId, identityId, member, se
   member.saveRevision = write.saveRevision
   member.xpGained = {}
   member.itemsLost = {}
+  // Written to the save above (applyGrimReaperStashToSave) — cleared so a
+  // second write-back this session doesn't re-stamp a stash the player may
+  // have already reclaimed.
+  member.grimReaperStash = null
   // Banked slayer points/completions are deltas — clearing them is what stops a
   // second write-back paying the same completed task again.
   member.slayerCredit = emptySlayerCredit()
@@ -714,6 +734,14 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
   // D1 still carrying 0031's `(session_id, kill_seq)` key the first row written
   // takes the only slot there is. Losing a participant's kill count there is a
   // miss; losing a winner's drop is a robbery.
+  //
+  // Scoped to NON-winners, and it has to stay that way while the two claims
+  // share one `(session_id, kill_seq, character_id)` key. A winner whose
+  // settlement gave its sequence back (no identity, save load throw, diverged,
+  // write throw) loses their kill count — a known gap, tracked separately —
+  // but counting them here would take the very row their retry needs, and a
+  // replay reading `granted_json = '[]'` hands back a dry kill forever. Closing
+  // that gap needs an idempotency key of its own, not a wider roster here.
   await recordParticipantKillCounts(env, { session, state, kill, killSeq, source, winners }, now)
     .catch((err) => console.error('[PocketRPG][coop] participant kill counts failed', {
       sessionId: session.id, killSeq, message: err?.message || err,
@@ -751,6 +779,10 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
  * `granted_json = '[]'` written up front: a non-winner has no grant to record
  * later, and an empty list is what the replay path should hand back if the row
  * is ever read. A member who cannot be claimed has already been counted.
+ *
+ * Winners are excluded outright, not by whether their settlement succeeded:
+ * the loot claim and this one are the same row, so a winner counted here holds
+ * the sequence their own retry needs (see settleCoopKill).
  */
 async function recordParticipantKillCounts(env, { session, state, kill, killSeq, source, winners }, now) {
   const listed = Array.isArray(kill?.killCountCharacterIds) ? kill.killCountCharacterIds : []
@@ -777,14 +809,27 @@ async function recordParticipantKillCounts(env, { session, state, kill, killSeq,
   }
   if (claimed.length === 0) return
 
-  await env.DB.batch(
-    claimed.map((characterId) => env.DB.prepare(
-      `INSERT INTO kill_counts (character_id, source_type, source_id, kill_count, updated_at)
-       VALUES (?, ?, ?, 1, ?)
-       ON CONFLICT(character_id, source_type, source_id)
-       DO UPDATE SET kill_count = kill_count + 1, updated_at = excluded.updated_at`,
-    ).bind(characterId, source.sourceType, source.sourceId, now)),
-  )
+  // The claim is taken BEFORE the count, so a throw here has to hand the
+  // sequence back — exactly as settleKillShare's releaseClaim does. Left behind,
+  // the row marks the kill settled for these members and the replay path claims
+  // nothing, voiding their count permanently rather than for one attempt.
+  // Scoped to the ids this call claimed: a winner who rolled an empty table also
+  // carries `granted_json = '[]'`, so the value alone is not a safe guard.
+  try {
+    await env.DB.batch(
+      claimed.map((characterId) => env.DB.prepare(
+        `INSERT INTO kill_counts (character_id, source_type, source_id, kill_count, updated_at)
+         VALUES (?, ?, ?, 1, ?)
+         ON CONFLICT(character_id, source_type, source_id)
+         DO UPDATE SET kill_count = kill_count + 1, updated_at = excluded.updated_at`,
+      ).bind(characterId, source.sourceType, source.sourceId, now)),
+    )
+  } catch (err) {
+    await Promise.all(claimed.map((characterId) => env.DB.prepare(
+      'DELETE FROM coop_kill_settlements WHERE session_id = ? AND kill_seq = ? AND character_id = ?',
+    ).bind(session.id, seq, characterId).run().catch(() => {})))
+    throw err
+  }
 }
 
 /**
@@ -848,10 +893,11 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
     return empty
   }
 
+  let characterRow
   let saveObject
   let saveRevision
   try {
-    ({ saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId))
+    ({ row: characterRow, saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId))
   } catch (err) {
     await releaseClaim()
     throw err
@@ -877,9 +923,12 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
   // room is fighting so it leads; the column says the same for a caller holding
   // only the row.
   const hardMode = state?.hardMode === true || session?.hard_mode === 1
+  // Grindman is the opposite: an ACCOUNT type, so it is per winner. A room can
+  // hold a mix, and each member's table is rolled against their own row.
+  const grindman = characterRow?.is_grindman === 1
   const rewards = sourceType === 'raids'
-    ? rollRaidRewardsById(sourceId, Math.random, hardMode)
-    : rollMonsterRewardsById(sourceId, Math.random, onTask, hardMode)
+    ? rollRaidRewardsById(sourceId, Math.random, hardMode, grindman)
+    : rollMonsterRewardsById(sourceId, Math.random, onTask, hardMode, grindman)
   const withSession = applyMemberToSave(saveObject, member)
   let settled
   let write
@@ -901,6 +950,7 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
   member.inventory = Array.isArray(withSession.inventory) ? withSession.inventory.map((s) => (s ? { ...s } : null)) : []
   member.xpGained = {}
   member.itemsLost = {}
+  member.grimReaperStash = null
   member.slayerCredit = emptySlayerCredit()
   member.saveRevision = write.saveRevision
 

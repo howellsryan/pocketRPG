@@ -1,0 +1,1 @@
+ALTER TABLE characters ADD COLUMN is_grindman BOOLEAN NOT NULL DEFAULT 0;

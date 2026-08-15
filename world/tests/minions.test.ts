@@ -593,6 +593,39 @@ describe('a boss that summons minions in the open world', () => {
     expect(minionsIn(npcs)).toHaveLength(1)
   })
 
+  // §4: adds drop nothing and count for nothing. Out here a minion is a real
+  // npc, so its death reaches the kill list like any other — and the DO tallies
+  // kill counts and daily-task events off that list. Unmarked, a boss that
+  // re-summons on a timer is a kill-count farm that never touches the boss.
+  it('marks a killed minion as summoned, so nothing tallies it as a kill', () => {
+    const { npcs, boss } = bossAt(ZARYTH, 10, 10)
+    const players = [makePlayer('1', 10, 11)]
+    const tick = runTicks(LONGEST_SUMMON_TICKS + 2, npcs, players)
+    const [minion] = minionsIn(npcs)
+    expect(minion).toBeDefined()
+
+    // Stand next to it and attack it, letting the engine build the session.
+    const player = players[0]
+    player.x = minion.x
+    player.z = minion.z + 1
+    player.combat = null
+    player.pendingInteract = { kind: 'npc', id: minion.id, action: 'attack' } as never
+
+    let killRecord
+    for (let t = tick; t < tick + 200 && !killRecord; t++) {
+      // One hit from death every tick, so whichever swing lands is the fatal one.
+      if (minion.state !== 'dead') minion.hp = 1
+      player.hp = player.maxHp
+      const result = tickPlayer(player, ctx(t, npcs, players))
+      killRecord = result.kills.find((k) => k.monsterId === minion.monsterId)
+    }
+
+    expect(killRecord, 'the minion died inside the window').toBeDefined()
+    expect(killRecord!.summoned).toBe(true)
+    // The boss itself is not summoned by anything, so it still counts.
+    expect(boss.summonerId).toBeUndefined()
+  })
+
   it('summons nothing for a boss that has no minions', () => {
     const { npcs } = bossAt(GRONDAR, 10, 10)
     const players = [makePlayer('1', 10, 11)]

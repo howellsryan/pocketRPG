@@ -13,12 +13,13 @@ import CoopRaidLobby from '../components/CoopRaidLobby.jsx'
 import CoopChatPanel from '../components/CoopChatPanel.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
+import { CombatMonsterInfoSheet } from './CombatMobileSheets.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { openCoopFeed } from '../cloud/coopFeed.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
-import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal, foughtThisKill } from '../engine/coopBossEngine.js'
+import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal, foughtThisKill, isRaidPayingBoss } from '../engine/coopBossEngine.js'
 import { coopRaidSummary, raidProgress } from '../engine/coopRaidEngine.js'
 import { appendChatLines, chatLinesFromCoopEvents } from '../utils/coopChat.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
@@ -51,6 +52,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const [playerSplats, setPlayerSplats] = useState([])
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [showQuickPrayerConfig, setShowQuickPrayerConfig] = useState(false)
+  const [showMonsterInfo, setShowMonsterInfo] = useState(false)
   const [lootModal, setLootModal] = useState(null)
   // Cleared by the poll that reports the raid running, so a double-tap on Start
   // cannot queue two starts (the second is refused server-side either way).
@@ -169,6 +171,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       // who fought the kill and each client credits its own. Gated on that list
       // so a member who sat the fight out in the lobby is not paid for it.
       else if (ev.type === 'bossDefeated' || ev.type === 'raidBossDefeated') {
+        // A raid pays its boss kill on the final boss and nowhere else, which is
+        // where solo fires its one (isRaidPayingBoss).
+        if (ev.type === 'raidBossDefeated' && !isRaidPayingBoss(ev)) continue
         if (foughtThisKill(ev, characterId)) recordGameEvent?.({ kind: 'boss_kill', monsterId: ev.bossId })
       } else if (ev.type === 'raidComplete') {
         if (foughtThisKill(ev, characterId)) recordGameEvent?.({ kind: 'raid_complete', raidId: ev.raidId })
@@ -361,7 +366,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       // authority until the write-back), so this only reports it. Derived
       // from the death EVENT because only that carries the tally — a
       // reload falls back to the plain modal rather than an empty list.
-      sub={state?.hardMode ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined}
+      sub={state?.hardMode
+        ? (itemsLost.length > 0
+          ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you. Reclaim it from Grim Reaper in Settings.'
+          : 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.')
+        : undefined}
       loot={itemsLost.length > 0 ? lootRowsForModal(shapeLootForModal(itemsLost, itemsData).valued, itemsData) : undefined}
       lootTitle={itemsLost.length > 0 ? 'Lost Forever' : undefined}
       lootSigned="-"
@@ -409,6 +418,15 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const form = monster?.multiForm && boss?.monster?.currentForm && monster.forms?.[boss.monster.currentForm]
     ? monster.forms[boss.monster.currentForm]
     : null
+  // The info sheet's live view of the boss: the authored record overlaid with
+  // the room's mutable fields (MUTABLE_MONSTER_FIELDS in coopBossEngine.js —
+  // currentForm, stats, defenceBonus, defenceBonusDrain, baseDefenceLevel and
+  // the rest), so a Dragon Warhammer smash or a Grondar Godsword warstrike
+  // landed by ANY member shows up here exactly as it does in solo, not just on
+  // the shared HP bar.
+  const liveMonster = monster
+    ? { ...monster, ...(boss?.monster || {}), currentHP: boss?.currentHP ?? 0, hitpoints: boss?.maxHP ?? monster.hitpoints }
+    : null
   // The room's copy is authoritative for the length of the fight — it is what
   // gets written back — so the bar renders from it and falls back to the local
   // setting only until the first poll lands.
@@ -437,6 +455,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           meta={<CoopLootShare member={me} maxHP={coopLootBasisHP(state)} />}
           combatLevel={monster?.combatLevel}
           aside={state?.hardMode ? <HardModeTag /> : null}
+          onInfo={() => setShowMonsterInfo(true)}
         />
 
         <CombatHPBlock
@@ -586,6 +605,14 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           reload or a dropped poll still shows it. A dead member stays dead for
           the life of the session — respawning the boss does not revive them. */}
       {deathModalNode}
+
+      {showMonsterInfo && liveMonster && (
+        <CombatMonsterInfoSheet
+          monster={liveMonster}
+          itemsData={itemsData}
+          onClose={() => setShowMonsterInfo(false)}
+        />
+      )}
     </div>
   )
 }
