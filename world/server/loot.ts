@@ -15,10 +15,10 @@ export type LootEntity = {
   spawnTick: number
   /** Owner-only window override (player drops go public faster than kill loot). */
   ownerTicks?: number
-  /** This stack came off a player killed in the Wilderness. An Ironman may
-   * never take it — not even when they are the killer who owns it — because
-   * every unit in it was earned on somebody else's account. Bot drops carry no
-   * flag: those are a drop table, and an Ironman rolling one has earned it. */
+  /** This stack came off a player killed in the Wilderness. A self-sufficient
+   * account may never take it — not even when they are the killer who owns it —
+   * because every unit in it was earned on somebody else's account. Bot drops
+   * carry no flag: those are a drop table, and rolling one has earned it. */
   fromPlayer?: boolean
 }
 
@@ -75,42 +75,62 @@ export function spawnDrops(
 /** Who is looking at the floor. Passed as an object rather than a charId + flag
  * so adding an account rule here is a compile error at every call site instead
  * of a silently permissive default. */
-export type LootViewer = { charId: string; isIronman: boolean }
+export type LootViewer = { charId: string; isIronman: boolean; isGrindman: boolean }
+
+/**
+ * Accounts that may only ever hold what they earned themselves. Ironman is the
+ * original; Grindman rides on the same rule because its triple drop rates are
+ * paid for with half XP, and loot handed over by another player is a grind the
+ * account never did. Every floor-loot rule below reads this, never a mode flag,
+ * so a third self-sufficient mode is one line here.
+ */
+export function takesOwnLootOnly(viewer: LootViewer): boolean {
+  return viewer.isIronman || viewer.isGrindman
+}
+
+/** The refusal, naming the mode that caused it — a player who reads "Ironman"
+ * on a Grindman account learns nothing about their own restriction. */
+export function ownLootOnlyMessage(viewer: LootViewer): string {
+  return viewer.isGrindman && !viewer.isIronman
+    ? 'Grindman characters can only take their own loot.'
+    : 'Ironman characters can only take their own loot.'
+}
 
 export function isExpired(loot: LootEntity, tick: number): boolean {
   return tick - loot.spawnTick >= LOOT_DESPAWN_TICKS
 }
 
-/** An Ironman may only ever have loot they own — a public window never opens
- * for them, so another player cannot hand them items by dropping on the floor
- * (the world equivalent of the Trading Post ban). Their own drops and kill loot
- * are unaffected. */
+/** A self-sufficient account may only ever have loot they own — a public window
+ * never opens for them, so another player cannot hand them items by dropping on
+ * the floor (the world equivalent of the Trading Post ban). Their own drops and
+ * kill loot are unaffected. */
 export function isOwnedBy(loot: LootEntity, viewer: LootViewer): boolean {
   return loot.ownerCharId === viewer.charId
 }
 
 /** The account rule at the moment of pickup, deliberately independent of
- * isVisibleTo: an Ironman may only take loot they own. Visibility already hides
- * it, so this only fires on a stale client view, a replayed take, or a future
- * change to the windows above — none of which may put the item in the pack.
- * Checked immediately before the inventory mutation, so it is the last word. */
+ * isVisibleTo: a restricted account may only take loot they own. Visibility
+ * already hides it, so this only fires on a stale client view, a replayed take,
+ * or a future change to the windows above — none of which may put the item in
+ * the pack. Checked immediately before the inventory mutation, so it is the
+ * last word. */
 export function mayTake(loot: LootEntity, viewer: LootViewer): boolean {
-  if (!viewer.isIronman) return true
-  // Ownership is not enough for a player kill: an Ironman who wins a fight in
-  // the Wilderness still may not pick the loser's account up off the floor.
-  // They keep the fight, the rank and every bot drop — this is the one thing
-  // the mode costs them.
+  if (!takesOwnLootOnly(viewer)) return true
+  // Ownership is not enough for a player kill: winning a fight in the
+  // Wilderness still does not let these accounts pick the loser's account up
+  // off the floor. They keep the fight, the rank and every bot drop — this is
+  // the one thing the modes cost them.
   if (loot.fromPlayer) return false
   return isOwnedBy(loot, viewer)
 }
 
 /** Owner-only until the owner window elapses, then visible to everyone (until
- * despawn, which the caller removes separately) — except to an Ironman, for
- * whom loot they don't own never becomes visible at all. */
+ * despawn, which the caller removes separately) — except to a restricted
+ * account, for whom loot they don't own never becomes visible at all. */
 export function isVisibleTo(loot: LootEntity, viewer: LootViewer, tick: number): boolean {
   if (isExpired(loot, tick)) return false
-  if (viewer.isIronman && loot.fromPlayer) return false
-  if (viewer.isIronman && !isOwnedBy(loot, viewer)) return false
+  if (takesOwnLootOnly(viewer) && loot.fromPlayer) return false
+  if (takesOwnLootOnly(viewer) && !isOwnedBy(loot, viewer)) return false
   if (tick - loot.spawnTick < (loot.ownerTicks ?? LOOT_OWNER_TICKS)) return isOwnedBy(loot, viewer)
   return true
 }

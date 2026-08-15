@@ -7,6 +7,7 @@ import {
   isExpired,
   isVisibleTo,
   mayTake,
+  ownLootOnlyMessage,
   spawnDrops,
   takeLoot,
   visibleLootFor,
@@ -49,7 +50,7 @@ describe('spawnDrops', () => {
     // window a voluntarily dropped item gets would go public mid-pickup.
     expect(KILL_DROP_OWNER_TICKS).toBeGreaterThan(28 + 11)
     const pile = spawnDrops([{ itemId: 'shark', quantity: 1 }], 0, 0, 'killer', 0, KILL_DROP_OWNER_TICKS, { fromPlayer: true })[0]
-    const bystander = { charId: 'other', isIronman: false }
+    const bystander = { charId: 'other', isIronman: false, isGrindman: false }
     expect(isVisibleTo(pile, bystander, PLAYER_DROP_OWNER_TICKS + 1)).toBe(false)
     expect(isVisibleTo(pile, bystander, KILL_DROP_OWNER_TICKS)).toBe(true)
   })
@@ -60,10 +61,13 @@ function loot(overrides: Partial<LootEntity> = {}): LootEntity {
 }
 
 function main(charId: string): LootViewer {
-  return { charId, isIronman: false }
+  return { charId, isIronman: false, isGrindman: false }
 }
 function iron(charId: string): LootViewer {
-  return { charId, isIronman: true }
+  return { charId, isIronman: true, isGrindman: false }
+}
+function grind(charId: string): LootViewer {
+  return { charId, isIronman: false, isGrindman: true }
 }
 
 describe('visibility windows', () => {
@@ -132,6 +136,43 @@ describe('Ironman floor loot', () => {
     const tick = LOOT_OWNER_TICKS + 10
     expect(visibleLootFor([own, killed, dropped], iron('1'), tick).map((l) => l.id)).toEqual(['a'])
     expect(visibleLootFor([own, killed, dropped], main('1'), tick).map((l) => l.id)).toEqual(['a', 'b', 'c'])
+  })
+})
+
+describe('Grindman floor loot', () => {
+  it('never opens the public window on loot a Grindman does not own, at any tick', () => {
+    const theirs = loot({ ownerCharId: '2', spawnTick: 0 })
+    for (const tick of [0, LOOT_OWNER_TICKS - 1, LOOT_OWNER_TICKS, LOOT_OWNER_TICKS + 1, LOOT_DESPAWN_TICKS - 1]) {
+      expect(isVisibleTo(theirs, grind('1'), tick)).toBe(false)
+    }
+    expect(mayTake(theirs, grind('1'))).toBe(false)
+  })
+
+  it('refuses a Grindman an item another player dropped for them, however long it sits there', () => {
+    const dropped = loot({ ownerCharId: '2', spawnTick: 0, ownerTicks: PLAYER_DROP_OWNER_TICKS })
+    expect(isVisibleTo(dropped, grind('1'), PLAYER_DROP_OWNER_TICKS)).toBe(false)
+    expect(isVisibleTo(dropped, grind('1'), PLAYER_DROP_OWNER_TICKS + 500)).toBe(false)
+    expect(mayTake(dropped, grind('1'))).toBe(false)
+  })
+
+  it('keeps a Grindman their own loot, inside and outside the owner window', () => {
+    const mine = loot({ ownerCharId: '1', spawnTick: 0 })
+    expect(isVisibleTo(mine, grind('1'), 0)).toBe(true)
+    expect(isVisibleTo(mine, grind('1'), LOOT_OWNER_TICKS + 1)).toBe(true)
+    expect(mayTake(mine, grind('1'))).toBe(true)
+  })
+
+  it('shows a Grindman only their own pile when a group shares a boss instance', () => {
+    const own = loot({ id: 'a', itemId: 'grondar_godsword', ownerCharId: '1', spawnTick: 0 })
+    const killed = loot({ id: 'b', itemId: 'grondar_godsword', ownerCharId: '2', spawnTick: 0 })
+    const dropped = loot({ id: 'c', itemId: 'coins', ownerCharId: '3', spawnTick: 0, ownerTicks: PLAYER_DROP_OWNER_TICKS })
+    const tick = LOOT_OWNER_TICKS + 10
+    expect(visibleLootFor([own, killed, dropped], grind('1'), tick).map((l) => l.id)).toEqual(['a'])
+  })
+
+  it('names the mode in the refusal, so a Grindman is not told about Ironman', () => {
+    expect(ownLootOnlyMessage(grind('1'))).toContain('Grindman')
+    expect(ownLootOnlyMessage(iron('1'))).toContain('Ironman')
   })
 })
 
