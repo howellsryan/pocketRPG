@@ -25,6 +25,7 @@ import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, rando
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
 import { grindmanDropChance } from './grindman.js'
+import { applyNotedDrops } from './notedDrops.js'
 
 
 function getAvasAmmoSaveChance(equipment) {
@@ -1265,7 +1266,7 @@ function rollDrops(monster, isOnTask = false, grindman = false) {
   for (const drop of getMonsterCharmDrops(monster)) {
     if (Math.random() < grindmanDropChance(drop.chance, grindman)) loot.push({ itemId: drop.itemId, quantity: drop.quantity })
   }
-  return loot
+  return applyNotedDrops(loot)
 }
 
 /**
@@ -1298,7 +1299,7 @@ function rollRaidRewards(rewards, grindman = false) {
       }
     }
   }
-  return loot
+  return applyNotedDrops(loot)
 }
 
 /**
