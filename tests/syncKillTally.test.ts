@@ -110,9 +110,85 @@ describe('kill tally on a push', () => {
     expect(readKillTally()).toBeNull()
   })
 
-  it('drops the tally when a server copy is adopted — that window is superseded', async () => {
+  // Unlike the loss ledger, which describes the very blob the server replaced.
+  // Kill counts live in their own D1 table, and every /api/save path that banks
+  // them answers `ok` — all three refusals return first. So a rolled-back write
+  // banked nothing, and the tally it kept is exactly what still needs sending.
+  it('keeps the tally when a server copy is adopted — kill counts are not in the blob', async () => {
     recordKills('green_dragon', 9)
     await applyCloudSave({ version: 1 }, 123, 4)
+    expect(readKillTally()).toEqual({ green_dragon: 9 })
+  })
+
+  // Co-op exit is leave → pullSave → applyCloudSave, and the co-op lock branch
+  // in performPush deliberately keeps the tally through the refused push. The
+  // adopt that follows a moment later must not undo that.
+  it('survives the pull that follows a co-op fight, which the lock branch preserved it for', async () => {
+    recordKills('green_dragon', 4)
+    putSave.mockRejectedValueOnce(Object.assign(new Error('locked'), {
+      status: 409, body: { code: 'CHARACTER_IN_COOP_SESSION' },
+    }))
+    await pushNow({ stats: {} })
+    expect(readKillTally()).toEqual({ green_dragon: 4 })
+    await applyCloudSave({ version: 1 }, 456, 7)
+    expect(readKillTally()).toEqual({ green_dragon: 4 })
+  })
+
+  // A closing tab's beacon skips the tally when a push is already on the wire,
+  // on the documented promise that it "rides the next session's first save".
+  // Boot is pull-then-adopt, so an adopt that reset would break that promise
+  // before the next session ever pushed.
+  it('carries a closing tab\'s unsent kills through the next boot\'s adopt', async () => {
+    recordKills('field_chicken', 12)
+    await applyCloudSave({ version: 1 }, 999, 3)
+    await pushNow({ stats: { attack: { xp: 40 } } })
+    expect(killsOf(0)).toEqual({ field_chicken: 12 })
+  })
+
+  // The one case where the tally may already have been banked: a push whose ok
+  // was lost still wrote, and the next push 409s on the revision that write
+  // moved. Keeping the tally there would count the same kills twice.
+  it('drops the tally on a save-revision conflict, which is evidence a push landed unseen', async () => {
+    recordKills('field_chicken', 7)
+    putSave.mockRejectedValueOnce(Object.assign(new Error('stale'), {
+      status: 409, body: { code: 'SAVE_REVISION_CONFLICT', current_revision: 9 },
+    }))
+    await pushNow({ stats: { attack: { xp: 40 } } })
+    expect(readKillTally()).toBeNull()
+  })
+
+  // The other 409 that classifies as a conflict takes the same rollback path but
+  // means the opposite thing: nothing was written at all, so the tally is simply
+  // the kills still owed.
+  it('keeps the tally when the bank-wipe guard refuses the write', async () => {
+    recordKills('field_chicken', 7)
+    putSave.mockRejectedValueOnce(Object.assign(new Error('wipe'), {
+      status: 409, body: { code: 'BANK_WIPE_REJECTED' },
+    }))
+    await pushNow({ stats: { attack: { xp: 40 } } })
+    expect(readKillTally()).toEqual({ field_chicken: 7 })
+  })
+
+  // The server swallows a failed kill_counts write so it can never turn a
+  // legitimate save into a failure, and says so in the reply. Settling on that
+  // ok would drop the window's kills with nothing to show for them.
+  it('keeps the tally when the reply says the counts did not land', async () => {
+    recordKills('green_dragon', 5)
+    putSave.mockResolvedValueOnce({ ok: true, updatedAt: 1, save_revision: 2, killsApplied: false })
+    await pushNow({ stats: { attack: { xp: 40 } } })
+    expect(readKillTally()).toEqual({ green_dragon: 5 })
+  })
+
+  it('settles it when the reply says they did', async () => {
+    recordKills('green_dragon', 5)
+    putSave.mockResolvedValueOnce({ ok: true, updatedAt: 1, save_revision: 2, killsApplied: true })
+    await pushNow({ stats: { attack: { xp: 40 } } })
+    expect(readKillTally()).toBeNull()
+  })
+
+  it('is cleared by resetSyncState, which owns logout and character switch', async () => {
+    recordKills('green_dragon', 5)
+    resetSyncState()
     expect(readKillTally()).toBeNull()
   })
 })

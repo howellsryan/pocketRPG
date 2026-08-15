@@ -30,6 +30,7 @@ import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable,
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload } from './grants'
 import { dropBroadcastsFrom, isBossMonster, recordBossKill, recordKillCounts } from './bossKills'
+import { rollLootForCredited } from './killLoot'
 import {
   creditWorldSlayerKill, drainSlayerCredit, killDailyEvents, restoreSlayerCredit, seedSlayerSession, xpDailyEvents,
   type DailyEvent, type SlayerTask,
@@ -2033,27 +2034,60 @@ export class WorldZone extends Server<Env> {
         this.scheduleDirtyFlush(player)
       }
       for (const kill of result.kills) {
-        // Server-authoritative side-effects (collection log, audit) —
-        // fire-and-forget D1 like the flushes below. Gated on the DROP, not on
-        // the monster, so a non-boss unique fills its slot too; an ordinary
-        // kill with nothing logged touches no D1. The kill count is separate,
-        // tallied below for every monster.
-        void recordBossKill(this.env, kill)
+        // Snapshot each credited player's task BEFORE crediting it. Completing a
+        // task NULLS it (creditWorldSlayerKill), so read after, the one kill that
+        // finishes a task is the one kill that could never roll the task-only
+        // drops the task exists to unlock.
+        const creditedPlayers = (kill.credited ?? [])
+          .filter((charId) => this.players.has(charId))
+          .map((charId) => {
+            const p = this.players.get(charId)!
+            return { charId, slayerTask: p.slayer.task, isGrindman: p.isGrindman === true }
+          })
         this.creditKill(kill)
         const isBoss = isBossMonster(kill.monsterId)
-        const drops = dropBroadcastsFrom(kill.monsterId, kill.loot, itemsData)
-        if (!isBoss && drops.length === 0) continue
         const monsterName = monsterNames[kill.monsterId]?.name ?? kill.monsterId
-        const killerName = this.players.get(kill.owner)?.name ?? 'Someone'
-        if (isBoss) broadcastEvents.push({ e: 'kill', monster: monsterName, killer: killerName })
-        for (const drop of drops) {
-          broadcastEvents.push({
-            e: 'uniqueDrop',
-            monster: monsterName,
-            player: killerName,
-            item: itemNameOf(drop.itemId),
-            epic: drop.epic,
-          })
+        if (isBoss) {
+          const killerName = this.players.get(kill.owner)?.name ?? 'Someone'
+          broadcastEvents.push({ e: 'kill', monster: monsterName, killer: killerName })
+        }
+
+        // Everyone past the 10% line rolls the table INDEPENDENTLY, the way a
+        // co-op room pays its winners — not a share of one drop. The killer's
+        // roll rode the death event and is already on the floor under their own
+        // name; the rest are rolled here, where each player's own slayer task
+        // and Grindman flag are visible (a task-only drop must not roll for
+        // someone who is not on it). Their pile is owned by them, so loot.ts
+        // hides it from everyone else for the owner window with nothing new:
+        // two piles on one tile, one each.
+        const extra = kill.summoned ? [] : rollLootForCredited(kill.monsterId, creditedPlayers, kill.killer)
+        for (const share of extra) {
+          for (const loot of spawnDrops(share.loot, kill.x, kill.z, share.charId, this.tickCount)) {
+            this.loot.set(loot.id, loot)
+          }
+        }
+
+        // Collection log and audit per player, on their OWN roll: a unique is
+        // logged for whoever actually pulled it. Gated on the drop rather than
+        // the monster, so an ordinary kill with nothing logged reaches no D1.
+        // The killer's own share only counts when they earned the kill — a boss
+        // audits even on an empty roll, so a last-hit sniper below the line
+        // would otherwise be filed as having killed it.
+        const killerShare = (kill.credited ?? []).includes(kill.killer)
+          ? [{ charId: kill.killer, loot: kill.loot }]
+          : []
+        for (const share of [...killerShare, ...extra]) {
+          void recordBossKill(this.env, { ...kill, owner: share.charId, loot: share.loot })
+          const playerName = this.players.get(share.charId)?.name ?? 'Someone'
+          for (const drop of dropBroadcastsFrom(kill.monsterId, share.loot, itemsData)) {
+            broadcastEvents.push({
+              e: 'uniqueDrop',
+              monster: monsterName,
+              player: playerName,
+              item: itemNameOf(drop.itemId),
+              epic: drop.epic,
+            })
+          }
         }
       }
       if (result.events.length > 0) eventsByChar.set(player.charId, result.events)
@@ -2393,6 +2427,46 @@ export class WorldZone extends Server<Env> {
     }
   }
 
+  /**
+   * Everything a kill is worth beyond its loot, for the character it was
+   * attributed to: the kill count, their own slayer task, and the daily tasks
+   * the kill feeds. All three are tallied on the session and flushed in a batch
+   * — one D1 round trip per kill is not affordable on a grind (killProgress.ts).
+   *
+   * Paid to EVERY player who earned the kill on the shared 10% damage share
+   * (`kill.credited`, killCredit.js), not just the one the loot pile went to —
+   * the same rule a co-op room pays on, so a boss fought by three people counts
+   * for three slayer tasks in both places. Their drops are rolled separately
+   * (the kill loop above), one pile each on the same tile.
+   *
+   * Someone who has already left the zone takes no credit: their session (and
+   * its slayer task) is gone.
+   *
+   * A boss MINION earns none of it (§4: adds count for nothing). Out here they
+   * are real npcs rather than session-local adds, so they reach the kill list
+   * like anything else — and a boss that respawns its sentinels on a timer would
+   * otherwise be a kill-count and daily-task farm that never touches the boss.
+   */
+  private creditKill(kill: { monsterId: string; owner: string; credited: string[]; summoned?: boolean }): void {
+    if (kill.summoned) return
+    for (const charId of kill.credited ?? []) {
+      const player = this.players.get(charId)
+      if (!player) continue
+      player.killTally[kill.monsterId] = (player.killTally[kill.monsterId] ?? 0) + 1
+
+      const credited = creditWorldSlayerKill(player.slayer, kill.monsterId)
+      if (!credited) continue
+      if (credited.slayerXp > 0) player.pendingEvents.push(...grantSessionXp(player, 'slayer', credited.slayerXp))
+      player.pendingEvents.push({ e: 'msg', text: credited.message })
+      if (credited.completed) {
+        player.dailyEvents.push({ kind: 'slayer_task_complete', count: 1 })
+        // A finished task is a milestone: don't leave it sitting in memory until
+        // the 60s checkpoint, where a DO eviction would cost the whole task.
+        this.scheduleDirtyFlush(player)
+      }
+    }
+  }
+
   /** Snapshots and clears the player's pending grant tallies, then applies
    * them to the save blob. Every flush carries XP, consumed units (eaten,
    * buried, dropped, equipped), bank deposits, the world-minted units the pack
@@ -2407,33 +2481,6 @@ export class WorldZone extends Server<Env> {
    * session that ended without a clean disconnect flush deleted them outright
    * (see sessionItems.ts). Their reclassification to save-backed happens only
    * after the grant is known to have landed. */
-  /**
-   * Everything a kill is worth beyond its loot, for the character it was
-   * attributed to: the kill count, their own slayer task, and the daily tasks
-   * the kill feeds. All three are tallied on the session and flushed in a batch
-   * — one D1 round trip per kill is not affordable on a grind (killProgress.ts).
-   *
-   * The owner is whoever the drop went to, which is not necessarily the player
-   * whose tick resolved the killing blow. Someone who has already left the zone
-   * takes no credit: their session (and its slayer task) is gone.
-   */
-  private creditKill(kill: { monsterId: string; owner: string }): void {
-    const player = this.players.get(kill.owner)
-    if (!player) return
-    player.killTally[kill.monsterId] = (player.killTally[kill.monsterId] ?? 0) + 1
-
-    const credited = creditWorldSlayerKill(player.slayer, kill.monsterId)
-    if (!credited) return
-    if (credited.slayerXp > 0) player.pendingEvents.push(...grantSessionXp(player, 'slayer', credited.slayerXp))
-    player.pendingEvents.push({ e: 'msg', text: credited.message })
-    if (credited.completed) {
-      player.dailyEvents.push({ kind: 'slayer_task_complete', count: 1 })
-      // A finished task is a milestone: don't leave it sitting in memory until
-      // the 60s checkpoint, where a DO eviction would cost the whole task.
-      this.scheduleDirtyFlush(player)
-    }
-  }
-
   private async flush(player: Player, reason: GrantPayload['reason']): Promise<void> {
     const pools = player.pools
     const drained = drainForFlush(pools, reason)

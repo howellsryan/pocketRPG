@@ -511,6 +511,7 @@ describe('coopRaidEngine — slayer credit for a raid clear', () => {
     // raid tasks paid between 400 and 8000 where solo has always paid the
     // authored 2500-10000 (getSlayerTaskXpForKill's flatXp).
     const state = partyOnTask({ 7: raidTask(2) })
+    state.members['7'].damage = coopLootDamageRequired(coopLootBasisHP(state))
     const { stateNext, events } = tick(killBoss(state))
 
     const credit = events.find((e: any) => e.type === 'slayerCredit')
@@ -519,15 +520,24 @@ describe('coopRaidEngine — slayer credit for a raid clear', () => {
     expect(stateNext.members['7'].slayerTask.monstersRemaining).toBe(1)
   })
 
-  it('credits every living raider on that task, not just the loot winner', () => {
-    const state = partyOnTask({ 7: raidTask(2), 8: raidTask(2), 9: null })
-    state.members['7'].damage = coopLootDamageRequired(coopLootBasisHP(state))
+  // The raid's share is measured against the WHOLE run's health, and damage is
+  // never reset between bosses — so carrying five bosses and coasting the sixth
+  // still pays, while turning up for the last one does not.
+  it('credits every raider past the run\'s 10% line, and nobody under it', () => {
+    const state = partyOnTask({ 7: raidTask(2), 8: raidTask(2), 9: raidTask(2), 10: null })
+    const line = coopLootDamageRequired(coopLootBasisHP(state))
+    state.members['7'].damage = line
+    state.members['8'].damage = line
+    state.members['9'].damage = line - 1
+    state.members['10'].damage = line
     const { stateNext, events } = tick(killBoss(state))
 
     expect(events.filter((e: any) => e.type === 'slayerCredit').map((e: any) => e.characterId).sort())
       .toEqual([7, 8])
     expect(stateNext.members['8'].xpGained.slayer).toBe(RAID_TASK_META[FINAL].flatSlayerXp)
+    // 9 was on the task but short of the line; 10 cleared it with no task.
     expect(stateNext.members['9'].xpGained.slayer).toBeUndefined()
+    expect(stateNext.members['10'].xpGained.slayer).toBeUndefined()
   })
 
   it('credits nothing for the bosses before the last one', () => {
@@ -551,12 +561,14 @@ describe('coopRaidEngine — slayer credit for a raid clear', () => {
     // is paid by the CLEAR, so a bare kill of the final boss must pay nothing.
     const member: any = {
       status: 'alive', characterId: 7, slayerTask: raidTask(2), xpGained: {}, slayerTasksCompleted: 0,
+      damage: 5000,
     }
-    expect(creditSlayerKill(member, FINAL, monstersData)).toBeNull()
+    const basisHP = 5000
+    expect(creditSlayerKill(member, FINAL, monstersData, { basisHP })).toBeNull()
     expect(member.slayerTask.monstersRemaining).toBe(2)
     expect(member.xpGained.slayer).toBeUndefined()
 
-    expect(creditSlayerKill(member, FINAL, monstersData, { fromRaidCompletion: true })).toBeTruthy()
+    expect(creditSlayerKill(member, FINAL, monstersData, { fromRaidCompletion: true, basisHP })).toBeTruthy()
     expect(member.slayerTask.monstersRemaining).toBe(1)
   })
 })

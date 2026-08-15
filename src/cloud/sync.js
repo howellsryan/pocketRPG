@@ -10,7 +10,7 @@ import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.j
 import { LOCAL_WRITE_MARKER_KEY } from '../db/stores.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
-import { classifySaveError, saveLockCode } from './saveErrors.js'
+import { classifySaveError, isRevisionConflict, saveLockCode } from './saveErrors.js'
 import { readItemLossLedger, resetItemLossLedger, settleItemLossLedger } from '../engine/lossLedger.js'
 import { readKillTally, resetKillTally, settleKillTally } from '../engine/killTally.js'
 import { clearWorldHandoff, hasPendingWorldHandoff } from './worldHandoff.js'
@@ -202,7 +202,11 @@ async function performPush() {
     // Settle by subtracting what THIS payload declared. Anything spent since it
     // was captured stays on the ledger for the save that will carry it.
     if (losses) settleItemLossLedger(losses)
-    if (kills) settleKillTally(kills)
+    // `killsApplied: false` is the server saying the reply is ok but the counts
+    // are not in D1 — the tally write is swallowed so a failed one can never
+    // turn a legitimate save into a failure. Settling on that would drop the
+    // window's kills silently; kept, they ride the next push.
+    if (kills && res?.killsApplied !== false) settleKillTally(kills)
     pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     if (Number.isFinite(res?.save_revision)) lastSaveRevision = res.save_revision
@@ -268,6 +272,27 @@ async function performPush() {
       conflictPending = true
       pendingSnapshot = null
       pendingLosses = null
+      // A stale revision is the only signal we get that a FULL write of ours
+      // landed without us seeing the ok: it banked the kills, we settle only on
+      // a reply so the tally kept them, and the next push 409s on the revision
+      // that write moved. Re-sending would count them twice. Dropped here
+      // rather than in applyCloudSave, which also runs on the co-op-exit and
+      // boot pulls, where nothing suggests a write landed and the tally is
+      // simply the kills still owed.
+      //
+      // This does NOT cover every lost ok. The idle-ceiling and no-op replies
+      // bank kills while leaving the revision alone, so a lost response there
+      // raises no conflict and the retry banks them again — an over-count no
+      // client-side rule can catch, and the reason the real fix is an
+      // idempotency key on the report. Nor is a 409 proof it was us: raised by a
+      // foreign writer (a world flush, an action completion) this loses the
+      // window's counts instead. Both errors are bounded and invisible, and §14
+      // keeps every gated monster off this channel entirely.
+      //
+      // The OTHER conflict code lands here too and must not reset: a bank-wipe
+      // rejection refused the write outright, so it banked nothing and the tally
+      // is simply the kills still owed.
+      if (isRevisionConflict(err)) resetKillTally()
       pendingSaveOptions = {}
       hasUnsyncedChanges = false
       if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
@@ -596,9 +621,16 @@ export async function applyCloudSave(payload, updatedAt, saveRevision) {
   // would let the next save's real losses hide behind spends that no longer
   // relate to what the server is comparing against.
   resetItemLossLedger()
-  // Same reasoning for the kill tally: we are discarding the local window whose
-  // XP those kills produced, so its counts go with it.
-  resetKillTally()
+  // The kill tally is deliberately NOT reset here, unlike the ledger above.
+  // The ledger describes this write's holdings and is meaningless against a
+  // blob the server has replaced; kill counts live in their own D1 table, which
+  // adopting a save supersedes nothing about. Every /api/save path that banks
+  // them answers `ok`, and all three refusals return before it — so a rejected
+  // write counted nothing and the tally it kept is exactly what still needs
+  // sending. Resetting cost the kills the co-op lock branch above deliberately
+  // preserves (the client always PULLS on room exit), and, because boot is the
+  // same pull-then-adopt, everything a closing tab left in localStorage.
+  // Character switch and logout clear it through resetSyncState below.
   if (updatedAt) lastPushedAt = updatedAt
   // We just adopted the server's copy, so its content is already durably stored.
   // Seed the dirty-check key with it: the next autosave / screen-change push of

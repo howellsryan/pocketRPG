@@ -145,6 +145,8 @@ export function GameProvider({ children }) {
   const pendingGameEventsRef = useRef([])
   // Matched events awaiting their batched push to /api/daily-tasks/progress.
   const pendingDailyPushRef = useRef([])
+  // The task date the buffered events were matched against — see flushDailyTaskEvents.
+  const pendingDailyPushDateRef = useRef(null)
   const dailyPushTimerRef = useRef(null)
   const recordGameEventRef = useRef(null)
   const matchDailyEventRef = useRef(null)
@@ -1763,15 +1765,26 @@ export function GameProvider({ children }) {
    * forever, because the local optimistic progress above is what the player is
    * looking at, and the completion call remains the thing that pays the credit.
    */
-  const flushDailyTaskEvents = useCallback(async () => {
+  const flushDailyTaskEvents = useCallback(async ({ keepalive = false } = {}) => {
+    // CLEARED, not just dropped: an early flush (tab-hide, pagehide) leaves the
+    // debounce still armed, and forgetting the handle lets the next event arm a
+    // second one — the orphan then fires a pointless flush and untracks the live
+    // timer, so repeated tab-switching stacks them up.
+    if (dailyPushTimerRef.current) clearTimeout(dailyPushTimerRef.current)
     dailyPushTimerRef.current = null
     const events = pendingDailyPushRef.current
     if (events.length === 0) return
     pendingDailyPushRef.current = []
-    const date = dailyTaskDateRef.current
+    // The date these events were MATCHED against, not the one the ref holds
+    // now: a tab open across midnight UTC re-fetches into a new day's tasks, and
+    // sending yesterday's kills under today's date credits tasks they were never
+    // matched against. Stamped at queue time, so the server's own stale-date
+    // check (409 DAILY_TASKS_ROLLED_OVER) can see it and refuse — silently, like
+    // every other dropped batch on this best-effort path.
+    const date = pendingDailyPushDateRef.current
     if (!date || !getCharacterId() || !getToken()) return
     try {
-      const res = await api.syncDailyTaskProgress({ date, events })
+      const res = await api.syncDailyTaskProgress({ date, events }, { keepalive })
       const rows = Array.isArray(res?.tasks) ? res.tasks : []
       if (rows.length > 0) {
         // The server's row is the floor, never a ceiling: an event still sitting
@@ -1796,6 +1809,12 @@ export function GameProvider({ children }) {
 
   const queueDailyTaskEvent = useCallback((evt) => {
     if (!getCharacterId() || !getToken()) return
+    // One buffer, one day. Rolling over mid-buffer would send a mixed batch
+    // under a single date, so the older half is dropped rather than misfiled.
+    if (pendingDailyPushDateRef.current !== dailyTaskDateRef.current) {
+      pendingDailyPushRef.current = []
+      pendingDailyPushDateRef.current = dailyTaskDateRef.current
+    }
     const buf = pendingDailyPushRef.current
     buf.push(evt)
     if (buf.length > 200) buf.shift()
@@ -1804,15 +1823,21 @@ export function GameProvider({ children }) {
   }, [flushDailyTaskEvents])
 
   // A hidden tab runs no timers, so the debounce above would never fire for a
-  // player who tabs away (or straight into the open world) mid-grind.
+  // player who tabs away (or straight into the open world) mid-grind. Both of
+  // these can be the last thing the document does, so the request has to
+  // outlive it — an ordinary fetch is cancelled on unload.
   useEffect(() => {
-    const flush = () => { void flushDailyTaskEvents() }
+    const flush = () => { void flushDailyTaskEvents({ keepalive: true }) }
     const onVisibility = () => { if (document.hidden) flush() }
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('pagehide', flush)
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pagehide', flush)
+      if (dailyPushTimerRef.current) {
+        clearTimeout(dailyPushTimerRef.current)
+        dailyPushTimerRef.current = null
+      }
     }
   }, [flushDailyTaskEvents])
 
@@ -1828,7 +1853,15 @@ export function GameProvider({ children }) {
     }
     const tasks = dailyTaskStatesRef.current
     if (!tasks || tasks.length === 0) return
-    queueDailyTaskEvent(evt)
+    // Only events that move one of today's own tasks are worth sending. The
+    // server matches with this same matcher against these same five rows, so
+    // anything matching nothing here would match nothing there — and a grind
+    // fires skill_xp on every gain, which unfiltered is a POST every 8s
+    // carrying events no task will ever read.
+    if (tasks.some(task => {
+      const def = taskById(task.taskId)
+      return def ? matchTaskProgress(def, evt) > 0 : false
+    })) queueDailyTaskEvent(evt)
     let changed = false
     const next = tasks.map(task => {
       if (task.completed || task._completing) return task

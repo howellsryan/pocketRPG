@@ -139,6 +139,33 @@ describe('PUT /api/save kill-count side channel', () => {
     expect(countOf('green_dragon')).toBe(6)
   })
 
+  // The tally write is swallowed so a failed one can never turn a legitimate
+  // save into a failure — but the client settles by subtraction on an ok, so a
+  // silent swallow loses the window's kills. The reply has to say so.
+  it('tells the client when the counts did not land, while still answering ok', async () => {
+    const realBatch = env.DB.batch.bind(env.DB)
+    env.DB.batch = async (statements: any[]) => {
+      const sql = String(statements?.[0]?.__sql ?? statements?.[0]?.sql ?? '')
+      if (sql.includes('kill_counts')) throw new Error('d1 down')
+      return realBatch(statements)
+    }
+    const res = await onRequestPut({
+      request: put({ save_data: JSON.stringify(saveWith({ stats: { attack: { xp: 500 } } })), save_revision: 7, kills: { green_dragon: 4 } }),
+      env,
+    } as any)
+    expect(res.status).toBe(200)
+    expect((await res.json()).killsApplied).toBe(false)
+    expect(countOf('green_dragon')).toBe(0)
+  })
+
+  it('says they landed on an ordinary write', async () => {
+    const res = await onRequestPut({
+      request: put({ save_data: JSON.stringify(saveWith({ stats: { attack: { xp: 500 } } })), save_revision: 7, kills: { green_dragon: 4 } }),
+      env,
+    } as any)
+    expect((await res.json()).killsApplied).toBe(true)
+  })
+
   it('writes the save normally when no tally is reported', async () => {
     const res = await onRequestPut({
       request: put({ save_data: JSON.stringify(saveWith({ stats: { attack: { xp: 500 } } })), save_revision: 7 }),

@@ -1,12 +1,14 @@
 import { coopLootProgress } from '../engine/coopBossEngine.js'
 
-// Your loot share, as a hairline bar under the boss's name.
+// Your share of the kill, as a hairline bar under the boss's name.
 //
-// Loot in a group fight goes to everyone who personally deals 10% of the boss's
-// max HP, so "am I getting a drop" is a decision the player makes mid-fight —
-// but it is a glance, not a screen. The bar measures against the THRESHOLD, not
-// the boss's health: it fills across the 0–10% you need and turns solid green
-// the moment the drop is secured.
+// Dealing 10% of the boss's max HP earns the whole kill — a roll of the drop
+// table, the kill count, slayer progress and whatever daily tasks it feeds — so
+// "am I getting this one" is a decision the player makes mid-fight, but it is a
+// glance, not a screen. The bar measures against the THRESHOLD, not the boss's
+// health: it fills across the 0–10% you need and turns solid green the moment
+// the kill is secured. It says "kill", not "drop", because the loot stopped
+// being the only thing riding on it (killCredit.js).
 
 export default function CoopLootShare({ member, maxHP }) {
   const { pct, qualified, remaining } = coopLootProgress(member, maxHP)
@@ -16,7 +18,7 @@ export default function CoopLootShare({ member, maxHP }) {
         <div class="cb-loot__fill" style={{ width: `${pct}%` }} />
       </div>
       <span class="cb-loot__v">
-        {qualified ? 'Drop secured' : `${remaining.toLocaleString()} dmg to loot`}
+        {qualified ? 'Kill secured' : `${remaining.toLocaleString()} dmg to earn it`}
       </span>
     </div>
   )

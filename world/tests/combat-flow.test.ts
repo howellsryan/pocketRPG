@@ -81,30 +81,41 @@ describe('combat via tickPlayer', () => {
     expect(player.combat).not.toBeNull()
   })
 
-  it('two attackers drain one shared HP pool; top damage owns the drop (Phase 4)', () => {
+  // The pile spawned by the death event used to be owned by the top damage
+  // contributor. It is the killer's now, because the engine rolled it under the
+  // KILLER's slayer task and Grindman flag — spawned under anyone else it paid
+  // them somebody else's rates. Every other credited player is rolled their own
+  // pile separately (WorldZone/killLoot). `kill.owner` keeps the top contributor
+  // for the kill announcement.
+  it('two attackers drain one shared HP pool; the killer owns the pile, top damage owns the kill (Phase 4)', () => {
     const { npcs, bull } = bullAt(5, 5)
     const a = makePlayer({ charId: '1', x: 5, z: 6, pendingInteract: { kind: 'npc', id: 'bull_1', action: 'attack' } })
     const b = makePlayer({ charId: '2', x: 5, z: 4, pendingInteract: { kind: 'npc', id: 'bull_1', action: 'attack' } })
 
     const dmgByChar: Record<string, number> = { '1': 0, '2': 0 }
-    let owner: string | null = null
+    let pileOwner: string | null = null
+    let kill: { owner: string; killer: string; credited: string[] } | null = null
     let tick = 0
     while (bull.state !== 'dead' && tick < 1000) {
       tick++
       for (const p of [a, b]) {
         const r = tickPlayer(p, ctx(tick, npcs))
         for (const h of r.hits) if (h.targetId === 'bull_1') dmgByChar[p.charId] += h.dmg
-        if (r.newLoot.length > 0) owner = r.newLoot[0].ownerCharId
+        if (r.newLoot.length > 0) pileOwner = r.newLoot[0].ownerCharId
+        if (r.kills.length > 0) kill = r.kills[0]
       }
     }
 
     expect(bull.state).toBe('dead')
     // Shared pool: combined damage is exactly the bull's 8 HP — no double-kill.
     expect(dmgByChar['1'] + dmgByChar['2']).toBe(8)
-    expect(owner).not.toBeNull()
-    // The recorded top contributor owns the drop (either rule outcome on a tie).
+    expect(kill).not.toBeNull()
+    expect(pileOwner).toBe(kill!.killer)
+    // Both cleared the 10% line on an 8 HP monster, so both are credited.
+    expect(kill!.credited.slice().sort()).toEqual(['1', '2'])
+    // The recorded top contributor owns the kill (either rule outcome on a tie).
     if (dmgByChar['1'] !== dmgByChar['2']) {
-      expect(owner).toBe(dmgByChar['1'] > dmgByChar['2'] ? '1' : '2')
+      expect(kill!.owner).toBe(dmgByChar['1'] > dmgByChar['2'] ? '1' : '2')
     }
   })
 

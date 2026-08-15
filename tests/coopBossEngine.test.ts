@@ -21,6 +21,7 @@ import {
   lootEligibleCharacterIds,
   killCountCharacterIds,
   foughtThisKill,
+  isRaidPayingBoss,
   describeCoopEquipRefusal,
   describeCoopActionRefusal,
 } from '../src/engine/coopBossEngine.js'
@@ -884,23 +885,28 @@ describe('slayer credit on a group boss kill', () => {
     return processCoopTick(state, [], deps, Date.now())
   }
 
-  it('credits every living member on task, not just the one who dealt the damage', () => {
+  it('credits every member past the 10% line and nobody under it', () => {
     const state = stateWithMembers([
       { id: 1, task: taskFor(BOSS, 5) },
       { id: 2, task: taskFor(BOSS, 5) },
+      { id: 3, task: taskFor(BOSS, 5) },
     ])
-    // Only member 1 did anything at all.
-    state.members['1'].damage = 2000
+    // 2000 HP boss, so the line is 200. Member 3 swung and fell short.
+    state.members['1'].damage = 1600
+    state.members['2'].damage = 200
+    state.members['3'].damage = 199
     const { stateNext, events } = killTick(state)
 
     expect(stateNext.members['1'].slayerTask.monstersRemaining).toBe(4)
     expect(stateNext.members['2'].slayerTask.monstersRemaining).toBe(4)
+    expect(stateNext.members['3'].slayerTask.monstersRemaining).toBe(5)
     const credits = events.filter((e: any) => e.type === 'slayerCredit')
     expect(credits.map((c: any) => c.characterId).sort()).toEqual([1, 2])
   })
 
   it('grants slayer XP for the kill to each member on task', () => {
     const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 5) }])
+    state.members['1'].damage = 2000
     const { stateNext } = killTick(state)
     // Boss with no explicit slayerXP falls back to HP (2000) at the ×4 boss
     // multiplier — §4's guardrail against inflated boss slayer XP.
@@ -911,6 +917,7 @@ describe('slayer credit on a group boss kill', () => {
     const state = stateWithMembers([
       { id: 1, task: taskFor(BOSS, 5), settings: { characterUnlocks: { doubleSlayerXp: true } } },
     ])
+    state.members['1'].damage = 2000
     const { stateNext } = killTick(state)
     expect(stateNext.members['1'].xpGained.slayer).toBe(16000)
   })
@@ -920,6 +927,9 @@ describe('slayer credit on a group boss kill', () => {
       { id: 1, task: null },
       { id: 2, task: taskFor('warlord_grondar', 5) },
     ])
+    // Both well past the damage line, so this tests the TASK gate alone.
+    state.members['1'].damage = 1000
+    state.members['2'].damage = 1000
     const { stateNext, events } = killTick(state)
     expect(stateNext.members['1'].slayerTask).toBeNull()
     expect(stateNext.members['2'].slayerTask.monstersRemaining).toBe(5)
@@ -927,17 +937,31 @@ describe('slayer credit on a group boss kill', () => {
     expect(events.filter((e: any) => e.type === 'slayerCredit')).toHaveLength(0)
   })
 
-  it('does NOT credit a member who is dead when the boss falls', () => {
+  // The alive check is gone: slayer follows the loot gate, and the loot gate has
+  // always paid a member who earned their share and then died.
+  it('credits a member who earned their share and then died', () => {
     const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 5) }, { id: 2, task: taskFor(BOSS, 5) }])
+    state.members['1'].damage = 1000
+    state.members['2'].damage = 1000
     state.members['2'].status = 'dead'
     state.members['2'].hp = 0
     const { stateNext } = killTick(state)
     expect(stateNext.members['1'].slayerTask.monstersRemaining).toBe(4)
+    expect(stateNext.members['2'].slayerTask.monstersRemaining).toBe(4)
+  })
+
+  it('credits nobody for a boss they barely touched, alive or not', () => {
+    const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 5) }, { id: 2, task: taskFor(BOSS, 5) }])
+    state.members['1'].damage = 1990
+    state.members['2'].damage = 10
+    const { stateNext } = killTick(state)
     expect(stateNext.members['2'].slayerTask.monstersRemaining).toBe(5)
+    expect(stateNext.members['2'].xpGained.slayer).toBeUndefined()
   })
 
   it('completes the task on the last kill and banks the points', () => {
     const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 1) }])
+    state.members['1'].damage = 2000
     const { stateNext, events } = killTick(state)
     const me = stateNext.members['1']
     expect(me.slayerTask).toBeNull()
@@ -952,11 +976,13 @@ describe('slayer credit on a group boss kill', () => {
     const state = stateWithMembers([
       { id: 1, task: taskFor(BOSS, 1), settings: { slayerTasksCompleted: 4 } },
     ])
+    state.members['1'].damage = 2000
     const first = killTick(state).stateNext
     expect(first.members['1'].slayerCredit.pointsEarned).toBe(150)
     expect(first.members['1'].slayerTasksCompleted).toBe(5)
 
     first.members['1'].slayerTask = taskFor(BOSS, 1)
+    first.members['1'].damage = 2000
     // Clear the respawn wait too, or the next tick just counts it down.
     first.boss.killedAt = null
     first.boss.respawnCountdown = 0
@@ -1013,21 +1039,25 @@ describe('coopBossEngine — the 10% loot threshold', () => {
     expect(lootEligibleCharacterIds(state)).toContain(2)
   })
 
-  it('counts the kill for everyone alive who swung, past the loot line or not', () => {
+  // One kill, one rule: the kill count list IS the loot list. It used to be its
+  // own gate (alive, any damage), so a fight paid three different ways at once.
+  it('counts the kill for exactly the members it pays loot to', () => {
     const state = joinedState([1, 2, 3])
     state.members['1'].damage = 1400
-    state.members['2'].damage = 1
-    state.members['3'].damage = 0
-    // 3 never swung; 2 is nowhere near a drop but did fight the thing.
+    state.members['2'].damage = 400
+    state.members['3'].damage = 1
+    // 3 swung, but nowhere near the line — no drop and no kill count either.
     expect(killCountCharacterIds(state)).toEqual([1, 2])
+    expect(killCountCharacterIds(state)).toEqual(lootEligibleCharacterIds(state))
   })
 
-  it('does not count the kill for a member who died before it landed', () => {
+  it('counts the kill for a member who earned their share and then died', () => {
     const state = joinedState([1, 2])
     state.members['1'].damage = 1000
     state.members['2'].damage = 500
     state.members['2'].status = 'dead'
-    expect(killCountCharacterIds(state)).toEqual([1])
+    // Damage, never survival — the same rule the loot has always used.
+    expect(killCountCharacterIds(state)).toContain(2)
   })
 
   it('ships the eligible list on the kill record', () => {
@@ -1291,5 +1321,28 @@ describe('foughtThisKill', () => {
 
   it('is true when the room is older than the field, rather than silently paying nobody', () => {
     expect(foughtThisKill({ bossId: 'warlord_grondar' }, 3)).toBe(true)
+  })
+})
+
+// A raid pays its boss kill once, on the last boss, because that is the only
+// one solo pays: combat.js emits `monsterDeath` there and nowhere else, so
+// crediting each boss in the run handed a group raider five kills for a run a
+// solo raider gets one from.
+describe('isRaidPayingBoss', () => {
+  it('pays the final boss of the run', () => {
+    expect(isRaidPayingBoss({ bossIndex: 4, totalBosses: 5 })).toBe(true)
+  })
+
+  it('pays none of the bosses before it', () => {
+    expect(isRaidPayingBoss({ bossIndex: 0, totalBosses: 5 })).toBe(false)
+    expect(isRaidPayingBoss({ bossIndex: 3, totalBosses: 5 })).toBe(false)
+  })
+
+  it('pays a one-boss raid on its only boss', () => {
+    expect(isRaidPayingBoss({ bossIndex: 0, totalBosses: 1 })).toBe(true)
+  })
+
+  it('pays an event with no run shape at all, rather than silently paying nobody', () => {
+    expect(isRaidPayingBoss({ bossId: 'the_great_olm' })).toBe(true)
   })
 })

@@ -8,10 +8,29 @@
 // tab-hide and on every critical save, so the counts land without a single
 // extra request.
 //
-// Window semantics mirror lossLedger.js: settled by SUBTRACTION on a successful
-// push (kills made while that push was on the wire belong to the next one),
-// retained on a failure, and reset outright when a server copy is adopted —
-// that save's XP is being discarded, so its kills must go with it.
+// Window semantics mirror lossLedger.js in one respect and deliberately part
+// company in another: settled by SUBTRACTION on a successful push (kills made
+// while that push was on the wire belong to the next one) and retained on a
+// failure — but NOT reset when a server copy is adopted. The ledger describes
+// the very blob the server replaced; these counts live in their own D1 table,
+// which adopting a save supersedes nothing about, and no /api/save refusal
+// banks them. Resetting on every adopt threw away the kills the co-op lock
+// preserves for the pull that follows a fight, and — boot being the same
+// pull-then-adopt — everything a closing tab left in localStorage.
+//
+// It IS reset on a save_revision CONFLICT (sync.js), the only signal that a
+// full write landed unseen and already banked what is still sitting here, and
+// on logout / character switch via resetSyncState. Specifically that code —
+// the bank-wipe rejection classifies as a conflict too and refused the write
+// outright, so it banked nothing and the tally is simply what is still owed.
+// That covers the revision-bumping write and nothing else: an idle-ceiling or
+// no-op reply banks kills without moving the revision, so a lost response there
+// is re-sent and counted twice. Closing that needs an idempotency key on the
+// report, not another client-side rule.
+//
+// A tally the server failed to write is a different case and IS reported back:
+// the kill_counts write is swallowed rather than failing an otherwise good
+// save, and the reply carries killsApplied: false so this survives the ok.
 //
 // What may be reported at all is decided by killCountReports.js, not here.
 import { filterReportableKills, MAX_REPORTED_KILLS_PER_MONSTER, MAX_REPORTED_MONSTERS } from './killCountReports.js'
@@ -104,7 +123,8 @@ export function settleKillTally(shipped) {
   persistKillTally()
 }
 
-/** Drop the tally — on adopting a server copy, logout, or character switch. */
+/** Drop the tally — on a save-revision conflict, logout, or character switch.
+ * NOT on adopting a server copy: see the window semantics at the top. */
 export function resetKillTally() {
   killTallyHydrated = true
   killTally = new Map()

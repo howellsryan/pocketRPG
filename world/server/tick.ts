@@ -124,6 +124,11 @@ export type TickPlayer = {
    * Lives on the base session rather than the DO's Player so the entity diff can
    * read it without importing the zone. */
   pvpOpponentId?: string | null
+  /** The player's own slayer session, owned by the DO (killProgress.ts) and
+   * declared here structurally so the combat adapter can hand the engine THIS
+   * player's task: it is what makes a task-only drop roll and a slayer weapon
+   * apply its bonus. Optional because the pure tick fixtures carry no session. */
+  slayer?: { task: { monsterId?: string } | null }
   /** Overhead protection-prayer style last put on the wire. Prayers toggle
    * BETWEEN ticks (a client message), so the tick's own before/after snapshot
    * can't see the change — this is what makes the entity diff go out, the same
@@ -197,7 +202,26 @@ export type TickResult = {
   /** Kills resolved this tick, for the DO to record server-authoritatively
    * (collection log + kill count + audit for bosses). `owner` is the top-damage
    * contributor; `loot` is what was rolled for them. */
-  kills: { monsterId: string; owner: string; loot: { itemId: string; quantity: number }[] }[]
+  /** `owner` is the top-damage player, whose roll came off the death event and
+   * is already on the floor. `credited` is everyone who earned the kill on the
+   * shared 10% damage share (killCredit.js) — kill count, slayer task, daily
+   * tasks and a drop-table roll of their own (killLoot.ts) go to all of them.
+   * `summoned` marks a boss minion, which earns none of it (§4: adds count for
+   * nothing) despite being a real npc out here that dies like any other. */
+  kills: {
+    monsterId: string
+    /** Biggest contributor — who the kill is announced under. */
+    owner: string
+    /** Who landed the last blow, and so whose flags rolled `loot`. */
+    killer: string
+    credited: string[]
+    /** The killer's own roll, empty when they never reached the credit line. */
+    loot: { itemId: string; quantity: number }[]
+    /** The death tile: every credited player's pile is spawned here. */
+    x: number
+    z: number
+    summoned?: boolean
+  }[]
 }
 
 export function emptyResult(): TickResult {
