@@ -11,7 +11,6 @@ import {
   segmentDurationMs,
   shouldSnap,
   stepYaw,
-  swingStartDelayMs,
   yawDelta,
   yawToward,
 } from '../client/src/motion'
@@ -146,24 +145,12 @@ describe('resolveGltfAnim (one-shot swing latch)', () => {
     // animated at all — the next diff is already back to idle.
     expect(resolveGltfAnim('run', 'attack', true, false, false)).toEqual({ fireSwing: true, latched: true, playBase: true })
   })
-  it('keeps the stride clip playing until the deferred swing actually starts', () => {
+  it('keeps the stride clip playing while an impact-aligned wind-up waits out its lead', () => {
+    // A monster with attackImpactSec is pre-signalled ticks ahead of the blow
+    // and its clip start is held back by the sub-tick nudge; it keeps walking
+    // until the clip actually starts.
     expect(resolveGltfAnim('run', 'attack', true, true, false).playBase).toBe(true)
     expect(resolveGltfAnim('run', 'attack', true, true, true).playBase).toBe(false)
   })
 })
 
-describe('swingStartDelayMs', () => {
-  it('starts a standing swing immediately', () => {
-    expect(swingStartDelayMs(0, 0)).toBe(0)
-  })
-  it('waits out the rest of the stride so the blow lands on arrival', () => {
-    expect(swingStartDelayMs(420, 0)).toBe(420)
-  })
-  it('never starts before the monster’s own impact-frame lead', () => {
-    expect(swingStartDelayMs(100, 300)).toBe(300)
-    expect(swingStartDelayMs(500, 300)).toBe(500)
-  })
-  it('clamps a segment that has already overrun', () => {
-    expect(swingStartDelayMs(-80, 0)).toBe(0)
-  })
-})

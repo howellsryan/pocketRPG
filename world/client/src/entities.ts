@@ -4,7 +4,7 @@ import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.j
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
-import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, swingStartDelayMs, yawToward } from './motion'
+import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
 import { MONSTER_MODELS, FORM_TINT_MIX, FORM_TINT_EMISSIVE, formTintColor } from '../../shared/monsterModels'
 import { footprintRadius } from '../../shared/monsterSize'
 import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
@@ -997,15 +997,12 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number, 
       const decision = resolveGltfAnim(name, swing, entity.moving, anim.swingLatched ?? false, attackPlaying)
       anim.swingLatched = decision.latched
       if (decision.fireSwing && attackAction) {
-        // Two reasons to hold the clip back: this monster's sub-tick impact
-        // delay (so the impact frame coincides with the hit splat, the same
-        // alignment the arena does — src/utils/combatWindup.js), and the rest of
-        // the stride when the swing was signalled on the tick the attacker
-        // stepped into reach.
-        const segmentRemaining = entity.moving ? entity.segmentStart + entity.segmentDuration - now : 0
-        const delay = swingStartDelayMs(segmentRemaining, anim.swingDelayMs ?? 0)
-        if (delay > 0) {
-          anim.pendingSwingAt = now + delay
+        if ((anim.swingDelayMs ?? 0) > 0) {
+          // Defer the clip start by this monster's sub-tick impact delay so the
+          // impact frame coincides with the hit splat (same alignment the arena
+          // does — src/utils/combatWindup.js). Never delayed for anything else,
+          // mid-stride included: the splat renders on the frame the diff lands.
+          anim.pendingSwingAt = now + anim.swingDelayMs!
           anim.pendingSwingAction = attackAction
         } else {
           playSwing(anim, attackAction)

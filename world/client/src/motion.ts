@@ -18,11 +18,15 @@ export function isAttackAnim(name: AnimName): boolean {
  * lands then returns to idle, so without this the swing would be cut off after
  * ~1 tick — this keeps it playing to completion, matching the combat arena.
  *
- * A swing signalled MID-STRIDE still fires (the caller delays it to the end of
- * the traversal): the server resolves the first swing on the very tick the last
- * step lands, so the client is still interpolating that step when the signal
- * arrives. Dropping it there cost a run-in kill its entire animation — a one-hit
- * kill never animated at all, since the next diff is already back to idle. */
+ * A swing signalled MID-STRIDE fires anyway, rather than losing to the walk
+ * clip: the server resolves the first swing on the very tick the last step
+ * lands, so the client is ALWAYS still interpolating that step when the signal
+ * arrives. Dropped there, a run-in kill lost its entire animation — a one-hit
+ * kill never animated at all, since the next diff is already back to idle. It
+ * fires on the signal frame and not on arrival because the splat, the health
+ * bar and the target's death clip all render the moment the diff lands, while
+ * position lags a whole interpolation segment behind: held to the arrival, the
+ * swing would play after the blow it delivers. */
 export function resolveGltfAnim(
   base: AnimName,
   swing: AnimName | null,
@@ -39,14 +43,6 @@ export function resolveGltfAnim(
   // it hands over the moment the swing actually starts.
   if (swing) return { fireSwing: !latched, latched: true, playBase: moving && !attackPlaying }
   return { fireSwing: false, latched: false, playBase: !attackPlaying }
-}
-
-/** How long to hold a fired swing before its clip starts: long enough to finish
- * the stride it was signalled during (so the blow lands on arrival, not while
- * sliding into the tile), and never shorter than the monster's own impact-frame
- * lead. 0 => start it this frame. */
-export function swingStartDelayMs(segmentRemainingMs: number, impactDelayMs: number): number {
-  return Math.max(0, segmentRemainingMs, impactDelayMs)
 }
 
 export const MOVE_DURATION_MS = 600

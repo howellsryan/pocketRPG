@@ -48,7 +48,7 @@ function diff(x: number, z: number, anim: EntityDiff['anim']): EntityDiff {
 }
 
 describe('a swing signalled on the tick the attacker steps into reach', () => {
-  it('plays the attack clip once the stride finishes, not never', () => {
+  it('plays the attack clip on the arrival step, not never', () => {
     const { animator, actions } = animatorWith(['idle', 'walk', 'run', 'attack'])
     const entity = createEntity('p1', 5, 5, new THREE.Object3D(), animator)
 
@@ -57,19 +57,36 @@ describe('a swing signalled on the tick the attacker steps into reach', () => {
     const t0 = 1000
     updateEntity(entity, t0, 0.016)
     expect(entity.moving).toBe(true)
-    expect(actions.attack.plays).toBe(0)
-
-    // Mid-stride the walk clip still owns the mixer — the swing is held, not
-    // dropped, and not fired early into a slide.
-    updateEntity(entity, t0 + MOVE_DURATION_MS / 2, 0.016)
-    expect(actions.attack.plays).toBe(0)
-    expect(animator.current).toBe(actions.walk)
-
-    // The kill ended the fight, so the very next tick is already back to idle.
-    applyEntityDiff(entity, diff(6, 5, 'idle'))
-    updateEntity(entity, t0 + MOVE_DURATION_MS, 0.016)
+    // On the signal frame, alongside the splat and the target's death clip —
+    // both of which render the moment the diff lands, while position lags the
+    // whole segment behind.
     expect(actions.attack.plays).toBe(1)
     expect(animator.current).toBe(actions.attack)
+
+    // The kill ended the fight, so the very next tick is already back to idle —
+    // the clip keeps playing through it rather than being cut off.
+    applyEntityDiff(entity, diff(6, 5, 'idle'))
+    updateEntity(entity, t0 + MOVE_DURATION_MS / 2, 0.016)
+    expect(animator.current).toBe(actions.attack)
+    expect(actions.attack.plays).toBe(1)
+  })
+
+  it('holds an impact-aligned monster back by its sub-tick wind-up only', () => {
+    // A registry monster with attackImpactSec is pre-signalled ticks ahead of
+    // the blow; its clip start is nudged so the impact frame lands on the splat,
+    // and the stride must not stretch that (it would play the telegraph and the
+    // blow after the hit they were aligned to).
+    const { animator, actions } = animatorWith(['idle', 'walk', 'run', 'attack'])
+    animator.swingDelayMs = 150
+    const entity = createEntity('n1', 5, 5, new THREE.Object3D(), animator)
+
+    applyEntityDiff(entity, diff(6, 5, 'attack'))
+    updateEntity(entity, 1000, 0.016)
+    expect(actions.attack.plays).toBe(0)
+    updateEntity(entity, 1100, 0.016)
+    expect(actions.attack.plays).toBe(0)
+    updateEntity(entity, 1150, 0.016)
+    expect(actions.attack.plays).toBe(1)
   })
 
   it('fires immediately when the attacker is standing still', () => {
@@ -91,9 +108,10 @@ describe('a swing signalled on the tick the attacker steps into reach', () => {
     expect(actions.attack.plays).toBe(1)
   })
 
-  it('cancels a held swing when the attacker dies before the stride ends', () => {
+  it('cancels a held wind-up when the attacker dies before its clip starts', () => {
     const { animator, actions } = animatorWith(['idle', 'walk', 'run', 'attack', 'die'])
-    const entity = createEntity('p1', 5, 5, new THREE.Object3D(), animator)
+    animator.swingDelayMs = 150
+    const entity = createEntity('n1', 5, 5, new THREE.Object3D(), animator)
 
     applyEntityDiff(entity, diff(6, 5, 'attack'))
     updateEntity(entity, 1000, 0.016)
