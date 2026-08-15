@@ -92,6 +92,7 @@ const sourceFiles = [
   'engine/hardMode.js',
   'engine/grimReaper.js',
   'engine/grindman.js',
+  'engine/notedDrops.js',
   'engine/dropRateDisplay.js',
   'engine/xpBank.js',
   'engine/roomWideAttacks.js',

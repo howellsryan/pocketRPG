@@ -38,7 +38,7 @@ import { checkBossRequirementsPure, checkRaidRequirementsPure } from '../engine/
 import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
-import { addItem, removeItem, freeSlots, countItem } from '../engine/inventory.js'
+import { addLootEntry, removeItem, freeSlots, countItem } from '../engine/inventory.js'
 import { SUMMONING_CREATURES, getSummoningCreature, createSummonState, getMonsterCharmDrops } from '../engine/summoning.js'
 import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
@@ -1280,7 +1280,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   const itemId = reward?.itemId
                   const quantity = Math.floor(Number(reward?.quantity) || 0)
                   if (!itemId || quantity < 1) continue
-                  const item = itemsData[itemId]
                   if (reward?.destination === 'bank') {
                     const existing = newBank[itemId]
                     const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
@@ -1290,7 +1289,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       quantity: existingQty + quantity,
                     }
                   } else {
-                    addItem(newInv, itemId, quantity, item?.stackable || false)
+                    addLootEntry(newInv, reward, itemsData)
                   }
                 }
                 updateInventory(newInv)
@@ -1343,21 +1342,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             })
           } else if (killLoot.length > 0) {
             const newInv = [...inventoryRef.current]
-            for (const drop of killLoot) {
-                const item = itemsData[drop.itemId]
-                if (drop.noted) {
-                  const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted)
-                  if (existingIdx !== -1) newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity }
-                  else {
-                    const empty = newInv.indexOf(null)
-                    if (empty !== -1) newInv[empty] = { itemId: drop.itemId, quantity: drop.quantity, noted: true }
-                  }
-                } else {
-                  addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
-                }
-              }
-              updateInventory(newInv)
-            }
+            for (const drop of killLoot) addLootEntry(newInv, drop, itemsData)
+            updateInventory(newInv)
+          }
 
           if (hasCriticalDrop(killLoot, defeatedMonsterData, itemsData)) {
             requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.RARE_DROP)
@@ -1999,7 +1986,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const itemId = reward?.itemId
           const quantity = Math.floor(Number(reward?.quantity) || 0)
           if (!itemId || quantity < 1) continue
-          const item = itemsData[itemId]
           if (reward?.destination === 'bank') {
             const existing = newBank[itemId]
             const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
@@ -2009,7 +1995,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               quantity: existingQty + quantity,
             }
           } else {
-            addItem(newInv, itemId, quantity, item?.stackable || false)
+            addLootEntry(newInv, reward, itemsData)
           }
         }
         updateInventory(newInv)
