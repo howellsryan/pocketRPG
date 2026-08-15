@@ -18,6 +18,7 @@
 
 import { createCombatState, processCombatTick } from './combat.js'
 import { hardModeDeathLoss, monstersTableFor } from './hardMode.js'
+import { grimReaperStashFromDeath } from './grimReaper.js'
 import { getLevelFromXP } from './experience.js'
 import { resolveSlayerTaskKill } from './slayerTasks.js'
 import { RAID_TASK_META } from './slayerMasters.js'
@@ -456,6 +457,10 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     // save — and the client ledger that explains a solo hard-mode death to the
     // item-loss detector cannot see a loss it never made.
     itemsLost: {},
+    // A hard-mode death's Grim Reaper stash, set only at the death itself and
+    // cleared the moment a write-back lands it on the save (functions/_lib/game/
+    // coopBoss.js applyGrimReaperStashToSave) — same lifecycle as itemsLost above.
+    grimReaperStash: null,
     // Slayer state rides the session so a group kill credits the member's own
     // task. The running completion total comes along because the task-reward
     // multiplier keys off it (every 5th task ×10, every 50th ×50) — snapshotting
@@ -1266,6 +1271,11 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
         member.equipment = loss.equipment
         itemsLost = loss.lost
         member.itemsLost = bankMemberItemsLost(member.itemsLost, loss.lost)
+        // Stashed with the Grim Reaper on write-back (functions/_lib/game/coopBoss.js
+        // applyGrimReaperStashToSave) — overwrites whatever was stashed from an
+        // earlier death, same as a solo one.
+        const stash = grimReaperStashFromDeath(loss.lost, { id: next.bossId, name: monstersData?.[next.bossId]?.name })
+        if (stash) member.grimReaperStash = stash
       }
       events.push({ type: 'memberDeath', characterId: member.characterId, itemsLost })
       reselectTarget(next)

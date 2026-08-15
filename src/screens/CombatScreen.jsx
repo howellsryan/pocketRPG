@@ -26,6 +26,8 @@ import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
 import { hardModeDeathLoss, hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
+import { displayedDropChance, dropRateBoostLabel, monsterDropBoost } from '../engine/dropRateDisplay.js'
+import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
 import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
 import { recordItemLossEntries } from '../engine/lossLedger.js'
 import { HardModeConfirm, HardModeTag, HardModeToggle } from '../components/HardMode.jsx'
@@ -309,8 +311,58 @@ function MonsterAddStats({ monster }) {
   )
 }
 
+/**
+ * The desktop drop table, shared by the picker's info modal and the in-fight
+ * one — the two are the same list and drifted apart is how one of them would
+ * end up still printing authored rates.
+ *
+ * Rates are what the player is actually rolling against (monsterDropBoost). One
+ * boost covers every row — seeds and charms are empty for a boss, and hard mode
+ * is boss-only.
+ */
+function MonsterDropList({ monster, itemsData, grindman = false }) {
+  if (!monster?.drops || monster.drops.length === 0) return null
+  const boost = monsterDropBoost(monster, grindman)
+  const boostLabel = dropRateBoostLabel(boost)
+  const drops = [
+    ...monster.drops,
+    ...getMonsterSeedDrops(monster),
+    ...getMonsterCharmDrops(monster),
+  ]
+  return (
+    <div>
+      <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
+      {boostLabel && (
+        <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-2">{boostLabel}</div>
+      )}
+      <div class="space-y-1">
+        {drops.map(drop => {
+          const item = itemsData[drop.itemId]
+          return (
+            <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
+                  <GameIcon item={item} iconKey={item?.iconId} size={16} />
+                  <div class="min-w-0">
+                    <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.name || drop.itemId}</div>
+                    <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                      {formatDropChance(displayedDropChance(drop.chance, boost))}
+                      {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                      {drop.taskOnly ? ' · Slayer task only' : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, isGrindman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, isGrindman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget, updateGrimReaperStash } = useGame()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showWildernessEntry, setShowWildernessEntry] = useState(false)
@@ -497,6 +549,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // one the item-loss detector cannot tell from the bug it watches for
     // (src/engine/lossLedger.js).
     recordItemLossEntries(loss.lost)
+    // Stashed with the Grim Reaper (Settings) so it can be bought back for
+    // credits — overwrites whatever was stashed from an earlier death.
+    const stash = grimReaperStashFromDeath(loss.lost, { id: state.monster?.id, name: state.monster?.name })
+    if (stash) updateGrimReaperStash(stash)
     // Losing a pack has to survive a closed tab, so it does not wait for the
     // ordinary idle flush.
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.HARD_MODE_DEATH)
@@ -1410,6 +1466,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const hardModeSet = useMemo(() => new Set(hardModeTargets || []), [hardModeTargets])
   const offersHardMode = (entity) => supportsHardMode(entity) && !isDemo
   const isHardMode = (sourceType, sourceId) => hardModeSet.has(hardModeKey(sourceType, sourceId))
+  // A raid carries no scaled record for the info surfaces to read a flag off, so
+  // both of them (mobile sheet, desktop modal) ask here.
+  const raidDropBoost = (raid) => ({
+    hardMode: offersHardMode(raid) && isHardMode('raids', raid.id),
+    grindman: isGrindman,
+  })
   const [hardModePending, setHardModePending] = useState(null)
   // Switching hard mode ON is what puts a player's whole pack at risk, so it
   // asks first. Switching it OFF costs nothing and asks nothing.
@@ -2861,6 +2923,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monster={selectedMonsterInfo}
           categoryKey={getMonsterCategoryKey(selectedMonsterInfo.id)}
           itemsData={itemsData}
+          grindman={isGrindman}
           onClose={() => setSelectedMonsterInfo(null)}
         />
       )}
@@ -2914,33 +2977,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </div>
             <MonsterPhaseStats monster={selectedMonsterInfo} />
             <MonsterAddStats monster={selectedMonsterInfo} />
-            {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
-              <div>
-                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
-                <div class="space-y-1">
-                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo), ...getMonsterCharmDrops(selectedMonsterInfo)].map(drop => {
-                    const item = itemsData[drop.itemId]
-                    return (
-                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
-                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
-                            <div class="min-w-0">
-                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.name || drop.itemId}</div>
-                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                                {formatDropChance(drop.chance)}
-                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
-                                {drop.taskOnly ? ' · Slayer task only' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  </div>
-              </div>
-            )}
+            <MonsterDropList monster={selectedMonsterInfo} itemsData={itemsData} grindman={isGrindman} />
           </div>
         </Modal>
       )}
@@ -2952,6 +2989,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monstersData={monstersData}
           itemsData={itemsData}
           raidKillCounts={raidKillCounts}
+          boost={raidDropBoost(selectedRaidInfo)}
           onStartRaid={(raid) => { setSelectedRaidInfo(null); pickRaidForFight(raid) }}
           onClose={() => setSelectedRaidInfo(null)}
         />
@@ -2998,9 +3036,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 })}
               </div>
             </div>
-            {selectedRaidInfo.rewards && (
+            {selectedRaidInfo.rewards && (() => {
+              const raidBoost = raidDropBoost(selectedRaidInfo)
+              const raidBoostLabel = dropRateBoostLabel(raidBoost)
+              return (
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Rewards</h4>
+                {raidBoostLabel && (
+                  <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-2">{raidBoostLabel}</div>
+                )}
                 <div class="space-y-1">
                   {selectedRaidInfo.rewards.always?.map(drop => {
                     const item = itemsData[drop.itemId]
@@ -3010,7 +3054,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                           <GameIcon item={item} iconKey={item?.iconId} size={16} /> {item?.name || drop.itemId}
                         </div>
                         <div class="text-[9px] text-[var(--color-parchment)] opacity-50">
-                          {formatDropChance(drop.chance)}
+                          {formatDropChance(displayedDropChance(drop.chance, raidBoost))}
                           {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]}` : ` · ${drop.quantity}`}
                         </div>
                       </div>
@@ -3019,7 +3063,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {selectedRaidInfo.rewards.unique && (
                     <div class="bg-[var(--surface-raised)] border border-[var(--color-gold-dim)] rounded-lg p-2 mt-1">
                       <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-1">
-                        ✨ Unique Drop ({(selectedRaidInfo.rewards.unique.chance * 100).toFixed(1)}% chance)
+                        ✨ Unique Drop ({(displayedDropChance(selectedRaidInfo.rewards.unique.chance, raidBoost) * 100).toFixed(1)}% chance)
                       </div>
                       <div class="space-y-0.5">
                         {selectedRaidInfo.rewards.unique.items.map(u => {
@@ -3035,7 +3079,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   )}
                 </div>
               </div>
-            )}
+              )
+            })()}
           </div>
         </Modal>
       )}
@@ -4201,7 +4246,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           // A hard-mode death is the one death that costs items, so the screen
           // has to name what went with it rather than leave the player to work
           // out why their pack is empty.
-          sub={deathModal.itemsLost ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined}
+          sub={deathModal.itemsLost?.length > 0
+            ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you. Reclaim it from Grim Reaper in Settings.'
+            : (deathModal.itemsLost ? 'Hard Mode — everything tradeable you carried and wore is gone. Untradeables stayed with you.' : undefined)}
           loot={deathModal.itemsLost?.length > 0 ? lootRowsForModal(shapeLootForModal(deathModal.itemsLost, itemsData).valued, itemsData) : undefined}
           lootTitle={deathModal.itemsLost?.length > 0 ? 'Lost Forever' : undefined}
           lootSigned="-"
@@ -4302,36 +4349,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <MonsterPhaseStats monster={liveMonster} />
             <MonsterAddStats monster={liveMonster} />
 
-            {/* Drops */}
-            {liveMonster.drops && liveMonster.drops.length > 0 && (
-              <div>
-                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
-                <div class="space-y-1">
-                  {[...(liveMonster.drops || []), ...getMonsterSeedDrops(liveMonster), ...getMonsterCharmDrops(liveMonster)].map(drop => {
-                    const item = itemsData[drop.itemId]
-                    return (
-                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
-                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
-                            <div class="min-w-0">
-                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">
-                                {item?.name || drop.itemId}
-                              </div>
-                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                                {formatDropChance(drop.chance)}
-                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
-                                {drop.taskOnly ? ' · Slayer task only' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  </div>
-              </div>
-            )}
+            <MonsterDropList monster={liveMonster} itemsData={itemsData} grindman={isGrindman} />
           </div>
         </Modal>
         )

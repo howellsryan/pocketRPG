@@ -23,6 +23,15 @@ export const IRONMAN_FILTER = Object.freeze({
   icon: '🪖', // emoji fallback before the helm glyph chunk loads
 })
 
+// Grindman-only board, ranked by total level (same metric as the main board,
+// scoped to is_grindman accounts server-side).
+export const GRINDMAN_FILTER = Object.freeze({
+  id: 'grindman',
+  type: 'grindman',
+  label: 'Grindman',
+  icon: '🪙', // emoji fallback before the helm glyph chunk loads
+})
+
 // Canonical raids only. raids.json carries legacy_id aliases as extra keys
 // whose `id` points back at the canonical entry; skip those so each raid
 // appears once. Preserves raids.json declaration order.
@@ -77,6 +86,7 @@ export function getLeaderboardFilters() {
     cachedLeaderboardFilters = [
       TOTAL_LEVEL_FILTER,
       IRONMAN_FILTER,
+      GRINDMAN_FILTER,
       ...buildRaidLeaderboardFilters(),
       ...buildBossLeaderboardFilters(),
     ]

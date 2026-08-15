@@ -36,31 +36,6 @@ function getPlayerCombatLevel(stats) {
   return base + Math.max(melee, rangedCB, magicCB)
 }
 
-const SLAYER_MONSTER_ICONS = {
-  field_chicken: '🐔', cave_goblin: '👺', pasture_bull: '🐄', arcane_adept: '🧙',
-  stoneback_crab: '🦀', duneback_crab: '🦀', umbral_adept: '🧙‍♂️',
-  broodfang_spider: '🕷️', highland_giant: '👊', briar_giant: '🌿',
-  green_dragon: '🐉', red_dragon: '🐉', lesser_fiend: '👿', nether_demon: '😈',
-  warlord_grondar: '👹', commander_zephyra: '🌟', krylth_the_defiler: '🔥', skyrender_kharra: '🦅',
-  [DAGANNOTH_KINGS_TASK_ID]: '👑',
-  nagadoth_rex: '🦖', nagadoth_prime: '👹', nagadoth_supreme: '🏹', ember_tyrant: '🔥',
-  sanguine_veld: '🩸', nether_wraith: '👻', bone_wyvern: '🐲', cinder_devil: '💨',
-  deepmaw_kraken: '🦑', wailing_banshee: '👻', warped_spectre: '👁️', ash_wyrm: '🐍',
-  astral_warrior: '⚔️', astral_ranger: '🏹', astral_mage: '🔮', runestone_gargoyle: '🗿',
-  vicious_black_dragon: '🐉', nightfang_beast: '🦇', threefang_cerberus: '🐺', ashen_hydra: '🐲',
-  dustpaw_rat: '🐀', bogling_sprite: '✨', frostbite_imp: '❄️', marshfen_toad: '🐸',
-  cinderpaw_cub: '🐅', glaive_skeleton: '💀', mirebound_husk: '🪦', verdant_stalker: '🏹',
-  stoneglare_basilisk: '🦎', embertongue_lizard: '🦎', hollow_reaver: '⚰️',
-  briarheart_treant: '🌳', frostmaw_direwolf: '🐺', pyreclaw_demon: '👹',
-  wraithgale_specter: '👻', bloodmoon_stalker: '🌙', ironfang_drake: '🐲',
-  shadeglass_golem: '🗿', tidereaper_crab: '🦀',
-  voidweave_stalker: '🕸️', drakthul_wyrmling: '🐉', bonelight_pyromancer: '🔥',
-  cinderfang_reaver: '🗡️', ashen_marauder: '⚒️',
-  sovrathar_the_ashen_sovereign: '👑',
-  marshscale_shaman: '🦎', crazy_archaeologist: '🏺', adamant_dragon: '🐲', rune_dragon: '🐲',
-  hellbound_gorilla: '🦍',
-}
-
 // Resolve a master's monster-pool entry into display info for the info sheet.
 // Composite tasks (e.g. Nagadoth Kings) resolve to several monsters; we surface
 // the highest combat level / slayer requirement among them and use the first
@@ -274,6 +249,14 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
     ? Math.round((1 - slayerTask.monstersRemaining / slayerTask.totalCount) * 100)
     : 0
 
+  // Same resolution as getTaskInfo's `lead` monster: a composite task (e.g.
+  // Nagadoth Kings) has no single monsters.json row, so its icon falls back to
+  // the category default via getMonsterArt(null).
+  const currentTaskMonster = slayerTask
+    ? resolveTaskMonsterIds(slayerTask.monsterId).map(mid => monstersData[mid]).find(Boolean) || null
+    : null
+  const currentTaskArt = slayerTask ? getMonsterArt(currentTaskMonster) : null
+
   const handleSlayTask = () => {
     if (!slayerTask || !onNavigate) return
     const candidateIds = resolveTaskMonsterIds(slayerTask.monsterId)
@@ -333,8 +316,8 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
             )}
           </div>
           <div class="flex items-center gap-3 mb-2.5">
-            <div class="w-[46px] h-[46px] flex-shrink-0 rounded-xl flex items-center justify-center text-2xl bg-[rgba(212,160,23,0.08)] border border-[rgba(212,160,23,0.22)]">
-              {SLAYER_MONSTER_ICONS[slayerTask.monsterId] || '👹'}
+            <div class="w-[46px] h-[46px] flex-shrink-0 rounded-xl flex items-center justify-center bg-[rgba(212,160,23,0.08)] border border-[rgba(212,160,23,0.22)]">
+              <SkillEmblem iconKey={currentTaskArt.icon} accent={currentTaskArt.accent} size={32} glow={0.8} />
             </div>
             <div class="min-w-0">
               <div class="text-[16px] font-semibold text-[var(--color-parchment)]">{slayerTask.monsterName}</div>

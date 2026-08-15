@@ -35,6 +35,7 @@ import {
 } from '../cloud/activityProgress.js'
 import { getSlayerTaskReward, resolveSlayerLoopRewards } from '../engine/slayerRewards.js'
 import { hardModeDeathLoss, idleTaskDiedHard } from '../engine/hardMode.js'
+import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
 import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
@@ -106,6 +107,10 @@ export function GameProvider({ children }) {
   // hard_mode_targets — the server decides the doubled drop rates, this only
   // decides what the picker renders and which monster the client scales.
   const [hardModeTargets, setHardModeTargetsState] = useState([])
+  // What a hard-mode death stashed with the Grim Reaper (src/engine/grimReaper.js),
+  // or null when nothing is stashed. One slot — a second hard-mode death
+  // overwrites it outright.
+  const [grimReaper, setGrimReaperState] = useState(null)
   const [raidKillCounts, setRaidKillCountsState] = useState({})
   // True once the per-character server KC fetch has settled (success or fail).
   // The combat screen gates its first render on this so a cold cache never
@@ -196,7 +201,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets, savedGrimReaper] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -204,7 +209,8 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
-      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets')
+      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets'),
+      getSetting('grimReaper')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -282,6 +288,12 @@ export function GameProvider({ children }) {
 
     // ── Idle simulation (runs on raw DB data, before state is set) ──
     let idleResult = null
+    // Overwritten below only if this boot's offline catch-up itself killed the
+    // player on a hard fight — otherwise whatever was already stashed (from a
+    // previous session's death) survives the boot untouched. Declared here,
+    // not inside the simulation branch, because it's read unconditionally
+    // once loadGame reaches setGrimReaperState further down.
+    let nextGrimReaper = savedGrimReaper || null
     console.log('[PocketRPG] loadGame — savedTask:', savedTask, 'savedLastTick:', savedLastTick, 'elapsed:', savedLastTick ? Date.now() - savedLastTick : 0)
     if (savedTask && savedLastTick) {
       // Cap at 24h to limit cross-session clock manipulation; legitimate offline play
@@ -390,6 +402,8 @@ export function GameProvider({ children }) {
               hardModeDeathApplied = true
               sim.hardModeItemsLost = loss.lost
               recordItemLossEntries(loss.lost)
+              const stash = grimReaperStashFromDeath(loss.lost, { id: savedTask.monster?.id, name: savedTask.monster?.name })
+              if (stash) nextGrimReaper = stash
             }
           } else if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
             savedHP = applySettings.currentHP
@@ -484,7 +498,7 @@ export function GameProvider({ children }) {
             // instead of a toast (this boot path never shows toasts anyway).
             const levelUpsMap = new Map()
             const applyQuestCompletionToRawState = async (quest, pendingChoices) => {
-              if (!quest?.id) return
+              if (!quest?.id) return {}
 
               const merged = new Set(savedCompletedQuests || [])
               if (!merged.has(quest.id)) {
@@ -495,11 +509,16 @@ export function GameProvider({ children }) {
 
               const { fixed, choices } = splitQuestXpRewards(quest.xpReward || {})
 
+              // Reported back as what was actually BANKED, not what the quest
+              // offered — a Grindman's cut would otherwise show as the full
+              // pre-cut amount on the reward-reveal card.
+              const banked = {}
               for (const [skill, xp] of Object.entries(fixed)) {
                 if (xp > 0 && s[skill]) {
                   const before = s[skill].xp || 0
                   const from = getLevelFromXP(before)
-                  bankXp(s, skill, xp, { isGrindman: p?.is_grindman === true })
+                  const got = bankXp(s, skill, xp, { isGrindman: p?.is_grindman === true })
+                  if (got > 0) banked[skill] = (banked[skill] || 0) + got
                   const to = getLevelFromXP(s[skill].xp || 0)
                   if (to > from) {
                     const existing = levelUpsMap.get(skill)
@@ -517,6 +536,8 @@ export function GameProvider({ children }) {
               if (choices.length > 0) {
                 pendingChoices.push({ rewards: choices, questId: quest.id, questName: quest.name })
               }
+
+              return banked
             }
 
             const cascade = simulateQuestIdleCascade({
@@ -535,13 +556,11 @@ export function GameProvider({ children }) {
               const quest = entry.quest
               completedQuestsList.push(quest)
 
-              for (const [skill, xp] of Object.entries(quest.xpReward || {})) {
-                const amount = Math.floor(Number(xp) || 0)
-                if (amount > 0) aggregatedXp[skill] = (aggregatedXp[skill] || 0) + amount
-              }
-
               totalCoinsGained += Number(quest.coinReward || 0) || 0
-              await applyQuestCompletionToRawState(quest, pendingChoices)
+              const banked = await applyQuestCompletionToRawState(quest, pendingChoices)
+              for (const [skill, xp] of Object.entries(banked)) {
+                aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
+              }
             }
 
             savedTask = cascade.finalTask
@@ -738,6 +757,8 @@ export function GameProvider({ children }) {
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
     setHardModeTargetsState(Array.isArray(savedHardModeTargets) ? savedHardModeTargets : [])
+    setGrimReaperState(nextGrimReaper)
+    if (nextGrimReaper !== (savedGrimReaper || null)) saveSetting('grimReaper', nextGrimReaper)
     setRaidKillCountsState(savedRaidKillCounts ?? {})
     setFarmingState(savedFarming ?? { patchesById: {} })
     const initialCompletedQuests = new Set(savedCompletedQuests || [])
@@ -1260,6 +1281,14 @@ export function GameProvider({ children }) {
     saveSetting('raidKillCounts', counts)
   }, [])
 
+  // Replaces the stash wholesale — a hard-mode death overwrites whatever was
+  // there (only one death is ever stashed), and a successful reclaim clears
+  // it by passing null. Never merged.
+  const updateGrimReaperStash = useCallback((stash) => {
+    setGrimReaperState(stash || null)
+    saveSetting('grimReaper', stash || null)
+  }, [])
+
   // Merges server-authoritative KC into local state using max(local, server) per
   // id. This prevents a transient empty server response from zeroing local KC.
   const syncServerKillCounts = useCallback((serverBoss, serverRaid) => {
@@ -1511,6 +1540,7 @@ export function GameProvider({ children }) {
       dungeoneeringTokens: dungeoneeringTokensRef.current,
       bossKillCounts,
       raidKillCounts,
+      grimReaper,
       farming,
       completedQuests: [...completedQuestsRef.current],
       unlockedMinigameItems: [...unlockedMinigameItems],
@@ -1803,6 +1833,7 @@ export function GameProvider({ children }) {
     bossKillCounts, updateBossKillCounts,
     hardModeTargets, syncHardModeTargets, applyHardModeTarget,
     raidKillCounts, updateRaidKillCounts,
+    grimReaper, updateGrimReaperStash,
     syncServerKillCounts,
     killCountsLoaded, markKillCountsLoaded,
     farming, updateFarming,

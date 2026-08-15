@@ -156,6 +156,16 @@ Two new templates, so a variant costs a palette entry rather than a drawing:
 - [x] hand-drawn: `sanctified_elixir` — round flask, luminous white liquid, with
   the glow baked into the art (bespoke icons render unfiltered)
 
+### Phase 7 — UI surfaces ✅ (now 855)
+- [x] `grim_reaper_reclaim` — black gown, bare white skull, blood-soaked scythe;
+  the Grim Reaper buy-back's own art on the Settings nav link and the screen
+  itself. Deliberately a separate id from the `grim_reaper` monster glyph, which
+  is a hooded creature portrait for a different surface.
+- [x] `grindman_helm` — no art change: the entry was hand-added to
+  `bespokeIcons.json` with no `src/assets/icons/*.svg` source, so any full regen
+  dropped it (the trap `tests/navIconResolution.test.ts` documents). Recovered
+  the body into a source file so it survives the next one.
+
 ## Remaining
 - **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,
   horned_reptile, lizardman, grim_reaper, tree_face, devil_mask, bleeding_eye,
