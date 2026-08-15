@@ -587,23 +587,23 @@
     "slot": "head",
     "stackable": false,
     "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": -6,
-      "ranged": -3
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
     },
     "defenceBonus": {
-      "stab": 7,
-      "slash": 8,
-      "crush": 6,
-      "magic": -1,
-      "ranged": 7
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
     },
     "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
+      "meleeStrength": 2,
+      "rangedStrength": 2,
+      "magicDamage": 2
     },
     "requirements": {
       "defence": 1
@@ -621,23 +621,23 @@
     "slot": "head",
     "stackable": false,
     "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": -6,
-      "ranged": -3
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
     },
     "defenceBonus": {
       "stab": 10,
-      "slash": 11,
-      "crush": 9,
-      "magic": -1,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
       "ranged": 10
     },
     "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
+      "meleeStrength": 2,
+      "rangedStrength": 2,
+      "magicDamage": 2
     },
     "requirements": {
       "defence": 1
@@ -654,9 +654,9 @@
     "type": "armour",
     "slot": "head",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": -6, "ranged": -3 },
-    "defenceBonus": { "stab": 7, "slash": 8, "crush": 6, "magic": -1, "ranged": 7 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "attackBonus": { "stab": 10, "slash": 10, "crush": 10, "magic": 10, "ranged": 10 },
+    "defenceBonus": { "stab": 10, "slash": 10, "crush": 10, "magic": 10, "ranged": 10 },
+    "otherBonus": { "meleeStrength": 2, "rangedStrength": 2, "magicDamage": 2 },
     "requirements": { "defence": 1 },
     "shopValue": 1000,
     "isGeneralStore": true,
