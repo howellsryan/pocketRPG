@@ -26,6 +26,7 @@ import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
 import { hardModeDeathLoss, hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
+import { displayedDropChance, dropRateBoostLabel, monsterDropBoost } from '../engine/dropRateDisplay.js'
 import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
 import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
 import { recordItemLossEntries } from '../engine/lossLedger.js'
@@ -307,6 +308,56 @@ function MonsterAddStats({ monster }) {
         {spawnLabel && (
           <div class="text-[9px] text-[var(--color-parchment)] opacity-50">{spawnLabel}</div>
         )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The desktop drop table, shared by the picker's info modal and the in-fight
+ * one — the two are the same list and drifted apart is how one of them would
+ * end up still printing authored rates.
+ *
+ * Rates are what the player is actually rolling against (monsterDropBoost). One
+ * boost covers every row — seeds and charms are empty for a boss, and hard mode
+ * is boss-only.
+ */
+function MonsterDropList({ monster, itemsData, grindman = false }) {
+  if (!monster?.drops || monster.drops.length === 0) return null
+  const boost = monsterDropBoost(monster, grindman)
+  const boostLabel = dropRateBoostLabel(boost)
+  const drops = [
+    ...monster.drops,
+    ...getMonsterSeedDrops(monster),
+    ...getMonsterCharmDrops(monster),
+  ]
+  return (
+    <div>
+      <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
+      {boostLabel && (
+        <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-2">{boostLabel}</div>
+      )}
+      <div class="space-y-1">
+        {drops.map(drop => {
+          const item = itemsData[drop.itemId]
+          return (
+            <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
+                  <GameIcon item={item} iconKey={item?.iconId} size={16} />
+                  <div class="min-w-0">
+                    <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.name || drop.itemId}</div>
+                    <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                      {formatDropChance(displayedDropChance(drop.chance, boost))}
+                      {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                      {drop.taskOnly ? ' · Slayer task only' : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -1417,6 +1468,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const hardModeSet = useMemo(() => new Set(hardModeTargets || []), [hardModeTargets])
   const offersHardMode = (entity) => supportsHardMode(entity) && !isDemo
   const isHardMode = (sourceType, sourceId) => hardModeSet.has(hardModeKey(sourceType, sourceId))
+  // A raid carries no scaled record for the info surfaces to read a flag off, so
+  // both of them (mobile sheet, desktop modal) ask here.
+  const raidDropBoost = (raid) => ({
+    hardMode: offersHardMode(raid) && isHardMode('raids', raid.id),
+    grindman: isGrindman,
+  })
   const [hardModePending, setHardModePending] = useState(null)
   // Switching hard mode ON is what puts a player's whole pack at risk, so it
   // asks first. Switching it OFF costs nothing and asks nothing.
@@ -2868,6 +2925,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monster={selectedMonsterInfo}
           categoryKey={getMonsterCategoryKey(selectedMonsterInfo.id)}
           itemsData={itemsData}
+          grindman={isGrindman}
           onClose={() => setSelectedMonsterInfo(null)}
         />
       )}
@@ -2918,33 +2976,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </div>
             <MonsterPhaseStats monster={selectedMonsterInfo} />
             <MonsterAddStats monster={selectedMonsterInfo} />
-            {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
-              <div>
-                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
-                <div class="space-y-1">
-                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo), ...getMonsterCharmDrops(selectedMonsterInfo)].map(drop => {
-                    const item = itemsData[drop.itemId]
-                    return (
-                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
-                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
-                            <div class="min-w-0">
-                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.name || drop.itemId}</div>
-                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                                {formatDropChance(drop.chance)}
-                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
-                                {drop.taskOnly ? ' · Slayer task only' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  </div>
-              </div>
-            )}
+            <MonsterDropList monster={selectedMonsterInfo} itemsData={itemsData} grindman={isGrindman} />
           </div>
         </Modal>
       )}
@@ -2956,6 +2988,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monstersData={monstersData}
           itemsData={itemsData}
           raidKillCounts={raidKillCounts}
+          boost={raidDropBoost(selectedRaidInfo)}
           onStartRaid={(raid) => { setSelectedRaidInfo(null); pickRaidForFight(raid) }}
           onClose={() => setSelectedRaidInfo(null)}
         />
@@ -3002,9 +3035,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 })}
               </div>
             </div>
-            {selectedRaidInfo.rewards && (
+            {selectedRaidInfo.rewards && (() => {
+              const raidBoost = raidDropBoost(selectedRaidInfo)
+              const raidBoostLabel = dropRateBoostLabel(raidBoost)
+              return (
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Rewards</h4>
+                {raidBoostLabel && (
+                  <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-2">{raidBoostLabel}</div>
+                )}
                 <div class="space-y-1">
                   {selectedRaidInfo.rewards.always?.map(drop => {
                     const item = itemsData[drop.itemId]
@@ -3014,7 +3053,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                           <GameIcon item={item} iconKey={item?.iconId} size={16} /> {item?.name || drop.itemId}
                         </div>
                         <div class="text-[9px] text-[var(--color-parchment)] opacity-50">
-                          {formatDropChance(drop.chance)}
+                          {formatDropChance(displayedDropChance(drop.chance, raidBoost))}
                           {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]}` : ` · ${drop.quantity}`}
                         </div>
                       </div>
@@ -3023,7 +3062,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {selectedRaidInfo.rewards.unique && (
                     <div class="bg-[var(--surface-raised)] border border-[var(--color-gold-dim)] rounded-lg p-2 mt-1">
                       <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-1">
-                        ✨ Unique Drop ({(selectedRaidInfo.rewards.unique.chance * 100).toFixed(1)}% chance)
+                        ✨ Unique Drop ({(displayedDropChance(selectedRaidInfo.rewards.unique.chance, raidBoost) * 100).toFixed(1)}% chance)
                       </div>
                       <div class="space-y-0.5">
                         {selectedRaidInfo.rewards.unique.items.map(u => {
@@ -3039,7 +3078,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   )}
                 </div>
               </div>
-            )}
+              )
+            })()}
           </div>
         </Modal>
       )}
@@ -4318,36 +4358,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <MonsterPhaseStats monster={selectedMonsterInfo} />
             <MonsterAddStats monster={selectedMonsterInfo} />
 
-            {/* Drops */}
-            {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
-              <div>
-                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
-                <div class="space-y-1">
-                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo), ...getMonsterCharmDrops(selectedMonsterInfo)].map(drop => {
-                    const item = itemsData[drop.itemId]
-                    return (
-                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
-                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
-                            <div class="min-w-0">
-                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">
-                                {item?.name || drop.itemId}
-                              </div>
-                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                                {formatDropChance(drop.chance)}
-                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
-                                {drop.taskOnly ? ' · Slayer task only' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  </div>
-              </div>
-            )}
+            <MonsterDropList monster={selectedMonsterInfo} itemsData={itemsData} grindman={isGrindman} />
           </div>
         </Modal>
       )}
