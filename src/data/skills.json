@@ -3442,27 +3442,27 @@
                 "chance": 0.01
               },
               {
-                "itemId": "sapphire",
+                "itemId": "uncut_sapphire",
                 "quantity": 1,
                 "chance": 0.2
               },
               {
-                "itemId": "emerald",
+                "itemId": "uncut_emerald",
                 "quantity": 1,
                 "chance": 0.2
               },
               {
-                "itemId": "ruby",
+                "itemId": "uncut_ruby",
                 "quantity": 1,
                 "chance": 0.2
               },
               {
-                "itemId": "diamond",
+                "itemId": "uncut_diamond",
                 "quantity": 1,
                 "chance": 0.2
               },
               {
-                "itemId": "dragonstone",
+                "itemId": "uncut_dragonstone",
                 "quantity": 1,
                 "chance": 0.05
               }
