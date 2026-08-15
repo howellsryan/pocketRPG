@@ -17,8 +17,8 @@ import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
-import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
-import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt, getMonsterAddInfo } from '../utils/combatArt.js'
+import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip, WasIs } from './CombatMobileSheets.jsx'
+import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt, getMonsterAddInfo, getDefenceLevelInfo, getDefenceBonusInfo, DEFENCE_STYLES } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { COMBAT_CATEGORY_ORDER, COMBAT_RAID_ORDER, orderBy } from '../utils/combatOrder.js'
 import { prayerSkill } from '../utils/prayerIcons.js'
@@ -26,6 +26,7 @@ import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
 import { hardModeDeathLoss, hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
+import { displayedDropChance, dropRateBoostLabel, monsterDropBoost } from '../engine/dropRateDisplay.js'
 import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
 import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
 import { recordItemLossEntries } from '../engine/lossLedger.js'
@@ -226,8 +227,6 @@ function buildDungeonData(placeId) {
   return { categories, raids }
 }
 
-const DEFENCE_STYLES = ['stab', 'slash', 'crush', 'magic', 'ranged']
-
 // Per-phase attack/defence breakdown for multiForm bosses (e.g. Venomcoil
 // Matriarch) — the monster's own top-level stats/defenceBonus only mirror its
 // initial form, so a full picture needs every entry in `forms`.
@@ -307,6 +306,56 @@ function MonsterAddStats({ monster }) {
         {spawnLabel && (
           <div class="text-[9px] text-[var(--color-parchment)] opacity-50">{spawnLabel}</div>
         )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The desktop drop table, shared by the picker's info modal and the in-fight
+ * one — the two are the same list and drifted apart is how one of them would
+ * end up still printing authored rates.
+ *
+ * Rates are what the player is actually rolling against (monsterDropBoost). One
+ * boost covers every row — seeds and charms are empty for a boss, and hard mode
+ * is boss-only.
+ */
+function MonsterDropList({ monster, itemsData, grindman = false }) {
+  if (!monster?.drops || monster.drops.length === 0) return null
+  const boost = monsterDropBoost(monster, grindman)
+  const boostLabel = dropRateBoostLabel(boost)
+  const drops = [
+    ...monster.drops,
+    ...getMonsterSeedDrops(monster),
+    ...getMonsterCharmDrops(monster),
+  ]
+  return (
+    <div>
+      <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
+      {boostLabel && (
+        <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-2">{boostLabel}</div>
+      )}
+      <div class="space-y-1">
+        {drops.map(drop => {
+          const item = itemsData[drop.itemId]
+          return (
+            <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
+                  <GameIcon item={item} iconKey={item?.iconId} size={16} />
+                  <div class="min-w-0">
+                    <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.name || drop.itemId}</div>
+                    <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                      {formatDropChance(displayedDropChance(drop.chance, boost))}
+                      {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                      {drop.taskOnly ? ' · Slayer task only' : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -1417,6 +1466,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const hardModeSet = useMemo(() => new Set(hardModeTargets || []), [hardModeTargets])
   const offersHardMode = (entity) => supportsHardMode(entity) && !isDemo
   const isHardMode = (sourceType, sourceId) => hardModeSet.has(hardModeKey(sourceType, sourceId))
+  // A raid carries no scaled record for the info surfaces to read a flag off, so
+  // both of them (mobile sheet, desktop modal) ask here.
+  const raidDropBoost = (raid) => ({
+    hardMode: offersHardMode(raid) && isHardMode('raids', raid.id),
+    grindman: isGrindman,
+  })
   const [hardModePending, setHardModePending] = useState(null)
   // Switching hard mode ON is what puts a player's whole pack at risk, so it
   // asks first. Switching it OFF costs nothing and asks nothing.
@@ -2868,6 +2923,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monster={selectedMonsterInfo}
           categoryKey={getMonsterCategoryKey(selectedMonsterInfo.id)}
           itemsData={itemsData}
+          grindman={isGrindman}
           onClose={() => setSelectedMonsterInfo(null)}
         />
       )}
@@ -2898,7 +2954,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>HP</span><span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{selectedMonsterInfo.hitpoints}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Attack</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.attack}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Strength</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.strength}</span></div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Defence</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.defence}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Defence</span><span class="font-[var(--font-mono)]"><WasIs info={getDefenceLevelInfo(selectedMonsterInfo)} /></span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Magic</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.magic}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Ranged</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.ranged}</span></div>
               </div>
@@ -2906,45 +2962,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Defence Bonuses</h4>
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
-                {['stab', 'slash', 'crush', 'magic', 'ranged'].map(style => (
-                  <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                    <span class="capitalize">{style}</span>
-                    <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus[style] >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {selectedMonsterInfo.defenceBonus[style] >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus[style]}
-                    </span>
-                  </div>
-                ))}
+                {DEFENCE_STYLES.map(style => {
+                  const info = getDefenceBonusInfo(selectedMonsterInfo, style)
+                  return (
+                    <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                      <span class="capitalize">{style}</span>
+                      <span class={`font-[var(--font-mono)] ${info.current >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <WasIs info={info} format={(n) => `${n >= 0 ? '+' : ''}${n}`} />
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
             <MonsterPhaseStats monster={selectedMonsterInfo} />
             <MonsterAddStats monster={selectedMonsterInfo} />
-            {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
-              <div>
-                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
-                <div class="space-y-1">
-                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo), ...getMonsterCharmDrops(selectedMonsterInfo)].map(drop => {
-                    const item = itemsData[drop.itemId]
-                    return (
-                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
-                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
-                            <div class="min-w-0">
-                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.name || drop.itemId}</div>
-                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                                {formatDropChance(drop.chance)}
-                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
-                                {drop.taskOnly ? ' · Slayer task only' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  </div>
-              </div>
-            )}
+            <MonsterDropList monster={selectedMonsterInfo} itemsData={itemsData} grindman={isGrindman} />
           </div>
         </Modal>
       )}
@@ -2956,6 +2989,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monstersData={monstersData}
           itemsData={itemsData}
           raidKillCounts={raidKillCounts}
+          boost={raidDropBoost(selectedRaidInfo)}
           onStartRaid={(raid) => { setSelectedRaidInfo(null); pickRaidForFight(raid) }}
           onClose={() => setSelectedRaidInfo(null)}
         />
@@ -3002,9 +3036,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 })}
               </div>
             </div>
-            {selectedRaidInfo.rewards && (
+            {selectedRaidInfo.rewards && (() => {
+              const raidBoost = raidDropBoost(selectedRaidInfo)
+              const raidBoostLabel = dropRateBoostLabel(raidBoost)
+              return (
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Rewards</h4>
+                {raidBoostLabel && (
+                  <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-2">{raidBoostLabel}</div>
+                )}
                 <div class="space-y-1">
                   {selectedRaidInfo.rewards.always?.map(drop => {
                     const item = itemsData[drop.itemId]
@@ -3014,7 +3054,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                           <GameIcon item={item} iconKey={item?.iconId} size={16} /> {item?.name || drop.itemId}
                         </div>
                         <div class="text-[9px] text-[var(--color-parchment)] opacity-50">
-                          {formatDropChance(drop.chance)}
+                          {formatDropChance(displayedDropChance(drop.chance, raidBoost))}
                           {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]}` : ` · ${drop.quantity}`}
                         </div>
                       </div>
@@ -3023,7 +3063,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {selectedRaidInfo.rewards.unique && (
                     <div class="bg-[var(--surface-raised)] border border-[var(--color-gold-dim)] rounded-lg p-2 mt-1">
                       <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-1">
-                        ✨ Unique Drop ({(selectedRaidInfo.rewards.unique.chance * 100).toFixed(1)}% chance)
+                        ✨ Unique Drop ({(displayedDropChance(selectedRaidInfo.rewards.unique.chance, raidBoost) * 100).toFixed(1)}% chance)
                       </div>
                       <div class="space-y-0.5">
                         {selectedRaidInfo.rewards.unique.items.map(u => {
@@ -3039,7 +3079,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   )}
                 </div>
               </div>
-            )}
+              )
+            })()}
           </div>
         </Modal>
       )}
@@ -4219,12 +4260,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         />
       )}
 
-      {/* Monster Info Modal */}
-      {selectedMonsterInfo && (
+      {/* Monster Info Modal — in-fight only (this Modal only ever renders once
+          combat exists, guarded by the earlier `if (!combat) return` above), so
+          it reads combat.monster directly rather than the tap-time snapshot
+          selectedMonsterInfo held before: combat.monster is the SAME object a
+          special attack mutates in place, and re-reading it here on every
+          render is what makes a Dragon Warhammer smash or a Grondar Godsword
+          warstrike show up live instead of frozen at the moment "i" was tapped.
+          selectedMonsterInfo now only gates whether the modal is open. */}
+      {selectedMonsterInfo && (() => {
+        const liveMonster = combat.monster
+        return (
         <Modal onClose={() => setSelectedMonsterInfo(null)}>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] flex items-center gap-2">
-              <SkillEmblem iconKey={getMonsterArt(selectedMonsterInfo).icon} accent={getMonsterArt(selectedMonsterInfo).accent} size={28} glow={0} /> {selectedMonsterInfo.name}
+              <SkillEmblem iconKey={getMonsterArt(liveMonster).icon} accent={getMonsterArt(liveMonster).accent} size={28} glow={0} /> {liveMonster.name}
             </h3>
             <button
               onClick={() => setSelectedMonsterInfo(null)}
@@ -4237,11 +4287,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           <div class="space-y-4 max-h-96 overflow-y-auto">
             <div class="cb-fight__chips">
-              <MultiStyleChip chip={getMonsterAttackStyles(selectedMonsterInfo)} prefix="Uses " />
-              <MultiStyleChip chip={getMonsterWeakness(selectedMonsterInfo)} prefix="Weak: " kind="!" />
+              <MultiStyleChip chip={getMonsterAttackStyles(liveMonster)} prefix="Uses " />
+              <MultiStyleChip chip={getMonsterWeakness(liveMonster)} prefix="Weak: " kind="!" />
             </div>
-            {getMonsterLocationLabel(selectedMonsterInfo) && (
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">📍 {getMonsterLocationLabel(selectedMonsterInfo)}</div>
+            {getMonsterLocationLabel(liveMonster) && (
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">📍 {getMonsterLocationLabel(liveMonster)}</div>
             )}
             {/* Combat Stats */}
             <div>
@@ -4249,31 +4299,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Combat Level</span>
-                  <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedMonsterInfo.combatLevel}</span>
+                  <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{liveMonster.combatLevel}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>HP</span>
-                  <span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{selectedMonsterInfo.hitpoints}</span>
+                  <span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{liveMonster.hitpoints}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Attack</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.attack}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.attack}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Strength</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.strength}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.strength}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Defence</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.defence}</span>
+                  <span class="font-[var(--font-mono)]"><WasIs info={getDefenceLevelInfo(liveMonster)} /></span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Magic</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.magic}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.magic}</span>
                 </div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Ranged</span>
-                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.ranged}</span>
+                  <span class="font-[var(--font-mono)]">{liveMonster.stats.ranged}</span>
                 </div>
               </div>
             </div>
@@ -4282,75 +4332,28 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Defence Bonuses</h4>
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Stab</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.stab >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.stab >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.stab}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Slash</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.slash >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.slash >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.slash}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Crush</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.crush >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.crush >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.crush}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Magic</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.magic >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.magic >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.magic}
-                  </span>
-                </div>
-                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
-                  <span>Ranged</span>
-                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.ranged >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {selectedMonsterInfo.defenceBonus.ranged >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.ranged}
-                  </span>
-                </div>
+                {DEFENCE_STYLES.map(style => {
+                  const info = getDefenceBonusInfo(liveMonster, style)
+                  return (
+                    <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                      <span class="capitalize">{style}</span>
+                      <span class={`font-[var(--font-mono)] ${info.current >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <WasIs info={info} format={(n) => `${n >= 0 ? '+' : ''}${n}`} />
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
-            <MonsterPhaseStats monster={selectedMonsterInfo} />
-            <MonsterAddStats monster={selectedMonsterInfo} />
+            <MonsterPhaseStats monster={liveMonster} />
+            <MonsterAddStats monster={liveMonster} />
 
-            {/* Drops */}
-            {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
-              <div>
-                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
-                <div class="space-y-1">
-                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo), ...getMonsterCharmDrops(selectedMonsterInfo)].map(drop => {
-                    const item = itemsData[drop.itemId]
-                    return (
-                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
-                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
-                            <div class="min-w-0">
-                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">
-                                {item?.name || drop.itemId}
-                              </div>
-                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                                {formatDropChance(drop.chance)}
-                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
-                                {drop.taskOnly ? ' · Slayer task only' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  </div>
-              </div>
-            )}
+            <MonsterDropList monster={liveMonster} itemsData={itemsData} grindman={isGrindman} />
           </div>
         </Modal>
-      )}
+        )
+      })()}
     </div>
   )
 }

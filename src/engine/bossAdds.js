@@ -107,6 +107,11 @@ export function prepareAdd(definition, instanceId = 0) {
     instanceId: `${definition.id || 'add'}#${instanceId}`,
     currentHP: definition.hitpoints,
     attackTimer: Math.max(1, Math.floor(definition.attackSpeed || 4)),
+    // Same baseline stamps prepareMonster puts on the boss — an add can be the
+    // target of a Defence-draining special too, and a warstrike's floor
+    // (bossForms.js) is measured from this, never below it.
+    baseDefenceLevel: definition.stats?.defence,
+    defenceBonusBaseline: { ...definition.defenceBonus },
   }
 }
 
