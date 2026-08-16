@@ -266,7 +266,7 @@ function stripThink(text) {
 function answerText(res) {
   const content = res?.choices?.[0]?.message?.content
   if (typeof content !== 'string') return ''
-  return stripThink(content)
+  return stripLeakedToolSyntax(stripThink(content))
 }
 
 // Some models occasionally emit a tool call as a literal text fragment (a
@@ -277,35 +277,112 @@ function answerText(res) {
 // player, the write never gets gated/confirmed, and the model can go on to
 // confidently claim (on a later turn) that an action succeeded when nothing
 // ever ran.
-const LEAKED_TOOL_CALL_RE = /to=functions\.([a-zA-Z_][\w]*)[^{]*(\{[\s\S]*)/
-function recoverLeakedToolCall(content) {
-  if (typeof content !== 'string') return null
-  const match = content.match(LEAKED_TOOL_CALL_RE)
-  if (!match) return null
-  const [, name, rest] = match
+const LEAKED_TOOL_TOKEN_RE = /to=functions\.([a-zA-Z_][\w]*)/g
+// Channel noise a model puts between the tool name and its arguments — "code:",
+// "<|constrain|>json\n". Bounded on purpose: unbounded, a bare mention with no
+// arguments swallows the rest of the reply, and one with arguments far away
+// pairs with an unrelated JSON object and deletes the prose in between.
+const MAX_CHANNEL_NOISE_CHARS = 40
+
+function matchingBrace(text, start) {
   let depth = 0
-  let end = -1
-  for (let i = 0; i < rest.length; i++) {
-    if (rest[i] === '{') depth++
-    else if (rest[i] === '}') {
-      depth--
-      if (depth === 0) {
-        end = i
-        break
-      }
+  for (let i = start; i < text.length; i++) {
+    if (text[i] === '{') depth++
+    else if (text[i] === '}' && --depth === 0) return i
+  }
+  return -1
+}
+
+/**
+ * Locate every leaked Harmony-style tool call in one string: the calls it can
+ * parse, and the spans of text every leak occupies.
+ *
+ * ONE scanner behind both readers below, because they must agree — a stripper
+ * that measures a leak differently from the recogniser either leaves debris on
+ * screen or eats the sentence around it. Brace matching (never a lazy `\{.*?\}`)
+ * so nested arguments end where they actually end.
+ */
+function scanLeakedToolCalls(content) {
+  const calls = []
+  const spans = []
+  const re = new RegExp(LEAKED_TOOL_TOKEN_RE.source, 'g')
+  let match
+  while ((match = re.exec(content)) !== null) {
+    const tokenEnd = match.index + match[0].length
+    const limit = Math.min(content.length, tokenEnd + MAX_CHANNEL_NOISE_CHARS)
+    let probe = tokenEnd
+    while (probe < limit && content[probe] !== '{' && content[probe] !== '}') probe++
+    if (probe >= limit || content[probe] !== '{') {
+      // No arguments within reach: drop the token itself and leave the prose.
+      spans.push([match.index, tokenEnd])
+      re.lastIndex = tokenEnd
+      continue
     }
+    const end = matchingBrace(content, probe)
+    if (end === -1) {
+      // The arguments never close — output-token truncation cut them off mid
+      // object. Everything from here on is a half-written call, so it all goes;
+      // leaving the token behind still showed the player `{"item_id":...`.
+      spans.push([match.index, content.length])
+      break
+    }
+    try {
+      const parsed = JSON.parse(content.slice(probe, end + 1))
+      if (parsed && typeof parsed === 'object') calls.push({ name: match[1], args: parsed })
+    } catch {
+      /* unparseable arguments are still debris — the span is removed either way */
+    }
+    spans.push([match.index, end + 1])
+    re.lastIndex = end + 1
   }
-  if (end === -1) return null
-  let args
-  try {
-    args = JSON.parse(rest.slice(0, end + 1))
-  } catch {
-    return null
+  return { calls, spans }
+}
+
+// Tidies ONLY the seams a removal creates, never the whole string: a global
+// whitespace collapse flattens the indentation of any list or code block that
+// happened to share a reply with a leak.
+function removeSpans(content, spans) {
+  if (!spans.length) return content
+  const parts = []
+  let cursor = 0
+  for (const [start, end] of spans) {
+    parts.push(content.slice(cursor, start))
+    cursor = end
   }
-  const before = content.slice(0, match.index).trim()
-  const after = rest.slice(end + 1).trim()
-  const text = stripThink([before, after].filter(Boolean).join(' '))
-  return { name, args, text }
+  parts.push(content.slice(cursor))
+  let out = parts[0]
+  for (let i = 1; i < parts.length; i++) {
+    const left = out.replace(/[ \t]+$/, '')
+    const right = parts[i].replace(/^[ \t]+/, '')
+    if (!left) out = right
+    else if (!right) out = left
+    else out = /\n$/.test(left) || /^\n/.test(right) ? left + right : `${left} ${right}`
+  }
+  return out.trim()
+}
+
+// A leaked tool call is a MODEL bug we cannot fix from here, so it is handled
+// twice: recoverLeakedToolCalls turns them back into the calls they were meant
+// to be, and this removes whatever remains from text bound for the player. The
+// two are deliberately separate — recovery can fail (an unknown tool name,
+// unparseable arguments, a round budget with no room left) and the player must
+// never see the debris either way. Runs on EVERY player-visible string,
+// including the final no-tools answer, which is the path that leaked a wall of
+// `to=functions.get_reference` into a real reply.
+export function stripLeakedToolSyntax(text) {
+  if (typeof text !== 'string' || !text.includes('to=functions.')) return text
+  return removeSpans(text, scanLeakedToolCalls(text).spans)
+}
+
+// Recover EVERY leaked call in one message, not just the first. A model that
+// leaks one usually leaks a run of them (nine `get_reference` attempts in the
+// case this was written for), and recovering only the head left the rest as
+// prose in the assistant turn — where they went back into the transcript and
+// out to the player.
+export function recoverLeakedToolCalls(content) {
+  if (typeof content !== 'string' || !content.includes('to=functions.')) return { calls: [], text: '' }
+  const { calls, spans } = scanLeakedToolCalls(content)
+  return { calls, text: stripThink(removeSpans(content, spans)) }
 }
 
 // Accumulate a call's reported token usage into per-pool message stats.
@@ -414,9 +491,14 @@ export async function runAiChat(
       .slice(0, 3)
       .map((c, i) => ({ ...c, id: c.id || `call_${round}_${i}` }))
     if (!calls.length) {
-      const leaked = recoverLeakedToolCall(message?.content)
-      if (leaked && CHAT_TOOL_ALLOWLIST.includes(leaked.name)) {
-        calls = [{ id: `call_${round}_0`, type: 'function', function: { name: leaked.name, arguments: JSON.stringify(leaked.args) } }]
+      const leaked = recoverLeakedToolCalls(message?.content)
+      const usable = leaked.calls.filter((c) => CHAT_TOOL_ALLOWLIST.includes(c.name)).slice(0, 3)
+      if (usable.length) {
+        calls = usable.map((c, i) => ({
+          id: `call_${round}_${i}`,
+          type: 'function',
+          function: { name: c.name, arguments: JSON.stringify(c.args) },
+        }))
         if (message) message.content = leaked.text || null
       } else {
         const answer = answerText(res)

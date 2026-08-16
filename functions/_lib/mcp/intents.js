@@ -49,6 +49,9 @@ import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import { checkQuestEligibility, getQuestPointsEarned, getCombatLevel } from '../../../src/engine/quests.js'
 import { createQueuedQuestTask, simulateQuestIdleCascade, splitQuestXpRewards } from '../../../src/engine/questIdleCascade.js'
 import { PRODUCTION_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, COMBAT_SKILLS, ALL_SKILLS, TICK_DURATION, QUEST_QUEUE_MAX } from '../../../src/utils/constants.js'
+// One constant, shared with the planner that predicts this gate: two copies
+// drift and the helper promises training the endpoint then refuses.
+import { GILDED_ALTAR_CONSTRUCTION_LEVEL } from '../../../src/engine/trainingPlanner.js'
 
 const XP_CAP = 200000000
 
@@ -297,7 +300,6 @@ export function buildMinigameTask(save, minigameTaskId) {
 
 const PRAYER_ACTIONS = Array.isArray(skillsData.prayer?.actions) ? skillsData.prayer.actions : []
 export const PRAYER_ACTION_IDS = PRAYER_ACTIONS.map((a) => a.id).filter(Boolean)
-const GILDED_ALTAR_CONSTRUCTION_LEVEL = 75
 
 // Total of an item held in the unnoted inventory plus the bank (matches the
 // client's `countItem(inventory, id) + bank[id]` availability check).

@@ -60,6 +60,7 @@
 - `totalXP(L) = floor(sum(x=1..L-1, floor(x + 300 * 2^(x/7)) / 4))`.
 - Starting HP level **10** (1,154 XP).
 - Gains: Combat **4 XP/damage** to primary skill, **1.33 XP/damage** to HP. Magic: base spell XP + **2 XP/damage**.
+- **"How many X to level N" is `src/engine/trainingPlanner.js`**, never arithmetic in a caller — it walks the ladder picking the best option per level, applies the account XP cut and the gates outside the trained skill (gilded altar → Construction 75), and is what the `plan_training` MCP tool and the helper (§16) answer from. Only skills with a repeated-action ladder are plannable (`plannableSkillIds()`); Farming, Slayer and the combat skills have none and it refuses rather than guessing.
 
 ## 6) Combat Tick Model
 - Tick **600ms**.

@@ -20,6 +20,10 @@ and a test (parity enforced by `tests/mcpServer.test.ts`).
 - `analyze_dps` — best DPS loadout from owned gear (or every item), per style,
   optionally against a named monster; `include` adds unowned upgrades and
   level projections
+- `plan_training` — what reaching a skill level costs: the best option over each
+  stretch of levels, materials needed vs already owned, total time. Applies the
+  account's XP rate and requirements outside the skill; only skills with a
+  repeated-action ladder (Farming, Slayer and the melee/ranged skills have none)
 - `get_reference` — topics: mechanics, shop, skills, spells, prayers, quests,
   clues, minigames, raids, farming, construction, gather
 

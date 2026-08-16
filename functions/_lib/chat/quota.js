@@ -44,8 +44,8 @@ export const CHAT_MESSAGE_RESERVE_MILLI = 3_400_000
 // The OpenAI reserve is much larger than the others because its worst case
 // funds CHAT_OPENAI_MAX_OUTPUT_TOKENS of reasoning on every call, not just the
 // shared visible-answer cap.
-export const CHAT_OPENAI_TOKEN_BUDGET = 1_900_000
-export const CHAT_OPENAI_MESSAGE_RESERVE_TOKENS = 570_000
+export const CHAT_OPENAI_TOKEN_BUDGET = 1_880_000
+export const CHAT_OPENAI_MESSAGE_RESERVE_TOKENS = 600_000
 
 // Daily token pool for the PAID Gemini last resort. No free tier, so this is a
 // pure $ cap chosen for a rarely-reached fallback: at $0.10/$0.40 per M tokens
