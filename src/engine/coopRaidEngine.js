@@ -57,7 +57,7 @@ export function raidBossOrder(raidId) {
  * `monster.hitpoints` or the seeded state alone charges the loot gate for a
  * fraction of the fight it is supposed to measure.
  */
-function bossFightHitpoints(monster, monstersData) {
+export function bossFightHitpoints(monster, monstersData) {
   const seed = createCombatState(monster, 'melee', 'accurate', null, monstersData)
   let total = Math.max(0, Math.floor(Number(seed?.monster?.currentHP) || 0))
   if (monster.verzikPhased && monster.multiForm && monster.forms) {

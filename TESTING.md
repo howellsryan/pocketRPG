@@ -37,6 +37,7 @@ How PocketRPG stays regression-resistant. Deep rationale: `docs/testing-strategy
 | Combat feedback | `hitSplats`, `xpDrops`, `lootModal` | `src/utils/hitSplats.js`, `src/utils/xpDrops.js`, `src/utils/lootModal.js` |
 | Save-lock classification | `saveErrors` | `src/cloud/saveErrors.js` (every lock in `functions/api/save.js` must be listed there) |
 | MCP / chat | `mcp*`, `chat*` | `functions/api/mcp.js`, `functions/_lib/chat/**` |
+| DPS analysis / gear recommendation | `dpsCalculator`, `gearOptimizer`, `dpsAnalysis` | `src/engine/dpsCalculator.js`, `gearOptimizer.js`, `functions/_lib/mcp/dps.js`; `dpsCalculator` is the parity gate against `combat.js` |
 
 ## Invariant specs (`tests/spec/`)
 

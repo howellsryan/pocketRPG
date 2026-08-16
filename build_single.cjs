@@ -99,6 +99,8 @@ const sourceFiles = [
   'engine/consumables.js',
   'engine/combat.js',
   'engine/combatRequirements.js',
+  'engine/dpsCalculator.js',
+  'engine/gearOptimizer.js',
   'engine/combatant.js',
   'engine/combatPrimitives.js',
   'engine/pvpCombatModifiers.js',
@@ -304,6 +306,8 @@ const GAME_CHUNK_FILES = new Set([
   'components/SlayerMasterModal.js',
   'utils/combatArt.js', // -> game chunk (reads placeMapsData for monster locations; only combat/place-map screens use it)
   'utils/combatOrder.js', // -> game chunk (only the combat picker screens use it)
+  'engine/dpsCalculator.js', // -> game chunk (server-side helper today; never referenced at boot)
+  'engine/gearOptimizer.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',

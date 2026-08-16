@@ -10,6 +10,7 @@ import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdle
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
+import { analyzeDps } from './dps.js'
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 
 // Reuse the exact production endpoint handlers (see bridge.js).
@@ -354,6 +355,24 @@ const TOOLS = {
     if (!res.ok) throw httpError(res)
     if (!res.data?.save?.save_data) return ok({ characterId: id, total: 0, returned: 0, items: [], note: 'No save yet.' })
     return ok({ characterId: id, ...bankItems(res.data.save.save_data, { query, limit }) })
+  },
+
+  async analyze_dps({ style, monster_id, gear_scope, include, at_level, character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(getSave, env, { authorization, characterId: id })
+    if (!res.ok) throw httpError(res)
+    if (!res.data?.save?.save_data) throw new Error('No save yet for this character — play once in the app first.')
+    const state = JSON.parse(res.data.save.save_data)
+    return ok({
+      characterId: id,
+      ...analyzeDps(state, {
+        style: style || 'all',
+        monsterId: monster_id || null,
+        gearScope: gear_scope || 'owned',
+        include: Array.isArray(include) ? include : [],
+        atLevel: at_level || null,
+      }),
+    })
   },
 
   async get_daily_tasks({ character_id }, { env, authorization }) {

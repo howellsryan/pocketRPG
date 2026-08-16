@@ -25,7 +25,7 @@ export const MILLI_NEURONS_PER_OUTPUT_TOKEN = 36.37
 // 10,000 free daily neurons, so budget + one in-flight worst-case reserve must
 // stay ≤ 10,000,000 milli; the gap also absorbs estimation drift and any other
 // Workers AI use on the account.
-export const CHAT_NEURON_BUDGET_MILLI = 6_600_000
+export const CHAT_NEURON_BUDGET_MILLI = 6_500_000
 // Worst-case message: CHAT_MAX_TOOL_ROUNDS + 1 model calls with every context
 // and output limit maxed, including the FULL MCP tool schema the model is
 // offered (reads + gated writes). tests/chatQuota.test.ts derives this bound
@@ -34,7 +34,7 @@ export const CHAT_NEURON_BUDGET_MILLI = 6_600_000
 // against each other under a fixed ceiling, and the reserve is held only for
 // the duration of one in-flight call: with daily usage sitting far below the
 // allocation, per-message capacity is worth more than day-wide headroom.
-export const CHAT_MESSAGE_RESERVE_MILLI = 3_310_000
+export const CHAT_MESSAGE_RESERVE_MILLI = 3_400_000
 
 // Daily token pool for the OpenAI primary against the ~2.5M/day complimentary
 // data-sharing allotment. Metered locally because OpenAI doesn't hard-stop at
@@ -52,7 +52,7 @@ export const CHAT_OPENAI_MESSAGE_RESERVE_TOKENS = 570_000
 // this bounds Gemini spend to roughly $0.25/day. Own day_key so it never mixes
 // with the free Workers AI neuron budget.
 export const CHAT_GEMINI_TOKEN_BUDGET = 2_000_000
-export const CHAT_GEMINI_MESSAGE_RESERVE_TOKENS = 290_000
+export const CHAT_GEMINI_MESSAGE_RESERVE_TOKENS = 300_000
 
 export function openaiPoolKey(dayKey) {
   return `openai:${dayKey}`
