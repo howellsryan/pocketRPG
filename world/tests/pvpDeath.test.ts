@@ -117,8 +117,9 @@ describe('death drops against the provenance pools', () => {
   })
 })
 
-const iron = (charId: string): LootViewer => ({ charId, isIronman: true })
-const main = (charId: string): LootViewer => ({ charId, isIronman: false })
+const iron = (charId: string): LootViewer => ({ charId, isIronman: true, isGrindman: false })
+const main = (charId: string): LootViewer => ({ charId, isIronman: false, isGrindman: false })
+const grind = (charId: string): LootViewer => ({ charId, isIronman: false, isGrindman: true })
 
 describe('Ironman and Wilderness loot', () => {
   const playerDrop = (): LootEntity =>
@@ -154,5 +155,33 @@ describe('Ironman and Wilderness loot', () => {
     // Past the owner window it is public to everyone else — but never to them.
     expect(isVisibleTo(drop, main('bystander'), 100)).toBe(true)
     expect(isVisibleTo(drop, iron('bystander'), 100)).toBe(false)
+  })
+})
+
+describe('Grindman and Wilderness loot', () => {
+  const playerDrop = (): LootEntity =>
+    spawnDrops([{ itemId: 'dragon_scimitar', quantity: 1 }], 5, 5, 'killer', 0, 17, { fromPlayer: true })[0]
+  const botDrop = (): LootEntity =>
+    spawnDrops([{ itemId: 'zesta_longsword', quantity: 1 }], 5, 5, 'killer', 0)[0]
+
+  it('refuses a Grindman the loot of a player they killed themselves', () => {
+    const drop = playerDrop()
+    expect(mayTake(drop, grind('killer'))).toBe(false)
+    expect(isVisibleTo(drop, grind('killer'), 1)).toBe(false)
+  })
+
+  it('keeps a player drop out of a Grindman bystander’s view once it goes public', () => {
+    expect(isVisibleTo(playerDrop(), grind('bystander'), 100)).toBe(false)
+    expect(mayTake(playerDrop(), grind('bystander'))).toBe(false)
+  })
+
+  it('grants a Grindman their own bot drop, Zesta included', () => {
+    const drop = botDrop()
+    expect(mayTake(drop, grind('killer'))).toBe(true)
+    expect(isVisibleTo(drop, grind('killer'), 1)).toBe(true)
+  })
+
+  it('still refuses a Grindman a bot drop somebody ELSE earned', () => {
+    expect(mayTake(botDrop(), grind('bystander'))).toBe(false)
   })
 })

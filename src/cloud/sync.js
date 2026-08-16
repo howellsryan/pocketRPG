@@ -89,6 +89,33 @@ function normaliseActiveTaskForKey(settings) {
 export function saveContentKey(payload) {
   return JSON.stringify({ ...payload, timestamp: 0, settings: normaliseActiveTaskForKey(payload?.settings) })
 }
+
+// `settings.activeTask` is the one field in the blob the SERVER acts on rather
+// than merely stores: /api/save stamps it onto character_idle_state (the row
+// boot + visibility-return read to decide what to idle-simulate), and it does so
+// on every write, no-op saves included. Every other field is happy to be as old
+// as the snapshot it came from — this one is not. A snapshot captured before the
+// player started an action and flushed after (the debounce holds one for up to
+// PUSH_DEBOUNCE_MS, and schedulePeriodicSave declines to refresh it while the
+// session reads as idle) stamped active_task = NULL over the row pushIdleState
+// had just written correctly, and the return found nothing to resume.
+//
+// So the task is read LIVE at push time instead of trusted from the snapshot.
+// null is a real value here (the player stopped), not "untouched" — the override
+// writes it, or stopping an action could never clear the row.
+let liveActiveTaskProvider = null
+export function setLiveActiveTaskProvider(fn) {
+  liveActiveTaskProvider = typeof fn === 'function' ? fn : null
+}
+
+function withLiveActiveTask(payload) {
+  if (!liveActiveTaskProvider || !payload) return payload
+  let task
+  try { task = liveActiveTaskProvider() } catch { return payload }
+  if (task === undefined) return payload
+  return { ...payload, settings: { ...(payload.settings || {}), activeTask: task ?? null } }
+}
+
 let pendingTimer = null
 let pendingSnapshot = null
 // The declared loss ledger AS OF the moment pendingSnapshot was captured. It
@@ -174,7 +201,7 @@ async function performPush() {
   inFlight = true
   emitCloudSaveStatus('saving')
   try {
-    const data = buildSavePayloadFromSnapshot(snap)
+    const data = withLiveActiveTask(buildSavePayloadFromSnapshot(snap))
     const json = JSON.stringify(data)
     const contentKey = saveContentKey(data)
     // Dirty check: identical to the last successful push → nothing to do, so we
@@ -487,7 +514,7 @@ export function beaconSaveNow(snapshot) {
   if (conflictPending) return false
   if (!snapshot) return false
   let data
-  try { data = buildSavePayloadFromSnapshot(snapshot) } catch { return false }
+  try { data = withLiveActiveTask(buildSavePayloadFromSnapshot(snapshot)) } catch { return false }
   const contentKey = saveContentKey(data)
   // Already durably stored by the last successful push — nothing to flush.
   if (contentKey === lastPushedContentKey) return false

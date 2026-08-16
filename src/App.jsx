@@ -908,7 +908,11 @@ function GameApp() {
         // clock, hides the tab, then rolls it back, we'll catch the negative
         // delta on return and clamp elapsed to 0.
         updateMaxObservedAt(now)
-        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+        // getActiveTask(), not activeTaskRef: that ref is useEffect-synced, and
+        // Preact runs effects after paint — which a hiding tab never reaches. An
+        // action started in the moments before backgrounding would be mirrored
+        // here as whatever preceded it.
+        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(getActiveTask()))
         // Flush progress before the tab is suspended/killed. Use a sendBeacon
         // save (survives teardown) rather than pushNow's fetch, which the browser
         // cancels when the page actually goes away — that cancellation was
@@ -1451,7 +1455,7 @@ function GameApp() {
       const now = Date.now()
       localStorage.setItem('pocketrpg_hiddenAt', String(now))
       updateMaxObservedAt(now)
-      localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+      localStorage.setItem('pocketrpg_activeTask', JSON.stringify(getActiveTask()))
       // Folds the idle heartbeat into the same /api/save write — see the
       // visibilitychange handler above.
       try { beaconSaveNow(getSnapshot()) } catch { /* non-fatal */ }
@@ -1499,8 +1503,9 @@ function GameApp() {
       // suspended tab we compare Date.now() against this; if it dropped, the
       // device clock rolled backwards and we can't trust idle elapsed math.
       updateMaxObservedAt(now)
-      if (activeTaskRef.current) {
-        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+      const liveTask = getActiveTask()
+      if (liveTask) {
+        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(liveTask))
       }
       // Snapshot full save to localStorage every 100 ticks (~60s) as IDB failover
       // Uses getSnapshot() to read live refs — avoids stale closure values
@@ -1993,7 +1998,7 @@ function GameApp() {
    // token) and bounce back to AuthScreen so the user can pick or create
    // another character under the same GitHub login.
   // Shown when a player taps a cloud-only feature while in the offline demo.
-  const notifyDemoLocked = () => addToast(DEMO_LOCKED_MESSAGE, 'info')
+  const notifyDemoLocked = () => addToast(DEMO_LOCKED_MESSAGE, 'warning')
 
   // Enter the offline demo from the landing page. Persists the demo flag and
   // re-runs boot, which takes the no-token demo branch in initCloudAndSave.
@@ -2184,7 +2189,7 @@ function GameApp() {
   async function executeBossSkip(bossId) {
     const killHandler = combatSkipHandlerRef?.current
     if (!killHandler) {
-      addToast('Open the fight to skip a kill.', 'info')
+      addToast('Open the fight to skip a kill.', 'warning')
       return
     }
     // Freeze the game for the WHOLE skip: charge → arm the kill → server
@@ -2493,7 +2498,7 @@ function GameApp() {
     activeTaskRef.current = null
     setActionData(null)
     try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-    addToast(reason || 'This action can no longer progress.', 'info')
+    addToast(reason || 'This action can no longer progress.', 'warning')
   }
 
   // Skip 1 hour handler — preflight first, charge only after meaningful outcome exists
@@ -2512,7 +2517,7 @@ function GameApp() {
     if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.raidId) {
       const raidSkip = raidSkipHandlerRef?.current
       if (!raidSkip) {
-        addToast('Open the raid to skip it.', 'info')
+        addToast('Open the raid to skip it.', 'warning')
         isSkippingRef.current = false
         return
       }
@@ -2530,7 +2535,7 @@ function GameApp() {
       const monster = activeTaskRef.current?.monster
       const killHandler = combatSkipHandlerRef?.current
       if (!killHandler) {
-        addToast('Open the fight to skip a kill.', 'info')
+        addToast('Open the fight to skip a kill.', 'warning')
         isSkippingRef.current = false
         return
       }
@@ -2589,7 +2594,7 @@ function GameApp() {
       const preflight = getSkipPreflight(task, context, SKIP_HOUR_MS)
       if (!preflight.canSkip) {
         if (preflight.shouldStopTask) clearExhaustedActiveTask(preflight.reason)
-        else addToast(preflight.reason || 'Cannot skip this action right now.', 'info')
+        else addToast(preflight.reason || 'Cannot skip this action right now.', 'warning')
         return
       }
       // Commit to the skip: freeze the game until the server confirms. Pausing

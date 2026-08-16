@@ -70,3 +70,18 @@ export function accountModeConflict({ isIronman = false, isOneLife = false, isGr
  */
 export const GRINDMAN_CREDITS_BLOCKED =
   'Grindman accounts cannot buy credits — yours come from daily tasks.'
+
+/**
+ * The refusal a Grindman gets for a collection-logged item on the trading post.
+ *
+ * The mode's whole shape is triple drop rates paid for with half XP, so a unique
+ * that could be bought is a grind the account already skipped. It covers what a
+ * logged drop BECOMES as well as the drop itself, so the refusal says "uniques"
+ * rather than "collection log items" — an amulet of fury holds no log slot, but
+ * buying one is buying the onyx. Buying is the only side refused — a Grindman
+ * still sells what they grind — and the wording names the drop rather than the
+ * market, because the point is where the item comes from, not what the trading
+ * post is for.
+ */
+export const GRINDMAN_UNIQUES_GRINDED =
+  'Grindman accounts grind their uniques — this one has to drop for you.'
