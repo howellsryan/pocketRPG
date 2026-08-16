@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import Button from './Button.jsx'
+import GameIcon from './GameIcon.jsx'
 import { api, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { pauseTicks, resumeTicks } from '../engine/tick.js'
 import { applyCloudSave } from '../cloud/sync.js'
@@ -18,13 +19,18 @@ const GREETING = {
 // path — no separate endpoint, no separate rules, and a write still lands on
 // the same Confirm card. Phrased as the player would ask so the helper's
 // existing routing (and its tools) handle them unchanged.
+// `icon` is a key into the shared icon maps, resolved by GameIcon exactly as an
+// item's is — bespoke art first, tinted glyph second. Keys are chosen for
+// meaning rather than for an item: `coins` and `death_skull` are symbols in the
+// bespoke set, not just the items that share their name. They are also chosen
+// for legibility at 18px on a dark chip, which rules out otherwise apter art —
+// `crossed_swords` is too thin to read and `slayer_helmet` is a dark blob.
 const QUICK_ACTIONS = [
-  { label: '⚔️ Best DPS setup', prompt: "What's my best DPS setup right now? Compare melee, ranged and magic and tell me exactly what to wear." },
-  { label: '🎯 Setup for my task', prompt: "What's the best setup for my current slayer task monster, and which protection prayer should I use?" },
-  { label: '📈 Upgrades to chase', prompt: 'Which gear upgrades would raise my DPS the most, and where do I get them?' },
-  { label: '🧪 Levels worth it?', prompt: 'Which combat levels would raise my DPS the most, and by how much?' },
-  { label: '🗺️ What next?', prompt: 'Looking at my character, what is the single best thing for me to do next?' },
-  { label: '✅ Daily tasks', prompt: 'Which daily tasks do I still have left today?' },
+  { icon: 'winged_sword', label: 'Best DPS setup', prompt: "What's my best DPS setup right now? Compare melee, ranged and magic and tell me exactly what to wear." },
+  { icon: 'death_skull', label: 'Setup for my task', prompt: "What's the best setup for my current slayer task monster, and which protection prayer should I use?" },
+  { icon: 'crystal_ball', label: 'Upgrades to chase', prompt: 'Which gear upgrades would raise my DPS the most, and where do I get them?' },
+  { icon: 'coins', label: 'Best money maker', prompt: 'Given my levels, gear and account type, what is the best way for me to make money right now?' },
+  { icon: 'adventures_scroll', label: 'What next?', prompt: 'Looking at my character, what is the single best thing for me to do next?' },
 ]
 
 // In-game help chatbot. Cloud accounts only (the /api/chat endpoint needs an
@@ -254,8 +260,9 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
                     type="button"
                     disabled={busy}
                     onClick={() => send(action.prompt)}
-                    class="min-h-[44px] px-3 rounded-lg text-xs bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] disabled:opacity-50"
+                    class="min-h-[44px] px-3 rounded-lg text-xs flex items-center gap-1.5 bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] disabled:opacity-50"
                   >
+                    <GameIcon iconKey={action.icon} size={18} title={action.label} />
                     {action.label}
                   </button>
                 ))}
