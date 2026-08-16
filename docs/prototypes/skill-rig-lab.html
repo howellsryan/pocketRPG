@@ -80,6 +80,7 @@
     font-family: var(--mono);
     font-size: 12px;
     font-variant-numeric: tabular-nums;
+    margin: 0;
   }
   .readout div { text-align: right; }
   .readout dt {
@@ -90,6 +91,7 @@
     margin-bottom: 3px;
   }
   .readout dd { margin: 0; font-size: 17px; color: var(--text); }
+  .readout dd.phase { color: var(--gold); font-size: 13px; padding-top: 3px; }
 
   /* ── Stage pair ───────────────────────────────────────────── */
 
@@ -191,9 +193,12 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 2px 10px;
   }
   .cell__head b {
+    margin-left: auto;
+    white-space: nowrap;
     font-family: var(--mono);
     font-size: 12px;
     letter-spacing: 0;
@@ -323,10 +328,7 @@
   @media (max-width: 720px) {
     .stages { grid-template-columns: 1fr; }
     .mast { align-items: flex-start; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .chip { animation-duration: 1ms !important; }
+    .readout { gap: 16px; }
   }
 
   @keyframes chipFly {
@@ -335,6 +337,12 @@
   }
   .chip { animation: chipFly 620ms ease-out forwards; }
 
+  @keyframes puffOut {
+    from { opacity: 0.5; transform: translate(0,0) scale(0.4); }
+    to   { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.9); }
+  }
+  .puff { animation: puffOut 760ms ease-out forwards; }
+
   @keyframes yieldPop {
     0%   { opacity: 0; transform: translate(0,0) scale(0.5); }
     22%  { opacity: 1; transform: translate(0,-13px) scale(1.12); }
@@ -342,6 +350,10 @@
     100% { opacity: 0; transform: translate(0,-30px) scale(0.95); }
   }
   .yield { animation: yieldPop 1000ms ease-out forwards; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chip, .puff, .yield { animation-duration: 1ms !important; }
+  }
 </style>
 
 <div class="wrap">
@@ -356,6 +368,7 @@
       <div><dt>Action</dt><dd id="ro-ticks">—</dd></div>
       <div><dt>Swings</dt><dd id="ro-swings">—</dd></div>
       <div><dt>Progress</dt><dd id="ro-pct">—</dd></div>
+      <div><dt>Phase</dt><dd class="phase" id="ro-phase">—</dd></div>
     </dl>
   </header>
 
@@ -394,8 +407,8 @@
     </div>
 
     <div class="cell">
-      <div class="cell__head"><span>Scrub</span><b id="out-scrub">0%</b></div>
-      <input type="range" id="rng-scrub" min="0" max="1000" step="1" value="0" aria-label="Scrub through action">
+      <div class="cell__head"><span>Scrub whole cycle</span><b id="out-scrub">0%</b></div>
+      <input type="range" id="rng-scrub" min="0" max="1000" step="1" value="0" aria-label="Scrub through the full cycle including the payoff">
       <div class="btn-row">
         <button id="btn-play" aria-pressed="true">Pause</button>
         <button id="btn-guides" aria-pressed="false">Guides</button>
@@ -414,7 +427,11 @@
   <section class="notes">
     <div class="note">
       <h3>Tick-locked</h3>
-      <p>The swing is driven by the same <code>progress</code> value that fills the bar, so the final impact lands exactly as the bar completes and the yield pops. Nothing free-runs.</p>
+      <p>Swing timing divides the action's real tick count, and the last strike lands exactly as the bar reaches 100%. That impact is what starts the payoff — nothing free-runs.</p>
+    </div>
+    <div class="note">
+      <h3>The payoff</h3>
+      <p>The rock bursts into shards, the tree creaks then falls and settles, the rod snaps up and the catch is taken out of the air by hand. Then everything resets for the next action.</p>
     </div>
     <div class="note">
       <h3>Ink flips, figure doesn't</h3>
@@ -422,7 +439,7 @@
     </div>
     <div class="note">
       <h3>Cost</h3>
-      <p>Around 60 SVG primitives and one transform per part per frame. No sprite sheets, no WebGL, no new dependency — it inlines into the single-file build.</p>
+      <p>Around 70 SVG primitives and one transform per part per frame. No sprite sheets, no WebGL, no new dependency — it inlines into the single-file build.</p>
     </div>
   </section>
 
@@ -433,13 +450,20 @@
   'use strict';
 
   var TICK_MS = 600;
+  var IMPACT_PH = 0.70;   // phase within a swing where the tool lands
+
+  // Rig anchors. Everything the arm carries is positioned in the figure's
+  // own space and rotated about the shoulder, so tools stay in the hand.
+  var SHOULDER = [84, 58];
+  var HAND     = [100, 64];
+  var ROD_TIP  = [138, 36];
 
   // Real actions from src/data/skills.json, with the tint each product
   // resolves to through getItemIconTint / resolveIconTint.
   var VERBS = {
     mine: {
       label: 'Mine',
-      noun: 'ore',
+      payoffMs: 900,
       actions: [
         { id:'tin',        name:'Tin ore',        lvl:1,  ticks:4,  tint:'#e8d5a8' },
         { id:'copper',     name:'Copper ore',     lvl:1,  ticks:4,  tint:'#b87333' },
@@ -454,7 +478,7 @@
     },
     chop: {
       label: 'Chop',
-      noun: 'logs',
+      payoffMs: 1500,
       actions: [
         { id:'normal',   name:'Logs',          lvl:1,  ticks:4,  tint:'#c9a96e' },
         { id:'oak',      name:'Oak logs',      lvl:15, ticks:5,  tint:'#a07444' },
@@ -469,7 +493,7 @@
     },
     fish: {
       label: 'Fish',
-      noun: 'fish',
+      payoffMs: 1400,
       actions: [
         { id:'shrimps',    name:'Shrimps',    lvl:1,  ticks:4,  tint:'#f4a08c' },
         { id:'trout',      name:'Trout',      lvl:20, ticks:5,  tint:'#f4a08c' },
@@ -489,8 +513,11 @@
     swings: 3,
     playing: true,
     guides: false,
-    progress: 0,
-    lastImpact: -1
+    cursor: 0,          // 0..1 across the WHOLE cycle (action + payoff)
+    lastImpact: -1,
+    broke: false,
+    yielded: false,
+    dusted: false
   };
 
   var SVG_NS = 'http://www.w3.org/2000/svg';
@@ -498,6 +525,21 @@
     var n = document.createElementNS(SVG_NS, name);
     if (attrs) for (var k in attrs) n.setAttribute(k, attrs[k]);
     return n;
+  }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function easeOut(t) { return 1 - Math.pow(1 - t, 2.2); }
+  function easeIn(t)  { return Math.pow(t, 2.6); }
+
+  function cycleMs()   { return state.action.ticks * TICK_MS + VERBS[state.verb].payoffMs; }
+  function actionFrac(){ return (state.action.ticks * TICK_MS) / cycleMs(); }
+
+  // A point carried by the arm, in page space, for a given arm rotation.
+  function carried(pt, armDeg, bob) {
+    var a = armDeg * Math.PI / 180;
+    var dx = pt[0] - SHOULDER[0], dy = pt[1] - SHOULDER[1];
+    return [SHOULDER[0] + dx * Math.cos(a) - dy * Math.sin(a),
+            SHOULDER[1] + dx * Math.sin(a) + dy * Math.cos(a) + bob];
   }
 
   // ── The rig ───────────────────────────────────────────────────
@@ -509,7 +551,7 @@
 
     var ink   = mode === 'parch' ? '#1a1a0e' : '#e9dcbd';
     var cloth = mode === 'parch' ? '#f6efdd' : '#2a2724';
-    var cloth2= mode === 'parch' ? '#d8c69e' : '#3a352f';
+    var cloth2= mode === 'parch' ? '#d3bf93' : '#3d372f';
     var shade = mode === 'parch' ? 'rgba(26,26,14,0.10)' : 'rgba(233,220,189,0.09)';
 
     var svg = el('svg', { viewBox: '0 0 200 128', role: 'img' });
@@ -517,25 +559,15 @@
 
     var W = 3.1; // one ink weight everywhere — the defining constraint
 
-    var defs = el('defs');
-    svg.appendChild(defs);
+    svg.appendChild(el('path', {
+      d: 'M12 108 H188', stroke: ink, 'stroke-width': 2, 'stroke-linecap': 'round', opacity: 0.28
+    }));
+    svg.appendChild(el('ellipse', { cx: 76, cy: 108, rx: 23, ry: 3.4, fill: shade }));
 
-    // Ground line
-    var ground = el('path', {
-      d: 'M14 108 H186', stroke: ink, 'stroke-width': 2, 'stroke-linecap': 'round',
-      opacity: 0.28
-    });
-    svg.appendChild(ground);
-
-    // Contact shadow
-    svg.appendChild(el('ellipse', { cx: 74, cy: 108, rx: 22, ry: 3.4, fill: shade }));
-
-    // ── Prop (recoloured per resource) ──────────────────────────
-    var propG = el('g', { id: 'prop' });
+    var propG = el('g');
     svg.appendChild(propG);
 
-    // ── Figure ──────────────────────────────────────────────────
-    var fig = el('g', { id: 'fig' });
+    var fig = el('g');
     svg.appendChild(fig);
 
     var common = { stroke: ink, 'stroke-width': W, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' };
@@ -545,72 +577,68 @@
       for (var j in attrs) a[j] = attrs[j];
       return el(name, a);
     }
+    // An outlined limb: one ink stroke, one narrower cloth stroke on top.
+    // Drawing it the other way round gives a stick with a halo.
+    function limb(d, thickness, fillCol) {
+      var g = el('g');
+      g.appendChild(el('path', { d: d, fill: 'none', stroke: ink, 'stroke-width': thickness,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+      g.appendChild(el('path', { d: d, fill: 'none', stroke: fillCol, 'stroke-width': thickness - W * 2,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+      return g;
+    }
 
-    // Back leg
-    var legBack = el('g', { id: 'legBack' });
-    legBack.appendChild(part('path', { d: 'M68 84 L62 100 L54 103', fill: 'none', 'stroke-width': W + 3.4, stroke: cloth2 }));
-    legBack.appendChild(part('path', { d: 'M68 84 L62 100 L54 103', fill: 'none' }));
-    fig.appendChild(legBack);
+    fig.appendChild(limb('M72 84 L63 96 L55 103', 12, cloth2));   // back leg
+    fig.appendChild(limb('M78 84 L86 97 L95 104', 13, cloth));    // front leg
 
-    // Front leg
-    var legFront = el('g', { id: 'legFront' });
-    legFront.appendChild(part('path', { d: 'M78 84 L84 101 L93 104', fill: 'none', 'stroke-width': W + 3.8, stroke: cloth }));
-    legFront.appendChild(part('path', { d: 'M78 84 L84 101 L93 104', fill: 'none' }));
-    fig.appendChild(legFront);
-
-    // Back arm (rotates opposite the tool arm)
-    var armBack = el('g', { id: 'armBack' });
-    armBack.appendChild(part('path', { d: 'M76 58 L66 68 L64 76', fill: 'none', 'stroke-width': W + 2.6, stroke: cloth2 }));
-    armBack.appendChild(part('path', { d: 'M76 58 L66 68 L64 76', fill: 'none' }));
+    var armBack = limb('M78 60 L68 70 L66 78', 10, cloth2);
     fig.appendChild(armBack);
 
-    // Torso — a cinched tunic, chunky enough to read at 90px
-    var torso = el('g', { id: 'torso' });
-    torso.appendChild(part('path', {
-      d: 'M66 52 Q64 74 66 86 L84 86 Q86 72 84 52 Z',
-      fill: cloth
-    }));
-    // Belt
-    torso.appendChild(part('path', { d: 'M65.5 72 L84.5 72', fill: 'none', 'stroke-width': W + 1.2 }));
+    // Torso — a cinched tunic with enough mass to carry the limbs.
+    var torso = el('g');
+    torso.appendChild(part('path', { d: 'M67 54 Q64 72 66 86 L86 86 Q88 72 86 54 Z', fill: cloth }));
+    torso.appendChild(part('path', { d: 'M66.5 73 L86.5 73', fill: 'none', 'stroke-width': W + 1.4 }));
     fig.appendChild(torso);
 
-    // Head — hooded cowl. No face: nothing to keep consistent across ten verbs.
-    var head = el('g', { id: 'head' });
+    // Head — a hood that drapes FORWARD over the brow. The earlier version
+    // peaked upward, which read as an animal ear rather than a cowl.
+    var head = el('g');
     head.appendChild(part('path', {
-      d: 'M75 26 Q90 28 88 44 Q87 53 75 54 Q63 53 62 44 Q60 28 75 26 Z',
-      fill: cloth
+      d: 'M65 57 Q57 45 62 32 Q69 21 81 23 Q94 26 94 41 Q94 51 89 57 Z', fill: cloth
     }));
-    // Cowl peak
-    head.appendChild(part('path', { d: 'M75 26 Q80 18 88 17 Q86 25 84 30', fill: cloth }));
-    // Face void — the shadow under the hood
+    // Shadowed opening, set into the front of the hood.
     head.appendChild(el('path', {
-      d: 'M78 38 Q88 39 87 46 Q86 51 78 51 Z', fill: ink, opacity: 0.85
+      d: 'M85 33 Q93 36 92 45 Q90 52 84 53 Q80 43 85 33 Z', fill: ink, opacity: 0.88
+    }));
+    // Mantle across the shoulders, tying hood to torso.
+    head.appendChild(part('path', {
+      d: 'M64 53 Q76 63 90 53 Q92 60 86 65 L68 65 Q62 60 64 53 Z', fill: cloth2
     }));
     fig.appendChild(head);
 
-    // Front arm + tool. Rotation happens about the shoulder (82,57).
-    var armFront = el('g', { id: 'armFront' });
-    armFront.appendChild(part('path', { d: 'M82 57 L96 63', fill: 'none', 'stroke-width': W + 2.8, stroke: cloth }));
-    armFront.appendChild(part('path', { d: 'M82 57 L96 63', fill: 'none' }));
-    var toolG = el('g', { id: 'tool' });
+    // Front arm + tool. Everything rotates about the shoulder together.
+    var armFront = el('g');
+    armFront.appendChild(limb('M84 58 L94 62 L100 64', 11, cloth));
+    var toolG = el('g');
     armFront.appendChild(toolG);
     fig.appendChild(armFront);
 
-    // Guides — pivot points and the ground plane, for rig review only
-    var guides = el('g', { class: 'guides', opacity: 0.5 });
-    [[82,57],[75,54],[72,84]].forEach(function (p) {
+    var overlay = el('g');
+    svg.appendChild(overlay);
+
+    var guides = el('g', { class: 'guides', opacity: 0.55 });
+    [SHOULDER, HAND, [148, 108]].forEach(function (p) {
       guides.appendChild(el('circle', { cx: p[0], cy: p[1], r: 2, fill: 'none', stroke: '#d4a017', 'stroke-width': 0.9 }));
-      guides.appendChild(el('path', { d: 'M' + (p[0]-5) + ' ' + p[1] + ' H' + (p[0]+5), stroke: '#d4a017', 'stroke-width': 0.5 }));
-      guides.appendChild(el('path', { d: 'M' + p[0] + ' ' + (p[1]-5) + ' V' + (p[1]+5), stroke: '#d4a017', 'stroke-width': 0.5 }));
+      guides.appendChild(el('path', { d: 'M' + (p[0]-6) + ' ' + p[1] + ' H' + (p[0]+6), stroke: '#d4a017', 'stroke-width': 0.5 }));
+      guides.appendChild(el('path', { d: 'M' + p[0] + ' ' + (p[1]-6) + ' V' + (p[1]+6), stroke: '#d4a017', 'stroke-width': 0.5 }));
     });
     svg.appendChild(guides);
 
-    var fx = el('g', { id: 'fx' });
+    var fx = el('g');
     svg.appendChild(fx);
 
     host.appendChild(svg);
 
-    // Progress bar replica beneath each stage
     var bar = document.createElement('div');
     bar.className = 'bar';
     var fill = document.createElement('div');
@@ -622,181 +650,293 @@
     host.appendChild(pct);
 
     return {
-      svg: svg, ink: ink, cloth: cloth, cloth2: cloth2, W: W,
-      fig: fig, torso: torso, head: head,
-      armFront: armFront, armBack: armBack,
-      legFront: legFront, legBack: legBack,
-      tool: toolG, prop: propG, fx: fx,
-      fill: fill, pct: pct, part: part
+      ink: ink, cloth: cloth, cloth2: cloth2, W: W,
+      fig: fig, torso: torso, head: head, armFront: armFront, armBack: armBack,
+      tool: toolG, prop: propG, overlay: overlay, fx: fx, fill: fill, pct: pct, part: part, limb: limb
     };
   }
 
   // ── Tools ─────────────────────────────────────────────────────
-  // Drawn from the hand outward, so the arm group's rotation carries them.
+  // Each shaft passes THROUGH the hand at (100,64) and shows a grip, so
+  // the tool reads as held rather than floating alongside the arm.
 
   function drawTool(s) {
     s.tool.innerHTML = '';
     var p = s.part;
-    var shaft = s.ink;
 
     if (state.verb === 'mine') {
-      s.tool.appendChild(p('path', { d: 'M96 63 L118 55', fill: 'none', 'stroke-width': s.W + 1.4, stroke: shaft }));
-      s.tool.appendChild(p('path', { d: 'M112 44 Q120 52 112 65', fill: 'none', 'stroke-width': s.W + 2.2 }));
-    } else if (state.verb === 'chop') {
-      s.tool.appendChild(p('path', { d: 'M96 63 L116 56', fill: 'none', 'stroke-width': s.W + 1.4, stroke: shaft }));
-      s.tool.appendChild(p('path', {
-        d: 'M112 47 Q124 52 120 64 Q114 62 110 58 Z', fill: s.cloth2
+      s.tool.appendChild(s.limb('M92 70 L128 50', 7, s.cloth2));            // shaft
+      s.tool.appendChild(p('path', {                                        // pick head
+        d: 'M120 38 Q135 46 128 62', fill: 'none', 'stroke-width': 8
       }));
+      s.tool.appendChild(p('path', {
+        d: 'M120 38 Q135 46 128 62', fill: 'none', stroke: s.cloth, 'stroke-width': 2.6
+      }));
+      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 9, stroke: s.ink }));
+      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 4.4, stroke: s.cloth }));
+
+    } else if (state.verb === 'chop') {
+      s.tool.appendChild(s.limb('M92 70 L124 52', 7, s.cloth2));            // shaft
+      s.tool.appendChild(p('path', {                                        // blade
+        d: 'M117 45 L128 47 Q135 54 128 61 L117 60 Z', fill: s.cloth2
+      }));
+      s.tool.appendChild(p('path', {                                        // cutting edge
+        d: 'M128 47 Q135 54 128 61', fill: 'none', stroke: s.cloth, 'stroke-width': 2.4
+      }));
+      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 9, stroke: s.ink }));
+      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 4.4, stroke: s.cloth }));
+
     } else {
-      // Rod: a long taper. The line is drawn separately so it can sag.
-      s.tool.appendChild(p('path', { d: 'M94 64 L132 40', fill: 'none', 'stroke-width': s.W + 0.8, stroke: shaft }));
-      s.tool.appendChild(p('circle', { cx: 99, cy: 61, r: 2.6, fill: s.cloth2, 'stroke-width': s.W - 1.2 }));
+      s.tool.appendChild(s.limb('M92 72 L138 36', 5.4, s.cloth2));          // rod
+      s.tool.appendChild(p('circle', { cx: 103, cy: 63, r: 3.2, fill: s.cloth }));   // reel
     }
   }
 
   // ── Props ─────────────────────────────────────────────────────
+  // Each prop stores the nodes the payoff animates, so nothing is
+  // rebuilt per frame — the loop only writes transforms.
+
+  var ROCK = 'M130 108 Q123 96 129 85 Q135 75 148 73 Q161 72 166 84 Q171 96 165 105 Q160 109 152 108 Z';
+  var SHARDS = [
+    { d: 'M130 108 Q123 96 129 85 L143 89 L141 108 Z',           dx: -18, dy:  -7, rot: -58 },
+    { d: 'M129 85 Q135 75 148 73 L150 87 L143 89 Z',             dx:  -8, dy: -25, rot: -88 },
+    { d: 'M148 73 Q161 72 166 84 L157 92 L150 87 Z',             dx:  14, dy: -24, rot:  72 },
+    { d: 'M143 89 L150 87 L157 92 L166 84 Q171 96 165 105 Q160 109 152 108 L141 108 Z', dx: 22, dy: -5, rot: 46 }
+  ];
+
+  var TREE_PIVOT = [140, 108];
 
   function drawProp(s) {
     s.prop.innerHTML = '';
+    s.overlay.innerHTML = '';
+    s.rockBody = s.shards = s.shardG = s.tree = s.stump = s.notch = s.fishNode = s.lineNode = null;
     var p = s.part;
     var tint = state.action.tint;
 
     if (state.verb === 'mine') {
-      // Rock cluster — tinted body, ink outline, a facet in the tint's shadow
-      s.prop.appendChild(p('path', {
-        d: 'M132 108 L128 84 L142 72 L160 76 L166 96 L158 108 Z', fill: tint
-      }));
-      s.prop.appendChild(el('path', {
-        d: 'M142 72 L148 92 L166 96 L160 76 Z', fill: 'rgba(0,0,0,0.17)'
-      }));
-      s.prop.appendChild(p('path', { d: 'M142 72 L148 92 L132 108', fill: 'none', 'stroke-width': s.W - 1 }));
-      s.prop.appendChild(p('path', { d: 'M148 92 L166 96', fill: 'none', 'stroke-width': s.W - 1 }));
+      var body = el('g');
+      body.appendChild(p('path', { d: ROCK, fill: tint }));
+      body.appendChild(el('path', { d: 'M150 87 L157 92 L166 84 Q171 96 165 105 Q160 109 152 108 L141 108 L143 89 Z',
+        fill: 'rgba(0,0,0,0.13)' }));
+      body.appendChild(p('path', { d: 'M143 89 L150 87 L157 92', fill: 'none', 'stroke-width': s.W - 1.2 }));
+      body.appendChild(p('path', { d: 'M143 89 L141 108', fill: 'none', 'stroke-width': s.W - 1.2 }));
+      s.prop.appendChild(body);
+      s.rockBody = body;
+
+      var shardG = el('g', { opacity: 0 });
+      s.shards = [];
+      SHARDS.forEach(function (sh) {
+        var node = p('path', { d: sh.d, fill: tint, 'stroke-width': s.W - 0.4 });
+        shardG.appendChild(node);
+        s.shards.push(node);
+      });
+      s.prop.appendChild(shardG);
+      s.shardG = shardG;
+
     } else if (state.verb === 'chop') {
-      // Trunk, tinted to the log colour, canopy in a desaturated wash
-      s.prop.appendChild(el('path', {
-        d: 'M136 108 Q134 78 138 56 L154 56 Q158 78 156 108 Z', fill: tint,
-        stroke: s.ink, 'stroke-width': s.W, 'stroke-linejoin': 'round'
+      var tree = el('g');
+      tree.appendChild(p('path', {                                    // canopy
+        d: 'M140 60 Q116 56 118 38 Q120 21 138 19 Q158 17 163 33 Q167 53 144 60 Z',
+        fill: tint, opacity: 0.5
       }));
-      s.prop.appendChild(el('path', {
-        d: 'M147 56 Q150 82 148 108 L156 108 Q158 78 154 56 Z', fill: 'rgba(0,0,0,0.16)'
+      tree.appendChild(p('path', {                                    // trunk
+        d: 'M132 108 Q131 82 135 58 L147 58 Q151 82 150 108 Z', fill: tint
       }));
-      s.prop.appendChild(p('path', {
-        d: 'M146 56 Q118 50 126 30 Q130 12 152 14 Q176 12 176 32 Q180 50 152 56 Z',
-        fill: tint, opacity: 0.55
-      }));
-      s.prop.appendChild(p('path', { d: 'M139 74 Q146 71 153 74', fill: 'none', 'stroke-width': s.W - 1.4 }));
+      tree.appendChild(el('path', { d: 'M142 58 Q145 82 144 108 L150 108 Q151 82 147 58 Z', fill: 'rgba(0,0,0,0.13)' }));
+      // The notch the axe cuts — it deepens as the swings land.
+      s.notch = el('path', { d: 'M132 76 L132 76 L132 82 Z', fill: s.ink });
+      tree.appendChild(s.notch);
+      s.prop.appendChild(tree);
+      s.tree = tree;
+
+      s.stump = p('path', { d: 'M133 108 Q132 100 134 96 L149 96 Q151 101 150 108 Z', fill: tint, opacity: 0 });
+      s.prop.appendChild(s.stump);
+
     } else {
-      // Water plane + a fish silhouette below it
-      s.prop.appendChild(el('path', {
-        d: 'M118 96 H190 V116 H118 Z', fill: tint, opacity: 0.20
-      }));
-      s.prop.appendChild(p('path', { d: 'M118 96 Q130 92 142 96 T166 96 T190 96', fill: 'none', 'stroke-width': s.W - 0.6 }));
-      var fish = el('g', { id: 'fish' });
-      fish.appendChild(p('path', {
-        d: 'M150 106 Q158 100 168 106 Q158 112 150 106 Z', fill: tint
-      }));
-      fish.appendChild(p('path', { d: 'M150 106 L144 102 L145 110 Z', fill: tint }));
-      s.prop.appendChild(fish);
+      s.prop.appendChild(el('path', { d: 'M112 96 H196 V128 H112 Z', fill: tint, opacity: 0.16 }));
+      s.prop.appendChild(p('path', { d: 'M112 96 Q126 92 140 96 T166 96 T196 96', fill: 'none', 'stroke-width': s.W - 0.6 }));
+      var fish = el('g');
+      fish.appendChild(p('path', { d: 'M-7 0 Q0 -4.6 8 0 Q0 4.6 -7 0 Z', fill: tint, 'stroke-width': s.W - 0.7 }));
+      fish.appendChild(p('path', { d: 'M-7 0 L-12.5 -4 L-11.5 4 Z', fill: tint, 'stroke-width': s.W - 0.7 }));
+      s.lineNode = p('path', { d: '', fill: 'none', 'stroke-width': 1.1, opacity: 0.7, stroke: s.ink });
+      s.overlay.appendChild(s.lineNode);
+      s.overlay.appendChild(fish);
       s.fishNode = fish;
-      // Line from rod tip
-      s.lineNode = p('path', { d: '', fill: 'none', 'stroke-width': 1.1, opacity: 0.7 });
-      s.prop.appendChild(s.lineNode);
     }
   }
 
-  // ── Motion ────────────────────────────────────────────────────
+  function resetProp(s) {
+    if (s.rockBody) s.rockBody.setAttribute('opacity', 1);
+    if (s.shardG)   s.shardG.setAttribute('opacity', 0);
+    if (s.shards)   s.shards.forEach(function (n) { n.setAttribute('transform', ''); n.setAttribute('opacity', 1); });
+    if (s.tree)   { s.tree.setAttribute('transform', ''); s.tree.setAttribute('opacity', 1); }
+    if (s.stump)    s.stump.setAttribute('opacity', 0);
+    if (s.notch)    s.notch.setAttribute('d', 'M132 76 L132 76 L132 82 Z');
+    if (s.fishNode) s.fishNode.setAttribute('opacity', 1);
+  }
 
-  function easeOut(t) { return 1 - Math.pow(1 - t, 2.2); }
-  function easeIn(t)  { return Math.pow(t, 2.6); }
+  // ── Poses ─────────────────────────────────────────────────────
 
-  // Returns the pose for a phase within one swing (0..1).
-  function poseFor(ph) {
-    var verb = state.verb;
-
-    if (verb === 'fish') {
-      // No strike — a slow lift and dip, with a tug near the end.
+  function swingPose(ph) {
+    if (state.verb === 'fish') {
       var lift = Math.sin(ph * Math.PI * 2) * 7;
       var tug = ph > 0.78 ? Math.sin((ph - 0.78) / 0.22 * Math.PI) * 13 : 0;
-      return { arm: -6 - lift - tug, torso: lift * 0.14, bob: Math.sin(ph * Math.PI * 2) * 0.7, impact: false };
+      return { arm: -6 - lift - tug, torso: lift * 0.14, bob: Math.sin(ph * Math.PI * 2) * 0.7 };
     }
-
-    var windEnd = 0.52, strikeEnd = 0.70;
-    var up = verb === 'chop' ? -62 : -78;
-    var down = verb === 'chop' ? 30 : 40;
+    var windEnd = 0.52;
+    var up = state.verb === 'chop' ? -62 : -78;
+    var down = state.verb === 'chop' ? 30 : 40;
 
     if (ph < windEnd) {
       var t = easeOut(ph / windEnd);
-      return { arm: -8 + (up + 8) * t, torso: -3 * t, bob: -0.9 * t, impact: false };
+      return { arm: -8 + (up + 8) * t, torso: -3 * t, bob: -0.9 * t };
     }
-    if (ph < strikeEnd) {
-      var t2 = easeIn((ph - windEnd) / (strikeEnd - windEnd));
-      return { arm: up + (down - up) * t2, torso: -3 + 7 * t2, bob: -0.9 + 2.4 * t2, impact: false };
+    if (ph < IMPACT_PH) {
+      var t2 = easeIn((ph - windEnd) / (IMPACT_PH - windEnd));
+      return { arm: up + (down - up) * t2, torso: -3 + 7 * t2, bob: -0.9 + 2.4 * t2 };
     }
-    var t3 = (ph - strikeEnd) / (1 - strikeEnd);
+    var t3 = (ph - IMPACT_PH) / (1 - IMPACT_PH);
     var settle = 1 - easeOut(t3);
-    return { arm: -8 + (down + 8) * settle, torso: 4 * settle, bob: 1.5 * settle, impact: false };
+    return { arm: -8 + (down + 8) * settle, torso: 4 * settle, bob: 1.5 * settle };
   }
 
-  function spawnChips(s, isFinal) {
-    var origin = state.verb === 'mine' ? [134, 84]
-               : state.verb === 'chop' ? [140, 74]
-               : [158, 100];
-    var n = isFinal ? 9 : 5;
+  function payoffPose(q) {
+    if (state.verb === 'fish') {
+      // Yank, hold the catch in the air, reach out, take it by hand.
+      var arm;
+      if (q < 0.22)      arm = lerp(-6, -64, easeOut(q / 0.22));
+      else if (q < 0.62) arm = lerp(-64, -30, easeOut((q - 0.22) / 0.40));
+      else if (q < 0.80) arm = lerp(-30, -16, (q - 0.62) / 0.18);
+      else               arm = lerp(-16, -8, (q - 0.80) / 0.20);
+      var lean = q < 0.30 ? -5 * (q / 0.30) : -5 * (1 - (q - 0.30) / 0.70);
+      return { arm: arm, torso: lean, bob: q < 0.25 ? -1.4 * (q / 0.25) : -1.4 * (1 - (q - 0.25) / 0.75) };
+    }
+    var down = state.verb === 'chop' ? 30 : 40;
+    var t = easeOut(clamp(q / 0.45, 0, 1));
+    return { arm: lerp(down, -8, t), torso: lerp(4, 0, t), bob: lerp(1.5, 0, t) };
+  }
+
+  // ── Payoff: what happens to the prop ──────────────────────────
+
+  function applyPayoff(s, q) {
+    if (state.verb === 'mine') {
+      s.rockBody.setAttribute('opacity', 0);
+      s.shardG.setAttribute('opacity', 1);
+      s.shards.forEach(function (node, i) {
+        var sh = SHARDS[i];
+        var x = sh.dx * q, y = sh.dy * q + 54 * q * q, r = sh.rot * q;
+        node.setAttribute('transform',
+          'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') rotate(' + r.toFixed(1) + ' 148 91)');
+        node.setAttribute('opacity', q < 0.55 ? 1 : clamp(1 - (q - 0.55) / 0.40, 0, 1));
+      });
+      return;
+    }
+
+    if (state.verb === 'chop') {
+      s.stump.setAttribute('opacity', 1);
+      var rot;
+      if (q < 0.10)      rot = -3 * (q / 0.10);                            // creak backwards
+      else if (q < 0.68) { var t = (q - 0.10) / 0.58; rot = -3 + 87 * (t * t); }  // gathers speed
+      else if (q < 0.80) rot = 84 - 5 * Math.sin((q - 0.68) / 0.12 * Math.PI);    // settle bounce
+      else               rot = 84;                                          // lies across the frame
+      s.tree.setAttribute('transform', 'rotate(' + rot.toFixed(2) + ' ' + TREE_PIVOT[0] + ' ' + TREE_PIVOT[1] + ')');
+      s.tree.setAttribute('opacity', q < 0.84 ? 1 : clamp(1 - (q - 0.84) / 0.16, 0, 1));
+      return;
+    }
+
+    // Fish — the catch leaves the water on the line and arcs to the hand.
+    var pose = payoffPose(q);
+    var hand = carried(HAND, pose.arm, pose.bob);
+    var t2 = clamp((q - 0.04) / 0.66, 0, 1);
+    var fx = lerp(158, hand[0], t2);
+    var fy = lerp(104, hand[1], t2) - 36 * Math.sin(t2 * Math.PI);
+    var wob = Math.sin(q * Math.PI * 9) * (1 - t2) * 8;
+
+    if (q < 0.80) {
+      s.fishNode.setAttribute('opacity', 1);
+      s.fishNode.setAttribute('transform', 'translate(' + fx.toFixed(1) + ',' + fy.toFixed(1) +
+        ') rotate(' + (lerp(-25, -150, t2) + wob).toFixed(1) + ')');
+    } else {
+      s.fishNode.setAttribute('opacity', 0);   // taken in hand
+    }
+
+    var tip = carried(ROD_TIP, pose.arm, pose.bob);
+    if (q < 0.80) {
+      s.lineNode.setAttribute('opacity', 0.7);
+      s.lineNode.setAttribute('d', 'M' + tip[0].toFixed(1) + ' ' + tip[1].toFixed(1) +
+        ' Q' + ((tip[0] + fx) / 2).toFixed(1) + ' ' + ((tip[1] + fy) / 2 + 8).toFixed(1) +
+        ' ' + fx.toFixed(1) + ' ' + fy.toFixed(1));
+    } else {
+      s.lineNode.setAttribute('opacity', 0);
+    }
+  }
+
+  // Swing-time prop motion: the notch the axe cuts, the fish in the water.
+  function applySwingProp(s, p, segment, pose) {
+    if (state.verb === 'chop' && s.notch) {
+      var depth = 2 + 12 * p;
+      s.notch.setAttribute('d', 'M132 73 L' + (132 + depth).toFixed(1) + ' 79 L132 85 Z');
+    }
+    if (state.verb === 'fish' && s.lineNode) {
+      var tip = carried(ROD_TIP, pose.arm, pose.bob);
+      s.lineNode.setAttribute('opacity', 0.7);
+      s.lineNode.setAttribute('d', 'M' + tip[0].toFixed(1) + ' ' + tip[1].toFixed(1) +
+        ' Q' + ((tip[0] + 158) / 2).toFixed(1) + ' ' + (tip[1] + 28).toFixed(1) + ' 158 102');
+      if (s.fishNode) {
+        var wob = Math.sin(segment * Math.PI * 4) * 2.6;
+        s.fishNode.setAttribute('opacity', 1);
+        s.fishNode.setAttribute('transform', 'translate(' + (158 + wob).toFixed(1) + ',104) rotate(-6)');
+      }
+    }
+  }
+
+  // ── Effects ───────────────────────────────────────────────────
+
+  function impactOrigin() {
+    return state.verb === 'mine' ? [134, 84] : state.verb === 'chop' ? [134, 78] : [158, 100];
+  }
+
+  function spawnChips(s, n, spread) {
+    var o = impactOrigin();
     for (var i = 0; i < n; i++) {
       var c = el('rect', {
-        x: origin[0], y: origin[1],
-        width: 2.6 + Math.random() * 2.4,
-        height: 2.2 + Math.random() * 2,
-        rx: 0.6,
-        fill: state.action.tint
+        x: o[0], y: o[1],
+        width: 2.6 + Math.random() * 2.4, height: 2.2 + Math.random() * 2,
+        rx: 0.6, fill: state.action.tint
       });
       c.setAttribute('class', 'chip');
       var ang = (-140 + Math.random() * 110) * Math.PI / 180;
-      var dist = 14 + Math.random() * (isFinal ? 30 : 17);
+      var dist = 5 + Math.random() * spread;
       c.style.setProperty('--dx', (Math.cos(ang) * dist).toFixed(1) + 'px');
       c.style.setProperty('--dy', (Math.sin(ang) * dist).toFixed(1) + 'px');
       c.style.setProperty('--dr', Math.round(-220 + Math.random() * 440) + 'deg');
       s.fx.appendChild(c);
       (function (node) { setTimeout(function () { node.remove(); }, 700); })(c);
     }
+  }
 
-    if (isFinal) {
-      var y = el('g');
-      y.setAttribute('class', 'yield');
-      y.setAttribute('transform', 'translate(' + origin[0] + ',' + (origin[1] - 6) + ')');
-      y.appendChild(el('circle', { r: 6.5, fill: state.action.tint, stroke: s.ink, 'stroke-width': 2 }));
-      s.fx.appendChild(y);
-      (function (node) { setTimeout(function () { node.remove(); }, 1100); })(y);
+  function spawnPuffs(s, x, y, n) {
+    for (var i = 0; i < n; i++) {
+      var c = el('circle', { cx: x + (Math.random() * 20 - 10), cy: y, r: 2.4 + Math.random() * 2.6,
+        fill: s.ink, opacity: 0.4 });
+      c.setAttribute('class', 'puff');
+      c.style.setProperty('--dx', Math.round(-7 + Math.random() * 14) + 'px');
+      c.style.setProperty('--dy', Math.round(-6 - Math.random() * 5) + 'px');
+      s.fx.appendChild(c);
+      (function (node) { setTimeout(function () { node.remove(); }, 820); })(c);
     }
   }
 
-  function applyPose(s, p, pose, segment) {
-    s.armFront.setAttribute('transform', 'rotate(' + pose.arm.toFixed(2) + ' 82 57)');
-    s.armBack.setAttribute('transform', 'rotate(' + (-pose.arm * 0.28).toFixed(2) + ' 76 58)');
-    s.torso.setAttribute('transform', 'rotate(' + pose.torso.toFixed(2) + ' 75 84)');
-    s.head.setAttribute('transform', 'rotate(' + (pose.torso * 1.5).toFixed(2) + ' 75 54)');
-    s.fig.setAttribute('transform', 'translate(0,' + pose.bob.toFixed(2) + ')');
-
-    if (state.verb === 'fish' && s.lineNode) {
-      // Rod tip travels with the arm — recompute the line's anchor.
-      var a = pose.arm * Math.PI / 180;
-      var tipX = 82 + (132 - 82) * Math.cos(a) - (40 - 57) * Math.sin(a);
-      var tipY = 57 + (132 - 82) * Math.sin(a) + (40 - 57) * Math.cos(a) + pose.bob;
-      s.lineNode.setAttribute('d', 'M' + tipX.toFixed(1) + ' ' + tipY.toFixed(1) +
-        ' Q' + ((tipX + 158) / 2).toFixed(1) + ' ' + (tipY + 26).toFixed(1) + ' 158 102');
-      s.lineNode.setAttribute('stroke', s.ink);
-      if (s.fishNode) {
-        var wob = Math.sin(segment * Math.PI * 4) * 2.2;
-        s.fishNode.setAttribute('transform', 'translate(' + wob.toFixed(1) + ',0)');
-      }
-    }
-
-    var pctVal = Math.round(p * 100);
-    s.fill.style.width = pctVal + '%';
-    s.pct.textContent = pctVal + '%';
+  function spawnYield(s, x, y) {
+    var g = el('g');
+    g.setAttribute('class', 'yield');
+    g.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ')');
+    g.appendChild(el('circle', { r: 6.5, fill: state.action.tint, stroke: s.ink, 'stroke-width': 2 }));
+    s.fx.appendChild(g);
+    (function (node) { setTimeout(function () { node.remove(); }, 1100); })(g);
   }
 
-  // ── Loop ──────────────────────────────────────────────────────
+  // ── Frame ─────────────────────────────────────────────────────
 
   var stages = [];
   var start = performance.now();
@@ -810,35 +950,81 @@
   }
 
   function frame(now) {
-    var actionMs = state.action.ticks * TICK_MS;
+    var total = cycleMs();
+    if (state.playing) state.cursor = ((now - start) % total) / total;
 
-    if (state.playing) {
-      state.progress = ((now - start) % actionMs) / actionMs;
+    var c = state.cursor;
+    var aFrac = actionFrac();
+    var inPayoff = c >= aFrac;
+    var barP = clamp(c / aFrac, 0, 1);   // the bar tracks the ACTION only
+
+    var pose, phaseLabel;
+
+    if (!inPayoff) {
+      if (state.broke) { stages.forEach(resetProp); state.broke = false; state.yielded = false; state.dusted = false; state.lastImpact = -1; }
+
+      // Swings are spaced so the LAST impact lands exactly at bar 100%.
+      var periods = state.verb === 'fish' ? state.swings : (state.swings - 1 + IMPACT_PH);
+      var segment = (c / aFrac) * periods;
+      var idx = Math.floor(segment);
+      var ph = segment - idx;
+      pose = swingPose(ph);
+      phaseLabel = 'swing ' + Math.min(idx + 1, state.swings) + '/' + state.swings;
+
+      // Mid-action impacts. The final one is the break, handled below.
+      if (state.playing && state.verb !== 'fish' && ph >= IMPACT_PH && idx < state.swings - 1 && idx !== state.lastImpact) {
+        state.lastImpact = idx;
+        stages.forEach(function (s) { spawnChips(s, 5, 8); });
+      }
+      stages.forEach(function (s) { applySwingProp(s, barP, segment, pose); });
+
+    } else {
+      var q = (c - aFrac) / (1 - aFrac);
+      pose = payoffPose(q);
+      phaseLabel = state.verb === 'mine' ? 'smashing'
+                 : state.verb === 'chop' ? (q < 0.70 ? 'felling' : 'settling')
+                 : (q < 0.80 ? 'landing' : 'grabbed');
+
+      if (!state.broke) {
+        state.broke = true;
+        stages.forEach(function (s) {
+          if (state.verb === 'mine') spawnChips(s, 12, 15);
+          else if (state.verb === 'chop') spawnChips(s, 8, 12);
+        });
+      }
+
+      stages.forEach(function (s) { applyPayoff(s, q); });
+
+      if (state.verb === 'chop' && !state.dusted && q >= 0.68) {
+        state.dusted = true;
+        stages.forEach(function (s) { spawnPuffs(s, 172, 106, 5); });
+      }
+
+      var yieldAt = state.verb === 'mine' ? 0.50 : state.verb === 'chop' ? 0.78 : 0.80;
+      if (!state.yielded && q >= yieldAt) {
+        state.yielded = true;
+        stages.forEach(function (s) {
+          if (state.verb === 'fish') { var h = carried(HAND, pose.arm, pose.bob); spawnYield(s, h[0], h[1]); }
+          else spawnYield(s, state.verb === 'chop' ? 138 : 148, 86);
+        });
+      }
     }
 
-    var p = state.progress;
-    var segment = p * state.swings;
-    var idx = Math.floor(segment);
-    var ph = segment - idx;
-    var pose = poseFor(ph);
+    stages.forEach(function (s) {
+      s.armFront.setAttribute('transform', 'rotate(' + pose.arm.toFixed(2) + ' ' + SHOULDER[0] + ' ' + SHOULDER[1] + ')');
+      s.armBack.setAttribute('transform', 'rotate(' + (-pose.arm * 0.26).toFixed(2) + ' 78 60)');
+      s.torso.setAttribute('transform', 'rotate(' + pose.torso.toFixed(2) + ' 76 86)');
+      s.head.setAttribute('transform', 'rotate(' + (pose.torso * 1.4).toFixed(2) + ' 76 57)');
+      s.fig.setAttribute('transform', 'translate(0,' + pose.bob.toFixed(2) + ')');
+      var pv = Math.round(barP * 100);
+      s.fill.style.width = pv + '%';
+      s.pct.textContent = pv + '%';
+    });
 
-    // Impact fires once per swing, at the strike's landing phase.
-    var impactPh = state.verb === 'fish' ? 0.86 : 0.70;
-    var key = idx + (ph >= impactPh ? 1 : 0);
-    if (state.playing && ph >= impactPh && key !== state.lastImpact) {
-      state.lastImpact = key;
-      var isFinal = idx === state.swings - 1;
-      stages.forEach(function (s) { spawnChips(s, isFinal); });
-    }
-    if (p < 0.02) state.lastImpact = -1;
-
-    stages.forEach(function (s) { applyPose(s, p, pose, segment); });
-
-    document.getElementById('ro-pct').textContent = Math.round(p * 100) + '%';
-    document.getElementById('out-scrub').textContent = Math.round(p * 100) + '%';
-    if (state.playing) {
-      document.getElementById('rng-scrub').value = Math.round(p * 1000);
-    }
+    document.getElementById('ro-pct').textContent = Math.round(barP * 100) + '%';
+    document.getElementById('ro-phase').textContent = phaseLabel;
+    document.getElementById('out-scrub').textContent = Math.round(c * 100) + '%';
+    if (state.playing) document.getElementById('rng-scrub').value = Math.round(c * 1000);
 
     requestAnimationFrame(frame);
   }
@@ -850,12 +1036,17 @@
     document.getElementById('ro-ticks').textContent = a.ticks + 't · ' + (a.ticks * TICK_MS / 1000).toFixed(1) + 's';
     document.getElementById('ro-swings').textContent = state.swings;
     document.getElementById('out-swings').textContent = state.swings;
-    var per = (a.ticks * TICK_MS) / state.swings;
+    var periods = state.verb === 'fish' ? state.swings : (state.swings - 1 + IMPACT_PH);
+    var per = (a.ticks * TICK_MS) / periods;
     document.getElementById('swing-period').innerHTML =
-      '<span>' + Math.round(per) + 'ms per swing</span><b>' +
+      '<span>' + Math.round(per) + 'ms swing · ' + VERBS[state.verb].payoffMs + 'ms payoff</span><b>' +
       (per < 450 ? 'frantic' : per > 1900 ? 'sluggish' : 'reads well') + '</b>';
-    document.getElementById('ladder-title').textContent =
-      VERBS[state.verb].label + ' · tint ladder';
+    document.getElementById('ladder-title').textContent = VERBS[state.verb].label + ' · tint ladder';
+  }
+
+  function hardReset() {
+    state.broke = false; state.yielded = false; state.dusted = false; state.lastImpact = -1;
+    stages.forEach(resetProp);
   }
 
   function buildVerbs() {
@@ -868,7 +1059,8 @@
       b.onclick = function () {
         state.verb = k;
         state.action = VERBS[k].actions[Math.min(3, VERBS[k].actions.length - 1)];
-        buildVerbs(); buildActions(); buildLadder(); rebuild(); syncReadout();
+        buildVerbs(); buildActions(); buildLadder(); rebuild(); hardReset(); syncReadout();
+        start = performance.now();
       };
       g.appendChild(b);
     });
@@ -888,7 +1080,7 @@
       state.action = VERBS[state.verb].actions.filter(function (a) { return a.id === sel.value; })[0];
       buildLadder();
       stages.forEach(function (s) { drawProp(s); });
-      syncReadout();
+      hardReset(); syncReadout();
     };
   }
 
@@ -913,7 +1105,7 @@
         state.action = a;
         buildActions(); buildLadder();
         stages.forEach(function (s) { drawProp(s); });
-        syncReadout();
+        hardReset(); syncReadout();
       };
       l.appendChild(b);
     });
@@ -930,16 +1122,16 @@
     var btn = document.getElementById('btn-play');
     btn.setAttribute('aria-pressed', 'false');
     btn.textContent = 'Play';
-    state.progress = parseInt(this.value, 10) / 1000;
+    var next = parseInt(this.value, 10) / 1000;
+    if (next < state.cursor) hardReset();   // scrubbing backwards restores the prop
+    state.cursor = next;
   };
 
   document.getElementById('btn-play').onclick = function () {
     state.playing = !state.playing;
     this.setAttribute('aria-pressed', String(state.playing));
     this.textContent = state.playing ? 'Pause' : 'Play';
-    if (state.playing) {
-      start = performance.now() - state.progress * state.action.ticks * TICK_MS;
-    }
+    if (state.playing) start = performance.now() - state.cursor * cycleMs();
   };
 
   document.getElementById('btn-guides').onclick = function () {
@@ -950,7 +1142,7 @@
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     state.playing = false;
-    state.progress = 0.62;
+    state.cursor = 0.5;
     var pb = document.getElementById('btn-play');
     pb.setAttribute('aria-pressed', 'false');
     pb.textContent = 'Play';
