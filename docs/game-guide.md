@@ -279,4 +279,14 @@ You sign in with GitHub or Google and can have multiple characters. Your game sa
 
 ## Getting help
 
-This assistant (the 💬 button) is the in-game help: it answers questions about PocketRPG — game mechanics, items, monsters, and your own character's progress. It can only talk about PocketRPG; it has no access to the internet and won't answer unrelated questions. The Settings screen holds game preferences, such as toggling info notifications.
+This assistant (the 💬 button) is the in-game help: it answers questions about PocketRPG — game mechanics, items, monsters, and your own character's progress — and can act on your account, always behind a Confirm button. It can only talk about PocketRPG; it has no access to the internet and won't answer unrelated questions. Quick actions at the bottom of the panel send the most common asks in one tap. The Settings screen holds game preferences, such as toggling info notifications.
+
+## Best DPS setup
+
+Ask the helper "what's my best DPS setup?" and it runs the game's own combat maths over every item you own — equipment, inventory and bank — to work out the highest damage-per-second loadout you can actually wear right now. It compares melee, ranged and magic, names the swaps to make, and tells you which prayer the numbers assume.
+
+It answers in two parts: the best setup from gear you already have, and the better one you could have after a shopping trip. The shopping list only holds things your account can actually buy and afford right now — an Ironman is never pointed at the Trading Post, and a Grindman is never told to buy a collection log unique or anything built from one. Costs are a rough guide; Trading Post prices are set by other players.
+
+Name a monster and it goes further: it uses that monster's real defences, every form a multi-form boss rotates through, your time to kill, the monster's max hit and the protection prayer to run. You can also ask what you'd hit with gear you don't own yet (it names the items and where they drop), and what more combat levels are worth — often the honest answer once your gear is already best-in-slot.
+
+Two things it deliberately leaves out, so the numbers stay honest: enchanted bolt effects, and special attacks (manual and limited by special energy). Dharok's damage bonus is counted at full health, where it is ×1.

@@ -17,6 +17,9 @@ and a test (parity enforced by `tests/mcpServer.test.ts`).
 
 ### Reference / browse (read-only)
 - `inspect_item`, `inspect_monster`, `list_skill_actions`, `list_items`, `list_monsters`
+- `analyze_dps` — best DPS loadout from owned gear (or every item), per style,
+  optionally against a named monster; `include` adds unowned upgrades and
+  level projections
 - `get_reference` — topics: mechanics, shop, skills, spells, prayers, quests,
   clues, minigames, raids, farming, construction, gather
 

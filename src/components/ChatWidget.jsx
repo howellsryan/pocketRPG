@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import Button from './Button.jsx'
+import GameIcon from './GameIcon.jsx'
 import { api, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { pauseTicks, resumeTicks } from '../engine/tick.js'
 import { applyCloudSave } from '../cloud/sync.js'
@@ -12,6 +13,25 @@ const GREETING = {
   content:
     "Hi! I'm the PocketRPG helper. Ask me about game mechanics, items, monsters, quests — or your own character's progress. I can also do things for you (sell an item, get a slayer task, buy gear…) — just ask, and I'll confirm before anything changes.",
 }
+
+// One-tap versions of the asks players type most, so the common questions cost
+// a tap instead of a sentence. Each is just a prompt sent down the normal chat
+// path — no separate endpoint, no separate rules, and a write still lands on
+// the same Confirm card. Phrased as the player would ask so the helper's
+// existing routing (and its tools) handle them unchanged.
+// `icon` is a key into the shared icon maps, resolved by GameIcon exactly as an
+// item's is — bespoke art first, tinted glyph second. Keys are chosen for
+// meaning rather than for an item: `coins` and `death_skull` are symbols in the
+// bespoke set, not just the items that share their name. They are also chosen
+// for legibility at 18px on a dark chip, which rules out otherwise apter art —
+// `crossed_swords` is too thin to read and `slayer_helmet` is a dark blob.
+const QUICK_ACTIONS = [
+  { icon: 'winged_sword', label: 'Best DPS setup', prompt: "What's my best DPS setup right now? Compare melee, ranged and magic and tell me exactly what to wear." },
+  { icon: 'death_skull', label: 'Setup for my task', prompt: "What's the best setup for my current slayer task monster, and which protection prayer should I use?" },
+  { icon: 'crystal_ball', label: 'Upgrades to chase', prompt: 'Which gear upgrades would raise my DPS the most, and where do I get them?' },
+  { icon: 'coins', label: 'Best money maker', prompt: 'Given my levels, gear and account type, what is the best way for me to make money right now?' },
+  { icon: 'adventures_scroll', label: 'What next?', prompt: 'Looking at my character, what is the single best thing for me to do next?' },
+]
 
 // In-game help chatbot. Cloud accounts only (the /api/chat endpoint needs an
 // authenticated character); renders nothing in demo mode. The trigger lives in
@@ -25,6 +45,7 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [remaining, setRemaining] = useState(null)
+  const [showActions, setShowActions] = useState(true)
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -51,8 +72,8 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
     }
   }
 
-  const send = () => {
-    const question = input.trim()
+  const send = (text) => {
+    const question = (typeof text === 'string' ? text : input).trim()
     if (!question || busy) return
     const history = messages
       .filter((m) => m !== GREETING)
@@ -60,6 +81,9 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
       .map((m) => ({ role: m.role, content: m.content }))
     setMessages((prev) => [...prev, { role: 'user', content: question }])
     setInput('')
+    // The pane is for discovery, not for keeping: once the player has asked
+    // something it is three rows of chips between them and the reply.
+    setShowActions(false)
     setBusy(true)
     api
       .chat(question, history)
@@ -218,7 +242,34 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
               </div>
             )}
           </div>
-          <div class="flex gap-2 pt-2 border-t border-[#1a1a1a]">
+          <div class="pt-2 border-t border-[#1a1a1a]">
+            <button
+              type="button"
+              aria-expanded={showActions}
+              onClick={() => setShowActions((v) => !v)}
+              class="min-h-[44px] w-full flex items-center justify-between text-xs text-[var(--color-parchment-dark)] hover:text-[var(--color-gold)]"
+            >
+              <span>⚡ Quick actions</span>
+              <span>{showActions ? '▾' : '▸'}</span>
+            </button>
+            {showActions && (
+              <div class="flex flex-wrap gap-1.5 pb-2">
+                {QUICK_ACTIONS.map((action) => (
+                  <button
+                    key={action.label}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => send(action.prompt)}
+                    class="min-h-[44px] px-3 rounded-lg text-xs flex items-center gap-1.5 bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] disabled:opacity-50"
+                  >
+                    <GameIcon iconKey={action.icon} size={18} title={action.label} />
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div class="flex gap-2">
             <input
               type="text"
               value={input}
@@ -230,7 +281,7 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
               }}
               class="flex-1 min-w-0 min-h-[44px] rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] px-3 text-sm text-[var(--color-parchment)] placeholder:text-[var(--color-parchment-dark)] focus:outline-none focus:border-[var(--color-gold)]"
             />
-            <Button variant="primary" size="lg" disabled={busy || !input.trim()} onClick={send}>
+            <Button variant="primary" size="lg" disabled={busy || !input.trim()} onClick={() => send()}>
               Send
             </Button>
           </div>

@@ -34,13 +34,17 @@ WHAT YOU CAN DO HERE (pick the tool — don't guess; the "Acting" section below 
 the details and guard rails):
 - Look things up — game data: list_items, list_monsters, inspect_item,
   inspect_monster, list_skill_actions, get_reference. This account:
-  list_characters, get_character_state, get_bank, get_collection_log,
+  list_characters, get_character_state, get_bank, analyze_dps, get_collection_log,
   get_kill_counts, get_daily_tasks, get_leaderboard, get_account.
 - Train skills — start_skilling / start_gather (idle), train_prayer /
   train_construction / cast_magic (instant), plant_seed / harvest_patch /
   harvest_all (farming); claim_activity collects idle progress.
 - Fight — set_idle_combat_setup then start_fight (idle); fight_boss / kill_boss /
   kill_raid (bosses & raids); get_slayer_task / assign_slayer_task / skip_slayer_task.
+- Answer any gear/DPS question with analyze_dps — best setup now, best possible,
+  what more levels are worth, and all of it against a named monster. Never
+  compute DPS or compare gear from item stats yourself; this tool runs the
+  game's own combat maths and is the only correct answer.
 - Other activities — start_clue, start_minigame, start_quest (+ queue_quest /
   remove_from_queue), get_active_activity.
 - Economy & account — buy_item / sell_item, the trading-post offer tools
@@ -293,6 +297,41 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: READ('Inspect monster'),
+  },
+  {
+    name: 'analyze_dps',
+    description:
+      "The character's best damage-per-second setup, computed with the game's own combat maths. The ONLY correct way to answer 'best gear', 'best DPS', 'what should I wear', 'melee, ranged or magic?', 'is this an upgrade' or 'how do I kill X faster' — never work damage out yourself from item stats. Returns their current DPS, `bestOwned` (best loadout from gear they already have, with the swaps and the prayer), and `bestBuyable` (the better setup they could have after buying, with a shopping list, rough costs and whether they can afford it now) — the buy list already respects their account type, which `account` describes, so an Ironman is never told to use the Trading Post. Pass monster_id to tune it to one monster (defences, every form, time-to-kill, its max hit and the protection prayer). include:['upgrades'] adds drop-only gear they cannot simply buy; include:['levels'] and at_level cover what more combat levels are worth.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        style: {
+          type: 'string',
+          enum: ['all', 'melee', 'ranged', 'magic'],
+          description: "Combat style to analyse. Default 'all' compares melee, ranged and magic and names the winner. Pass one style only when the player insists on it.",
+        },
+        monster_id: { type: 'string', description: "Optional monster to tune the analysis to, e.g. 'green_dragon'. Find ids with list_monsters." },
+        gear_scope: {
+          type: 'string',
+          enum: ['owned', 'all'],
+          description: "'owned' (default) recommends only gear the character has in equipment, inventory or bank. 'all' also searches every item in the game — use it for 'what could I be hitting'.",
+        },
+        include: {
+          type: 'array',
+          items: { type: 'string', enum: ['upgrades', 'levels'] },
+          description: "Optional extras. 'upgrades' names specific items they don't own and how to get them; 'levels' reports what +1/+5/+10 in each combat skill is worth. Omit both for the fastest, shortest answer.",
+        },
+        at_level: {
+          type: 'integer',
+          minimum: 2,
+          maximum: 99,
+          description: 'Optional: project the best setup with every combat skill raised to this level.',
+        },
+        character_id: { type: 'integer', description: 'Character to analyse. Omit when the account has one character.' },
+      },
+      additionalProperties: false,
+    },
+    annotations: READ('Analyze best DPS setup'),
   },
   {
     name: 'list_skill_actions',

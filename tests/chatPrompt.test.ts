@@ -142,3 +142,27 @@ describe('chat prompt assembly', () => {
     expect(retrievalOnlyAnswer([])).toMatch(/PocketRPG/)
   })
 })
+
+describe('chat DPS routing', () => {
+  it('declares analyze_dps on every turn, without a search_tools round', () => {
+    const defs = chatToolDefs(ALWAYS_ON_TOOL_NAMES)
+    const dps = defs.find((d: any) => d.function.name === 'analyze_dps')
+    expect(dps).toBeTruthy()
+    // character_id is pinned server-side and must never be offered to the model.
+    expect(dps!.function.parameters.properties.character_id).toBeUndefined()
+    expect(Object.keys(dps!.function.parameters.properties)).toEqual(
+      expect.arrayContaining(['style', 'monster_id', 'gear_scope', 'include', 'at_level']),
+    )
+  })
+
+  it('tells the model never to work damage out itself', () => {
+    expect(SYSTEM_PROMPT).toMatch(/analyze_dps/)
+    expect(SYSTEM_PROMPT).toMatch(/Never work out damage, DPS or which gear is better/)
+  })
+
+  it('search_tools still finds it for a player who phrases it another way', () => {
+    for (const query of ['best gear setup', 'what should I wear', 'damage per second']) {
+      expect(searchToolsByQuery(query).names).toContain('analyze_dps')
+    }
+  })
+})

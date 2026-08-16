@@ -115,6 +115,7 @@ describe('MCP tool schema', () => {
       'get_leaderboard',
       'inspect_item',
       'inspect_monster',
+      'analyze_dps',
       'list_skill_actions',
       'list_items',
       'list_monsters',
@@ -478,6 +479,31 @@ describe('MCP trading-post source: inventory|bank', () => {
     expect(written.bank.fighter_helm).toBeUndefined()
     // Inventory copy untouched — the bank was the source.
     expect(written.inventory.find((s: any) => s.itemId === 'fighter_helm')?.quantity).toBe(1)
+  })
+
+  it('analyze_dps reads the character save and rates their gear', async () => {
+    const stats: Record<string, any> = {}
+    for (const skill of ['attack', 'strength', 'defence', 'ranged', 'magic', 'hitpoints', 'prayer']) {
+      stats[skill] = { xp: 1_210_421 } // level 75
+    }
+    const save = {
+      stats,
+      equipment: { weapon: { itemId: 'bronze_scimitar' } },
+      inventory: [],
+      bank: { runeforged_scimitar: { itemId: 'runeforged_scimitar', quantity: 1 } },
+      settings: { combatStance: 'accurate' },
+    }
+    const { env } = mockEnv(save)
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    const ctx = { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+
+    const res = await callTool('analyze_dps', { character_id: 7 }, ctx)
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.characterId).toBe(7)
+    expect(data.current.gear.weapon).toBe('Bronze Scimitar')
+    expect(data.bestOwned.style).toBe('melee')
+    expect(data.byStyle.melee.gear.weapon).toBe('Runeforged Scimitar')
   })
 
   it('get_bank lists bank contents with names and honours the query filter', async () => {

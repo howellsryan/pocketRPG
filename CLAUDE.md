@@ -66,6 +66,7 @@
 - Melee max hit: `floor(0.5 + effectiveStr * (bonus + 64) / 640)`.
 - Accuracy: `maxRoll = effectiveLevel * (bonus + 64)`; if `attackRoll > defRoll`: `1 - (defRoll + 2)/(2*(attackRoll + 1))`, else `attackRoll/(2*(defRoll + 1))`.
 - Auto-fight restart delay after kill: **1.2s**.
+- **`src/engine/dpsCalculator.js` is the analytical twin of `processCombatTick`'s player-attack branches** (expected damage in place of the roll), and `gearOptimizer.js` searches loadouts with it — both consumed by the `analyze_dps` MCP tool (§15) and the helper (§16). Change a player-damage branch in `combat.js` and change the matching branch there in the same edit, or the helper recommends gear by maths the fight doesn't use. `tests/dpsCalculator.test.ts` pins the two together by simulating swings against the estimate, so drift fails the build rather than shipping a confidently wrong answer. Enchanted bolt procs, Dharok's HP scaling and special attacks are deliberately unmodelled and declared in the payload's `notes`.
 - **Only a boss or a raid stops the game on the full-screen `LootResultModal`** (`killPresentsFullModal`, `src/utils/lootModal.js`). An ordinary kill flashes its loot as a reward-reveal card (`emitKillReveal`) and re-arms itself after the delay above — a grind must not need a tap per cow. A server-authoritative ordinary kill (non-boss with a collection-logged drop) simply holds the fight for the round trip — that hold is also what stops two `completeMonster` calls overlapping.
 
 ## 7) Special Attacks
