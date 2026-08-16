@@ -34,16 +34,23 @@ import { optimiseStyle, loadoutSwaps, levelUplift, DPS_SKILLS } from '../../../s
 import { bossFightHitpoints } from '../../../src/engine/coopRaidEngine.js'
 import { getMonster, itemSources } from './reference.js'
 
-const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'ranged', 'magic', 'hitpoints', 'prayer']
-
 function round(n, dp = 2) {
   const f = 10 ** dp
   return Math.round((Number(n) || 0) * f) / f
 }
 
+/**
+ * EVERY skill, not just the combat ones. Equip requirements are checked against
+ * this map, and plenty of combat gear is gated on a skill that never enters a
+ * damage formula — the Arcane Necklace needs Dungeoneering 65, chaotic weapons
+ * and slayer gear need Slayer, gathering tools need Woodcutting or Mining. Hand
+ * `checkEquipRequirements` a combat-only map and every one of those reads as
+ * level 1, so the item is silently dropped from the search however high the
+ * player has actually trained it.
+ */
 function levelsFromSave(state) {
   const levels = {}
-  for (const skill of COMBAT_SKILLS) levels[skill] = getLevelFromXP(Number(state?.stats?.[skill]?.xp || 0))
+  for (const skill of ALL_SKILLS) levels[skill] = getLevelFromXP(Number(state?.stats?.[skill]?.xp || 0))
   return levels
 }
 
@@ -412,7 +419,10 @@ export function analyzeDps(state, {
         }
         : { basis: `average of ${sampleSize} monsters near combat level ${combatLevel}` }),
     },
-    playerLevels: Object.fromEntries(DPS_SKILLS.concat('prayer').map((k) => [k, levels[k]])),
+    // Slayer and Dungeoneering are here because they GATE combat gear (chaotic
+    // weapons, slayer helms, the Arcane Necklace) without entering any damage
+    // formula — without them the helper cannot say why a piece is locked.
+    playerLevels: Object.fromEntries(DPS_SKILLS.concat('prayer', 'slayer', 'dungeoneering').map((k) => [k, levels[k]])),
     current: {
       ...describeLoadout(current),
       dps: round(currentDps.dps),

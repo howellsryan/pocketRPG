@@ -5,9 +5,16 @@ import { analyzeDps, itemAcquisition } from '../functions/_lib/mcp/dps.js'
 import { isCollectionLogLineageItem } from '../functions/_lib/collectionLog.js'
 import { CHAT_MAX_TOOL_RESULT_CHARS } from '../functions/_lib/chat/prompt.js'
 import { getXPForLevel } from '../src/engine/experience.js'
+import { ALL_SKILLS } from '../src/utils/constants.js'
 
 const items = itemsData as Record<string, any>
 const monsters = monstersData as Record<string, any>
+
+function allSkillsAt(level: number) {
+  const stats: Record<string, any> = {}
+  for (const skill of ALL_SKILLS) stats[skill] = { xp: getXPForLevel(level) }
+  return stats
+}
 
 function saveAt(level: number, bankIds: string[], over: Record<string, any> = {}) {
   const stats: Record<string, any> = {}
@@ -333,6 +340,60 @@ describe('analyzeDps on a character with nothing', () => {
     expect(out.current.dps).toBe(0)
     // …but the gear in the bank is still found.
     expect(out.bestOwned!.dps).toBeGreaterThan(0)
+  })
+})
+
+describe('gear gated on a non-combat skill', () => {
+  // Reported: the Arcane Necklace was rated worse than an Amulet of Fury at
+  // Grondar. It was never in the search at all — it needs Dungeoneering 65, and
+  // the level map handed to the equip gate held only combat skills, so every
+  // non-combat requirement read as level 1. Dungeoneering, Slayer, Woodcutting,
+  // Mining, Fishing and Agility all gate real combat gear.
+  const NON_COMBAT_GATED = Object.entries(items).filter(([, it]: any) =>
+    it.slot && Object.keys(it.requirements || {}).some((skill) =>
+      !['attack', 'strength', 'defence', 'ranged', 'magic', 'hitpoints', 'prayer'].includes(skill)))
+
+  it('exists in the item data, so this is worth guarding', () => {
+    expect(NON_COMBAT_GATED.length).toBeGreaterThan(10)
+    expect(items.arcane_necklace.requirements.dungeoneering).toBe(65)
+  })
+
+  it('is offered to a character who has the levels', () => {
+    const maxed = allSkillsAt(99)
+    const out = analyzeDps({
+      stats: maxed, coins: 0, equipment: {}, inventory: [],
+      bank: Object.fromEntries(NON_COMBAT_GATED.map(([id]) => [id, { quantity: 1 }])),
+      settings: { completedQuests: [] }, player: {},
+    } as any)
+    // With every gated item in the bank and every skill at 99, at least one of
+    // them has to reach a loadout — before the fix none of them could.
+    const worn = Object.values(out.byStyle).flatMap((s: any) => Object.values(s.gear || {}))
+    expect(worn.length).toBeGreaterThan(0)
+  })
+
+  it('picks the Arcane Necklace over an Amulet of Fury for magic at Grondar', () => {
+    // Grondar carries 0 magic defence bonus, so magic is the style there, and
+    // the necklace's +40 magic attack and +15% magic damage decide the slot.
+    expect(monsters.warlord_grondar.defenceBonus.magic).toBe(0)
+    const save = {
+      stats: allSkillsAt(99), coins: 0, equipment: {}, inventory: [],
+      bank: { arcane_necklace: { quantity: 1 }, amulet_of_fury: { quantity: 1 }, shadow_of_tumaken: { quantity: 1 } },
+      settings: { completedQuests: [] }, player: {},
+    }
+    const out = analyzeDps(save as any, { style: 'magic', monsterId: 'warlord_grondar' })
+    expect(out.byStyle.magic.gear.neck).toBe('Arcane Necklace')
+  })
+
+  it('still refuses it to a character without the Dungeoneering level', () => {
+    const stats = allSkillsAt(99)
+    stats.dungeoneering = { xp: 0 }
+    const save = {
+      stats, coins: 0, equipment: {}, inventory: [],
+      bank: { arcane_necklace: { quantity: 1 }, amulet_of_fury: { quantity: 1 }, shadow_of_tumaken: { quantity: 1 } },
+      settings: { completedQuests: [] }, player: {},
+    }
+    const out = analyzeDps(save as any, { style: 'magic', monsterId: 'warlord_grondar' })
+    expect(out.byStyle.magic.gear.neck).toBe('Amulet of Fury')
   })
 })
 
