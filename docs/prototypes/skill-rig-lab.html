@@ -260,6 +260,7 @@
     margin: 0;
   }
   .ladder-head span { color: var(--muted); font-size: 12.5px; }
+  .ladder-head code { font-family: var(--mono); font-size: 11.5px; color: var(--text); }
   .ladder {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
@@ -283,6 +284,13 @@
     border-radius: 2px;
     border: 1px solid rgba(255,255,255,0.09);
   }
+  .rung__chip--art {
+    height: 40px;
+    background: var(--panel-hi);
+    display: grid;
+    place-items: center;
+  }
+  .rung__chip--art svg { width: 34px; height: 34px; display: block; }
   .rung__name {
     font-size: 11.5px;
     line-height: 1.25;
@@ -313,6 +321,7 @@
     margin: 0 0 7px;
   }
   .note p { margin: 0; color: var(--muted); font-size: 13px; }
+  .note em { color: var(--text); font-style: normal; font-weight: 600; }
   .note code {
     font-family: var(--mono);
     font-size: 11.5px;
@@ -401,8 +410,8 @@
     </div>
 
     <div class="cell">
-      <div class="cell__head"><span>Swings per action</span><b id="out-swings">—</b></div>
-      <input type="range" id="rng-swings" min="1" max="8" step="1" value="3" aria-label="Swings per action">
+      <div class="cell__head"><span>Swing tempo</span><b id="out-swings">—</b></div>
+      <input type="range" id="rng-swings" min="450" max="1500" step="25" value="800" aria-label="Milliseconds per swing">
       <div class="cell__head" style="color:var(--faint)"><span id="swing-period">—</span></div>
     </div>
 
@@ -419,7 +428,7 @@
   <section class="ladder-wrap" aria-label="Resource tint range">
     <div class="ladder-head">
       <h2 id="ladder-title">Tint ladder</h2>
-      <span>Real values from <code style="font-family:var(--mono);font-size:11.5px">getItemIconTint</code> — the prop recolours, the figure does not.</span>
+      <span id="ladder-note"></span>
     </div>
     <div class="ladder" id="ladder"></div>
   </section>
@@ -427,11 +436,11 @@
   <section class="notes">
     <div class="note">
       <h3>Tick-locked</h3>
-      <p>Swing timing divides the action's real tick count, and the last strike lands exactly as the bar reaches 100%. That impact is what starts the payoff — nothing free-runs.</p>
+      <p>Every action swings at the same tempo. A longer one takes <em>more</em> strikes, not slower ones — runeforged ore is 23 swings, tin is 3. The last one lands exactly as the bar reaches 100%.</p>
     </div>
     <div class="note">
       <h3>The payoff</h3>
-      <p>The rock bursts into shards, the tree creaks then falls and settles, the rod snaps up and the catch is taken out of the air by hand. Then everything resets for the next action.</p>
+      <p>The rock bursts into shards. The trunk lets go at the notch the axe has been cutting, topples and drops, leaving a stump. The rod snaps up and the catch is taken out of the air by hand.</p>
     </div>
     <div class="note">
       <h3>Ink flips, figure doesn't</h3>
@@ -439,7 +448,7 @@
     </div>
     <div class="note">
       <h3>Cost</h3>
-      <p>Around 70 SVG primitives and one transform per part per frame. No sprite sheets, no WebGL, no new dependency — it inlines into the single-file build.</p>
+      <p>Around 70 SVG primitives and one transform per part per frame, plus 8.6 KB of fish art lifted straight from <code>bespokeIcons.json</code>. No sprite sheets, no WebGL, no new dependency.</p>
     </div>
   </section>
 
@@ -495,14 +504,15 @@
       label: 'Fish',
       payoffMs: 1400,
       actions: [
-        { id:'shrimps',    name:'Shrimps',    lvl:1,  ticks:4,  tint:'#f4a08c' },
-        { id:'trout',      name:'Trout',      lvl:20, ticks:5,  tint:'#f4a08c' },
-        { id:'tuna',       name:'Tuna',       lvl:35, ticks:6,  tint:'#f4a08c' },
-        { id:'eel',        name:'Eel',        lvl:50, ticks:7,  tint:'#f4a08c' },
-        { id:'karam',      name:'Karam',      lvl:65, ticks:8,  tint:'#f4a08c' },
-        { id:'shark',      name:'Shark',      lvl:76, ticks:8,  tint:'#f4a08c' },
-        { id:'manta_ray',  name:'Manta ray',  lvl:85, ticks:9,  tint:'#f4a08c' },
-        { id:'anglerfish', name:'Anglerfish', lvl:90, ticks:10, tint:'#f4a08c' }
+        { id:'shrimps',    name:'Shrimps',    lvl:1,  ticks:4,  tint:'#cdb0b8' },
+        { id:'trout',      name:'Trout',      lvl:20, ticks:5,  tint:'#e0a7a0' },
+        { id:'tuna',       name:'Tuna',       lvl:35, ticks:6,  tint:'#3f6d8c' },
+        { id:'crab',       name:'Crab',       lvl:40, ticks:6,  tint:'#a78a86' },
+        { id:'eel',        name:'Eel',        lvl:50, ticks:7,  tint:'#566472' },
+        { id:'karam',      name:'Karam',      lvl:65, ticks:8,  tint:'#e0a7a0' },
+        { id:'shark',      name:'Shark',      lvl:76, ticks:8,  tint:'#97a4b0' },
+        { id:'manta_ray',  name:'Manta ray',  lvl:85, ticks:9,  tint:'#8a929c' },
+        { id:'anglerfish', name:'Anglerfish', lvl:90, ticks:10, tint:'#e0a7a0' }
       ]
     }
   };
@@ -510,7 +520,7 @@
   var state = {
     verb: 'mine',
     action: VERBS.mine.actions[3],
-    swings: 3,
+    tempo: 800,   // ms per swing, held constant across every action
     playing: true,
     guides: false,
     cursor: 0,          // 0..1 across the WHOLE cycle (action + payoff)
@@ -530,6 +540,15 @@
   function lerp(a, b, t) { return a + (b - a) * t; }
   function easeOut(t) { return 1 - Math.pow(1 - t, 2.2); }
   function easeIn(t)  { return Math.pow(t, 2.6); }
+
+  // A long action is more swings at the same tempo — never a slower swing.
+  function swingCount() {
+    return Math.max(1, Math.round(state.action.ticks * TICK_MS / state.tempo));
+  }
+  function periodCount() {
+    var n = swingCount();
+    return state.verb === 'fish' ? n : (n - 1 + IMPACT_PH);
+  }
 
   function cycleMs()   { return state.action.ticks * TICK_MS + VERBS[state.verb].payoffMs; }
   function actionFrac(){ return (state.action.ticks * TICK_MS) / cycleMs(); }
@@ -704,7 +723,21 @@
     { d: 'M143 89 L150 87 L157 92 L166 84 Q171 96 165 105 Q160 109 152 108 L141 108 Z', dx: 22, dy: -5, rot: 46 }
   ];
 
-  var TREE_PIVOT = [140, 108];
+  // The nine raw-fish bodies lifted verbatim from src/data/bespokeIcons.json,
+  // so the water shows the same art the inventory does.
+  var FISH_ART = {
+    shrimps: { s: 0.042, body: '<defs><linearGradient id="raw_shrimps_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6d2d8"/><stop offset="0.55" stop-color="#cdb0b8"/><stop offset="1" stop-color="#9a7f88"/></linearGradient></defs><g stroke="#3a1c10" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><path d="M150 150 C 280 130 380 200 384 300 C 388 372 332 420 262 420 C 184 420 132 364 138 300 C 144 256 176 232 214 240 C 178 210 162 180 150 150 Z" fill="url(#raw_shrimps_b)"/><path d="M384 300 C 410 280 416 250 408 224 M384 312 C 414 312 436 296 448 272" stroke="#9a7f88" stroke-width="14" fill="none"/><path d="M196 296 C 220 286 250 286 270 298 M204 336 C 230 326 262 326 286 338 M222 372 C 246 364 274 364 296 374" stroke="#9a7f88" stroke-width="9" fill="none"/><circle cx="180" cy="186" r="11" fill="#2a1208" stroke="none"/><path d="M150 150 L120 120 M158 158 L128 150" stroke="#9a7f88" stroke-width="7" fill="none"/></g>' },
+    trout: { s: 0.055, body: '<defs><linearGradient id="raw_trout_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3c8c2"/><stop offset="0.55" stop-color="#e0a7a0"/><stop offset="1" stop-color="#a86f68"/></linearGradient></defs><g stroke="#2a2018" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><polygon points="396,256 466,200 448,256 466,312 396,300" fill="#a86f68"/><path d="M92 256 C 168 182 332 182 404 232 L422 256 L404 280 C 332 330 168 330 92 256 Z" fill="url(#raw_trout_b)"/><polygon points="232,200 290,128 314,206" fill="#a86f68"/><path d="M104 250 C 180 296 300 300 360 288 L360 312 C 280 322 168 312 110 282 Z" fill="#f3c8c2" stroke="none"/><circle cx="156" cy="240" r="13" fill="#2a2018" stroke="none"/><circle cx="151" cy="235" r="4" fill="#fff" stroke="none"/><path d="M186 226 L186 286 M212 222 L212 290" stroke="#a86f68" stroke-width="6" fill="none"/></g>' },
+    tuna: { s: 0.065, body: '<defs><linearGradient id="raw_tuna_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#13293a"/><stop offset="0.5" stop-color="#3f6d8c"/><stop offset="1" stop-color="#eaf4fb"/></linearGradient></defs><g stroke="#0d1b26" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><path d="M96 256 C 130 216 200 196 288 200 C 348 204 392 224 420 256 C 392 288 348 308 288 312 C 200 316 130 296 96 256 Z" fill="url(#raw_tuna_b)"/><path d="M394 232 C 424 208 448 196 470 198 C 458 220 452 240 450 256 C 452 272 458 294 470 314 C 448 316 424 304 394 280 Z" fill="#13293a"/><path d="M244 200 C 250 160 268 128 288 118 C 292 152 288 184 278 206 Z" fill="#13293a"/><path d="M170 270 C 190 300 210 322 200 340 C 176 326 156 300 154 276 Z" fill="#13293a"/><path d="M330 208 L338 192 L344 210 L354 194 L360 210 L370 196 L376 210 L386 200 L392 210" stroke="#f2c94c" stroke-width="6" fill="none"/><path d="M112 268 C 182 296 282 300 362 288 C 366 300 362 308 356 310 C 272 322 172 318 120 292 Z" fill="#eaf4fb" stroke="none"/><circle cx="150" cy="246" r="13" fill="#0d1b26" stroke="none"/><circle cx="145" cy="241" r="4" fill="#fff" stroke="none"/></g>' },
+    crab: { s: 0.052, body: '<defs><radialGradient id="raw_crab_s" cx="0.4" cy="0.32" r="0.8"><stop offset="0" stop-color="#cdb6b0"/><stop offset="0.6" stop-color="#a78a86"/><stop offset="1" stop-color="#6f5a58"/></radialGradient></defs><g stroke="#3a2c2a" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><path d="M120 300 C 96 280 92 252 110 240 M392 300 C 416 280 420 252 402 240" fill="none" stroke="#9a8480" stroke-width="16"/><path d="M150 330 L100 350 M150 360 L104 392 M362 330 L412 350 M362 360 L408 392" stroke="#9a8480" stroke-width="14" fill="none"/><path d="M140 230 C 110 218 100 244 116 264 C 132 282 120 252 150 256 Z" fill="url(#raw_crab_s)"/><path d="M372 230 C 402 218 412 244 396 264 C 380 282 392 252 362 268 Z" fill="url(#raw_crab_s)"/><ellipse cx="256" cy="296" rx="138" ry="92" fill="url(#raw_crab_s)"/><path d="M150 280 C 220 300 292 300 362 280" stroke="#6f5a58" stroke-width="8" fill="none"/><ellipse cx="214" cy="262" rx="18" ry="22" fill="#f0e6e2" stroke="#3a2c2a" stroke-width="8"/><ellipse cx="298" cy="262" rx="18" ry="22" fill="#f0e6e2" stroke="#3a2c2a" stroke-width="8"/><circle cx="214" cy="266" r="8" fill="#2a1f1e" stroke="none"/><circle cx="298" cy="266" r="8" fill="#2a1f1e" stroke="none"/></g>' },
+    eel: { s: 0.068, body: '<defs><linearGradient id="raw_eel_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8896a4"/><stop offset="0.55" stop-color="#566472"/><stop offset="1" stop-color="#33404c"/></linearGradient></defs><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M110 150 C 200 170 180 250 256 270 C 340 292 330 380 410 392" stroke="#1f2228" stroke-width="62"/><path d="M110 150 C 200 170 180 250 256 270 C 340 292 330 380 410 392" stroke="url(#raw_eel_b)" stroke-width="44"/><path d="M120 150 C 196 168 184 240 250 262" stroke="#8896a4" stroke-width="8"/></g><g stroke="#1f2228" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"><path d="M110 150 C 70 138 60 168 84 184 C 104 196 96 168 124 172 Z" fill="url(#raw_eel_b)"/><circle cx="98" cy="158" r="8" fill="#ffd24a" stroke="none"/></g>' },
+    karam: { s: 0.058, body: '<defs><linearGradient id="raw_karam_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3c8c2"/><stop offset="0.55" stop-color="#e0a7a0"/><stop offset="1" stop-color="#a86f68"/></linearGradient></defs><g stroke="#2a2018" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><polygon points="396,256 466,200 448,256 466,312 396,300" fill="#a86f68"/><path d="M92 256 C 168 182 332 182 404 232 L422 256 L404 280 C 332 330 168 330 92 256 Z" fill="url(#raw_karam_b)"/><polygon points="232,200 290,128 314,206" fill="#a86f68"/><path d="M104 250 C 180 296 300 300 360 288 L360 312 C 280 322 168 312 110 282 Z" fill="#f3c8c2" stroke="none"/><circle cx="156" cy="240" r="13" fill="#2a2018" stroke="none"/><circle cx="151" cy="235" r="4" fill="#fff" stroke="none"/><path d="M186 226 L186 286 M212 222 L212 290" stroke="#a86f68" stroke-width="6" fill="none"/></g>' },
+    shark: { s: 0.08, body: '<defs><linearGradient id="raw_shark_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8d0d8"/><stop offset="0.5" stop-color="#97a4b0"/><stop offset="1" stop-color="#6a7580"/></linearGradient></defs><g stroke="#2a323a" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><polygon points="404,250 472,196 452,254 474,330 402,288" fill="#7d8a96"/><path d="M72 268 C 150 214 250 206 360 232 C 392 240 414 250 414 262 C 414 274 392 286 360 296 C 250 322 150 320 92 296 C 76 290 66 278 72 268 Z" fill="url(#raw_shark_b)"/><polygon points="236,214 312,118 320,224" fill="#7d8a96"/><polygon points="196,300 232,372 286,312" fill="#7d8a96"/><path d="M96 286 C 170 312 280 312 356 300 C 360 312 356 320 350 322 C 270 334 168 330 104 304 Z" fill="#dbe2e8" stroke="none"/><circle cx="140" cy="258" r="13" fill="#2a323a" stroke="none"/><path d="M76 276 C 100 290 128 294 156 292" fill="none" stroke="#2a323a" stroke-width="7"/></g>' },
+    manta_ray: { s: 0.072, body: '<defs><radialGradient id="raw_manta_ray_b" cx="0.5" cy="0.38" r="0.7"><stop offset="0" stop-color="#b4bcc6"/><stop offset="0.6" stop-color="#8a929c"/><stop offset="1" stop-color="#565d66"/></radialGradient></defs><g stroke="#2a2620" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><path d="M256 150 C 320 156 360 196 420 256 C 372 276 372 300 396 336 C 340 320 300 322 256 332 C 212 322 172 320 116 336 C 140 300 140 276 92 256 C 152 196 192 156 256 150 Z" fill="url(#raw_manta_ray_b)"/><path d="M256 332 C 256 380 250 420 256 456 C 262 420 256 380 256 332 Z" fill="#565d66"/><path d="M236 178 L218 156 M276 178 L294 156" stroke="#565d66" stroke-width="9" fill="none"/><circle cx="226" cy="210" r="9" fill="#2a2620" stroke="none"/><circle cx="286" cy="210" r="9" fill="#2a2620" stroke="none"/><path d="M150 256 C 200 246 312 246 362 256" stroke="#b4bcc6" stroke-width="7" fill="none"/></g>' },
+    anglerfish: { s: 0.06, body: '<defs><linearGradient id="raw_anglerfish_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3c8c2"/><stop offset="0.55" stop-color="#e0a7a0"/><stop offset="1" stop-color="#a86f68"/></linearGradient></defs><g stroke="#2a2018" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><polygon points="396,256 466,200 448,256 466,312 396,300" fill="#a86f68"/><path d="M92 256 C 168 182 332 182 404 232 L422 256 L404 280 C 332 330 168 330 92 256 Z" fill="url(#raw_anglerfish_b)"/><polygon points="232,200 290,128 314,206" fill="#a86f68"/><path d="M104 250 C 180 296 300 300 360 288 L360 312 C 280 322 168 312 110 282 Z" fill="#f3c8c2" stroke="none"/><circle cx="156" cy="240" r="13" fill="#2a2018" stroke="none"/><circle cx="151" cy="235" r="4" fill="#fff" stroke="none"/><path d="M186 226 L186 286 M212 222 L212 290" stroke="#a86f68" stroke-width="6" fill="none"/></g>' },
+  };
+
+  var TREE_PIVOT = [141, 79];   // the cut, not the roots
 
   function drawProp(s) {
     s.prop.innerHTML = '';
@@ -734,30 +767,37 @@
       s.shardG = shardG;
 
     } else if (state.verb === 'chop') {
+      // The stump is the trunk BELOW the cut and never moves. The faller is
+      // everything above it, hinged at the notch — so the trunk lets go where
+      // the axe has been landing rather than snapping off at the roots.
+      s.stump = el('g');
+      s.stump.appendChild(p('path', { d: 'M132 108 Q131.4 92 133.2 79 L148.8 79 Q150.4 92 150 108 Z', fill: tint }));
+      s.cutFace = p('path', { d: 'M133.2 79 L148.8 79 L148.4 75 L133.6 75 Z', fill: s.cloth2, opacity: 0 });
+      s.stump.appendChild(s.cutFace);
+      s.prop.appendChild(s.stump);
+
       var tree = el('g');
       tree.appendChild(p('path', {                                    // canopy
         d: 'M140 60 Q116 56 118 38 Q120 21 138 19 Q158 17 163 33 Q167 53 144 60 Z',
         fill: tint, opacity: 0.5
       }));
-      tree.appendChild(p('path', {                                    // trunk
-        d: 'M132 108 Q131 82 135 58 L147 58 Q151 82 150 108 Z', fill: tint
+      tree.appendChild(p('path', {                                    // trunk above the cut
+        d: 'M133.2 79 Q134 68 135 58 L147 58 Q148 68 148.8 79 Z', fill: tint
       }));
-      tree.appendChild(el('path', { d: 'M142 58 Q145 82 144 108 L150 108 Q151 82 147 58 Z', fill: 'rgba(0,0,0,0.13)' }));
-      // The notch the axe cuts — it deepens as the swings land.
-      s.notch = el('path', { d: 'M132 76 L132 76 L132 82 Z', fill: s.ink });
+      tree.appendChild(el('path', { d: 'M142 58 Q143.5 68 144.4 79 L148.8 79 Q148 68 147 58 Z', fill: 'rgba(0,0,0,0.13)' }));
+      s.notch = el('path', { d: 'M133.2 70 L133.2 70 L133.2 79 Z', fill: s.ink });
       tree.appendChild(s.notch);
       s.prop.appendChild(tree);
       s.tree = tree;
 
-      s.stump = p('path', { d: 'M133 108 Q132 100 134 96 L149 96 Q151 101 150 108 Z', fill: tint, opacity: 0 });
-      s.prop.appendChild(s.stump);
-
     } else {
       s.prop.appendChild(el('path', { d: 'M112 96 H196 V128 H112 Z', fill: tint, opacity: 0.16 }));
       s.prop.appendChild(p('path', { d: 'M112 96 Q126 92 140 96 T166 96 T196 96', fill: 'none', 'stroke-width': s.W - 0.6 }));
+      var art = FISH_ART[state.action.id];
       var fish = el('g');
-      fish.appendChild(p('path', { d: 'M-7 0 Q0 -4.6 8 0 Q0 4.6 -7 0 Z', fill: tint, 'stroke-width': s.W - 0.7 }));
-      fish.appendChild(p('path', { d: 'M-7 0 L-12.5 -4 L-11.5 4 Z', fill: tint, 'stroke-width': s.W - 0.7 }));
+      var inner = el('g', { transform: 'scale(' + art.s + ') translate(-256,-256)' });
+      inner.innerHTML = art.body;
+      fish.appendChild(inner);
       s.lineNode = p('path', { d: '', fill: 'none', 'stroke-width': 1.1, opacity: 0.7, stroke: s.ink });
       s.overlay.appendChild(s.lineNode);
       s.overlay.appendChild(fish);
@@ -770,8 +810,8 @@
     if (s.shardG)   s.shardG.setAttribute('opacity', 0);
     if (s.shards)   s.shards.forEach(function (n) { n.setAttribute('transform', ''); n.setAttribute('opacity', 1); });
     if (s.tree)   { s.tree.setAttribute('transform', ''); s.tree.setAttribute('opacity', 1); }
-    if (s.stump)    s.stump.setAttribute('opacity', 0);
-    if (s.notch)    s.notch.setAttribute('d', 'M132 76 L132 76 L132 82 Z');
+    if (s.cutFace)  s.cutFace.setAttribute('opacity', 0);
+    if (s.notch)    s.notch.setAttribute('d', 'M133.2 70 L133.2 70 L133.2 79 Z');
     if (s.fishNode) s.fishNode.setAttribute('opacity', 1);
   }
 
@@ -833,14 +873,17 @@
     }
 
     if (state.verb === 'chop') {
-      s.stump.setAttribute('opacity', 1);
-      var rot;
+      s.cutFace.setAttribute('opacity', 1);
+      var rot, drop = 0;
       if (q < 0.10)      rot = -3 * (q / 0.10);                            // creak backwards
-      else if (q < 0.68) { var t = (q - 0.10) / 0.58; rot = -3 + 87 * (t * t); }  // gathers speed
-      else if (q < 0.80) rot = 84 - 5 * Math.sin((q - 0.68) / 0.12 * Math.PI);    // settle bounce
-      else               rot = 84;                                          // lies across the frame
-      s.tree.setAttribute('transform', 'rotate(' + rot.toFixed(2) + ' ' + TREE_PIVOT[0] + ' ' + TREE_PIVOT[1] + ')');
-      s.tree.setAttribute('opacity', q < 0.84 ? 1 : clamp(1 - (q - 0.84) / 0.16, 0, 1));
+      else if (q < 0.62) { var t = (q - 0.10) / 0.52; rot = -3 + 87 * (t * t); }  // gathers speed
+      else               rot = 84;
+      // Hinged at the cut, the trunk also drops to the ground once it lets go.
+      if (q >= 0.44) { var d = clamp((q - 0.44) / 0.30, 0, 1); drop = 29 * d * d; }
+      if (q >= 0.74) drop = 29 - 3.5 * Math.sin(clamp((q - 0.74) / 0.13, 0, 1) * Math.PI);
+      s.tree.setAttribute('transform', 'translate(0,' + drop.toFixed(2) + ') rotate(' +
+        rot.toFixed(2) + ' ' + TREE_PIVOT[0] + ' ' + TREE_PIVOT[1] + ')');
+      s.tree.setAttribute('opacity', q < 0.86 ? 1 : clamp(1 - (q - 0.86) / 0.14, 0, 1));
       return;
     }
 
@@ -874,8 +917,8 @@
   // Swing-time prop motion: the notch the axe cuts, the fish in the water.
   function applySwingProp(s, p, segment, pose) {
     if (state.verb === 'chop' && s.notch) {
-      var depth = 2 + 12 * p;
-      s.notch.setAttribute('d', 'M132 73 L' + (132 + depth).toFixed(1) + ' 79 L132 85 Z');
+      var depth = 2 + 11 * p;
+      s.notch.setAttribute('d', 'M133.2 70 L' + (133.2 + depth).toFixed(1) + ' 74.5 L133.2 79 Z');
     }
     if (state.verb === 'fish' && s.lineNode) {
       var tip = carried(ROD_TIP, pose.arm, pose.bob);
@@ -893,7 +936,7 @@
   // ── Effects ───────────────────────────────────────────────────
 
   function impactOrigin() {
-    return state.verb === 'mine' ? [134, 84] : state.verb === 'chop' ? [134, 78] : [158, 100];
+    return state.verb === 'mine' ? [134, 84] : state.verb === 'chop' ? [135, 75] : [158, 100];
   }
 
   function spawnChips(s, n, spread) {
@@ -964,15 +1007,15 @@
       if (state.broke) { stages.forEach(resetProp); state.broke = false; state.yielded = false; state.dusted = false; state.lastImpact = -1; }
 
       // Swings are spaced so the LAST impact lands exactly at bar 100%.
-      var periods = state.verb === 'fish' ? state.swings : (state.swings - 1 + IMPACT_PH);
-      var segment = (c / aFrac) * periods;
+      var n = swingCount();
+      var segment = (c / aFrac) * periodCount();
       var idx = Math.floor(segment);
       var ph = segment - idx;
       pose = swingPose(ph);
-      phaseLabel = 'swing ' + Math.min(idx + 1, state.swings) + '/' + state.swings;
+      phaseLabel = 'swing ' + Math.min(idx + 1, n) + '/' + n;
 
       // Mid-action impacts. The final one is the break, handled below.
-      if (state.playing && state.verb !== 'fish' && ph >= IMPACT_PH && idx < state.swings - 1 && idx !== state.lastImpact) {
+      if (state.playing && state.verb !== 'fish' && ph >= IMPACT_PH && idx < n - 1 && idx !== state.lastImpact) {
         state.lastImpact = idx;
         stages.forEach(function (s) { spawnChips(s, 5, 8); });
       }
@@ -982,7 +1025,7 @@
       var q = (c - aFrac) / (1 - aFrac);
       pose = payoffPose(q);
       phaseLabel = state.verb === 'mine' ? 'smashing'
-                 : state.verb === 'chop' ? (q < 0.70 ? 'felling' : 'settling')
+                 : state.verb === 'chop' ? (q < 0.44 ? 'cracking' : q < 0.76 ? 'falling' : 'settling')
                  : (q < 0.80 ? 'landing' : 'grabbed');
 
       if (!state.broke) {
@@ -995,12 +1038,12 @@
 
       stages.forEach(function (s) { applyPayoff(s, q); });
 
-      if (state.verb === 'chop' && !state.dusted && q >= 0.68) {
+      if (state.verb === 'chop' && !state.dusted && q >= 0.74) {
         state.dusted = true;
         stages.forEach(function (s) { spawnPuffs(s, 172, 106, 5); });
       }
 
-      var yieldAt = state.verb === 'mine' ? 0.50 : state.verb === 'chop' ? 0.78 : 0.80;
+      var yieldAt = state.verb === 'mine' ? 0.50 : state.verb === 'chop' ? 0.82 : 0.80;
       if (!state.yielded && q >= yieldAt) {
         state.yielded = true;
         stages.forEach(function (s) {
@@ -1034,14 +1077,18 @@
   function syncReadout() {
     var a = state.action;
     document.getElementById('ro-ticks').textContent = a.ticks + 't · ' + (a.ticks * TICK_MS / 1000).toFixed(1) + 's';
-    document.getElementById('ro-swings').textContent = state.swings;
-    document.getElementById('out-swings').textContent = state.swings;
-    var periods = state.verb === 'fish' ? state.swings : (state.swings - 1 + IMPACT_PH);
-    var per = (a.ticks * TICK_MS) / periods;
+    document.getElementById('ro-swings').textContent = swingCount();
+    document.getElementById('out-swings').textContent = state.tempo + 'ms';
+    var per = (a.ticks * TICK_MS) / periodCount();
     document.getElementById('swing-period').innerHTML =
-      '<span>' + Math.round(per) + 'ms swing · ' + VERBS[state.verb].payoffMs + 'ms payoff</span><b>' +
-      (per < 450 ? 'frantic' : per > 1900 ? 'sluggish' : 'reads well') + '</b>';
-    document.getElementById('ladder-title').textContent = VERBS[state.verb].label + ' · tint ladder';
+      '<span>' + swingCount() + ' swings · ' + Math.round(per) + 'ms each · ' +
+      VERBS[state.verb].payoffMs + 'ms payoff</span><b>' +
+      (per < 430 ? 'frantic' : per > 1700 ? 'sluggish' : 'reads well') + '</b>';
+    document.getElementById('ladder-title').textContent =
+      VERBS[state.verb].label + (state.verb === 'fish' ? ' · catch' : ' · tint ladder');
+    document.getElementById('ladder-note').innerHTML = state.verb === 'fish'
+      ? 'Every raw fish resolves to the same <code>#f4a08c</code> tint, so the bespoke icon — not colour — is what tells them apart.'
+      : 'Real values from <code>getItemIconTint</code> — the prop recolours, the figure does not.';
   }
 
   function hardReset() {
@@ -1093,13 +1140,18 @@
       b.setAttribute('aria-pressed', String(a.id === state.action.id));
       var chip = document.createElement('div');
       chip.className = 'rung__chip';
-      chip.style.background = a.tint;
+      if (state.verb === 'fish' && FISH_ART[a.id]) {
+        chip.classList.add('rung__chip--art');
+        chip.innerHTML = '<svg viewBox="0 0 512 512" aria-hidden="true">' + FISH_ART[a.id].body + '</svg>';
+      } else {
+        chip.style.background = a.tint;
+      }
       var nm = document.createElement('div');
       nm.className = 'rung__name';
       nm.textContent = a.name;
       var mt = document.createElement('div');
       mt.className = 'rung__meta';
-      mt.textContent = 'Lv ' + a.lvl + ' · ' + a.tint;
+      mt.textContent = 'Lv ' + a.lvl + ' · ' + (state.verb === 'fish' ? 'bespoke' : a.tint);
       b.appendChild(chip); b.appendChild(nm); b.appendChild(mt);
       b.onclick = function () {
         state.action = a;
@@ -1112,7 +1164,7 @@
   }
 
   document.getElementById('rng-swings').oninput = function () {
-    state.swings = parseInt(this.value, 10);
+    state.tempo = parseInt(this.value, 10);
     state.lastImpact = -1;
     syncReadout();
   };
