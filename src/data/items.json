@@ -7725,7 +7725,7 @@
     "name": "Nagadoth Bones",
     "type": "resource",
     "stackable": false,
-    "shopValue": 14448,
+    "shopValue": 7633,
     "isGeneralStore": false
   },
   "berserker_ring": {
@@ -17100,7 +17100,7 @@
     "name": "Ashen Hydra Bones",
     "type": "resource",
     "stackable": false,
-    "shopValue": 7633,
+    "shopValue": 14448,
     "isGeneralStore": false
   },
   "ferocious_gloves": {
