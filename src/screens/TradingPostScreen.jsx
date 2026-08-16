@@ -834,18 +834,8 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
 
   const detailModal = selected ? (() => {
     const orderBook = isOrderBookItem(selected)
-    const m = marketData[selected.id] || {}
     const ownedQty = countItem(inventory, selected.id)
     const isBuy = pendingAction === 'buy'
-    const summary = orderBook
-      ? (
-        <div class="text-[11px] text-[var(--text-faint)] space-y-1">
-          <div>Best sell: {m.bestSell ? `${m.bestSell.price.toLocaleString()} gp × ${m.bestSell.quantity}` : '—'}</div>
-          <div>Best buy: {m.bestBuy ? `${m.bestBuy.price.toLocaleString()} gp × ${m.bestBuy.quantity}` : '—'}</div>
-          <div>Total listed: {m.totalListedQuantity || 0}</div>
-        </div>
-      )
-      : null
     const isQuestLocked = !questRequirementMet(completedQuests, selected.questUnlock)
     const isMinigameLocked = minigameProductIds.has(selected.id) && !unlockedMinigameItems.has(selected.id)
     const isSlayerLocked = isSlayerStoreItem(selected.id) && !slayerStoreUnlockSet.has(selected.id)
@@ -853,7 +843,6 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     const buyLocked = isBuy && (isQuestLocked || isMinigameLocked || isSlayerLocked || !!capeBlock)
     return (
       <div class="space-y-3">
-        {summary && <Panel>{summary}</Panel>}
         {!isBuy && ownedQty < 1 && (
           <Panel className="text-[11px] text-[var(--fm-blood)]">You don't own any of this item to sell.</Panel>
         )}
