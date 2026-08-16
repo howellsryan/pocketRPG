@@ -17,6 +17,9 @@ import { CombatMonsterInfoSheet } from './CombatMobileSheets.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { openCoopFeed } from '../cloud/coopFeed.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
+import { swingsFromCoopEvents, playerCombatSprite, monsterCombatSprite } from '../utils/actionSprites.js'
+import { useActionSwings } from '../hooks/useActionSwings.js'
+import ActionSpriteStage from '../components/ActionSpriteStage.jsx'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
 import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal, foughtThisKill, isRaidPayingBoss } from '../engine/coopBossEngine.js'
@@ -50,6 +53,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const [bossSplats, setBossSplats] = useState([])
   const [addSplats, setAddSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
+  // Latest swing per side for the sprite stage — see CombatScreen, same shape.
+  const { swings, pushSwings } = useActionSwings()
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [showQuickPrayerConfig, setShowQuickPrayerConfig] = useState(false)
   const [showMonsterInfo, setShowMonsterInfo] = useState(false)
@@ -94,12 +99,14 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const addsOnField = bossAddsOf(boss).filter((add) => add && add.currentHP > 0)
   const onBoss = typeof combatState?.addTargetIndex !== 'number'
   const activeAdd = (!onBoss && bossAddsOf(boss)[combatState.addTargetIndex]) || addsOnField[0] || null
+  const spriteAdd = (!onBoss && bossAddsOf(boss)[combatState.addTargetIndex]) || null
   // A raid party runs in this same screen: the lobby replaces the HUD until the
   // host sets off, and the fight after that is the co-op boss fight with a run
   // counter on it. Keeping both here is what makes the group raid feel like the
   // group boss it is built on.
   const raid = raidProgress(state, monstersData)
   const inLobby = state?.phase === 'lobby'
+
 
   const pushSplats = (setter, splats) => {
     if (!splats.length) return
@@ -161,6 +168,17 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     pushSplats(setBossSplats, tickSplats.boss)
     pushSplats(setAddSplats, tickSplats.add)
     pushSplats(setPlayerSplats, tickSplats.player)
+
+    // Only THIS member's swings move the stage: every member's events arrive on
+    // the shared ring, and a full room would otherwise lunge eight times a tick.
+    // The stage follows whichever enemy this member is hitting, exactly as the
+    // solo screen does (§20) — so the swings it animates have to be routed the
+    // same way, or a hit on a sentinel flashes the boss's emblem over an HP bar
+    // that never moves. Read off THIS beat's state, not a ref written during
+    // render: the beat callback runs before the render it causes, so a rendered
+    // ref lags a beat and drops both swings on every target switch.
+    const beatTarget = nextState?.members?.[String(characterId)]?.combat?.addTargetIndex
+    pushSwings(swingsFromCoopEvents(events, characterId, { showingAdd: typeof beatTarget === 'number' }))
     // Run-shaped events: everybody in the party sees these, not just the
     // member they name.
     for (const ev of events) {
@@ -438,6 +456,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const canSpec = hasSpec && canAffordSpecialAttack(weapon.specialAttack, energy) && me?.status === 'alive'
   const specQueued = !!combatState?.specialAttackQueued
   const isMagic = weapon?.attackStyle === 'magic'
+  const coopPlayerSprite = playerCombatSprite(me?.equipment, itemsData, { combatType: combatState?.combatType, stance: combatState?.stance })
+  const coopStageTarget = spriteAdd || liveMonster
+  const coopStageArt = spriteAdd ? getMonsterArt(spriteAdd) : mArt
+  const coopMonsterSprite = monsterCombatSprite(coopStageTarget)
 
   return (
     <div class="forge-shell h-full flex flex-col p-4">
@@ -456,6 +478,17 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           combatLevel={monster?.combatLevel}
           aside={state?.hardMode ? <HardModeTag /> : null}
           onInfo={() => setShowMonsterInfo(true)}
+        />
+
+        {/* §20: the group fight looks like the solo fight, so the stage sits in
+            the same place with the same timing law — read off THIS member's
+            weapon and the boss's current form. */}
+        <ActionSpriteStage
+          actor={{ ...coopPlayerSprite, accent: getStyleArt(coopPlayerSprite.motion).color }}
+          target={{ icon: coopStageArt.icon, accent: coopStageArt.accent, sprite: coopMonsterSprite }}
+          actorSwing={swings.player}
+          targetSwing={swings.monster}
+          label={`You versus ${coopStageTarget?.name || bossName}`}
         />
 
         <CombatHPBlock
