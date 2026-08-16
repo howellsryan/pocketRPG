@@ -284,17 +284,28 @@ export function canPerformAction(action, skillXP, inventory, itemsData, bank = {
 }
 
 /**
+ * Probability that one cook burns at this level. Decreases linearly from the
+ * base chance at the recipe's own level to 0 at burnStopLevel.
+ *
+ * Split out from checkBurn because a burnt cook eats the raw fish and pays no
+ * XP, so anything ESTIMATING a cook — how many raw sharks a level costs — needs
+ * the chance rather than a roll (src/engine/trainingPlanner.js). One formula,
+ * two readers: never re-derive this next to a planner.
+ */
+export function burnChance(cookingLevel, recipe) {
+  if (!recipe?.burnStopLevel) return 0
+  if (cookingLevel >= recipe.burnStopLevel) return 0
+  const range = recipe.burnStopLevel - recipe.level
+  if (!(range > 0)) return 0
+  const progress = Math.max(0, cookingLevel - recipe.level)
+  return COOKING_BURN_BASE_CHANCE * (1 - progress / range)
+}
+
+/**
  * Check if food burns during cooking
- * Burn chance decreases linearly from base to 0 at burnStopLevel
  */
 export function checkBurn(cookingLevel, recipe) {
-  if (!recipe.burnStopLevel) return false
-  if (cookingLevel >= recipe.burnStopLevel) return false
-
-  const range = recipe.burnStopLevel - recipe.level
-  const progress = cookingLevel - recipe.level
-  const burnChance = COOKING_BURN_BASE_CHANCE * (1 - progress / range)
-  return Math.random() < burnChance
+  return Math.random() < burnChance(cookingLevel, recipe)
 }
 
 /**

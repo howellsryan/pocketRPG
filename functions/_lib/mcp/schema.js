@@ -5,8 +5,12 @@
 
 import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS, MINIGAME_TASK_IDS, PRAYER_ACTION_IDS, CONSTRUCTION_ACTION_IDS, CONSTRUCTION_PERK_IDS, MAGIC_ACTION_IDS } from './intents.js'
 import { SKILL_IDS, REFERENCE_TOPIC_NAMES } from './reference.js'
+import { plannableSkillIds } from '../../../src/engine/trainingPlanner.js'
 
 const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
+// Only skills trained by repeating an action can be costed; farming (plot-based)
+// and the combat skills have no ladder to walk.
+const PLANNABLE_SKILLS = plannableSkillIds()
 
 // Server-level guidance surfaced to the model on connect (MCP `instructions`).
 export const SERVER_INSTRUCTIONS = `PocketRPG is a menu-driven idle/simulation fantasy RPG. These tools let you
@@ -45,6 +49,12 @@ the details and guard rails):
   what more levels are worth, and all of it against a named monster. Never
   compute DPS or compare gear from item stats yourself; this tool runs the
   game's own combat maths and is the only correct answer.
+- Answer any levelling-cost question with plan_training — "how many bones to 77
+  Prayer", "how long to 99", "what materials will that take". Never work XP
+  totals or material counts out yourself: it walks the game's own XP table,
+  picks the best option at each level, honours requirements outside the skill
+  (a gilded altar needs Construction 75) and applies the account's XP rate, so
+  a Grindman's answer is correctly about double.
 - Other activities — start_clue, start_minigame, start_quest (+ queue_quest /
   remove_from_queue), get_active_activity.
 - Economy & account — buy_item / sell_item, the trading-post offer tools
@@ -332,6 +342,27 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: READ('Analyze best DPS setup'),
+  },
+  {
+    name: 'plan_training',
+    description:
+      "How much it costs to reach a skill level, computed from the game's own XP table. The ONLY correct way to answer 'how many bones to 77 Prayer', 'how long to 99', 'what do I need to level X' or 'how much material will that take' — never work XP totals or material counts out yourself. Returns the route as segments (which action, over which levels, how many of it), the total materials with how many the character already owns, total time, and `blockedOptions` for faster training they cannot reach yet (a gilded altar needs Construction 75). It applies the account's XP rate, so a Grindman's answer is correctly about double. Only skills trained by repeating an action can be planned; it says so plainly for the rest.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        skill: { type: 'string', enum: PLANNABLE_SKILLS, description: "Skill to plan, e.g. 'prayer'." },
+        target_level: { type: 'integer', minimum: 2, maximum: 99, description: 'Level to reach. Defaults to the next level up.' },
+        objective: {
+          type: 'string',
+          enum: ['fastest', 'fewest_items'],
+          description: "'fastest' (default) picks the best XP per tick. 'fewest_items' picks the best XP per material — use it when the player is asking how to spend the least of something.",
+        },
+        character_id: { type: 'integer', description: 'Character to plan for. Omit when the account has one character.' },
+      },
+      required: ['skill'],
+      additionalProperties: false,
+    },
+    annotations: READ('Plan skill training'),
   },
   {
     name: 'list_skill_actions',

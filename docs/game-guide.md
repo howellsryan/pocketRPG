@@ -290,3 +290,11 @@ It answers in two parts: the best setup from gear you already have, and the bett
 Name a monster and it goes further: it uses that monster's real defences, every form a multi-form boss rotates through, your time to kill, the monster's max hit and the protection prayer to run. You can also ask what you'd hit with gear you don't own yet (it names the items and where they drop), and what more combat levels are worth — often the honest answer once your gear is already best-in-slot.
 
 Two things it deliberately leaves out, so the numbers stay honest: enchanted bolt effects, and special attacks (manual and limited by special energy). Dharok's damage bonus is counted at full health, where it is ×1.
+
+## Levelling costs
+
+Ask the helper "how many bones to 77 Prayer?" or "how long to 99 Fishing?" and it works the answer out from the game's XP table rather than estimating. It walks the levels between where you are and where you want to be, picks the best training option at each one, and reports how many of each material that takes, how long it runs for, and how many you already hold in your bank and pack.
+
+Two things it gets right that are easy to miss by hand. Best does not mean most obvious — Gargoyle Dust beats big bones on a gilded altar from Prayer 20, at the same speed. And options with requirements outside the skill are excluded until you meet them: a gilded altar needs a level 75 Construction house, so without one the plan trains around it and tells you what you are missing. Your account's XP rate is applied too, so a Grindman's answer is roughly double a normal account's.
+
+Ask for the fewest items instead of the fastest route and it re-plans for the one you care about. Only skills trained by repeating an action can be costed this way — Farming, Slayer and the melee and ranged skills are trained by doing, not by repeating a recipe, and it says so rather than guessing. Magic counts, but its ladder starts at level 7: the levels below that come from casting in combat.

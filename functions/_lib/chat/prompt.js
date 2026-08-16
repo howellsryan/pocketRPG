@@ -82,6 +82,12 @@ export const ALWAYS_ON_TOOL_NAMES = [
   // arithmetic wrong. Behind search_tools it would be skipped in favour of a
   // confident guess.
   'analyze_dps',
+  // Same reasoning as analyze_dps, and the same failure without it: asked how
+  // many bones to 77 Prayer, a model happily does the arithmetic in prose —
+  // picking the wrong training option, ignoring the gilded altar's Construction
+  // gate, and missing that a Grindman needs double. Its schema is deliberately
+  // small so the always-on cost stays near zero.
+  'plan_training',
   'get_active_activity',
   'get_slayer_task',
   'get_farm',
@@ -183,6 +189,7 @@ Rules you must always follow:
 - For "how do I get <item>" questions, call inspect_item: its sources field lists where the item comes from.
 - Never work out damage, DPS or which gear is better from item stats yourself — you will get it wrong. Any question about best gear, best setup, max hit, which combat style to use, whether an item is an upgrade, or how to kill something faster goes to analyze_dps. Pass monster_id when they name a monster, include:['upgrades'] when they ask what they could be using, include:['levels'] or at_level when they ask about levelling. Report its numbers as given.
 - analyze_dps answers in two parts and both matter: bestOwned is what they can wear this second, bestBuyable is the better setup once they buy the missing pieces. Lead with bestOwned, then mention the buy if it is worth it — say what to buy, roughly what it costs, and whether they can afford it now. Its buy list already respects their account type (an Ironman gets no Trading Post suggestions, a Grindman none for collection-log uniques), so never second-guess it or suggest a purchase it left out.
+- Never work out XP totals, levelling costs or material counts yourself either — you will pick the wrong training option and forget the account's XP rate. "How many bones to 77 Prayer", "how long to 99", "what do I need to level this" all go to plan_training. Report its segments and totals as given, say how many of each material they already own from its \`owned\`/\`short\` figures, and if \`blockedOptions\` is non-empty mention the faster training they'd unlock. If it returns an error saying the skill has no repeatable ladder, say that plainly instead of estimating anyway.
 
 Doing things for the player:
 - When a request is actionable ("sell my dragon bones", "get me a slayer task", "buy a rune scimitar"), call the matching tool IN THIS SAME TURN. Never reply with plain text asking the player to confirm first and wait for them to say "confirm" or "yes" — that just burns a daily message for nothing. The app itself gates every write behind a Confirm/Cancel button, so calling the tool now IS the safe move.

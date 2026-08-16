@@ -10,7 +10,9 @@ import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdle
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
-import { analyzeDps } from './dps.js'
+import { analyzeDps, ownedPool } from './dps.js'
+import { planTraining, compactTrainingPlan } from '../../../src/engine/trainingPlanner.js'
+import { getLevelFromXP } from '../../../src/engine/experience.js'
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 
 // Reuse the exact production endpoint handlers (see bridge.js).
@@ -40,7 +42,17 @@ import { onRequestPost as completeMinigame } from '../../api/actions/minigame/co
 import { onRequestPost as completeSlayer } from '../../api/actions/slayer/complete.js'
 import { onRequestPost as postUnlockPurchase } from '../../api/unlocks/purchase.js'
 import { SLAYER_UNLOCKS, ownsItem as ownsSlayerUnlockItem } from '../../../src/engine/slayerUnlocks.js'
-import { TICK_DURATION } from '../../../src/utils/constants.js'
+import { TICK_DURATION, ALL_SKILLS, MAX_LEVEL } from '../../../src/utils/constants.js'
+
+// Under the chatbot's CHAT_MAX_TOOL_RESULT_CHARS (6000), with room for the
+// envelope this file wraps around a plan. Kept here rather than imported from
+// the chat lib: MCP has other clients, and this is the tightest budget any of
+// them impose.
+const PLAN_RESULT_CHAR_BUDGET = 5600
+// Measured the way ok() actually emits it — indent-2 runs ~1.6x the compact
+// length, so budgeting against JSON.stringify's default let the real payload
+// sail past the slice it was supposed to stay under.
+const PLAN_SERIALISE = (payload) => JSON.stringify(payload, null, 2)
 
 function ok(payload) {
   const text = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2)
@@ -352,15 +364,18 @@ const TOOLS = {
   },
 
   async get_character_state({ character_id }, { env, authorization }) {
-    const id = await resolveCharacterId(env, authorization, character_id)
+    // The characters row, not just the id: account modes change what every XP,
+    // drop-rate and time-to-goal answer should say (a Grindman banks half XP at
+    // triple drop rates), and without them here a client has no way to know.
+    const { id, ...accountModes } = await resolveCharacterRow(env, authorization, character_id)
     const res = await callHandler(getSave, env, { authorization, characterId: id })
     if (!res.ok) throw httpError(res)
-    if (!res.data?.save?.save_data) return ok({ characterId: id, state: null, note: 'No save yet.' })
+    if (!res.data?.save?.save_data) return ok({ characterId: id, ...accountModes, state: null, note: 'No save yet.' })
     const summary = summarizeSave(res.data.save.save_data)
     // Resolve item ids to names so the model doesn't need a separate lookup.
     summary.inventory = summary.inventory.map(withItemName)
     for (const [slot, item] of Object.entries(summary.equipment)) summary.equipment[slot] = withItemName(item)
-    return ok({ characterId: id, savedAt: res.data.save.updatedAt, ...summary })
+    return ok({ characterId: id, savedAt: res.data.save.updatedAt, ...accountModes, ...summary })
   },
 
   async get_bank({ query, limit, character_id }, { env, authorization }) {
@@ -387,6 +402,38 @@ const TOOLS = {
         include: Array.isArray(include) ? include : [],
         atLevel: at_level || null,
       }),
+    })
+  },
+
+  async plan_training({ skill, target_level, objective, character_id }, { env, authorization }) {
+    // The characters row, not the save's mirror: the account's XP rate decides
+    // every number in the plan (mcp.md — account modes come from the row).
+    const { id, isGrindman } = await resolveCharacterRow(env, authorization, character_id)
+    const res = await callHandler(getSave, env, { authorization, characterId: id })
+    if (!res.ok) throw httpError(res)
+    if (!res.data?.save?.save_data) throw new Error('No save yet for this character — play once in the app first.')
+    const state = JSON.parse(res.data.save.save_data)
+    const currentXp = Number(state?.stats?.[skill]?.xp) || 0
+    // Every skill, not just the trained one: a gilded altar is gated on
+    // Construction, and a missing entry reads as level 1 and wrongly locks it.
+    const levels = {}
+    for (const skillId of ALL_SKILLS) levels[skillId] = getLevelFromXP(Number(state?.stats?.[skillId]?.xp) || 0)
+    // Budgeted against the chatbot's CHAT_MAX_TOOL_RESULT_CHARS (6000), which
+    // hard-slices — a payload cut mid-JSON is read wrong, not read short.
+    return ok({
+      characterId: id,
+      ...compactTrainingPlan(planTraining({
+        skillId: skill,
+        currentXp,
+        targetLevel: target_level || Math.min(MAX_LEVEL, getLevelFromXP(currentXp) + 1),
+        levels,
+        owned: Object.fromEntries(ownedPool(state).quantities),
+        // Tools are most of a gathering skill's real speed, so the time
+        // estimate is wrong without them (a Dragon Axe halves woodcutting).
+        gear: { equipment: state?.equipment || {}, inventory: state?.inventory || [], stats: state?.stats || {} },
+        objective: objective || 'fastest',
+        isGrindman,
+      }), PLAN_RESULT_CHAR_BUDGET, PLAN_SERIALISE),
     })
   },
 

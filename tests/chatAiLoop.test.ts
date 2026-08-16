@@ -236,7 +236,94 @@ describe('runAiChat', () => {
       .mockResolvedValueOnce(aiResponse('Final answer.'))
     const { answer, pendingWrite } = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
     expect(pendingWrite).toBeNull()
-    expect(answer).toBe('to=functions.made_up_tool json\n{"a":1} some text')
+    // The unknown tool is NOT called, but the raw token soup must not reach the
+    // player either — only the prose around it survives.
+    expect(answer).toBe('some text')
+    expect(answer).not.toContain('to=functions.')
+  })
+
+  it('recovers every leaked call in one message, not just the first', async () => {
+    const run = vi
+      .fn()
+      .mockResolvedValueOnce(
+        aiResponse(
+          'Let me look that up. to=functions.get_reference code:\n{"topic":"skills"} to=functions.get_reference code:\n{"topic":"prayers"}',
+        ),
+      )
+      .mockResolvedValueOnce(aiResponse('Here is the answer.'))
+    const messages = baseMessages()
+    const { answer } = await runAiChat({ AI: { run } } as any, messages, opts())
+    const assistantMsg = messages.find((m: any) => m.role === 'assistant' && m.tool_calls?.length) as any
+    expect(assistantMsg.tool_calls).toHaveLength(2)
+    expect(assistantMsg.tool_calls.map((c: any) => JSON.parse(c.function.arguments).topic)).toEqual(['skills', 'prayers'])
+    // Recovering only the head used to leave the rest as prose in the transcript.
+    expect(assistantMsg.content).toBe('Let me look that up.')
+    expect(answer).toBe('Here is the answer.')
+  })
+
+  it('keeps the reply when a tool name is mentioned with no arguments after it', async () => {
+    // A greedy scan past the name ate everything to the end of the string,
+    // leaving an empty answer that burned the whole fallback chain.
+    const run = vi.fn().mockResolvedValue(
+      aiResponse('You can check that yourself with to=functions.get_reference and it will list the topics for you.'),
+    )
+    const { answer } = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
+    expect(answer).not.toContain('to=functions.')
+    expect(answer).toContain('You can check that yourself with')
+    expect(answer).toContain('it will list the topics for you.')
+  })
+
+  it('does not pair a bare tool mention with an unrelated JSON object later in the reply', async () => {
+    const run = vi.fn().mockResolvedValue(
+      aiResponse('to=functions.sell_item — here is a long sentence of real prose that the player needs to read in full, and separately {"unrelated":true}'),
+    )
+    const { answer, pendingWrite } = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
+    expect(pendingWrite).toBeNull()
+    expect(answer).toContain('here is a long sentence of real prose')
+    expect(answer).toContain('{"unrelated":true}')
+  })
+
+  it('ends nested tool arguments where they actually end', async () => {
+    const run = vi.fn().mockResolvedValue(
+      aiResponse('to=functions.get_reference {"a":{"b":1}} trailing text the player should see'),
+    )
+    const { answer } = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
+    expect(answer).toBe('trailing text the player should see')
+  })
+
+  it('removes a leaked call whose arguments were cut off mid-object', async () => {
+    // Output-token truncation leaves the JSON unterminated; dropping only the
+    // token showed the player the half-written `{"item_id":...` fragment.
+    const run = vi.fn().mockResolvedValue(
+      aiResponse('Selling those for you. to=functions.sell_item json\n{"item_id":"oak_logs","quan'),
+    )
+    const { answer } = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
+    expect(answer).toBe('Selling those for you.')
+    expect(answer).not.toContain('item_id')
+  })
+
+  it('does not flatten indentation elsewhere in a reply that contained a leak', async () => {
+    const run = vi.fn().mockResolvedValue(
+      aiResponse('to=functions.get_reference {"topic":"skills"}\nYour options:\n    - Mine tin\n    - Mine iron'),
+    )
+    const { answer } = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
+    expect(answer).toContain('    - Mine tin')
+    expect(answer).toContain('    - Mine iron')
+  })
+
+  it('strips leaked tool syntax from the final no-tools answer', async () => {
+    // The round budget is spent on leaked calls, so the loop falls through to
+    // the last no-tools call — the path that shipped a wall of `to=functions.`
+    // fragments into a real reply.
+    const run = vi.fn().mockResolvedValue(
+      aiResponse(
+        'Starting from 10,765 Prayer XP: to=functions.get_reference code:\n{"topic":"xp"} to=functions.get_reference code:\n{"topic":"leveling"} you need 3,445 bones.',
+      ),
+    )
+    const { answer } = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
+    expect(answer).not.toContain('to=functions.')
+    expect(answer).toContain('Starting from 10,765 Prayer XP:')
+    expect(answer).toContain('you need 3,445 bones.')
   })
 
   it('marks usage unknown when a call reports no token counts', async () => {

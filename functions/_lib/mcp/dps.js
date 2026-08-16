@@ -55,10 +55,12 @@ function levelsFromSave(state) {
 }
 
 /**
- * Everything the character could put on: worn gear, the pack and the bank.
- * Quantities come along because ammo with none left cannot be fired.
+ * Everything the character holds: worn gear, the pack and the bank. Quantities
+ * come along because ammo with none left cannot be fired — and because
+ * `plan_training` needs the same tally to say how many of a material the player
+ * already owns. One walk of the three containers, two readers.
  */
-function ownedPool(state) {
+export function ownedPool(state) {
   const quantities = new Map()
   const add = (itemId, qty) => {
     if (!itemId) return

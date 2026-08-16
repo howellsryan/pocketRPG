@@ -116,6 +116,7 @@ describe('MCP tool schema', () => {
       'inspect_item',
       'inspect_monster',
       'analyze_dps',
+      'plan_training',
       'list_skill_actions',
       'list_items',
       'list_monsters',
@@ -415,15 +416,15 @@ describe('MCP trading-post source: inventory|bank', () => {
   const TEST_SECRET = 'test-jwt-secret'
   const IDENTITY = 'identity-1'
 
-  function mockEnv(save: any) {
+  function mockEnv(save: any, characterRow: Record<string, any> = {}) {
     const captured: { saveData: string | null } = { saveData: null }
     const blob = gzipJsonString(JSON.stringify(save))
     const prepare = (sql: string) => ({
       bind: (...args: any[]) => ({
         all: async () => {
-          // characters listing (resolveCharacterId)
+          // characters listing (resolveCharacterId / resolveCharacterRow)
           if (sql.includes('FROM characters c') && sql.includes('total_pvp_kills')) {
-            return { results: [{ id: 7, username: 'Hero', is_ironman: 0, is_one_life: 0, created_at: 1 }] }
+            return { results: [{ id: 7, username: 'Hero', is_ironman: 0, is_one_life: 0, created_at: 1, ...characterRow }] }
           }
           return { results: [] }
         },
@@ -504,6 +505,59 @@ describe('MCP trading-post source: inventory|bank', () => {
     expect(data.current.gear.weapon).toBe('Bronze Scimitar')
     expect(data.bestOwned.style).toBe('melee')
     expect(data.byStyle.melee.gear.weapon).toBe('Runeforged Scimitar')
+  })
+
+  // The save that produced the wrong helper answer: 10,765 Prayer XP, no house,
+  // a pile of nagadoth bones already banked.
+  const prayerSave = {
+    stats: { prayer: { xp: 10_765 }, construction: { xp: 0 } },
+    equipment: {},
+    inventory: [],
+    bank: { nagadoth_bones: { itemId: 'nagadoth_bones', quantity: 1200 } },
+  }
+
+  async function planCtx(characterRow: Record<string, any> = {}) {
+    const { env } = mockEnv(prayerSave, characterRow)
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    return { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+  }
+
+  it('plan_training costs a prayer goal from the save and counts bones already banked', async () => {
+    const res = await callTool('plan_training', { skill: 'prayer', target_level: 77, character_id: 7 }, await planCtx())
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.characterId).toBe(7)
+    expect(data.from.level).toBe(27)
+    expect(data.to.level).toBe(77)
+    const naga = data.totals.materials.find((m: any) => m.itemId === 'nagadoth_bones')
+    expect(naga.owned).toBe(1200)
+    expect(naga.short).toBe(naga.quantity - 1200)
+  })
+
+  it('plan_training locks the gilded altar behind Construction 75 rather than assuming it', async () => {
+    const res = await callTool('plan_training', { skill: 'prayer', target_level: 77, character_id: 7 }, await planCtx())
+    const data = JSON.parse(res.content[0].text)
+    for (const seg of data.segments) expect(seg.actionId.startsWith('altar_')).toBe(false)
+    expect(data.blockedOptions.length).toBeGreaterThan(0)
+  })
+
+  it('plan_training applies the Grindman XP rate from the characters row, not the save', async () => {
+    const normal = JSON.parse((await callTool('plan_training', { skill: 'prayer', target_level: 77, character_id: 7 }, await planCtx())).content[0].text)
+    // The save is byte-identical; only the characters row differs.
+    const grind = JSON.parse(
+      (await callTool('plan_training', { skill: 'prayer', target_level: 77, character_id: 7 }, await planCtx({ is_grindman: 1 }))).content[0].text,
+    )
+    expect(normal.accountXpMultiplier).toBe(1)
+    expect(grind.accountXpMultiplier).toBe(0.5)
+    expect(grind.totals.actions).toBeGreaterThan(normal.totals.actions * 1.95)
+  })
+
+  it('get_character_state reports the account modes so XP answers can honour them', async () => {
+    const res = await callTool('get_character_state', { character_id: 7 }, await planCtx({ is_grindman: 1 }))
+    const data = JSON.parse(res.content[0].text)
+    expect(data.isGrindman).toBe(true)
+    expect(data.isIronman).toBe(false)
+    expect(data.isOneLife).toBe(false)
   })
 
   it('get_bank lists bank contents with names and honours the query filter', async () => {

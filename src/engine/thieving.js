@@ -47,8 +47,10 @@ export function createThievingState(npc) {
   }
 }
 
-// Ticks per successful pickpocket for an NPC (default 4).
-function getPickpocketTicks(npc) {
+// Ticks per successful pickpocket for an NPC (default 4). Exported because a
+// thieving npc carries no `ticks` field at all, so anything reading one — the
+// training planner's time estimate — reads every npc as a single tick.
+export function getPickpocketTicks(npc) {
   return npc?.pickpocketTicks || 4
 }
 
