@@ -1,0 +1,966 @@
+<title>Inkwright Rig</title>
+<style>
+  :root {
+    --studio:      #121110;
+    --panel:       #1b1917;
+    --panel-hi:    #232019;
+    --rule:        #2f2a23;
+    --rule-soft:   #221f1a;
+    --text:        #e8e2d4;
+    --muted:       #8b8375;
+    --faint:       #5d574c;
+    --gold:        #d4a017;
+    --gold-hi:     #f0c040;
+
+    /* The two grounds the character must survive. Literal game values. */
+    --stage-parch: #e9dcbd;
+    --stage-iron:  #141414;
+
+    --display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    --ui: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--studio);
+    color: var(--text);
+    font-family: var(--ui);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 22px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+
+  .mast {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .mast h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 30px;
+    letter-spacing: 0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 7px;
+  }
+  .mast p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    max-width: 54ch;
+  }
+  .readout {
+    display: flex;
+    gap: 22px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout div { text-align: right; }
+  .readout dt {
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 3px;
+  }
+  .readout dd { margin: 0; font-size: 17px; color: var(--text); }
+
+  /* ── Stage pair ───────────────────────────────────────────── */
+
+  .stages {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .stage {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .stage__label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .swatch {
+    width: 11px; height: 11px;
+    border-radius: 2px;
+    border: 1px solid var(--rule);
+    flex-shrink: 0;
+  }
+  .stage__floor { padding: 18px 14px 14px; }
+  .stage__floor svg { display: block; width: 100%; height: auto; }
+
+  /* Both grounds are painted literally — this page is the one place they
+     must appear together, so neither follows the viewer's theme. */
+  .ground-parch { background: var(--stage-parch); }
+  .ground-iron  { background: var(--stage-iron); }
+
+  /* ── In-game progress bar replica ─────────────────────────── */
+
+  .bar {
+    position: relative;
+    height: 9px;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 14px;
+  }
+  .ground-parch .bar { background: rgba(26,26,14,0.13); }
+  .ground-iron  .bar { background: rgba(255,255,255,0.07); }
+  .bar__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #8b6914, var(--gold-hi));
+    min-width: 8px;
+  }
+  .bar__pct {
+    margin-top: 6px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ground-parch .bar__pct { color: rgba(26,26,14,0.5); }
+  .ground-iron  .bar__pct { color: rgba(245,230,200,0.5); }
+
+  /* ── Controls ─────────────────────────────────────────────── */
+
+  .console {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1px;
+    background: var(--rule-soft);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .cell {
+    background: var(--panel);
+    padding: 15px 16px 17px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .cell > label,
+  .cell__head {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .cell__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .cell__head b {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  select, button {
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--panel-hi);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 8px 10px;
+    cursor: pointer;
+    width: 100%;
+    min-height: 38px;
+  }
+  select:focus-visible,
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+  button:hover { border-color: var(--faint); }
+  button[aria-pressed="true"] {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #17140d;
+    font-weight: 600;
+  }
+  .btn-row { display: flex; gap: 8px; }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--gold);
+    min-height: 30px;
+  }
+
+  .verbs { display: flex; gap: 6px; }
+  .verbs button { padding: 8px 4px; font-size: 12.5px; }
+
+  /* ── Tint ladder ──────────────────────────────────────────── */
+
+  .ladder-wrap { display: flex; flex-direction: column; gap: 11px; }
+  .ladder-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .ladder-head h2 {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .ladder-head span { color: var(--muted); font-size: 12.5px; }
+  .ladder {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    gap: 8px;
+  }
+  .rung {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 9px 9px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    cursor: pointer;
+    text-align: left;
+    min-height: 0;
+  }
+  .rung[aria-pressed="true"] { border-color: var(--gold); }
+  .rung__chip {
+    height: 22px;
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.09);
+  }
+  .rung__name {
+    font-size: 11.5px;
+    line-height: 1.25;
+    color: var(--text);
+  }
+  .rung__meta {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Notes ────────────────────────────────────────────────── */
+
+  .notes {
+    border-top: 1px solid var(--rule);
+    padding-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 22px;
+  }
+  .note h3 {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 7px;
+  }
+  .note p { margin: 0; color: var(--muted); font-size: 13px; }
+  .note code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text);
+    background: var(--panel);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+
+  .guides { display: none; }
+  .show-guides .guides { display: block; }
+
+  @media (max-width: 720px) {
+    .stages { grid-template-columns: 1fr; }
+    .mast { align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chip { animation-duration: 1ms !important; }
+  }
+
+  @keyframes chipFly {
+    from { opacity: 1; transform: translate(0,0) rotate(0deg); }
+    to   { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--dr)); }
+  }
+  .chip { animation: chipFly 620ms ease-out forwards; }
+
+  @keyframes yieldPop {
+    0%   { opacity: 0; transform: translate(0,0) scale(0.5); }
+    22%  { opacity: 1; transform: translate(0,-13px) scale(1.12); }
+    72%  { opacity: 1; transform: translate(0,-19px) scale(1); }
+    100% { opacity: 0; transform: translate(0,-30px) scale(0.95); }
+  }
+  .yield { animation: yieldPop 1000ms ease-out forwards; }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <div>
+      <div class="eyebrow">Skilling rig · preview</div>
+      <h1>Inkwright</h1>
+      <p>One inked-vector figure, reused across every skill. The tool and the motion change per verb; the resource colour drives the prop, never the character.</p>
+    </div>
+    <dl class="readout">
+      <div><dt>Action</dt><dd id="ro-ticks">—</dd></div>
+      <div><dt>Swings</dt><dd id="ro-swings">—</dd></div>
+      <div><dt>Progress</dt><dd id="ro-pct">—</dd></div>
+    </dl>
+  </header>
+
+  <section class="stages" aria-label="Character on both game themes">
+    <div class="stage">
+      <div class="stage__label">
+        <span>Light theme · parchment</span>
+        <span class="swatch" style="background:var(--stage-parch)"></span>
+      </div>
+      <div class="stage__floor ground-parch" id="floor-parch"></div>
+    </div>
+    <div class="stage">
+      <div class="stage__label">
+        <span>Dark theme · iron</span>
+        <span class="swatch" style="background:var(--stage-iron)"></span>
+      </div>
+      <div class="stage__floor ground-iron" id="floor-iron"></div>
+    </div>
+  </section>
+
+  <section class="console" aria-label="Rig controls">
+    <div class="cell">
+      <label id="lbl-verb">Verb</label>
+      <div class="verbs" role="group" aria-labelledby="lbl-verb" id="verb-group"></div>
+    </div>
+
+    <div class="cell">
+      <label for="sel-action">Resource</label>
+      <select id="sel-action"></select>
+    </div>
+
+    <div class="cell">
+      <div class="cell__head"><span>Swings per action</span><b id="out-swings">—</b></div>
+      <input type="range" id="rng-swings" min="1" max="8" step="1" value="3" aria-label="Swings per action">
+      <div class="cell__head" style="color:var(--faint)"><span id="swing-period">—</span></div>
+    </div>
+
+    <div class="cell">
+      <div class="cell__head"><span>Scrub</span><b id="out-scrub">0%</b></div>
+      <input type="range" id="rng-scrub" min="0" max="1000" step="1" value="0" aria-label="Scrub through action">
+      <div class="btn-row">
+        <button id="btn-play" aria-pressed="true">Pause</button>
+        <button id="btn-guides" aria-pressed="false">Guides</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="ladder-wrap" aria-label="Resource tint range">
+    <div class="ladder-head">
+      <h2 id="ladder-title">Tint ladder</h2>
+      <span>Real values from <code style="font-family:var(--mono);font-size:11.5px">getItemIconTint</code> — the prop recolours, the figure does not.</span>
+    </div>
+    <div class="ladder" id="ladder"></div>
+  </section>
+
+  <section class="notes">
+    <div class="note">
+      <h3>Tick-locked</h3>
+      <p>The swing is driven by the same <code>progress</code> value that fills the bar, so the final impact lands exactly as the bar completes and the yield pops. Nothing free-runs.</p>
+    </div>
+    <div class="note">
+      <h3>Ink flips, figure doesn't</h3>
+      <p>The outline takes its colour from the ground — dark ink on parchment, warm bone on iron. Same geometry, same rig, two semantic tokens.</p>
+    </div>
+    <div class="note">
+      <h3>Cost</h3>
+      <p>Around 60 SVG primitives and one transform per part per frame. No sprite sheets, no WebGL, no new dependency — it inlines into the single-file build.</p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var TICK_MS = 600;
+
+  // Real actions from src/data/skills.json, with the tint each product
+  // resolves to through getItemIconTint / resolveIconTint.
+  var VERBS = {
+    mine: {
+      label: 'Mine',
+      noun: 'ore',
+      actions: [
+        { id:'tin',        name:'Tin ore',        lvl:1,  ticks:4,  tint:'#e8d5a8' },
+        { id:'copper',     name:'Copper ore',     lvl:1,  ticks:4,  tint:'#b87333' },
+        { id:'clay',       name:'Clay',           lvl:1,  ticks:4,  tint:'#e8d5a8' },
+        { id:'iron',       name:'Iron ore',       lvl:15, ticks:5,  tint:'#8c8c8c' },
+        { id:'coal',       name:'Coal',           lvl:30, ticks:6,  tint:'#2b2b2b' },
+        { id:'gold',       name:'Gold ore',       lvl:40, ticks:6,  tint:'#f39c12' },
+        { id:'mithril',    name:'Mithril ore',    lvl:55, ticks:7,  tint:'#3550c4' },
+        { id:'adamantite', name:'Adamantite ore', lvl:70, ticks:8,  tint:'#3aa55f' },
+        { id:'runite',     name:'Runeforged ore', lvl:85, ticks:30, tint:'#b7e4ff' }
+      ]
+    },
+    chop: {
+      label: 'Chop',
+      noun: 'logs',
+      actions: [
+        { id:'normal',   name:'Logs',          lvl:1,  ticks:4,  tint:'#c9a96e' },
+        { id:'oak',      name:'Oak logs',      lvl:15, ticks:5,  tint:'#a07444' },
+        { id:'willow',   name:'Willow logs',   lvl:30, ticks:6,  tint:'#b08a55' },
+        { id:'teak',     name:'Teak logs',     lvl:35, ticks:7,  tint:'#7a5228' },
+        { id:'maple',    name:'Maple logs',    lvl:45, ticks:7,  tint:'#8a6234' },
+        { id:'mahogany', name:'Mahogany logs', lvl:50, ticks:8,  tint:'#5c3015' },
+        { id:'yew',      name:'Yew logs',      lvl:60, ticks:8,  tint:'#6b4420' },
+        { id:'magic',    name:'Magic logs',    lvl:75, ticks:9,  tint:'#3498db' },
+        { id:'redwood',  name:'Redwood logs',  lvl:90, ticks:10, tint:'#c0372b' }
+      ]
+    },
+    fish: {
+      label: 'Fish',
+      noun: 'fish',
+      actions: [
+        { id:'shrimps',    name:'Shrimps',    lvl:1,  ticks:4,  tint:'#f4a08c' },
+        { id:'trout',      name:'Trout',      lvl:20, ticks:5,  tint:'#f4a08c' },
+        { id:'tuna',       name:'Tuna',       lvl:35, ticks:6,  tint:'#f4a08c' },
+        { id:'eel',        name:'Eel',        lvl:50, ticks:7,  tint:'#f4a08c' },
+        { id:'karam',      name:'Karam',      lvl:65, ticks:8,  tint:'#f4a08c' },
+        { id:'shark',      name:'Shark',      lvl:76, ticks:8,  tint:'#f4a08c' },
+        { id:'manta_ray',  name:'Manta ray',  lvl:85, ticks:9,  tint:'#f4a08c' },
+        { id:'anglerfish', name:'Anglerfish', lvl:90, ticks:10, tint:'#f4a08c' }
+      ]
+    }
+  };
+
+  var state = {
+    verb: 'mine',
+    action: VERBS.mine.actions[3],
+    swings: 3,
+    playing: true,
+    guides: false,
+    progress: 0,
+    lastImpact: -1
+  };
+
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  function el(name, attrs) {
+    var n = document.createElementNS(SVG_NS, name);
+    if (attrs) for (var k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+
+  // ── The rig ───────────────────────────────────────────────────
+  // Inked vector: one uniform outline weight, flat fills, no interior
+  // detail that dies below 90px. Parts are <g> nodes the loop rotates.
+
+  function buildStage(host, mode) {
+    host.innerHTML = '';
+
+    var ink   = mode === 'parch' ? '#1a1a0e' : '#e9dcbd';
+    var cloth = mode === 'parch' ? '#f6efdd' : '#2a2724';
+    var cloth2= mode === 'parch' ? '#d8c69e' : '#3a352f';
+    var shade = mode === 'parch' ? 'rgba(26,26,14,0.10)' : 'rgba(233,220,189,0.09)';
+
+    var svg = el('svg', { viewBox: '0 0 200 128', role: 'img' });
+    svg.setAttribute('aria-label', 'Character performing the ' + state.verb + ' animation');
+
+    var W = 3.1; // one ink weight everywhere — the defining constraint
+
+    var defs = el('defs');
+    svg.appendChild(defs);
+
+    // Ground line
+    var ground = el('path', {
+      d: 'M14 108 H186', stroke: ink, 'stroke-width': 2, 'stroke-linecap': 'round',
+      opacity: 0.28
+    });
+    svg.appendChild(ground);
+
+    // Contact shadow
+    svg.appendChild(el('ellipse', { cx: 74, cy: 108, rx: 22, ry: 3.4, fill: shade }));
+
+    // ── Prop (recoloured per resource) ──────────────────────────
+    var propG = el('g', { id: 'prop' });
+    svg.appendChild(propG);
+
+    // ── Figure ──────────────────────────────────────────────────
+    var fig = el('g', { id: 'fig' });
+    svg.appendChild(fig);
+
+    var common = { stroke: ink, 'stroke-width': W, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' };
+    function part(name, attrs) {
+      var a = {};
+      for (var k in common) a[k] = common[k];
+      for (var j in attrs) a[j] = attrs[j];
+      return el(name, a);
+    }
+
+    // Back leg
+    var legBack = el('g', { id: 'legBack' });
+    legBack.appendChild(part('path', { d: 'M68 84 L62 100 L54 103', fill: 'none', 'stroke-width': W + 3.4, stroke: cloth2 }));
+    legBack.appendChild(part('path', { d: 'M68 84 L62 100 L54 103', fill: 'none' }));
+    fig.appendChild(legBack);
+
+    // Front leg
+    var legFront = el('g', { id: 'legFront' });
+    legFront.appendChild(part('path', { d: 'M78 84 L84 101 L93 104', fill: 'none', 'stroke-width': W + 3.8, stroke: cloth }));
+    legFront.appendChild(part('path', { d: 'M78 84 L84 101 L93 104', fill: 'none' }));
+    fig.appendChild(legFront);
+
+    // Back arm (rotates opposite the tool arm)
+    var armBack = el('g', { id: 'armBack' });
+    armBack.appendChild(part('path', { d: 'M76 58 L66 68 L64 76', fill: 'none', 'stroke-width': W + 2.6, stroke: cloth2 }));
+    armBack.appendChild(part('path', { d: 'M76 58 L66 68 L64 76', fill: 'none' }));
+    fig.appendChild(armBack);
+
+    // Torso — a cinched tunic, chunky enough to read at 90px
+    var torso = el('g', { id: 'torso' });
+    torso.appendChild(part('path', {
+      d: 'M66 52 Q64 74 66 86 L84 86 Q86 72 84 52 Z',
+      fill: cloth
+    }));
+    // Belt
+    torso.appendChild(part('path', { d: 'M65.5 72 L84.5 72', fill: 'none', 'stroke-width': W + 1.2 }));
+    fig.appendChild(torso);
+
+    // Head — hooded cowl. No face: nothing to keep consistent across ten verbs.
+    var head = el('g', { id: 'head' });
+    head.appendChild(part('path', {
+      d: 'M75 26 Q90 28 88 44 Q87 53 75 54 Q63 53 62 44 Q60 28 75 26 Z',
+      fill: cloth
+    }));
+    // Cowl peak
+    head.appendChild(part('path', { d: 'M75 26 Q80 18 88 17 Q86 25 84 30', fill: cloth }));
+    // Face void — the shadow under the hood
+    head.appendChild(el('path', {
+      d: 'M78 38 Q88 39 87 46 Q86 51 78 51 Z', fill: ink, opacity: 0.85
+    }));
+    fig.appendChild(head);
+
+    // Front arm + tool. Rotation happens about the shoulder (82,57).
+    var armFront = el('g', { id: 'armFront' });
+    armFront.appendChild(part('path', { d: 'M82 57 L96 63', fill: 'none', 'stroke-width': W + 2.8, stroke: cloth }));
+    armFront.appendChild(part('path', { d: 'M82 57 L96 63', fill: 'none' }));
+    var toolG = el('g', { id: 'tool' });
+    armFront.appendChild(toolG);
+    fig.appendChild(armFront);
+
+    // Guides — pivot points and the ground plane, for rig review only
+    var guides = el('g', { class: 'guides', opacity: 0.5 });
+    [[82,57],[75,54],[72,84]].forEach(function (p) {
+      guides.appendChild(el('circle', { cx: p[0], cy: p[1], r: 2, fill: 'none', stroke: '#d4a017', 'stroke-width': 0.9 }));
+      guides.appendChild(el('path', { d: 'M' + (p[0]-5) + ' ' + p[1] + ' H' + (p[0]+5), stroke: '#d4a017', 'stroke-width': 0.5 }));
+      guides.appendChild(el('path', { d: 'M' + p[0] + ' ' + (p[1]-5) + ' V' + (p[1]+5), stroke: '#d4a017', 'stroke-width': 0.5 }));
+    });
+    svg.appendChild(guides);
+
+    var fx = el('g', { id: 'fx' });
+    svg.appendChild(fx);
+
+    host.appendChild(svg);
+
+    // Progress bar replica beneath each stage
+    var bar = document.createElement('div');
+    bar.className = 'bar';
+    var fill = document.createElement('div');
+    fill.className = 'bar__fill';
+    bar.appendChild(fill);
+    host.appendChild(bar);
+    var pct = document.createElement('div');
+    pct.className = 'bar__pct';
+    host.appendChild(pct);
+
+    return {
+      svg: svg, ink: ink, cloth: cloth, cloth2: cloth2, W: W,
+      fig: fig, torso: torso, head: head,
+      armFront: armFront, armBack: armBack,
+      legFront: legFront, legBack: legBack,
+      tool: toolG, prop: propG, fx: fx,
+      fill: fill, pct: pct, part: part
+    };
+  }
+
+  // ── Tools ─────────────────────────────────────────────────────
+  // Drawn from the hand outward, so the arm group's rotation carries them.
+
+  function drawTool(s) {
+    s.tool.innerHTML = '';
+    var p = s.part;
+    var shaft = s.ink;
+
+    if (state.verb === 'mine') {
+      s.tool.appendChild(p('path', { d: 'M96 63 L118 55', fill: 'none', 'stroke-width': s.W + 1.4, stroke: shaft }));
+      s.tool.appendChild(p('path', { d: 'M112 44 Q120 52 112 65', fill: 'none', 'stroke-width': s.W + 2.2 }));
+    } else if (state.verb === 'chop') {
+      s.tool.appendChild(p('path', { d: 'M96 63 L116 56', fill: 'none', 'stroke-width': s.W + 1.4, stroke: shaft }));
+      s.tool.appendChild(p('path', {
+        d: 'M112 47 Q124 52 120 64 Q114 62 110 58 Z', fill: s.cloth2
+      }));
+    } else {
+      // Rod: a long taper. The line is drawn separately so it can sag.
+      s.tool.appendChild(p('path', { d: 'M94 64 L132 40', fill: 'none', 'stroke-width': s.W + 0.8, stroke: shaft }));
+      s.tool.appendChild(p('circle', { cx: 99, cy: 61, r: 2.6, fill: s.cloth2, 'stroke-width': s.W - 1.2 }));
+    }
+  }
+
+  // ── Props ─────────────────────────────────────────────────────
+
+  function drawProp(s) {
+    s.prop.innerHTML = '';
+    var p = s.part;
+    var tint = state.action.tint;
+
+    if (state.verb === 'mine') {
+      // Rock cluster — tinted body, ink outline, a facet in the tint's shadow
+      s.prop.appendChild(p('path', {
+        d: 'M132 108 L128 84 L142 72 L160 76 L166 96 L158 108 Z', fill: tint
+      }));
+      s.prop.appendChild(el('path', {
+        d: 'M142 72 L148 92 L166 96 L160 76 Z', fill: 'rgba(0,0,0,0.17)'
+      }));
+      s.prop.appendChild(p('path', { d: 'M142 72 L148 92 L132 108', fill: 'none', 'stroke-width': s.W - 1 }));
+      s.prop.appendChild(p('path', { d: 'M148 92 L166 96', fill: 'none', 'stroke-width': s.W - 1 }));
+    } else if (state.verb === 'chop') {
+      // Trunk, tinted to the log colour, canopy in a desaturated wash
+      s.prop.appendChild(el('path', {
+        d: 'M136 108 Q134 78 138 56 L154 56 Q158 78 156 108 Z', fill: tint,
+        stroke: s.ink, 'stroke-width': s.W, 'stroke-linejoin': 'round'
+      }));
+      s.prop.appendChild(el('path', {
+        d: 'M147 56 Q150 82 148 108 L156 108 Q158 78 154 56 Z', fill: 'rgba(0,0,0,0.16)'
+      }));
+      s.prop.appendChild(p('path', {
+        d: 'M146 56 Q118 50 126 30 Q130 12 152 14 Q176 12 176 32 Q180 50 152 56 Z',
+        fill: tint, opacity: 0.55
+      }));
+      s.prop.appendChild(p('path', { d: 'M139 74 Q146 71 153 74', fill: 'none', 'stroke-width': s.W - 1.4 }));
+    } else {
+      // Water plane + a fish silhouette below it
+      s.prop.appendChild(el('path', {
+        d: 'M118 96 H190 V116 H118 Z', fill: tint, opacity: 0.20
+      }));
+      s.prop.appendChild(p('path', { d: 'M118 96 Q130 92 142 96 T166 96 T190 96', fill: 'none', 'stroke-width': s.W - 0.6 }));
+      var fish = el('g', { id: 'fish' });
+      fish.appendChild(p('path', {
+        d: 'M150 106 Q158 100 168 106 Q158 112 150 106 Z', fill: tint
+      }));
+      fish.appendChild(p('path', { d: 'M150 106 L144 102 L145 110 Z', fill: tint }));
+      s.prop.appendChild(fish);
+      s.fishNode = fish;
+      // Line from rod tip
+      s.lineNode = p('path', { d: '', fill: 'none', 'stroke-width': 1.1, opacity: 0.7 });
+      s.prop.appendChild(s.lineNode);
+    }
+  }
+
+  // ── Motion ────────────────────────────────────────────────────
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 2.2); }
+  function easeIn(t)  { return Math.pow(t, 2.6); }
+
+  // Returns the pose for a phase within one swing (0..1).
+  function poseFor(ph) {
+    var verb = state.verb;
+
+    if (verb === 'fish') {
+      // No strike — a slow lift and dip, with a tug near the end.
+      var lift = Math.sin(ph * Math.PI * 2) * 7;
+      var tug = ph > 0.78 ? Math.sin((ph - 0.78) / 0.22 * Math.PI) * 13 : 0;
+      return { arm: -6 - lift - tug, torso: lift * 0.14, bob: Math.sin(ph * Math.PI * 2) * 0.7, impact: false };
+    }
+
+    var windEnd = 0.52, strikeEnd = 0.70;
+    var up = verb === 'chop' ? -62 : -78;
+    var down = verb === 'chop' ? 30 : 40;
+
+    if (ph < windEnd) {
+      var t = easeOut(ph / windEnd);
+      return { arm: -8 + (up + 8) * t, torso: -3 * t, bob: -0.9 * t, impact: false };
+    }
+    if (ph < strikeEnd) {
+      var t2 = easeIn((ph - windEnd) / (strikeEnd - windEnd));
+      return { arm: up + (down - up) * t2, torso: -3 + 7 * t2, bob: -0.9 + 2.4 * t2, impact: false };
+    }
+    var t3 = (ph - strikeEnd) / (1 - strikeEnd);
+    var settle = 1 - easeOut(t3);
+    return { arm: -8 + (down + 8) * settle, torso: 4 * settle, bob: 1.5 * settle, impact: false };
+  }
+
+  function spawnChips(s, isFinal) {
+    var origin = state.verb === 'mine' ? [134, 84]
+               : state.verb === 'chop' ? [140, 74]
+               : [158, 100];
+    var n = isFinal ? 9 : 5;
+    for (var i = 0; i < n; i++) {
+      var c = el('rect', {
+        x: origin[0], y: origin[1],
+        width: 2.6 + Math.random() * 2.4,
+        height: 2.2 + Math.random() * 2,
+        rx: 0.6,
+        fill: state.action.tint
+      });
+      c.setAttribute('class', 'chip');
+      var ang = (-140 + Math.random() * 110) * Math.PI / 180;
+      var dist = 14 + Math.random() * (isFinal ? 30 : 17);
+      c.style.setProperty('--dx', (Math.cos(ang) * dist).toFixed(1) + 'px');
+      c.style.setProperty('--dy', (Math.sin(ang) * dist).toFixed(1) + 'px');
+      c.style.setProperty('--dr', Math.round(-220 + Math.random() * 440) + 'deg');
+      s.fx.appendChild(c);
+      (function (node) { setTimeout(function () { node.remove(); }, 700); })(c);
+    }
+
+    if (isFinal) {
+      var y = el('g');
+      y.setAttribute('class', 'yield');
+      y.setAttribute('transform', 'translate(' + origin[0] + ',' + (origin[1] - 6) + ')');
+      y.appendChild(el('circle', { r: 6.5, fill: state.action.tint, stroke: s.ink, 'stroke-width': 2 }));
+      s.fx.appendChild(y);
+      (function (node) { setTimeout(function () { node.remove(); }, 1100); })(y);
+    }
+  }
+
+  function applyPose(s, p, pose, segment) {
+    s.armFront.setAttribute('transform', 'rotate(' + pose.arm.toFixed(2) + ' 82 57)');
+    s.armBack.setAttribute('transform', 'rotate(' + (-pose.arm * 0.28).toFixed(2) + ' 76 58)');
+    s.torso.setAttribute('transform', 'rotate(' + pose.torso.toFixed(2) + ' 75 84)');
+    s.head.setAttribute('transform', 'rotate(' + (pose.torso * 1.5).toFixed(2) + ' 75 54)');
+    s.fig.setAttribute('transform', 'translate(0,' + pose.bob.toFixed(2) + ')');
+
+    if (state.verb === 'fish' && s.lineNode) {
+      // Rod tip travels with the arm — recompute the line's anchor.
+      var a = pose.arm * Math.PI / 180;
+      var tipX = 82 + (132 - 82) * Math.cos(a) - (40 - 57) * Math.sin(a);
+      var tipY = 57 + (132 - 82) * Math.sin(a) + (40 - 57) * Math.cos(a) + pose.bob;
+      s.lineNode.setAttribute('d', 'M' + tipX.toFixed(1) + ' ' + tipY.toFixed(1) +
+        ' Q' + ((tipX + 158) / 2).toFixed(1) + ' ' + (tipY + 26).toFixed(1) + ' 158 102');
+      s.lineNode.setAttribute('stroke', s.ink);
+      if (s.fishNode) {
+        var wob = Math.sin(segment * Math.PI * 4) * 2.2;
+        s.fishNode.setAttribute('transform', 'translate(' + wob.toFixed(1) + ',0)');
+      }
+    }
+
+    var pctVal = Math.round(p * 100);
+    s.fill.style.width = pctVal + '%';
+    s.pct.textContent = pctVal + '%';
+  }
+
+  // ── Loop ──────────────────────────────────────────────────────
+
+  var stages = [];
+  var start = performance.now();
+
+  function rebuild() {
+    stages = [
+      buildStage(document.getElementById('floor-parch'), 'parch'),
+      buildStage(document.getElementById('floor-iron'), 'iron')
+    ];
+    stages.forEach(function (s) { drawTool(s); drawProp(s); });
+  }
+
+  function frame(now) {
+    var actionMs = state.action.ticks * TICK_MS;
+
+    if (state.playing) {
+      state.progress = ((now - start) % actionMs) / actionMs;
+    }
+
+    var p = state.progress;
+    var segment = p * state.swings;
+    var idx = Math.floor(segment);
+    var ph = segment - idx;
+    var pose = poseFor(ph);
+
+    // Impact fires once per swing, at the strike's landing phase.
+    var impactPh = state.verb === 'fish' ? 0.86 : 0.70;
+    var key = idx + (ph >= impactPh ? 1 : 0);
+    if (state.playing && ph >= impactPh && key !== state.lastImpact) {
+      state.lastImpact = key;
+      var isFinal = idx === state.swings - 1;
+      stages.forEach(function (s) { spawnChips(s, isFinal); });
+    }
+    if (p < 0.02) state.lastImpact = -1;
+
+    stages.forEach(function (s) { applyPose(s, p, pose, segment); });
+
+    document.getElementById('ro-pct').textContent = Math.round(p * 100) + '%';
+    document.getElementById('out-scrub').textContent = Math.round(p * 100) + '%';
+    if (state.playing) {
+      document.getElementById('rng-scrub').value = Math.round(p * 1000);
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  // ── Controls ──────────────────────────────────────────────────
+
+  function syncReadout() {
+    var a = state.action;
+    document.getElementById('ro-ticks').textContent = a.ticks + 't · ' + (a.ticks * TICK_MS / 1000).toFixed(1) + 's';
+    document.getElementById('ro-swings').textContent = state.swings;
+    document.getElementById('out-swings').textContent = state.swings;
+    var per = (a.ticks * TICK_MS) / state.swings;
+    document.getElementById('swing-period').innerHTML =
+      '<span>' + Math.round(per) + 'ms per swing</span><b>' +
+      (per < 450 ? 'frantic' : per > 1900 ? 'sluggish' : 'reads well') + '</b>';
+    document.getElementById('ladder-title').textContent =
+      VERBS[state.verb].label + ' · tint ladder';
+  }
+
+  function buildVerbs() {
+    var g = document.getElementById('verb-group');
+    g.innerHTML = '';
+    Object.keys(VERBS).forEach(function (k) {
+      var b = document.createElement('button');
+      b.textContent = VERBS[k].label;
+      b.setAttribute('aria-pressed', String(k === state.verb));
+      b.onclick = function () {
+        state.verb = k;
+        state.action = VERBS[k].actions[Math.min(3, VERBS[k].actions.length - 1)];
+        buildVerbs(); buildActions(); buildLadder(); rebuild(); syncReadout();
+      };
+      g.appendChild(b);
+    });
+  }
+
+  function buildActions() {
+    var sel = document.getElementById('sel-action');
+    sel.innerHTML = '';
+    VERBS[state.verb].actions.forEach(function (a) {
+      var o = document.createElement('option');
+      o.value = a.id;
+      o.textContent = a.name + '  ·  Lv ' + a.lvl + '  ·  ' + a.ticks + 't';
+      o.selected = a.id === state.action.id;
+      sel.appendChild(o);
+    });
+    sel.onchange = function () {
+      state.action = VERBS[state.verb].actions.filter(function (a) { return a.id === sel.value; })[0];
+      buildLadder();
+      stages.forEach(function (s) { drawProp(s); });
+      syncReadout();
+    };
+  }
+
+  function buildLadder() {
+    var l = document.getElementById('ladder');
+    l.innerHTML = '';
+    VERBS[state.verb].actions.forEach(function (a) {
+      var b = document.createElement('button');
+      b.className = 'rung';
+      b.setAttribute('aria-pressed', String(a.id === state.action.id));
+      var chip = document.createElement('div');
+      chip.className = 'rung__chip';
+      chip.style.background = a.tint;
+      var nm = document.createElement('div');
+      nm.className = 'rung__name';
+      nm.textContent = a.name;
+      var mt = document.createElement('div');
+      mt.className = 'rung__meta';
+      mt.textContent = 'Lv ' + a.lvl + ' · ' + a.tint;
+      b.appendChild(chip); b.appendChild(nm); b.appendChild(mt);
+      b.onclick = function () {
+        state.action = a;
+        buildActions(); buildLadder();
+        stages.forEach(function (s) { drawProp(s); });
+        syncReadout();
+      };
+      l.appendChild(b);
+    });
+  }
+
+  document.getElementById('rng-swings').oninput = function () {
+    state.swings = parseInt(this.value, 10);
+    state.lastImpact = -1;
+    syncReadout();
+  };
+
+  document.getElementById('rng-scrub').oninput = function () {
+    state.playing = false;
+    var btn = document.getElementById('btn-play');
+    btn.setAttribute('aria-pressed', 'false');
+    btn.textContent = 'Play';
+    state.progress = parseInt(this.value, 10) / 1000;
+  };
+
+  document.getElementById('btn-play').onclick = function () {
+    state.playing = !state.playing;
+    this.setAttribute('aria-pressed', String(state.playing));
+    this.textContent = state.playing ? 'Pause' : 'Play';
+    if (state.playing) {
+      start = performance.now() - state.progress * state.action.ticks * TICK_MS;
+    }
+  };
+
+  document.getElementById('btn-guides').onclick = function () {
+    state.guides = !state.guides;
+    this.setAttribute('aria-pressed', String(state.guides));
+    document.body.classList.toggle('show-guides', state.guides);
+  };
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    state.playing = false;
+    state.progress = 0.62;
+    var pb = document.getElementById('btn-play');
+    pb.setAttribute('aria-pressed', 'false');
+    pb.textContent = 'Play';
+  }
+
+  buildVerbs();
+  buildActions();
+  buildLadder();
+  rebuild();
+  syncReadout();
+  requestAnimationFrame(frame);
+})();
+</script>
