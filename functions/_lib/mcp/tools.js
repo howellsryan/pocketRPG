@@ -57,16 +57,30 @@ function httpError(res) {
 // Most tools act on a single character. Auto-select when the account has
 // exactly one; otherwise require an explicit character_id.
 async function resolveCharacterId(env, authorization, provided) {
+  return (await resolveCharacterRow(env, authorization, provided)).id
+}
+
+// The same resolution, keeping the characters row. Account-mode flags
+// (is_ironman / is_one_life / is_grindman) are server state, so a tool that
+// reasons about what the account may buy or trade must read them from here,
+// never from the save's mirror.
+async function resolveCharacterRow(env, authorization, provided) {
   const res = await callHandler(listCharacters, env, { authorization })
   if (!res.ok) throw httpError(res)
   const characters = res.data?.characters || []
+  const pick = (row) => ({
+    id: Number(row.id),
+    isIronman: !!row.is_ironman,
+    isOneLife: !!row.is_one_life,
+    isGrindman: !!row.is_grindman,
+  })
   if (provided !== undefined && provided !== null) {
     const match = characters.find((c) => Number(c.id) === Number(provided))
     if (!match) throw new Error(`Character ${provided} not found on this account.`)
-    return Number(match.id)
+    return pick(match)
   }
   if (characters.length === 0) throw new Error('This account has no characters yet. Create one in the PocketRPG app first.')
-  if (characters.length === 1) return Number(characters[0].id)
+  if (characters.length === 1) return pick(characters[0])
   const list = characters.map((c) => `${c.id} (${c.username})`).join(', ')
   throw new Error(`Multiple characters found — pass character_id. Options: ${list}`)
 }
@@ -358,7 +372,7 @@ const TOOLS = {
   },
 
   async analyze_dps({ style, monster_id, gear_scope, include, at_level, character_id }, { env, authorization }) {
-    const id = await resolveCharacterId(env, authorization, character_id)
+    const { id, ...accountModes } = await resolveCharacterRow(env, authorization, character_id)
     const res = await callHandler(getSave, env, { authorization, characterId: id })
     if (!res.ok) throw httpError(res)
     if (!res.data?.save?.save_data) throw new Error('No save yet for this character — play once in the app first.')
@@ -366,6 +380,7 @@ const TOOLS = {
     return ok({
       characterId: id,
       ...analyzeDps(state, {
+        accountModes,
         style: style || 'all',
         monsterId: monster_id || null,
         gearScope: gear_scope || 'owned',

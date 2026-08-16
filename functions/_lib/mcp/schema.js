@@ -301,7 +301,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'analyze_dps',
     description:
-      "The character's best damage-per-second setup, computed with the game's own combat maths. The ONLY correct way to answer 'best gear', 'best DPS', 'what should I wear', 'melee, ranged or magic?', 'is this an upgrade' or 'how do I kill X faster' — never work damage out yourself from item stats. Returns their current DPS, the best loadout per style from gear they own, the swaps to make and the prayer to use. Pass monster_id to tune it to one monster (defences, every form, time-to-kill, its max hit and the protection prayer). include:['upgrades'] adds gear they don't own yet and where it drops; include:['levels'] and at_level cover what more combat levels are worth.",
+      "The character's best damage-per-second setup, computed with the game's own combat maths. The ONLY correct way to answer 'best gear', 'best DPS', 'what should I wear', 'melee, ranged or magic?', 'is this an upgrade' or 'how do I kill X faster' — never work damage out yourself from item stats. Returns their current DPS, `bestOwned` (best loadout from gear they already have, with the swaps and the prayer), and `bestBuyable` (the better setup they could have after buying, with a shopping list, rough costs and whether they can afford it now) — the buy list already respects their account type, which `account` describes, so an Ironman is never told to use the Trading Post. Pass monster_id to tune it to one monster (defences, every form, time-to-kill, its max hit and the protection prayer). include:['upgrades'] adds drop-only gear they cannot simply buy; include:['levels'] and at_level cover what more combat levels are worth.",
     inputSchema: {
       type: 'object',
       properties: {

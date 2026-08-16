@@ -23,6 +23,9 @@ import { resolveMagicSpell } from '../../../src/engine/equipment.js'
 import { applyPrayerBonuses } from '../../../src/engine/combat.js'
 import { completedQuestsFromSave } from '../../../src/engine/questGates.js'
 import { hasRequiredRunes } from '../../../src/engine/runes.js'
+import { getPurchaseRestriction, isOrderBookItem } from '../../../src/engine/storeRules.js'
+import { isCollectionLogLineageItem } from '../collectionLog.js'
+import { ALL_SKILLS, MAX_TOTAL_LEVEL } from '../../../src/utils/constants.js'
 import {
   COMBAT_STYLES, DPS_MODEL_NOTES, estimateDpsVsTargets, monsterTargets,
   referenceTarget, timeToKill,
@@ -65,6 +68,92 @@ function ownedPool(state) {
 /** Every equippable item in the game — the "what could it be" pool. */
 function fullPool() {
   return new Set(Object.entries(itemsData).filter(([, it]) => it?.slot).map(([id]) => id))
+}
+
+/**
+ * Can this account get hold of this item, and how?
+ *
+ * Composed from the funnels that already police buying, never restated:
+ * `getPurchaseRestriction` for the shop (already account-mode aware),
+ * `isOrderBookItem` for what trades player-to-player, and the two account gates
+ * the trading post itself enforces — Ironman is refused outright
+ * (`functions/api/trading-post/list.js`), and a Grindman may not BUY a
+ * collection-log unique or anything built from one, because buying the amulet
+ * of fury is buying the onyx.
+ *
+ * Note the shop and the order book disagree on purpose: a boss unique is
+ * refused by `getPurchaseRestriction` yet is perfectly buyable player-to-player,
+ * so the two are asked separately rather than one gating the other.
+ */
+export function itemAcquisition(item, { isIronman = false, isOneLife = false, isGrindman = false, slayerStoreUnlocks = null, isMaxed = false } = {}) {
+  if (!item) return { acquirable: false, via: null }
+  // The Max Cape's gate is a total-level check enforced in /api/purchase, not an
+  // equip requirement, so nothing else in the search would catch it.
+  if (item.isMaxCape && !isMaxed) return { acquirable: false, via: null }
+  const modes = {
+    isIronman,
+    isOneLife,
+    isGrindman,
+    allowSlayerStorePurchase: !!slayerStoreUnlocks?.includes?.(item.id),
+  }
+  if (getPurchaseRestriction(item, modes).allowed) {
+    return { acquirable: true, via: 'shop', cost: Math.floor(Number(item.shopValue) || 0) }
+  }
+  if (isOrderBookItem(item) && !isIronman && !(isGrindman && isCollectionLogLineageItem(item.id))) {
+    return { acquirable: true, via: 'trading_post', cost: Math.floor(Number(item.shopValue) || 0) }
+  }
+  return { acquirable: false, via: null }
+}
+
+/**
+ * Gear the character owns PLUS everything the account is allowed to buy. This
+ * is the honest pool for "what's my best setup": a normal account is one
+ * trading-post trip from most of the game, and answering only from the bank
+ * hides a 12-gp stack of arrows behind a Fletching level they never needed.
+ */
+function acquirablePool(owned, modes, coins) {
+  const pool = new Set(owned)
+  const via = new Map()
+  for (const [id, item] of Object.entries(itemsData)) {
+    if (!item?.slot || pool.has(id)) continue
+    const acquisition = itemAcquisition({ ...item, id }, modes)
+    if (!acquisition.acquirable) continue
+    // Priced out of the answer. "Best setup" has to be something they can go
+    // and do — a 100m bow recommended to a player holding 500k buries the
+    // twelve-gold stack of arrows that would actually help today. The
+    // unaffordable gear is still reachable through `include:['upgrades']`,
+    // which is the long-term chase rather than the current setup.
+    if (acquisition.cost > coins) continue
+    pool.add(id)
+    via.set(id, acquisition)
+  }
+  return { pool, via }
+}
+
+/** Maxed — the Max Cape's own gate, summed the way /api/purchase sums it. */
+function isMaxedAccount(state) {
+  const total = ALL_SKILLS.reduce((sum, skill) => sum + getLevelFromXP(Number(state?.stats?.[skill]?.xp || 0)), 0)
+  return total >= MAX_TOTAL_LEVEL
+}
+
+/** What the account may do, in the words an answer needs. */
+function accountSummary({ isIronman, isOneLife, isGrindman }) {
+  const mode = isGrindman ? 'grindman' : isIronman ? (isOneLife ? 'ironman_onelife' : 'ironman') : 'standard'
+  if (isIronman) {
+    return {
+      mode,
+      canUseTradingPost: false,
+      note: 'Ironman: no trading post. Only General Store stock, quest shops, skill capes and unlocked slayer gear can be bought — everything else must be earned.',
+    }
+  }
+  if (isGrindman) {
+    return {
+      mode,
+      canUseTradingPost: true,
+      note: 'Grindman: can buy on the trading post, except collection-log uniques and anything built from one — those have to drop.',
+    }
+  }
+  return { mode, canUseTradingPost: true }
 }
 
 /**
@@ -204,7 +293,15 @@ export function analyzeDps(state, {
   gearScope = 'owned',
   include = [],
   atLevel = null,
+  accountModes = null,
 } = {}) {
+  // The characters row is the server's own account identity (§14); the save's
+  // mirror is the fallback for a direct call.
+  const modes = accountModes || {
+    isIronman: state?.player?.is_ironman === true,
+    isOneLife: state?.player?.is_one_life === true,
+    isGrindman: state?.player?.is_grindman === true,
+  }
   const levels = levelsFromSave(state)
   const combatLevel = combatLevelFromStats(state?.stats || {})
   const completedQuests = completedQuestsFromSave(state)
@@ -265,6 +362,32 @@ export function analyzeDps(state, {
   const bestStyle = ranked[0]?.[0] || null
   const bestEntry = ranked[0]?.[1] || null
 
+  // The same search over gear the account could go and BUY. Run unconditionally
+  // because it is the honest answer for most accounts: a stack of arrows sitting
+  // on the trading post is not a future upgrade, it is the setup they should be
+  // using today. It collapses to nothing for an Ironman, whose acquirable pool
+  // is barely wider than their bank.
+  const coins = Math.floor(Number(state?.coins) || 0)
+  const { pool: buyable, via: acquiredVia } = acquirablePool(owned, {
+    ...modes,
+    isMaxed: isMaxedAccount(state),
+    // Slayer reward gear already bought with slayer points sells for coins —
+    // omit this and gear the character has earned the right to buy reads as
+    // unobtainable, Ironmen included.
+    slayerStoreUnlocks: state?.settings?.slayerStoreUnlocks || null,
+  }, coins)
+  let bestBuy = null
+  if (buyable.size > owned.size) {
+    for (const s of styles) {
+      const searchLevels = boostedLevels(levels, bestPrayerFor(s, levels))
+      const loadout = optimiseStyle({
+        ...baseSearch, style: s, pool: buyable, levels: searchLevels, requirementLevels: levels,
+        ownedQuantities: quantities, spellFilter: ownsRunesFor,
+      })
+      if (loadout && (!bestBuy || loadout.dps > bestBuy.loadout.dps)) bestBuy = { style: s, loadout, searchLevels }
+    }
+  }
+
   const current = currentLoadout(state)
   const currentDps = current.equipment.weapon
     ? estimateDpsVsTargets(targets, {
@@ -310,6 +433,7 @@ export function analyzeDps(state, {
           .map((s) => ({ slot: s.slot, wear: s.to?.name || '(nothing)', instead: s.from?.name || '(empty)' })),
       }
       : null,
+    account: accountSummary(modes),
     byStyle: Object.fromEntries(Object.entries(analysis.styles).map(([k, v]) => {
       const { _loadout, _levels, style: _style, ...rest } = v
       return [k, rest]
@@ -319,6 +443,48 @@ export function analyzeDps(state, {
 
   if (slayerTask?.monsterId && monsterId && slayerTask.monsterId === monsterId) {
     out.notes.unshift('Slayer-task gear bonuses are included — this monster is your current task.')
+  }
+
+  // Only worth reporting when the shopping trip actually beats the wardrobe.
+  const ownedBestDps = bestEntry?._loadout?.dps || 0
+  if (bestBuy && bestBuy.loadout.dps > ownedBestDps * 1.001) {
+    const buy = loadoutSwaps({
+      from: bestEntry?._loadout?.style === bestBuy.style ? bestEntry._loadout : null,
+      to: bestBuy.loadout, itemsData, targets, levels: bestBuy.searchLevels, slayerTask, monsterId,
+    })
+      .filter((s) => s.to && !owned.has(s.to.itemId))
+      .slice(0, 6)
+      .map((s) => {
+        const acquisition = acquiredVia.get(s.to.itemId)
+        return {
+          slot: s.slot,
+          item: s.to.name,
+          itemId: s.to.itemId,
+          via: acquisition?.via === 'shop' ? 'General Store' : 'Trading Post',
+          roughCost: acquisition?.cost ?? 0,
+          // Ammo and other stackables are priced per unit, and a bow gets
+          // through hundreds — quoting one arrow's price as the bill would be
+          // an order of magnitude out.
+          ...(itemsData[s.to.itemId]?.stackable ? { costIsPerUnit: true } : {}),
+          ...(s.dpsGainPercent == null ? {} : { dpsGainPercent: s.dpsGainPercent }),
+        }
+      })
+    const roughTotalCost = buy.reduce((sum, b) => sum + b.roughCost, 0)
+    out.bestBuyable = {
+      style: bestBuy.style,
+      dps: round(bestBuy.loadout.dps),
+      gainOverOwnedPercent: ownedBestDps > 0
+        ? round(((bestBuy.loadout.dps - ownedBestDps) / ownedBestDps) * 100, 1)
+        : null,
+      coins,
+      roughTotalCost,
+      // Each piece is affordable on its own — the pool is filtered on that —
+      // but the bill for all of them may not be.
+      ...(roughTotalCost > coins ? { affordAllPieces: false } : {}),
+      buy,
+      ...describeLoadout(bestBuy.loadout),
+    }
+    out.notes.push('bestBuyable only contains gear they can afford right now. Costs are shop value — a rough guide, per unit where costIsPerUnit is set (ammo is bought by the hundred); Trading Post prices are player-set, so call search_market for a real quote.')
   }
 
   // ── Opt-in extras ──

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
-import { analyzeDps } from '../functions/_lib/mcp/dps.js'
+import { analyzeDps, itemAcquisition } from '../functions/_lib/mcp/dps.js'
+import { isCollectionLogLineageItem } from '../functions/_lib/collectionLog.js'
 import { CHAT_MAX_TOOL_RESULT_CHARS } from '../functions/_lib/chat/prompt.js'
 import { getXPForLevel } from '../src/engine/experience.js'
 
@@ -71,6 +72,13 @@ describe('analyzeDps default answer', () => {
 
   it('fits the chat tool-result budget, which truncates mid-JSON', () => {
     expect(JSON.stringify(out).length).toBeLessThan(CHAT_MAX_TOOL_RESULT_CHARS)
+    // The widest realistic answer: a funded account (so the shopping list is
+    // present) against a boss, with both opt-in extras asked for.
+    const widest = analyzeDps(saveAt(90, MODEST_KIT, { coins: 100_000_000 }), {
+      monsterId: 'krylth_the_defiler', include: ['upgrades', 'levels'], atLevel: 99,
+    })
+    expect(widest.bestBuyable).toBeTruthy()
+    expect(JSON.stringify(widest).length).toBeLessThan(CHAT_MAX_TOOL_RESULT_CHARS)
   })
 
   it('recommends nothing the character does not own', () => {
@@ -194,6 +202,115 @@ describe('analyzeDps extras', () => {
   it('holds a single style when one is named', () => {
     const out = analyzeDps(saveAt(70, MODEST_KIT), { style: 'ranged' })
     expect(Object.keys(out.byStyle)).toEqual(['ranged'])
+  })
+})
+
+describe('itemAcquisition respects the account type', () => {
+  const item = (id: string) => ({ ...items[id], id })
+
+  it('sells General Store stock through the shop to anyone', () => {
+    expect(itemAcquisition(item('bronze_arrow'), {})).toMatchObject({ acquirable: true, via: 'shop' })
+    expect(itemAcquisition(item('bronze_arrow'), { isIronman: true })).toMatchObject({ acquirable: true, via: 'shop' })
+  })
+
+  it('routes ordinary tradeables to the trading post', () => {
+    expect(itemAcquisition(item('steel_arrow'), {})).toMatchObject({ acquirable: true, via: 'trading_post' })
+  })
+
+  it('offers a boss unique on the trading post even though the shop refuses it', () => {
+    const unique = Object.keys(items).find((id) => items[id].isBossUnique && items[id].slot && !isCollectionLogLineageItem(id))
+      || Object.keys(items).find((id) => items[id].isBossUnique && items[id].slot)!
+    expect(itemAcquisition(item(unique), {}).via).toBe('trading_post')
+  })
+
+  it('shuts an Ironman out of everything but the shop', () => {
+    expect(itemAcquisition(item('steel_arrow'), { isIronman: true }).acquirable).toBe(false)
+  })
+
+  it('refuses a Grindman a collection-log unique and anything built from one', () => {
+    const lineage = Object.keys(items).find((id) => items[id].slot && isCollectionLogLineageItem(id)
+      && itemAcquisition(item(id), {}).acquirable)!
+    expect(lineage).toBeTruthy()
+    expect(itemAcquisition(item(lineage), { isGrindman: true }).acquirable).toBe(false)
+  })
+
+  it('still sells a Grindman an ordinary tradeable', () => {
+    expect(itemAcquisition(item('steel_arrow'), { isGrindman: true })).toMatchObject({ acquirable: true, via: 'trading_post' })
+  })
+
+  it('holds the Max Cape behind being maxed, which is not an equip requirement', () => {
+    const maxCape = Object.keys(items).find((id) => items[id].isMaxCape)!
+    expect(itemAcquisition(item(maxCape), {}).acquirable).toBe(false)
+    expect(itemAcquisition(item(maxCape), { isMaxed: true }).acquirable).toBe(true)
+  })
+})
+
+describe('analyzeDps buys what the account is allowed to buy', () => {
+  // The reported bug: a bow in the bank and nothing to fire from it. Arrows
+  // need no Fletching to USE — they are a few gp on the trading post — but the
+  // answer only ever looked in the player's own bank.
+  it('buys ammo for a bow the character already owns', () => {
+    const save = saveAt(60, ['magic_shortbow'], { coins: 100000 })
+    const out = analyzeDps(save, { style: 'ranged' })
+    expect(out.byStyle.ranged.available).toBe(false)
+    expect(out.bestBuyable!.gear.weapon).toBe('Magic Shortbow')
+    const ammo = out.bestBuyable!.buy.find((b: any) => b.slot === 'ammo')
+    expect(ammo).toBeTruthy()
+    expect(ammo.via).toBe('Trading Post')
+    expect(ammo.roughCost).toBeGreaterThan(0)
+  })
+
+  it('reports the account type and whether the trading post is open', () => {
+    expect(analyzeDps(saveAt(70, MODEST_KIT)).account).toMatchObject({ mode: 'standard', canUseTradingPost: true })
+    const iron = analyzeDps(saveAt(70, MODEST_KIT, { player: { is_ironman: true } })).account
+    expect(iron).toMatchObject({ mode: 'ironman', canUseTradingPost: false })
+    expect(iron.note).toMatch(/no trading post/i)
+    expect(analyzeDps(saveAt(70, MODEST_KIT, { player: { is_grindman: true } })).account.mode).toBe('grindman')
+  })
+
+  it('never suggests the trading post to an Ironman', () => {
+    const out = analyzeDps(saveAt(70, MODEST_KIT, { coins: 100_000_000, player: { is_ironman: true } }))
+    for (const buy of out.bestBuyable?.buy || []) expect(buy.via).toBe('General Store')
+  })
+
+  it('never puts a collection-log unique on a Grindman shopping list', () => {
+    const out = analyzeDps(saveAt(70, MODEST_KIT, { coins: 100_000_000, player: { is_grindman: true } }))
+    for (const buy of out.bestBuyable?.buy || []) expect(isCollectionLogLineageItem(buy.itemId)).toBe(false)
+  })
+
+  it('only offers gear the character can pay for', () => {
+    const poor = analyzeDps(saveAt(70, MODEST_KIT, { coins: 500 }))
+    for (const buy of poor.bestBuyable?.buy || []) expect(buy.roughCost).toBeLessThanOrEqual(500)
+    const rich = analyzeDps(saveAt(70, MODEST_KIT, { coins: 100_000_000 }))
+    expect(rich.bestBuyable!.dps).toBeGreaterThan(poor.bestBuyable?.dps ?? 0)
+  })
+
+  it('flags when the whole shopping list costs more than they hold', () => {
+    const out = analyzeDps(saveAt(70, MODEST_KIT, { coins: 20000 }))
+    if (out.bestBuyable && out.bestBuyable.roughTotalCost > out.bestBuyable.coins) {
+      expect(out.bestBuyable.affordAllPieces).toBe(false)
+    }
+  })
+
+  it('takes the account type from the server, not the save, when both are given', () => {
+    const save = saveAt(70, MODEST_KIT, { coins: 100_000_000, player: { is_ironman: false } })
+    const out = analyzeDps(save, { accountModes: { isIronman: true, isOneLife: false, isGrindman: false } })
+    expect(out.account.mode).toBe('ironman')
+    for (const buy of out.bestBuyable?.buy || []) expect(buy.via).toBe('General Store')
+  })
+
+  it('kits out a character who owns nothing but has coins', () => {
+    const out = analyzeDps({
+      stats: {}, equipment: {}, inventory: [], bank: {}, coins: 50000, settings: {}, player: {},
+    } as any)
+    expect(out.bestOwned).toBeNull()
+    expect(out.bestBuyable!.buy.length).toBeGreaterThan(0)
+    expect(out.bestBuyable!.gainOverOwnedPercent).toBeNull()
+  })
+
+  it('leaves bestBuyable off when buying changes nothing', () => {
+    const out = analyzeDps(saveAt(70, MODEST_KIT, { coins: 0 }))
+    expect(out.bestBuyable).toBeUndefined()
   })
 })
 

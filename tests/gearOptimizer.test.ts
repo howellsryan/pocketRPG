@@ -101,6 +101,30 @@ describe('optimiseStyle', () => {
     expect(search({ style: 'ranged', pool: new Set(['runeforged_scimitar']) })).toBeNull()
   })
 
+  it('does not let a bolt prune every arrow out of the ammo slot', () => {
+    // A bolt is not a worse arrow — it is ammunition a bow cannot fire. Ranked
+    // against each other, the strongest bolt dominated every arrow in the game,
+    // so arrow-firing bows had nothing to shoot and lost to whichever bow
+    // needed no ammo at all.
+    const bolt = Object.entries(items).find(([, it]: any) => it.slot === 'ammo' && it.ammoKind === 'bolt')![0]
+    const best = search({
+      style: 'ranged',
+      pool: new Set(['magic_shortbow', 'maple_longbow', 'adamant_arrow', bolt]),
+    })
+    expect(best).toBeTruthy()
+    expect(best!.equipment.weapon.itemId).toBe('magic_shortbow')
+    expect(best!.equipment.ammo.itemId).toBe('adamant_arrow')
+  })
+
+  it('keeps ammo a weapon names outright, however weak its stats', () => {
+    const named = Object.values(items).find((it: any) =>
+      it.slot === 'weapon' && it.attackStyle === 'ranged' && (it.requiredAmmoIds?.length || it.requiredAmmoId)) as any
+    if (!named) return
+    const ammoId = named.requiredAmmoIds?.[0] || named.requiredAmmoId
+    const best = search({ style: 'ranged', pool: new Set([named.id, ammoId]), levels: levelsAt(99) })
+    expect(best?.equipment.ammo?.itemId).toBe(ammoId)
+  })
+
   it('gives a bow ammo it can actually fire', () => {
     const best = search({ style: 'ranged' })
     expect(best).toBeTruthy()

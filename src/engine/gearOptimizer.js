@@ -84,19 +84,25 @@ function weaponStyleOf(weapon) {
  * on task, or a piece of a full set, must survive a comparison against a
  * plainly stronger item or the set can never be assembled.
  */
-function pruneDominated(items, style, setItemIds) {
+function pruneDominated(items, style, setItemIds, keepIds) {
   const axes = items.map((it) => ({
     it,
     a: styleAttackBonus(it, style),
     d: styleDamageBonus(it, style),
     s: (it.otherBonus?.slayerTaskAccuracyPercent || 0) + (it.otherBonus?.slayerTaskDamagePercent || 0),
-    keep: setItemIds.has(it.id) || !!it.magicDamageMultiplier || !!it.spellRuneDamage,
+    // Only items that can SUBSTITUTE for each other may dominate each other. A
+    // bolt is not a worse arrow, it is a different ammunition: comparing the
+    // two let one high-strength bolt prune every arrow in the game, which left
+    // arrow-firing bows with nothing to shoot and handed the ranged slot to
+    // whichever bow needed no ammo at all.
+    group: it.ammoKind || '',
+    keep: setItemIds.has(it.id) || keepIds.has(it.id) || !!it.magicDamageMultiplier || !!it.spellRuneDamage,
   }))
   return axes.filter((x) => {
     if (x.keep) return true
     // Nothing offensive to offer: the slot is better left empty than searched.
     if (x.a <= 0 && x.d <= 0 && x.s <= 0) return false
-    return !axes.some((y) => y.it.id !== x.it.id && !y.keep
+    return !axes.some((y) => y.it.id !== x.it.id && !y.keep && y.group === x.group
       && y.a >= x.a && y.d >= x.d && y.s >= x.s
       && (y.a > x.a || y.d > x.d || y.s > x.s))
   }).map((x) => x.it)
@@ -133,8 +139,11 @@ function buildCandidates({ pool, itemsData, style, levels, completedQuests, owne
     ;(bySlot[item.slot] ||= []).push(item)
   }
 
+  // Ammo a weapon names outright survives the prune whatever its stats: it is
+  // the only thing that weapon can fire.
+  const keepIds = new Set(weapons.flatMap((w) => w.requiredAmmoIds || (w.requiredAmmoId ? [w.requiredAmmoId] : [])))
   for (const slot of GEAR_SLOTS) {
-    bySlot[slot] = pruneDominated(bySlot[slot] || [], style, setItemIds)
+    bySlot[slot] = pruneDominated(bySlot[slot] || [], style, setItemIds, keepIds)
   }
   return { weapons, bySlot }
 }
