@@ -5,7 +5,7 @@ import { isOnTaskFor, rollLootForCredited } from '../server/killLoot'
 import { LOOT_OWNER_TICKS, isVisibleTo, spawnDrops, visibleLootFor } from '../server/loot'
 
 const MONSTER = 'green_dragon'
-const view = (charId: string) => ({ charId, isIronman: false })
+const view = (charId: string) => ({ charId, isIronman: false, isGrindman: false })
 
 describe('rolling a world kill for everyone who earned it', () => {
   // The killer's roll rode the death event and is already on the floor. Rolling
@@ -131,7 +131,7 @@ describe('two piles on one tile', () => {
   // An Ironman's own pile is theirs; a public window never opens for them.
   it('never shows an Ironman the other player\'s pile, even after the window', () => {
     const floor = sharedKill()
-    const iron = { charId: 'a', isIronman: true }
+    const iron = { charId: 'a', isIronman: true, isGrindman: false }
     expect(visibleLootFor(floor, iron, LOOT_OWNER_TICKS + 1).map((l) => l.itemId))
       .toEqual(['dragon_visage'])
   })
