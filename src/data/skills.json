@@ -2714,6 +2714,26 @@
         }
       },
       {
+        "id": "bury_ashen_hydra_bones",
+        "name": "Bury ashen hydra bones",
+        "level": 70,
+        "ticks": 3,
+        "xp": 196,
+        "materials": {
+          "ashen_hydra_bones": 1
+        }
+      },
+      {
+        "id": "altar_ashen_hydra_bones",
+        "name": "Use gilded altar (ashen hydra bones)",
+        "level": 70,
+        "ticks": 3,
+        "xp": 686,
+        "materials": {
+          "ashen_hydra_bones": 1
+        }
+      },
+      {
         "id": "scatter_gargoyle_dust",
         "name": "Scatter Gargoyle Dust",
         "level": 20,
