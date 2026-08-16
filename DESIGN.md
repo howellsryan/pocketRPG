@@ -129,6 +129,7 @@ Material rules:
 - **Tags** — `fm-tag` small-caps chips; tint by meaning (§3), never by aesthetics.
 - **Headings** — `fm-rule-head` flanks section titles with gradient hairlines; eyebrow above, banner below.
 - **Progress** — XP bars in `--color-xp-bar` green; HP bars traffic-light by threshold. Bars are flat fills on inset tracks, no gradients-for-decoration.
+- **Action stage** — `ActionSpriteStage` (`.as-*`): a sunken band showing the action happening, actor's tool glyph → lane → target's mark. Combat shows sword/bow/staff; skilling shows the tool. Two rules make it portable. Its motion duration is always the inline `--as-dur`, computed from the action's own cadence (`src/utils/actionSprites.js`) — never a literal, or a faster weapon stops looking faster. And it takes every colour from the semantic layer, so unlike the `.cb-*` family it is defined **once** and is exempt from the Two-Skin Trap (§2); a non-semantic colour added here owes a second `.forge-shell` definition, so reach for a token instead. All keyframes sit inside the `prefers-reduced-motion: no-preference` block and the band reads as a posed tableau without them. Authoring: the `action-animation` skill.
 - **Screen shells** — piloted screens wrap in `.forge-shell`; non-piloted screens stay on the base parchment/void palette until ported. Both must coexist without visual whiplash: shared spacing, shared meaning colors.
 
 ## 7. Do and Do Not

@@ -24,6 +24,7 @@ const sourceFiles = [
   'utils/formatters.js',
   'utils/itemValue.js',
   'utils/hitSplats.js',
+  'utils/actionSprites.js',
   'utils/xpDrops.js',
   'utils/lootModal.js',
   'utils/coopChat.js',
@@ -47,6 +48,7 @@ const sourceFiles = [
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
+  'hooks/useActionSwings.js',
   'hooks/usePanZoomStage.js',
   'engine/experience.js',
   'engine/combatLevel.js',
@@ -178,6 +180,7 @@ const sourceFiles = [
   'components/InventoryFullPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',
+  'components/ActionSpriteStage.js',
   'components/ActivePotionBadges.js',
   'components/LootResultModal.js',
   'components/ProgressBar.js',
@@ -308,6 +311,9 @@ const GAME_CHUNK_FILES = new Set([
   'components/ActivityIcon.js',
   'components/PlaceMapView.js',
   'components/SlayerMasterModal.js',
+  'utils/actionSprites.js', // -> game chunk (only the combat screens use it today; skilling screens are chunked too)
+  'components/ActionSpriteStage.js',
+  'hooks/useActionSwings.js', // -> game chunk, with the SWING_MAX_MS it reads (§12)
   'utils/combatArt.js', // -> game chunk (reads placeMapsData for monster locations; only combat/place-map screens use it)
   'utils/combatOrder.js', // -> game chunk (only the combat picker screens use it)
   'engine/dpsCalculator.js', // -> game chunk (server-side helper today; never referenced at boot)

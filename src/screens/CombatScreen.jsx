@@ -62,6 +62,9 @@ import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
+import { swingsFromCombatEvents, playerCombatSprite, monsterCombatSprite } from '../utils/actionSprites.js'
+import { useActionSwings } from '../hooks/useActionSwings.js'
+import ActionSpriteStage from '../components/ActionSpriteStage.jsx'
 import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal, killPresentsFullModal } from '../utils/lootModal.js'
 import { emitKillReveal } from '../utils/rewardReveal.js'
@@ -493,6 +496,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [monsterSplats, setMonsterSplats] = useState([])
   const [addSplats, setAddSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
+  // Latest swing per side for the sprite stage. The hook expires each token when
+  // its motion is over, so nothing between fights, respawns or target switches
+  // is left holding a swing that could replay.
+  const { swings, pushSwings } = useActionSwings()
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
   const hasAutoStarted = useRef(false)
@@ -739,6 +746,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       pushSplats(setMonsterSplats, tickSplats.monster)
       pushSplats(setAddSplats, tickSplats.add)
       pushSplats(setPlayerSplats, tickSplats.player)
+
+      // A tick with no swing on a side leaves that side's token alone — the
+      // stage keys off the id, so re-setting an unchanged one would replay a
+      // motion the engine never made. `showingAdd` routes each swing to the
+      // enemy it is about, since a boss and its adds share one event stream and
+      // are told apart only by a flag. It is read from `state`, the PRE-tick
+      // target: these events describe the tick that just resolved, and the blow
+      // that kills a targeted add clears `addTargetIndex`, so reading the result
+      // would throw away the killing swing.
+      pushSwings(swingsFromCombatEvents(events, { showingAdd: !!targetedAdd(state) }))
 
       // Filled from what grantXP BANKED below, so the floating drop and the
       // skill can never disagree — the engine's number is pre-account-type.
@@ -3311,6 +3328,28 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     </div>
   )
 
+  // ── Sprite stage ──
+  // Both sides are rebuilt every render because both can change mid-fight: a
+  // weapon swap changes the player's tool AND its speed, and a multi-form boss
+  // changes style per form. Timing comes from actionSprites, never from here.
+  const spriteMonster = targetedAdd(combat) || combat.monster
+  const spriteMonsterArt = getMonsterArt(spriteMonster, getMonsterCategoryKey(spriteMonster.id))
+  // Stance is part of the cadence: combat.js shortens a ranged swing by a tick
+  // on Rapid, so leaving it out animated the speed stance at Accurate's pace.
+  // combatType, not the weapon's own style: a staff with no spell selected
+  // fights melee, and Rapid takes a tick off a ranged swing.
+  const playerSprite = playerCombatSprite(equipment, itemsData, { combatType: combat.combatType, stance: combat.stance })
+  const monsterSprite = monsterCombatSprite(spriteMonster)
+  const spriteStage = (
+    <ActionSpriteStage
+      actor={{ ...playerSprite, accent: getStyleArt(playerSprite.motion).color }}
+      target={{ icon: spriteMonsterArt.icon, accent: spriteMonsterArt.accent, sprite: monsterSprite }}
+      actorSwing={swings.player}
+      targetSwing={swings.monster}
+      label={`You versus ${spriteMonster.name}`}
+    />
+  )
+
   return (
     <div class={`forge-shell h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
       {/* Back button */}
@@ -3330,6 +3369,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       {/* LEFT pane: enemy + player stats */}
       <div class={`flex flex-col ${isDesktopCombatLayout ? 'col-start-1 row-start-1 overflow-y-auto min-h-0 pr-1' : ''}`}>
+
+      {spriteStage}
 
       {/* Monster HP */}
       <div class="mb-3">
@@ -3791,6 +3832,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   </div>
                 </div>
               )}
+
+              {spriteStage}
 
               {/* Monster HP */}
               <CombatHPBlock

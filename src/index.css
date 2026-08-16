@@ -1092,6 +1092,127 @@ html, body, #app {
 .skill-emblem__glow { position: absolute; inset: -8%; filter: blur(9px); }
 .skill-emblem__art { position: absolute; inset: 0; }
 
+/* ── Action sprite stage (components/ActionSpriteStage.jsx) ──────────────────
+   Combat first, every skill next — see docs/action-animations.md.
+
+   Deliberately NOT a .cb-* class, so it is exempt from the Two-Skin Trap
+   (DESIGN.md §2): every colour here comes from the semantic layer, which flips
+   with the theme on its own, so this block is defined ONCE and the stage is
+   free to be dropped onto a parchment skilling screen and an iron one alike.
+   Adding a colour that is not a semantic token means adding a second
+   definition — reach for a token instead.
+
+   Every duration is `var(--as-dur)`, set inline from the ACTOR'S ATTACK SPEED.
+   Never replace it with a literal: the whole point is that a 4-tick weapon
+   animates faster than a 7-tick one. Motion is gated behind reduced-motion, so
+   the stage still reads as a posed tableau with animation off. */
+.as-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr minmax(56px, 1.6fr) 1fr;
+  align-items: center;
+  gap: 4px;
+  height: 72px;
+  margin-bottom: 12px;
+  padding: 0 10px;
+  border-radius: var(--fm-r-frame);
+  background: var(--surface-sunken);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+}
+.as-side { display: flex; align-items: center; min-width: 0; }
+.as-side--actor { justify-content: flex-start; }
+.as-side--target { justify-content: flex-end; position: relative; }
+
+/* The lane the shot crosses. The hairline is the ground the two sides stand on
+   — a stage with nothing between them read as two unrelated icons. */
+.as-lane { position: relative; height: 100%; }
+.as-lane::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--hairline), transparent);
+}
+.as-tool, .as-mark { position: relative; display: flex; align-items: center; justify-content: center; }
+/* The tool faces the target; the mark faces back. */
+.as-tool { transform: scaleX(-1); }
+/* The shot crosses the LANE, so it animates `left` — a percentage in a
+   transform resolves against the 20px glyph itself, which moved it ~24px and
+   never reached the other side. */
+.as-shot { position: absolute; top: 50%; margin-top: -10px; width: 20px; opacity: 0; }
+.as-struck { position: absolute; inset: 0; border-radius: 50%; opacity: 0; pointer-events: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Melee — a committed lunge into range and back. */
+  @keyframes asMeleeSwing {
+    0%   { transform: scaleX(-1) translateX(0) rotate(0deg); }
+    35%  { transform: scaleX(-1) translateX(-4px) rotate(-24deg); }
+    58%  { transform: scaleX(-1) translateX(16px) rotate(38deg); }
+    100% { transform: scaleX(-1) translateX(0) rotate(0deg); }
+  }
+  /* Ranged — draw, hold, release. The bow never leaves its mark. */
+  @keyframes asRangedSwing {
+    0%   { transform: scaleX(-1) translateX(0) scale(1); }
+    45%  { transform: scaleX(-1) translateX(-5px) scale(0.94); }
+    62%  { transform: scaleX(-1) translateX(3px) scale(1.06); }
+    100% { transform: scaleX(-1) translateX(0) scale(1); }
+  }
+  /* Magic — raise the staff, discharge. */
+  @keyframes asMagicSwing {
+    0%   { transform: scaleX(-1) translateY(0) rotate(0deg); filter: none; }
+    40%  { transform: scaleX(-1) translateY(-7px) rotate(-14deg); filter: brightness(1.5); }
+    70%  { transform: scaleX(-1) translateY(1px) rotate(6deg); filter: brightness(1.2); }
+    100% { transform: scaleX(-1) translateY(0) rotate(0deg); filter: none; }
+  }
+  .as-tool--melee.is-swinging  { animation: asMeleeSwing var(--as-dur) var(--fm-ease); }
+  .as-tool--ranged.is-swinging { animation: asRangedSwing var(--as-dur) var(--fm-ease); }
+  .as-tool--magic.is-swinging  { animation: asMagicSwing var(--as-dur) var(--fm-ease); }
+
+  /* The target's own strike mirrors the tool motions, without the scaleX flip. */
+  @keyframes asMarkStrike {
+    0%   { transform: translateX(0); }
+    35%  { transform: translateX(7px); }
+    60%  { transform: translateX(-14px); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes asMarkCharge {
+    0%   { transform: translateY(0) scale(1); filter: none; }
+    45%  { transform: translateY(-5px) scale(1.06); filter: brightness(1.45); }
+    100% { transform: translateY(0) scale(1); filter: none; }
+  }
+  .as-mark--melee.is-swinging  { animation: asMarkStrike var(--as-dur) var(--fm-ease); }
+  .as-mark--ranged.is-swinging,
+  .as-mark--magic.is-swinging  { animation: asMarkCharge var(--as-dur) var(--fm-ease); }
+
+  /* The recoil flash is a SIBLING of the mark, with its own key: a target that
+     is striking and being struck on the same tick plays both, and neither
+     replays when only the other fires. Nested, a remount of one dragged the
+     other with it. */
+  @keyframes asStruck {
+    0%   { opacity: 0; }
+    40%  { opacity: 0.55; }
+    100% { opacity: 0; }
+  }
+  .as-struck {
+    background: radial-gradient(circle, var(--color-hp-red), transparent 62%);
+    animation: asStruck var(--as-hit-dur) ease-out;
+  }
+
+  @keyframes asShotOut {
+    0%   { opacity: 0; left: 0; }
+    38%  { opacity: 1; }
+    100% { opacity: 0; left: calc(100% - 20px); }
+  }
+  @keyframes asShotIn {
+    0%   { opacity: 0; left: calc(100% - 20px); }
+    38%  { opacity: 1; }
+    100% { opacity: 0; left: 0; }
+  }
+  .as-shot--out { left: 0; animation: asShotOut var(--as-dur) linear; }
+  .as-shot--in  { left: calc(100% - 20px); animation: asShotIn var(--as-dur) linear; }
+}
+
 /* Armoury grid + cards */
 /* Armoury reads as an inventory: a dense grid of square item tiles (icon over
    name over level), not a list of wide cards. Same tile metal as every other
