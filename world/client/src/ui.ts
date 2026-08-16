@@ -154,12 +154,25 @@ ${SCROLL_CSS}
 .hud-pane { display: none; }
 .hud-pane.active { display: block; }
 
-/* portrait: sheet docks above the bottom rail, drag handle at the top */
+/* portrait: sheet docks above the bottom rail, drag handle at the top. Fixed
+   height (the drag-resizable --sheet-h var, set by setSheetHeight/applyLayout
+   in ui.ts) so every tab is the same size instead of shrink-wrapping to
+   whichever pane happens to be active — the fallback only covers the instant
+   before JS first runs. overflow moves from the body onto the active pane
+   below so the handle never scrolls out of view. */
 :root[data-hud-orient="portrait"] #hud-body {
   left: 0; right: 0; bottom: 64px; border-radius: 16px 16px 0 0;
   border-left: none; border-right: none; border-bottom: none;
   padding: 0 12px 10px; box-shadow: 0 -6px 22px rgba(0, 0, 0, 0.35);
+  height: var(--sheet-h, 42vh); display: flex; flex-direction: column; overflow: hidden;
 }
+:root[data-hud-orient="portrait"] .hud-pane.active {
+  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow-y: auto;
+}
+/* Content shorter than the sheet centres instead of hugging the top; content
+   taller than the sheet ignores the auto margins and just scrolls (the pane
+   above is the one and only scroll surface — no nested scrollbars). */
+:root[data-hud-orient="portrait"] .hud-pane.active > * { margin: auto 0; }
 :root[data-hud-orient="portrait"] .hud-sheet-handle {
   display: flex; justify-content: center; padding: 9px 0 6px; cursor: grab;
   touch-action: none; position: sticky; top: 0;
@@ -258,7 +271,9 @@ ${SCROLL_CSS}
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px #000;
 }
-#prayer-grid { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
+/* No own max-height/scroll: the portrait sheet's .hud-pane.active is the one
+   scroll surface (landscape's #hud-body scrolls as a whole, same as before). */
+#prayer-grid { display: flex; flex-direction: column; gap: 5px; }
 #prayer-grid:empty { display: none; }
 /* Six per row in both orientations (each button is 1/6 of the row width, so a
    full row fills and the narrow landscape pane still fits six), flex-centred so
@@ -281,7 +296,7 @@ ${SCROLL_CSS}
   position: absolute; right: 2px; bottom: 1px; font-size: 9px; font-weight: bold; line-height: 1;
   color: #f4e9c8; text-shadow: 0 1px 2px #000, 0 0 2px #000; font-family: sans-serif; pointer-events: none;
 }
-#magic-panel { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+#magic-panel { display: flex; flex-direction: column; gap: 5px; }
 .tp-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .tp-row {
   min-height: 40px; padding: 8px 12px; border: 1px solid #5a4a30; border-radius: 6px; cursor: pointer;
@@ -964,7 +979,7 @@ export function initHud(handlers?: HudHandlers): void {
   body.appendChild(paneHead)
 
   const invPane = document.createElement('div')
-  invPane.className = 'hud-pane active'
+  invPane.className = 'hud-pane active ' + SCROLL_CLASS
   invPane.setAttribute('data-pane', 'inventory')
   const inv = document.createElement('div')
   inv.id = 'inv-panel'
@@ -977,7 +992,7 @@ export function initHud(handlers?: HudHandlers): void {
   body.appendChild(invPane)
 
   const equipPane = document.createElement('div')
-  equipPane.className = 'hud-pane'
+  equipPane.className = 'hud-pane ' + SCROLL_CLASS
   equipPane.setAttribute('data-pane', 'equipment')
   const equip = document.createElement('div')
   equip.id = 'equip-panel'
@@ -999,7 +1014,7 @@ export function initHud(handlers?: HudHandlers): void {
   body.appendChild(equipPane)
 
   const combatPane = document.createElement('div')
-  combatPane.className = 'hud-pane'
+  combatPane.className = 'hud-pane ' + SCROLL_CLASS
   combatPane.setAttribute('data-pane', 'combat')
   const combat = document.createElement('div')
   combat.id = 'combat-panel'
@@ -1044,7 +1059,7 @@ export function initHud(handlers?: HudHandlers): void {
   // Prayer has its own tab (moved off the Combat tab, 2026-07): the pool bar
   // + Protection/Combat toggle grid, built by renderPrayerPanel/setPrayerState.
   const prayerPane = document.createElement('div')
-  prayerPane.className = 'hud-pane'
+  prayerPane.className = 'hud-pane ' + SCROLL_CLASS
   prayerPane.setAttribute('data-pane', 'prayer')
   const prayer = document.createElement('div')
   prayer.id = 'prayer-panel'
@@ -1061,17 +1076,15 @@ export function initHud(handlers?: HudHandlers): void {
   prayer.appendChild(prayerBar)
   const prayerGrid = document.createElement('div')
   prayerGrid.id = 'prayer-grid'
-  prayerGrid.className = SCROLL_CLASS
   prayer.appendChild(prayerGrid)
   prayerPane.appendChild(prayer)
   body.appendChild(prayerPane)
 
   const magicPane = document.createElement('div')
-  magicPane.className = 'hud-pane'
+  magicPane.className = 'hud-pane ' + SCROLL_CLASS
   magicPane.setAttribute('data-pane', 'magic')
   const magic = document.createElement('div')
   magic.id = 'magic-panel'
-  magic.className = SCROLL_CLASS
   magicPane.appendChild(magic)
   body.appendChild(magicPane)
 

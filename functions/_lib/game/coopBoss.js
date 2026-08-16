@@ -23,10 +23,10 @@ import {
   addCoopMember,
   createCoopBossState,
   createCoopMember,
-  emptySlayerCredit,
   memberCount,
   removeCoopMember,
 } from '../../../src/engine/coopBossEngine.js'
+import { applySlayerCreditToSave, emptySlayerCredit } from './slayerCredit.js'
 import { bossEntryFailure, loadBossKillCounts } from './bossEntry.js'
 import { isHardModeEnabled } from './hardMode.js'
 import { monsterMaxHitRange } from '../../../src/engine/monsterMaxHit.js'
@@ -501,30 +501,7 @@ export function applyXpGainedToSave(saveObject, xpGained) {
  * counts are DELTAS and are added, so the caller must clear the credit after a
  * successful write or a second write-back pays them twice.
  */
-export function applySlayerCreditToSave(saveObject, member) {
-  // A session that predates slayer support carries no task field at all —
-  // writing `null` over the player's real task would cancel it.
-  if (!Object.prototype.hasOwnProperty.call(member || {}, 'slayerTask')) return saveObject
-  const settings = { ...(saveObject.settings && typeof saveObject.settings === 'object' ? saveObject.settings : {}) }
-  settings.slayerTask = member.slayerTask || null
-
-  const credit = member.slayerCredit
-  if (credit?.tasksCompleted > 0 || credit?.pointsEarned > 0) {
-    settings.slayerPoints = Math.max(0, Math.floor(Number(settings.slayerPoints) || 0))
-      + Math.max(0, Math.floor(Number(credit.pointsEarned) || 0))
-    settings.slayerTasksCompleted = Math.max(
-      Math.max(0, Math.floor(Number(settings.slayerTasksCompleted) || 0)),
-      Math.max(0, Math.floor(Number(member.slayerTasksCompleted) || 0)),
-    )
-    const completions = { ...(settings.slayerMasterTaskCompletions && typeof settings.slayerMasterTaskCompletions === 'object' ? settings.slayerMasterTaskCompletions : {}) }
-    for (const [masterId, count] of Object.entries(credit.masterCompletions || {})) {
-      completions[masterId] = (Math.floor(Number(completions[masterId]) || 0)) + Math.max(0, Math.floor(Number(count) || 0))
-    }
-    settings.slayerMasterTaskCompletions = completions
-  }
-  saveObject.settings = settings
-  return saveObject
-}
+export { applySlayerCreditToSave }
 
 /**
  * Folds a mid-fight quick-prayer edit back into the save.
@@ -739,7 +716,6 @@ function lootWinnerIds(state, kill) {
  */
 export async function settleCoopKill(env, { session, state, kill, killSeq }, now = Date.now()) {
   const winners = lootWinnerIds(state, kill)
-  if (winners.length === 0) return { settlements: [], granted: [], ownerCharacterId: null }
   const source = killRewardSource(session, kill)
 
   const settlements = []
@@ -753,6 +729,24 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
       settlements.push({ characterId, granted: [], failed: true })
     }
   }
+
+  // After the loot shares, never before: both claims sit in one table, and on a
+  // D1 still carrying 0031's `(session_id, kill_seq)` key the first row written
+  // takes the only slot there is. Losing a participant's kill count there is a
+  // miss; losing a winner's drop is a robbery.
+  //
+  // Scoped to NON-winners, and it has to stay that way while the two claims
+  // share one `(session_id, kill_seq, character_id)` key. A winner whose
+  // settlement gave its sequence back (no identity, save load throw, diverged,
+  // write throw) loses their kill count — a known gap, tracked separately —
+  // but counting them here would take the very row their retry needs, and a
+  // replay reading `granted_json = '[]'` hands back a dry kill forever. Closing
+  // that gap needs an idempotency key of its own, not a wider roster here.
+  await recordParticipantKillCounts(env, { session, state, kill, killSeq, source, winners }, now)
+    .catch((err) => console.error('[PocketRPG][coop] participant kill counts failed', {
+      sessionId: session.id, killSeq, message: err?.message || err,
+    }))
+  if (winners.length === 0) return { settlements: [], granted: [], ownerCharacterId: null }
 
   await auditLog(env, source.sourceType === 'raids' ? 'coop.raid.complete' : 'coop.boss.kill', {
     sessionId: session.id,
@@ -771,6 +765,71 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
   // reading what they always read; `settlements` is the full picture.
   const primary = settlements.find((s) => Number(s.characterId) === Number(kill?.ownerCharacterId)) || settlements[0]
   return { settlements, ...primary, ownerCharacterId: primary.characterId }
+}
+
+/**
+ * Kill counts for the members who fought this kill but took no loot.
+ *
+ * The loot winners get theirs inside their own settlement, atomically with the
+ * save write that carries the drop. Everyone else needs one here, or a member
+ * who fought a boss for an hour under the 10% threshold has nothing to show
+ * that they ever fought it — and boss entry gates read this table (§14).
+ *
+ * Exactly-once through the same `coop_kill_settlements` key the loot uses, with
+ * `granted_json = '[]'` written up front: a non-winner has no grant to record
+ * later, and an empty list is what the replay path should hand back if the row
+ * is ever read. A member who cannot be claimed has already been counted.
+ *
+ * Winners are excluded outright, not by whether their settlement succeeded:
+ * the loot claim and this one are the same row, so a winner counted here holds
+ * the sequence their own retry needs (see settleCoopKill).
+ */
+async function recordParticipantKillCounts(env, { session, state, kill, killSeq, source, winners }, now) {
+  const listed = Array.isArray(kill?.killCountCharacterIds) ? kill.killCountCharacterIds : []
+  const winnerIds = new Set(winners.map((id) => Number(id)))
+  const seq = Math.max(0, Math.floor(Number(killSeq) || 0))
+  const ids = []
+  const seen = new Set()
+  for (const raw of listed) {
+    const id = Number(raw)
+    if (!Number.isFinite(id) || seen.has(id) || winnerIds.has(id)) continue
+    if (!state?.members?.[String(id)]) continue
+    seen.add(id)
+    ids.push(id)
+  }
+  if (ids.length === 0 || !source?.sourceId) return
+
+  const claimed = []
+  for (const characterId of ids) {
+    const claim = await env.DB.prepare(
+      `INSERT OR IGNORE INTO coop_kill_settlements (session_id, kill_seq, character_id, boss_id, granted_json, settled_at)
+       VALUES (?, ?, ?, ?, '[]', ?)`,
+    ).bind(session.id, seq, characterId, source.sourceId, now).run().catch(() => null)
+    if (claim?.meta?.changes) claimed.push(characterId)
+  }
+  if (claimed.length === 0) return
+
+  // The claim is taken BEFORE the count, so a throw here has to hand the
+  // sequence back — exactly as settleKillShare's releaseClaim does. Left behind,
+  // the row marks the kill settled for these members and the replay path claims
+  // nothing, voiding their count permanently rather than for one attempt.
+  // Scoped to the ids this call claimed: a winner who rolled an empty table also
+  // carries `granted_json = '[]'`, so the value alone is not a safe guard.
+  try {
+    await env.DB.batch(
+      claimed.map((characterId) => env.DB.prepare(
+        `INSERT INTO kill_counts (character_id, source_type, source_id, kill_count, updated_at)
+         VALUES (?, ?, ?, 1, ?)
+         ON CONFLICT(character_id, source_type, source_id)
+         DO UPDATE SET kill_count = kill_count + 1, updated_at = excluded.updated_at`,
+      ).bind(characterId, source.sourceType, source.sourceId, now)),
+    )
+  } catch (err) {
+    await Promise.all(claimed.map((characterId) => env.DB.prepare(
+      'DELETE FROM coop_kill_settlements WHERE session_id = ? AND kill_seq = ? AND character_id = ?',
+    ).bind(session.id, seq, characterId).run().catch(() => {})))
+    throw err
+  }
 }
 
 /**

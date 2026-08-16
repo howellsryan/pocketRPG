@@ -8,6 +8,7 @@ import { isWorldSessionLive } from '../_lib/game/worldSessions.js'
 import { isCoopSessionLive, sweepStaleCoopSessions } from '../_lib/game/coopBoss.js'
 import { auditLog } from '../_lib/game/audit.js'
 import { classifyItemLoss } from '../_lib/game/holdingsDelta.js'
+import { applyReportedKillCountsFromSave } from '../_lib/game/killCounts.js'
 import {
   flaggedSaveHistoryStatement,
   pruneSaveHistory,
@@ -214,12 +215,24 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   const lastInteractiveAt = Number(existing?.last_interactive_at)
   if (!interactive && Number.isFinite(lastInteractiveAt) && lastInteractiveAt > 0 &&
       (now - lastInteractiveAt) > IDLE_WRITE_CEILING_MS) {
+    // Kill counts reported by the client for this window (src/engine/killTally.js).
+    // The client settles its tally only against an `ok`, so they must be banked on
+    // every success path and on NO other — a save that is refused, or that throws
+    // on its way to the write, is retried with the same tally, and the retry
+    // passes the revision guard because nothing was written. So the call sits
+    // immediately before each of the three ok replies (here, the no-op below, and
+    // the full write at the end), never once up front where anything after it
+    // could still fail. This one answers ok while refusing the BLOB, not the
+    // counts: dropping them would lose every kill an offline catch-up reported
+    // past the ceiling.
+    const killsApplied = await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
     return json({
       ok: true,
       updatedAt: Number(existing?.updated_at) || now,
       save_revision: currentRevision,
       noop: true,
       idle_ceiling: true,
+      killsApplied,
     })
   }
 
@@ -343,13 +356,21 @@ async function applySaveWrite({ env, ch, identityId, body }) {
         await env.DB.prepare(
           'UPDATE saves SET updated_at = ? WHERE character_id = ?'
         ).bind(now, ch.id).run()
-        return json({ ok: true, updatedAt: now, save_revision: currentRevision, noop: true })
+        // The blob is a no-op; the kills reported alongside it are not. After
+        // the touch, never before: a throw between the two banks the kills and
+        // still answers an error, so the client retries the same tally and
+        // counts them twice.
+        const killsApplied = await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
+        return json({ ok: true, updatedAt: now, save_revision: currentRevision, noop: true, killsApplied })
       }
+      // The blob is a no-op; the kills reported alongside it are not.
+      const killsApplied = await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
       return json({
         ok: true,
         updatedAt: Number(existing?.updated_at) || now,
         save_revision: currentRevision,
         noop: true,
+        killsApplied,
       })
     }
   }
@@ -417,6 +438,10 @@ async function applySaveWrite({ env, ch, identityId, body }) {
     )
   }
   await env.DB.batch(statements)
+  // After the write, so a throw on the way here leaves the tally with the
+  // client — the retry passes the revision guard untouched and would otherwise
+  // bank the same kills twice.
+  const killsApplied = await applyReportedKillCountsFromSave(env, { characterId: ch.id, identityId, kills: body?.kills }, now)
 
   if (itemLoss?.flagged) {
     // Swallowed: the detector observes, and an audit outage must never turn a
@@ -436,7 +461,7 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // currentRevision is 0) or COALESCE(save_revision,0)+1 on update — so the new
   // revision is currentRevision + 1 in both cases. Compute it instead of issuing
   // a post-write SELECT.
-  return json({ ok: true, updatedAt: now, save_revision: currentRevision + 1 })
+  return json({ ok: true, updatedAt: now, save_revision: currentRevision + 1, killsApplied })
 }
 
 // Hard-delete the saves row for this character. Used on One-Life death so

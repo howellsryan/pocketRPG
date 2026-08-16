@@ -929,6 +929,17 @@ function GameApp() {
         // destroy everything it had just withdrawn from the bank.
         try { await flushLocalSaves() } catch (e) { /* runLocalSave restores the flags and re-arms the debounce */ }
       } else {
+        // Daily tasks may have moved while this tab was hidden — the open world
+        // runs in a tab of its own and writes progress server-side, so a player
+        // coming back from it would otherwise see the count they left behind.
+        if (getToken() && getCharacterId()) {
+          api.getDailyTasks().then(dt => {
+            if (!dt?.tasks) return
+            setDailyTaskDate(dt.date)
+            setDailyTaskResetInMs(dt.resetInMs ?? 0)
+            setDailyTasks(dt.tasks, dt.date)
+          }).catch(() => {})
+        }
         // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
         // to prevent system-time manipulation from granting fake idle progress.
         try {

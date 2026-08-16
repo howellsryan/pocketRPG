@@ -29,7 +29,21 @@ import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload } from './grants'
-import { dropBroadcastsFrom, isBossMonster, recordBossKill } from './bossKills'
+import { dropBroadcastsFrom, isBossMonster, recordBossKill, recordKillCounts } from './bossKills'
+import { rollLootForCredited } from './killLoot'
+import {
+  creditWorldSlayerKill, drainSlayerCredit, killDailyEvents, restoreSlayerCredit, seedSlayerSession,
+  slayerCreditNeedsFlush, xpDailyEvents,
+  type DailyEvent, type SlayerTask,
+} from './killProgress'
+import { applyDailyTaskEvents as applyDailyTaskEventsJs } from '../../functions/_lib/game/dailyTaskProgress.js'
+
+// The lib is plain JS shared with functions/**; its `identityId = null` default
+// is all TS has to infer from, which types the field as null.
+const applyDailyTaskEvents = applyDailyTaskEventsJs as (
+  env: unknown,
+  args: { characterId: number; identityId: string | null; events: DailyEvent[] },
+) => Promise<unknown>
 import { auditLog } from '../../functions/_lib/game/audit.js'
 import monstersDataJson from '../../src/data/monsters.json'
 
@@ -127,6 +141,23 @@ type Player = TickPlayer & {
    * entries are excluded — the world can't preserve charges). */
   bankView: Tally
   completedQuests: Set<string>
+  /** The player's slayer task, seeded from the save at hello and advanced by
+   * world kills. `dirty` is what makes the flush write it: a session that never
+   * killed anything on-task must not write its snapshot over a task the idle
+   * game changed. Points/completions are DELTAS (see grants.ts). */
+  slayer: {
+    task: SlayerTask | null
+    tasksCompleted: number
+    doubleXp: boolean
+    credit: { pointsEarned: number; tasksCompleted: number; masterCompletions: Record<string, number> }
+    dirty: boolean
+  }
+  /** Kills since the last flush, per monster id — batched into kill_counts so a
+   * grind is one upsert per monster rather than one per cow (bossKills.ts). */
+  killTally: Record<string, number>
+  /** Daily-task events since the last flush, replayed server-side against this
+   * character's issued tasks (functions/_lib/game/dailyTaskProgress.js). */
+  dailyEvents: DailyEvent[]
   /** The player re-geared in-world → next flush snapshots equipment to the save. */
   equipmentDirty: boolean
   /** The player changed combat stance in-world → next flush writes it back to
@@ -606,6 +637,7 @@ export class WorldZone extends Server<Env> {
     let maxHp = 10
     let bankView: Tally = {}
     let completedQuests = new Set<string>()
+    let slayer = seedSlayerSession({})
     let masterRejuvenation = false
     let stance: CombatStance = 'accurate'
     let saveForGate: unknown = null
@@ -620,6 +652,7 @@ export class WorldZone extends Server<Env> {
       bankView = bankViewFromSave(saveObject)
       const questList = (saveObject.settings as { completedQuests?: unknown } | undefined)?.completedQuests
       completedQuests = new Set(Array.isArray(questList) ? questList.filter((q): q is string => typeof q === 'string') : [])
+      slayer = seedSlayerSession(saveObject as Record<string, unknown>)
       masterRejuvenation = hasMasterRejuvenation((saveObject.settings as { unlockedFeatures?: unknown } | undefined)?.unlockedFeatures)
       stance = combatStanceFromSave(saveObject)
     } catch {
@@ -681,6 +714,9 @@ export class WorldZone extends Server<Env> {
       pools,
       bankView,
       completedQuests,
+      slayer,
+      killTally: {},
+      dailyEvents: [],
       equipmentDirty: false,
       stanceDirty: false,
       flushAtTick: null,
@@ -2003,24 +2039,60 @@ export class WorldZone extends Server<Env> {
         this.scheduleDirtyFlush(player)
       }
       for (const kill of result.kills) {
-        // Server-authoritative boss side-effects (collection log, kill count,
-        // audit) — fire-and-forget D1 like the flushes below. No-op for
-        // non-boss monsters.
-        void recordBossKill(this.env, kill)
-        const isBoss = isBossMonster(kill.monsterId)
-        const drops = dropBroadcastsFrom(kill.monsterId, kill.loot, itemsData)
-        if (!isBoss && drops.length === 0) continue
-        const monsterName = monsterNames[kill.monsterId]?.name ?? kill.monsterId
-        const killerName = this.players.get(kill.owner)?.name ?? 'Someone'
-        if (isBoss) broadcastEvents.push({ e: 'kill', monster: monsterName, killer: killerName })
-        for (const drop of drops) {
-          broadcastEvents.push({
-            e: 'uniqueDrop',
-            monster: monsterName,
-            player: killerName,
-            item: itemNameOf(drop.itemId),
-            epic: drop.epic,
+        // Snapshot each credited player's task BEFORE crediting it. Completing a
+        // task NULLS it (creditWorldSlayerKill), so read after, the one kill that
+        // finishes a task is the one kill that could never roll the task-only
+        // drops the task exists to unlock.
+        const creditedPlayers = (kill.credited ?? [])
+          .filter((charId) => this.players.has(charId))
+          .map((charId) => {
+            const p = this.players.get(charId)!
+            return { charId, slayerTask: p.slayer.task, isGrindman: p.isGrindman === true }
           })
+        this.creditKill(kill)
+        const isBoss = isBossMonster(kill.monsterId)
+        const monsterName = monsterNames[kill.monsterId]?.name ?? kill.monsterId
+        if (isBoss) {
+          const killerName = this.players.get(kill.owner)?.name ?? 'Someone'
+          broadcastEvents.push({ e: 'kill', monster: monsterName, killer: killerName })
+        }
+
+        // Everyone past the 10% line rolls the table INDEPENDENTLY, the way a
+        // co-op room pays its winners — not a share of one drop. The killer's
+        // roll rode the death event and is already on the floor under their own
+        // name; the rest are rolled here, where each player's own slayer task
+        // and Grindman flag are visible (a task-only drop must not roll for
+        // someone who is not on it). Their pile is owned by them, so loot.ts
+        // hides it from everyone else for the owner window with nothing new:
+        // two piles on one tile, one each.
+        const extra = kill.summoned ? [] : rollLootForCredited(kill.monsterId, creditedPlayers, kill.killer)
+        for (const share of extra) {
+          for (const loot of spawnDrops(share.loot, kill.x, kill.z, share.charId, this.tickCount)) {
+            this.loot.set(loot.id, loot)
+          }
+        }
+
+        // Collection log and audit per player, on their OWN roll: a unique is
+        // logged for whoever actually pulled it. Gated on the drop rather than
+        // the monster, so an ordinary kill with nothing logged reaches no D1.
+        // The killer's own share only counts when they earned the kill — a boss
+        // audits even on an empty roll, so a last-hit sniper below the line
+        // would otherwise be filed as having killed it.
+        const killerShare = (kill.credited ?? []).includes(kill.killer)
+          ? [{ charId: kill.killer, loot: kill.loot }]
+          : []
+        for (const share of [...killerShare, ...extra]) {
+          void recordBossKill(this.env, { ...kill, owner: share.charId, loot: share.loot })
+          const playerName = this.players.get(share.charId)?.name ?? 'Someone'
+          for (const drop of dropBroadcastsFrom(kill.monsterId, share.loot, itemsData)) {
+            broadcastEvents.push({
+              e: 'uniqueDrop',
+              monster: monsterName,
+              player: playerName,
+              item: itemNameOf(drop.itemId),
+              epic: drop.epic,
+            })
+          }
         }
       }
       if (result.events.length > 0) eventsByChar.set(player.charId, result.events)
@@ -2362,6 +2434,50 @@ export class WorldZone extends Server<Env> {
     }
   }
 
+  /**
+   * Everything a kill is worth beyond its loot, for the character it was
+   * attributed to: the kill count, their own slayer task, and the daily tasks
+   * the kill feeds. All three are tallied on the session and flushed in a batch
+   * — one D1 round trip per kill is not affordable on a grind (killProgress.ts).
+   *
+   * Paid to EVERY player who earned the kill on the shared 10% damage share
+   * (`kill.credited`, killCredit.js), not just the one the loot pile went to —
+   * the same rule a co-op room pays on, so a boss fought by three people counts
+   * for three slayer tasks in both places. Their drops are rolled separately
+   * (the kill loop above), one pile each on the same tile.
+   *
+   * Someone who has already left the zone takes no credit: their session (and
+   * its slayer task) is gone.
+   *
+   * A boss MINION earns none of it (§4: adds count for nothing). Out here they
+   * are real npcs rather than session-local adds, so they reach the kill list
+   * like anything else — and a boss that respawns its sentinels on a timer would
+   * otherwise be a kill-count and daily-task farm that never touches the boss.
+   */
+  private creditKill(kill: { monsterId: string; owner: string; credited: string[]; summoned?: boolean }): void {
+    if (kill.summoned) return
+    for (const charId of kill.credited ?? []) {
+      const player = this.players.get(charId)
+      if (!player) continue
+      player.killTally[kill.monsterId] = (player.killTally[kill.monsterId] ?? 0) + 1
+
+      const credited = creditWorldSlayerKill(player.slayer, kill.monsterId)
+      if (!credited) continue
+      if (credited.slayerXp > 0) player.pendingEvents.push(...grantSessionXp(player, 'slayer', credited.slayerXp))
+      player.pendingEvents.push({ e: 'msg', text: credited.message })
+      if (credited.completed) player.dailyEvents.push({ kind: 'slayer_task_complete', count: 1 })
+      // Every credited kill re-arms the flush debounce, not just a completion —
+      // it used to be the one case that flushed early, leaving a plain progress
+      // tick (7→6) waiting on the 60s checkpoint, where a DO eviction would cost
+      // it and — with no in-progress task UI in the world at all — a player
+      // checking the idle tab would see nothing move. A kill streak faster than
+      // DIRTY_FLUSH_DELAY_TICKS keeps re-arming this and rides the checkpoint
+      // instead, same worst case as before; the debounce only helps once kills
+      // (or any other flush-triggering change) stop landing that fast.
+      if (slayerCreditNeedsFlush(credited)) this.scheduleDirtyFlush(player)
+    }
+  }
+
   /** Snapshots and clears the player's pending grant tallies, then applies
    * them to the save blob. Every flush carries XP, consumed units (eaten,
    * buried, dropped, equipped), bank deposits, the world-minted units the pack
@@ -2386,6 +2502,12 @@ export class WorldZone extends Server<Env> {
       ...drained,
     }
     player.pendingXp = {}
+    const slayerDrained = drainSlayerCredit(player.slayer)
+    if (slayerDrained) Object.assign(payload, slayerDrained)
+    const killTally = player.killTally
+    player.killTally = {}
+    const dailyEvents = [...player.dailyEvents, ...killDailyEvents(killTally), ...xpDailyEvents(payload.xpBySkill)]
+    player.dailyEvents = []
     const equipmentWasDirty = player.equipmentDirty
     if (equipmentWasDirty) {
       payload.equipment = { ...player.equipment }
@@ -2396,7 +2518,12 @@ export class WorldZone extends Server<Env> {
       payload.combatStance = player.stance
       player.stanceDirty = false
     }
-    if (isEmptyPayload(payload)) return
+    // Kill counts and daily tasks are their own tables, not the save — a flush
+    // carrying nothing but kills still has to land them.
+    if (isEmptyPayload(payload)) {
+      this.flushProgress(player, killTally, dailyEvents)
+      return
+    }
     player.flushSeq += 1
 
     const ok = await flushGrants(this.env, {
@@ -2407,6 +2534,7 @@ export class WorldZone extends Server<Env> {
     }, payload)
     if (ok) {
       commitFlush(pools, drained)
+      this.flushProgress(player, killTally, dailyEvents)
     } else {
       // A dropped payload is real lost progress and is otherwise completely
       // invisible — `wrangler tail` is the only place this surfaces.
@@ -2419,7 +2547,35 @@ export class WorldZone extends Server<Env> {
       restoreFlush(pools, drained)
       if (equipmentWasDirty) player.equipmentDirty = true
       if (stanceWasDirty) player.stanceDirty = true
+      restoreSlayerCredit(player.slayer, slayerDrained)
+      // The XP went back on the pile, so its daily events must too — re-derived
+      // from the restored tally on the next flush rather than double-counted
+      // here. Kills go back the same way.
+      for (const [monsterId, count] of Object.entries(killTally)) {
+        player.killTally[monsterId] = (player.killTally[monsterId] ?? 0) + count
+      }
+      player.dailyEvents.unshift(...dailyEvents.filter((evt) => evt.kind === 'slayer_task_complete'))
     }
+  }
+
+  /** Kill counts + daily-task progress for a flush that has already landed.
+   * Both are additive writes to their own tables, so unlike the grant they need
+   * no revision guard — and both are fire-and-forget: a D1 hiccup here must not
+   * hold up the tick loop or roll back a save write that already succeeded. */
+  private flushProgress(player: Player, killTally: Record<string, number>, dailyEvents: DailyEvent[]): void {
+    if (Object.keys(killTally).length > 0) {
+      void recordKillCounts(this.env, Number(player.charId), killTally).catch((err) => {
+        console.error('[World][flush] kill counts not recorded', { charId: player.charId, err })
+      })
+    }
+    if (dailyEvents.length === 0) return
+    void applyDailyTaskEvents(this.env, {
+      characterId: Number(player.charId),
+      identityId: player.identityId,
+      events: dailyEvents,
+    }).catch((err) => {
+      console.error('[World][flush] daily task progress not applied', { charId: player.charId, err })
+    })
   }
 
   private async flushCheckpoints(): Promise<void> {

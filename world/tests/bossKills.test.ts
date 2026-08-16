@@ -1,9 +1,10 @@
 // Item 5 (P0): world boss kills must record the same server-authoritative
 // side-effects the main game's /api/actions/monster/complete does — collection
-// log for uniques, boss kill count, audit. Regular monsters and unresolved
-// owners record nothing.
+// log for uniques and an audit row. Regular monsters and unresolved owners
+// record nothing here. The KILL COUNT is no longer part of this: every monster
+// earns one, so it is tallied on the session and flushed by recordKillCounts.
 import { describe, expect, it, vi } from 'vitest'
-import { recordBossKill, isBossMonster, uniqueDropsFrom, dropBroadcastsFrom, type BossKillIO } from '../server/bossKills'
+import { recordBossKill, recordKillCounts, isBossMonster, uniqueDropsFrom, dropBroadcastsFrom, type BossKillIO } from '../server/bossKills'
 
 type Call = { sql: string; args: unknown[] }
 
@@ -53,15 +54,15 @@ describe('recordBossKill', () => {
     expect(inserts).toHaveLength(1)
     expect(inserts[0].sql).toContain('collection_log')
     expect(inserts[0].args).toEqual([42, 'grondar_hilt', 'warlord_grondar', expect.any(Number)])
-    // Kill count upsert ran for the boss.
-    expect(upserts.some((c) => c.sql.includes('kill_counts') && c.args[0] === 42)).toBe(true)
-    // Audit carries the resolved count + the unique.
+    // The kill count is the flush's job now, not this path's.
+    expect(upserts.some((c) => c.sql.includes('kill_counts'))).toBe(false)
+    // Audit carries the unique.
     expect(io.audits).toHaveLength(1)
     expect(io.audits[0].eventType).toBe('world_boss_kill')
-    expect(io.audits[0].payload).toMatchObject({ characterId: 42, monsterId: 'warlord_grondar', killCount: 3, collectionLog: ['grondar_hilt'] })
+    expect(io.audits[0].payload).toMatchObject({ characterId: 42, monsterId: 'warlord_grondar', collectionLog: ['grondar_hilt'] })
   })
 
-  it('still increments the kill count + audits a boss kill with no unique in the drop', async () => {
+  it('audits a boss kill with no unique in the drop', async () => {
     const { env, inserts, upserts } = makeDb(5)
     const io = spyIO()
     await recordBossKill(env, {
@@ -70,11 +71,27 @@ describe('recordBossKill', () => {
       loot: [{ itemId: 'big_bones', quantity: 1 }, { itemId: 'coins', quantity: 20000 }],
     }, io)
     expect(inserts).toHaveLength(0) // no collection-log write
-    expect(upserts.some((c) => c.sql.includes('kill_counts'))).toBe(true)
-    expect(io.audits[0].payload).toMatchObject({ killCount: 5, collectionLog: [] })
+    expect(upserts).toHaveLength(0)
+    expect(io.audits[0].payload).toMatchObject({ collectionLog: [] })
   })
 
-  it('records nothing for a non-boss monster', async () => {
+  it('fills a collection-log slot for a NON-boss monster that owns one', async () => {
+    // The bug: gated on `boss`, so a Black Dragon's visage — a logged unique
+    // whose killer is not a boss — could never fill its slot in the world,
+    // while the same kill solo does.
+    const { env, inserts } = makeDb()
+    const io = spyIO()
+    await recordBossKill(env, {
+      monsterId: 'black_dragon',
+      owner: '42',
+      loot: [{ itemId: 'dragon_bones', quantity: 1 }, { itemId: 'dragon_visage', quantity: 1 }],
+    }, io)
+    expect(inserts).toHaveLength(1)
+    expect(inserts[0].args).toEqual([42, 'dragon_visage', 'black_dragon', expect.any(Number)])
+    expect(io.audits[0].payload).toMatchObject({ monsterId: 'black_dragon', boss: false, collectionLog: ['dragon_visage'] })
+  })
+
+  it('records nothing for an ordinary kill that dropped nothing logged', async () => {
     const { env, inserts, upserts } = makeDb()
     const io = spyIO()
     await recordBossKill(env, { monsterId: 'pasture_bull', owner: '42', loot: [{ itemId: 'cowhide', quantity: 1 }] }, io)
@@ -92,6 +109,36 @@ describe('recordBossKill', () => {
     expect(inserts).toHaveLength(0)
     expect(upserts).toHaveLength(0)
     expect(io.audits).toHaveLength(0)
+  })
+})
+
+// Every world monster earns a kill count, not just bosses: the world resolves
+// its own combat, so this is a server-authoritative count in the table the boss
+// entry gates read. Batched, because a per-kill round trip is not affordable.
+describe('recordKillCounts', () => {
+  it('upserts one row per monster carrying that monster\'s whole tally', async () => {
+    const { env, upserts } = makeDb()
+    await recordKillCounts(env, 42, { green_dragon: 7, pasture_bull: 2 }, 1000)
+    expect(upserts).toHaveLength(2)
+    expect(upserts.every((c) => c.sql.includes('kill_counts'))).toBe(true)
+    expect(upserts.map((c) => c.args)).toEqual([
+      [42, 'green_dragon', 7, 1000],
+      [42, 'pasture_bull', 2, 1000],
+    ])
+  })
+
+  it('adds the tally to the existing count rather than overwriting it', async () => {
+    const { env, upserts } = makeDb()
+    await recordKillCounts(env, 42, { green_dragon: 3 })
+    expect(upserts[0].sql).toContain('kill_count = kill_count + excluded.kill_count')
+  })
+
+  it('writes nothing for an empty tally, a zero count or an unresolved character', async () => {
+    const { env, upserts } = makeDb()
+    await recordKillCounts(env, 42, {})
+    await recordKillCounts(env, 42, { green_dragon: 0 })
+    await recordKillCounts(env, 0, { green_dragon: 5 })
+    expect(upserts).toHaveLength(0)
   })
 })
 

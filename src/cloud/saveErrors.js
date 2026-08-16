@@ -41,6 +41,21 @@ export function saveLockCode(err) {
   return legacy ? legacy.toUpperCase() : null
 }
 
+/**
+ * Was this refusal specifically a stale `save_revision`?
+ *
+ * The two conflict codes take the same rollback path but mean opposite things
+ * about whether a write of ours landed: a stale revision says one did (something
+ * moved it), a bank-wipe rejection says nothing was written at all. Only the
+ * first may settle the side channels a landed write would have banked.
+ */
+export function isRevisionConflict(err) {
+  if (classifySaveError(err) !== 'conflict') return false
+  return err?.body?.code === 'SAVE_REVISION_CONFLICT'
+    || err?.body?.error === 'save_revision_conflict'
+    || err?.message === 'save_revision_conflict'
+}
+
 export function classifySaveError(err) {
   if (err?.status !== 409) return 'failure'
   const code = err?.body?.code

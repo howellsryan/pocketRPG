@@ -85,6 +85,107 @@ beforeEach(() => {
   raw = d.raw
 })
 
+// A kill counted for the loot winners and nobody else, so a member who fought
+// a boss for an hour under the 10% damage threshold had nothing to show that
+// they had ever fought it — and boss entry gates read this table.
+describe('kill counts reach everyone who fought the kill', () => {
+  it('counts the kill for a participant who earned no loot', async () => {
+    await seedCharacter(7)
+    await seedCharacter(8)
+    const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'p7' })
+    await joinCoopSession(env as never, { characterId: 8, identityId: 1, bossId: BOSS, username: 'p8' })
+    const session = { id: sessionId, boss_id: BOSS }
+    const state = parseSessionState(await readSession(env as never, sessionId))
+
+    await settleCoopKill(env as never, {
+      session,
+      state,
+      // Nobody cleared the loot gate; both were in the fight.
+      kill: { ownerCharacterId: null, lootCharacterIds: [], killCountCharacterIds: [7, 8], contributors: [] },
+      killSeq: 1,
+    })
+
+    for (const id of [7, 8]) {
+      const kc = raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = ? AND source_id = ?').get(id, BOSS)
+      expect(kc.kill_count).toBe(1)
+    }
+  })
+
+  it('counts a participant\'s kill exactly once across a replayed settlement', async () => {
+    await seedCharacter(7)
+    const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'p7' })
+    const session = { id: sessionId, boss_id: BOSS }
+    const state = parseSessionState(await readSession(env as never, sessionId))
+    const kill = { ownerCharacterId: null, lootCharacterIds: [], killCountCharacterIds: [7], contributors: [] }
+
+    await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    const kc = raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = 7 AND source_id = ?').get(BOSS)
+    expect(kc.kill_count).toBe(1)
+  })
+
+  it('does not double-count a loot winner, whose settlement already counted it', async () => {
+    await seedCharacter(7)
+    const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'p7' })
+    const session = { id: sessionId, boss_id: BOSS }
+    const state = parseSessionState(await readSession(env as never, sessionId))
+
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    await settleCoopKill(env as never, {
+      session,
+      state,
+      kill: { ownerCharacterId: 7, lootCharacterIds: [7], killCountCharacterIds: [7], contributors: [{ characterId: 7, damage: 2000 }] },
+      killSeq: 1,
+    })
+    vi.restoreAllMocks()
+
+    const kc = raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = 7 AND source_id = ?').get(BOSS)
+    expect(kc.kill_count).toBe(1)
+  })
+
+  it('ignores a character who is not a member of the session', async () => {
+    await seedCharacter(7)
+    const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'p7' })
+    const session = { id: sessionId, boss_id: BOSS }
+    const state = parseSessionState(await readSession(env as never, sessionId))
+
+    await settleCoopKill(env as never, {
+      session,
+      state,
+      kill: { ownerCharacterId: null, lootCharacterIds: [], killCountCharacterIds: [7, 999], contributors: [] },
+      killSeq: 1,
+    })
+
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM kill_counts WHERE character_id = 999').get().n).toBe(0)
+  })
+
+  // The participant claim is written before the count, so a throw in between
+  // has to hand the sequence back. Left behind, the row marks the kill settled
+  // and the replay path claims nothing — voiding the count permanently rather
+  // than for one attempt.
+  it('releases the participant claim when the kill_counts batch throws, so a retry still counts', async () => {
+    await seedCharacter(7)
+    const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'p7' })
+    const session = { id: sessionId, boss_id: BOSS }
+    const state = parseSessionState(await readSession(env as never, sessionId))
+    const kill = { ownerCharacterId: null, lootCharacterIds: [], killCountCharacterIds: [7], contributors: [] }
+
+    const realBatch = env.DB.batch.bind(env.DB)
+    const batch = vi.spyOn(env.DB, 'batch').mockRejectedValueOnce(new Error('D1 unavailable'))
+    await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM kill_counts WHERE character_id = 7').get().n).toBe(0)
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM coop_kill_settlements WHERE character_id = 7').get().n).toBe(0)
+
+    batch.mockImplementation(realBatch as never)
+    await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    vi.restoreAllMocks()
+
+    const kc = raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = 7 AND source_id = ?').get(BOSS)
+    expect(kc?.kill_count).toBe(1)
+  })
+})
+
 describe('kill settlement is exactly-once', () => {
   const kill = (owner: number) => ({ ownerCharacterId: owner, contributors: [{ characterId: owner, damage: 2000 }] })
 

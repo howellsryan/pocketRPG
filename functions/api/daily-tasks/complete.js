@@ -1,5 +1,5 @@
 import { requireAuth, json } from '../../_lib/auth.js'
-import { auditLog } from '../../_lib/game/audit.js'
+import { claimDailyTaskCredit } from '../../_lib/game/dailyTaskProgress.js'
 
 async function resolveCharacterId(request, env, identityId) {
   const headerId = request.headers.get('X-Character-Id')
@@ -28,36 +28,21 @@ export async function onRequestPost({ request, env }) {
     return json({ error: 'Missing required fields: taskId, slot, date' }, 400)
   }
 
-  const now = Date.now()
+  // Atomic: flip credited=0→1, set progress=target, record completion time and
+  // pay the credit. Shared with the progress endpoint and the world's flush, so
+  // whichever of them reaches the target first is the one that pays.
+  const claim = await claimDailyTaskCredit(env, {
+    characterId: ch.id,
+    identityId: auth.identity.id,
+    dateKey: date,
+    slot,
+    taskId,
+  })
 
-  // Atomic: flip credited=0→1, set progress=target, record completion time.
-  // credited=0 guard is the idempotency point — concurrent replays get no row.
-  const claimed = await env.DB.prepare(`
-    UPDATE character_daily_tasks
-       SET progress = target, completed_at = ?1, credited = 1
-     WHERE character_id = ?2 AND task_date = ?3 AND slot = ?4
-       AND task_id = ?5 AND credited = 0
-    RETURNING task_id, tier
-  `).bind(now, ch.id, date, slot, taskId).first()
-
-  if (!claimed) {
+  if (claim.creditsGranted === 0) {
     // Already credited or no such issued task — idempotent no-op
     return json({ ok: true, alreadyCompleted: true, creditsGranted: 0 })
   }
 
-  const grant = await env.DB.prepare(`
-    UPDATE characters SET credits = credits + 1
-     WHERE id = ?1 AND owner_id = ?2 AND deleted_at IS NULL
-    RETURNING credits
-  `).bind(ch.id, auth.identity.id).first()
-
-  await auditLog(env, 'daily_task.completed', {
-    characterId: ch.id,
-    identityId: auth.identity.id,
-    taskId,
-    tier: claimed.tier,
-    credits_remaining: grant?.credits ?? 0,
-  }, { swallow: true })
-
-  return json({ ok: true, taskId, creditsGranted: 1, credits: grant?.credits ?? 0 })
+  return json({ ok: true, taskId, creditsGranted: 1, credits: claim.credits ?? 0 })
 }
