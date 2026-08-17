@@ -69,7 +69,7 @@ import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal, killPresentsFullModal } from '../utils/lootModal.js'
 import { emitKillReveal } from '../utils/rewardReveal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
-import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
+import { CombatFightHead, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
@@ -501,6 +501,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // is left holding a swing that could replay.
   const { swings, pushSwings } = useActionSwings()
   const combatRef = useRef(null)
+  // Bumped exactly at a new-fight boundary (startFight/continueFight/startRaid),
+  // never on an ordinary re-render — InkwrightCombatStage clears its frozen
+  // swing state when this changes, so the last motion/tool of a monster that
+  // just died can't bleed a frame into the next monster's first swing.
+  const fightSeqRef = useRef(0)
   const hpRef = useRef(currentHP)
   const hasAutoStarted = useRef(false)
   // Timestamp-throttles the "out of runes" error toast so a spell that splashes
@@ -1886,6 +1891,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.maxPrayerPoints = prayerLvl
     state.prayerPoints = prayerLvl
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
+    fightSeqRef.current += 1
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
@@ -1925,6 +1931,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.prayerPoints = raidPrayerLvl
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     combatRef.current = state
+    fightSeqRef.current += 1
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
@@ -1959,6 +1966,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // (the engine keeps ticking down ticksLeft and expires it naturally).
     state.summon = combatRef.current?.summon || null
     combatRef.current = state
+    fightSeqRef.current += 1
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
   }
@@ -3340,12 +3348,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // fights melee, and Rapid takes a tick off a ranged swing.
   const playerSprite = playerCombatSprite(equipment, itemsData, { combatType: combat.combatType, stance: combat.stance })
   const monsterSprite = monsterCombatSprite(spriteMonster)
+  // Whichever splat stream belongs to what's actually shown — an add has its
+  // own HP bar and its own splats (addSplats), so a targeted add must not
+  // borrow the boss's monsterSplats or a hit on the add would flash on a
+  // figure representing something else entirely.
+  const stageTargetSplats = targetedAdd(combat) ? addSplats : monsterSplats
   const spriteStage = (
     <InkwrightCombatStage
       actor={{ ...playerSprite, accent: getStyleArt(playerSprite.motion).color }}
-      target={{ icon: spriteMonsterArt.icon, accent: spriteMonsterArt.accent, sprite: monsterSprite }}
+      target={{
+        icon: spriteMonsterArt.icon,
+        accent: spriteMonsterArt.accent,
+        sprite: monsterSprite,
+        dying: spriteMonster.currentHP <= 0,
+      }}
       actorSwing={swings.player}
       targetSwing={swings.monster}
+      actorHp={{ current: currentHP, max: getMaxHP() }}
+      targetHp={{ current: spriteMonster.currentHP, max: spriteMonster.hitpoints }}
+      actorSplats={playerSplats}
+      targetSplats={stageTargetSplats}
+      resetKey={fightSeqRef.current}
       label={`You versus ${spriteMonster.name}`}
     />
   )
@@ -3372,7 +3395,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       {spriteStage}
 
-      {/* Monster HP */}
+      {/* Monster identity — the HP bar itself is above the character in the
+          stage now, not duplicated here. */}
       <div class="mb-3">
         <div class="flex items-center justify-between mb-1">
           <span class="text-sm font-semibold text-[var(--color-parchment)]">
@@ -3389,10 +3413,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <span class="flex items-center gap-2">
             <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
           </span>
-        </div>
-        <div class="relative">
-          <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
-          <HitSplatLayer splats={monsterSplats} />
         </div>
       </div>
 
@@ -3423,15 +3443,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
       )}
 
-      {/* Player HP */}
+      {/* Active potions — your HP bar is above your own character in the stage. */}
       <div class="mb-2">
         <div class="flex items-center justify-between mb-0.5">
           <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>
           <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
-        </div>
-        <div class="relative">
-          <HPBar current={currentHP} max={getMaxHP()} size="large" />
-          <HitSplatLayer splats={playerSplats} />
         </div>
       </div>
 
@@ -3835,23 +3851,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
               {spriteStage}
 
-              {/* Monster HP */}
-              <CombatHPBlock
-                label="Enemy Hitpoints"
-                current={m.currentHP}
-                max={m.hitpoints}
-                splats={monsterSplats}
-              />
-
-              {/* Player HP */}
-              <CombatHPBlock
-                label="Your Hitpoints"
-                current={currentHP}
-                max={getMaxHP()}
-                splats={playerSplats}
-                valueColor="#7ce88a"
-                right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
-              />
+              {/* Both combatants' HP is now the mini bar above their own head
+                  in the stage, with hit splats landing on them directly — no
+                  duplicate bar block here. Active potions still need a home. */}
+              <div class="mb-2 flex justify-end">
+                <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
+              </div>
 
               {addPanel}
 

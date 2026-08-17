@@ -1,7 +1,5 @@
 import GameIcon from './GameIcon.jsx'
 import SkillEmblem from './SkillEmblem.jsx'
-import HPBar from './HPBar.jsx'
-import { HitSplatLayer } from './HitSplat.jsx'
 
 // Shared building blocks for the mobile combat HUD, used by BOTH the solo
 // CombatScreen and the co-op CoopBossScreen so the two fights look identical.
@@ -32,29 +30,6 @@ export function CombatFightHead({ icon, accent, name, nameColor, sub, meta, comb
           <span class="cb-fight__cb">CB {combatLevel}</span>
         )}
       </span>
-    </div>
-  )
-}
-
-export function CombatHPBlock({ label, current, max, splats, valueColor, right }) {
-  const shown = Math.max(0, Math.round(current || 0))
-  return (
-    <div class="cb-hpblock">
-      <div class="cb-hplabel">
-        <span>{label}</span>
-        {right ? (
-          <span class="cb-hplabel__right">
-            {right}
-            <span class="cb-hplabel__v" style={valueColor ? { color: valueColor } : undefined}>{shown}/{max}</span>
-          </span>
-        ) : (
-          <span class="cb-hplabel__v" style={valueColor ? { color: valueColor } : undefined}>{shown}/{max}</span>
-        )}
-      </div>
-      <div class="relative">
-        <HPBar current={Math.max(0, current || 0)} max={max} size="large" />
-        <HitSplatLayer splats={splats} />
-      </div>
     </div>
   )
 }

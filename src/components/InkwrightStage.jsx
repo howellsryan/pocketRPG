@@ -135,12 +135,16 @@ function Tool({ kind }) {
     )
   }
   if (kind === 'fish') {
+    // The line's end point sits well below the water's y=96 surface (not
+    // right at it) so the rod's ±7deg rest-sway (inkStrikeFish) never swings
+    // the hook back above the surface — a line that clears the water even
+    // briefly breaks the "cast into the pond" read this stage exists for.
     return (
       <g>
         <path class="ink-shaft ink-shaft--thin" d="M92 72 L138 36" />
         <circle class="ink-blade" cx="103" cy="63" r="3.2" />
-        <path class="ink-lineout" d="M138 36 Q150 62 156 95" />
-        <circle class="ink-float" cx="156" cy="96" r="2.6" />
+        <path class="ink-lineout" d="M138 36 Q150 74 148 114" />
+        <circle class="ink-float" cx="148" cy="114" r="2.4" />
       </g>
     )
   }
@@ -220,8 +224,12 @@ function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
   if (kind === 'water') {
     return (
       <g>
+        {/* The bank: a solid ledge the figure stands at the lip of, so the cast
+            reads as thrown OUT and DOWN into the pond rather than into a flat
+            puddle at the figure's feet. */}
+        <path class="ink-bank" d="M92 108 L118 96 L104 128 Z" />
         <path class="ink-water" d="M104 128 L118 96 H196 V128 Z" />
-        <path class="ink-line" d="M118 96 Q130 92 142 96 T168 96 T196 96" />
+        <path class="ink-water-ripple" d="M118 96 Q130 92 142 96 T168 96 T196 96" />
         {/* Idling: the actual species, roaming below the surface. Hidden the
             instant the payoff starts (sibling `.ink-payoff` group takes over),
             so there is never a second fish on screen at once. */}
