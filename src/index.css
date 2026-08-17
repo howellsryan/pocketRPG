@@ -235,6 +235,12 @@
    ════════════════════════════════════════════════════════════════════════ */
 :root,
 [data-theme='light'] {
+  /* The bevel on a drawn blade (InkwrightCombatStage). Light runs down the
+     edge, the off-side falls away — those two bands are what read as "sharp"
+     at stage scale, where an outline alone reads as a blunt wedge. Deeper on
+     iron because a dark ground swallows a soft shade. */
+  --blade-glint: rgba(255, 255, 255, 0.55);
+  --blade-shade: rgba(0, 0, 0, 0.20);
   --surface-page: var(--fm-vellum);
   --surface-panel: var(--fm-parch);
   --surface-card: var(--fm-vellum);
@@ -271,6 +277,8 @@
 }
 
 [data-theme='dark'] {
+  --blade-glint: rgba(255, 255, 255, 0.55);
+  --blade-shade: rgba(0, 0, 0, 0.34);
   --surface-page: var(--fm-soot);
   --surface-panel: var(--fm-iron);
   --surface-card: #232020;
@@ -1329,7 +1337,44 @@ html, body, #app {
    read as two different combatants without a second character to draw. */
 .inkc-fig.enemy { filter: drop-shadow(0 0 3px var(--inkc-accent)); }
 
-.inkc-crossguard, .inkc-bowstring { fill: none; stroke: var(--text-strong); stroke-width: 2.6; stroke-linecap: round; }
+/* `.inkc-bowstring` is now an ANIMATION HOOK, not a paint: it selects
+   inkcStringDraw below. Colour and width come from `.inkc-w-bowstring` and
+   the inline per-part width, so setting either here would only shadow them.
+   (`.inkc-crossguard` went with the old stroked guards — every guard is a
+   filled shape now.) */
+
+/* Weapon paint roles (utils/weaponShapes.js part `role` -> `.inkc-w-<role>`).
+   The geometry file names a role and never a colour, so a palette change
+   lands here and nowhere else.
+
+   ONLY `blade` is tinted by the item, and only `orb`/`bowstring` take the
+   style accent — everything else paints from a fixed token. That is not a
+   simplification: `getItemIconTint` returns `var(--tier-dragon)` for some
+   items, so a second colour cannot be derived from a tint at all, and a
+   brass guard on every blade metal reads better than the attempt would.
+
+   The material colours below are literals, not tokens, and identical in both
+   themes on purpose: a leather grip is the same brown on parchment as on
+   iron. They describe a material, not a surface, so they are not part of the
+   semantic layer DESIGN.md 3.1 governs.
+
+   NO STROKE WIDTHS HERE. They live in weaponShapes.js's ROLE_STROKE and are
+   emitted inline, because a scaled copy (shortbow, dagger) has to divide them
+   back out — an SVG transform scales stroke too. A width left in this file is
+   a width the scale compensation cannot reach. */
+.inkc-w-blade { fill: var(--surface-raised); stroke: var(--text-strong); stroke-linejoin: round; }
+.inkc-w-guard { fill: #6d6257; stroke: var(--text-strong); stroke-linejoin: round; }
+.inkc-w-guardline { fill: none; stroke: #6d6257; stroke-linecap: round; }
+.inkc-w-wood { fill: #7a5433; stroke: var(--text-strong); stroke-linejoin: round; }
+.inkc-w-grip { fill: #4e3626; stroke: var(--text-strong); stroke-linejoin: round; }
+.inkc-w-limb { fill: none; stroke: #7a5433; stroke-linecap: round; }
+.inkc-w-limbink { fill: none; stroke: var(--text-strong); stroke-linecap: round; }
+.inkc-w-glint { fill: none; stroke: var(--blade-glint); stroke-linecap: round; }
+.inkc-w-shade { fill: var(--blade-shade); stroke: none; }
+.inkc-w-line { fill: none; stroke: var(--text-strong); stroke-linecap: round; opacity: 0.34; }
+.inkc-w-bowstring { fill: none; stroke: var(--text-strong); stroke-linecap: round; }
+.inkc-w-band { fill: none; stroke: #6d6257; stroke-linecap: round; }
+.inkc-w-orb { fill: var(--surface-raised); stroke: var(--text-strong); }
 .inkc-orb { fill: var(--surface-raised); stroke: var(--text-strong); stroke-width: 2.4; }
 .inkc-consume { fill: var(--surface-raised); stroke: var(--text-strong); stroke-width: 2.4; }
 
@@ -1451,11 +1496,16 @@ html, body, #app {
   .inkc-fig--magic.is-swinging .inkc-orb { animation: inkcOrbCharge var(--inkc-dur) ease-out; transform-box: fill-box; transform-origin: center; }
 
   /* The bowstring draws taut through the same window the arm pulls back. */
+  /* Relative to the string's OWN gauge (--inkc-string-w, set per part by
+     InkwrightCombatStage), never two absolute widths: a keyframe value
+     outranks the inline width for as long as it runs, so literals here made
+     every ranged swing snap the string to one thickness — thickening a
+     longbow's and THINNING a shortbow's, which is the opposite of a draw. */
   @keyframes inkcStringDraw {
-    0%   { stroke-width: 2.6; }
-    55%  { stroke-width: 2.6; }
-    64%  { stroke-width: 3.6; }
-    100% { stroke-width: 2.6; }
+    0%   { stroke-width: var(--inkc-string-w); }
+    55%  { stroke-width: var(--inkc-string-w); }
+    64%  { stroke-width: calc(var(--inkc-string-w) * 1.4); }
+    100% { stroke-width: var(--inkc-string-w); }
   }
   .inkc-fig--ranged.is-swinging .inkc-bowstring { animation: inkcStringDraw var(--inkc-dur) var(--fm-ease); }
 

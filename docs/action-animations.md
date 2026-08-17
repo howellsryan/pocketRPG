@@ -168,10 +168,14 @@ between attacks, because `t` (the frozen/current target sprite) is already avail
 before the first swing token ever arrives — `target.sprite` is computed every render
 from `monsterCombatSprite`, independent of whether anything is mid-swing.
 
-**The actor's own weapon is drawn as one of TEN hand-drawn shapes, keyed by the
+**The actor's own weapon is drawn as one of TWELVE hand-drawn shapes, keyed by the
 equipped item's TYPE and coloured by its MATERIAL** — `WEAPON_ICON_TYPES` in
-`utils/actionSprites.js`, drawn by `CombatTool` in `InkwrightCombatStage.jsx`: sword,
-scimitar, rapier, godsword, maul, mace, bow, crossbow, staff, wand. This is the
+`utils/actionSprites.js`, authored in `utils/weaponShapes.js` and rendered by
+`CombatTool` in `InkwrightCombatStage.jsx`: sword, dagger, scimitar, rapier,
+godsword, maul, mace, longbow, shortbow, crossbow, staff, wand. Two of those are
+SCALED COPIES rather than drawings of their own — a shortbow is a longbow at half
+size, a dagger is a sword at half size — so each family has one profile to get
+right. This is the
 SECOND attempt at "the weapon should look like the weapon." The first embedded the
 actual `bespokeIcons.json` inventory icon per item and was reverted: that icon set
 mixes authoring conventions with no single anchor that lands all 151 of them
@@ -265,17 +269,27 @@ they're spelled out rather than left implicit.
    to `WEAPON_ICON_TYPES`. `tests/actionSprites.test.ts`'s structural test asserts
    every shipped weapon classifies to a real type — a name pattern that matches
    nothing still needs a mechanical fallback or that test fails.
-2. Draw it in `CombatTool()` (`InkwrightCombatStage.jsx`): shaft/blade through the
-   grip at (100,64) same as every other shape; colour the MATERIAL part (blade/head/
-   body, never the grip) with `tint`, falling back to `var(--surface-raised)` when
-   unarmed passes none. `accent` stays reserved for projectile-adjacent bits only.
+2. Draw it in `WEAPON_SHAPES` (`utils/weaponShapes.js`), NOT in the component —
+   `CombatTool` is only a mapper. Author it in the weapon's own local frame: origin
+   at the hand, +X toward the tip, +Y the edge side, with its own `angle` for
+   placement. That frame is what makes a profile drawable at all; geometry authored
+   directly in stage coordinates has to be pre-rotated ~40deg by hand, which is why
+   the shapes this replaced read as stroked lines and flat wedges. Give it at least
+   one part in a tinted role (`TINTED_FILL_ROLES`/`TINTED_STROKE_ROLES`) or every
+   tier of it renders identically. Widths come from `ROLE_STROKE`, never CSS — a
+   scaled copy has to divide them back out. If it is a copy of an existing weapon at
+   a different size, add it to `SCALED` instead and draw nothing.
+   `tests/weaponShapes.test.ts` checks that it stays inside the stage through its own
+   wind-up, and `npm run gen:weapon-preview` refreshes the review page from it.
 3. If it's genuinely a smash weapon (two-handed, meant to read heavy), add it to
    `SMASH_WEAPON_TYPES` in `actionSprites.js` — melee only, `isSmashWeaponType` gates
    `.is-smash` and nothing reads it outside that motion. A thrusting weapon instead
    of a swinging one is the same pattern via `LUNGE_WEAPON_TYPES`/`isLungeWeaponType`
    /`.is-lunge` — the two are mutually exclusive, so add a weapon to at most one.
-4. If it fires its own distinct projectile (not the default arrow/orb), branch it in
-   `shotOffset` and `CombatShot`, and give it its own CSS class in the `inkcShotFly`
+4. If it fires, give it a `shot` kind and a `shotFrom` (its muzzle, in its own local
+   frame) — `weaponMuzzle`/`shotOffset` derive the flight from those, so there is
+   nothing to branch for the origin. Only a genuinely NEW projectile shape needs a
+   branch in `CombatShot`, and it needs its own CSS class in the `inkcShotFly`
    selector — reusing another kind's class silently attaches the wrong animation
    (or none), the exact bug the crossbow-vs-magic-orb naming collision would have
    been if `.inkc-shot--bolt` had been reused instead of adding `--crossbow`.

@@ -25,6 +25,7 @@ const sourceFiles = [
   'utils/itemValue.js',
   'utils/hitSplats.js',
   'utils/actionSprites.js',
+  'utils/weaponShapes.js',
   'utils/inkwright.js',
   'utils/xpDrops.js',
   'utils/lootModal.js',
@@ -315,6 +316,7 @@ const GAME_CHUNK_FILES = new Set([
   'components/PlaceMapView.js',
   'components/SlayerMasterModal.js',
   'utils/actionSprites.js', // -> game chunk (only the combat screens use it today; skilling screens are chunked too)
+  'utils/weaponShapes.js', // -> game chunk, with the CombatTool that maps it (§12)
   'utils/inkwright.js', // -> game chunk, with the actionSprites law it reads (§12)
   'components/InkwrightFigure.js',
   'components/InkwrightStage.js',

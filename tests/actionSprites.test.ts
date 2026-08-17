@@ -131,7 +131,9 @@ describe('weaponIconTypeFor', () => {
     expect(weaponIconTypeFor({ id: 'dragon_warhammer', attackStyle: 'crush' })).toBe('mace')
     expect(weaponIconTypeFor({ id: 'ancestral_wand', attackStyle: 'magic' })).toBe('wand')
     expect(weaponIconTypeFor({ id: 'battlestaff', attackStyle: 'magic' })).toBe('staff')
-    expect(weaponIconTypeFor({ id: 'shortbow', attackStyle: 'ranged', ammoType: 'arrow' })).toBe('bow')
+    expect(weaponIconTypeFor({ id: 'longbow', attackStyle: 'ranged', ammoType: 'arrow' })).toBe('longbow')
+    expect(weaponIconTypeFor({ id: 'shortbow', attackStyle: 'ranged', ammoType: 'arrow' })).toBe('shortbow')
+    expect(weaponIconTypeFor({ id: 'dragon_dagger', attackStyle: 'slash' })).toBe('dagger')
     expect(weaponIconTypeFor({ id: 'adamant_crossbow', attackStyle: 'ranged', ammoType: 'bolt' })).toBe('crossbow')
   })
 
@@ -140,13 +142,21 @@ describe('weaponIconTypeFor', () => {
   })
 
   it('does not misread "bowyers_knife" as a bow — the regression this pattern fixed', () => {
-    expect(weaponIconTypeFor({ id: 'bowyers_knife', attackStyle: 'stab' })).toBe('sword')
+    // It is a knife, so it now lands on the dagger shape rather than merely
+    // avoiding the bow one. The bare bow pattern's negative lookahead stays
+    // as a second line of defence behind the dagger rule's ordering.
+    expect(weaponIconTypeFor({ id: 'bowyers_knife', attackStyle: 'stab' })).toBe('dagger')
+  })
+
+  it('checks shortbow before the bare bow pattern — every shortbow id contains "bow"', () => {
+    expect(weaponIconTypeFor({ id: 'thornspine_shortbow', attackStyle: 'ranged' })).toBe('shortbow')
+    expect(weaponIconTypeFor({ id: 'magic_shortbow', attackStyle: 'ranged' })).toBe('shortbow')
   })
 
   it('falls back to the mechanical style when the name says nothing', () => {
     expect(weaponIconTypeFor({ id: 'zesta_longsword', attackStyle: 'slash' })).toBe('sword')
     expect(weaponIconTypeFor({ id: 'trident_of_venom', attackStyle: 'magic' })).toBe('staff')
-    expect(weaponIconTypeFor({ id: 'colossal_ballista', attackStyle: 'ranged', ammoType: 'javelin' })).toBe('bow')
+    expect(weaponIconTypeFor({ id: 'colossal_ballista', attackStyle: 'ranged', ammoType: 'javelin' })).toBe('longbow')
     expect(weaponIconTypeFor({ id: 'torvek_s_hammers', attackStyle: 'crush' })).toBe('mace')
     expect(weaponIconTypeFor({ id: 'dravok_s_greataxe', attackStyle: 'crush', twoHanded: true })).toBe('maul')
     expect(weaponIconTypeFor({ id: 'scythe_of_vythar', attackStyle: 'slash', twoHanded: true })).toBe('godsword')
