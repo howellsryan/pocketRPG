@@ -1,5 +1,8 @@
 import GameIcon from './GameIcon.jsx'
 import { getItemIconTint } from '../utils/itemIcons.js'
+import { resolveItemIcon } from '../utils/itemIconResolve.js'
+import bespokeIconsData from '../data/bespokeIcons.json'
+import gameIconsData from '../data/gameIcons.json'
 
 /**
  * Inkwright: the skilling figure at work. One inked-vector character strikes a
@@ -49,6 +52,13 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
   // resolver the inventory uses — so copper reads copper and mithril blue
   // without this component knowing a single ore exists.
   const tint = (product && getItemIconTint(product)) || 'var(--text-soft)'
+  // Fishing is the one skill where the "resource" IS the item — a rock is
+  // always a rock, but a shark and a shrimp are different animals. Every raw
+  // fish resolves to the same flat #f4a08c through getItemIconTint (there is
+  // no tier ladder for fish), so a tinted silhouette could never tell a shark
+  // from a shrimp — the real bespoke art has to, the same art the inventory
+  // already shows for that item.
+  const fishArt = prop === 'water' ? bespokeFishArt(product) : null
   // Nothing has given way until an action has actually completed. Rendering
   // the payoff at mount shattered the rock the instant the screen opened, and
   // popped a reward for an action nobody had finished.
@@ -76,11 +86,11 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
             the next one — left up, the broken pieces fly over a rock that is
             still standing there whole. */}
         <g key={`pr${yieldToken}`} class={`ink-prop${broke ? ' is-breaking' : ''}`}>
-          <Prop kind={prop} />
+          <Prop kind={prop} fishArt={fishArt} swinging={swinging} />
         </g>
         {broke && (
           <g key={`p${yieldToken}`} class={`ink-payoff ink-payoff--${motion}`}>
-            <Prop kind={prop} broken />
+            <Prop kind={prop} broken fishArt={fishArt} />
           </g>
         )}
 
@@ -169,9 +179,45 @@ function Tool({ kind }) {
   )
 }
 
+// Every raw fish has a bespoke entry (checked against skills.json's fishing
+// products) and none are `tintable`, so this always comes back as the item's
+// own multi-tone art with no tint to apply — unlike ore/logs, whose colour IS
+// the flat tint. Returns null only if the data hasn't loaded yet (chunk not
+// ready) or an unmapped item slips through, and the water just stays empty
+// rather than guess at a placeholder.
+export function bespokeFishArt(product) {
+  if (!product) return null
+  const icon = resolveItemIcon(product, {
+    bespoke: typeof bespokeIconsData !== 'undefined' ? bespokeIconsData : null,
+    glyphs: typeof gameIconsData !== 'undefined' ? gameIconsData : null,
+  })
+  if (icon.kind === 'none') return null
+  const [vx, vy, vw, vh] = (icon.viewBox || '0 0 512 512').split(/\s+/).map(Number)
+  return { body: icon.body, tint: icon.tint, cx: vx + vw / 2, cy: vy + vh / 2, size: Math.max(vw, vh) }
+}
+
+// The fish's own art, scaled from its native (typically 512x512) viewBox down
+// into this stage's 200x128 frame and recentred on (cx, cy). A CSS animation
+// on the OUTER group composes with this positioning transform rather than
+// fighting it — same layering as .ink-arm's rotation around a fixed origin.
+function FishArt({ art, cx, cy, width, className }) {
+  const scale = width / (art.size || 512)
+  return (
+    <g class={className} style={{ transformOrigin: `${cx}px ${cy}px` }}>
+      <g
+        transform={`translate(${cx} ${cy}) scale(${scale}) translate(${-art.cx} ${-art.cy})`}
+        {...(art.tint ? { fill: art.tint } : {})}
+        dangerouslySetInnerHTML={{ __html: art.body }}
+      />
+    </g>
+  )
+}
+
 /** The resource. `broken` is the payoff layer — the same silhouette split into
- * pieces that fly, so the whole and the broken form can never drift apart. */
-function Prop({ kind, broken = false }) {
+ * pieces that fly, so the whole and the broken form can never drift apart.
+ * `swinging` only matters to the idle fish, so it can freeze with the figure
+ * when the action is stalled (inventory full) rather than keep roaming. */
+function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
   if (kind === 'tree') {
     // The trunk below the cut is a stump and never moves; everything above it
     // hinges at the notch, so the tree lets go where the axe has been landing
@@ -200,7 +246,19 @@ function Prop({ kind, broken = false }) {
       <g>
         <path class="ink-water" d="M104 128 L118 96 H196 V128 Z" />
         <path class="ink-line" d="M118 96 Q130 92 142 96 T168 96 T196 96" />
-        {broken && <path class="ink-catch" d="M149 104 Q156 99 164 104 Q156 109 149 104 Z" />}
+        {/* Idling: the actual species, roaming below the surface. Hidden the
+            instant the payoff starts (sibling `.ink-payoff` group takes over),
+            so there is never a second fish on screen at once. */}
+        {!broken && fishArt && (
+          <FishArt art={fishArt} cx={152} cy={112} width={26} className={`ink-fish-idle${swinging ? ' is-working' : ''}`} />
+        )}
+        {/* Caught: the SAME art, breaking the surface on the rise. Falls back
+            to a plain silhouette if the bespoke data was not ready — better a
+            generic catch than none at all mid-payoff. */}
+        {broken && (fishArt
+          ? <FishArt art={fishArt} cx={156} cy={100} width={22} className="ink-catch" />
+          : <path class="ink-catch ink-catch--fallback" d="M149 104 Q156 99 164 104 Q156 109 149 104 Z" />
+        )}
       </g>
     )
   }

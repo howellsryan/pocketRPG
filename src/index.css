@@ -1268,7 +1268,10 @@ html, body, #app {
 .ink-res    { fill: var(--ink-tint); }
 .ink-res--soft { opacity: 0.55; }
 .ink-water  { fill: var(--ink-tint); opacity: 0.16; }
-.ink-catch  { fill: var(--ink-tint); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; }
+/* The catch is the real species art (see InkwrightStage's FishArt), which
+   paints its own colour — no fill/stroke here. The fallback silhouette used
+   only if that art failed to load keeps the old flat treatment. */
+.ink-catch--fallback { fill: var(--ink-tint); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; }
 
 /* The payoff layer sits exactly on the prop and is invisible until its own
    animation runs, so a stage at rest shows one unbroken resource. */
@@ -1287,6 +1290,8 @@ html, body, #app {
 .ink-fig { transform-box: view-box; transform-origin: 76px 100px; }
 .ink-faller, .ink-fall { transform-box: view-box; transform-origin: 141px 79px; }
 .ink-shard { transform-box: view-box; transform-origin: 148px 91px; }
+.ink-fish-idle { transform-box: view-box; }
+.ink-catch { transform-box: view-box; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* Mining — a high wind-up and a committed drop onto the rock. */
@@ -1322,6 +1327,15 @@ html, body, #app {
   .ink-fig--fish.is-working .ink-arm { animation: inkStrikeFish var(--ink-strike) ease-in-out infinite; }
   .ink-fig--mine.is-working,
   .ink-fig--chop.is-working { animation: inkBodyWork var(--ink-strike) var(--fm-ease) infinite; }
+
+  /* The fish roams while the rod is out. Tied to the same strike clock as
+     everything else on the stage, so nothing on screen runs its own free
+     clock — pausing the action pauses the water too. */
+  @keyframes inkFishSwim {
+    0%, 100% { transform: translate(3px, 0) rotate(-3deg); }
+    50%      { transform: translate(-4px, 1.6px) rotate(3deg); }
+  }
+  .ink-fish-idle.is-working { animation: inkFishSwim var(--ink-strike) ease-in-out infinite; }
 
   /* Payoffs. Each runs once per completed action and returns the prop to rest,
      because the engine starts the next action immediately — there is no dead
