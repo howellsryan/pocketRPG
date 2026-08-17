@@ -6,36 +6,47 @@ import bespokeIconsData from '../data/bespokeIcons.json'
 import gameIconsData from '../data/gameIcons.json'
 
 /**
- * Inkwright: the skilling figure at work. One inked-vector character strikes a
- * resource in time with the action, and the resource gives way when the action
- * completes.
+ * Inkwright: the skilling figure at work. One articulated character strikes
+ * a resource in time with the action, and the resource gives way when the
+ * action completes.
+ *
+ * Baseline for the fidelity bar every skilling animation now targets: real
+ * tools (a crescent pickaxe, a bearded felling axe, a three-segment fishing
+ * rod — authored local-frame, same convention as combat's `weaponShapes.js`)
+ * and real environments (an ore boulder proud of a strata'd rock wall, a
+ * tree with a persistent notch under a broken-silhouette canopy, a river
+ * with a surface film and the caught species' own art), replacing the
+ * hooded ink-vector figure this used to draw. Design record, the review
+ * artifact this was built from, and the measured-impact-point methodology:
+ * docs/action-animations.md.
+ *
+ * The figure body (`InkwrightFigure.jsx`) is shared with combat — this file
+ * supplies only the front arm/tool, same as it always did, at the same
+ * shoulder (84,58) and grip (100,64) combat's math depends on. What's new is
+ * everything drawn AROUND that figure.
  *
  * Pure presentation. Every duration arrives already solved by
  * utils/inkwright.js — this component must not derive one, or the "animation
- * speed IS the action's cadence" law stops holding the moment someone edits the
- * CSS. The two it receives:
+ * speed IS the action's cadence" law stops holding the moment someone edits
+ * the CSS. The two it receives:
  *   --ink-strike  one strike, looping forever at the action's own tempo
  *   --ink-payoff  the one-shot beat when the resource gives way
  *
- * The strike fills its whole period, and the period IS the tempo — the wind-up
- * and recovery stretch to fill a longer one. That is correct here and wrong for
- * combat: a combat cycle is one swing, so its motion is a shrinking fraction of
- * the cycle (swingDurationMs). A skilling period is already near-constant by
- * construction, so a second scaling on top of it would do nothing but drift.
+ * THE STRIKE LOOP IS RE-KEYED ON EVERY COMPLETED ACTION, which is what keeps
+ * it phase-locked. `plan.strikes` strikes divide the action exactly, so a
+ * loop restarted at each yield lands its final impact on the next yield,
+ * forever. A free-running loop drifts within a few actions and the pick
+ * starts passing through a rock that breaks on its own.
  *
- * THE STRIKE LOOP IS RE-KEYED ON EVERY COMPLETED ACTION, which is what keeps it
- * phase-locked. `plan.strikes` strikes divide the action exactly, so a loop
- * restarted at each yield lands its final impact on the next yield, forever. A
- * free-running loop drifts within a few actions and the pick starts passing
- * through a rock that breaks on its own.
+ * The payoff is a SIBLING of the prop, never a wrapper: a CSS animation
+ * replays when its element mounts, so a wrapper remounting on each yield
+ * would drag the strike loop inside it along and restart the figure
+ * mid-swing.
  *
- * The payoff is a SIBLING of the prop, never a wrapper: a CSS animation replays
- * when its element mounts, so a wrapper remounting on each yield would drag the
- * strike loop inside it along and restart the figure mid-swing.
- *
- * Progress is deliberately NOT a prop. getActionProgress is tick-quantised — a
- * 4-tick action only ever reports 0, .25, .5, .75 — so driving motion from it
- * gives four poses and a jump. The bar reads progress; the figure reads a clock.
+ * Progress is deliberately NOT a prop. getActionProgress is tick-quantised —
+ * a 4-tick action only ever reports 0, .25, .5, .75 — so driving motion from
+ * it gives four poses and a jump. The bar reads progress; the figure reads a
+ * clock.
  *
  * Props:
  *   plan       — from inkwrightPlan(): motion, prop, strikePeriodMs, payoffMs
@@ -55,14 +66,14 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
   const tint = (product && getItemIconTint(product)) || 'var(--text-soft)'
   // Fishing is the one skill where the "resource" IS the item — a rock is
   // always a rock, but a shark and a shrimp are different animals. Every raw
-  // fish resolves to the same flat #f4a08c through getItemIconTint (there is
-  // no tier ladder for fish), so a tinted silhouette could never tell a shark
-  // from a shrimp — the real bespoke art has to, the same art the inventory
-  // already shows for that item.
+  // fish resolves to the same flat colour through getItemIconTint (there is
+  // no tier ladder for fish), so a tinted silhouette could never tell a
+  // shark from a shrimp — the real bespoke art has to, the same art the
+  // inventory already shows for that item.
   const fishArt = prop === 'water' ? bespokeFishArt(product) : null
   // Nothing has given way until an action has actually completed. Rendering
-  // the payoff at mount shattered the rock the instant the screen opened, and
-  // popped a reward for an action nobody had finished.
+  // the payoff at mount shattered the rock the instant the screen opened,
+  // and popped a reward for an action nobody had finished.
   const broke = yieldToken > 0
 
   return (
@@ -77,15 +88,12 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
       }}
     >
       <svg class="ink-svg" viewBox="0 0 200 128" aria-hidden="true">
-        {/* Ground the two sides stand on. Without it the figure and the rock
-            read as two unrelated drawings floating in a box. */}
-        <path class="ink-ground" d="M12 108 H188" />
-        <ellipse class="ink-shadow" cx="76" cy="108" rx="23" ry="3.4" />
+        <Backdrop kind={prop} />
 
         {/* Prop, and its payoff as a SIBLING layer keyed on the yield. The
-            intact resource hides for exactly the payoff's length and returns as
-            the next one — left up, the broken pieces fly over a rock that is
-            still standing there whole. */}
+            intact resource hides for exactly the payoff's length and returns
+            as the next one — left up, the broken pieces fly over a rock that
+            is still standing there whole. */}
         <g key={`pr${yieldToken}`} class={`ink-prop${broke ? ' is-breaking' : ''}`}>
           <Prop kind={prop} fishArt={fishArt} swinging={swinging} />
         </g>
@@ -95,11 +103,26 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
           </g>
         )}
 
-        {/* The figure. Only the arm swings; the body carries the recoil. */}
+        {/* Ground the figure stands on, and its own contact shadow — drawn
+            after the backdrop's own ground/floor so the character always
+            reads as standing IN the scene, not pasted over it. Runs the full
+            width for a solid resource (mining/chop) so the resource never
+            reads as floating past where the line used to stop; stops at the
+            bank for fishing, or it would draw a stray stroke across the
+            water Prop already painted at this same y. */}
+        <path class="ink-ground" d={prop === 'water' ? 'M6 108 H100' : 'M6 108 H196'} />
+        <ellipse class="ink-shadow" cx="76" cy="108" rx="23" ry="3.4" />
+
+        {/* The figure. Only the arms/head carry the strike; InkwrightFigure
+            itself never animates, so every skill (and combat) can choreograph
+            it differently without touching the shared body. */}
         <g class={`ink-fig ink-fig--${motion}${swinging ? ' is-working' : ''}`} key={`f${yieldToken}`}>
           <InkwrightFigure>
-            {/* Arm and tool rotate together about the shoulder, so the tool
-                cannot drift out of the hand. */}
+            {/* Arm and tool rotate together about the shoulder (84,58), the
+                exact joint combat's weapon math is anchored to — this segment
+                is deliberately identical to InkwrightCombatStage's own, so a
+                redraw of the body behind it never has to re-derive where the
+                hand is. */}
             <g class="ink-arm">
               <Limb d="M84 58 L94 62 L100 64" w={11} />
               <Tool kind={motion} />
@@ -107,11 +130,18 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
           </InkwrightFigure>
         </g>
 
+        {/* Terminal fishing tackle (line/float/catch) lives in STAGE space,
+            not inside the rod's local frame — a line hangs by gravity, it
+            does not rotate rigidly with the blank. Its own motion is driven
+            off the rod tip's own measured path (inkRigMotion, index.css),
+            same technique the review artifact validated. */}
+        {prop === 'water' && <FishingRig fishArt={fishArt} broke={broke} swinging={swinging} />}
       </svg>
 
-      {/* What the action produced, popped on the yield. An HTML sibling rather
-          than a foreignObject: GameIcon renders its own <svg>, and nesting one
-          inside this one through foreignObject buys nothing but quirks. */}
+      {/* What the action produced, popped on the yield. An HTML sibling
+          rather than a foreignObject: GameIcon renders its own <svg>, and
+          nesting one inside this one through foreignObject buys nothing but
+          quirks. */}
       {product && broke && (
         <div key={`y${yieldToken}`} class="ink-yield" aria-hidden="true">
           <GameIcon item={product} size={30} />
@@ -121,40 +151,145 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
   )
 }
 
-/** Each shaft passes THROUGH the hand at (100,64) and shows a grip, so the
- * tool reads as held rather than floating alongside the arm. */
-function Tool({ kind }) {
-  if (kind === 'chop') {
+/** The scene behind the figure and its prop — a strata'd cave wall for
+ * mining, a forest edge for woodcutting, a far bank and water for fishing.
+ * Fixed, atmospheric colour (not theme tokens): a cave is dark and a river
+ * is blue regardless of whether the surrounding UI chrome is parchment or
+ * iron, the same reasoning `--tier-*`/`--potion-*` already rely on elsewhere
+ * in this file. Purely decorative — never the thing carrying gameplay state,
+ * which is why nothing here reads `swinging`/`broken`. */
+function Backdrop({ kind }) {
+  if (kind === 'rock') {
     return (
-      <g>
-        <path class="ink-shaft" d="M92 70 L124 52" />
-        <path class="ink-blade" d="M117 45 L128 47 Q135 54 128 61 L117 60 Z" />
-        <path class="ink-edge" d="M128 47 Q135 54 128 61" />
-        <path class="ink-grip" d="M96 68 L104 64" />
+      <g class="ink-scene ink-scene--mine">
+        <path class="ink-cave-wall" d="M0 108 L0 74 L22 62 L46 78 L70 58 L92 72 L100 108 Z" />
+        <path class="ink-cave-wall ink-cave-wall--near" d="M0 108 L0 90 L28 82 L58 94 L88 84 L100 92 L100 108 Z" />
       </g>
     )
   }
-  if (kind === 'fish') {
-    // The line's end point sits well below the water's y=96 surface (not
-    // right at it) so the rod's ±7deg rest-sway (inkStrikeFish) never swings
-    // the hook back above the surface — a line that clears the water even
-    // briefly breaks the "cast into the pond" read this stage exists for.
+  if (kind === 'tree') {
     return (
-      <g>
-        <path class="ink-shaft ink-shaft--thin" d="M92 72 L138 36" />
-        <circle class="ink-blade" cx="103" cy="63" r="3.2" />
-        <path class="ink-lineout" d="M138 36 Q150 74 148 114" />
-        <circle class="ink-float" cx="148" cy="114" r="2.4" />
+      <g class="ink-scene ink-scene--chop">
+        <path class="ink-treeline" d="M0 108 L6 84 L12 108 Z" />
+        <path class="ink-treeline" d="M14 108 L21 78 L28 108 Z" />
+        <path class="ink-treeline" d="M2 96 Q22 88 40 96 Q54 100 78 97 L78 108 L0 108 Z" />
       </g>
     )
   }
   return (
-    <g>
-      <path class="ink-shaft" d="M92 70 L128 50" />
-      {/* Double-pointed head straddling the haft's end. Drawn as a stroked
-          arc it bowed away from the shaft and read as a hook. */}
-      <path class="ink-blade" d="M120 37 L131 48 L135 61 L125 52 Z" />
-      <path class="ink-grip" d="M96 68 L104 64" />
+    <g class="ink-scene ink-scene--fish">
+      <path class="ink-far-bank" d="M0 88 Q40 84 78 87 L78 96 L0 96 Z" />
+      <g class="ink-reed">
+        <path d="M14 88 Q13 79 15 73 M18 88 Q18 78 16 72" />
+        <path d="M58 87 Q57 78 59 72" />
+      </g>
+    </g>
+  )
+}
+
+/** Each shaft passes THROUGH the hand at (100,64) and shows a grip, so the
+ * tool reads as held rather than floating alongside the arm — same
+ * convention as `weaponShapes.js`'s combat weapons, authored in the tool's
+ * own local frame (origin at the hand, +X toward the working end) and
+ * placed here by one translate+rotate+scale. The scale exists because this
+ * stage's whole canvas is a third the size of the review artifact's — the
+ * geometry is the SAME shapes, just fitted to a mobile skilling card
+ * instead of a full scene. */
+function Tool({ kind }) {
+  if (kind === 'chop') {
+    return (
+      <g transform="translate(100,64) rotate(19) scale(.8)">
+        <path class="ink-tool-haft" d="M-22 3 Q-27 5 -25 8 Q-21 10 -17 7 L14 3 L13 -3 L-17 1 Z" />
+        <path class="ink-tool-grip" d="M-22 3 Q-27 5 -25 8 Q-21 10 -17 7 L-4 5 L-5 10 L-17 12 Q-24 10 -22 3 Z" />
+        {/* Bearded bit: a straight top edge running on from the haft, the
+            mass dropping BELOW into a beard — a symmetric flare reads as a
+            spade, this asymmetry is what reads as an axe. */}
+        <path class="ink-tool-head" d="M12 -13 L28 -15 C33 -8 34 0 32 8 C30 15 24 21 16 23 L12 12 Z" />
+        <path class="ink-tool-edge" d="M27 -13 C32 -6 33 1 31 7 C29 13 25 18 19 21" />
+        <path class="ink-tool-eye" d="M0 -11 L13 -13 L13 11 L0 9 Z" />
+        <path class="ink-tool-wedge" d="M2 -6 L10 -7 M2 3 L10 3.6" />
+      </g>
+    )
+  }
+  if (kind === 'fish') {
+    return (
+      <g transform="translate(100,64) rotate(-10) scale(.4)">
+        <path class="ink-tool-grip" d="M-18 -4 Q-22 0 -18 4 L20 3.8 L20 -3.8 Z" />
+        <path class="ink-tool-seat" d="M20 -4 L34 -3.4 L34 3.4 L20 4 Z" />
+        <g class="ink-rod-reel">
+          <circle class="ink-tool-reel" cx="27" cy="13" r="11" />
+          <path class="ink-tool-reel-spoke" d="M27 4 L27 22 M18.6 13 L35.4 13 M21 7 L33 19 M33 7 L21 19" />
+        </g>
+        {/* Three chained segments so the blank bends as a curve, not a stick
+            tilting — the single detail the review artifact's fishing plate
+            was praised for. Each nested group is its own animated joint
+            (index.css: .ink-rod-seg1/2/3). */}
+        <path class="ink-tool-blank" d="M34 -3.2 L96 -2.2 L96 2.2 L34 3.2 Z" />
+        <g class="ink-rod-seg1">
+          <path class="ink-tool-blank" d="M96 -2.2 L150 -1.5 L150 1.5 L96 2.2 Z" />
+          <path class="ink-tool-guide" d="M112 -1.9 L110 -8 Q115 -12 120 -8 L118 -1.8" />
+          <g class="ink-rod-seg2">
+            <path class="ink-tool-blank" d="M150 -1.5 L186 -1 L186 1 L150 1.5 Z" />
+            <path class="ink-tool-guide" d="M162 -1.3 L160 -6.4 Q165 -9.8 170 -6.4 L168 -1.2" />
+            <g class="ink-rod-seg3">
+              <path class="ink-tool-blank" d="M186 -1 L226 -.35 L226 .35 L186 1 Z" />
+              <path class="ink-tool-guide" d="M198 -.9 L196 -4.8 Q200.5 -7.6 205 -4.8 L203 -.85" />
+              <circle class="ink-tool-tip" cx="228" cy="-2.6" r="2.4" />
+            </g>
+          </g>
+        </g>
+      </g>
+    )
+  }
+  return (
+    <g transform="translate(100,64) rotate(17) scale(.5)">
+      <path class="ink-tool-haft" d="M-19 -3 Q-21 0 -19 3 L100 2.4 L100 -2.4 Z" />
+      <path class="ink-tool-grip" d="M-19 -3 Q-21 0 -19 3 L14 2.9 L14 -2.9 Z" />
+      <path class="ink-tool-collar" d="M72 -3 L86 -2.85 L86 2.85 L72 3 Z" />
+      {/* A crescent crossing the haft, sharp at both points — proportion is
+          what makes this read as a pick rather than a spear: taller than it
+          is wide, the head running well past the haft on both sides. */}
+      <path class="ink-tool-head" d="M84 -31 C101 -25 113 -13 114 0 C115 13 109 24 99 32 C104 20 106 10 104 0 C102 -11 95 -22 84 -31 Z" />
+      <path class="ink-tool-edge" d="M86 -28 C101 -22 111.5 -12 112.5 0 C113.5 12 107.5 22 98.5 29" />
+      <path class="ink-tool-eye" d="M87 -11 L107 -9.5 L106 8 L86 9 Z" />
+      <path class="ink-tool-wedge" d="M93 -6 L101 -5.4 M93 2 L101 2.4" />
+    </g>
+  )
+}
+
+/** Line, float and (once hooked) the real species art — kept in STAGE
+ * coordinates, sibling to the rod rather than nested inside its local frame.
+ * Two earlier attempts (docs/skilling-plates-review.html) failed for the
+ * same underlying reason: a fixed anchor left the line visibly detached
+ * from the tip through the swing, and parenting the tackle to the tip made
+ * it inherit the rod's own rotation and fly off-stage — a line hangs by
+ * gravity, it does not swing rigidly with the blank. `.ink-rig`'s keyframes
+ * (index.css) are the rod tip's own measured path instead: damped to a
+ * quarter during the idle sway (slack absorbs it), full during the haul
+ * (which is what actually lifts the catch clear of the water). */
+function FishingRig({ fishArt, broke, swinging }) {
+  return (
+    <g class={`ink-rig${swinging ? ' is-working' : ''}`}>
+      {/* Anchored at the rod tip's own REST position (190,47) — computed from
+          the tool's placement transform, not eyeballed, the same discipline
+          the review artifact's measured-impact-point probe established. The
+          float sits at y=100, well below the water's y=96 surface (x>=118,
+          Prop()'s .ink-water) — a float drawn AT the surface line reads as
+          floating in the air above the pond, the same trap the old fishing
+          rod's own line-length comment was written to avoid. */}
+      <path class="ink-rod-line" d="M190 47 Q186 72 178 100" />
+      {!broke && (
+        <g class="ink-float-idle">
+          <circle class="ink-tool-float" cx="178" cy="100" r="3.6" />
+        </g>
+      )}
+      {broke && (
+        <g class="ink-catch-rise">
+          {fishArt
+            ? <FishArt art={fishArt} cx={178} cy={98} width={24} className="ink-catch" />
+            : <path class="ink-catch ink-catch--fallback" d="M169 98 Q178 92 187 98 Q178 104 169 98 Z" />}
+        </g>
+      )}
     </g>
   )
 }
@@ -177,9 +312,9 @@ export function bespokeFishArt(product) {
 }
 
 // The fish's own art, scaled from its native (typically 512x512) viewBox down
-// into this stage's 200x128 frame and recentred on (cx, cy). A CSS animation
-// on the OUTER group composes with this positioning transform rather than
-// fighting it — same layering as .ink-arm's rotation around a fixed origin.
+// into this stage's frame and recentred on (cx, cy). A CSS animation on the
+// OUTER group composes with this positioning transform rather than fighting
+// it — same layering as .ink-arm's rotation around a fixed origin.
 function FishArt({ art, cx, cy, width, className }) {
   const scale = width / (art.size || 512)
   return (
@@ -193,28 +328,46 @@ function FishArt({ art, cx, cy, width, className }) {
   )
 }
 
-/** The resource. `broken` is the payoff layer — the same silhouette split into
- * pieces that fly, so the whole and the broken form can never drift apart.
- * `swinging` only matters to the idle fish, so it can freeze with the figure
- * when the action is stalled (inventory full) rather than keep roaming. */
+/** The resource. `broken` is the payoff layer — the same silhouette split
+ * into pieces that fly, so the whole and the broken form can never drift
+ * apart. `swinging` only matters to the idle float, so it can freeze with
+ * the figure when the action is stalled (inventory full) rather than keep
+ * bobbing. */
 function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
   if (kind === 'tree') {
-    // The trunk below the cut is a stump and never moves; everything above it
-    // hinges at the notch, so the tree lets go where the axe has been landing
-    // rather than snapping off at the roots.
     return (
       <g>
-        <path class="ink-res" d="M132 108 Q131.4 92 133.2 79 L148.8 79 Q150.4 92 150 108 Z" />
+        {/* Canopy: an irregular silhouette with a scalloped underside, then
+            one lit clump — a broken outline reads as leaf mass, stacked flat
+            ellipses (the previous version) read as broccoli. */}
         {!broken && (
-          <g class="ink-faller">
-            <path class="ink-res ink-res--soft" d="M130 62 Q112 56 116 38 Q120 20 140 18 Q162 16 166 34 Q170 54 152 62 Z" />
-            <path class="ink-res" d="M133.2 79 Q134 68 135 58 L147 58 Q148 68 148.8 79 Z" />
+          <g class="ink-faller" transform="translate(28,30.24) scale(.72)">
+            <path class="ink-canopy" d="M108 66 C92 66 80 58 79 46 C78 36 86 28 96 27 C100 18 112 13 122 16 C134 10 148 12 152 22 C160 24 164 34 160 42 C166 48 164 58 154 62 C150 68 138 70 126 66 Z" />
+            <path class="ink-canopy-lit" d="M96 42 C92 46 93 52 98 54 C104 56 110 52 109 46 C108 40 101 38 96 42 Z" />
+            <path class="ink-canopy-lit" d="M128 26 C122 29 122 37 129 40 C137 43 144 37 142 30 C141 25 133 23 128 26 Z" />
+            <path class="ink-bough" d="M114 66 Q108 58 100 54" />
+            <path class="ink-bough" d="M119 62 Q130 54 138 51" />
           </g>
         )}
+        {/* Trunk + notch — the trunk never moves, the notch STAYS CUT between
+            swings so the loop reads as progress, and the fall hinges from
+            exactly where the axe has been landing. */}
+        <g transform="translate(28,30.24) scale(.72)">
+          <path class="ink-trunk" d="M112 108 Q109 88 112 66 L126 66 Q129 88 126 108 Z" />
+          <g class="ink-notch">
+            <path class="ink-notch-face" d="M114 88 L128 94 L114 100 Z" />
+            <path class="ink-notch-lit" d="M114 88 L128 94 L116 97 Z" />
+          </g>
+        </g>
         {broken && (
           <g class="ink-fall">
-            <path class="ink-res ink-res--soft" d="M130 62 Q112 56 116 38 Q120 20 140 18 Q162 16 166 34 Q170 54 152 62 Z" />
-            <path class="ink-res" d="M133.2 79 Q134 68 135 58 L147 58 Q148 68 148.8 79 Z" />
+            <g transform="translate(28,30.24) scale(.72)">
+              <path class="ink-canopy" d="M108 66 C92 66 80 58 79 46 C78 36 86 28 96 27 C100 18 112 13 122 16 C134 10 148 12 152 22 C160 24 164 34 160 42 C166 48 164 58 154 62 C150 68 138 70 126 66 Z" />
+              <path class="ink-canopy-lit" d="M96 42 C92 46 93 52 98 54 C104 56 110 52 109 46 C108 40 101 38 96 42 Z" />
+              <path class="ink-bough" d="M114 66 Q108 58 100 54" />
+              <path class="ink-bough" d="M119 62 Q130 54 138 51" />
+              <path class="ink-trunk" d="M112 90 Q110 78 112 66 L126 66 Q128 78 126 90 Z" />
+            </g>
           </g>
         )}
       </g>
@@ -224,47 +377,43 @@ function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
   if (kind === 'water') {
     return (
       <g>
-        {/* The bank: a solid ledge the figure stands at the lip of, so the cast
-            reads as thrown OUT and DOWN into the pond rather than into a flat
-            puddle at the figure's feet. */}
-        <path class="ink-bank" d="M92 108 L118 96 L104 128 Z" />
-        <path class="ink-water" d="M104 128 L118 96 H196 V128 Z" />
-        <path class="ink-water-ripple" d="M118 96 Q130 92 142 96 T168 96 T196 96" />
+        {/* The bank: a ledge the figure stands at the lip of, so the line
+            reads as cast OUT and DOWN into the water rather than into a
+            puddle at the figure's own feet. */}
+        <path class="ink-bank" d="M90 108 L118 96 L102 128 Z" />
+        <path class="ink-water" d="M102 128 L118 96 H200 V128 Z" />
+        <path class="ink-water-ripple" d="M118 97 Q134 92 150 97 T182 97 T200 97" />
         {/* Idling: the actual species, roaming below the surface. Hidden the
-            instant the payoff starts (sibling `.ink-payoff` group takes over),
-            so there is never a second fish on screen at once. */}
+            instant the payoff starts (FishingRig's sibling group takes over),
+            so there is never a second fish visible at once. */}
         {!broken && fishArt && (
-          <FishArt art={fishArt} cx={152} cy={112} width={26} className={`ink-fish-idle${swinging ? ' is-working' : ''}`} />
-        )}
-        {/* Caught: the SAME art, breaking the surface on the rise. Falls back
-            to a plain silhouette if the bespoke data was not ready — better a
-            generic catch than none at all mid-payoff. */}
-        {broken && (fishArt
-          ? <FishArt art={fishArt} cx={156} cy={100} width={22} className="ink-catch" />
-          : <path class="ink-catch ink-catch--fallback" d="M149 104 Q156 99 164 104 Q156 109 149 104 Z" />
+          <FishArt art={fishArt} cx={158} cy={112} width={22} className={`ink-fish-idle${swinging ? ' is-working' : ''}`} />
         )}
       </g>
     )
   }
 
-  // Rock. The whole silhouette, and the same silhouette split four ways —
-  // the shard seams double as the facets, so an unbroken rock still reads
-  // as faceted stone rather than a pebble.
+  // Rock. The whole silhouette (a boulder proud of the wall, not merged into
+  // it — the pick lands on stone, not inside the wall it's part of), and the
+  // same silhouette split into shard facets for the payoff.
   if (!broken) {
     return (
       <g>
-        <path class="ink-res" d="M130 108 Q123 96 129 85 Q135 75 148 73 Q161 72 166 84 Q171 96 165 105 Q160 109 152 108 Z" />
-        <path class="ink-facet" d="M143 89 L150 87 L157 92" />
-        <path class="ink-facet" d="M143 89 L141 108" />
+        <path class="ink-res" d="M108 108 Q104 94 112 84 Q121 74 134 72 Q149 70 156 82 Q163 94 158 104 Q153 109 144 108 Z" />
+        <path class="ink-facet" d="M124 90 L136 87 L146 93" />
+        <path class="ink-facet" d="M124 90 L120 108" />
+        <g class="ink-seam">
+          <path d="M113 102 Q120 90 130 85 Q140 81 151 82" />
+        </g>
       </g>
     )
   }
   return (
     <g>
-      <path class="ink-res ink-shard ink-shard--a" d="M130 108 Q123 96 129 85 L143 89 L141 108 Z" />
-      <path class="ink-res ink-shard ink-shard--b" d="M129 85 Q135 75 148 73 L150 87 L143 89 Z" />
-      <path class="ink-res ink-shard ink-shard--c" d="M148 73 Q161 72 166 84 L157 92 L150 87 Z" />
-      <path class="ink-res ink-shard ink-shard--d" d="M143 89 L150 87 L157 92 L166 84 Q171 96 165 105 Q160 109 152 108 L141 108 Z" />
+      <path class="ink-res ink-shard ink-shard--a" d="M108 108 Q104 94 112 84 L124 90 L120 108 Z" />
+      <path class="ink-res ink-shard ink-shard--b" d="M112 84 Q121 74 134 72 L136 87 L124 90 Z" />
+      <path class="ink-res ink-shard ink-shard--c" d="M134 72 Q149 70 156 82 L146 93 L136 87 Z" />
+      <path class="ink-res ink-shard ink-shard--d" d="M124 90 L136 87 L146 93 Q163 94 158 104 Q153 109 144 108 L120 108 Z" />
     </g>
   )
 }

@@ -16,7 +16,7 @@ the *why*; the skill is the *how*.
 | | `InkwrightCombatStage` (`.inkc-*`) | `InkwrightStage` (`.ink-*`) |
 |---|---|---|
 | Shape | two figures facing off, mirrored | a figure working a resource |
-| Sprite | drawn inked-vector figure + weapon | drawn inked-vector figure + tool |
+| Sprite | articulated inked figure + weapon | articulated inked figure + tool + environment |
 | Cadence | one cycle = one swing | one action = several strikes, one yield |
 | Wired | solo combat, co-op/raid | mining, woodcutting, fishing |
 
@@ -154,6 +154,19 @@ times a tick.
 Two `InkwrightFigure`s facing off, drawn from the exact same body geometry skilling
 uses — the whole point of the name is that it is ONE character, not a per-context
 redraw. What differs is what's in the hand and what the enemy looks like.
+
+**The body itself was redrawn once, in place, for the whole-figure realism pass
+described under "Inkwright — the skilling figure" below** — real legs and boots, a
+jerkin with a belt, a face — without moving a single joint combat's own math
+depends on. `InkwrightFigure.jsx`'s docblock states the constraint plainly: the
+shoulder pivot (84,58), the grip (100,64 — `GRIP_X`/`GRIP_Y` in `weaponShapes.js`),
+the hip/root origin (76,100), and the ground line (y=108) are independently
+hard-coded in this file, in `weaponShapes.js`, and in every `transform-origin` in
+`.inkc-*`/`.ink-*` — none of them re-derive the others, they just have to keep
+agreeing. A body redraw that keeps those five numbers is safe; a redraw that moves
+any of them requires re-deriving all twelve weapon placements and every swing/shot
+transform-origin in the same change, which is a much bigger, Architect-gated
+undertaking this pass deliberately stayed inside of.
 
 **The enemy has no art of its own, on purpose.** It is the player's own rig, mirrored
 and given a coloured aura from the style/monster accent already resolved elsewhere
@@ -297,10 +310,80 @@ they're spelled out rather than left implicit.
 ## Inkwright — the skilling figure
 
 `src/utils/inkwright.js` (pure) + `src/components/InkwrightStage.jsx` + the `.ink-*`
-CSS. One hooded inked-vector figure, reused across every gathering skill; the tool,
-the motion and the prop change per skill, the figure never does. That is what makes
-it extend to 23 skills: a new skill costs a motion row, a keyframe family and a prop
-shape, never a character.
+CSS. One articulated inked figure, reused across every gathering skill; the tool,
+the motion, the prop and the environment change per skill, the figure's timing
+law never does. That is what makes it extend to 23 skills: a new skill costs a
+motion row, a keyframe family, a tool and a resource, never a character or a
+second timing system.
+
+### The fidelity bar: real tools, real environments, a real figure
+
+Mining, woodcutting and fishing set the baseline every skilling animation now
+targets — reviewed and approved as a standalone artifact
+(`docs/skilling-plates-review.html`) before a line of it was wired into the game.
+What changed from the original hooded-silhouette figure:
+
+- **A real articulated body** (`InkwrightFigure.jsx`) — legs with boots, a belted
+  leather jerkin, a face — replacing the faceless cowl the "no face, on purpose"
+  rule used to justify. It is still shared with combat (see "Inkwright — the
+  combat figures" above) and still one outline weight; what earns "realism" here
+  is silhouette and proportion, not paint.
+- **Real tools**, authored local-frame at (0,0) with +X toward the working end —
+  the exact convention `weaponShapes.js` already proved for the twelve combat
+  weapons, now extended to a crescent pickaxe, a bearded felling axe, and a
+  three-segment fishing rod (`InkwrightStage.jsx`'s `Tool()`). A pick or an axe
+  that flares symmetrically from a waist reads as a spade or a shovel, not a
+  tool — see the weapon-shape file's own notes on the mace icon and apply the
+  same suspicion here: proportion is what a silhouette-only style has to get
+  right, because there is no texture to fall back on.
+- **Real environments** — an ore boulder proud of a strata'd rock wall, a tree
+  with a persistent notch under a broken-silhouette canopy (a stacked-ellipse
+  canopy reads as broccoli; a scalloped outline reads as leaf mass), a river
+  with a surface film the caught species' own art sits under. Fixed, not
+  theme-flipped colour (see the token rule below).
+- **Multi-joint choreography** instead of a single arm rotation: the strike
+  keyframes now animate the front arm, the back arm, the head and a whole-body
+  weight-shift together (`inkArmMine`/`inkArmBackMine`/`inkHeadMine`/`inkBodyMine`
+  and their `Chop`/`Fish` counterparts, `index.css`), on a shared four-phase
+  shape — anticipation, downswing, impact, recovery — instead of the old
+  three-keyframe wind-up/swing/settle loop.
+
+**Colour is a FIXED, non-theme-flipped material palette (`--ink-*` tokens,
+`src/index.css` `:root`, next to `--tier-*`/`--potion-*`), never raw hex and
+never a gradient.** This is the one rule every future skill built to this bar
+must not break: a hero's skin, a tool's steel, a cave's darkness is the same
+material regardless of whether the surrounding UI chrome is parchment or iron —
+exactly the reasoning `--tier-dragon` already relies on elsewhere in this file
+(confirm with `grep -n "\[data-theme" src/index.css`: neither `--tier-*` nor
+`--potion-*` is ever redefined per theme). The system's own semantic layer
+(`--surface-*`/`--text-*`/`--hairline`) still carries the figure's OUTLINE and
+the stage frame, which is why it still flips for free — only the MATERIALS are
+fixed. An early prototype used full multi-stop SVG gradients for a painterly
+look; that was rejected for the shipped version, because this stage renders at
+the same scale and speed as combat's mirrored two-actor stage, and a flat,
+narrow, deliberate palette (one tone per material, occasionally a shade pair)
+is what stays legible there — see `weaponShapes.js`'s own restraint for the
+same call made once already, one system over.
+
+**Placement is measured, not eyeballed.** Every tool's `translate/rotate/scale`
+placement and every resource's position were derived from the actual grip
+(100,64) and shoulder (84,58) coordinates by vector arithmetic — not "it looked
+about right" — then verified by rendering the real component (a throwaway Vite
+entry mounting `InkwrightStage`/`InkwrightCombatStage` directly, screenshotted
+headless at rest and at the computed impact-frame percentage, deleted once the
+check passed) rather than trusting the arithmetic alone. A tool's `scale` sets
+its reach: reach-from-shoulder is the vector sum of shoulder→grip and (rotated,
+scaled) grip→tip, and it is CONSTANT across the whole swing (rotation preserves
+distance from the pivot) — so a resource placed off that radius can never be
+struck, however the keyframe percentages are tuned. When adding a skill to this
+tier, do the same arithmetic before drawing the resource, and confirm it with a
+real screenshot before calling the placement done — a rest-pose screenshot alone
+missed both the pick's undersized head and the axe's inch of overshoot; the pick
+was only fixed by moving the resource, and the axe only by moving the tool's
+`scale` and re-deriving the reach from there. The `--ink-*` prototype method is
+also the review-artifact-first practice for any FUTURE skill in this tier: build
+a standalone HTML plate, get it approved, then transplant the geometry and
+timing shape (never the raw palette) into the real component.
 
 ### Where skilling diverges from combat, and why
 
@@ -349,26 +432,56 @@ faster than a Bronze one for free; passing the base cost silently throws that aw
 
 | Surface | Stage | State |
 |---|---|---|
-| Solo combat, co-op/raid | `.inkc-*` | shipped (superseded `.as-*` deleted) |
-| Mining, woodcutting, fishing | `.ink-*` | shipped |
-| Firemaking, cooking, smithing, crafting, fletching, herblore, runecraft | `.ink-*` | next — each is a motion row + keyframes + prop |
+| Solo combat, co-op/raid | `.inkc-*` | shipped — same shared figure, redrawn realistic (see above) |
+| Mining, woodcutting, fishing | `.ink-*` | shipped — the fidelity baseline (real tools, real environments, measured placement) every future skill in this tier now targets |
+| Firemaking, cooking, smithing, crafting, fletching, herblore, runecraft, prayer, agility, dungeoneering, thieving, hunter, construction, summoning, magic (utility) | `.ink-*` | next — full coverage plan and per-skill motion concepts in `docs/skill-animations-proposal.md`; build to the tier this file describes, not the pre-realism bar |
+| Slayer | — | no action of its own — trains via `CombatScreen`, already covered by `.inkc-*` |
+| Farming | — | out of scope for the Inkwright stage; patch-based UI, not a `SkillActivePanel` action loop |
 | Thieving, hunter, agility, farming, construction, summoning | — | own screens, not on `SkillActivePanel`; needs a look first |
 | Magic, prayer, slayer, dungeoneering | — | no physical strike; may not want a figure at all |
 | Open world | neither | baked GLB clips, `src/utils/combatWindup.js` — deliberately separate |
 
 ## Extending to a skill
 
-Full checklist in the `action-animation` skill. For a gathering-shaped skill:
+Full checklist in the `action-animation` skill. For a gathering-shaped skill, built
+to the fidelity bar above:
 
-1. Add a row to `INKWRIGHT_MOTIONS` and map the skill in `SKILL_MOTIONS`.
-2. Add its keyframe family to `src/index.css` as `.ink-fig--<motion>`, and a payoff.
-3. Draw its tool in `Tool()` and its resource in `Prop()` — whole, and broken.
-4. Register both new files in `build_single.cjs` (`sourceFiles` + `GAME_CHUNK_FILES`).
-5. Render from the chunked screen, passing `stage` into `SkillActivePanel`.
+1. Prototype it as a standalone HTML review artifact first (figure + tool +
+   environment, at the real 200×128 skilling-stage frame, not the roomy canvas an
+   exploratory mockup tends to reach for) and get it approved before touching
+   `src/`. This is not optional ceremony — the placement-arithmetic step below
+   depends on knowing the real anchors, and a canvas sized for a mockup produces
+   numbers that don't transfer.
+2. Work out the tool's `translate(100,64) rotate(θ) scale(s)` placement from the
+   shoulder (84,58) and grip (100,64) — reach-from-shoulder is fixed by `s` and is
+   the radius the resource must sit on (see "Placement is measured, not eyeballed"
+   above for the vector arithmetic). Draw the tool local-frame, same convention as
+   `weaponShapes.js`.
+3. Add a row to `INKWRIGHT_MOTIONS` and map the skill in `SKILL_MOTIONS`
+   (`src/utils/inkwright.js` — unchanged by this pass, still the timing law only).
+4. Add the multi-joint keyframe family to `src/index.css` — front arm, back arm,
+   head, whole-body weight-shift, matching the four-phase anticipation/downswing/
+   impact/recovery shape `inkArmMine`/`inkArmChop`/`inkArmFish` set — and a payoff.
+   Every colour a NEW `--ink-*` token (`:root`, fixed, not theme-flipped) or an
+   existing one; never raw hex, never a gradient.
+5. Draw its tool in `Tool()` and its resource/environment in `Prop()`/`Backdrop()`
+   — whole, and broken.
+6. Verify placement by rendering the real component (a throwaway Vite entry
+   mounting `InkwrightStage` directly with a fake `plan`, screenshotted headless at
+   rest and at the impact-frame percentage, then deleted) — not by reading the
+   arithmetic and trusting it.
+7. No `build_single.cjs` registration needed unless the change adds a FILE — a new
+   skill inside the existing `inkwright.js`/`InkwrightStage.jsx`/`index.css` needs
+   none.
+8. Render from the chunked screen, passing `stage` into `SkillActivePanel`.
 
-Point 5 is the leverage: `SkillActivePanel` is one component behind most skilling
-screens, so a stage added there covers many skills at once. Check each screen that
-passes its own `icon` override before assuming it is uniform — `GatherScreen` does.
+Point 8 is the leverage: `SkillActivePanel` is one component behind every skilling
+screen already — checked directly for the 8-skill coverage proposal
+(`docs/skill-animations-proposal.md`): `SkillingScreen`, `AgilityScreen`,
+`ThievingScreen`, `HunterScreen`, `ConstructionScreen`, `SummoningScreen` and
+`MagicScreen` all call it, so a stage added there covers many skills at once. Check
+each screen that passes its own `icon` override before assuming it is uniform —
+`GatherScreen` does.
 
 ## Known gaps
 

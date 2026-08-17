@@ -13,7 +13,7 @@ checklist.
 | | `InkwrightCombatStage` (`.inkc-*`) | `InkwrightStage` (`.ink-*`) |
 |---|---|---|
 | Shape | two figures facing off, mirrored | a figure working a resource |
-| Sprite | drawn inked-vector figure + weapon | drawn inked-vector figure + tool |
+| Sprite | articulated inked figure + weapon | articulated inked figure + tool + environment |
 | Cadence | one cycle = one swing | one action = several strikes, one yield |
 | Wired | solo combat, co-op/raid | mining, woodcutting, fishing |
 
@@ -152,22 +152,51 @@ is for a genuinely new attack style.
 
 ## Adding a skill to Inkwright
 
-The common case, and cheaper than the list above — no event plumbing at all, because
-the stage reads a clock and a completion counter.
+The common case, and cheaper than the combat list above — no event plumbing at all,
+because the stage reads a clock and a completion counter. Mining, woodcutting and
+fishing set the fidelity bar every new skill in this tier now has to clear: real
+tools, real environments, an articulated figure, all at the review-artifact-first
+discipline below — not the flat-silhouette-only version this section described
+before that pass. Full design record: `docs/action-animations.md`'s "Inkwright —
+the skilling figure" section; the 8-skill coverage plan and per-skill motion
+concepts: `docs/skill-animations-proposal.md`.
 
-1. **Add a motion row** to `INKWRIGHT_MOTIONS` (`src/utils/inkwright.js`) and map the
-   skill in `SKILL_MOTIONS`. A row with no keyframes renders a figure standing still.
-2. **Add the keyframe family** to `src/index.css`: `.ink-fig--<motion> .ink-arm` for
-   the strike, `.ink-payoff--<motion>` for the yield. Inside the existing
-   `prefers-reduced-motion: no-preference` block. Every duration is `var(--ink-strike)`
-   or `var(--ink-payoff)` — a literal ms is the failure this system prevents.
-3. **Draw the tool** in `Tool()` and the resource in `Prop()`, whole AND broken. The
-   broken form is the same silhouette split up, so the two cannot drift apart.
-4. **Register** both modules in `build_single.cjs` — `sourceFiles` AND
-   `GAME_CHUNK_FILES` (§12). `inkwright.js` must come after `actionSprites.js`.
-5. **Pass the EFFECTIVE tick cost**, not the action's base cost — the tool-adjusted
+1. **Prototype it as a standalone HTML review artifact first**, at the real
+   200×128 skilling-stage frame (not a roomy exploratory canvas — a canvas sized
+   for a mockup produces placement numbers that don't transfer), and get it
+   approved before touching `src/`.
+2. **Work out the tool's placement arithmetic** — `translate(100,64) rotate(θ)
+   scale(s)` from the fixed shoulder (84,58) and grip (100,64). Reach-from-shoulder
+   is fixed by `s` alone (rotation preserves distance from the pivot), and that
+   radius is where the resource has to sit — a resource placed off it can never be
+   struck, however the swing keyframes are tuned. Draw the tool local-frame, same
+   origin-at-hand convention as `weaponShapes.js`.
+3. **Add a motion row** to `INKWRIGHT_MOTIONS` (`src/utils/inkwright.js`) and map
+   the skill in `SKILL_MOTIONS`. A row with no keyframes renders a figure standing
+   still. This file is the timing law only — untouched by the realism pass.
+4. **Add the multi-joint keyframe family** to `src/index.css`: front arm, back arm,
+   head and a whole-body weight-shift, on the four-phase anticipation/downswing/
+   impact/recovery shape (`inkArmMine`/`inkArmChop`/`inkArmFish` are the reference),
+   plus `.ink-payoff--<motion>` for the yield. Inside the existing
+   `prefers-reduced-motion: no-preference` block. Every duration is
+   `var(--ink-strike)` or `var(--ink-payoff)` — a literal ms is the failure this
+   system prevents. Every COLOUR is an `--ink-*` token (`:root`, fixed, not
+   theme-flipped — see the trap below) or the existing semantic layer for
+   outline/ground — never raw hex, never a gradient.
+5. **Draw the tool** in `Tool()` and the resource/environment in `Prop()`/
+   `Backdrop()`, whole AND broken. The broken form is the same silhouette split
+   up, so the two cannot drift apart.
+6. **Verify placement against the real component**, not the arithmetic alone — a
+   throwaway Vite entry mounting `InkwrightStage` with a fake `plan`, screenshotted
+   headless at rest and at the impact-frame percentage, deleted once it checks out.
+   A rest-pose-only screenshot is not enough: it will not catch a tool that
+   overshoots or undershoots its resource once the swing is actually applied.
+7. **Register** only if the change adds a FILE — a new skill inside the existing
+   `inkwright.js`/`InkwrightStage.jsx`/`index.css` needs no `build_single.cjs`
+   change (`sourceFiles`/`GAME_CHUNK_FILES`, §12).
+8. **Pass the EFFECTIVE tick cost**, not the action's base cost — the tool-adjusted
    value the session already stores. Skipping this is skipping the law.
-6. **Test in `tests/inkwright.test.ts`** against real `skills.json` actions.
+9. **Test in `tests/inkwright.test.ts`** against real `skills.json` actions.
 
 ### Inkwright traps, each one paid for
 
@@ -188,6 +217,21 @@ the stage reads a clock and a completion counter.
   product call.
 - **Do not reach for `swingDurationMs` here.** The skilling period is already
   near-constant by construction; a second scaling on top only drifts.
+- **Never use a raw hex colour or an SVG gradient on the figure, a tool or an
+  environment.** Reuse an existing `--ink-*`/`--tier-*`/`--fm-*` token or add a new
+  `--ink-*` one (`:root`, fixed — not `[data-theme]`, same precedent `--tier-*`
+  already sets). A prototype's exploratory palette is a reference for the shapes
+  and the timing shape, never for the literal colour values — the shipped version
+  swaps every gradient for a flat, token-backed tone before it's wired in.
+- **A static `transform=""` attribute and a CSS `animation` targeting `transform`
+  cannot share the same element.** The animation wins outright, silently discarding
+  the static placement the instant the animation starts — wrap the static
+  positioning (e.g. an anchor-scale repositioning of a whole prop) in a NESTED
+  group instead of putting it on the element that also carries the animated class.
+- **A tool's `scale` and a resource's position are two ends of the same equation,
+  not independent choices.** Changing one without re-deriving the other from the
+  shoulder/grip arithmetic is how a felling axe ends up sized for a canopy it can
+  no longer reach, or a boulder placed a visible margin off the pick's actual arc.
 
 ## Where this does not apply
 

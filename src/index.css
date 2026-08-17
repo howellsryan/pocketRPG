@@ -87,6 +87,38 @@
   --potion-super-combat: #1e7d4f;
   --potion-super-strength: #ffffff;
   --potion-super-defence: #f4d03f;
+
+  /* Inkwright materials — fixed, NOT theme-flipped, same precedent as
+     --tier-* / --potion-* above (grep confirms neither is ever redefined under
+     [data-theme]). A hero's skin or a pickaxe's steel is the same material
+     regardless of whether the UI chrome around it is parchment or iron, the
+     same way a dragon scimitar's --tier-dragon tint doesn't change with
+     theme. Shared by BOTH Inkwright stages (skilling .ink-* AND combat
+     .inkc-*, via InkwrightFigure.jsx) — one set, not two. Kept deliberately
+     small: one flat tone per material plus (where the geometry calls for it)
+     a shade/highlight pair, matching weaponShapes.js's own restraint rather
+     than the multi-stop gradients an early prototype used and rejected.
+     docs/action-animations.md has the fuller rationale. */
+  --ink-skin: #caa27a;
+  --ink-skin-shade: #a67c54;
+  --ink-hair: #3a2a1c;
+  --ink-leather: #6c4529;
+  --ink-leather-shade: #4b2f1c;
+  --ink-boot: #33261a;
+  --ink-brass: #b98b4c;
+  --ink-brass-shade: #5e4321;
+  --ink-haft: #8c6038;
+  --ink-haft-shade: #5e3f22;
+  --ink-bark: #4e3e2d;
+  --ink-bark-shade: #2c231a;
+  --ink-leaf: #557c46;
+  --ink-leaf-light: #6e9459;
+  --ink-rock: #565d67;
+  --ink-rock-shade: #33383f;
+  --ink-water: #28505e;
+  --ink-water-light: #3c6b79;
+  --ink-cork: #b98b4c;
+
   --font-display: 'Cinzel', serif;
   --font-body: 'Nunito', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -1103,9 +1135,26 @@ html, body, #app {
 
 /* ── Inkwright: the skilling figure ──────────────────────────────────────────
    The second presentation on the action-animation foundation (components/
-   InkwrightStage.jsx, utils/inkwright.js). Like .as-*, every colour here comes
-   from the SEMANTIC layer, so this block is defined once and is exempt from the
-   Two-Skin Trap (DESIGN.md §2) — the ink flips with the ground for free.
+   InkwrightStage.jsx, utils/inkwright.js). Baseline for the fidelity bar every
+   skilling animation now targets — an articulated figure with real tools and
+   environments, replacing the hooded ink-vector figure this used to draw.
+   Design record + the review artifact this was built from:
+   docs/action-animations.md.
+
+   Two colour tiers, both exempt from the Two-Skin Trap (DESIGN.md §2), for
+   two different reasons. (1) The figure's outline/ground/UI-adjacent bits
+   still read the SEMANTIC layer (--surface-* / --text-*), so they flip with
+   the theme for free, same as before. (2) The figure's own MATERIALS
+   (skin/hair/leather/brass/steel/wood) and the environment's own atmosphere
+   read the new --ink-* tokens (:root, near --tier-* / --potion-*) — FIXED,
+   not theme-flipped, because a hero's skin or a cave's darkness is the same
+   regardless of whether the surrounding UI chrome is parchment or iron, the
+   same reasoning --tier-dragon already relies on elsewhere in this file.
+   Kept deliberately narrow (one flat tone per material, occasionally a
+   second shade) rather than the multi-stop gradients an early prototype
+   used and rejected — this stage renders at the same scale and speed as
+   combat's mirrored two-actor stage, which is why it stays a flat, legible
+   silhouette instead of a painting.
 
    Every duration is a custom property set by the component. A literal ms here
    is the failure this system exists to prevent: a player who buys a faster
@@ -1125,52 +1174,83 @@ html, body, #app {
 .ink-shadow { fill: var(--text-strong); opacity: 0.09; }
 
 /* One outline weight for the whole figure — the defining constraint of the
-   style. Fills come from the surface layer so the figure is legible whether it
-   stands on parchment or on iron. */
-.ink-cloth,
-.ink-blade,
-.ink-res {
-  fill: var(--surface-raised);
-  stroke: var(--text-strong);
-  stroke-width: 3.1;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-.ink-cloth2 { fill: var(--surface-panel); stroke: var(--text-strong); stroke-width: 3.1; stroke-linejoin: round; }
-.ink-hollow { fill: var(--text-strong); opacity: 0.85; }
-.ink-line   { fill: none; stroke: var(--text-strong); stroke-width: 4.3; stroke-linecap: round; }
+   style, unchanged from before: an articulated body is still an ink figure,
+   not a painting. */
+.ink-cloth { fill: var(--surface-raised); stroke: var(--text-strong); stroke-width: 3.1; stroke-linejoin: round; stroke-linecap: round; }
 .ink-facet  { fill: none; stroke: var(--text-strong); stroke-width: 1.9; stroke-linecap: round; opacity: 0.7; }
 
 .ink-limb-ink  { fill: none; stroke: var(--text-strong); stroke-linecap: round; stroke-linejoin: round; }
 .ink-limb-fill { fill: none; stroke: var(--surface-raised); stroke-linecap: round; stroke-linejoin: round; }
 .ink-limb-back { fill: none; stroke: var(--surface-panel); stroke-linecap: round; stroke-linejoin: round; }
 
-.ink-shaft  { fill: none; stroke: var(--text-strong); stroke-width: 7; stroke-linecap: round; }
-.ink-shaft--thin { stroke-width: 5.4; }
-.ink-edge   { fill: none; stroke: var(--surface-raised); stroke-width: 2.4; stroke-linecap: round; }
-.ink-grip   { fill: none; stroke: var(--text-strong); stroke-width: 9; stroke-linecap: round; }
-.ink-lineout { fill: none; stroke: var(--text-strong); stroke-width: 1.1; opacity: 0.55; }
-.ink-float { fill: var(--surface-raised); stroke: var(--text-strong); stroke-width: 2; }
+/* Figure materials — InkwrightFigure.jsx, shared by both stages. */
+.ink-skin      { fill: var(--ink-skin); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.ink-skin-fill { fill: var(--ink-skin); stroke: var(--text-strong); stroke-width: 1.6; }
+.ink-hair      { fill: var(--ink-hair); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-eye       { fill: var(--text-strong); }
+.ink-brow, .ink-mouth { fill: none; stroke: var(--text-strong); stroke-width: 1.3; stroke-linecap: round; }
+.ink-nose      { fill: none; stroke: var(--ink-skin-shade); stroke-width: 1.1; stroke-linecap: round; }
+.ink-jerkin        { fill: var(--ink-leather); stroke: var(--text-strong); stroke-width: 2.6; stroke-linejoin: round; }
+.ink-jerkin-shade  { fill: none; stroke: var(--ink-leather-shade); stroke-width: 1.6; opacity: 0.7; }
+.ink-jerkin-collar { fill: none; stroke: var(--ink-leather-shade); stroke-width: 1.3; opacity: 0.8; }
+.ink-belt          { fill: var(--ink-leather-shade); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-buckle         { fill: var(--ink-brass); stroke: var(--text-strong); stroke-width: 1.3; }
+.ink-buckle-hollow  { fill: var(--ink-brass-shade); }
+.ink-boot      { fill: var(--ink-boot); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
+.ink-boot-sole { fill: none; stroke: var(--text-strong); stroke-width: 2.6; stroke-linecap: round; }
+
+/* Tool materials — pickaxe/axe/rod (InkwrightStage.jsx's Tool()), the same
+   local-frame + role convention combat's weaponShapes.js uses. */
+.ink-tool-haft   { fill: var(--ink-haft); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-tool-grip   { fill: var(--ink-haft-shade); stroke: var(--text-strong); stroke-width: 1.4; stroke-linejoin: round; }
+.ink-tool-collar,
+.ink-tool-seat   { fill: var(--ink-brass); stroke: var(--text-strong); stroke-width: 1.3; }
+.ink-tool-head   { fill: var(--tier-steel); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-tool-edge   { fill: none; stroke: #eef2f4; stroke-width: 1.5; stroke-linecap: round; opacity: 0.85; }
+.ink-tool-eye    { fill: var(--ink-haft-shade); stroke: var(--text-strong); stroke-width: 1.2; }
+.ink-tool-wedge  { fill: none; stroke: var(--ink-brass); stroke-width: 1.6; stroke-linecap: round; }
+.ink-tool-blank  { fill: var(--ink-haft-shade); stroke: var(--text-strong); stroke-width: 1.3; stroke-linejoin: round; }
+.ink-tool-guide  { fill: none; stroke: var(--tier-steel); stroke-width: 1; }
+.ink-tool-tip    { fill: none; stroke: var(--tier-steel); stroke-width: 1.1; }
+.ink-tool-reel        { fill: var(--ink-brass); stroke: var(--text-strong); stroke-width: 1.4; }
+.ink-tool-reel-spoke  { fill: none; stroke: var(--ink-brass-shade); stroke-width: 1; }
+.ink-tool-float  { fill: var(--color-blood); stroke: var(--text-strong); stroke-width: 1.3; }
+.ink-rod-line    { fill: none; stroke: var(--text-soft); stroke-width: 0.7; opacity: 0.75; }
+
+/* Environments — one per skill, fixed atmospheric colour (see the block
+   comment above for why). */
+.ink-scene--mine .ink-cave-wall       { fill: var(--ink-rock-shade); opacity: 0.5; }
+.ink-scene--mine .ink-cave-wall--near { fill: var(--ink-rock-shade); opacity: 0.75; }
+.ink-scene--chop .ink-treeline { fill: var(--ink-leaf); opacity: 0.35; }
+.ink-scene--fish .ink-far-bank { fill: var(--ink-leaf); opacity: 0.45; }
+.ink-scene--fish .ink-reed     { fill: none; stroke: var(--ink-leaf); stroke-width: 1.4; stroke-linecap: round; opacity: 0.7; }
+
+.ink-trunk       { fill: var(--ink-bark); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; }
+.ink-canopy      { fill: var(--ink-leaf); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; }
+.ink-canopy-lit  { fill: var(--ink-leaf-light); opacity: 0.8; }
+.ink-bough       { fill: none; stroke: var(--ink-bark); stroke-width: 2.2; stroke-linecap: round; }
+.ink-notch-face  { fill: var(--ink-brass); stroke: var(--ink-bark-shade); stroke-width: 1.2; stroke-linejoin: round; }
+.ink-notch-lit   { fill: var(--ink-brass); opacity: 0.55; }
 
 /* The resource wears the colour of the item it yields. */
-.ink-res    { fill: var(--ink-tint); }
-.ink-res--soft { opacity: 0.55; }
+.ink-res    { fill: var(--ink-tint); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; }
+.ink-seam   { fill: none; stroke: var(--ink-tint); stroke-width: 1.6; opacity: 0.6; }
 /* Water is the one prop that isn't the colour of what it yields — a pond
    reads as a pond only if it's actually blue. fill-opacity (not opacity) so
    the ledge/shore outline stays crisp while the body itself stays a wash. */
 .ink-water  {
-  fill: var(--color-mana);
-  fill-opacity: 0.5;
+  fill: var(--ink-water);
+  fill-opacity: 0.55;
   stroke: var(--text-strong);
   stroke-width: 2;
   stroke-opacity: 0.35;
   stroke-linejoin: round;
 }
-.ink-water-ripple { fill: none; stroke: var(--color-mana-light); stroke-width: 1.6; stroke-linecap: round; opacity: 0.75; }
-/* The bank the figure casts from — solid ground, same ink language as the
-   rock/tree props, capping the gap between the ground line and the water's
-   edge so standing-at-a-ledge reads instead of standing in a puddle. */
-.ink-bank   { fill: var(--surface-panel); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; opacity: 0.9; }
+.ink-water-ripple { fill: none; stroke: var(--ink-water-light); stroke-width: 1.6; stroke-linecap: round; opacity: 0.75; }
+/* The bank the figure casts from — solid ground, capping the gap between the
+   ground line and the water's edge so standing-at-a-ledge reads instead of
+   standing in a puddle. */
+.ink-bank   { fill: var(--ink-leaf); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; opacity: 0.9; }
 /* The catch is the real species art (see InkwrightStage's FishArt), which
    paints its own colour — no fill/stroke here. The fallback silhouette used
    only if that art failed to load keeps the old flat treatment. */
@@ -1188,52 +1268,195 @@ html, body, #app {
 }
 
 /* Motion. The arm carries the strike; the body carries the recoil. Rotation is
-   about the shoulder in the SVG's own coordinates, so the tool stays in hand. */
-.ink-arm { transform-box: view-box; transform-origin: 84px 58px; }
-.ink-fig { transform-box: view-box; transform-origin: 76px 100px; }
-.ink-faller, .ink-fall { transform-box: view-box; transform-origin: 141px 79px; }
-.ink-shard { transform-box: view-box; transform-origin: 148px 91px; }
-.ink-fish-idle { transform-box: view-box; }
-.ink-catch { transform-box: view-box; }
+   about the shoulder in the SVG's own coordinates, so the tool stays in hand.
+   Every origin below is in the OUTER svg's viewBox space (transform-box:
+   view-box resolves it there regardless of how deeply the element is
+   nested) — computed from each part's placement, not eyeballed. */
+.ink-arm      { transform-box: view-box; transform-origin: 84px 58px; }
+.ink-arm-back { transform-box: view-box; transform-origin: 78px 58px; }
+.ink-head     { transform-box: view-box; transform-origin: 76px 33px; }
+.ink-fig      { transform-box: view-box; transform-origin: 76px 100px; }
+.ink-faller, .ink-fall { transform-box: view-box; transform-origin: 114px 78px; }
+.ink-shard    { transform-box: view-box; transform-origin: 130px 90px; }
+.ink-fish-idle, .ink-catch, .ink-float-idle, .ink-catch-rise { transform-box: view-box; }
+/* The fishing rod's blank bends as a CHAIN — three nested joints, each
+   pivoting at its own segment's start as placed by the tool's outer
+   translate/rotate/scale (InkwrightStage.jsx's Tool()). */
+.ink-rod-seg1 { transform-box: view-box; transform-origin: 138px 57px; }
+.ink-rod-seg2 { transform-box: view-box; transform-origin: 159px 54px; }
+.ink-rod-seg3 { transform-box: view-box; transform-origin: 173px 51px; }
+.ink-rod-reel { transform-box: view-box; transform-origin: 112px 67px; }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Mining — a high wind-up and a committed drop onto the rock. */
-  @keyframes inkStrikeMine {
-    0%   { transform: rotate(-8deg); }
-    46%  { transform: rotate(-74deg); }
-    68%  { transform: rotate(40deg); }
-    100% { transform: rotate(-8deg); }
+  /* ═══ MINING — a wind-up, a committed drop, a dead stop on the rock. ═══
+     Percentages transplanted from the review artifact's dope sheet
+     (anticipation / downswing / impact / recovery); rotation MAGNITUDES
+     recalculated for this figure's shorter reach so the tip actually lands
+     on .ink-res (docs/action-animations.md has the full arithmetic). */
+  @keyframes inkArmMine {
+    0%   { transform: rotate(-10deg); }
+    42%  { transform: rotate(-30deg); }
+    58%  { transform: rotate(14deg); }
+    64%  { transform: rotate(17deg); }
+    100% { transform: rotate(-10deg); }
   }
-  /* Chopping — flatter and wider than a pick, the way an axe actually swings. */
-  @keyframes inkStrikeChop {
-    0%   { transform: rotate(-8deg); }
-    46%  { transform: rotate(-58deg); }
-    68%  { transform: rotate(30deg); }
-    100% { transform: rotate(-8deg); }
+  @keyframes inkArmBackMine {
+    0%   { transform: rotate(0deg); }
+    42%  { transform: rotate(-14deg); }
+    58%  { transform: rotate(7deg); }
+    100% { transform: rotate(0deg); }
   }
-  /* Fishing — no strike at all. A slow lift and dip, with a tug near the end. */
-  @keyframes inkStrikeFish {
-    0%   { transform: rotate(-6deg); }
-    40%  { transform: rotate(-13deg); }
-    82%  { transform: rotate(-2deg); }
-    100% { transform: rotate(-6deg); }
+  @keyframes inkHeadMine {
+    0%   { transform: rotate(0deg); }
+    42%  { transform: rotate(6deg); }
+    58%  { transform: rotate(-5deg); }
+    100% { transform: rotate(0deg); }
   }
-  @keyframes inkBodyWork {
-    0%   { transform: translateY(0) rotate(0deg); }
-    46%  { transform: translateY(-0.9px) rotate(-1.4deg); }
-    68%  { transform: translateY(1.5px) rotate(2.2deg); }
-    100% { transform: translateY(0) rotate(0deg); }
+  @keyframes inkBodyMine {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    42%  { transform: translate(-1.5px,-1px) rotate(-2deg); }
+    58%  { transform: translate(1.5px,0.8px) rotate(2.4deg); }
+    64%  { transform: translate(0.6px,0.3px) rotate(0.8deg); }
+    100% { transform: translate(0,0) rotate(0deg); }
   }
 
-  .ink-fig--mine.is-working .ink-arm { animation: inkStrikeMine var(--ink-strike) var(--fm-ease) infinite; }
-  .ink-fig--chop.is-working .ink-arm { animation: inkStrikeChop var(--ink-strike) var(--fm-ease) infinite; }
-  .ink-fig--fish.is-working .ink-arm { animation: inkStrikeFish var(--ink-strike) ease-in-out infinite; }
-  .ink-fig--mine.is-working,
-  .ink-fig--chop.is-working { animation: inkBodyWork var(--ink-strike) var(--fm-ease) infinite; }
+  /* ═══ CHOPPING — wider and flatter than a pick, the way an axe swings. ═══ */
+  @keyframes inkArmChop {
+    0%   { transform: rotate(-12deg); }
+    42%  { transform: rotate(-42deg); }
+    58%  { transform: rotate(21deg); }
+    64%  { transform: rotate(25deg); }
+    100% { transform: rotate(-12deg); }
+  }
+  @keyframes inkArmBackChop {
+    0%   { transform: rotate(0deg); }
+    42%  { transform: rotate(-20deg); }
+    58%  { transform: rotate(10deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkHeadChop {
+    0%   { transform: rotate(0deg); }
+    42%  { transform: rotate(8deg); }
+    58%  { transform: rotate(-6deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkBodyChop {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    42%  { transform: translate(-2px,-1.2px) rotate(-2.6deg); }
+    58%  { transform: translate(2px,1px) rotate(3deg); }
+    64%  { transform: translate(0.8px,0.4px) rotate(1deg); }
+    100% { transform: translate(0,0) rotate(0deg); }
+  }
 
-  /* The fish roams while the rod is out. Tied to the same strike clock as
-     everything else on the stage, so nothing on screen runs its own free
-     clock — pausing the action pauses the water too. */
+  .ink-fig--mine.is-working .ink-arm      { animation: inkArmMine var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--mine.is-working .ink-arm-back { animation: inkArmBackMine var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--mine.is-working .ink-head     { animation: inkHeadMine var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--mine.is-working               { animation: inkBodyMine var(--ink-strike) var(--fm-ease) infinite; }
+
+  .ink-fig--chop.is-working .ink-arm      { animation: inkArmChop var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--chop.is-working .ink-arm-back { animation: inkArmBackChop var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--chop.is-working .ink-head     { animation: inkHeadChop var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--chop.is-working               { animation: inkBodyChop var(--ink-strike) var(--fm-ease) infinite; }
+
+  /* ═══ FISHING — hold, bite, haul, land, reset. No strike at all: the one
+     skill whose whole action is a wait that pays off. ═══ */
+  @keyframes inkArmFish {
+    0%   { transform: rotate(0deg); }
+    48%  { transform: rotate(1.5deg); }
+    53%  { transform: rotate(5deg); }
+    62%  { transform: rotate(-4deg); }
+    78%  { transform: rotate(-15deg); }
+    92%  { transform: rotate(-5deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkArmBackFish {
+    0%, 48% { transform: rotate(0deg); }
+    62%     { transform: rotate(-4deg); }
+    78%     { transform: rotate(-10deg); }
+    92%     { transform: rotate(-3deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  @keyframes inkBodyFish {
+    0%, 48% { transform: rotate(0deg); }
+    62%     { transform: rotate(-2deg); }
+    78%     { transform: rotate(-5deg); }
+    92%     { transform: rotate(-1.5deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  @keyframes inkHeadFish {
+    0%, 48% { transform: rotate(0deg); }
+    58%     { transform: rotate(3deg); }
+    78%     { transform: rotate(6deg); }
+    92%     { transform: rotate(2deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  /* The blank bends as a CHAIN: three small rotations compound into a real
+     curve, which is what a single rotated rod can never fake. */
+  @keyframes inkRodSeg1 {
+    0%, 48% { transform: rotate(0deg); }
+    58%     { transform: rotate(5deg); }
+    70%     { transform: rotate(9deg); }
+    78%     { transform: rotate(7deg); }
+    92%     { transform: rotate(2deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  @keyframes inkRodSeg2 {
+    0%, 48% { transform: rotate(0deg); }
+    58%     { transform: rotate(8deg); }
+    70%     { transform: rotate(14deg); }
+    78%     { transform: rotate(10deg); }
+    92%     { transform: rotate(3deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  @keyframes inkRodSeg3 {
+    0%, 48% { transform: rotate(0deg); }
+    58%     { transform: rotate(11deg); }
+    70%     { transform: rotate(19deg); }
+    78%     { transform: rotate(14deg); }
+    92%     { transform: rotate(4deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  @keyframes inkReel {
+    0%, 62% { transform: rotate(0deg); }
+    80%     { transform: rotate(-260deg); }
+    100%    { transform: rotate(-260deg); }
+  }
+  /* The terminal tackle's own motion — line/float/catch, in STAGE space —
+     is driven off the rod tip's OWN computed path (docs/action-animations.md
+     has the trig), not a free-running bob: idle sway damped to a few
+     pixels, the haul lifting it well clear of the water, matching whatever
+     the rod tip is actually doing above it. */
+  @keyframes inkRig {
+    0%, 48% { transform: translate(0,0); }
+    53%     { transform: translate(0.5px,3px); }
+    62%     { transform: translate(-1px,-2px); }
+    78%     { transform: translate(-3px,-11px); }
+    92%     { transform: translate(-1px,-3px); }
+    100%    { transform: translate(0,0); }
+  }
+  @keyframes inkFloatBob {
+    0%   { transform: translateY(0) rotate(-3deg); }
+    50%  { transform: translateY(-1.4px) rotate(3deg); }
+    100% { transform: translateY(0) rotate(-3deg); }
+  }
+
+  .ink-fig--fish.is-working .ink-arm      { animation: inkArmFish var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--fish.is-working .ink-arm-back { animation: inkArmBackFish var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--fish.is-working .ink-head     { animation: inkHeadFish var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--fish.is-working               { animation: inkBodyFish var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--fish.is-working .ink-rod-seg1 { animation: inkRodSeg1 var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--fish.is-working .ink-rod-seg2 { animation: inkRodSeg2 var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--fish.is-working .ink-rod-seg3 { animation: inkRodSeg3 var(--ink-strike) ease-in-out infinite; }
+  /* The reel lives on the rod itself (Tool()'s 'fish' branch, inside .ink-arm),
+     not inside .ink-rig — the terminal tackle group is a STAGE-space sibling,
+     not an ancestor of the tool's local frame. A sibling-combinator selector
+     here silently matched nothing. */
+  .ink-fig--fish.is-working .ink-rod-reel { animation: inkReel var(--ink-strike) linear infinite; }
+  .ink-rig.is-working { animation: inkRig var(--ink-strike) ease-in-out infinite; }
+  .ink-float-idle { animation: inkFloatBob calc(var(--ink-strike) * 0.55) ease-in-out infinite; }
+  /* The idle fish roams while the rod is out, same as the pre-realism version —
+     tied to the same strike clock as everything else on the stage, so pausing
+     the action pauses the water too. */
   @keyframes inkFishSwim {
     0%, 100% { transform: translate(3px, 0) rotate(-3deg); }
     50%      { transform: translate(-4px, 1.6px) rotate(3deg); }
@@ -1293,11 +1516,11 @@ html, body, #app {
   @keyframes inkPayoffFish { 0%, 86% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes inkCatchRise {
     0%   { transform: translate(0,0) rotate(0deg); }
-    55%  { transform: translate(-14px,-34px) rotate(-38deg); }
-    100% { transform: translate(-26px,-46px) rotate(-96deg); }
+    55%  { transform: translate(-10px,-24px) rotate(-30deg); }
+    100% { transform: translate(-18px,-32px) rotate(-70deg); }
   }
   .ink-payoff--fish { animation: inkPayoffFish var(--ink-payoff) ease-out; }
-  .ink-payoff--fish .ink-catch { animation: inkCatchRise var(--ink-payoff) ease-out; }
+  .ink-payoff--fish .ink-catch-rise { animation: inkCatchRise var(--ink-payoff) ease-out; }
 
   @keyframes inkYieldPop {
     0%   { opacity: 0; transform: translateY(6px) scale(0.6); }
@@ -1309,8 +1532,9 @@ html, body, #app {
 }
 
 /* ── Inkwright combat: two figures, opposite timing law ──────────────────────
-   Reuses every .ink-cloth, .ink-limb, .ink-hollow (and so on) rule above
-   unchanged — InkwrightFigure draws the same body regardless of which stage
+   Reuses every .ink-cloth, .ink-limb, .ink-skin, .ink-jerkin (and so on)
+   rule above unchanged — InkwrightFigure draws the same body regardless of
+   which stage
    wraps it, so this block only adds what combat needs on top: a wider stage,
    a mirrored enemy, one-shot (not looping) swings sized to --inkc-dur, a
    lane-crossing shot, a mini HP bar per head, on-body hit splats, and a
