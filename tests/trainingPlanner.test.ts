@@ -21,11 +21,16 @@ function totalOf(plan: any, itemId: string) {
 describe('planTraining — prayer to 77', () => {
   it('uses the gilded altar ladder when the player has the house for it', () => {
     const plan = planTraining({ skillId: 'prayer', currentXp: PRAYER_XP, targetLevel: 77, levels: ALL_SKILLS_MAXED })
-    expect(segmentIds(plan)).toEqual(['scatter_gargoyle_dust', 'altar_dragon_bones', 'altar_dagganoth_bones'])
+    // Ashen Hydra Bones (686 XP / 3 ticks ≈ 228.7 XP/tick, unlocked at 70) beats
+    // Dagganoth Bones (437 XP / 3 ticks ≈ 145.7 XP/tick) once it's available, so
+    // a plan running past level 70 correctly switches to it for the last leg —
+    // this is the ladder as authored (#961), not a planner regression.
+    expect(segmentIds(plan)).toEqual(['scatter_gargoyle_dust', 'altar_dragon_bones', 'altar_dagganoth_bones', 'altar_ashen_hydra_bones'])
     expect(totalOf(plan, 'gargoyle_dust')).toBe(94)
     expect(totalOf(plan, 'dragon_bones')).toBe(59)
-    expect(totalOf(plan, 'nagadoth_bones')).toBe(3292)
-    expect(plan.totals.actions).toBe(3445)
+    expect(totalOf(plan, 'nagadoth_bones')).toBe(1603)
+    expect(totalOf(plan, 'ashen_hydra_bones')).toBe(1076)
+    expect(plan.totals.actions).toBe(2832)
   })
 
   it('prefers Gargoyle Dust to big bones from level 20 — the bug in the original answer', () => {

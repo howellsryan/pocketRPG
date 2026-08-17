@@ -12,7 +12,7 @@ import CoopLootShare from '../components/CoopLootShare.jsx'
 import CoopRaidLobby from '../components/CoopRaidLobby.jsx'
 import CoopChatPanel from '../components/CoopChatPanel.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
-import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
+import { CombatFightHead } from '../components/CombatHud.jsx'
 import { CombatMonsterInfoSheet } from './CombatMobileSheets.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { openCoopFeed } from '../cloud/coopFeed.js'
@@ -460,6 +460,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const coopStageTarget = spriteAdd || liveMonster
   const coopStageArt = spriteAdd ? getMonsterArt(spriteAdd) : mArt
   const coopMonsterSprite = monsterCombatSprite(coopStageTarget)
+  // Same add-vs-boss split as the splat streams above: whichever the stage is
+  // actually showing is what its mini HP bar and on-body splats must track.
+  const coopStageSplats = spriteAdd ? addSplats : bossSplats
 
   return (
     <div class="forge-shell h-full flex flex-col p-4">
@@ -485,27 +488,26 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
             weapon and the boss's current form. */}
         <InkwrightCombatStage
           actor={{ ...coopPlayerSprite, accent: getStyleArt(coopPlayerSprite.motion).color }}
-          target={{ icon: coopStageArt.icon, accent: coopStageArt.accent, sprite: coopMonsterSprite }}
+          target={{
+            icon: coopStageArt.icon,
+            accent: coopStageArt.accent,
+            sprite: coopMonsterSprite,
+            dying: (coopStageTarget?.currentHP ?? 1) <= 0,
+          }}
           actorSwing={swings.player}
           targetSwing={swings.monster}
+          actorHp={{ current: me?.hp ?? 0, max: me?.maxHP ?? 1 }}
+          targetHp={{ current: coopStageTarget?.currentHP ?? 0, max: coopStageTarget?.hitpoints ?? 1 }}
+          actorSplats={playerSplats}
+          targetSplats={coopStageSplats}
+          showCorners
+          actorPrayer={typeof combatState?.maxPrayerPoints === 'number' ? { current: combatState.prayerPoints, max: combatState.maxPrayerPoints } : null}
           label={`You versus ${coopStageTarget?.name || bossName}`}
         />
 
-        <CombatHPBlock
-          label="Enemy Hitpoints"
-          current={boss?.currentHP ?? 0}
-          max={boss?.maxHP ?? 1}
-          splats={bossSplats}
-        />
-
-        <CombatHPBlock
-          label="Your Hitpoints"
-          current={me?.hp ?? 0}
-          max={me?.maxHP ?? 1}
-          splats={playerSplats}
-          valueColor="#7ce88a"
-          right={<ActivePotionBadges activePotions={combatState?.activePotions} itemsData={itemsData} />}
-        />
+        <div class="mb-2 flex justify-end">
+          <ActivePotionBadges activePotions={combatState?.activePotions} itemsData={itemsData} />
+        </div>
 
         {activeAdd && (
           <div class="cb-qa" style={{ marginBottom: 12 }}>
@@ -538,9 +540,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           </div>
         )}
 
-        {typeof combatState?.maxPrayerPoints === 'number' && (
-          <CombatPrayerBlock current={combatState.prayerPoints} max={combatState.maxPrayerPoints} />
-        )}
+        {/* Prayer pool now reads from the stage's top-left corner
+            (showCorners/actorPrayer above) — no bar block here. */}
 
         {boss?.respawnCountdown > 0 && (
           <div class="cb-respawn">
