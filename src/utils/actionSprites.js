@@ -94,8 +94,9 @@ export function actionSpriteFor(style) {
   return ACTION_SPRITES[spriteStyleKey(style)]
 }
 
-// Ten hand-drawn weapon shapes InkwrightCombatStage's CombatTool can draw,
-// replacing the one-shape-per-motion default (plain sword / bow / staff).
+// Twelve hand-drawn weapon shapes InkwrightCombatStage's CombatTool draws,
+// authored in utils/weaponShapes.js, replacing the one-shape-per-motion
+// default (plain sword / longbow / staff).
 // This is the SECOND swing at "the weapon should look like the weapon", after
 // embedding the actual bespoke inventory icon in the hand (reverted — the icon
 // set mixes authoring conventions with no single anchor that lands all 151 of
@@ -106,9 +107,13 @@ export function actionSpriteFor(style) {
 // tint (`weaponTint` below) — a bronze scimitar and a dragon scimitar are the
 // same silhouette in different colours, same as the real weapons in the
 // Armoury. `WEAPON_ICON_TYPES` order matters only for readability below.
+// `shortbow` and `dagger` are the same drawings as `longbow` and `sword` at
+// half size (utils/weaponShapes.js) rather than shapes of their own — a
+// shortbow IS a small longbow and a dagger IS a small sword, so declaring
+// them as copies keeps one profile to get right per family.
 export const WEAPON_ICON_TYPES = [
-  'sword', 'scimitar', 'rapier', 'godsword', 'maul', 'mace',
-  'bow', 'crossbow', 'staff', 'wand',
+  'sword', 'dagger', 'scimitar', 'rapier', 'godsword', 'maul', 'mace',
+  'longbow', 'shortbow', 'crossbow', 'staff', 'wand',
 ]
 
 // Substring rules run BEFORE the mechanical fallback because the item's own
@@ -120,6 +125,11 @@ export const WEAPON_ICON_TYPES = [
 // negative lookahead — a plain substring match misclassified it.
 const NAME_TYPE_RULES = [
   [/crossbow/, 'crossbow'],
+  // Before every bow pattern: "bowyers_knife" is a stab dagger whose id
+  // contains "bow", and it is the reason the bare bow pattern below carries a
+  // negative lookahead at all. That lookahead stays as a second line of
+  // defence — this rule only wins while it is ordered ahead of it.
+  [/dagger|knife/, 'dagger'],
   [/godsword/, 'godsword'],
   [/maul/, 'maul'],
   [/flail/, 'mace'],
@@ -129,7 +139,13 @@ const NAME_TYPE_RULES = [
   [/rapier/, 'rapier'],
   [/wand/, 'wand'],
   [/staff|stave/, 'staff'],
-  [/bow(?!yer)/, 'bow'],
+  // Shortbow before the bare bow pattern, same ordering reason as crossbow —
+  // every shortbow id also contains "bow". A bow that is neither by name
+  // (bow_of_faerdhinen, shardglass_bow, 2nd_age_bow) draws as a longbow,
+  // which is also where the mechanical fallback below sends an unmatched
+  // ranged weapon.
+  [/shortbow/, 'shortbow'],
+  [/bow(?!yer)/, 'longbow'],
 ]
 
 /**
@@ -138,10 +154,14 @@ const NAME_TYPE_RULES = [
  * `attackStyle`, `twoHanded` and `ammoType` off the item, so it needs no
  * DOM and no bespoke-icon data. Unmatched items (tools misfiled into the
  * weapon slot, reskins with no on-brand name) fall back by mechanics: magic
- * to staff, ranged to crossbow only when it actually fires bolts (else bow),
- * crush to maul/mace by two-handedness, everything else (slash/stab/unset)
- * to godsword/sword by two-handedness — a two-handed reach weapon reads
- * closer to a godsword's big swing than a one-handed sword's.
+ * to staff, ranged to crossbow only when it actually fires bolts (else
+ * longbow), crush to maul/mace by two-handedness, everything else
+ * (slash/stab/unset) to godsword/sword by two-handedness — a two-handed reach
+ * weapon reads closer to a godsword's big swing than a one-handed sword's.
+ *
+ * The fallback never reaches `dagger` or `shortbow`: both are the SMALL
+ * member of their family, and guessing "small" from stats alone would shrink
+ * every unnamed stab weapon. They are claimed by name or not at all.
  */
 export function weaponIconTypeFor(item) {
   if (!item) return null
@@ -150,7 +170,7 @@ export function weaponIconTypeFor(item) {
     if (pattern.test(id)) return type
   }
   if (item.attackStyle === 'magic') return 'staff'
-  if (item.attackStyle === 'ranged') return item.ammoType === 'bolt' ? 'crossbow' : 'bow'
+  if (item.attackStyle === 'ranged') return item.ammoType === 'bolt' ? 'crossbow' : 'longbow'
   if (item.attackStyle === 'crush') return item.twoHanded ? 'maul' : 'mace'
   return item.twoHanded ? 'godsword' : 'sword'
 }
