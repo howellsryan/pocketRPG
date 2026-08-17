@@ -305,17 +305,25 @@ function CombatConsume() {
 }
 
 // Every bespoke weapon icon (src/data/bespokeIcons.json) is authored on the
-// same 512x512 canvas, business end toward the top-right and grip toward the
-// bottom-centre — swords/axes/maces/spears/staves are drawn upright and
-// rotated -22° to -45° about their own centre, bows are drawn upright with
-// no rotation at all (see docs/action-animations.md's per-family notes if
-// this ever needs re-deriving). That convention is what makes ONE anchor per
-// MOTION — not per item — land all 151 weapons close enough to "held": the
-// icon's own centre goes near the hand, nudged up-right so the grip half (of
-// a pre-rotated icon) lands ON the hand and the business end reaches out to
-// roughly where CombatTool's generic blade used to point. `scale` is tuned
-// against the icon's full 512-unit canvas, not its drawn content, so it
-// looks small relative to the padding a css inspector would show.
+// same 512x512 canvas roughly centred at (256,256), which is what makes ONE
+// anchor per MOTION — not per item — land all 151 weapons close enough to
+// "held": the icon's own centre goes near the hand, nudged toward the
+// business end so the grip half lands ON the hand. `scale` is tuned against
+// the icon's full 512-unit canvas, not its drawn content, so it looks small
+// relative to the padding a css inspector would show.
+//
+// The nudge direction assumes every icon's business end already points
+// up-RIGHT of its own centre — true for the scimitar/dagger-style icons
+// (blade drawn diagonally in absolute coordinates, no wrapping rotate) but
+// backwards for the LARGER family authored as an upright shape then rotated
+// -8° to -45° about its own centre (maces, longswords, spears, axes,
+// staves, wands, godswords, mauls...): rotating something upright by a
+// NEGATIVE angle swings its top toward up-LEFT, not up-right, so anchoring
+// those with the same rightward nudge put the business end over the
+// wielder's own face and left the grip dangling past the hand — a maul or
+// mace, being two round masses of near-equal visual weight at each end,
+// showed this at a glance; a thin dagger or staff was subtle enough to pass
+// a quick look. `needsMirror` below is the fix — see its own comment.
 export const WEAPON_ICON_ANCHOR = {
   melee:  { scale: 0.16, dx: 18, dy: -10 },
   ranged: { scale: 0.14, dx: 0,  dy: 0 },
@@ -329,6 +337,22 @@ export function viewBoxCenter(viewBox) {
   const parts = String(viewBox || '0 0 512 512').split(/\s+/).map(Number)
   const [minX, minY, w, h] = parts.length === 4 && parts.every(n => Number.isFinite(n)) ? parts : [0, 0, 512, 512]
   return [minX + w / 2, minY + h / 2]
+}
+
+// Detects the "upright, rotated negative" family described above by reading
+// the icon's OWN first `rotate(angle cx cy)` — whatever authored it already
+// encodes which way it leans, so this reads that intent instead of
+// re-guessing it. A NEGATIVE angle is that family (needs the mirror); a
+// POSITIVE angle is the direct-diagonal family's own grip-ornament nudge
+// (dragon_scimitar etc — already leans right, never mirror); no rotate at
+// all is the bow family (also already right, via its own zero-nudge anchor
+// above). Mirroring is one sign flip on the transform's X scale — it swaps
+// up-left for up-right without touching the tuned anchor constants, because
+// mirroring an already-rotated shape around its own centre is exactly that:
+// `scale(-s,s)` centred on (256,256) sends a point (256-d) to (256+d).
+export function needsMirror(body) {
+  const m = /rotate\(\s*(-?[\d.]+)[\s,]/.exec(body || '')
+  return !!m && Number(m[1]) < 0
 }
 
 /** The player's actual weapon, drawn from its own bespoke inventory icon
@@ -351,8 +375,9 @@ function CombatWeaponIcon({ item, motion, accent }) {
   const [vbx, vby] = viewBoxCenter(icon.viewBox)
   const cx = 100 + anchor.dx
   const cy = 64 + anchor.dy
+  const scaleX = needsMirror(icon.body) ? -anchor.scale : anchor.scale
   return (
-    <g transform={`translate(${cx},${cy}) scale(${anchor.scale}) translate(${-vbx},${-vby})`}>
+    <g transform={`translate(${cx},${cy}) scale(${scaleX},${anchor.scale}) translate(${-vbx},${-vby})`}>
       <g
         {...(icon.tint ? { fill: icon.tint } : {})}
         style={{ ...(icon.tint && { color: icon.tint }), ...(icon.glow && { filter: icon.glow }) }}

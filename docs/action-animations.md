@@ -172,15 +172,22 @@ from `monsterCombatSprite`, independent of whether anything is mid-swing.
 inventory icon — `CombatWeaponIcon` in `InkwrightCombatStage.jsx`.** This reverses
 the "per-weapon art" line that used to sit under "Deliberately not done" below: every
 weapon in `items.json` already has a `bespokeIcons.json` entry (151/151), so there was
-no coverage gap to design around. It costs no new art and no per-item authoring
-because `bespokeIcons.json`'s weapon entries already share one convention — a
-512×512 canvas, business end toward the top-right, grip toward the bottom-centre,
-swords/axes/maces/spears/staves pre-rotated -22° to -45° about their own centre and
-bows drawn upright with no rotation at all. `WEAPON_ICON_ANCHOR` exploits that: ONE
-anchor+scale per `motion` (melee/ranged/magic), not per item, is enough to land all
-151 weapons close enough to "held" — the icon's own centre lands near the hand,
-nudged up-right so a pre-rotated icon's grip half sits on the hand and its business
-end reaches out to roughly where `CombatTool`'s generic blade used to point. Bespoke
+no coverage gap to design around. It costs no new art and no per-item authoring because
+`bespokeIcons.json`'s weapon entries share one 512×512 canvas roughly centred at
+(256,256), which is what makes ONE anchor+scale per `motion` (melee/ranged/magic), not
+per item, land all 151 close enough to "held": the icon's own centre goes near the hand,
+nudged toward the business end so the grip half sits on the hand. That canvas hides TWO
+different authoring conventions, though, and only one nudges correctly on its own — a
+blade drawn diagonally in absolute coordinates (dragon_scimitar and its tier-mates)
+already leans up-right, but the larger family (maces, longswords, spears, staves, wands,
+godswords, mauls...) is drawn upright and then rotated a NEGATIVE angle about its own
+centre, which swings the business end up-LEFT instead. Anchored the same way, a dragon
+mace's head landed over the wielder's own face with its pommel dangling out past the
+hand — obvious on a mace (two round masses of near-equal weight at each end), easy to
+miss on a thin dagger or staff at a glance. `needsMirror` reads each icon's own
+`rotate(angle …)` to tell the two families apart — a NEGATIVE angle mirrors (one sign
+flip on the transform's X scale, centred on the same anchor), a positive angle or no
+rotate at all (the bow family) does not. Bespoke
 icons render exactly as authored (full colour, no tint) — the one place on this stage
 that isn't flat ink, because the item is the point. `CombatTool` is now purely the
 FALLBACK: unarmed (no weapon item) and anything with no resolvable icon at all render
