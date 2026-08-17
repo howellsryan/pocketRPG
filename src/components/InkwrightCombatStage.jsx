@@ -1,7 +1,7 @@
 import { useRef } from 'preact/hooks'
 import InkwrightFigure, { Limb } from './InkwrightFigure.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
-import { isSmashWeaponType } from '../utils/actionSprites.js'
+import { isSmashWeaponType, isLungeWeaponType } from '../utils/actionSprites.js'
 
 /**
  * Inkwright's combat presentation: two figures facing each other — the
@@ -170,10 +170,13 @@ export default function InkwrightCombatStage({
   // nor stays armed, the same way a dropped weapon doesn't ride a corpse down.
   const targetSwinging = !dying && !!targetSwing && !!targetSprite
 
-  // godsword/maul play a heavier two-handed smash instead of the standard
-  // one-handed swing — melee only, since a "smash" weapon type never occurs
-  // outside that motion.
+  // godsword/maul play a heavier two-handed smash, a rapier a fencer's lunge,
+  // instead of the standard one-handed swing — melee only, since neither
+  // weapon type occurs outside that motion. Mutually exclusive (a weapon has
+  // exactly one WEAPON_ICON_TYPES entry), so at most one of these is ever on.
   const actorSmash = a.motion === 'melee' && isSmashWeaponType(a.weaponIconType)
+  const actorLunge = a.motion === 'melee' && isLungeWeaponType(a.weaponIconType)
+  const actorSwingVariant = actorSmash ? ' is-smash' : actorLunge ? ' is-lunge' : ''
 
   return (
     <div class="inkc-stage" role="img" aria-label={label}>
@@ -187,7 +190,7 @@ export default function InkwrightCombatStage({
           <MiniHpBar cx={TORSO_CX} hp={actorHp} />
           <g
             key={`a${actorSwing ? actorSwing.id : 0}`}
-            class={`inkc-fig${actorSwing ? ` inkc-fig--${a.motion}${actorSmash ? ' is-smash' : ''} is-swinging` : ''}`}
+            class={`inkc-fig${actorSwing ? ` inkc-fig--${a.motion}${actorSwingVariant} is-swinging` : ''}`}
             style={{ '--inkc-dur': `${a.swingMs}ms` }}
           >
             <InkwrightFigure>
@@ -348,16 +351,33 @@ function CombatTool({ kind, weaponIconType, tint, accent }) {
   switch (type) {
     case 'scimitar': return (
       <g>
-        <path class="ink-shaft" d="M96 66 Q112 46 134 32" fill="none" style={tintStroke} />
-        <path class="inkc-crossguard" d="M102 60 L110 51" />
+        {/* A filled crescent, not a stroked line — the curve has to bow AWAY
+            from the cutting edge on the spine side and hook back at the tip,
+            same silhouette as the game's own scimitar icon, or it just reads
+            as a bent stick. */}
+        <path
+          d="M96 68 C 100 51 115 36 140 30 C 129 38 118 47 109 60 L 107 64 L 105 66 L 104 68 Z"
+          style={{ fill: tint || 'var(--surface-raised)', stroke: 'var(--text-strong)', strokeWidth: 2.2, strokeLinejoin: 'round' }}
+        />
+        {/* A thin pale glint along the spine is what reads as "sharp" at this
+            scale — a filled shape alone still reads as a blunt wedge. */}
+        <path d="M99 52 C 111 41 125 34 137 31" fill="none" stroke="#fff" stroke-width="1.3" opacity="0.5" />
+        <path class="inkc-crossguard" d="M91 65 L101 58" />
         <path class="ink-grip" d="M96 68 L104 64" />
       </g>
     )
     case 'rapier': return (
       <g>
-        <path class="ink-shaft ink-shaft--thin" d="M96 66 L142 30" style={tintStroke} />
-        <circle class="inkc-crossguard" cx="99" cy="63" r="5" fill="none" />
-        <path class="ink-grip" d="M96 68 L104 64" />
+        <path class="ink-shaft ink-shaft--thin" d="M98 65 L146 26" style={tintStroke} />
+        {/* Swept hilt: a straight quillon plus a curved knuckle-bow looping
+            back toward the pommel — a rapier reads as a rapier by its guard
+            as much as its blade. Pushed clear of the fist (InkwrightFigure's
+            drawn hand is a ~7-radius blob centred on the grip point) rather
+            than centred on it, or the guard just disappears behind the hand. */}
+        <path class="inkc-crossguard" d="M88 78 L106 55" />
+        <path class="inkc-crossguard" d="M88 78 Q74 70 82 54" fill="none" />
+        <circle cx="84" cy="80" r="3.6" fill="var(--text-strong)" />
+        <path class="ink-grip" d="M96 70 L104 64" />
       </g>
     )
     case 'godsword': return (
@@ -374,11 +394,15 @@ function CombatTool({ kind, weaponIconType, tint, accent }) {
     )
     case 'maul': return (
       <g>
-        <path class="ink-shaft ink-shaft--thin" d="M96 68 L120 48" />
-        <ellipse
-          cx="128" cy="41" rx="15" ry="11" transform="rotate(-32 128 41)"
-          style={{ fill: tint || 'var(--surface-raised)', stroke: 'var(--text-strong)', strokeWidth: 2.6 }}
+        <path class="ink-shaft ink-shaft--thin" d="M96 68 L118 44" />
+        {/* A flat-topped hexagon, not a ball — a round head is the mace's
+            shape; the game's own maul icons are a blocky flanged hex head. */}
+        <path
+          d="M117 36 L139 36 L141 42 L139 48 L117 48 L115 42 Z"
+          transform="rotate(-33 128 42)"
+          style={{ fill: tint || 'var(--surface-raised)', stroke: 'var(--text-strong)', strokeWidth: 2.4, strokeLinejoin: 'round' }}
         />
+        <circle cx="128" cy="42" r="3.4" transform="rotate(-33 128 42)" fill="var(--text-strong)" opacity="0.5" />
         <path class="ink-grip" d="M96 70 L106 64" />
       </g>
     )

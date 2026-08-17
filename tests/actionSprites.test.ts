@@ -15,6 +15,7 @@ import {
   actionSpriteFor,
   weaponIconTypeFor,
   isSmashWeaponType,
+  isLungeWeaponType,
   playerCombatSprite,
   monsterCombatSprite,
   swingsFromCombatEvents,
@@ -183,6 +184,26 @@ describe('isSmashWeaponType', () => {
     }
     expect(isSmashWeaponType(null as any)).toBe(false)
     expect(isSmashWeaponType(undefined as any)).toBe(false)
+  })
+})
+
+describe('isLungeWeaponType', () => {
+  it('is true only for the rapier', () => {
+    expect(isLungeWeaponType('rapier')).toBe(true)
+  })
+
+  it('is false for every other shape, including unarmed (null)', () => {
+    for (const type of WEAPON_ICON_TYPES.filter((t) => t !== 'rapier')) {
+      expect(isLungeWeaponType(type)).toBe(false)
+    }
+    expect(isLungeWeaponType(null as any)).toBe(false)
+    expect(isLungeWeaponType(undefined as any)).toBe(false)
+  })
+
+  it('never overlaps with the smash weapons — a swing is at most one variant', () => {
+    for (const type of WEAPON_ICON_TYPES) {
+      expect(isSmashWeaponType(type) && isLungeWeaponType(type)).toBe(false)
+    }
   })
 })
 

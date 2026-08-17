@@ -1424,6 +1424,22 @@ html, body, #app {
   }
   .inkc-fig--melee.is-smash.is-swinging .inkc-arm:not(.is-eating) { animation: inkcSmashSwing var(--inkc-dur) var(--fm-ease); }
 
+  /* Rapier (utils/actionSprites.js isLungeWeaponType): a fencer's attack
+     travels straight out along the blade, not through an arc — a small
+     wind-back rotation, then a THRUST translated along the blade's own
+     ~-39deg axis (the rapier is drawn from the grip toward (146,26)) rather
+     than a big rotation. `translate` composes with `rotate` in one
+     transform value; order here (rotate then translate) matches every other
+     keyframe's convention even though the arm's small rotation barely
+     changes the thrust vector at this scale. */
+  @keyframes inkcRapierLunge {
+    0%   { transform: rotate(-4deg) translate(0px, 0px); }
+    36%  { transform: rotate(-9deg) translate(-3px, 1px); }
+    62%  { transform: rotate(3deg) translate(10px, -8px); }
+    100% { transform: rotate(-4deg) translate(0px, 0px); }
+  }
+  .inkc-fig--melee.is-lunge.is-swinging .inkc-arm:not(.is-eating) { animation: inkcRapierLunge var(--inkc-dur) var(--fm-ease); }
+
   /* The orb charges through the same window the arm steadies in, then holds
      invisible once the bolt itself takes over at launch. */
   @keyframes inkcOrbCharge {

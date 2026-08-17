@@ -165,6 +165,15 @@ export function isSmashWeaponType(weaponIconType) {
   return SMASH_WEAPON_TYPES.has(weaponIconType)
 }
 
+// A rapier lunges/thrusts instead of swinging — a fencer's attack travels
+// along the blade's own axis, not in an arc — so it gets its own `.is-lunge`
+// keyframe variant the same way godsword/maul get `.is-smash`: an ADDITIONAL
+// class, not a fourth motion, since only the LOOK changes.
+const LUNGE_WEAPON_TYPES = new Set(['rapier'])
+export function isLungeWeaponType(weaponIconType) {
+  return LUNGE_WEAPON_TYPES.has(weaponIconType)
+}
+
 /**
  * The player's side of the stage: which tool glyph is shown and how fast it
  * moves, read from what is actually equipped. Unarmed falls through to

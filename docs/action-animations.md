@@ -202,6 +202,19 @@ as a heavier weapon without needing a second drawn arm; the rig only has one
 grippable hand, so "two-handed" is conveyed by the shape (both are drawn bulkier than
 a one-handed weapon) and the motion, not by literally repositioning the back arm.
 
+**A rapier lunges instead of swinging** — `isLungeWeaponType` gates the same kind of
+extra class (`.is-lunge`, melee only, mutually exclusive with `.is-smash` since a
+weapon has exactly one `WEAPON_ICON_TYPES` entry). `inkcRapierLunge` composes
+`rotate()` with `translate()` in the same keyframe — a fencer's attack travels along
+the blade's own axis, not through an arc, so the wind-up is a small rotation and the
+attack itself is a THRUST translated roughly along the rapier's drawn angle (the
+blade runs grip→(146,26), ≈-39°), rather than the big rotation every other melee
+weapon uses. The rapier's hilt (crossguard + knuckle-bow + pommel) is drawn pushed
+clear of `InkwrightFigure`'s drawn fist (a ~7-radius blob centred on the grip point)
+rather than centred on the grip — geometry sitting UNDER the fist silhouette simply
+never rendered, which is also why the scimitar's crossguard and every other weapon's
+grip decoration stay small and close rather than reaching for realism.
+
 **A crossbow fires a bolt, not an arrow.** `CombatShot` and `shotOffset` both take
 `weaponIconType` alongside `kind` now — a crossbow's bolt is short and stubby, fired
 from its own shorter origin (the prod, not a full bowstring draw), so it needed its
@@ -258,7 +271,9 @@ they're spelled out rather than left implicit.
    unarmed passes none. `accent` stays reserved for projectile-adjacent bits only.
 3. If it's genuinely a smash weapon (two-handed, meant to read heavy), add it to
    `SMASH_WEAPON_TYPES` in `actionSprites.js` — melee only, `isSmashWeaponType` gates
-   `.is-smash` and nothing reads it outside that motion.
+   `.is-smash` and nothing reads it outside that motion. A thrusting weapon instead
+   of a swinging one is the same pattern via `LUNGE_WEAPON_TYPES`/`isLungeWeaponType`
+   /`.is-lunge` — the two are mutually exclusive, so add a weapon to at most one.
 4. If it fires its own distinct projectile (not the default arrow/orb), branch it in
    `shotOffset` and `CombatShot`, and give it its own CSS class in the `inkcShotFly`
    selector — reusing another kind's class silently attaches the wrong animation
