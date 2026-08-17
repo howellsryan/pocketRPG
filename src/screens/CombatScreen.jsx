@@ -64,7 +64,7 @@ import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/i
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { swingsFromCombatEvents, playerCombatSprite, monsterCombatSprite } from '../utils/actionSprites.js'
 import { useActionSwings } from '../hooks/useActionSwings.js'
-import ActionSpriteStage from '../components/ActionSpriteStage.jsx'
+import InkwrightCombatStage from '../components/InkwrightCombatStage.jsx'
 import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal, killPresentsFullModal } from '../utils/lootModal.js'
 import { emitKillReveal } from '../utils/rewardReveal.js'
@@ -3341,7 +3341,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const playerSprite = playerCombatSprite(equipment, itemsData, { combatType: combat.combatType, stance: combat.stance })
   const monsterSprite = monsterCombatSprite(spriteMonster)
   const spriteStage = (
-    <ActionSpriteStage
+    <InkwrightCombatStage
       actor={{ ...playerSprite, accent: getStyleArt(playerSprite.motion).color }}
       target={{ icon: spriteMonsterArt.icon, accent: spriteMonsterArt.accent, sprite: monsterSprite }}
       actorSwing={swings.player}

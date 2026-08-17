@@ -1,4 +1,5 @@
 import GameIcon from './GameIcon.jsx'
+import InkwrightFigure, { Limb } from './InkwrightFigure.jsx'
 import { getItemIconTint } from '../utils/itemIcons.js'
 import { resolveItemIcon } from '../utils/itemIconResolve.js'
 import bespokeIconsData from '../data/bespokeIcons.json'
@@ -96,28 +97,14 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
 
         {/* The figure. Only the arm swings; the body carries the recoil. */}
         <g class={`ink-fig ink-fig--${motion}${swinging ? ' is-working' : ''}`} key={`f${yieldToken}`}>
-          <g class="ink-legs">
-            <Limb d="M72 84 L63 96 L55 103" w={12} back />
-            <Limb d="M78 84 L86 97 L95 104" w={13} />
-          </g>
-          <Limb d="M78 60 L68 70 L66 78" w={10} back />
-
-          {/* Tunic */}
-          <path class="ink-cloth" d="M67 54 Q64 72 66 86 L86 86 Q88 72 86 54 Z" />
-          <path class="ink-line" d="M66.5 73 L86.5 73" />
-
-          {/* Hood, draping FORWARD over the brow. An upward peak reads as an
-              animal ear, which is what the first pass drew. */}
-          <path class="ink-cloth" d="M65 57 Q57 45 62 32 Q69 21 81 23 Q94 26 94 41 Q94 51 89 57 Z" />
-          <path class="ink-hollow" d="M85 33 Q93 36 92 45 Q90 52 84 53 Q80 43 85 33 Z" />
-          <path class="ink-cloth2" d="M64 53 Q76 63 90 53 Q92 60 86 65 L68 65 Q62 60 64 53 Z" />
-
-          {/* Arm and tool rotate together about the shoulder, so the tool
-              cannot drift out of the hand. */}
-          <g class="ink-arm">
-            <Limb d="M84 58 L94 62 L100 64" w={11} />
-            <Tool kind={motion} />
-          </g>
+          <InkwrightFigure>
+            {/* Arm and tool rotate together about the shoulder, so the tool
+                cannot drift out of the hand. */}
+            <g class="ink-arm">
+              <Limb d="M84 58 L94 62 L100 64" w={11} />
+              <Tool kind={motion} />
+            </g>
+          </InkwrightFigure>
         </g>
 
       </svg>
@@ -131,17 +118,6 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
         </div>
       )}
     </div>
-  )
-}
-
-/** An outlined limb: one ink stroke with a narrower cloth stroke on top.
- * Drawn the other way round it renders a stick with a halo. */
-function Limb({ d, w, back = false }) {
-  return (
-    <g>
-      <path class="ink-limb-ink" d={d} style={{ strokeWidth: w }} />
-      <path class={back ? 'ink-limb-back' : 'ink-limb-fill'} d={d} style={{ strokeWidth: w - 6.2 }} />
-    </g>
   )
 }
 

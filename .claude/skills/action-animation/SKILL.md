@@ -1,6 +1,6 @@
 ---
 name: action-animation
-description: Use when adding or changing an on-screen animation for a player action - a combat swing, a mining strike, a fishing cast, a smithing hammer blow - or when editing src/utils/actionSprites.js, src/utils/inkwright.js, ActionSpriteStage.jsx, InkwrightStage.jsx, or the .as-* / .ink-* CSS. Covers the two stages and when to use each, the timing law (an animation's speed IS the action's own cadence), why skilling scales strike COUNT instead of tempo, the event-to-swing contract, and the build/reduced-motion gates. Do not use for the open world's 3D entity clips (world/client, GLB rigs, combat wind-up alignment) or for procedural 3D creature specs - those are procgen-creature and .claude/rules/world-design.md.
+description: Use when adding or changing an on-screen animation for a player action - a combat swing, a mining strike, a fishing cast, a smithing hammer blow - or when editing src/utils/actionSprites.js, src/utils/inkwright.js, InkwrightCombatStage.jsx, InkwrightStage.jsx, InkwrightFigure.jsx, or the .inkc-* / .ink-* CSS. Covers the two live stages and when to use each, the timing law (an animation's speed IS the action's own cadence), why skilling scales strike COUNT instead of tempo, the event-to-swing contract, and the build/reduced-motion gates. Do not use for the open world's 3D entity clips (world/client, GLB rigs, combat wind-up alignment) or for procedural 3D creature specs - those are procgen-creature and .claude/rules/world-design.md.
 ---
 
 # action-animation: showing the player their action
@@ -8,21 +8,33 @@ description: Use when adding or changing an on-screen animation for a player act
 Design record, rationale and rollout state: `docs/action-animations.md`. This is the
 checklist.
 
-**One law, two stages.** Pick by what the player is doing:
+**One law, one drawn figure, two live stages.** Pick by what the player is doing:
 
-| | `ActionSpriteStage` (`.as-*`) | `InkwrightStage` (`.ink-*`) |
+| | `InkwrightCombatStage` (`.inkc-*`) | `InkwrightStage` (`.ink-*`) |
 |---|---|---|
-| Shape | actor's tool → lane → target's mark | a figure working a resource |
-| Sprite | masked `gameIcons.json` glyph | drawn inked-vector figure + tool |
+| Shape | two figures facing off, mirrored | a figure working a resource |
+| Sprite | drawn inked-vector figure + weapon | drawn inked-vector figure + tool |
 | Cadence | one cycle = one swing | one action = several strikes, one yield |
 | Wired | solo combat, co-op/raid | mining, woodcutting, fishing |
 
-Fighting something that fights back → the lane. Working something that gives way →
-the figure. A new skill almost always wants Inkwright.
+Fighting something that fights back → the combat stage. Working something that gives
+way → the skilling one. Both are the SAME character (`InkwrightFigure.jsx`) — a new
+combat style or a new skill costs a motion, not a redraw.
+
+**`ActionSpriteStage.jsx` (`.as-*`, a masked-glyph tool-in-a-lane) is superseded.**
+It was combat's first presentation and no screen renders it any more, but it is not
+deleted — its file, its CSS, and `useActionSwings.js` all stay, because the
+event-to-swing contract underneath it (`swingsFromCombatEvents`, `swingsFromCoopEvents`,
+`playerCombatSprite`, `monsterCombatSprite` — all in `actionSprites.js`) is exactly
+what `InkwrightCombatStage` still runs on, unchanged. Everything in this skill about
+swing tokens, misses, boss adds, Rapid stance, and co-op gating applies to the CURRENT
+renderer even though it was written against the old one — none of it lives in the
+renderer.
 
 These are two PRESENTATIONS, not two timing systems. Both take their cadence from
 `actionCycleMs`. A change that wants a **third timing source** or a per-screen
-duration is going the wrong way — the whole value is that 23 skills share one law.
+duration is going the wrong way — the whole value is that every skill and every
+combat style shares one law.
 
 ## The law — non-negotiable
 
@@ -34,10 +46,11 @@ const cycleMs = actionCycleMs(ticks)        // the action's tick cost × 600ms
 const swingMs = swingDurationMs(cycleMs)    // the motion inside that cadence
 ```
 
-Both from `src/utils/actionSprites.js`. The duration reaches CSS only as the inline
-`--as-dur` custom property. A hard-coded `animation: x 400ms` anywhere in `.as-*` is
-the failure this system exists to prevent — a player who buys a faster tool must see
-it.
+Both from `src/utils/actionSprites.js`. The duration reaches CSS only as an inline
+custom property (`--inkc-dur` on `InkwrightCombatStage`'s current renderer;
+`--as-dur` on the superseded `ActionSpriteStage`, same value, same source). A
+hard-coded `animation: x 400ms` anywhere in `.inkc-*` is the failure this system
+exists to prevent — a player who buys a faster weapon must see it.
 
 `swingDurationMs` is a shallow slope off a fixed base, **not** a percentage of the
 cycle. A percentage was built and rejected: it hit the upper clamp at 3 ticks, so
@@ -46,43 +59,47 @@ every weapon from a scimitar up animated identically. If a new action's cadence 
 cadences onto one duration. `tests/actionSprites.test.ts` asserts strict monotonicity
 across the shipped range and will fail if you do.
 
-## Adding an animation for a new action
+## Adding a combat style to Inkwright
 
-1. **Pick a glyph, don't commission art.** The sprite is a `src/data/gameIcons.json`
-   key (193 vendored, `pickaxe` / `wood_axe` / `fishing_pole` / `anvil` / `sewing_needle`
-   and so on). Verify the key exists before using it — a missing key renders *nothing*,
-   silently, because `SkillEmblem` returns null.
+A new WEAPON within melee/ranged/magic (a different sword, a different bow) needs
+**none of this** — the stage draws by style, not by item, on purpose (see Traps). This
+is for a genuinely new attack style.
 
-2. **Add a row to `ACTION_SPRITES`** (`src/utils/actionSprites.js`):
+1. **Add a row to `ACTION_SPRITES`** (`src/utils/actionSprites.js`):
    `{ motion, tool, projectile, label }`. `projectile` is `null` for anything that
-   connects in contact range.
+   connects in contact range (melee has none; ranged/magic do). This table is shared
+   with the superseded `ActionSpriteStage` and both combat-art helpers
+   (`getStyleArt`/`getMonsterArt`) — a new style needs an accent colour there too.
 
-3. **Add the keyframe family** to `src/index.css` as `.as-tool--<motion>` (and
-   `.as-mark--<motion>` if the target acts back). Every duration is `var(--as-dur)`.
-   Put it inside the existing `@media (prefers-reduced-motion: no-preference)` block —
-   DESIGN.md §5 requires a reduced-motion alternative, and the stage is designed to
-   read as a posed tableau with motion off.
+2. **Draw the weapon** in `CombatTool()` (`InkwrightCombatStage.jsx`). The shaft must
+   pass through the grip at (100,64) — every Inkwright tool follows this, or the
+   weapon reads as floating beside the hand rather than held in it.
 
-4. **Resolve the cadence from the action itself** — the skilling action's tick cost,
-   the weapon's `attackSpeed`. Not a screen constant, not a guess.
+3. **If it attacks at range, draw the shot** in `CombatShot()`, authored in the
+   ACTOR's own local coordinates — the enemy's wrapping mirror sends it the other way
+   for free, so never author a second, "enemy-facing" version.
 
-5. **Map events to swing tokens.** Follow `swingsFromCombatEvents`: return
+4. **Add the swing keyframe**: `.inkc-fig--<motion>.is-swinging .inkc-arm`, ONE-SHOT
+   (no `infinite` — a combat cycle is one swing, not a loop), duration
+   `var(--inkc-dur)`. Add the shot's own keyframe the same way if it has one. Inside
+   the existing `@media (prefers-reduced-motion: no-preference)` block — DESIGN.md §5
+   requires a reduced-motion alternative, and the stage reads as a posed tableau with
+   motion off.
+
+5. **Resolve the cadence from the action itself** — the weapon's `attackSpeed`, read
+   through `playerCombatSprite`/`monsterCombatSprite`. Not a screen constant, not a
+   guess.
+
+6. **Map events to swing tokens.** Follow `swingsFromCombatEvents`: return
    `{ id, side, hit }`, a fresh `id` per occurrence. The renderer keys on `id`, so a
-   boolean animates the first action and nothing after it.
+   boolean animates the first swing and nothing after it.
 
-6. **Render the stage.** For skilling that is `<InkwrightStage>`, built in the
-   CHUNKED screen and passed into `SkillActivePanel` as its `stage` prop — the panel
-   is core and these modules are chunk-only, so importing them there is a core→chunk
-   read at module eval (§12). One component sits behind most idle skilling screens,
-   so a stage there covers many skills at once; check screens that pass their own
-   `icon` override before assuming uniformity (`GatherScreen` does).
+7. **No build registration needed** unless the change added a FILE — a new style
+   inside the three existing files (`actionSprites.js`, `InkwrightCombatStage.jsx`,
+   `index.css`) needs no `build_single.cjs` changes.
 
-7. **Register in `build_single.cjs`** (§12) — any new file into `sourceFiles`, and
-   into `GAME_CHUNK_FILES` if it is in-game only. `gameIcons.json` is chunk-only, so a
-   stage on a boot-reachable screen needs the `typeof` guard re-checked.
-
-8. **Test in the same change** (`tests/actionSprites.test.ts`): the new mapping, and
-   that the glyph key it names actually exists in `gameIcons.json`.
+8. **Test in the same change** (`tests/actionSprites.test.ts`): the new
+   `ACTION_SPRITES` row and its cadence.
 
 ## Traps, each one paid for
 
@@ -110,10 +127,24 @@ across the shipped range and will fail if you do.
   on `isTarget` as well, or a full room lunges eight times a tick.
 - **Reset tokens between actions.** Mounting with a stale token is a key change, so a
   new fight/action opens by replaying the last one's motion.
-- **`.as-*` and `.ink-*` are not `.cb-*` classes.** It takes every colour from the semantic layer
-  (`--surface-sunken`, `--hairline`, `--text-*`), so it is defined **once** and is
-  exempt from the Two-Skin Trap (DESIGN.md §2). Adding a non-semantic colour means
-  owing a second `.forge-shell` definition — reach for a token instead.
+- **`.inkc-*`, `.as-*` and `.ink-*` are not `.cb-*` classes.** Every colour comes from
+  the semantic layer (`--surface-sunken`, `--hairline`, `--text-*`), so each is
+  defined **once** and is exempt from the Two-Skin Trap (DESIGN.md §2). Adding a
+  non-semantic colour means owing a second `.forge-shell` definition — reach for a
+  token instead.
+- **The enemy's weapon must be drawn at rest, not just mid-swing.** Gating
+  `CombatTool` on "currently swinging" makes it flicker in and out of existence
+  between attacks — `target.sprite`'s tool is known before the first swing token ever
+  arrives, so draw it unconditionally, matching the player's own always-armed
+  treatment (and skilling's pickaxe-always-in-hand rule).
+- **Struck flashes are named by who takes them, not who swung.** An `actorStruck` /
+  `targetStruck` pair reads backwards on first glance — the actor's OWN swing landing
+  is what flashes the *enemy*. Name them `enemyFlashes` / `playerFlashes` (or
+  equivalent) so the variable states the visible effect, not the cause.
+- **Mirror the ENEMY, not each figure.** One `translate(STAGE_W,0) scale(-1,1)`
+  around the whole enemy group means every local coordinate — shoulder pivot, weapon
+  tip, shot flight path — is authored once and reads correctly on both sides.
+  Mirroring per-figure means re-deriving that arithmetic twice and it drifting once.
 
 ## Adding a skill to Inkwright
 
@@ -158,6 +189,6 @@ the stage reads a clock and a completion counter.
 
 The open world renders 3D entities from baked GLB clips with its own impact-frame
 alignment (`src/utils/combatWindup.js`, `world/client/src/entities.ts`). Different
-renderer, different problem. Do not wire `.as-*` into it, and do not "unify" the two
+renderer, different problem. Do not wire `.inkc-*` into it, and do not "unify" the two
 timing models — the wind-up system aligns a clip's *impact frame* onto a hit tick,
 which is a stricter constraint than this one.

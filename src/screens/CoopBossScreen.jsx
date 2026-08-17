@@ -19,7 +19,7 @@ import { openCoopFeed } from '../cloud/coopFeed.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { swingsFromCoopEvents, playerCombatSprite, monsterCombatSprite } from '../utils/actionSprites.js'
 import { useActionSwings } from '../hooks/useActionSwings.js'
-import ActionSpriteStage from '../components/ActionSpriteStage.jsx'
+import InkwrightCombatStage from '../components/InkwrightCombatStage.jsx'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
 import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal, foughtThisKill, isRaidPayingBoss } from '../engine/coopBossEngine.js'
@@ -483,7 +483,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
         {/* §20: the group fight looks like the solo fight, so the stage sits in
             the same place with the same timing law — read off THIS member's
             weapon and the boss's current form. */}
-        <ActionSpriteStage
+        <InkwrightCombatStage
           actor={{ ...coopPlayerSprite, accent: getStyleArt(coopPlayerSprite.motion).color }}
           target={{ icon: coopStageArt.icon, accent: coopStageArt.accent, sprite: coopMonsterSprite }}
           actorSwing={swings.player}

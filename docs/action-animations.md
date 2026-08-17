@@ -1,26 +1,40 @@
 # Action Animations — design record
 
-The system that shows the player their action happening. **Two stages, one law.**
-Combat shipped first because it has the hardest version of the problem — two actors,
-three styles, and a cadence that changes with equipment. Mining, woodcutting and
-fishing shipped second, on a stage of their own.
+The system that shows the player their action happening. **Two live stages, one
+law, one drawn figure.** Combat shipped first because it has the hardest version of
+the problem — two actors, three styles, and a cadence that changes with equipment.
+Mining, woodcutting and fishing shipped second, on a stage of their own. Combat then
+moved a second time — off its original tool-glyph presentation onto the same drawn
+"Inkwright" figure skilling uses, armed per style and facing a mirrored copy of
+itself for the enemy.
 
 Authoring checklist for adding one: the **`action-animation`** skill. This file is
 the *why*; the skill is the *how*.
 
 ## Which stage
 
-| | `ActionSpriteStage` (`.as-*`) | `InkwrightStage` (`.ink-*`) |
+| | `InkwrightCombatStage` (`.inkc-*`) | `InkwrightStage` (`.ink-*`) |
 |---|---|---|
-| Shape | actor's tool → lane → target's mark | a figure working a resource |
-| Sprite | masked `gameIcons.json` glyph | drawn inked-vector figure + tool |
+| Shape | two figures facing off, mirrored | a figure working a resource |
+| Sprite | drawn inked-vector figure + weapon | drawn inked-vector figure + tool |
 | Cadence | one cycle = one swing | one action = several strikes, one yield |
 | Wired | solo combat, co-op/raid | mining, woodcutting, fishing |
 
 They are two PRESENTATIONS, not two timing systems: both take their cadence from
-`actionCycleMs` in `src/utils/actionSprites.js`. Pick by whether the player is
-fighting something that fights back (a lane between two actors) or working something
-that gives way (a figure and a resource). A new skill almost always wants Inkwright.
+`actionCycleMs` in `src/utils/actionSprites.js` (combat directly; skilling through its
+own `inkwright.js`, which inverts the law on purpose — see below). Pick by whether the
+player is fighting something that fights back or working something that gives way.
+
+**A third stage, `ActionSpriteStage` (`.as-*`, a masked `gameIcons.json` tool glyph in
+a lane between two actors), was combat's FIRST presentation and is superseded** — no
+screen renders it any more, but the file, its CSS and `useActionSwings.js` all stay in
+the repo rather than being deleted, because the event/timing plumbing underneath it
+(`swingsFromCombatEvents`, `swingsFromCoopEvents`, `playerCombatSprite`,
+`monsterCombatSprite`, all in `actionSprites.js`) is exactly what `InkwrightCombatStage`
+still consumes, unchanged. Everything below about swing tokens, the event contract,
+co-op gating, and reading a boss's current form applies to **both** renderers equally —
+it was true when `ActionSpriteStage` was live and stayed true across the swap, because
+none of it lives in the renderer.
 
 ## The one law
 
@@ -54,36 +68,40 @@ A shallow slope off a fixed base is strictly monotonic across everything shipped
 `tests/actionSprites.test.ts` asserts that directly — if a new action ever binds
 `SWING_MAX_MS`, re-tune the slope rather than letting the clamp flatten it.
 
-## The sprite is the tool glyph
+## The sprite is drawn, not a glyph — and that changed once
 
-The repo owns no sprite sheets and is not getting any. What it owns is 193 vendored
-game-icons.net glyphs (`src/data/gameIcons.json`), masked through
-`skillEmblemMask()` and rendered by `SkillEmblem` — the same technique as the Home
-Screen's skill art.
+`ActionSpriteStage` (superseded) drew the repo's 193 vendored game-icons.net glyphs
+(`src/data/gameIcons.json`), masked through `skillEmblemMask()` and rendered by
+`SkillEmblem` — the same technique as the Home Screen's skill art. The sprite was
+literally the tool: `sword` / `bow` / `staff` for the three combat styles. A glyph key
+plus a keyframe family was the whole cost of a new animation, which is why the system
+could reach 23 skills without commissioning art.
 
-So **the sprite is the tool**: `sword` / `bow` / `staff` for the three combat styles;
-`pickaxe` / `wood_axe` / `fishing_pole` for the gathering skills. A new animation
-costs a glyph key and a keyframe family. That is the only reason this generalises to
-23 skills instead of stalling at "we need an artist".
-
-Consequence to respect: `gameIcons.json` ships in the **lazy game chunk** (CLAUDE.md
-§12), so both files are in `GAME_CHUNK_FILES` and the glyph read stays behind
-`skillEmblemMask`'s existing `typeof` guard. A stage on a boot-reachable screen would
-need that guard checked again.
+`InkwrightCombatStage` keeps that same economy but pays it differently: **the sprite
+is drawn SVG, sharing the skilling figure's geometry.** A weapon costs a handful of
+paths in `CombatTool()` (`src/components/InkwrightCombatStage.jsx`), not a glyph
+lookup — melee is a blade off the shoulder, ranged is a bow with a drawn string,
+magic is a staff with a charging orb. Extending to a new weapon SHAPE (a shield, a
+2h axe) is still cheap; extending to a new CHARACTER is not, which is why the enemy
+is deliberately the same rig recoloured rather than its own drawing (see below).
 
 ## The pieces
 
 | File | Role |
 |---|---|
 | `src/utils/actionSprites.js` | Pure: timing law, style→tool table, event→swing mapping. No DOM. |
-| `src/components/ActionSpriteStage.jsx` | Presentation: actor's tool, target's mark, the lane between them. Derives no timing of its own. |
-| `src/index.css` `.as-*` | Layout + keyframes, all motion behind `prefers-reduced-motion`. |
-| `tests/actionSprites.test.ts` | The law, the clamps, the mappings. |
+| `src/components/InkwrightFigure.jsx` | The shared body — hood, tunic, limbs. No arm, no tool: those are `children`, supplied by whichever stage wraps it. |
+| `src/components/InkwrightCombatStage.jsx` | Presentation: two `InkwrightFigure`s, weapon per style, mirrored enemy, struck flash, lane-crossing shot. Derives no timing of its own. |
+| `src/components/ActionSpriteStage.jsx` | Superseded presentation (tool glyph in a lane). Unrendered; kept for its documented invariants. |
+| `src/index.css` `.inkc-*` | Combat's layout + keyframes; `.as-*` is the superseded equivalent, still present. All motion behind `prefers-reduced-motion`. |
+| `tests/actionSprites.test.ts` | The law, the clamps, the mappings — shared by both renderers, untouched by the swap. |
 
-The stage is a three-column band: **actor tool** → **lane** → **target mark**. In
-combat the actor is the player and the target is the monster's emblem; for skilling
-the actor is the player's tool and the target is the resource's emblem. The lane
-carries the projectile for any motion that connects at range.
+`InkwrightCombatStage` mirrors the ENEMY, not each figure: one wrapping
+`translate(STAGE_W,0) scale(-1,1)` around the whole enemy group, so every local
+coordinate authored for the player — shoulder pivot, weapon tip, shot flight path —
+is written once and reads correctly on both sides for free. CSS `transform-origin` is
+evaluated in an element's own local space before its own transform, so `.inkc-arm`'s
+pivot needs no mirrored counterpart.
 
 ### Why a swing is a token, not a boolean
 
@@ -128,6 +146,61 @@ session produced them (CLAUDE.md §20). `swingsFromCoopEvents` therefore takes t
 viewer: only **their** swings move the tool, and only a boss swing whose `isTarget`
 names them moves the incoming motion. Without that gate a full room lunges eight
 times a tick.
+
+## Inkwright — the combat figures
+
+Two `InkwrightFigure`s facing off, drawn from the exact same body geometry skilling
+uses — the whole point of the name is that it is ONE character, not a per-context
+redraw. What differs is what's in the hand and what the enemy looks like.
+
+**The enemy has no art of its own, on purpose.** It is the player's own rig, mirrored
+and given a coloured aura from the style/monster accent already resolved elsewhere
+(`getStyleArt`/`getMonsterArt`) — a `filter: drop-shadow` on `.inkc-fig.enemy`, nothing
+more. Real per-monster art is future work the `action-animation` skill flags, not a
+gap to close here; today the aura is the only thing telling two fights apart.
+
+**The weapon is always drawn, at rest and mid-swing alike** — matching skilling's own
+pickaxe-is-always-in-hand rule. The enemy side learned this the hard way: gating its
+`CombatTool` on "currently swinging" made its weapon flicker in and out of existence
+between attacks, because `t` (the frozen/current target sprite) is already available
+before the first swing token ever arrives — `target.sprite` is computed every render
+from `monsterCombatSprite`, independent of whether anything is mid-swing.
+
+**A swing is ONE-SHOT, not a loop** — `.inkc-fig--<motion>.is-swinging .inkc-arm`
+plays once per token and holds at rest until the next one, exactly the cadence
+`ActionSpriteStage` already established ("Why a swing is a token, not a boolean",
+above). The GAP between tokens
+(`cycleMs − swingMs`, both from `actionSprites.js`) is what a slow weapon looks like;
+nothing in `.inkc-*` tries to fill that gap with more motion, which would be the
+skilling law bleeding into a system that deliberately doesn't use it.
+
+**The shot** (ranged arrow, magic bolt) is authored once, in the ACTOR's own local
+coordinates, and reused unchanged for the enemy's own attack — the enemy's wrapping
+mirror sends it the other way for free, same as the weapon geometry. It stays
+invisible through the wind-up/charge (`0%, 58%` in `inkcShotFly`), appears right as
+the string or the orb releases, and crosses to roughly the other figure's torso before
+the swing ends. Melee has no shot at all — it connects in reach, not at range.
+
+**Struck flashes are named by who takes them, not who swung** — `enemyFlashes` /
+`playerFlashes`, not `actorStruck` / `targetStruck`. The actor's swing landing flashes
+the ENEMY; the target's swing landing flashes the PLAYER. The two read backwards from
+each other on first glance (that IS the bug shape a bad name invites), which is why
+they're spelled out rather than left implicit.
+
+### Extending to a combat style
+
+1. Add the style to `ACTION_SPRITES` in `actionSprites.js` if it is genuinely new (the
+   three that exist — melee/ranged/magic — are unlikely to grow; a new WEAPON within
+   an existing style needs no change here at all).
+2. Draw it in `CombatTool()`: the shaft must pass through the grip at (100,64), same
+   rule as every skilling tool, or it reads as floating beside the arm.
+3. If it attacks at range, add its shot to `CombatShot()` and give it a keyframe
+   `.inkc-fig--<motion>.is-swinging .inkc-shot--<name>` inside the existing
+   `prefers-reduced-motion: no-preference` block.
+4. Add the swing keyframe itself: `.inkc-fig--<motion>.is-swinging .inkc-arm`, one-shot
+   (no `infinite`), duration `var(--inkc-dur)`.
+5. Nothing to register in `build_single.cjs` unless you added a FILE — a new style
+   inside the existing three files needs no build changes.
 
 ## Inkwright — the skilling figure
 
@@ -184,7 +257,7 @@ faster than a Bronze one for free; passing the base cost silently throws that aw
 
 | Surface | Stage | State |
 |---|---|---|
-| Solo combat, co-op/raid | `.as-*` | shipped |
+| Solo combat, co-op/raid | `.inkc-*` | shipped (superseded `.as-*`, kept unrendered) |
 | Mining, woodcutting, fishing | `.ink-*` | shipped |
 | Firemaking, cooking, smithing, crafting, fletching, herblore, runecraft | `.ink-*` | next — each is a motion row + keyframes + prop |
 | Thieving, hunter, agility, farming, construction, summoning | — | own screens, not on `SkillActivePanel`; needs a look first |
@@ -214,8 +287,9 @@ passes its own `icon` override before assuming it is uniform — `GatherScreen` 
   `nextState` — which is as close as that context gets, and crucially *not* a ref
   written during render: the beat callback runs before the render it causes, so a
   rendered ref lags a beat and drops both swings on every target switch. On an
-  add's death the recoil therefore flashes over the emblem that replaced it, for
-  one frame. That is the deliberate trade against losing the swing entirely.
+  add's death the recoil therefore flashes over whichever enemy replaced it on the
+  stage, for one frame. That is the deliberate trade against losing the swing
+  entirely — true of both renderers, since the read happens above either of them.
 - **`splatsFromCoopEvents` has the room-wide gap this change closed for swings**: it
   gates incoming splats on `isTarget` alone, so a non-target member takes room-wide
   damage with no splat over their HP bar. The `roomWide` flag now on the event is
@@ -229,6 +303,9 @@ passes its own `icon` override before assuming it is uniform — `GatherScreen` 
 - **Boss adds** do not get their own stage. The stage follows the enemy the player is
   actually targeting; a stack of them would push the fight off a phone screen, the
   same reason only one add HP bar is drawn.
-- **Per-weapon glyphs.** The stage shows the *style*, not the item — a scimitar and a
-  godsword both show `sword`. Style is what the player needs to read mid-fight; the
-  item is already in the equipment pane.
+- **Per-weapon art.** The stage shows the *style*, not the item — a scimitar and a
+  godsword both draw the same blade. Style is what the player needs to read
+  mid-fight; the item is already in the equipment pane.
+- **Per-monster art for the enemy.** Today every monster is the same rig with a
+  coloured aura. Real per-monster silhouettes are the obvious next step and were
+  explicitly deferred, not forgotten — see "Inkwright — the combat figures" above.

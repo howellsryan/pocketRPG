@@ -1400,6 +1400,117 @@ html, body, #app {
   .ink-yield { animation: inkYieldPop var(--ink-payoff) ease-out; }
 }
 
+/* ── Inkwright combat: two figures, opposite timing law ──────────────────────
+   Reuses every .ink-cloth, .ink-limb, .ink-hollow (and so on) rule above
+   unchanged — InkwrightFigure draws the same body regardless of which stage
+   wraps it, so this block only adds what combat needs on top: a wider stage,
+   a mirrored enemy, one-shot (not looping) swings sized to --inkc-dur, and
+   the things skilling never needed — a struck flash and a lane-crossing shot. */
+.inkc-stage {
+  position: relative;
+  height: 148px;
+  margin: 4px 0 12px;
+  border-radius: var(--fm-r-frame);
+  background: var(--surface-sunken);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+}
+.inkc-svg { display: block; width: 100%; height: 100%; }
+
+.inkc-arm { transform-box: view-box; transform-origin: 84px 58px; }
+/* The enemy is InkwrightFigure again, full stop — .ink-cloth etc. paint it
+   identically. `enemy` only adds a coloured aura (from the style/category
+   accent the caller already resolves) so two identical silhouettes still
+   read as two different combatants without a second character to draw. */
+.inkc-fig.enemy { filter: drop-shadow(0 0 3px var(--inkc-accent)); }
+
+.inkc-crossguard, .inkc-bowstring { fill: none; stroke: var(--text-strong); stroke-width: 2.6; stroke-linecap: round; }
+.inkc-orb { fill: var(--surface-raised); stroke: var(--text-strong); stroke-width: 2.4; }
+
+.inkc-shot { opacity: 0; transform-box: view-box; }
+.inkc-shot path { fill: none; stroke: var(--text-strong); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+.inkc-shot--bolt circle { fill: var(--surface-raised); stroke: var(--text-strong); stroke-width: 2.4; }
+.inkc-bolt-trail { stroke: none; opacity: 0.35; }
+
+.inkc-struck {
+  fill: var(--color-hp-red);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* One shot per token, not a loop — a combat cycle IS one swing, so the
+     motion plays once and holds at rest until the next token arrives. The
+     GAP between tokens (cycleMs - swingMs, computed in actionSprites.js) is
+     what a slow weapon actually looks like; nothing here should try to fill
+     that gap with more motion. */
+  @keyframes inkcMeleeSwing {
+    0%   { transform: rotate(-8deg); }
+    42%  { transform: rotate(-58deg); }
+    62%  { transform: rotate(46deg); }
+    100% { transform: rotate(-8deg); }
+  }
+  /* Ranged: a controlled draw and release — the arrow crossing the lane is
+     the attack, not a violent arm swing. */
+  @keyframes inkcRangedDraw {
+    0%   { transform: rotate(-4deg); }
+    55%  { transform: rotate(-20deg); }
+    64%  { transform: rotate(-2deg); }
+    100% { transform: rotate(-4deg); }
+  }
+  /* Magic: the arm steadies through the charge, then a forward cast thrust
+     right as the bolt launches. */
+  @keyframes inkcMagicCast {
+    0%   { transform: rotate(-4deg); }
+    58%  { transform: rotate(-15deg); }
+    70%  { transform: rotate(12deg); }
+    100% { transform: rotate(-4deg); }
+  }
+  .inkc-fig--melee.is-swinging .inkc-arm  { animation: inkcMeleeSwing  var(--inkc-dur) var(--fm-ease); }
+  .inkc-fig--ranged.is-swinging .inkc-arm { animation: inkcRangedDraw var(--inkc-dur) var(--fm-ease); }
+  .inkc-fig--magic.is-swinging .inkc-arm  { animation: inkcMagicCast  var(--inkc-dur) var(--fm-ease); }
+
+  /* The orb charges through the same window the arm steadies in, then holds
+     invisible once the bolt itself takes over at launch. */
+  @keyframes inkcOrbCharge {
+    0%   { opacity: 0.35; transform: scale(0.5); }
+    58%  { opacity: 1; transform: scale(1.35); }
+    62%  { opacity: 0; transform: scale(0.6); }
+    100% { opacity: 0; transform: scale(0.6); }
+  }
+  .inkc-fig--magic.is-swinging .inkc-orb { animation: inkcOrbCharge var(--inkc-dur) ease-out; transform-box: fill-box; transform-origin: center; }
+
+  /* The bowstring draws taut through the same window the arm pulls back. */
+  @keyframes inkcStringDraw {
+    0%   { stroke-width: 2.6; }
+    55%  { stroke-width: 2.6; }
+    64%  { stroke-width: 3.6; }
+    100% { stroke-width: 2.6; }
+  }
+  .inkc-fig--ranged.is-swinging .inkc-bowstring { animation: inkcStringDraw var(--inkc-dur) var(--fm-ease); }
+
+  /* The shot itself: invisible through the wind-up/charge, appears right as
+     the string or the orb releases, and crosses the lane before the swing
+     ends. Distance is authored once (see CombatShot) and reused unmirrored
+     for both sides — the enemy's own wrapping transform sends it the other
+     way for free. */
+  @keyframes inkcShotFly {
+    0%, 58%  { opacity: 0; transform: translate(0, 0); }
+    64%      { opacity: 1; transform: translate(0, 0); }
+    96%      { opacity: 1; transform: translate(var(--inkc-shot-dx), var(--inkc-shot-dy)); }
+    100%     { opacity: 0; transform: translate(var(--inkc-shot-dx), var(--inkc-shot-dy)); }
+  }
+  .inkc-fig--ranged.is-swinging .inkc-shot--arrow,
+  .inkc-fig--magic.is-swinging .inkc-shot--bolt { animation: inkcShotFly var(--inkc-dur) linear; }
+
+  @keyframes inkcStruck {
+    0%   { opacity: 0; }
+    38%  { opacity: 0.55; }
+    100% { opacity: 0; }
+  }
+  .inkc-struck { animation: inkcStruck var(--inkc-hit-dur) ease-out; }
+}
+
 /* Armoury grid + cards */
 /* Armoury reads as an inventory: a dense grid of square item tiles (icon over
    name over level), not a list of wide cards. Same tile metal as every other
