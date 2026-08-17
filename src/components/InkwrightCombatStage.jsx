@@ -1,6 +1,7 @@
 import { useRef } from 'preact/hooks'
 import InkwrightFigure, { Limb } from './InkwrightFigure.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
+import { isSmashWeaponType, isLungeWeaponType } from '../utils/actionSprites.js'
 
 /**
  * Inkwright's combat presentation: two figures facing each other — the
@@ -37,13 +38,24 @@ import { HitSplatLayer } from './HitSplat.jsx'
  * to prevent, same as ActionSpriteStage's `--as-dur`.
  *
  * Props (identical shape to ActionSpriteStage, plus the additions below):
- *   actor       — { motion: 'melee'|'ranged'|'magic', swingMs, accent } — NOTE this
- *                 also carries a `tool` field (ACTION_SPRITES' old glyph key, e.g.
- *                 'sword'/'bow'/'staff') that this component must NOT read; `motion`
- *                 is the one that names both the CSS keyframe family and CombatTool's
- *                 branch. Reading `.tool` here compiles fine and is silently wrong —
- *                 it renders every style as melee, since 'bow'/'staff' match neither
- *                 CombatTool's 'ranged'/'magic' check and fall through to its default.
+ *   actor       — { motion: 'melee'|'ranged'|'magic', swingMs, accent,
+ *                 weaponIconType, weaponTint } — NOTE this also carries a
+ *                 `tool` field (ACTION_SPRITES' old glyph key, e.g.
+ *                 'sword'/'bow'/'staff') that this component must NOT read;
+ *                 `motion` is the one that names both the CSS keyframe
+ *                 family and CombatTool's fallback. Reading `.tool` here
+ *                 compiles fine and is silently wrong — it renders every
+ *                 style as melee, since 'bow'/'staff' match neither
+ *                 CombatTool's 'ranged'/'magic' check and fall through to
+ *                 its default. `weaponIconType`/`weaponTint` — one of
+ *                 utils/actionSprites.js's ten `WEAPON_ICON_TYPES` and a
+ *                 `getItemIconTint` colour, both already resolved onto the
+ *                 sprite by `playerCombatSprite` — pick which of CombatTool's
+ *                 hand-drawn shapes the actor's own weapon draws as and what
+ *                 colour its material is. Both null/undefined for unarmed,
+ *                 which falls back to the plain per-motion default. The enemy
+ *                 side has no equivalent — it stays the generic mirrored rig
+ *                 (CLAUDE.md's "per-monster art" is separate, deferred work).
  *   target      — { accent, sprite?, dying? } — sprite present means it acts back;
  *                 dying plays the collapse animation and holds its end pose
  *   actorSwing  — swing token (utils/actionSprites.js) or null; a new `id` replays
@@ -85,30 +97,39 @@ const TORSO_CY = 68
 // CombatShot's own comment below) and travels from ITS OWN drawn origin to
 // the OPPONENT's torso — which, in that same unmirrored space, sits at
 // STAGE_W - TORSO_CX (the mirror puts the target's local TORSO_CX there).
-// The two projectiles are drawn at different points on the arm (the bow's
-// arrowhead at the string, the staff's orb above the hand), so each needs
-// its OWN dx/dy computed from its OWN origin — reusing one pair for both
-// (as this used to) sends the arrow to wherever the bolt's origin implies,
-// which is not where the arrow itself starts, and it lands short, near the
-// ground instead of on the torso. The same dx/dy is reused for the enemy's
+// Every shot kind is drawn at a different point on the arm (the bow's
+// arrowhead at the string, the crossbow's bolt at its own shorter string,
+// the staff's orb above the hand), so each needs its OWN dx/dy computed from
+// its OWN origin — reusing one pair for two of them sends the second to
+// wherever the first's origin implies, which is not where it itself starts,
+// and it lands short of the torso. The same dx/dy is reused for the enemy's
 // own outgoing shot: its whole side is already wrapped in the mirror
 // transform, so it lands on the actor's torso for free.
-const BOLT_ORIGIN_X = 106
-const BOLT_ORIGIN_Y = 34
-const BOLT_DX = (STAGE_W - TORSO_CX) - BOLT_ORIGIN_X
-const BOLT_DY = TORSO_CY - BOLT_ORIGIN_Y
+const ORB_ORIGIN_X = 106
+const ORB_ORIGIN_Y = 34
+const ORB_DX = (STAGE_W - TORSO_CX) - ORB_ORIGIN_X
+const ORB_DY = TORSO_CY - ORB_ORIGIN_Y
 // The arrowhead's drawn tip (see CombatShot's arrow path: "M124 64 L116 58 ...").
 const ARROW_ORIGIN_X = 124
 const ARROW_ORIGIN_Y = 64
 const ARROW_DX = (STAGE_W - TORSO_CX) - ARROW_ORIGIN_X
 const ARROW_DY = TORSO_CY - ARROW_ORIGIN_Y
+// The bolt's drawn tip — shorter reach than the arrow's, fired from the
+// crossbow's own prod rather than a hand-drawn bowstring (see CrossbowTool).
+const BOLT_ORIGIN_X = 116
+const BOLT_ORIGIN_Y = 64
+const BOLT_DX = (STAGE_W - TORSO_CX) - BOLT_ORIGIN_X
+const BOLT_DY = TORSO_CY - BOLT_ORIGIN_Y
 
 /** Exported so the geometry bug this exists to prevent — reusing one
- * origin's offset for both projectiles — can be caught without mounting the
- * component (tests/inkwrightCombatShot.test.ts). Melee has no shot. */
-export function shotOffset(kind) {
-  if (kind === 'ranged') return { dx: ARROW_DX, dy: ARROW_DY }
-  if (kind === 'magic') return { dx: BOLT_DX, dy: BOLT_DY }
+ * origin's offset for a different shot — can be caught without mounting the
+ * component (tests/inkwrightCombatShot.test.ts). Melee has no shot.
+ * `weaponIconType` only matters for 'ranged' — a crossbow fires a bolt from
+ * its own shorter origin, everything else that fires an arrow shares the
+ * bow's. */
+export function shotOffset(kind, weaponIconType) {
+  if (kind === 'ranged') return weaponIconType === 'crossbow' ? { dx: BOLT_DX, dy: BOLT_DY } : { dx: ARROW_DX, dy: ARROW_DY }
+  if (kind === 'magic') return { dx: ORB_DX, dy: ORB_DY }
   return null
 }
 
@@ -149,6 +170,14 @@ export default function InkwrightCombatStage({
   // nor stays armed, the same way a dropped weapon doesn't ride a corpse down.
   const targetSwinging = !dying && !!targetSwing && !!targetSprite
 
+  // godsword/maul play a heavier two-handed smash, a rapier a fencer's lunge,
+  // instead of the standard one-handed swing — melee only, since neither
+  // weapon type occurs outside that motion. Mutually exclusive (a weapon has
+  // exactly one WEAPON_ICON_TYPES entry), so at most one of these is ever on.
+  const actorSmash = a.motion === 'melee' && isSmashWeaponType(a.weaponIconType)
+  const actorLunge = a.motion === 'melee' && isLungeWeaponType(a.weaponIconType)
+  const actorSwingVariant = actorSmash ? ' is-smash' : actorLunge ? ' is-lunge' : ''
+
   return (
     <div class="inkc-stage" role="img" aria-label={label}>
       <svg class="inkc-svg" viewBox={`0 0 ${STAGE_W} 128`} aria-hidden="true">
@@ -161,7 +190,7 @@ export default function InkwrightCombatStage({
           <MiniHpBar cx={TORSO_CX} hp={actorHp} />
           <g
             key={`a${actorSwing ? actorSwing.id : 0}`}
-            class={`inkc-fig${actorSwing ? ` inkc-fig--${a.motion} is-swinging` : ''}`}
+            class={`inkc-fig${actorSwing ? ` inkc-fig--${a.motion}${actorSwingVariant} is-swinging` : ''}`}
             style={{ '--inkc-dur': `${a.swingMs}ms` }}
           >
             <InkwrightFigure>
@@ -176,10 +205,12 @@ export default function InkwrightCombatStage({
                 class={`inkc-arm${actorConsume ? ' is-eating' : ''}`}
               >
                 <Limb d="M84 58 L94 62 L100 64" w={11} />
-                {actorConsume ? <CombatConsume /> : <CombatTool kind={a.motion} accent={a.accent} />}
+                {actorConsume ? <CombatConsume /> : (
+                  <CombatTool kind={a.motion} weaponIconType={a.weaponIconType} tint={a.weaponTint} accent={a.accent} />
+                )}
               </g>
             </InkwrightFigure>
-            {actorSwing && <CombatShot kind={a.motion} accent={a.accent} />}
+            {actorSwing && <CombatShot kind={a.motion} weaponIconType={a.weaponIconType} accent={a.accent} />}
           </g>
         </g>
 
@@ -292,50 +323,160 @@ function CombatConsume() {
   return <circle class="inkc-consume" cx="100" cy="64" r="5" />
 }
 
-/** Every weapon shaft passes through the hand at (100,64), same rule as the
- * skilling tools — a weapon that doesn't touch the grip reads as floating
- * alongside the arm rather than held in it. `accent` tints only the
- * projectile-adjacent bits (bowstring glow, orb) — the weapon body itself
- * stays flat ink/cloth like everything else Inkwright draws; a fully
- * accent-coloured weapon would be the one non-ink object on the whole stage. */
-function CombatTool({ kind, accent }) {
-  if (kind === 'ranged') {
-    return (
+// One motion-keyed fallback shape per style, used for the enemy (which never
+// carries a weaponIconType) and for the actor when unarmed. Matches what
+// CombatTool drew before per-type shapes existed, so neither case regresses.
+const DEFAULT_WEAPON_TYPE = { melee: 'sword', ranged: 'bow', magic: 'staff' }
+
+/** Ten hand-drawn weapon shapes (utils/actionSprites.js `WEAPON_ICON_TYPES`),
+ * one per TYPE rather than one per item — CLAUDE.md's "the stage shows the
+ * style, not the item" is relaxed one notch, not reversed: a bronze scimitar
+ * and a dragon scimitar are the same silhouette in different colours, told
+ * apart only by `tint` (`getItemIconTint`, resolved onto the sprite by
+ * playerCombatSprite). This replaces an earlier attempt at embedding the
+ * actual bespoke inventory icon per item (reverted) — that icon set mixes
+ * authoring conventions with no single anchor that lands all 151 of them
+ * correctly, and a wrongly-anchored icon (a mace head over the wielder's own
+ * face) is a far worse failure than a shape that's merely generic. Every
+ * shaft/blade passes through the grip at (100,64), same rule as the skilling
+ * tools and the old per-style shapes — a weapon that doesn't touch the grip
+ * reads as floating alongside the arm rather than held in it. `accent` tints
+ * only the projectile-adjacent bits (bowstring/prod glow, orb) — a style
+ * cue, unrelated to the item's own material; `tint` colours the body/blade/
+ * head, the item's own identity. The grip itself is never tinted (a leather
+ * wrap reads the same regardless of blade metal). */
+function CombatTool({ kind, weaponIconType, tint, accent }) {
+  const type = weaponIconType || DEFAULT_WEAPON_TYPE[kind] || 'sword'
+  const tintStroke = tint ? { stroke: tint } : undefined
+  switch (type) {
+    case 'scimitar': return (
       <g>
-        <path class="ink-shaft ink-shaft--thin" d="M92 40 Q100 64 92 88" fill="none" />
+        {/* A filled crescent, not a stroked line — the curve has to bow AWAY
+            from the cutting edge on the spine side and hook back at the tip,
+            same silhouette as the game's own scimitar icon, or it just reads
+            as a bent stick. */}
+        <path
+          d="M96 68 C 100 51 115 36 140 30 C 129 38 118 47 109 60 L 107 64 L 105 66 L 104 68 Z"
+          style={{ fill: tint || 'var(--surface-raised)', stroke: 'var(--text-strong)', strokeWidth: 2.2, strokeLinejoin: 'round' }}
+        />
+        {/* A thin pale glint along the spine is what reads as "sharp" at this
+            scale — a filled shape alone still reads as a blunt wedge. */}
+        <path d="M99 52 C 111 41 125 34 137 31" fill="none" stroke="#fff" stroke-width="1.3" opacity="0.5" />
+        <path class="inkc-crossguard" d="M91 65 L101 58" />
+        <path class="ink-grip" d="M96 68 L104 64" />
+      </g>
+    )
+    case 'rapier': return (
+      <g>
+        <path class="ink-shaft ink-shaft--thin" d="M98 65 L146 26" style={tintStroke} />
+        {/* Swept hilt: a straight quillon plus a curved knuckle-bow looping
+            back toward the pommel — a rapier reads as a rapier by its guard
+            as much as its blade. Pushed clear of the fist (InkwrightFigure's
+            drawn hand is a ~7-radius blob centred on the grip point) rather
+            than centred on it, or the guard just disappears behind the hand. */}
+        <path class="inkc-crossguard" d="M88 78 L106 55" />
+        <path class="inkc-crossguard" d="M88 78 Q74 70 82 54" fill="none" />
+        <circle cx="84" cy="80" r="3.6" fill="var(--text-strong)" />
+        <path class="ink-grip" d="M96 70 L104 64" />
+      </g>
+    )
+    case 'godsword': return (
+      <g>
+        {/* A broad, filled blade instead of a stroked line — a godsword reads
+            as "big" or it just reads as a sword. */}
+        <path
+          d="M92 74 L104 63 L146 26 L152 33 L114 68 Z"
+          style={{ fill: tint || 'var(--surface-raised)', stroke: 'var(--text-strong)', strokeWidth: 2.2, strokeLinejoin: 'round' }}
+        />
+        <path class="inkc-crossguard" d="M94 66 L108 56" />
+        <path class="ink-grip" d="M92 74 L104 64" />
+      </g>
+    )
+    case 'maul': return (
+      <g>
+        <path class="ink-shaft ink-shaft--thin" d="M96 68 L118 44" />
+        {/* A flat-topped hexagon, not a ball — a round head is the mace's
+            shape; the game's own maul icons are a blocky flanged hex head. */}
+        <path
+          d="M117 36 L139 36 L141 42 L139 48 L117 48 L115 42 Z"
+          transform="rotate(-33 128 42)"
+          style={{ fill: tint || 'var(--surface-raised)', stroke: 'var(--text-strong)', strokeWidth: 2.4, strokeLinejoin: 'round' }}
+        />
+        <circle cx="128" cy="42" r="3.4" transform="rotate(-33 128 42)" fill="var(--text-strong)" opacity="0.5" />
+        <path class="ink-grip" d="M96 70 L106 64" />
+      </g>
+    )
+    case 'mace': return (
+      <g>
+        <path class="ink-shaft ink-shaft--thin" d="M96 68 L116 52" />
+        <circle cx="120" cy="48" r="7" style={{ fill: tint || 'var(--surface-raised)', stroke: 'var(--text-strong)', strokeWidth: 2 }} />
+        <path d="M120 39 L122 44 M129 42 L125 46 M129 54 L124 51" stroke="var(--text-strong)" stroke-width="1.6" />
+        <path class="ink-grip" d="M96 70 L104 64" />
+      </g>
+    )
+    case 'bow': return (
+      <g>
+        <path class="ink-shaft ink-shaft--thin" d="M92 40 Q100 64 92 88" fill="none" style={tintStroke} />
         <path class="inkc-bowstring" d="M92 40 L100 64 L92 88" style={accent ? { stroke: accent } : undefined} />
         <path class="ink-grip" d="M96 68 L104 64" />
       </g>
     )
-  }
-  if (kind === 'magic') {
-    return (
+    case 'crossbow': return (
       <g>
-        <path class="ink-shaft" d="M92 74 L106 38" />
+        <path class="ink-shaft ink-shaft--thin" d="M92 66 L120 62" style={tintStroke} />
+        <path class="ink-shaft ink-shaft--thin" d="M108 50 Q116 64 108 78" fill="none" style={tintStroke} />
+        <path class="inkc-bowstring" d="M108 50 L114 64 L108 78" style={accent ? { stroke: accent } : undefined} />
+        <path class="ink-grip" d="M96 68 L104 64" />
+      </g>
+    )
+    case 'wand': return (
+      <g>
+        <path class="ink-shaft ink-shaft--thin" d="M96 70 L110 54" style={tintStroke} />
+        <circle class="inkc-orb" cx="112" cy="50" r="4" style={accent ? { fill: accent } : undefined} />
+        <path class="ink-grip" d="M96 70 L104 64" />
+      </g>
+    )
+    case 'staff': return (
+      <g>
+        <path class="ink-shaft" d="M92 74 L106 38" style={tintStroke} />
         <circle class="inkc-orb" cx="106" cy="34" r="6" style={accent ? { fill: accent } : undefined} />
         <path class="ink-grip" d="M96 68 L104 64" />
       </g>
     )
+    default: return (
+      // sword — a straight blade with a crossguard, the plainest read at range.
+      <g>
+        <path class="ink-shaft" d="M96 66 L128 40" style={tintStroke} />
+        <path class="inkc-crossguard" d="M108 57 L118 47" />
+        <path class="ink-grip" d="M96 68 L104 64" />
+      </g>
+    )
   }
-  // Melee — a straight blade with a crossguard, the plainest read at range.
-  return (
-    <g>
-      <path class="ink-shaft" d="M96 66 L128 40" />
-      <path class="inkc-crossguard" d="M108 57 L118 47" />
-      <path class="ink-grip" d="M96 68 L104 64" />
-    </g>
-  )
 }
 
-/** The thing that crosses the lane: an arrow for ranged, a bolt for magic,
- * nothing for melee (which connects in reach, not at range). Authored in the
- * ACTOR's own local space and reused unchanged for the enemy's shot — the
- * enemy's wrapping mirror transform is what sends it the other way. Each
- * kind travels its OWN dx/dy (see the ARROW_/BOLT_ constants above) because
- * the two are drawn from different origins on the arm. */
-function CombatShot({ kind, accent }) {
-  const offset = shotOffset(kind)
+/** The thing that crosses the lane: an arrow for a bow, a short bolt for a
+ * crossbow, a glowing orb for magic, nothing for melee (which connects in
+ * reach, not at range). Authored in the ACTOR's own local space and reused
+ * unchanged for the enemy's shot — the enemy's wrapping mirror transform is
+ * what sends it the other way. Each kind travels its OWN dx/dy (see the
+ * ORB_/ARROW_/BOLT_ constants above) because each is drawn from a different
+ * origin on the arm. */
+function CombatShot({ kind, weaponIconType, accent }) {
+  const offset = shotOffset(kind, weaponIconType)
   if (!offset) return null
+  if (kind === 'ranged' && weaponIconType === 'crossbow') {
+    return (
+      <g class="inkc-shot inkc-shot--crossbow" style={{ '--inkc-shot-dx': `${offset.dx}px`, '--inkc-shot-dy': `${offset.dy}px` }}>
+        {/* Short and stubby next to the arrow — a bolt is a stouter dart,
+            fired from a much shorter draw. Own class, not the magic orb's
+            `inkc-shot--bolt` — same generic name, different animal, and the
+            fly keyframe below is selected per class, not per kind. */}
+        <path d="M108 64 L104 61 M108 64 L104 67" />
+        <path d="M108 64 L116 64" />
+        <path d="M116 64 L111 60 M116 64 L111 68" />
+      </g>
+    )
+  }
   if (kind === 'ranged') {
     return (
       <g class="inkc-shot inkc-shot--arrow" style={{ '--inkc-shot-dx': `${offset.dx}px`, '--inkc-shot-dy': `${offset.dy}px` }}>

@@ -1,4 +1,5 @@
 import { getAttackSpeed, getAttackStyle } from '../engine/equipment.js'
+import { getItemIconTint } from './itemIcons.js'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Action sprite animations — the shared foundation for "show me the action",
@@ -93,6 +94,86 @@ export function actionSpriteFor(style) {
   return ACTION_SPRITES[spriteStyleKey(style)]
 }
 
+// Ten hand-drawn weapon shapes InkwrightCombatStage's CombatTool can draw,
+// replacing the one-shape-per-motion default (plain sword / bow / staff).
+// This is the SECOND swing at "the weapon should look like the weapon", after
+// embedding the actual bespoke inventory icon in the hand (reverted — the icon
+// set mixes authoring conventions with no single anchor that lands all 151 of
+// them correctly, and a mace-shaped icon anchored wrong is far more obviously
+// broken than a style mismatch ever was). This version draws ONE shape per
+// TYPE, not per item, so there is a small fixed set to get right instead of
+// 151 individual ones, and every item within a type is told apart only by its
+// tint (`weaponTint` below) — a bronze scimitar and a dragon scimitar are the
+// same silhouette in different colours, same as the real weapons in the
+// Armoury. `WEAPON_ICON_TYPES` order matters only for readability below.
+export const WEAPON_ICON_TYPES = [
+  'sword', 'scimitar', 'rapier', 'godsword', 'maul', 'mace',
+  'bow', 'crossbow', 'staff', 'wand',
+]
+
+// Substring rules run BEFORE the mechanical fallback because the item's own
+// NAME is more specific than its stats — "dragon_battleaxe" is coded
+// attackStyle:'crush' for balance reasons but reads unambiguously as a maul
+// shape. Order matters: 'crossbow' must be checked before the bare 'bow'
+// pattern (a crossbow id also contains "bow"), and the 'bow' pattern itself
+// excludes "bowyer" (bowyers_knife is a stab dagger, not a bow) via the
+// negative lookahead — a plain substring match misclassified it.
+const NAME_TYPE_RULES = [
+  [/crossbow/, 'crossbow'],
+  [/godsword/, 'godsword'],
+  [/maul/, 'maul'],
+  [/flail/, 'mace'],
+  [/mace/, 'mace'],
+  [/warhammer|hammers?(?:_|$)/, 'mace'],
+  [/scimitar/, 'scimitar'],
+  [/rapier/, 'rapier'],
+  [/wand/, 'wand'],
+  [/staff|stave/, 'staff'],
+  [/bow(?!yer)/, 'bow'],
+]
+
+/**
+ * Classifies an equipped weapon item into one of `WEAPON_ICON_TYPES`, for
+ * InkwrightCombatStage's CombatTool to pick a shape. Pure — reads only `id`,
+ * `attackStyle`, `twoHanded` and `ammoType` off the item, so it needs no
+ * DOM and no bespoke-icon data. Unmatched items (tools misfiled into the
+ * weapon slot, reskins with no on-brand name) fall back by mechanics: magic
+ * to staff, ranged to crossbow only when it actually fires bolts (else bow),
+ * crush to maul/mace by two-handedness, everything else (slash/stab/unset)
+ * to godsword/sword by two-handedness — a two-handed reach weapon reads
+ * closer to a godsword's big swing than a one-handed sword's.
+ */
+export function weaponIconTypeFor(item) {
+  if (!item) return null
+  const id = String(item.id || '')
+  for (const [pattern, type] of NAME_TYPE_RULES) {
+    if (pattern.test(id)) return type
+  }
+  if (item.attackStyle === 'magic') return 'staff'
+  if (item.attackStyle === 'ranged') return item.ammoType === 'bolt' ? 'crossbow' : 'bow'
+  if (item.attackStyle === 'crush') return item.twoHanded ? 'maul' : 'mace'
+  return item.twoHanded ? 'godsword' : 'sword'
+}
+
+// godsword/maul play a heavier two-handed smash instead of the standard
+// one-handed swing (InkwrightCombatStage's `.is-smash` keyframe variant) —
+// a set, not a third `motion`, because `motion` drives the whole event/
+// timing/co-op contract above and neither of these weapons changes how a
+// swing is TIMED, only how it LOOKS.
+const SMASH_WEAPON_TYPES = new Set(['godsword', 'maul'])
+export function isSmashWeaponType(weaponIconType) {
+  return SMASH_WEAPON_TYPES.has(weaponIconType)
+}
+
+// A rapier lunges/thrusts instead of swinging — a fencer's attack travels
+// along the blade's own axis, not in an arc — so it gets its own `.is-lunge`
+// keyframe variant the same way godsword/maul get `.is-smash`: an ADDITIONAL
+// class, not a fourth motion, since only the LOOK changes.
+const LUNGE_WEAPON_TYPES = new Set(['rapier'])
+export function isLungeWeaponType(weaponIconType) {
+  return LUNGE_WEAPON_TYPES.has(weaponIconType)
+}
+
 /**
  * The player's side of the stage: which tool glyph is shown and how fast it
  * moves, read from what is actually equipped. Unarmed falls through to
@@ -112,15 +193,19 @@ export function actionSpriteFor(style) {
  */
 export function playerCombatSprite(equipment, itemsData, { combatType = null, stance = null } = {}) {
   const equip = equipment || {}
-  const style = combatType || getAttackStyle(equip, itemsData || {})
-  let speed = getAttackSpeed(equip, itemsData || {})
+  const items = itemsData || {}
+  const style = combatType || getAttackStyle(equip, items)
+  let speed = getAttackSpeed(equip, items)
   if (stance === 'rapid' && spriteStyleKey(style) === 'ranged') speed = Math.max(1, speed - 1)
   const cycleMs = actionCycleMs(speed)
+  const weaponItem = equip.weapon?.itemId ? items[equip.weapon.itemId] : null
   return {
     ...actionSpriteFor(style),
     speedTicks: speed,
     cycleMs,
     swingMs: swingDurationMs(cycleMs),
+    weaponIconType: weaponIconTypeFor(weaponItem),
+    weaponTint: weaponItem ? getItemIconTint(weaponItem) : null,
   }
 }
 
