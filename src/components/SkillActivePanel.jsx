@@ -12,6 +12,11 @@ import BackLink from './BackLink.jsx'
  *   title      — action name
  *   subtitle   — optional description under the title
  *   producing  — optional node shown in the gold "producing" chip
+ *   stage      — optional node REPLACING the orb: the action's own animation
+ *                (components/InkwrightStage.jsx). Passed in as a node rather
+ *                than built here on purpose — this panel is core and the
+ *                animation modules are game-chunk only (§12), so importing them
+ *                here would be a core→chunk read at module eval.
  *   progress   — 0..1 completion of the current action
  *   stats      — array of { label, value, accent } rows for the SESSION card
  *   statsTitle — card heading, default "SESSION"
@@ -26,6 +31,7 @@ export default function SkillActivePanel({
   title,
   subtitle = null,
   producing = null,
+  stage = null,
   progress = 0,
   stats = [],
   statsTitle = 'SESSION',
@@ -45,15 +51,19 @@ export default function SkillActivePanel({
 
       {/* Scrollable body so the SESSION card never gets clipped on short screens */}
       <div class="flex-1 min-h-0 overflow-y-auto">
-      {/* Orb */}
+      {/* The action's own animation where there is one, else the orb. */}
       <div class="flex flex-col items-center mt-6">
-        <div class="relative w-[148px] h-[148px] flex items-center justify-center">
-          <div class="absolute inset-0 rounded-full border-[1.5px] border-dashed border-[rgba(212,160,23,0.30)] skill-ring-spin" />
-          <div class="w-[112px] h-[112px] rounded-full flex items-center justify-center skill-orb-pulse bg-[radial-gradient(circle_at_50%_38%,#1a1813,#0c0b0a)]">
-            {glyph}
+        {stage ? (
+          <div class="w-full">{stage}</div>
+        ) : (
+          <div class="relative w-[148px] h-[148px] flex items-center justify-center">
+            <div class="absolute inset-0 rounded-full border-[1.5px] border-dashed border-[rgba(212,160,23,0.30)] skill-ring-spin" />
+            <div class="w-[112px] h-[112px] rounded-full flex items-center justify-center skill-orb-pulse bg-[radial-gradient(circle_at_50%_38%,#1a1813,#0c0b0a)]">
+              {glyph}
+            </div>
           </div>
-        </div>
-        <div class="font-[var(--font-display)] text-[22px] font-bold text-[var(--color-gold-dim)] mt-5 text-center">
+        )}
+        <div class={`font-[var(--font-display)] text-[22px] font-bold text-[var(--color-gold-dim)] text-center ${stage ? 'mt-3' : 'mt-5'}`}>
           {title}
         </div>
         {subtitle && (

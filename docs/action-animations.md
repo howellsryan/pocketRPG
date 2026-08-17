@@ -1,11 +1,26 @@
 # Action Animations — design record
 
-The system that shows the player their action happening: combat swings today, every
-skilling action next. Combat shipped first because it has the hardest version of the
-problem — two actors, three styles, and a cadence that changes with equipment.
+The system that shows the player their action happening. **Two stages, one law.**
+Combat shipped first because it has the hardest version of the problem — two actors,
+three styles, and a cadence that changes with equipment. Mining, woodcutting and
+fishing shipped second, on a stage of their own.
 
 Authoring checklist for adding one: the **`action-animation`** skill. This file is
 the *why*; the skill is the *how*.
+
+## Which stage
+
+| | `ActionSpriteStage` (`.as-*`) | `InkwrightStage` (`.ink-*`) |
+|---|---|---|
+| Shape | actor's tool → lane → target's mark | a figure working a resource |
+| Sprite | masked `gameIcons.json` glyph | drawn inked-vector figure + tool |
+| Cadence | one cycle = one swing | one action = several strikes, one yield |
+| Wired | solo combat, co-op/raid | mining, woodcutting, fishing |
+
+They are two PRESENTATIONS, not two timing systems: both take their cadence from
+`actionCycleMs` in `src/utils/actionSprites.js`. Pick by whether the player is
+fighting something that fights back (a lane between two actors) or working something
+that gives way (a figure and a resource). A new skill almost always wants Inkwright.
 
 ## The one law
 
@@ -114,20 +129,81 @@ viewer: only **their** swings move the tool, and only a boss swing whose `isTarg
 names them moves the incoming motion. Without that gate a full room lunges eight
 times a tick.
 
+## Inkwright — the skilling figure
+
+`src/utils/inkwright.js` (pure) + `src/components/InkwrightStage.jsx` + the `.ink-*`
+CSS. One hooded inked-vector figure, reused across every gathering skill; the tool,
+the motion and the prop change per skill, the figure never does. That is what makes
+it extend to 23 skills: a new skill costs a motion row, a keyframe family and a prop
+shape, never a character.
+
+### Where skilling diverges from combat, and why
+
+A combat cycle is ONE swing, so a slower weapon means a slower-looking swing. A
+skilling action is several strikes ending in one yield, so **a longer action means
+MORE strikes at the same tempo** — runeforged ore takes 23 swings to break, not one
+sluggish one. This was a deliberate product call, made watching the prototype: tempo
+is what a player reads as "how hard am I working", strike count as "how tough is this
+rock". Making a 30-tick action swing 7.5× slower read as broken.
+
+So `inkwrightPlan` solves the strike COUNT from a target tempo, then the period back
+from the count — never the other way round. Rounding the period instead leaves a
+partial strike at the end and the yield lands mid-windup. Because the count divides
+the action exactly, a loop restarted at each yield lands its final impact on the next
+yield forever.
+
+`swingDurationMs` is deliberately NOT used here. The skilling period is already
+near-constant by construction (720–890ms across everything shipped), so a second
+scaling on top of it would do nothing but drift. Combat needs it because its cycle
+varies 3–9 ticks; skilling does not.
+
+### Three things that bit
+
+- **Progress is tick-quantised.** `getActionProgress` on a 4-tick action only ever
+  reports 0, .25, .5, .75 — four poses and a jump. The bar reads progress; the figure
+  reads a CSS clock. Do not drive motion from `progress`.
+- **The payoff must not render before an action completes.** Keyed on
+  `skilling.totalActions`, which starts at 0 — so the rock shattered and a reward
+  popped the instant the screen opened. Gate on `yieldToken > 0`.
+- **The intact resource has to step aside for its own payoff.** They are sibling
+  layers, so the shards flew over a rock still standing there whole. `.ink-prop`
+  hides for exactly the payoff and returns as the next rock.
+
+### The wiring constraint
+
+`SkillActivePanel` is in **core**; `actionSprites.js` and `inkwright.js` are
+**game-chunk** only (§12). So the panel takes the stage as a `stage` node prop and
+imports nothing — the chunked screen builds it. Importing the modules into the panel
+would be a core→chunk read at module eval, which is the whiteout hazard.
+
+Feed it the **effective** tick cost. `SkillingScreen` stores the tool-adjusted action
+on the session (`getEffectiveToolActionTicks`), so a Rune pickaxe strikes visibly
+faster than a Bronze one for free; passing the base cost silently throws that away.
+
+## Rollout state
+
+| Surface | Stage | State |
+|---|---|---|
+| Solo combat, co-op/raid | `.as-*` | shipped |
+| Mining, woodcutting, fishing | `.ink-*` | shipped |
+| Firemaking, cooking, smithing, crafting, fletching, herblore, runecraft | `.ink-*` | next — each is a motion row + keyframes + prop |
+| Thieving, hunter, agility, farming, construction, summoning | — | own screens, not on `SkillActivePanel`; needs a look first |
+| Magic, prayer, slayer, dungeoneering | — | no physical strike; may not want a figure at all |
+| Open world | neither | baked GLB clips, `src/utils/combatWindup.js` — deliberately separate |
+
 ## Extending to a skill
 
-Full checklist in the `action-animation` skill. The shape:
+Full checklist in the `action-animation` skill. For a gathering-shaped skill:
 
-1. Add a row to `ACTION_SPRITES` — `{ motion, tool, projectile, label }`.
-2. Add its keyframe family to `src/index.css` as `.as-tool--<motion>`.
-3. Resolve the cadence from the skill's own action (its tick cost), not a constant.
-4. Map the skill's completion/progress events to swing tokens.
-5. Render `<ActionSpriteStage>` — for a skilling screen, most likely inside
-   `SkillActivePanel`, which every idle skill already shares.
+1. Add a row to `INKWRIGHT_MOTIONS` and map the skill in `SKILL_MOTIONS`.
+2. Add its keyframe family to `src/index.css` as `.ink-fig--<motion>`, and a payoff.
+3. Draw its tool in `Tool()` and its resource in `Prop()` — whole, and broken.
+4. Register both new files in `build_single.cjs` (`sourceFiles` + `GAME_CHUNK_FILES`).
+5. Render from the chunked screen, passing `stage` into `SkillActivePanel`.
 
 Point 5 is the leverage: `SkillActivePanel` is one component behind most skilling
-screens, so a stage added there covers many skills in one change. Check each screen
-that passes its own `icon` override before assuming it is uniform.
+screens, so a stage added there covers many skills at once. Check each screen that
+passes its own `icon` override before assuming it is uniform — `GatherScreen` does.
 
 ## Known gaps
 

@@ -1,15 +1,28 @@
 ---
 name: action-animation
-description: Use when adding or changing an on-screen animation for a player action - a combat swing, a mining strike, a fishing cast, a smithing hammer blow - or when editing src/utils/actionSprites.js, src/components/ActionSpriteStage.jsx, or the .as-* CSS. Covers the timing law (an animation's speed IS the action's own cadence), the glyph-as-sprite model, the event-to-swing contract, and the build/reduced-motion gates. Do not use for the open world's 3D entity clips (world/client, GLB rigs, combat wind-up alignment) or for procedural 3D creature specs - those are procgen-creature and .claude/rules/world-design.md.
+description: Use when adding or changing an on-screen animation for a player action - a combat swing, a mining strike, a fishing cast, a smithing hammer blow - or when editing src/utils/actionSprites.js, src/utils/inkwright.js, ActionSpriteStage.jsx, InkwrightStage.jsx, or the .as-* / .ink-* CSS. Covers the two stages and when to use each, the timing law (an animation's speed IS the action's own cadence), why skilling scales strike COUNT instead of tempo, the event-to-swing contract, and the build/reduced-motion gates. Do not use for the open world's 3D entity clips (world/client, GLB rigs, combat wind-up alignment) or for procedural 3D creature specs - those are procgen-creature and .claude/rules/world-design.md.
 ---
 
 # action-animation: showing the player their action
 
-Design record and rationale: `docs/action-animations.md`. This is the checklist.
+Design record, rationale and rollout state: `docs/action-animations.md`. This is the
+checklist.
 
-The system is deliberately small: one pure module, one component, one CSS block. If a
-change wants a second timing source, a second stage component, or a per-screen
-duration, it is going the wrong way — the whole value is that 23 skills share one law.
+**One law, two stages.** Pick by what the player is doing:
+
+| | `ActionSpriteStage` (`.as-*`) | `InkwrightStage` (`.ink-*`) |
+|---|---|---|
+| Shape | actor's tool → lane → target's mark | a figure working a resource |
+| Sprite | masked `gameIcons.json` glyph | drawn inked-vector figure + tool |
+| Cadence | one cycle = one swing | one action = several strikes, one yield |
+| Wired | solo combat, co-op/raid | mining, woodcutting, fishing |
+
+Fighting something that fights back → the lane. Working something that gives way →
+the figure. A new skill almost always wants Inkwright.
+
+These are two PRESENTATIONS, not two timing systems. Both take their cadence from
+`actionCycleMs`. A change that wants a **third timing source** or a per-screen
+duration is going the wrong way — the whole value is that 23 skills share one law.
 
 ## The law — non-negotiable
 
@@ -57,10 +70,12 @@ across the shipped range and will fail if you do.
    `{ id, side, hit }`, a fresh `id` per occurrence. The renderer keys on `id`, so a
    boolean animates the first action and nothing after it.
 
-6. **Render `<ActionSpriteStage>`.** For skilling this most likely belongs in
-   `SkillActivePanel` — one component behind most idle skilling screens, so a stage
-   there covers many skills at once. Check screens that pass their own `icon`
-   override before assuming uniformity.
+6. **Render the stage.** For skilling that is `<InkwrightStage>`, built in the
+   CHUNKED screen and passed into `SkillActivePanel` as its `stage` prop — the panel
+   is core and these modules are chunk-only, so importing them there is a core→chunk
+   read at module eval (§12). One component sits behind most idle skilling screens,
+   so a stage there covers many skills at once; check screens that pass their own
+   `icon` override before assuming uniformity (`GatherScreen` does).
 
 7. **Register in `build_single.cjs`** (§12) — any new file into `sourceFiles`, and
    into `GAME_CHUNK_FILES` if it is in-game only. `gameIcons.json` is chunk-only, so a
@@ -95,10 +110,49 @@ across the shipped range and will fail if you do.
   on `isTarget` as well, or a full room lunges eight times a tick.
 - **Reset tokens between actions.** Mounting with a stale token is a key change, so a
   new fight/action opens by replaying the last one's motion.
-- **`.as-*` is not a `.cb-*` class.** It takes every colour from the semantic layer
+- **`.as-*` and `.ink-*` are not `.cb-*` classes.** It takes every colour from the semantic layer
   (`--surface-sunken`, `--hairline`, `--text-*`), so it is defined **once** and is
   exempt from the Two-Skin Trap (DESIGN.md §2). Adding a non-semantic colour means
   owing a second `.forge-shell` definition — reach for a token instead.
+
+## Adding a skill to Inkwright
+
+The common case, and cheaper than the list above — no event plumbing at all, because
+the stage reads a clock and a completion counter.
+
+1. **Add a motion row** to `INKWRIGHT_MOTIONS` (`src/utils/inkwright.js`) and map the
+   skill in `SKILL_MOTIONS`. A row with no keyframes renders a figure standing still.
+2. **Add the keyframe family** to `src/index.css`: `.ink-fig--<motion> .ink-arm` for
+   the strike, `.ink-payoff--<motion>` for the yield. Inside the existing
+   `prefers-reduced-motion: no-preference` block. Every duration is `var(--ink-strike)`
+   or `var(--ink-payoff)` — a literal ms is the failure this system prevents.
+3. **Draw the tool** in `Tool()` and the resource in `Prop()`, whole AND broken. The
+   broken form is the same silhouette split up, so the two cannot drift apart.
+4. **Register** both modules in `build_single.cjs` — `sourceFiles` AND
+   `GAME_CHUNK_FILES` (§12). `inkwright.js` must come after `actionSprites.js`.
+5. **Pass the EFFECTIVE tick cost**, not the action's base cost — the tool-adjusted
+   value the session already stores. Skipping this is skipping the law.
+6. **Test in `tests/inkwright.test.ts`** against real `skills.json` actions.
+
+### Inkwright traps, each one paid for
+
+- **Never drive motion from `progress`.** `getActionProgress` is tick-quantised: a
+  4-tick action reports 0, .25, .5, .75 and nothing between. The bar reads progress;
+  the figure reads a CSS clock.
+- **Gate the payoff on `yieldToken > 0`.** It is the completed-action count and starts
+  at 0, so an ungated payoff shattered the rock and popped a reward the instant the
+  screen opened, before a single action finished.
+- **The intact resource must hide for its own payoff.** Prop and payoff are sibling
+  layers, so the shards flew over a rock still standing there whole.
+- **Re-key the strike loop on each yield.** That is what keeps it phase-locked — a
+  free-running loop drifts within a few actions and the pick starts passing through a
+  rock that breaks on its own.
+- **Scale the strike COUNT, never the tempo.** Solve the count from the target tempo,
+  then the period back from the count. A longer action is more swings, not slower
+  ones — a 30-tick action animated at 7.5× reads as broken, and this was a deliberate
+  product call.
+- **Do not reach for `swingDurationMs` here.** The skilling period is already
+  near-constant by construction; a second scaling on top only drifts.
 
 ## Where this does not apply
 

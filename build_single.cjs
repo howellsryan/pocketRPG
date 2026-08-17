@@ -25,6 +25,7 @@ const sourceFiles = [
   'utils/itemValue.js',
   'utils/hitSplats.js',
   'utils/actionSprites.js',
+  'utils/inkwright.js',
   'utils/xpDrops.js',
   'utils/lootModal.js',
   'utils/coopChat.js',
@@ -181,6 +182,7 @@ const sourceFiles = [
   'components/HPBar.js',
   'components/HitSplat.js',
   'components/ActionSpriteStage.js',
+  'components/InkwrightStage.js',
   'components/ActivePotionBadges.js',
   'components/LootResultModal.js',
   'components/ProgressBar.js',
@@ -313,6 +315,8 @@ const GAME_CHUNK_FILES = new Set([
   'components/SlayerMasterModal.js',
   'utils/actionSprites.js', // -> game chunk (only the combat screens use it today; skilling screens are chunked too)
   'components/ActionSpriteStage.js',
+  'utils/inkwright.js', // -> game chunk, with the actionSprites law it reads (§12)
+  'components/InkwrightStage.js',
   'hooks/useActionSwings.js', // -> game chunk, with the SWING_MAX_MS it reads (§12)
   'utils/combatArt.js', // -> game chunk (reads placeMapsData for monster locations; only combat/place-map screens use it)
   'utils/combatOrder.js', // -> game chunk (only the combat picker screens use it)
