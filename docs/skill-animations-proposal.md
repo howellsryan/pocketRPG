@@ -23,10 +23,10 @@ Two things make this cheaper than it looks:
    figure instead of the static orb — the plumbing is not the work, the
    **motion design** is.
 
-Farming is the one exception (see Tier H) — it isn't a continuous ticking
-action on `SkillActivePanel` at all, it's a patch you plant/water/harvest
-over real time. Slayer and dungeoneering are meta-skills with no single
-physical action of their own (see Tier I).
+**Farming and slayer are out of scope for this pass** (skipped per your call).
+Dungeoneering folds into Tier B alongside agility below — its "clear floor"
+actions are the same traversal shape as an obstacle course, just dressed as
+a dungeon instead of a course.
 
 ## Tiering
 
@@ -48,24 +48,32 @@ component — just content for the system that already exists.
 | **Runecraft** | `weave` | Bare hands (no tool drawn) | Essence at a rune altar → glowing rune | The one skill in this tier with no handheld tool — the "strike" becomes a two-hand channel gesture over the altar, essence dissolving into a rune shape on payoff. |
 | **Prayer** | `commune` | None (bones/dust in hand) | Bones at a grave or the gilded altar → rune of light / dust scatters | Three sub-poses keyed off the action id prefix, same way `SkillingScreen` already branches on `action.id?.startsWith('altar_')`: **bury** (kneel, dig, place bones, pat earth), **altar** (kneel at the gilded altar, hands raised into a golden updraft), **scatter** (`scatter_gargoyle_dust` — stand, cast dust from an open hand in an arc). One motion family, three payoff variants — see open question 1. |
 
-### Tier B — locomotion (agility)
+### Tier B — traversal (agility, dungeoneering)
 
 Genuinely different from every other skill: the figure isn't striking a
 static prop, it's **moving across the stage**. This is a new motion family
-inside Inkwright (legs mid-stride + a jump arc instead of an arm swing), but
-it reuses the exact same timing solve — a course's tick cost divides into N
-obstacle-cross beats the same way a rock divides into N strikes, just
-renamed (`TARGET_OBSTACLE_MS` alongside `TARGET_STRIKE_MS`).
+inside Inkwright (legs mid-stride + a step/leap arc instead of an arm
+swing), but it reuses the exact same timing solve — an action's tick cost
+divides into N traversal beats the same way a rock divides into N strikes,
+just renamed (`TARGET_TRAVERSAL_MS` alongside `TARGET_STRIKE_MS`). One
+motion family, two prop/payoff dressings:
 
-- **Prop**: a short obstacle silhouette (wall, gap, rope swing — pick one
-  generic shape, not per-obstacle art, matching mining/fishing/woodcutting's
-  "one prop shape per skill" economy) sitting where the rock/tree currently
-  sits.
-- **Motion**: figure runs in place, then a leap keyframe (knees tuck, arms
-  pump) timed to land past the obstacle — one obstacle cleared per beat,
-  same "token per beat" mechanism as a mining strike.
-- **Payoff**: landing pose + the coin/XP pop agility already tracks
-  (`agility.totalLaps`), on lap completion rather than per obstacle.
+- **Agility** — prop is a short obstacle silhouette (wall, gap, rope swing —
+  one generic shape, not per-obstacle art, matching the "one prop shape per
+  skill" economy mining/fishing/woodcutting already use). Motion: figure
+  runs, then a leap keyframe (knees tuck, arms pump) timed to land past the
+  obstacle — one obstacle cleared per beat. Payoff: landing pose + the
+  coin/XP pop agility already tracks (`agility.totalLaps`), on lap
+  completion rather than per obstacle.
+- **Dungeoneering** — prop is a dungeon doorway/corridor silhouette instead
+  of an obstacle. Motion: a walk/advance step (no leap — descending into a
+  dungeon reads as exploring, not vaulting) toward the doorway, which swings
+  open on the beat — one room advanced per beat. Only `dungeoneering_floor_*`
+  actions (the ticking "clear floor" actions) get this; `unlock_*` reward
+  actions are an instant token spend with no ticking loop to animate, same
+  as today. Payoff: doorway open pose + the dungeoneering token pop on
+  floor completion, mirroring agility's lap pop but with tokens instead of
+  coins.
 
 ### Tier C — interact with a subject that reacts (thieving)
 
@@ -116,29 +124,6 @@ prop instead of a mirrored enemy — a rune circle for teleports, a pedestal
 for alchemy. No new weapon art, just a new target prop and dropping the
 enemy-mirror half of the combat stage.
 
-### Tier H — farming (separate system, own scope)
-
-Not on `SkillActivePanel` at all — `FarmingScreen`/`FarmPatchView` is a
-patch grid with growth over real elapsed time, not a ticking action loop.
-Proposing this as its **own small follow-up**, not part of the Inkwright
-stage: short one-shot beats per tap rather than a continuous figure —
-seed drops into tilled soil on plant, a water-arc on watering, crop pops and
-stalk clears on harvest. Lower priority than the tiers above since the
-screen has no idle "in progress" moment to fill the way the others do.
-
-### Tier I — meta-skills, no action of their own
-
-- **Slayer**: assigns a task, then you fight the assigned monster through
-  `CombatScreen`, already animated by `InkwrightCombatStage`. Nothing to
-  build.
-- **Dungeoneering**: two action shapes, neither is a physical resource
-  strike — "clear floor" actions are abstract multi-room instances, and
-  "claim reward" actions are a token spend (a shop tap, not a strike). Doc's
-  own rollout table already flagged this family as "may not want a figure."
-  Recommend leaving the plain orb; optionally, as a stretch goal only, a
-  generic "delve" beat (figure stepping through a doorway) for floor-clear
-  actions specifically, never for reward claims. See open question 4.
-
 ## Suggested build order
 
 1. **Tier A (8 skills)** — firemaking, cooking, smithing, crafting,
@@ -148,12 +133,10 @@ screen has no idle "in progress" moment to fill the way the others do.
 2. **Tiers E and G (construction, magic)** — new wiring (pass `stage` into a
    new screen) but reuse Tier A/combat motion primitives almost unchanged.
 3. **Tier D (hunter)** — reuses fishing's idle/catch shape.
-4. **Tiers B, C, F (agility, thieving, summoning)** — genuinely new motion
+4. **Tier B (agility, dungeoneering)** — new traversal motion family, shared
+   by both skills once built.
+5. **Tiers C and F (thieving, summoning)** — the remaining new motion
    families, most design + CSS work.
-5. **Tier H (farming)** — separate scope, own small proposal when we get
-   there.
-6. **Tier I (slayer, dungeoneering)** — no work, or the optional dungeoneering
-   stretch goal if approved.
 
 ## Open questions
 
@@ -164,7 +147,8 @@ screen has no idle "in progress" moment to fill the way the others do.
    a distinct "noticed" stumble/flash worth building now?
 3. **Summoning**: plain `GameIcon` payoff (consistent, cheap) or a small
    familiar-silhouette pop (nicer, more art)?
-4. **Dungeoneering**: skip entirely, or build the optional "delve" beat for
-   floor-clear actions?
+4. **Dungeoneering**: is sharing the traversal motion family with agility
+   (same run/step rig, different prop and payoff) the right amount of reuse,
+   or should it feel more distinct given it's a signature skill?
 5. **Build order**: does the phase order above work, or is there a skill
    you'd rather see first (e.g. prayer, since it prompted this)?
