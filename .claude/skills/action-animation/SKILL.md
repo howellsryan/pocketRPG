@@ -21,15 +21,17 @@ Fighting something that fights back → the combat stage. Working something that
 way → the skilling one. Both are the SAME character (`InkwrightFigure.jsx`) — a new
 combat style or a new skill costs a motion, not a redraw.
 
-**`ActionSpriteStage.jsx` (`.as-*`, a masked-glyph tool-in-a-lane) is superseded.**
-It was combat's first presentation and no screen renders it any more, but it is not
-deleted — its file, its CSS, and `useActionSwings.js` all stay, because the
+**`ActionSpriteStage.jsx` (`.as-*`, a masked-glyph tool-in-a-lane) was combat's first
+presentation, was superseded, and is deleted.** `useActionSwings.js` and the
 event-to-swing contract underneath it (`swingsFromCombatEvents`, `swingsFromCoopEvents`,
-`playerCombatSprite`, `monsterCombatSprite` — all in `actionSprites.js`) is exactly
-what `InkwrightCombatStage` still runs on, unchanged. Everything in this skill about
-swing tokens, misses, boss adds, Rapid stance, and co-op gating applies to the CURRENT
-renderer even though it was written against the old one — none of it lives in the
-renderer.
+`playerCombatSprite`, `monsterCombatSprite` — all in `actionSprites.js`) are NOT
+deleted, because they are exactly what `InkwrightCombatStage` still runs on, unchanged.
+Everything in this skill about swing tokens, misses, boss adds, Rapid stance, and co-op
+gating applies to the CURRENT renderer even though it was written against the old one —
+none of it lives in the renderer. **`ACTION_SPRITES` still carries the deleted
+renderer's `tool` field** (`'sword'|'bow'|'staff'`) next to `motion`
+(`'melee'|'ranged'|'magic'`) — read `.motion`; reading `.tool` compiles fine and
+silently renders every style as melee.
 
 These are two PRESENTATIONS, not two timing systems. Both take their cadence from
 `actionCycleMs`. A change that wants a **third timing source** or a per-screen
@@ -47,10 +49,10 @@ const swingMs = swingDurationMs(cycleMs)    // the motion inside that cadence
 ```
 
 Both from `src/utils/actionSprites.js`. The duration reaches CSS only as an inline
-custom property (`--inkc-dur` on `InkwrightCombatStage`'s current renderer;
-`--as-dur` on the superseded `ActionSpriteStage`, same value, same source). A
-hard-coded `animation: x 400ms` anywhere in `.inkc-*` is the failure this system
-exists to prevent — a player who buys a faster weapon must see it.
+custom property (`--inkc-dur` on `InkwrightCombatStage`; the deleted `ActionSpriteStage`
+used the same value via its own `--as-dur`). A hard-coded `animation: x 400ms` anywhere
+in `.inkc-*` is the failure this system exists to prevent — a player who buys a faster
+weapon must see it.
 
 `swingDurationMs` is a shallow slope off a fixed base, **not** a percentage of the
 cycle. A percentage was built and rejected: it hit the upper clamp at 3 ticks, so
@@ -66,10 +68,12 @@ A new WEAPON within melee/ranged/magic (a different sword, a different bow) need
 is for a genuinely new attack style.
 
 1. **Add a row to `ACTION_SPRITES`** (`src/utils/actionSprites.js`):
-   `{ motion, tool, projectile, label }`. `projectile` is `null` for anything that
-   connects in contact range (melee has none; ranged/magic do). This table is shared
-   with the superseded `ActionSpriteStage` and both combat-art helpers
-   (`getStyleArt`/`getMonsterArt`) — a new style needs an accent colour there too.
+   `{ motion, tool, projectile, label }`. `tool` is the deleted `ActionSpriteStage`'s
+   old glyph key, left in the table — `InkwrightCombatStage` must read `.motion`,
+   never `.tool`, or the style silently renders as melee. `projectile` is `null` for
+   anything that connects in contact range (melee has none; ranged/magic do). A new
+   style needs an accent colour in `src/utils/combatArt.js` too
+   (`getStyleArt`/`getMonsterArt`, a separate table from this one).
 
 2. **Draw the weapon** in `CombatTool()` (`InkwrightCombatStage.jsx`). The shaft must
    pass through the grip at (100,64) — every Inkwright tool follows this, or the

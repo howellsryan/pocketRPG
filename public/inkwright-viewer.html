@@ -561,12 +561,15 @@
   // ── Boot: fetch the real data, then build ───────────────────────────────
   // Vite's dev server prefixes EVERY path under vite.config.js's `base`
   // ('/pocketrpg/' today), including raw src/ reads and this page itself —
-  // not just the built app. A hard-coded leading `/src/...` 404s the moment
-  // this page isn't served from the domain root, so the prefix is read off
-  // this page's own (already-correct) URL instead of duplicating the config
-  // value here.
-  var siteBase = location.pathname.replace(/[^/]*$/, '');
-  function srcData(name) { return fetch(siteBase + 'src/data/' + name, { cache: 'no-store' }).then(function (r) {
+  // not just the built app. A RELATIVE path (no leading slash) sidesteps the
+  // question entirely: the browser resolves it against wherever this
+  // document actually is, so it needs no knowledge of `base` and keeps
+  // working if that value ever changes. A leading-slash `/src/...` doesn't
+  // (it 404s the moment this page isn't served from the domain root, which
+  // it never is under `npm run dev`), and a hand-reconstructed prefix off
+  // `location.pathname` is the same bug rewritten — it has to independently
+  // track what `base` resolves to instead of just letting the browser do it.
+  function srcData(name) { return fetch('src/data/' + name, { cache: 'no-store' }).then(function (r) {
     if (!r.ok) throw new Error(name + ': HTTP ' + r.status);
     return r.json();
   }); }

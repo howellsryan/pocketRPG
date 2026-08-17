@@ -36,7 +36,13 @@ import InkwrightFigure, { Limb } from './InkwrightFigure.jsx'
  * to prevent, same as ActionSpriteStage's `--as-dur`.
  *
  * Props (identical shape to ActionSpriteStage):
- *   actor       — { tool: motion key ('melee'|'ranged'|'magic'), swingMs, accent }
+ *   actor       — { motion: 'melee'|'ranged'|'magic', swingMs, accent } — NOTE this
+ *                 also carries a `tool` field (ACTION_SPRITES' old glyph key, e.g.
+ *                 'sword'/'bow'/'staff') that this component must NOT read; `motion`
+ *                 is the one that names both the CSS keyframe family and CombatTool's
+ *                 branch. Reading `.tool` here compiles fine and is silently wrong —
+ *                 it renders every style as melee, since 'bow'/'staff' match neither
+ *                 CombatTool's 'ranged'/'magic' check and fall through to its default.
  *   target      — { accent, sprite? } — sprite present means it acts back
  *   actorSwing  — swing token (utils/actionSprites.js) or null; a new `id` replays
  *   targetSwing — same, for the target's own strike
@@ -80,16 +86,16 @@ export default function InkwrightCombatStage({ actor, target, actorSwing = null,
         <g class="inkc-side">
           <g
             key={`a${actorSwing ? actorSwing.id : 0}`}
-            class={`inkc-fig${actorSwing ? ` inkc-fig--${a.tool} is-swinging` : ''}`}
+            class={`inkc-fig${actorSwing ? ` inkc-fig--${a.motion} is-swinging` : ''}`}
             style={{ '--inkc-dur': `${a.swingMs}ms` }}
           >
             <InkwrightFigure>
               <g class="inkc-arm">
                 <Limb d="M84 58 L94 62 L100 64" w={11} />
-                <CombatTool kind={a.tool} accent={a.accent} />
+                <CombatTool kind={a.motion} accent={a.accent} />
               </g>
             </InkwrightFigure>
-            {actorSwing && <CombatShot kind={a.tool} dx={76} dy={-6} accent={a.accent} />}
+            {actorSwing && <CombatShot kind={a.motion} dx={76} dy={-6} accent={a.accent} />}
           </g>
           {playerFlashes && (
             <ellipse
@@ -106,7 +112,7 @@ export default function InkwrightCombatStage({ actor, target, actorSwing = null,
         <g class="inkc-side" transform={`translate(${STAGE_W},0) scale(-1,1)`}>
           <g
             key={`t${targetSwing ? targetSwing.id : 0}`}
-            class={`inkc-fig${targetSwinging ? ` inkc-fig--${t.tool} is-swinging enemy` : ' enemy'}`}
+            class={`inkc-fig${targetSwinging ? ` inkc-fig--${t.motion} is-swinging enemy` : ' enemy'}`}
             style={{ '--inkc-dur': `${targetSwinging ? t.swingMs : (a.swingMs || 600)}ms`, '--inkc-accent': target.accent || 'var(--color-blood-ember)' }}
           >
             <InkwrightFigure>
@@ -117,10 +123,10 @@ export default function InkwrightCombatStage({ actor, target, actorSwing = null,
                     before the first swing token ever arrives. Gating this on
                     `targetSwinging` made the enemy's weapon flicker in and
                     out of existence between swings instead of staying drawn. */}
-                {t.tool && <CombatTool kind={t.tool} accent={target.accent} />}
+                {t.motion && <CombatTool kind={t.motion} accent={target.accent} />}
               </g>
             </InkwrightFigure>
-            {targetSwinging && <CombatShot kind={t.tool} dx={76} dy={-6} accent={target.accent} />}
+            {targetSwinging && <CombatShot kind={t.motion} dx={76} dy={-6} accent={target.accent} />}
           </g>
           {enemyFlashes && (
             <ellipse

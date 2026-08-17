@@ -13,14 +13,16 @@ import { getAttackSpeed, getAttackStyle } from '../engine/equipment.js'
 // that hard-codes a duration has stopped telling the player the truth about
 // what they equipped.
 //
-// The repo owns no sprite sheets, so the SPRITE IS THE TOOL GLYPH: a
-// game-icons.net key masked through skillEmblemMask() (utils/skillArt.js), the
-// same technique as SkillEmblem. Combat shows sword / bow / staff; the skilling
-// rollout shows pickaxe / wood_axe / fishing_pole. No new art is needed to add
-// an animation, which is why this generalises at all.
-//
-// Pure logic — no UI imports, no DOM. The component that draws it is
-// components/ActionSpriteStage.jsx.
+// This module is pure logic — no UI imports, no DOM — and outlived its first
+// renderer: combat originally drew the SPRITE AS A TOOL GLYPH (a game-icons.net
+// key masked through skillEmblemMask(), in the now-deleted
+// components/ActionSpriteStage.jsx). The current renderer is
+// components/InkwrightCombatStage.jsx, a drawn inked-vector figure armed per
+// style — but the timing law, the ACTION_SPRITES table and the event→swing
+// mapping below are exactly what that renderer runs on too, unchanged. Note
+// the table still carries `tool` (the old glyph key, e.g. 'sword'/'bow'/'staff')
+// alongside `motion` ('melee'/'ranged'/'magic') — InkwrightCombatStage must
+// read `.motion`, never `.tool`.
 // ──────────────────────────────────────────────────────────────────────────
 
 /** The game's tick, in ms (CLAUDE.md §1/§6). Local rather than imported: the

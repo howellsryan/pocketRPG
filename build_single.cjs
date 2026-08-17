@@ -181,7 +181,6 @@ const sourceFiles = [
   'components/InventoryFullPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',
-  'components/ActionSpriteStage.js',
   'components/InkwrightFigure.js',
   'components/InkwrightStage.js',
   'components/InkwrightCombatStage.js',
@@ -316,7 +315,6 @@ const GAME_CHUNK_FILES = new Set([
   'components/PlaceMapView.js',
   'components/SlayerMasterModal.js',
   'utils/actionSprites.js', // -> game chunk (only the combat screens use it today; skilling screens are chunked too)
-  'components/ActionSpriteStage.js',
   'utils/inkwright.js', // -> game chunk, with the actionSprites law it reads (§12)
   'components/InkwrightFigure.js',
   'components/InkwrightStage.js',

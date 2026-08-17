@@ -26,15 +26,17 @@ own `inkwright.js`, which inverts the law on purpose — see below). Pick by whe
 player is fighting something that fights back or working something that gives way.
 
 **A third stage, `ActionSpriteStage` (`.as-*`, a masked `gameIcons.json` tool glyph in
-a lane between two actors), was combat's FIRST presentation and is superseded** — no
-screen renders it any more, but the file, its CSS and `useActionSwings.js` all stay in
-the repo rather than being deleted, because the event/timing plumbing underneath it
-(`swingsFromCombatEvents`, `swingsFromCoopEvents`, `playerCombatSprite`,
-`monsterCombatSprite`, all in `actionSprites.js`) is exactly what `InkwrightCombatStage`
-still consumes, unchanged. Everything below about swing tokens, the event contract,
-co-op gating, and reading a boss's current form applies to **both** renderers equally —
-it was true when `ActionSpriteStage` was live and stayed true across the swap, because
-none of it lives in the renderer.
+a lane between two actors), was combat's FIRST presentation, was superseded, and is
+deleted** — the event/timing plumbing underneath it (`swingsFromCombatEvents`,
+`swingsFromCoopEvents`, `playerCombatSprite`, `monsterCombatSprite`, `useActionSwings.js`,
+all in `actionSprites.js`) is NOT deleted, because it is exactly what
+`InkwrightCombatStage` still consumes, unchanged. Everything below about swing tokens,
+the event contract, co-op gating, and reading a boss's current form applies to the
+CURRENT renderer even though some of it was written against the old one — none of it
+lives in the renderer. **`ACTION_SPRITES` still carries the deleted renderer's `tool`
+field** (`'sword'|'bow'|'staff'`) alongside `motion` (`'melee'|'ranged'|'magic'`) —
+`InkwrightCombatStage` must read `.motion`; reading `.tool` compiles fine and silently
+renders every style as melee.
 
 ## The one law
 
@@ -70,7 +72,7 @@ A shallow slope off a fixed base is strictly monotonic across everything shipped
 
 ## The sprite is drawn, not a glyph — and that changed once
 
-`ActionSpriteStage` (superseded) drew the repo's 193 vendored game-icons.net glyphs
+`ActionSpriteStage` (superseded, now deleted) drew the repo's 193 vendored game-icons.net glyphs
 (`src/data/gameIcons.json`), masked through `skillEmblemMask()` and rendered by
 `SkillEmblem` — the same technique as the Home Screen's skill art. The sprite was
 literally the tool: `sword` / `bow` / `staff` for the three combat styles. A glyph key
@@ -92,8 +94,8 @@ is deliberately the same rig recoloured rather than its own drawing (see below).
 | `src/utils/actionSprites.js` | Pure: timing law, style→tool table, event→swing mapping. No DOM. |
 | `src/components/InkwrightFigure.jsx` | The shared body — hood, tunic, limbs. No arm, no tool: those are `children`, supplied by whichever stage wraps it. |
 | `src/components/InkwrightCombatStage.jsx` | Presentation: two `InkwrightFigure`s, weapon per style, mirrored enemy, struck flash, lane-crossing shot. Derives no timing of its own. |
-| `src/components/ActionSpriteStage.jsx` | Superseded presentation (tool glyph in a lane). Unrendered; kept for its documented invariants. |
-| `src/index.css` `.inkc-*` | Combat's layout + keyframes; `.as-*` is the superseded equivalent, still present. All motion behind `prefers-reduced-motion`. |
+| `src/components/ActionSpriteStage.jsx` | Deleted (superseded presentation, tool glyph in a lane). Documented invariants live on in this file and the skill instead. |
+| `src/index.css` `.inkc-*` | Combat's layout + keyframes; `.as-*` (the superseded equivalent) is deleted. All motion behind `prefers-reduced-motion`. |
 | `tests/actionSprites.test.ts` | The law, the clamps, the mappings — shared by both renderers, untouched by the swap. |
 
 `InkwrightCombatStage` mirrors the ENEMY, not each figure: one wrapping
@@ -257,7 +259,7 @@ faster than a Bronze one for free; passing the base cost silently throws that aw
 
 | Surface | Stage | State |
 |---|---|---|
-| Solo combat, co-op/raid | `.inkc-*` | shipped (superseded `.as-*`, kept unrendered) |
+| Solo combat, co-op/raid | `.inkc-*` | shipped (superseded `.as-*` deleted) |
 | Mining, woodcutting, fishing | `.ink-*` | shipped |
 | Firemaking, cooking, smithing, crafting, fletching, herblore, runecraft | `.ink-*` | next — each is a motion row + keyframes + prop |
 | Thieving, hunter, agility, farming, construction, summoning | — | own screens, not on `SkillActivePanel`; needs a look first |

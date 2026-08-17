@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks'
 import { SWING_MAX_MS } from '../utils/actionSprites.js'
 
 /**
- * Holds the latest swing token per side for an ActionSpriteStage, and — the
- * whole point — LETS IT GO once its motion is over.
+ * Holds the latest swing token per side for a combat stage (InkwrightCombatStage
+ * today, ActionSpriteStage before it was deleted), and — the whole point — LETS
+ * IT GO once its motion is over.
  *
  * A token that outlives its animation is a loaded gun: the stage replays a
  * motion whenever its element remounts or its classes are re-added, so a held
