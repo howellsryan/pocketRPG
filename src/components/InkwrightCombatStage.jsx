@@ -186,13 +186,21 @@ function MiniHpBar({ cx, hp }) {
   if (!hp || !(Number(hp.max) > 0)) return null
   const pct = Math.max(0, Math.min(1, Number(hp.current || 0) / Number(hp.max)))
   const w = 46
-  const h = 5
+  // NOT `h` — the single-file build's classic script scope uses `h` as the
+  // JSX pragma (Preact's hyperscript), and a local `h` here shadows it. Vite's
+  // dev build never surfaces this (automatic JSX runtime, no bare `h` in
+  // scope), so it only breaks in the production single-file bundle: minified,
+  // every `h(...)` call in this function silently resolves to this number
+  // instead of Preact's createElement, throwing "h2 is not a function" (or
+  // whatever the minifier renamed the shadowed local to) the instant a fight
+  // tries to render it.
+  const barH = 5
   const x = cx - w / 2
   const color = pct > 0.5 ? 'var(--color-hp-green)' : pct > 0.25 ? 'var(--color-hp-yellow)' : 'var(--color-hp-red)'
   return (
     <g class="inkc-hpbar">
-      <rect class="inkc-hpbar__track" x={x} y="6" width={w} height={h} rx="2.4" />
-      {pct > 0 && <rect x={x} y="6" width={w * pct} height={h} rx="2.4" style={{ fill: color }} />}
+      <rect class="inkc-hpbar__track" x={x} y="6" width={w} height={barH} rx="2.4" />
+      {pct > 0 && <rect x={x} y="6" width={w * pct} height={barH} rx="2.4" style={{ fill: color }} />}
     </g>
   )
 }
