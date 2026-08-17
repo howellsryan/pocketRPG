@@ -1,0 +1,1658 @@
+<title>The Skilling Plates</title>
+<style>
+/* ========================================================================
+   THE SKILLING PLATES — palette
+   Metallurgy, not parchment. Cool slate ground, forged copper, oxidised
+   verdigris. Neutrals carry a green bias so they read as chosen.
+   ===================================================================== */
+:root{
+  --ground:#E8EAE7;
+  --surface:#F4F6F2;
+  --surface-2:#DFE3DE;
+  --ink:#1B211F;
+  --ink-soft:#3D4744;
+  --muted:#66716D;
+  --hairline:#C6CCC4;
+  --copper:#9C5228;
+  --copper-soft:#C4794A;
+  --verdigris:#2C6A5E;
+  --stage-sky-a:#20272A;
+  --stage-sky-b:#0E1214;
+  --shadow:0 1px 0 rgba(27,33,31,.06), 0 8px 28px -18px rgba(27,33,31,.5);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#111517;
+    --surface:#181E20;
+    --surface-2:#212829;
+    --ink:#E3E7E2;
+    --ink-soft:#B4BDB8;
+    --muted:#818C88;
+    --hairline:#2A3235;
+    --copper:#D98A52;
+    --copper-soft:#B06E3E;
+    --verdigris:#5FB3A1;
+    --stage-sky-a:#1B2225;
+    --stage-sky-b:#090C0D;
+    --shadow:0 1px 0 rgba(255,255,255,.03), 0 10px 34px -20px #000;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#111517;
+  --surface:#181E20;
+  --surface-2:#212829;
+  --ink:#E3E7E2;
+  --ink-soft:#B4BDB8;
+  --muted:#818C88;
+  --hairline:#2A3235;
+  --copper:#D98A52;
+  --copper-soft:#B06E3E;
+  --verdigris:#5FB3A1;
+  --stage-sky-a:#1B2225;
+  --stage-sky-b:#090C0D;
+  --shadow:0 1px 0 rgba(255,255,255,.03), 0 10px 34px -20px #000;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:Optima,Candara,"Segoe UI","Gill Sans MT","Gill Sans",system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.62;
+}
+h1,h2,h3{
+  font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","URW Palladio L",Georgia,serif;
+  font-weight:600;
+  text-wrap:balance;
+  margin:0;
+  letter-spacing:-.005em;
+}
+.mono{font-family:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;font-variant-numeric:tabular-nums}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+/* ---------- masthead ---------- */
+.masthead{padding:64px 0 34px;border-bottom:1px solid var(--hairline)}
+.eyebrow{
+  font-family:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--copper);margin-bottom:18px;
+}
+.masthead h1{font-size:clamp(38px,6.4vw,66px);line-height:1.03}
+.masthead .lede{
+  margin:20px 0 0;max-width:60ch;font-size:17.5px;color:var(--ink-soft);
+}
+.facts{
+  display:flex;flex-wrap:wrap;gap:0 40px;margin-top:32px;
+  padding-top:22px;border-top:1px solid var(--hairline);
+}
+.fact{display:flex;flex-direction:column;gap:2px;padding:6px 0}
+.fact dt{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.fact dd{margin:0;font-size:15px;color:var(--ink)}
+
+/* ---------- control bar ---------- */
+.controls{
+  position:sticky;top:0;z-index:30;
+  background:color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--hairline);
+}
+.controls .wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap;padding-top:11px;padding-bottom:11px}
+.btn{
+  font:inherit;font-size:13.5px;
+  display:inline-flex;align-items:center;gap:8px;
+  min-height:38px;padding:0 15px;
+  background:var(--surface);color:var(--ink);
+  border:1px solid var(--hairline);border-radius:2px;
+  cursor:pointer;transition:border-color .15s,color .15s;
+}
+.btn:hover{border-color:var(--copper);color:var(--copper)}
+.btn:focus-visible,input:focus-visible{outline:2px solid var(--copper);outline-offset:2px}
+.btn[aria-pressed="true"]{border-color:var(--verdigris);color:var(--verdigris);background:color-mix(in srgb,var(--verdigris) 9%,var(--surface))}
+.ctl-label{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.speed{display:flex;align-items:center;gap:11px}
+.speed input{width:118px;accent-color:var(--copper);height:38px}
+.speed output{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--ink);min-width:42px}
+
+/* ---------- plates ---------- */
+.plate{
+  padding:66px 0;border-bottom:1px solid var(--hairline);
+  --speed:1;
+}
+.plate-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px}
+.plate-num{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;
+  color:var(--copper);letter-spacing:.14em;
+  padding-top:6px;
+}
+.plate-head h2{font-size:clamp(27px,3.6vw,38px)}
+.plate-sub{margin:0 0 30px;color:var(--muted);font-size:15.5px;max-width:62ch}
+
+.plate-body{display:grid;grid-template-columns:minmax(0,1fr) 246px;gap:30px;align-items:start}
+@media (max-width:860px){.plate-body{grid-template-columns:minmax(0,1fr)}}
+
+/* the lit stage — its own fixed atmosphere, like a lightbox. Materials stay
+   the same colour in both themes; only the air behind them shifts. */
+.stage{
+  position:relative;border:1px solid var(--hairline);border-radius:3px;
+  overflow:hidden;background:var(--stage-sky-b);box-shadow:var(--shadow);
+}
+.stage svg{display:block;width:100%;height:auto}
+
+/* ---------- dope sheet ---------- */
+.sheet{border:1px solid var(--hairline);border-radius:3px;background:var(--surface);overflow:hidden}
+.sheet-cap{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:11px 14px;border-bottom:1px solid var(--hairline);
+  font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);
+}
+.sheet-cap b{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:500;letter-spacing:0;font-size:12.5px;color:var(--ink);text-transform:none}
+.phases{position:relative;padding:6px 0}
+.phase{display:grid;grid-template-columns:14px 1fr auto;gap:10px;align-items:center;padding:7px 14px}
+.phase i{
+  font-style:normal;font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:10.5px;color:var(--muted);
+}
+.phase .nm{font-size:13.5px;color:var(--ink)}
+.phase .ms{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bars{display:flex;height:7px;margin:8px 14px 4px;border-radius:1px;overflow:hidden;background:var(--surface-2)}
+.bars span{display:block}
+.bar-a{background:var(--muted)}
+.bar-b{background:var(--copper)}
+.bar-c{background:var(--verdigris)}
+.bar-d{background:var(--hairline)}
+.track{position:relative;height:16px;margin:0 14px 12px;border-top:1px solid var(--hairline)}
+.playhead{
+  position:absolute;top:0;bottom:0;width:1px;background:var(--copper);
+  animation:sweep var(--cycle) linear infinite;
+}
+.playhead::after{
+  content:"";position:absolute;top:-1px;left:-3px;width:7px;height:7px;
+  background:var(--copper);
+  clip-path:polygon(50% 100%,0 0,100% 0);
+}
+@keyframes sweep{from{left:0}to{left:100%}}
+
+.notes{margin-top:18px;border-top:1px solid var(--hairline);padding-top:16px}
+.notes h3{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-family:inherit;font-weight:600}
+.notes ul{margin:10px 0 0;padding-left:18px;color:var(--ink-soft);font-size:14.5px}
+.notes li{margin-bottom:7px}
+.notes li b{color:var(--ink);font-weight:600}
+
+/* ---------- prop sheet ---------- */
+.props{padding:66px 0 20px}
+.prop-grid{display:grid;gap:26px;margin-top:34px}
+.prop{
+  border:1px solid var(--hairline);border-radius:3px;background:var(--surface);
+  overflow:hidden;box-shadow:var(--shadow);
+}
+.prop-art{background:var(--stage-sky-b);padding:0}
+.prop-art svg{display:block;width:100%;height:auto}
+.prop-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 26px;padding:16px 18px;border-top:1px solid var(--hairline)}
+.prop-meta h3{grid-column:1/-1;font-size:19px;margin-bottom:5px}
+.prop-meta p{margin:0;font-size:14px;color:var(--ink-soft)}
+.prop-meta .spec{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--muted)}
+@media (max-width:700px){.prop-meta{grid-template-columns:1fr}}
+
+/* ---------- closing ---------- */
+.closing{padding:56px 0 90px;border-top:1px solid var(--hairline)}
+.closing h2{font-size:26px;margin-bottom:16px}
+.ask{display:grid;gap:16px;margin-top:26px}
+@media (min-width:760px){.ask{grid-template-columns:repeat(3,1fr)}}
+.ask div{border-left:2px solid var(--copper);padding:2px 0 2px 15px}
+.ask h3{font-size:15px;margin-bottom:5px}
+.ask p{margin:0;font-size:14px;color:var(--ink-soft)}
+
+/* ========================================================================
+   RIG + MOTION
+   Every joint is a <g> rotating about its own absolute pivot. Geometry is
+   authored in stage coordinates; nesting a joint inside its parent gives
+   compound rotation for free, so a tool held in the hand can never drift
+   out of it.
+   ===================================================================== */
+.j{transform-box:view-box}
+.rig{opacity:0;transition:opacity .2s}
+body.rig-on .rig{opacity:1}
+.rig-bone{stroke:#D98A52;stroke-width:1.1;stroke-dasharray:3 2.5;fill:none;opacity:.85}
+.rig-pin{fill:none;stroke:#5FB3A1;stroke-width:1.3}
+.rig-pin-c{fill:#5FB3A1}
+
+body.paused .stage *,body.paused .playhead{animation-play-state:paused!important}
+
+/* Mining ------------------------------------------------------------- */
+.p-mine{--cycle:1000ms}
+.m-torso{animation:mTorso calc(var(--cycle)/var(--speed)) infinite;transform-origin:172px 168px}
+.m-shF  {animation:mShF   calc(var(--cycle)/var(--speed)) infinite;transform-origin:192px 124px}
+.m-elF  {animation:mElF   calc(var(--cycle)/var(--speed)) infinite;transform-origin:216px 148px}
+.m-shB  {animation:mShB   calc(var(--cycle)/var(--speed)) infinite;transform-origin:176px 128px}
+.m-elB  {animation:mElB   calc(var(--cycle)/var(--speed)) infinite;transform-origin:202px 152px}
+.m-head {animation:mHead  calc(var(--cycle)/var(--speed)) infinite;transform-origin:182px 114px}
+.m-root {animation:mRoot  calc(var(--cycle)/var(--speed)) infinite;transform-origin:172px 250px}
+.m-kneeF{animation:mKneeF calc(var(--cycle)/var(--speed)) infinite;transform-origin:196px 206px}
+.m-rock {animation:mRock  calc(var(--cycle)/var(--speed)) infinite;transform-origin:380px 180px}
+.m-dust {animation:mDust  calc(var(--cycle)/var(--speed)) infinite;transform-origin:318px 226px}
+.m-chip {animation:mChip  calc(var(--cycle)/var(--speed)) infinite;transform-origin:318px 226px}
+.m-spark{animation:mSpark calc(var(--cycle)/var(--speed)) infinite;transform-origin:318px 226px}
+.m-glow {animation:mGlow  calc(var(--cycle)/var(--speed)) infinite}
+
+@keyframes mTorso{
+  0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.35,0,.5,1)}
+  32%{transform:rotate(-13deg);animation-timing-function:cubic-bezier(.6,0,.85,.4)}
+  43%{transform:rotate(5deg)}
+  47%{transform:rotate(7deg);animation-timing-function:cubic-bezier(.2,.7,.3,1)}
+  53%{transform:rotate(5.5deg)}
+  72%{transform:rotate(1deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes mShF{
+  0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.3,0,.5,1)}
+  33%{transform:rotate(-46deg);animation-timing-function:cubic-bezier(.65,0,.9,.35)}
+  43%{transform:rotate(-6deg)}
+  47%{transform:rotate(1deg);animation-timing-function:cubic-bezier(.2,.75,.3,1)}
+  54%{transform:rotate(-2deg)}
+  75%{transform:rotate(4deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes mElF{
+  0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.3,0,.5,1)}
+  33%{transform:rotate(-24deg);animation-timing-function:cubic-bezier(.7,0,.9,.4)}
+  43%{transform:rotate(-2deg)}
+  47%{transform:rotate(3deg);animation-timing-function:cubic-bezier(.2,.7,.3,1)}
+  56%{transform:rotate(-3deg)}
+  78%{transform:rotate(-5deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes mShB{
+  0%{transform:rotate(0deg)}
+  33%{transform:rotate(-48deg);animation-timing-function:cubic-bezier(.65,0,.9,.35)}
+  43%{transform:rotate(-8deg)}
+  47%{transform:rotate(-1deg)}
+  75%{transform:rotate(3deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes mElB{
+  0%{transform:rotate(0deg)}
+  33%{transform:rotate(-34deg)}
+  47%{transform:rotate(2deg)}
+  78%{transform:rotate(-4deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes mHead{
+  0%{transform:rotate(0deg)}
+  33%{transform:rotate(7deg)}
+  47%{transform:rotate(-6deg)}
+  60%{transform:rotate(-2deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes mRoot{
+  0%{transform:translate(0,0)}
+  33%{transform:translate(-4px,-2px)}
+  47%{transform:translate(3px,1.5px)}
+  60%{transform:translate(1px,0)}
+  100%{transform:translate(0,0)}
+}
+@keyframes mKneeF{
+  0%{transform:rotate(0deg)}
+  33%{transform:rotate(-7deg)}
+  47%{transform:rotate(5deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes mRock{
+  0%,45%{transform:translate(0,0)}
+  47%{transform:translate(2.4px,1.2px)}
+  49.5%{transform:translate(-1.6px,-.5px)}
+  52%{transform:translate(.9px,.4px)}
+  55%,100%{transform:translate(0,0)}
+}
+@keyframes mDust{
+  0%,45%{opacity:0;transform:scale(.3)}
+  48%{opacity:.55;transform:scale(.75);animation-timing-function:cubic-bezier(.1,.6,.3,1)}
+  78%{opacity:0;transform:scale(2.1)}
+  100%{opacity:0;transform:scale(2.1)}
+}
+@keyframes mChip{
+  0%,45%{opacity:0;transform:translate(0,0) rotate(0deg)}
+  47%{opacity:1;transform:translate(0,0) rotate(0deg);animation-timing-function:cubic-bezier(.15,.6,.5,1)}
+  62%{opacity:1;transform:translate(calc(var(--dx)*.55px),calc(var(--dy)*1px - 9px)) rotate(calc(var(--r)*.55))}
+  84%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px + 22px)) rotate(var(--r))}
+  100%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px + 22px)) rotate(var(--r))}
+}
+@keyframes mSpark{
+  0%,45.5%{opacity:0;transform:translate(0,0) scale(.4)}
+  47%{opacity:1;transform:translate(0,0) scale(1)}
+  57%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px)) scale(.35)}
+  100%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px)) scale(.35)}
+}
+@keyframes mGlow{
+  0%,45%{opacity:.34}
+  47%{opacity:1}
+  70%{opacity:.34}
+  100%{opacity:.34}
+}
+
+/* Woodcutting -------------------------------------------------------- */
+.p-chop{--cycle:1150ms}
+.c-torso{animation:cTorso calc(var(--cycle)/var(--speed)) infinite;transform-origin:170px 168px}
+.c-shF  {animation:cShF   calc(var(--cycle)/var(--speed)) infinite;transform-origin:190px 124px}
+.c-elF  {animation:cElF   calc(var(--cycle)/var(--speed)) infinite;transform-origin:214px 149px}
+.c-shB  {animation:cShB   calc(var(--cycle)/var(--speed)) infinite;transform-origin:174px 128px}
+.c-elB  {animation:cElB   calc(var(--cycle)/var(--speed)) infinite;transform-origin:200px 153px}
+.c-head {animation:cHead  calc(var(--cycle)/var(--speed)) infinite;transform-origin:180px 114px}
+.c-root {animation:cRoot  calc(var(--cycle)/var(--speed)) infinite;transform-origin:170px 250px}
+.c-tree {animation:cTree  calc(var(--cycle)/var(--speed)) infinite;transform-origin:352px 250px}
+.c-leaf {animation:cLeaf  calc(var(--cycle)/var(--speed)) infinite}
+.c-chip {animation:cChip  calc(var(--cycle)/var(--speed)) infinite;transform-origin:362px 202px}
+.c-notch{animation:cNotch calc(var(--cycle)/var(--speed)) infinite}
+.sway   {animation:sway calc(5200ms/var(--speed)) ease-in-out infinite;transform-origin:352px 250px}
+
+@keyframes cTorso{
+  0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.35,0,.5,1)}
+  35%{transform:rotate(-15deg);animation-timing-function:cubic-bezier(.6,0,.85,.35)}
+  45%{transform:rotate(6deg)}
+  49%{transform:rotate(9deg);animation-timing-function:cubic-bezier(.2,.7,.3,1)}
+  56%{transform:rotate(7deg)}
+  74%{transform:rotate(2deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes cShF{
+  0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.3,0,.5,1)}
+  36%{transform:rotate(-54deg);animation-timing-function:cubic-bezier(.68,0,.9,.32)}
+  45%{transform:rotate(-14deg)}
+  49%{transform:rotate(-6deg);animation-timing-function:cubic-bezier(.2,.75,.3,1)}
+  57%{transform:rotate(-9deg)}
+  78%{transform:rotate(3deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes cElF{
+  0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.3,0,.5,1)}
+  36%{transform:rotate(-34deg);animation-timing-function:cubic-bezier(.72,0,.9,.38)}
+  45%{transform:rotate(-4deg)}
+  49%{transform:rotate(1deg);animation-timing-function:cubic-bezier(.2,.7,.3,1)}
+  58%{transform:rotate(-5deg)}
+  80%{transform:rotate(-6deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes cShB{
+  0%{transform:rotate(0deg)}
+  36%{transform:rotate(-58deg);animation-timing-function:cubic-bezier(.68,0,.9,.32)}
+  45%{transform:rotate(-14deg)}
+  49%{transform:rotate(-7deg)}
+  78%{transform:rotate(2deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes cElB{
+  0%{transform:rotate(0deg)}
+  36%{transform:rotate(-42deg)}
+  49%{transform:rotate(0deg)}
+  80%{transform:rotate(-5deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes cHead{
+  0%{transform:rotate(0deg)}36%{transform:rotate(8deg)}
+  49%{transform:rotate(-7deg)}64%{transform:rotate(-2deg)}100%{transform:rotate(0deg)}
+}
+@keyframes cRoot{
+  0%{transform:translate(0,0)}36%{transform:translate(-5px,-2px)}
+  49%{transform:translate(4px,2px)}64%{transform:translate(1px,0)}100%{transform:translate(0,0)}
+}
+@keyframes cTree{
+  0%,47%{transform:rotate(0deg)}
+  49.5%{transform:rotate(.85deg)}
+  53%{transform:rotate(-.55deg)}
+  57%{transform:rotate(.3deg)}
+  62%{transform:rotate(-.12deg)}
+  68%,100%{transform:rotate(0deg)}
+}
+@keyframes cLeaf{
+  0%,48%{opacity:0;transform:translate(0,0) rotate(0deg)}
+  50%{opacity:.95;transform:translate(0,0) rotate(0deg);animation-timing-function:linear}
+  99%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px)) rotate(var(--r))}
+  100%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px)) rotate(var(--r))}
+}
+@keyframes cChip{
+  0%,47%{opacity:0;transform:translate(0,0) rotate(0deg)}
+  49%{opacity:1;transform:translate(0,0) rotate(0deg);animation-timing-function:cubic-bezier(.15,.6,.5,1)}
+  64%{opacity:1;transform:translate(calc(var(--dx)*.55px),calc(var(--dy)*1px - 11px)) rotate(calc(var(--r)*.5))}
+  86%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px + 26px)) rotate(var(--r))}
+  100%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px + 26px)) rotate(var(--r))}
+}
+@keyframes cNotch{
+  0%,47%{opacity:.55}
+  49%{opacity:1}
+  75%{opacity:.55}
+  100%{opacity:.55}
+}
+@keyframes sway{
+  0%{transform:rotate(-.35deg)}50%{transform:rotate(.35deg)}100%{transform:rotate(-.35deg)}
+}
+
+/* Fishing ------------------------------------------------------------ */
+.p-fish{--cycle:5200ms}
+.f-torso{animation:fTorso calc(var(--cycle)/var(--speed)) infinite;transform-origin:150px 170px}
+.f-shF  {animation:fShF   calc(var(--cycle)/var(--speed)) infinite;transform-origin:170px 126px}
+.f-elF  {animation:fElF   calc(var(--cycle)/var(--speed)) infinite;transform-origin:194px 150px}
+.f-shB  {animation:fShB   calc(var(--cycle)/var(--speed)) infinite;transform-origin:154px 130px}
+.f-elB  {animation:fElB   calc(var(--cycle)/var(--speed)) infinite;transform-origin:178px 154px}
+.f-head {animation:fHead  calc(var(--cycle)/var(--speed)) infinite;transform-origin:160px 116px}
+.f-root {animation:fRoot  calc(var(--cycle)/var(--speed)) infinite;transform-origin:150px 250px}
+.f-seg1 {animation:fSeg1  calc(var(--cycle)/var(--speed)) infinite;transform-origin:96px 0px}
+.f-seg2 {animation:fSeg2  calc(var(--cycle)/var(--speed)) infinite;transform-origin:150px 0px}
+.f-seg3 {animation:fSeg3  calc(var(--cycle)/var(--speed)) infinite;transform-origin:186px 0px}
+.f-rig  {animation:fRig   calc(var(--cycle)/var(--speed)) infinite}
+.f-float{animation:fFloat calc(var(--cycle)/var(--speed)) infinite;transform-origin:392px 214px}
+.f-fish {animation:fFish  calc(var(--cycle)/var(--speed)) infinite;transform-origin:392px 250px}
+.f-ring {animation:fRing  calc(var(--cycle)/var(--speed)) infinite;transform-origin:392px 216px}
+.f-drop {animation:fDrop  calc(var(--cycle)/var(--speed)) infinite;transform-origin:386px 200px}
+.f-reel {animation:fReel  calc(var(--cycle)/var(--speed)) infinite;transform-origin:27px 13px}
+.ripple {animation:ripple calc(4400ms/var(--speed)) ease-in-out infinite}
+
+/* Hold 0-50% · Bite 50-60% · Set & haul 60-75% · Landing 75-87% · Reset 87-100% */
+@keyframes fTorso{
+  0%,48%{transform:rotate(0deg)}
+  53%{transform:rotate(2deg)}
+  60%{transform:rotate(-4deg);animation-timing-function:cubic-bezier(.5,0,.75,.4)}
+  67%{transform:rotate(-9deg)}
+  75%{transform:rotate(-7deg);animation-timing-function:cubic-bezier(.25,.7,.35,1)}
+  88%{transform:rotate(-3deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes fShF{
+  0%{transform:rotate(1.6deg)}
+  25%{transform:rotate(-1.6deg)}
+  48%{transform:rotate(1.2deg)}
+  53%{transform:rotate(6deg)}
+  60%{transform:rotate(-2deg);animation-timing-function:cubic-bezier(.55,0,.8,.35)}
+  67%{transform:rotate(-19deg)}
+  73%{transform:rotate(-22deg);animation-timing-function:cubic-bezier(.25,.7,.35,1)}
+  86%{transform:rotate(-9deg)}
+  100%{transform:rotate(1.6deg)}
+}
+@keyframes fElF{
+  0%,48%{transform:rotate(0deg)}
+  53%{transform:rotate(5deg)}
+  60%{transform:rotate(-4deg)}
+  67%{transform:rotate(-13deg)}
+  73%{transform:rotate(-15deg)}
+  86%{transform:rotate(-5deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes fShB{
+  0%,48%{transform:rotate(0deg)}
+  60%{transform:rotate(-6deg)}
+  70%{transform:rotate(-18deg)}
+  86%{transform:rotate(-6deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes fElB{
+  0%,48%{transform:rotate(0deg)}
+  70%{transform:rotate(-12deg)}
+  86%{transform:rotate(-4deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes fHead{
+  0%,48%{transform:rotate(0deg)}
+  56%{transform:rotate(4deg)}
+  70%{transform:rotate(9deg)}
+  88%{transform:rotate(3deg)}
+  100%{transform:rotate(0deg)}
+}
+@keyframes fRoot{
+  0%,48%{transform:translate(0,0)}
+  60%{transform:translate(1px,0)}
+  70%{transform:translate(-4px,-1px)}
+  86%{transform:translate(-2px,0)}
+  100%{transform:translate(0,0)}
+}
+/* The blank bends as a chain: three small rotations compound into a curve. */
+@keyframes fSeg1{
+  0%{transform:rotate(.8deg)}25%{transform:rotate(-.8deg)}
+  48%{transform:rotate(.6deg)}
+  53%{transform:rotate(4deg)}
+  58%{transform:rotate(7deg)}
+  67%{transform:rotate(9deg)}
+  75%{transform:rotate(7deg)}
+  88%{transform:rotate(2deg)}100%{transform:rotate(.8deg)}
+}
+@keyframes fSeg2{
+  0%{transform:rotate(1deg)}25%{transform:rotate(-1deg)}
+  48%{transform:rotate(.8deg)}
+  53%{transform:rotate(6deg)}
+  58%{transform:rotate(11deg)}
+  67%{transform:rotate(14deg)}
+  75%{transform:rotate(10deg)}
+  88%{transform:rotate(3deg)}100%{transform:rotate(1deg)}
+}
+@keyframes fSeg3{
+  0%{transform:rotate(1.4deg)}25%{transform:rotate(-1.4deg)}
+  48%{transform:rotate(1deg)}
+  53%{transform:rotate(9deg)}
+  58%{transform:rotate(16deg)}
+  67%{transform:rotate(20deg)}
+  75%{transform:rotate(14deg)}
+  88%{transform:rotate(4deg)}100%{transform:rotate(1.4deg)}
+}
+/* Line + float + fish hang off the tip: hauling lifts the whole terminal rig. */
+@keyframes fRig{
+  0%{transform:translate(0,0)}
+  25%{transform:translate(-1px,-5px)}
+  48%{transform:translate(0,0)}
+  53%{transform:translate(2px,15px)}
+  58%{transform:translate(-1px,-2px)}
+  62%{transform:translate(-4px,-7px);animation-timing-function:cubic-bezier(.5,0,.7,.4)}
+  67%{transform:translate(-67px,-111px)}
+  72%{transform:translate(-80px,-127px);animation-timing-function:cubic-bezier(.25,.7,.35,1)}
+  75%{transform:translate(-60px,-107px)}
+  78%{transform:translate(-35px,-77px)}
+  86%{transform:translate(-25px,-63px)}
+  88%{transform:translate(-20px,-54px)}
+  94%{transform:translate(-2px,-9px)}
+  100%{transform:translate(0,0)}
+}
+}
+@keyframes fFloat{
+  0%{transform:translate(0,0) rotate(-4deg)}
+  14%{transform:translate(0,-1.6px) rotate(3deg)}
+  30%{transform:translate(0,.6px) rotate(-3deg)}
+  46%{transform:translate(0,-1px) rotate(2deg)}
+  50%{transform:translate(0,0) rotate(0deg)}
+  54%{transform:translate(0,7px) rotate(12deg)}
+  58%{transform:translate(0,3px) rotate(6deg)}
+  62%{transform:translate(0,9px) rotate(16deg)}
+  70%{transform:translate(0,0) rotate(-8deg)}
+  100%{transform:translate(0,0) rotate(-4deg)}
+}
+@keyframes fFish{
+  0%,57%{opacity:0;transform:translate(0,10px) rotate(6deg)}
+  60%{opacity:.35;transform:translate(0,6px) rotate(2deg)}
+  64%{opacity:.8;transform:translate(-2px,0) rotate(-8deg)}
+  70%{opacity:1;transform:translate(-4px,-6px) rotate(-22deg)}
+  76%{opacity:1;transform:translate(-2px,-2px) rotate(-12deg)}
+  84%{opacity:1;transform:translate(0,2px) rotate(-16deg)}
+  92%{opacity:0;transform:translate(2px,8px) rotate(-4deg)}
+  100%{opacity:0;transform:translate(0,10px) rotate(6deg)}
+}
+@keyframes fRing{
+  0%,52%{opacity:0;transform:scale(.25)}
+  56%{opacity:.75;transform:scale(.5);animation-timing-function:cubic-bezier(.1,.6,.3,1)}
+  70%{opacity:0;transform:scale(2.3)}
+  100%{opacity:0;transform:scale(2.3)}
+}
+@keyframes fDrop{
+  0%,63%{opacity:0;transform:translate(0,0)}
+  66%{opacity:1;transform:translate(0,0);animation-timing-function:cubic-bezier(.15,.6,.5,1)}
+  76%{opacity:.9;transform:translate(calc(var(--dx)*.6px),calc(var(--dy)*1px - 8px))}
+  88%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px + 26px))}
+  100%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px + 26px))}
+}
+@keyframes fReel{
+  0%,62%{transform:rotate(0deg)}
+  80%{transform:rotate(-320deg)}
+  100%{transform:rotate(-320deg)}
+}
+@keyframes ripple{
+  0%{transform:translateX(0)}50%{transform:translateX(9px)}100%{transform:translateX(0)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .stage *,.playhead{animation:none!important}
+}
+</style>
+
+<div class="wrap masthead">
+  <p class="eyebrow">Baseline proposal · Skilling animation</p>
+  <h1>The Skilling Plates</h1>
+  <p class="lede">Three reference plates — a hero mining an ore seam, felling a tree, and drawing a fish from
+  a river. Built from scratch, not adapted from the existing skilling stage. These set the figure, the tool
+  standard and the motion vocabulary every other skill inherits, so they are drawn to the bar the weapon
+  profiles set: real joints, forged tools with beveled edges and bound grips, and environments with
+  strata, bark and current.</p>
+  <dl class="facts">
+    <div class="fact"><dt>Plates</dt><dd>3 of 3 drafted</dd></div>
+    <div class="fact"><dt>Rig</dt><dd class="mono">14 joints, compound chain</dd></div>
+    <div class="fact"><dt>Base cadence</dt><dd class="mono">1000 / 1150 / 5200 ms</dd></div>
+    <div class="fact"><dt>Status</dt><dd>Awaiting approval — nothing wired into the game</dd></div>
+  </dl>
+  <p class="lede" style="margin-top:22px;font-size:15.5px">Every strike point here was <em>measured</em>, not
+  eyeballed: each tool carries an invisible marker at its working tip, the animation is frozen at the impact
+  frame, and the marker's real stage position is read back out of the browser. The ore seam, the notch and
+  every chip and spark are then placed on that measured point. The first draft guessed, and the pick landed
+  30 px under the floor.</p>
+</div>
+
+<div class="controls">
+  <div class="wrap">
+    <button class="btn" id="pp" aria-pressed="false">⏸ Pause</button>
+    <div class="speed">
+      <span class="ctl-label">Cadence</span>
+      <input type="range" id="sp" min="0.35" max="2" step="0.05" value="1" aria-label="Playback speed">
+      <output id="spv" class="mono">1.00×</output>
+    </div>
+    <button class="btn" id="rig" aria-pressed="false">Rig overlay</button>
+  </div>
+</div>
+
+<!-- ==================== PLATE 01 — MINING ==================== -->
+<section class="plate p-mine">
+  <div class="wrap">
+    <div class="plate-head">
+      <span class="plate-num">PLATE 01</span>
+      <h2>Mining the seam</h2>
+    </div>
+    <p class="plate-sub">A pick is swung from over the shoulder and stopped dead by the rock. The whole read
+    is in the stop: the body keeps travelling for two frames after the head lands.</p>
+
+    <div class="plate-body">
+      <div class="stage">
+        <svg viewBox="0 0 480 300" role="img" aria-label="A miner swings a pickaxe into a glowing ore seam in a rock face; chips and sparks fly on impact.">
+          <defs>
+            <linearGradient id="mSky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="var(--stage-sky-a)"/><stop offset="1" stop-color="var(--stage-sky-b)"/>
+            </linearGradient>
+            <radialGradient id="mLamp" cx=".5" cy=".5" r=".5">
+              <stop offset="0" stop-color="#8FD8C6" stop-opacity=".22"/><stop offset="1" stop-color="#8FD8C6" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="gLimb" x1="0" y1="0" x2=".7" y2="1">
+              <stop offset="0" stop-color="#8A6642"/><stop offset="1" stop-color="#54402A"/>
+            </linearGradient>
+            <linearGradient id="gSkin" x1="0" y1="0" x2=".6" y2="1">
+              <stop offset="0" stop-color="#D9A87E"/><stop offset="1" stop-color="#A97B54"/>
+            </linearGradient>
+            <linearGradient id="gJerkin" x1=".15" y1="0" x2=".9" y2="1">
+              <stop offset="0" stop-color="#8A5C38"/><stop offset=".55" stop-color="#6C4529"/><stop offset="1" stop-color="#4B2F1C"/>
+            </linearGradient>
+            <linearGradient id="gSteel" x1="0" y1="0" x2=".35" y2="1">
+              <stop offset="0" stop-color="#C9D2D8"/><stop offset=".42" stop-color="#8B959D"/><stop offset="1" stop-color="#454D55"/>
+            </linearGradient>
+            <linearGradient id="gHaft" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#B08050"/><stop offset=".5" stop-color="#8C6038"/><stop offset="1" stop-color="#5E3F22"/>
+            </linearGradient>
+            <linearGradient id="gRock" x1=".1" y1="0" x2=".8" y2="1">
+              <stop offset="0" stop-color="#79808A"/><stop offset=".5" stop-color="#565D67"/><stop offset="1" stop-color="#33383F"/>
+            </linearGradient>
+            <linearGradient id="gVein" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#7FE0C8"/><stop offset="1" stop-color="#2C7A69"/>
+            </linearGradient>
+          </defs>
+
+          <rect width="480" height="300" fill="url(#mSky)"/>
+          <ellipse cx="352" cy="176" rx="150" ry="118" fill="url(#mLamp)"/>
+
+          <!-- cavern depth: back wall silhouettes -->
+          <path d="M0 250 L0 196 L52 176 L96 200 L150 172 L206 196 L252 168 L300 190 L340 156 L400 184 L446 150 L480 172 L480 250 Z" fill="#151A1D"/>
+          <path d="M0 250 L0 216 L64 204 L124 224 L188 202 L250 222 L318 198 L380 220 L440 200 L480 214 L480 250 Z" fill="#1B2124"/>
+
+          <!-- ROCK FACE — the seam the pick lands in -->
+          <g class="m-rock">
+            <path d="M336 252 L340 208 L352 180 L346 148 L368 118 L400 102 L432 108 L456 94 L474 116 L480 150 L480 252 Z" fill="url(#gRock)"/>
+            <!-- strata -->
+            <path d="M352 152 L388 140 L424 148 L462 134 L480 142" fill="none" stroke="#3E444C" stroke-width="2.2" opacity=".75"/>
+            <path d="M346 186 L384 174 L420 184 L458 168 L480 176" fill="none" stroke="#3E444C" stroke-width="2" opacity=".6"/>
+            <path d="M342 220 L380 210 L420 218 L458 204 L480 212" fill="none" stroke="#3E444C" stroke-width="1.8" opacity=".5"/>
+            <!-- lit faces -->
+            <path d="M352 180 L346 148 L368 118 L400 102 L388 136 L368 160 Z" fill="#8C949E" opacity=".38"/>
+            <path d="M432 108 L456 94 L474 116 L458 130 L436 130 Z" fill="#8C949E" opacity=".28"/>
+            <!-- THE ORE BOULDER — the thing actually being mined, sitting proud of the wall so
+                 the pick lands on stone rather than inside it. Its seam is centred on the measured
+                 strike point (318,226). -->
+            <path d="M266 252 Q262 232 274 216 Q288 200 310 196 Q334 193 350 206 Q364 218 362 236 Q360 248 354 252 Z" fill="url(#gRock)"/>
+            <path d="M274 216 Q288 200 310 196 Q334 193 350 206 L330 214 L300 210 Z" fill="#8C949E" opacity=".34"/>
+            <path d="M300 210 L330 214 L336 236 L296 234 Z" fill="#464C55" opacity=".5"/>
+            <path d="M296 234 L336 236 L340 252 L288 252 Z" fill="#3A4048" opacity=".45"/>
+            <g class="m-glow">
+              <path d="M282 240 Q294 222 306 214 Q320 205 336 204 L340 214 Q324 216 312 224 Q300 232 292 246 Z" fill="url(#gVein)" opacity=".55"/>
+              <path d="M306 220 L318 210 L328 216 L316 227 Z" fill="#9CF0DA"/>
+              <path d="M290 236 L302 224 L310 230 L298 242 Z" fill="#7FE0C8"/>
+              <path d="M326 208 L336 202 L342 208 L332 214 Z" fill="#6FCDB6"/>
+              <path d="M312 232 L320 226 L326 231 L318 238 Z" fill="#9CF0DA" opacity=".85"/>
+            </g>
+            <path d="M266 252 Q262 232 274 216 Q288 200 310 196 Q334 193 350 206 Q364 218 362 236 Q360 248 354 252"
+                  fill="none" stroke="#252A2F" stroke-width="2.2" stroke-linejoin="round"/>
+            <path d="M336 252 L340 208 L352 180 L346 148 L368 118 L400 102 L432 108 L456 94 L474 116 L480 150"
+                  fill="none" stroke="#252A2F" stroke-width="2.4" stroke-linejoin="round"/>
+          </g>
+
+          <!-- floor -->
+          <path d="M0 250 H480 V300 H0 Z" fill="#171C1F"/>
+          <path d="M0 250 H480" stroke="#2B3236" stroke-width="2"/>
+          <ellipse cx="176" cy="252" rx="62" ry="6" fill="#0B0E10" opacity=".7"/>
+          <!-- rubble + a mined chunk already on the ground -->
+          <path d="M242 250 L250 242 L262 244 L266 250 Z" fill="#4C535B"/>
+          <path d="M262 250 L268 245 L276 248 L277 250 Z" fill="#3B4149"/>
+          <path d="M92 250 L99 243 L110 246 L112 250 Z" fill="#434A52"/>
+          <g opacity=".9">
+            <path d="M276 250 L282 240 L296 238 L302 246 L296 250 Z" fill="#5A626B"/>
+            <path d="M283 246 L289 241 L295 244 L290 248 Z" fill="#7FE0C8"/>
+          </g>
+
+          <!-- ================= HERO ================= -->
+          <g class="j m-root">
+            <!-- BACK LEG -->
+            <g class="j">
+              <path d="M164 170 L146 208" stroke="url(#gLimb)" stroke-width="14" stroke-linecap="round" fill="none"/>
+              <path d="M146 208 L132 244" stroke="url(#gLimb)" stroke-width="11.5" stroke-linecap="round" fill="none"/>
+              <path d="M126 234 Q122 246 122 250 L146 250 Q146 240 141 232 Z" fill="#2F2620"/>
+              <path d="M122 250 L148 250" stroke="#1C1713" stroke-width="3" stroke-linecap="round"/>
+              <path d="M127 236 L142 233" stroke="#4A3B2E" stroke-width="2.4"/>
+            </g>
+            <!-- FRONT LEG -->
+            <g class="j">
+              <path d="M180 168 L196 206" stroke="url(#gLimb)" stroke-width="15" stroke-linecap="round" fill="none"/>
+              <g class="j m-kneeF">
+                <path d="M196 206 L208 244" stroke="url(#gLimb)" stroke-width="12" stroke-linecap="round" fill="none"/>
+                <path d="M202 234 Q200 246 202 250 L228 250 Q228 240 220 232 Z" fill="#38291F"/>
+                <path d="M202 250 L229 250" stroke="#221812" stroke-width="3" stroke-linecap="round"/>
+                <path d="M203 236 L219 234" stroke="#57422F" stroke-width="2.4"/>
+                <g class="rig"><circle class="rig-pin" cx="196" cy="206" r="3.4"/></g>
+              </g>
+              <g class="rig"><path class="rig-bone" d="M180 168 L196 206 L208 244"/></g>
+            </g>
+
+            <!-- BACK ARM (behind torso) -->
+            <g class="j m-shB">
+              <path d="M176 128 L202 152" stroke="#4E3722" stroke-width="10.5" stroke-linecap="round" fill="none"/>
+              <g class="j m-elB">
+                <path d="M202 152 L224 146" stroke="#4E3722" stroke-width="9" stroke-linecap="round" fill="none"/>
+                <path d="M218 141 Q230 141 232 147 Q231 153 220 152 Z" fill="#2E2119"/>
+              </g>
+            </g>
+
+            <!-- TORSO -->
+            <g class="j m-torso">
+              <!-- linen shirt beneath -->
+              <path d="M162 122 Q172 112 190 116 L196 138 L192 168 L160 170 L156 140 Z" fill="#CFC7B4"/>
+              <!-- leather jerkin -->
+              <path d="M164 118 Q174 110 192 115 Q200 126 198 142 L194 164 Q176 170 158 164 L154 138 Q156 124 164 118 Z" fill="url(#gJerkin)"/>
+              <path d="M172 114 L178 162" stroke="#3E2716" stroke-width="2" opacity=".7"/>
+              <path d="M186 116 Q190 138 188 162" stroke="#3E2716" stroke-width="1.6" opacity=".5"/>
+              <!-- shoulder pauldron -->
+              <path d="M186 113 Q202 116 200 132 Q194 136 186 132 Z" fill="#5B3B22"/>
+              <path d="M187 118 Q197 120 197 129" fill="none" stroke="#8A5C38" stroke-width="1.6"/>
+              <!-- belt -->
+              <path d="M156 156 Q176 164 195 156 L196 166 Q176 174 155 166 Z" fill="#3A2617"/>
+              <rect x="171" y="159" width="9" height="9" rx="1.4" fill="#B98B4C"/>
+              <rect x="173.4" y="161.4" width="4.2" height="4.2" fill="#5E4321"/>
+              <!-- neck -->
+              <path d="M180 108 L184 120" stroke="url(#gSkin)" stroke-width="9" stroke-linecap="round"/>
+
+              <!-- HEAD -->
+              <g class="j m-head">
+                <path d="M175 88 Q186 82 195 90 Q199 98 196 106 Q192 114 183 114 Q175 112 173 104 Q172 94 175 88 Z" fill="url(#gSkin)"/>
+                <path d="M196 99 L200 101 L196 104 Z" fill="#C08F63"/>
+                <path d="M173 96 Q172 84 184 81 Q196 79 199 89 Q200 93 198 95 Q192 88 182 89 Q175 90 173 96 Z" fill="#2E2016"/>
+                <path d="M172 97 Q168 100 170 106 Q172 109 175 107" fill="#2E2016"/>
+                <ellipse cx="191" cy="97" rx="1.9" ry="2.2" fill="#241A12"/>
+                <path d="M188 92.5 Q191 91 194 92.5" stroke="#241A12" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M186 108 Q190 110 194 107" stroke="#8E6040" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+                <path d="M175 103 Q178 104 178 107" stroke="#B0805A" stroke-width="1.4" fill="none"/>
+                <g class="rig"><circle class="rig-pin" cx="182" cy="114" r="3"/></g>
+              </g>
+
+              <!-- FRONT ARM + PICKAXE -->
+              <g class="j m-shF">
+                <path d="M192 124 L216 148" stroke="url(#gLimb)" stroke-width="11.5" stroke-linecap="round" fill="none"/>
+                <path d="M190 120 Q202 124 206 134" stroke="#A97B54" stroke-width="3" fill="none" opacity=".45"/>
+                <g class="j m-elF">
+                  <!-- forearm + wrapped bracer -->
+                  <path d="M216 148 L240 140" stroke="url(#gSkin)" stroke-width="9.5" stroke-linecap="round" fill="none"/>
+                  <path d="M219 143 Q230 139 234 141 L235 148 Q228 152 220 152 Z" fill="#54331C"/>
+                  <path d="M221 143.5 L222 151 M226 141.5 L227 150.5 M231 140.5 L232 149" stroke="#8A5C38" stroke-width="1.3"/>
+                  <!-- glove / fist on the grip -->
+                  <path d="M235 134 Q245 134 246 141 Q245 148 236 147 Q231 142 235 134 Z" fill="#3B2717"/>
+
+                  <!-- ============ PICKAXE (local frame: grip at 0,0, +X to head) ============ -->
+                  <g transform="translate(240,140) rotate(17)">
+                    <!-- haft -->
+                    <path d="M-19 -3.3 Q-21.5 0 -19 3.3 L100 2.5 L100 -2.5 Z" fill="url(#gHaft)"/>
+                    <path d="M-14 -1.4 L96 -1.05" stroke="#C79A66" stroke-width=".8" opacity=".5"/>
+                    <path d="M-8 1.4 L94 1.15" stroke="#4A3018" stroke-width=".7" opacity=".55"/>
+                    <!-- bound leather grip -->
+                    <path d="M-19 -3.3 Q-21.5 0 -19 3.3 L14 2.9 L14 -2.9 Z" fill="#3E2917"/>
+                    <path d="M-15 -3.2 L-11 3.2 M-9 -3.15 L-5 3.15 M-3 -3.1 L1 3.1 M3 -3.05 L7 3.05 M9 -3 L13 3"
+                          stroke="#6A4526" stroke-width="1.15" stroke-linecap="round"/>
+                    <!-- steel collar under the head -->
+                    <path d="M72 -3 L86 -2.85 L86 2.85 L72 3 Z" fill="#5E666E"/>
+                    <path d="M72 -3 L86 -2.85" stroke="#C2CBD1" stroke-width=".9"/>
+                    <!-- FORGED HEAD: a crescent crossing the haft, sharp at both points -->
+                    <path d="M84 -31 C101 -25 113 -13 114 0 C115 13 109 24 99 32
+                             C104 20 106 10 104 0 C102 -11 95 -22 84 -31 Z" fill="url(#gSteel)"/>
+                    <path d="M86 -28 C101 -22 111.5 -12 112.5 0 C113.5 12 107.5 22 98.5 29"
+                          fill="none" stroke="#E8EFF3" stroke-width="1.7" opacity=".9"/>
+                    <path d="M103.5 -2 C102 -11 95.5 -21 86 -28.5 M103.5 2 C104 12 102 20 97.5 28"
+                          fill="none" stroke="#2A3137" stroke-width="1.5" opacity=".75"/>
+                    <!-- eye block + wedge, where the haft passes through -->
+                    <path d="M87 -11 L107 -9.5 L106 8 L86 9 Z" fill="#3B434B"/>
+                    <path d="M87 -11 L107 -9.5" stroke="#98A2AA" stroke-width="1.2"/>
+                    <path d="M93 -6 L101 -5.4 M93 2 L101 2.4" stroke="#B08050" stroke-width="2.1" stroke-linecap="round"/>
+                    <path d="M84 -31 C101 -25 113 -13 114 0 C115 13 109 24 99 32
+                             C104 20 106 10 104 0 C102 -11 95 -22 84 -31 Z"
+                          fill="none" stroke="#1E242A" stroke-width="1.5" stroke-linejoin="round"/>
+                    <circle id="mPickTip" cx="99" cy="32" r="0" fill="none"/>
+                  </g>
+                  <g class="rig"><circle class="rig-pin" cx="216" cy="148" r="3.4"/><circle class="rig-pin-c" cx="240" cy="140" r="2.2"/></g>
+                </g>
+                <g class="rig"><path class="rig-bone" d="M192 124 L216 148 L240 140"/><circle class="rig-pin" cx="192" cy="124" r="3.6"/></g>
+              </g>
+              <g class="rig"><path class="rig-bone" d="M172 168 L176 128 L182 114"/><circle class="rig-pin" cx="172" cy="168" r="4"/></g>
+            </g>
+          </g>
+
+          <!-- ============ IMPACT — anchored on the measured tip position ============ -->
+          <g>
+            <ellipse class="m-dust" cx="318" cy="226" rx="22" ry="13" fill="#9BA3AC" opacity="0"/>
+            <g class="m-chip" style="--dx:-44;--dy:-8;--r:-180deg"><path d="M315 222 L322 219 L324 225 L317 228 Z" fill="#79818B"/></g>
+            <g class="m-chip" style="--dx:-28;--dy:-16;--r:220deg"><path d="M317 224 L323 223 L322 229 L316 228 Z" fill="#96A0AA"/></g>
+            <g class="m-chip" style="--dx:-54;--dy:2;--r:-260deg"><path d="M314 228 L320 226 L321 232 L315 233 Z" fill="#5F6771"/></g>
+            <g class="m-chip" style="--dx:-18;--dy:-22;--r:150deg"><path d="M319 220 L325 220 L324 225 L319 225 Z" fill="#7FE0C8"/></g>
+            <g class="m-chip" style="--dx:-38;--dy:-24;--r:-120deg"><path d="M316 218 L321 217 L322 222 L317 223 Z" fill="#9CF0DA"/></g>
+            <g class="m-chip" style="--dx:-12;--dy:0;--r:300deg"><path d="M320 228 L326 227 L325 233 L320 233 Z" fill="#6E767F"/></g>
+            <g class="m-spark" style="--dx:-36;--dy:-28"><path d="M318 226 L310 222" stroke="#FFD9A0" stroke-width="1.9" stroke-linecap="round"/></g>
+            <g class="m-spark" style="--dx:-24;--dy:-36"><path d="M318 226 L313 219" stroke="#FFE9C4" stroke-width="1.7" stroke-linecap="round"/></g>
+            <g class="m-spark" style="--dx:-44;--dy:-10"><path d="M318 226 L309 224" stroke="#FFC978" stroke-width="1.7" stroke-linecap="round"/></g>
+            <g class="m-spark" style="--dx:-14;--dy:-42"><path d="M318 226 L315 218" stroke="#FFF0D6" stroke-width="1.5" stroke-linecap="round"/></g>
+            <g class="m-spark" style="--dx:-50;--dy:-32"><path d="M318 226 L310 220" stroke="#FFD9A0" stroke-width="1.4" stroke-linecap="round"/></g>
+          </g>
+        </svg>
+      </div>
+
+      <aside>
+        <div class="sheet">
+          <div class="sheet-cap"><span>Dope sheet</span><b>1000 ms</b></div>
+          <div class="phases">
+            <div class="phase"><i>1</i><span class="nm">Anticipation</span><span class="ms">0–320</span></div>
+            <div class="phase"><i>2</i><span class="nm">Downswing</span><span class="ms">320–430</span></div>
+            <div class="phase"><i>3</i><span class="nm">Impact</span><span class="ms">430–540</span></div>
+            <div class="phase"><i>4</i><span class="nm">Recovery</span><span class="ms">540–1000</span></div>
+          </div>
+          <div class="bars">
+            <span class="bar-a" style="width:32%"></span><span class="bar-b" style="width:11%"></span>
+            <span class="bar-c" style="width:11%"></span><span class="bar-d" style="width:46%"></span>
+          </div>
+          <div class="track"><span class="playhead"></span></div>
+        </div>
+        <div class="notes">
+          <h3>What to look at</h3>
+          <ul>
+            <li><b>The stop.</b> Shoulder and elbow reverse hard at 430 ms; the torso overshoots to 470 and settles. That two-frame lag is the whole weight read.</li>
+            <li><b>Seam glow pulses on contact</b> — the rock is the thing giving way, so it reacts, not just the particles.</li>
+            <li><b>Chips carry ore colour.</b> Two of the six are verdigris, so what shatters matches what you're mining.</li>
+            <li><b>Rock jolt</b> is 2.4 px and damped over three beats. Any more reads as an earthquake.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PLATE 02 — WOODCUTTING ==================== -->
+<section class="plate p-chop">
+  <div class="wrap">
+    <div class="plate-head">
+      <span class="plate-num">PLATE 02</span>
+      <h2>Felling the trunk</h2>
+    </div>
+    <p class="plate-sub">Same rig, different physics. An axe travels further round the body than a pick and
+    bites at an angle into a notch that is already there — so the swing is wider, the recoil softer, and the
+    tree answers all the way up in the canopy.</p>
+
+    <div class="plate-body">
+      <div class="stage">
+        <svg viewBox="0 0 480 300" role="img" aria-label="A woodcutter swings a felling axe into a notch in a large tree; chips fly and leaves drift from the shivering canopy.">
+          <defs>
+            <linearGradient id="cSky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2A3A34"/><stop offset=".6" stop-color="#1A2422"/><stop offset="1" stop-color="#101614"/>
+            </linearGradient>
+            <linearGradient id="gBark" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#3E3125"/><stop offset=".32" stop-color="#6E5740"/><stop offset=".72" stop-color="#4E3E2D"/><stop offset="1" stop-color="#2C231A"/>
+            </linearGradient>
+            <linearGradient id="gLeafA" x1=".2" y1="0" x2=".8" y2="1">
+              <stop offset="0" stop-color="#6E9459"/><stop offset="1" stop-color="#33512F"/>
+            </linearGradient>
+            <linearGradient id="gLeafB" x1=".2" y1="0" x2=".8" y2="1">
+              <stop offset="0" stop-color="#557C46"/><stop offset="1" stop-color="#24401F"/>
+            </linearGradient>
+            <linearGradient id="gHeart" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#E4C48E"/><stop offset="1" stop-color="#B08A56"/>
+            </linearGradient>
+            <linearGradient id="gAxeSteel" x1=".1" y1="0" x2=".5" y2="1">
+              <stop offset="0" stop-color="#CFD7DC"/><stop offset=".4" stop-color="#8A949C"/><stop offset="1" stop-color="#3E464E"/>
+            </linearGradient>
+          </defs>
+
+          <rect width="480" height="300" fill="url(#cSky)"/>
+          <!-- distant treeline -->
+          <g opacity=".5">
+            <path d="M0 246 L14 206 L28 246 Z" fill="#1D2A25"/><path d="M30 246 L46 194 L62 246 Z" fill="#1D2A25"/>
+            <path d="M64 246 L78 212 L92 246 Z" fill="#1D2A25"/><path d="M420 246 L436 200 L452 246 Z" fill="#1D2A25"/>
+            <path d="M448 246 L464 214 L480 246 Z" fill="#1D2A25"/>
+          </g>
+          <g opacity=".75">
+            <path d="M0 248 Q40 232 84 244 Q120 252 148 246 L148 300 L0 300 Z" fill="#1A2420"/>
+          </g>
+
+          <!-- ================= TREE ================= -->
+          <g class="sway">
+            <g class="c-tree">
+              <!-- Canopy: one irregular silhouette with scalloped edges, then lit clumps inside it.
+                   Stacked flat ellipses read as broccoli; a broken outline reads as leaf mass. -->
+              <path d="M352 148 C300 148 262 128 258 96 C255 70 272 54 292 50
+                       C296 28 320 14 346 18 C362 4 392 4 408 18
+                       C434 16 454 34 452 58 C472 68 476 96 458 114
+                       C452 136 420 150 388 148 Z" fill="#26401F"/>
+              <path d="M348 142 C302 142 268 124 265 96 C262 74 277 60 296 57
+                       C300 37 322 25 344 29 C359 17 385 17 399 30
+                       C422 29 439 45 437 66 C455 76 458 100 442 114
+                       C436 133 408 144 380 142 Z" fill="url(#gLeafB)"/>
+              <!-- scalloped underside, so the mass doesn't end on a clean arc -->
+              <path d="M266 104 q14 16 30 8 q10 18 28 10 q12 18 30 10 q14 18 32 8 q14 16 32 6 q16 14 32 2
+                       q14 10 28 -4 l6 -14 l-188 -34 Z" fill="url(#gLeafB)"/>
+              <!-- lit clumps catching the light from upper-left -->
+              <g>
+                <path d="M300 62 C288 70 288 86 300 92 C314 98 330 90 330 76 C330 62 314 54 300 62 Z" fill="url(#gLeafA)"/>
+                <path d="M344 40 C330 46 328 64 342 72 C358 80 376 70 374 54 C372 40 358 34 344 40 Z" fill="url(#gLeafA)"/>
+                <path d="M398 46 C386 54 388 70 402 76 C418 82 432 72 430 58 C428 44 412 38 398 46 Z" fill="url(#gLeafA)"/>
+                <path d="M320 104 C308 110 308 124 322 130 C338 136 354 128 352 114 C350 102 334 98 320 104 Z" fill="url(#gLeafA)"/>
+                <path d="M382 100 C370 108 372 122 386 128 C402 134 416 124 414 110 C412 98 396 92 382 100 Z" fill="url(#gLeafA)"/>
+                <ellipse cx="348" cy="44" rx="20" ry="11" fill="#93B872" opacity=".5"/>
+                <ellipse cx="304" cy="70" rx="14" ry="8" fill="#93B872" opacity=".38"/>
+                <ellipse cx="404" cy="52" rx="13" ry="7" fill="#93B872" opacity=".32"/>
+              </g>
+              <!-- boughs -->
+              <path d="M350 150 Q336 132 318 124" stroke="#4A3A2A" stroke-width="8" fill="none" stroke-linecap="round"/>
+              <path d="M357 142 Q378 126 396 120" stroke="#4A3A2A" stroke-width="7" fill="none" stroke-linecap="round"/>
+              <path d="M354 128 Q354 110 358 96" stroke="#4A3A2A" stroke-width="6" fill="none" stroke-linecap="round"/>
+              <!-- trunk with root flare -->
+              <path d="M336 250 Q329 244 324 250 L330 214 Q336 172 341 132 L369 132 Q374 174 380 216 L386 250 Q379 244 372 250 Z" fill="url(#gBark)"/>
+              <!-- bark texture -->
+              <path d="M343 140 Q339 180 335 224" stroke="#2A2118" stroke-width="2.2" fill="none" opacity=".8"/>
+              <path d="M350 136 Q348 178 346 226" stroke="#2A2118" stroke-width="1.8" fill="none" opacity=".6"/>
+              <path d="M359 138 Q361 180 364 228" stroke="#2A2118" stroke-width="2" fill="none" opacity=".7"/>
+              <path d="M368 142 Q372 182 375 224" stroke="#2A2118" stroke-width="1.6" fill="none" opacity=".5"/>
+              <path d="M345 158 L354 156 M357 190 L366 189 M338 206 L347 205 M361 168 L370 167"
+                    stroke="#8A6E4E" stroke-width="1.5" opacity=".5"/>
+              <!-- the notch already cut, heartwood exposed -->
+              <g class="c-notch">
+                <path d="M334 186 L374 200 L334 216 Z" fill="url(#gHeart)"/>
+                <path d="M334 186 L374 200 L336 208 Z" fill="#F0D8A6" opacity=".45"/>
+                <path d="M334 186 L374 200 L334 216 Z" fill="none" stroke="#7A5C33" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M336 194 L362 200 M336 206 L358 202" stroke="#B08A56" stroke-width="1.2" opacity=".7"/>
+              </g>
+              <!-- root flare shading -->
+              <path d="M330 236 Q335 246 326 250 L336 250 Q336 242 333 234 Z" fill="#241C14"/>
+              <path d="M380 236 Q377 246 386 250 L373 250 Q375 242 378 234 Z" fill="#241C14"/>
+            </g>
+          </g>
+
+          <!-- ground -->
+          <path d="M0 250 H480 V300 H0 Z" fill="#1A231F"/>
+          <path d="M0 250 H480" stroke="#31413A" stroke-width="2"/>
+          <ellipse cx="352" cy="252" rx="52" ry="6" fill="#0A0E0C" opacity=".65"/>
+          <ellipse cx="172" cy="252" rx="58" ry="6" fill="#0A0E0C" opacity=".65"/>
+          <!-- grass tufts -->
+          <g stroke="#4E6B44" stroke-width="1.9" fill="none" stroke-linecap="round">
+            <path d="M40 250 L37 240 M44 250 L45 239 M48 250 L52 241"/>
+            <path d="M258 250 L255 241 M262 250 L263 240 M266 250 L270 242"/>
+            <path d="M436 250 L433 241 M440 250 L441 240 M444 250 L448 242"/>
+          </g>
+          <!-- split logs already stacked -->
+          <g>
+            <path d="M56 250 L56 238 Q72 234 88 238 L88 250 Z" fill="#5A452F"/>
+            <ellipse cx="88" cy="244" rx="5" ry="6" fill="#C7A369"/>
+            <ellipse cx="88" cy="244" rx="2.4" ry="3" fill="#9A7842"/>
+            <path d="M60 236 L60 250 M70 235 L70 250 M80 236 L80 250" stroke="#3E2F1F" stroke-width="1.4"/>
+            <path d="M62 236 L62 228 Q78 224 92 228 L92 236 Q76 232 62 236 Z" fill="#6B5238"/>
+            <ellipse cx="92" cy="232" rx="4.4" ry="4.6" fill="#D6B478"/>
+          </g>
+          <!-- loose chips on the ground -->
+          <path d="M244 250 L252 246 L254 250 Z" fill="#C7A369"/>
+          <path d="M266 250 L272 247 L274 250 Z" fill="#A88750"/>
+          <path d="M296 250 L303 246 L305 250 Z" fill="#C7A369"/>
+
+          <!-- ================= HERO ================= -->
+          <g class="j c-root">
+            <g class="j">
+              <path d="M162 170 L142 208" stroke="url(#gLimb)" stroke-width="14" stroke-linecap="round" fill="none"/>
+              <path d="M142 208 L128 244" stroke="url(#gLimb)" stroke-width="11.5" stroke-linecap="round" fill="none"/>
+              <path d="M122 234 Q118 246 118 250 L142 250 Q142 240 137 232 Z" fill="#2F2620"/>
+              <path d="M118 250 L144 250" stroke="#1C1713" stroke-width="3" stroke-linecap="round"/>
+            </g>
+            <g class="j">
+              <path d="M178 168 L196 206" stroke="url(#gLimb)" stroke-width="15" stroke-linecap="round" fill="none"/>
+              <path d="M196 206 L210 244" stroke="url(#gLimb)" stroke-width="12" stroke-linecap="round" fill="none"/>
+              <path d="M204 234 Q202 246 204 250 L230 250 Q230 240 222 232 Z" fill="#38291F"/>
+              <path d="M204 250 L231 250" stroke="#221812" stroke-width="3" stroke-linecap="round"/>
+              <g class="rig"><path class="rig-bone" d="M178 168 L196 206 L210 244"/><circle class="rig-pin" cx="196" cy="206" r="3.4"/></g>
+            </g>
+
+            <g class="j c-shB">
+              <path d="M174 128 L200 153" stroke="#4E3722" stroke-width="10.5" stroke-linecap="round" fill="none"/>
+              <g class="j c-elB">
+                <path d="M200 153 L222 147" stroke="#4E3722" stroke-width="9" stroke-linecap="round" fill="none"/>
+                <path d="M216 142 Q228 142 230 148 Q229 154 218 153 Z" fill="#2E2119"/>
+              </g>
+            </g>
+
+            <g class="j c-torso">
+              <path d="M160 122 Q170 112 188 116 L194 138 L190 168 L158 170 L154 140 Z" fill="#CFC7B4"/>
+              <path d="M162 118 Q172 110 190 115 Q198 126 196 142 L192 164 Q174 170 156 164 L152 138 Q154 124 162 118 Z" fill="url(#gJerkin)"/>
+              <path d="M170 114 L176 162" stroke="#3E2716" stroke-width="2" opacity=".7"/>
+              <path d="M184 116 Q188 138 186 162" stroke="#3E2716" stroke-width="1.6" opacity=".5"/>
+              <path d="M184 113 Q200 116 198 132 Q192 136 184 132 Z" fill="#5B3B22"/>
+              <path d="M185 118 Q195 120 195 129" fill="none" stroke="#8A5C38" stroke-width="1.6"/>
+              <path d="M154 156 Q174 164 193 156 L194 166 Q174 174 153 166 Z" fill="#3A2617"/>
+              <rect x="169" y="159" width="9" height="9" rx="1.4" fill="#B98B4C"/>
+              <rect x="171.4" y="161.4" width="4.2" height="4.2" fill="#5E4321"/>
+              <path d="M178 108 L182 120" stroke="url(#gSkin)" stroke-width="9" stroke-linecap="round"/>
+
+              <g class="j c-head">
+                <path d="M173 88 Q184 82 193 90 Q197 98 194 106 Q190 114 181 114 Q173 112 171 104 Q170 94 173 88 Z" fill="url(#gSkin)"/>
+                <path d="M194 99 L198 101 L194 104 Z" fill="#C08F63"/>
+                <path d="M171 96 Q170 84 182 81 Q194 79 197 89 Q198 93 196 95 Q190 88 180 89 Q173 90 171 96 Z" fill="#2E2016"/>
+                <path d="M170 97 Q166 100 168 106 Q170 109 173 107" fill="#2E2016"/>
+                <ellipse cx="189" cy="97" rx="1.9" ry="2.2" fill="#241A12"/>
+                <path d="M186 92.5 Q189 91 192 92.5" stroke="#241A12" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M184 108 Q188 110 192 107" stroke="#8E6040" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              </g>
+
+              <g class="j c-shF">
+                <path d="M190 124 L214 149" stroke="url(#gLimb)" stroke-width="11.5" stroke-linecap="round" fill="none"/>
+                <g class="j c-elF">
+                  <path d="M214 149 L238 141" stroke="url(#gSkin)" stroke-width="9.5" stroke-linecap="round" fill="none"/>
+                  <path d="M217 144 Q228 140 232 142 L233 149 Q226 153 218 153 Z" fill="#54331C"/>
+                  <path d="M219 144.5 L220 152 M224 142.5 L225 151.5 M229 141.5 L230 150" stroke="#8A5C38" stroke-width="1.3"/>
+                  <path d="M233 135 Q243 135 244 142 Q243 149 234 148 Q229 143 233 135 Z" fill="#3B2717"/>
+
+                  <!-- ============ FELLING AXE (local frame) ============ -->
+                  <g transform="translate(238,141) rotate(19)">
+                    <!-- curved hickory haft, fawn's-foot knob -->
+                    <path d="M-22 2.6 Q-27 4.6 -25 7.4 Q-21 9 -17 6.2 L-16 5 Q-6 1.2 12 -.6 Q44 -3.6 74 -5.4 L88 -6 L88 .4 L74 1 Q44 2.8 13 5.6 Q-4 7.3 -16 9.2 Z" fill="url(#gHaft)"/>
+                    <path d="M-12 4.4 Q22 .9 84 -3" stroke="#C79A66" stroke-width=".85" opacity=".5" fill="none"/>
+                    <path d="M-10 7.6 Q24 4 86 .2" stroke="#4A3018" stroke-width=".75" opacity=".55" fill="none"/>
+                    <path d="M-22 2.6 Q-27 4.6 -25 7.4 Q-21 9 -17 6.2 L-4 4.6 L-5 9.4 Z" fill="#3E2917"/>
+                    <path d="M-20 3.6 L-19 8.4 M-15 3.2 L-14 8.2 M-10 2.8 L-9 7.8" stroke="#6A4526" stroke-width="1.1" stroke-linecap="round"/>
+                    <!-- HEAD: eye block + a fan-shaped bit. PROPORTION is what makes this read, not curve
+                         tweaking - a straight top edge, a beard below, and a small head on a long haft. Symmetric flaring is what makes a spade, so it cannot
+                         silhouette as a spade. Three earlier attempts flared symmetrically from a
+                         waist at roughly square proportions and all three read as a shovel. -->
+                    <path d="M95 -10 L109.5 -11.5 C113.5 -6 114.5 0 112.5 6.5 C110.5 13 105 18 98.5 19.5 L95 9.5 Z" fill="url(#gAxeSteel)"/>
+                    <path d="M110.5 -9.5 C114 -4 114.5 1.5 112 8 C110 13 106 17 101 18.8" fill="none" stroke="#F2F7FA" stroke-width="1.9" stroke-linecap="round"/>
+                    <path d="M98 -9.5 L108 -10.5 C112 -5.5 113 0 111 6 C109 11.5 104 15.5 99 17 L97.5 12 C101.5 6 102 -2 98 -9.5 Z"
+                          fill="#3E464E" opacity=".38"/>
+                    <path d="M98 -9 C102.5 -2 103 6 99 16" fill="none" stroke="#252C32" stroke-width="1.4" opacity=".6"/>
+                    <path d="M84 -8.5 L96 -10 L96 10 L84 8.5 Z" fill="#414A52"/>
+                    <path d="M86 -6.5 L94 -7.6 L94 7.6 L86 6.5 Z" fill="#333B43"/>
+                    <path d="M86 -6.5 L94 -7.6" stroke="#9AA4AC" stroke-width="1"/>
+                    <path d="M87.5 -3 L92.5 -3.6 M87.5 3 L92.5 3.4" stroke="#B08050" stroke-width="1.7" stroke-linecap="round"/>
+                    <path d="M95 -10 L109.5 -11.5 C113.5 -6 114.5 0 112.5 6.5 C110.5 13 105 18 98.5 19.5 L95 9.5 Z" fill="none" stroke="#1E242A" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M84 -8.5 L96 -10 L96 10 L84 8.5 Z" fill="none" stroke="#1E242A" stroke-width="1.4" stroke-linejoin="round"/>
+                    <circle id="mAxeTip" cx="112" cy="4" r="0" fill="none"/>
+                  </g>
+                  <g class="rig"><circle class="rig-pin" cx="214" cy="149" r="3.4"/><circle class="rig-pin-c" cx="238" cy="141" r="2.2"/></g>
+                </g>
+                <g class="rig"><path class="rig-bone" d="M190 124 L214 149 L238 141"/><circle class="rig-pin" cx="190" cy="124" r="3.6"/></g>
+              </g>
+              <g class="rig"><path class="rig-bone" d="M170 168 L174 128 L180 114"/><circle class="rig-pin" cx="170" cy="168" r="4"/></g>
+            </g>
+          </g>
+
+          <!-- ============ IMPACT: chips out of the notch, on the measured tip ============ -->
+          <g>
+            <g class="c-chip" style="--dx:-50;--dy:-10;--r:-210deg"><path d="M358 198 L368 196 L370 202 L360 204 Z" fill="#D9B978"/></g>
+            <g class="c-chip" style="--dx:-32;--dy:-24;--r:260deg"><path d="M358 202 L366 201 L366 207 L358 208 Z" fill="#C09256"/></g>
+            <g class="c-chip" style="--dx:-62;--dy:0;--r:-300deg"><path d="M356 206 L364 205 L365 211 L357 211 Z" fill="#E4C48E"/></g>
+            <g class="c-chip" style="--dx:-20;--dy:-32;--r:170deg"><path d="M362 194 L370 194 L369 200 L362 200 Z" fill="#B98B4C"/></g>
+            <g class="c-chip" style="--dx:-44;--dy:-34;--r:-140deg"><path d="M360 192 L367 191 L368 197 L361 198 Z" fill="#D9B978"/></g>
+            <g class="c-chip" style="--dx:-10;--dy:-10;--r:330deg"><path d="M364 206 L372 205 L371 212 L364 212 Z" fill="#A88750"/></g>
+            <g class="c-leaf" style="--dx:-26;--dy:180;--r:420deg"><path d="M330 108 Q338 102 344 108 Q338 116 330 108 Z" fill="#6E9459"/></g>
+            <g class="c-leaf" style="--dx:18;--dy:170;--r:-380deg"><path d="M382 92 Q390 86 396 92 Q390 100 382 92 Z" fill="#557C46"/></g>
+            <g class="c-leaf" style="--dx:-42;--dy:160;--r:300deg"><path d="M300 78 Q308 72 314 78 Q308 86 300 78 Z" fill="#87AC69"/></g>
+            <g class="c-leaf" style="--dx:34;--dy:150;--r:-260deg"><path d="M414 66 Q422 60 428 66 Q422 74 414 66 Z" fill="#6E9459"/></g>
+          </g>
+        </svg>
+      </div>
+
+      <aside>
+        <div class="sheet">
+          <div class="sheet-cap"><span>Dope sheet</span><b>1150 ms</b></div>
+          <div class="phases">
+            <div class="phase"><i>1</i><span class="nm">Wind-up</span><span class="ms">0–415</span></div>
+            <div class="phase"><i>2</i><span class="nm">Swing</span><span class="ms">415–520</span></div>
+            <div class="phase"><i>3</i><span class="nm">Bite</span><span class="ms">520–645</span></div>
+            <div class="phase"><i>4</i><span class="nm">Recovery</span><span class="ms">645–1150</span></div>
+          </div>
+          <div class="bars">
+            <span class="bar-a" style="width:36%"></span><span class="bar-b" style="width:9%"></span>
+            <span class="bar-c" style="width:11%"></span><span class="bar-d" style="width:44%"></span>
+          </div>
+          <div class="track"><span class="playhead"></span></div>
+        </div>
+        <div class="notes">
+          <h3>What to look at</h3>
+          <ul>
+            <li><b>A wider arc than the pick</b> — the shoulder travels 122° against mining's 104°, because an axe is swung round the body, not dropped on the spot.</li>
+            <li><b>The tree answers as one object.</b> Trunk, boughs and canopy pivot together at the root, so the shiver travels up rather than the leaves twitching alone.</li>
+            <li><b>Heartwood brightens on the bite</b> and the notch stays cut between swings — the damage persists, so the loop reads as progress.</li>
+            <li><b>Ambient sway</b> runs at 5.2 s, deliberately out of phase with the 1.15 s swing so the tree never looks metronomic.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PLATE 03 — FISHING ==================== -->
+<section class="plate p-fish">
+  <div class="wrap">
+    <div class="plate-head">
+      <span class="plate-num">PLATE 03</span>
+      <h2>Drawing the river</h2>
+    </div>
+    <p class="plate-sub">The one skill with no strike. Fishing is a wait that pays: a long hold on a bobbing
+    float, a bite, a set, and a fish hauled clear of the surface. This is the template for every skill whose
+    action is patience rather than force.</p>
+
+    <div class="plate-body">
+      <div class="stage">
+        <svg viewBox="0 0 480 300" role="img" aria-label="An angler stands on a river bank; the float dips, the rod bends, and a trout is hauled clear of the water in a shower of droplets.">
+          <defs>
+            <linearGradient id="fSky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#33454E"/><stop offset=".55" stop-color="#1E2C33"/><stop offset="1" stop-color="#121A1E"/>
+            </linearGradient>
+            <linearGradient id="gWater" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#3C6B79"/><stop offset=".45" stop-color="#28505E"/><stop offset="1" stop-color="#152F39"/>
+            </linearGradient>
+            <linearGradient id="gBank" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#4E6B44"/><stop offset=".18" stop-color="#3C5636"/><stop offset=".4" stop-color="#5A4530"/><stop offset="1" stop-color="#2E2318"/>
+            </linearGradient>
+            <linearGradient id="gCork" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#D2AC77"/><stop offset="1" stop-color="#9A7442"/>
+            </linearGradient>
+            <linearGradient id="gBlank" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#6A4E33"/><stop offset=".45" stop-color="#4A3320"/><stop offset="1" stop-color="#2C1E12"/>
+            </linearGradient>
+            <linearGradient id="gBrass" x1="0" y1="0" x2=".4" y2="1">
+              <stop offset="0" stop-color="#E4C486"/><stop offset=".5" stop-color="#B98B4C"/><stop offset="1" stop-color="#6E4F24"/>
+            </linearGradient>
+            <linearGradient id="gTrout" x1=".1" y1="0" x2=".5" y2="1">
+              <stop offset="0" stop-color="#9FB6B8"/><stop offset=".42" stop-color="#5D7C82"/><stop offset="1" stop-color="#2E4249"/>
+            </linearGradient>
+          </defs>
+
+          <rect width="480" height="300" fill="url(#fSky)"/>
+          <!-- far bank + reeds -->
+          <path d="M0 196 Q120 186 246 192 Q360 197 480 190 L480 214 L0 214 Z" fill="#243128"/>
+          <path d="M0 196 Q120 186 246 192 Q360 197 480 190" fill="none" stroke="#33452F" stroke-width="2"/>
+          <g stroke="#3E5637" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".9">
+            <path d="M28 194 Q26 178 30 168 M36 194 Q36 176 33 166 M44 194 Q46 180 42 170"/>
+            <path d="M404 192 Q402 176 406 166 M412 192 Q412 174 409 164 M420 192 Q422 178 418 168"/>
+            <path d="M300 193 Q298 180 302 172 M308 193 Q308 178 305 170"/>
+          </g>
+          <ellipse cx="34" cy="167" rx="2.6" ry="6" fill="#6B5A34"/>
+          <ellipse cx="410" cy="165" rx="2.6" ry="6" fill="#6B5A34"/>
+
+          <!-- WATER BODY -->
+          <rect x="0" y="214" width="480" height="86" fill="url(#gWater)"/>
+
+          <!-- ============ TERMINAL TACKLE ============
+               Line, float and fish live in STAGE coordinates and are carried by .f-rig, whose
+               keyframes ARE the rod tip's measured path (probe_tip). Two earlier attempts failed:
+               a fixed anchor left the line detached from the tip, and parenting the tackle to the
+               tip made it rotate with the rod and fly off-stage - a line hangs by gravity, it does
+               not swing with the blank. Idle motion is damped to a quarter (slack absorbs a sway);
+               the haul transmits in full, which is what lifts the fish clear of the water. -->
+          <g class="f-rig">
+            <path d="M396 91 Q400 152 392 212" fill="none" stroke="#E8F1F2" stroke-width=".7" opacity=".7"/>
+            <g class="f-fish">
+              <g transform="translate(392,250)">
+                <path d="M-24 0 Q-13 -12 4 -11 Q20 -9 29 0 Q20 9 4 11 Q-13 12 -24 0 Z" fill="url(#gTrout)"/>
+                <path d="M-24 0 L-37 -10 L-33 0 L-37 10 Z" fill="#4A666D"/>
+                <path d="M0 -10 L5 -18 L15 -8 Z" fill="#3E585F"/>
+                <path d="M2 10 L7 17 L14 8 Z" fill="#3E585F"/>
+                <path d="M-9 8 L-5 15 L2 8 Z" fill="#48646B"/>
+                <path d="M18 -7 Q24 0 18 7" fill="none" stroke="#22343A" stroke-width="1.3"/>
+                <circle cx="24.5" cy="-2" r="2.2" fill="#F0F4F4"/><circle cx="25" cy="-2" r="1.2" fill="#16232A"/>
+                <path d="M-15 -4.5 Q-4 -7 7 -5.5" fill="none" stroke="#C6D6D6" stroke-width="1.4" opacity=".5"/>
+                <circle cx="-11" cy="2" r="1.4" fill="#22343A"/><circle cx="-2" cy="4" r="1.3" fill="#22343A"/>
+                <circle cx="7" cy="1" r="1.2" fill="#22343A"/><circle cx="0" cy="-4" r="1.1" fill="#C05A3E"/>
+                <circle cx="-8" cy="-2" r="1.1" fill="#C05A3E"/>
+                <path d="M-24 0 Q-13 -12 4 -11 Q20 -9 29 0 Q20 9 4 11 Q-13 12 -24 0 Z" fill="none" stroke="#1B2A30" stroke-width="1.2"/>
+              </g>
+            </g>
+            <g class="f-float">
+              <g transform="translate(392,214)">
+                <path d="M0 -13 L0 3" stroke="#E8EDEE" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M-3.2 -2 Q0 -8.6 3.2 -2 Q3.2 6.6 0 10.4 Q-3.2 6.6 -3.2 -2 Z" fill="#C43F2E"/>
+                <path d="M-3.2 -2 Q0 -8.6 3.2 -2 Q3.2 .8 3 2.8 L-3 2.8 Q-3.2 .8 -3.2 -2 Z" fill="#F2F0E8"/>
+                <path d="M-3.2 -2 Q0 -8.6 3.2 -2 Q3.2 6.6 0 10.4 Q-3.2 6.6 -3.2 -2 Z" fill="none" stroke="#5E2418" stroke-width="1"/>
+              </g>
+            </g>
+          </g>
+          <!-- WATER SURFACE FILM — sits above the rig, so anything below reads as submerged -->
+          <g>
+            <rect x="0" y="214" width="480" height="86" fill="#1E4351" opacity=".52"/>
+            <path d="M0 214 H480" stroke="#7FB3BE" stroke-width="1.6" opacity=".8"/>
+            <g class="ripple" opacity=".5">
+              <path d="M-20 224 Q10 221 40 224 T100 224 T160 224 T220 224 T280 224 T340 224 T400 224 T460 224 T520 224"
+                    fill="none" stroke="#8FC4CE" stroke-width="1.3"/>
+              <path d="M-20 240 Q16 236 52 240 T124 240 T196 240 T268 240 T340 240 T412 240 T484 240"
+                    fill="none" stroke="#6DA5B1" stroke-width="1.2" opacity=".8"/>
+              <path d="M-20 262 Q22 257 64 262 T148 262 T232 262 T316 262 T400 262 T484 262"
+                    fill="none" stroke="#5A8E9B" stroke-width="1.1" opacity=".6"/>
+              <path d="M-20 284 Q26 279 72 284 T164 284 T256 284 T348 284 T440 284 T532 284"
+                    fill="none" stroke="#4A7986" stroke-width="1" opacity=".45"/>
+            </g>
+            <!-- strike ring where the float went under -->
+            <ellipse class="f-ring" cx="392" cy="216" rx="16" ry="4.6" fill="none" stroke="#CDE6EA" stroke-width="1.6" opacity="0"/>
+            <ellipse class="f-ring" cx="392" cy="216" rx="9" ry="2.6" fill="none" stroke="#E6F3F5" stroke-width="1.3" opacity="0" style="animation-delay:.12s"/>
+          </g>
+
+          <!-- NEAR BANK the angler stands on -->
+          <path d="M0 236 Q56 226 118 230 Q168 233 206 244 Q222 250 224 262 L224 300 L0 300 Z" fill="url(#gBank)"/>
+          <path d="M0 236 Q56 226 118 230 Q168 233 206 244 Q222 250 224 262" fill="none" stroke="#5E7C4E" stroke-width="2.4"/>
+          <path d="M0 248 Q60 240 120 243 Q170 246 204 256" fill="none" stroke="#2E2318" stroke-width="1.6" opacity=".6"/>
+          <g stroke="#5E7C4E" stroke-width="1.9" fill="none" stroke-linecap="round">
+            <path d="M28 233 L25 222 M33 232 L34 221 M38 233 L42 223"/>
+            <path d="M96 230 L93 219 M101 230 L102 219 M106 231 L110 221"/>
+            <path d="M168 235 L165 225 M173 236 L174 226"/>
+          </g>
+          <!-- creel basket beside him -->
+          <g>
+            <path d="M62 250 Q62 236 78 236 Q94 236 94 250 Z" fill="#8A6A3E"/>
+            <path d="M64 244 H92 M65 240 H91" stroke="#5E4526" stroke-width="1.5"/>
+            <path d="M60 236 Q78 230 96 236 L96 240 Q78 234 60 240 Z" fill="#A38150"/>
+            <path d="M70 234 Q78 226 86 234" fill="none" stroke="#5E4526" stroke-width="2"/>
+          </g>
+
+          <!-- ================= ANGLER ================= -->
+          <g class="j f-root">
+            <g class="j">
+              <path d="M142 172 L124 210" stroke="url(#gLimb)" stroke-width="14" stroke-linecap="round" fill="none"/>
+              <path d="M124 210 L112 246" stroke="url(#gLimb)" stroke-width="11.5" stroke-linecap="round" fill="none"/>
+              <path d="M106 236 Q102 248 102 252 L126 252 Q126 242 121 234 Z" fill="#2F2620"/>
+              <path d="M102 252 L128 252" stroke="#1C1713" stroke-width="3" stroke-linecap="round"/>
+            </g>
+            <g class="j">
+              <path d="M158 170 L172 208" stroke="url(#gLimb)" stroke-width="15" stroke-linecap="round" fill="none"/>
+              <path d="M172 208 L184 246" stroke="url(#gLimb)" stroke-width="12" stroke-linecap="round" fill="none"/>
+              <path d="M178 236 Q176 248 178 252 L204 252 Q204 242 196 234 Z" fill="#38291F"/>
+              <path d="M178 252 L205 252" stroke="#221812" stroke-width="3" stroke-linecap="round"/>
+              <g class="rig"><path class="rig-bone" d="M158 170 L172 208 L184 246"/><circle class="rig-pin" cx="172" cy="208" r="3.4"/></g>
+            </g>
+
+            <!-- back arm supports the butt of the rod -->
+            <g class="j f-shB">
+              <path d="M154 130 L178 154" stroke="#4E3722" stroke-width="10.5" stroke-linecap="round" fill="none"/>
+              <g class="j f-elB">
+                <path d="M178 154 L200 150" stroke="#4E3722" stroke-width="9" stroke-linecap="round" fill="none"/>
+                <path d="M194 145 Q206 145 208 151 Q207 157 196 156 Z" fill="#2E2119"/>
+              </g>
+            </g>
+
+            <g class="j f-torso">
+              <path d="M140 124 Q150 114 168 118 L174 140 L170 170 L138 172 L134 142 Z" fill="#CFC7B4"/>
+              <path d="M142 120 Q152 112 170 117 Q178 128 176 144 L172 166 Q154 172 136 166 L132 140 Q134 126 142 120 Z" fill="#4E5F4A"/>
+              <path d="M150 116 L156 164" stroke="#2E3A2C" stroke-width="2" opacity=".7"/>
+              <path d="M164 118 Q168 140 166 164" stroke="#2E3A2C" stroke-width="1.6" opacity=".5"/>
+              <path d="M164 115 Q180 118 178 134 Q172 138 164 134 Z" fill="#3A4837"/>
+              <path d="M134 158 Q154 166 173 158 L174 168 Q154 176 133 168 Z" fill="#3A2617"/>
+              <rect x="149" y="161" width="9" height="9" rx="1.4" fill="#B98B4C"/>
+              <rect x="151.4" y="163.4" width="4.2" height="4.2" fill="#5E4321"/>
+              <path d="M158 110 L162 122" stroke="url(#gSkin)" stroke-width="9" stroke-linecap="round"/>
+
+              <g class="j f-head">
+                <path d="M153 90 Q164 84 173 92 Q177 100 174 108 Q170 116 161 116 Q153 114 151 106 Q150 96 153 90 Z" fill="url(#gSkin)"/>
+                <path d="M174 101 L178 103 L174 106 Z" fill="#C08F63"/>
+                <!-- brimmed hat, not the mining hair -->
+                <path d="M150 95 Q150 83 162 81 Q175 80 177 91 L177 95 Q168 89 158 91 Q152 92 150 95 Z" fill="#5B4A2E"/>
+                <path d="M142 95 Q160 89 186 94 Q186 99 180 99 Q162 95 146 99 Q141 99 142 95 Z" fill="#6E5A38"/>
+                <path d="M150 92 Q162 87 176 91" fill="none" stroke="#8A7248" stroke-width="1.5"/>
+                <ellipse cx="169" cy="99" rx="1.9" ry="2.2" fill="#241A12"/>
+                <path d="M164 110 Q168 112 172 109" stroke="#8E6040" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+                <path d="M155 104 Q152 108 156 112 Q159 113 160 110" fill="#2E2016"/>
+              </g>
+
+              <!-- front arm holds the rod -->
+              <g class="j f-shF">
+                <path d="M170 126 L194 150" stroke="url(#gLimb)" stroke-width="11.5" stroke-linecap="round" fill="none"/>
+                <g class="j f-elF">
+                  <path d="M194 150 L218 142" stroke="url(#gSkin)" stroke-width="9.5" stroke-linecap="round" fill="none"/>
+                  <path d="M197 145 Q208 141 212 143 L213 150 Q206 154 198 154 Z" fill="#54331C"/>
+                  <path d="M199 145.5 L200 153 M204 143.5 L205 152.5 M209 142.5 L210 151" stroke="#8A5C38" stroke-width="1.3"/>
+                  <path d="M213 136 Q223 136 224 143 Q223 150 214 149 Q209 144 213 136 Z" fill="#3B2717"/>
+
+                  <!-- ============ FISHING ROD (local frame: butt at 0,0, +X toward tip) ============ -->
+                  <g transform="translate(218,142) rotate(-18) scale(.82)">
+                    <!-- butt cap + cork handle -->
+                    <path d="M-18 -4 Q-22 0 -18 4 L-14 4 L-14 -4 Z" fill="#4A3A24"/>
+                    <path d="M-14 -4.6 L20 -3.8 L20 3.8 L-14 4.6 Z" fill="url(#gCork)"/>
+                    <g fill="#7E5E32" opacity=".55">
+                      <circle cx="-9" cy="-1.4" r=".9"/><circle cx="-4" cy="1.8" r=".8"/><circle cx="1" cy="-2.2" r=".9"/>
+                      <circle cx="6" cy="1.2" r=".85"/><circle cx="11" cy="-1.6" r=".8"/><circle cx="16" cy="2" r=".9"/>
+                      <circle cx="-6" cy="-3" r=".6"/><circle cx="9" cy="3" r=".65"/>
+                    </g>
+                    <!-- brass reel seat -->
+                    <path d="M20 -4 L34 -3.4 L34 3.4 L20 4 Z" fill="url(#gBrass)"/>
+                    <path d="M22 -3.8 L22 3.8 M31 -3.5 L31 3.6" stroke="#6E4F24" stroke-width="1.1"/>
+                    <!-- centre-pin reel -->
+                    <g class="f-reel">
+                      <circle cx="27" cy="13" r="11" fill="url(#gBrass)"/>
+                      <circle cx="27" cy="13" r="11" fill="none" stroke="#5E4321" stroke-width="1.4"/>
+                      <circle cx="27" cy="13" r="7.4" fill="none" stroke="#7E5C2C" stroke-width="1.2"/>
+                      <path d="M27 4 L27 22 M18.6 13 L35.4 13 M21 7 L33 19 M33 7 L21 19" stroke="#8A6634" stroke-width="1.3"/>
+                      <circle cx="27" cy="13" r="2.8" fill="#4E3A1C"/>
+                      <circle cx="34" cy="19" r="2.1" fill="#E4C486"/>
+                    </g>
+                    <path d="M27 4 L27 2" stroke="#5E4321" stroke-width="1.4"/>
+
+                    <!-- BLANK, three chained segments so it bends as a curve -->
+                    <path d="M34 -3.2 L96 -2.2 L96 2.2 L34 3.2 Z" fill="url(#gBlank)"/>
+                    <path d="M40 -1.4 L94 -.9" stroke="#8A6740" stroke-width=".7" opacity=".5"/>
+                    <path d="M38 -3.4 L38 3.4 M46 -3.3 L46 3.3" stroke="#B0402E" stroke-width="1.6"/>
+                    <g class="j f-seg1">
+                      <path d="M96 -2.2 L150 -1.5 L150 1.5 L96 2.2 Z" fill="url(#gBlank)"/>
+                      <path d="M100 -1 L148 -.7" stroke="#8A6740" stroke-width=".6" opacity=".45"/>
+                      <!-- guide -->
+                      <path d="M112 -1.9 L110 -8 M118 -1.8 L120 -8" stroke="#9AA3AA" stroke-width="1.3"/>
+                      <path d="M110 -8 Q115 -12 120 -8" fill="none" stroke="#B7C0C6" stroke-width="1.5"/>
+                      <path d="M110 -2.4 L112 -2.3 M118 -2.3 L120 -2.2" stroke="#B0402E" stroke-width="2.2"/>
+                      <g class="j f-seg2">
+                        <path d="M150 -1.5 L186 -1 L186 1 L150 1.5 Z" fill="url(#gBlank)"/>
+                        <path d="M162 -1.3 L160 -6.4 M168 -1.2 L170 -6.4" stroke="#9AA3AA" stroke-width="1.1"/>
+                        <path d="M160 -6.4 Q165 -9.8 170 -6.4" fill="none" stroke="#B7C0C6" stroke-width="1.3"/>
+                        <path d="M159 -1.7 L161 -1.6 M167 -1.6 L169 -1.5" stroke="#B0402E" stroke-width="1.9"/>
+                        <g class="j f-seg3">
+                          <path d="M186 -1 L226 -.35 L226 .35 L186 1 Z" fill="url(#gBlank)"/>
+                          <path d="M198 -.9 L196 -4.8 M203 -.85 L205 -4.8" stroke="#9AA3AA" stroke-width=".95"/>
+                          <path d="M196 -4.8 Q200.5 -7.6 205 -4.8" fill="none" stroke="#B7C0C6" stroke-width="1.1"/>
+                          <path d="M195 -1.3 L197 -1.25 M203 -1.2 L205 -1.15" stroke="#B0402E" stroke-width="1.6"/>
+                          <!-- tip ring -->
+                          <circle cx="228" cy="-2.6" r="2.4" fill="none" stroke="#C2CBD1" stroke-width="1.2"/>
+                          <path d="M226 0 L227.4 -1" stroke="#9AA3AA" stroke-width="1.2"/>
+<circle id="mTip" cx="228" cy="-2.6" r="0" fill="none"/>
+                        </g>
+                      </g>
+                    </g>
+                  </g>
+                  <g class="rig"><circle class="rig-pin" cx="194" cy="150" r="3.4"/><circle class="rig-pin-c" cx="218" cy="142" r="2.2"/></g>
+                </g>
+                <g class="rig"><path class="rig-bone" d="M170 126 L194 150 L218 142"/><circle class="rig-pin" cx="170" cy="126" r="3.6"/></g>
+              </g>
+              <g class="rig"><path class="rig-bone" d="M150 170 L154 130 L160 116"/><circle class="rig-pin" cx="150" cy="170" r="4"/></g>
+            </g>
+          </g>
+
+          <!-- droplets thrown off the fish as it clears the surface -->
+          <g>
+            <g class="f-drop" style="--dx:-26;--dy:-18"><circle cx="380" cy="196" r="2.2" fill="#CDE6EA"/></g>
+            <g class="f-drop" style="--dx:-10;--dy:-26"><circle cx="374" cy="188" r="1.8" fill="#E6F3F5"/></g>
+            <g class="f-drop" style="--dx:-38;--dy:-8"><circle cx="386" cy="200" r="1.6" fill="#A8CBD2"/></g>
+            <g class="f-drop" style="--dx:6;--dy:-22"><circle cx="370" cy="192" r="1.9" fill="#CDE6EA"/></g>
+            <g class="f-drop" style="--dx:-46;--dy:-24"><circle cx="382" cy="190" r="1.4" fill="#E6F3F5"/></g>
+            <g class="f-drop" style="--dx:-18;--dy:-36"><circle cx="376" cy="184" r="1.5" fill="#A8CBD2"/></g>
+          </g>
+        </svg>
+      </div>
+
+      <aside>
+        <div class="sheet">
+          <div class="sheet-cap"><span>Dope sheet</span><b>5200 ms</b></div>
+          <div class="phases">
+            <div class="phase"><i>1</i><span class="nm">Hold</span><span class="ms">0–2600</span></div>
+            <div class="phase"><i>2</i><span class="nm">Bite</span><span class="ms">2600–3120</span></div>
+            <div class="phase"><i>3</i><span class="nm">Set &amp; haul</span><span class="ms">3120–3900</span></div>
+            <div class="phase"><i>4</i><span class="nm">Landing</span><span class="ms">3900–4520</span></div>
+            <div class="phase"><i>5</i><span class="nm">Reset</span><span class="ms">4520–5200</span></div>
+          </div>
+          <div class="bars">
+            <span class="bar-a" style="width:50%"></span><span class="bar-b" style="width:10%"></span>
+            <span class="bar-c" style="width:15%"></span><span class="bar-b" style="width:12%"></span>
+            <span class="bar-d" style="width:13%"></span>
+          </div>
+          <div class="track"><span class="playhead"></span></div>
+        </div>
+        <div class="notes">
+          <h3>What to look at</h3>
+          <ul>
+            <li><b>The blank bends as a chain</b> — three segments at 9°, 14° and 20° compound into a real curve. A single rotated rod reads as a stick tilting.</li>
+            <li><b>Half the cycle is the wait.</b> The float bobs, the rod tip sways, nothing else happens. That patience is the point of the skill.</li>
+            <li><b>The surface film is a layer, not a mask.</b> The trout is drawn under a translucent sheet, so it darkens below the line and clears it on the haul with no clipping.</li>
+            <li><b>The reel turns only while hauling</b> — 320° over 780 ms, then holds. It is the one part that must not idle.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PROP SHEET ==================== -->
+<section class="props">
+  <div class="wrap">
+    <div class="plate-head">
+      <span class="plate-num">PROPS</span>
+      <h2>The three tools, isolated</h2>
+    </div>
+    <p class="plate-sub">Each authored in its own local frame — origin at the hand, +X toward the working
+    end — the same convention the weapon profiles use, so a tool can be placed by one translate and one
+    rotate and never drifts out of the fist. Drawn here at four times stage scale.</p>
+
+    <div class="prop-grid">
+      <!-- PICKAXE -->
+      <div class="prop">
+        <div class="prop-art">
+          <svg viewBox="0 0 760 300" role="img" aria-label="A miner's pickaxe drawn in isolation: hickory haft, bound leather grip, steel collar and a forged crescent head sharp at both points.">
+            <defs>
+              <linearGradient id="pSteel" x1="0" y1="0" x2=".35" y2="1">
+                <stop offset="0" stop-color="#C9D2D8"/><stop offset=".42" stop-color="#8B959D"/><stop offset="1" stop-color="#454D55"/>
+              </linearGradient>
+              <linearGradient id="pHaft" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#B08050"/><stop offset=".5" stop-color="#8C6038"/><stop offset="1" stop-color="#5E3F22"/>
+              </linearGradient>
+            </defs>
+            <rect width="760" height="300" fill="var(--stage-sky-b)"/>
+            <g transform="translate(150,150) scale(3.0)">
+              <!-- haft -->
+                    <path d="M-19 -3.3 Q-21.5 0 -19 3.3 L100 2.5 L100 -2.5 Z" fill="url(#pHaft)"/>
+                    <path d="M-14 -1.4 L96 -1.05" stroke="#C79A66" stroke-width=".8" opacity=".5"/>
+                    <path d="M-8 1.4 L94 1.15" stroke="#4A3018" stroke-width=".7" opacity=".55"/>
+                    <!-- bound leather grip -->
+                    <path d="M-19 -3.3 Q-21.5 0 -19 3.3 L14 2.9 L14 -2.9 Z" fill="#3E2917"/>
+                    <path d="M-15 -3.2 L-11 3.2 M-9 -3.15 L-5 3.15 M-3 -3.1 L1 3.1 M3 -3.05 L7 3.05 M9 -3 L13 3"
+                          stroke="#6A4526" stroke-width="1.15" stroke-linecap="round"/>
+                    <!-- steel collar under the head -->
+                    <path d="M72 -3 L86 -2.85 L86 2.85 L72 3 Z" fill="#5E666E"/>
+                    <path d="M72 -3 L86 -2.85" stroke="#C2CBD1" stroke-width=".9"/>
+                    <!-- FORGED HEAD: a crescent crossing the haft, sharp at both points -->
+                    <path d="M84 -31 C101 -25 113 -13 114 0 C115 13 109 24 99 32
+                             C104 20 106 10 104 0 C102 -11 95 -22 84 -31 Z" fill="url(#pSteel)"/>
+                    <path d="M86 -28 C101 -22 111.5 -12 112.5 0 C113.5 12 107.5 22 98.5 29"
+                          fill="none" stroke="#E8EFF3" stroke-width="1.7" opacity=".9"/>
+                    <path d="M103.5 -2 C102 -11 95.5 -21 86 -28.5 M103.5 2 C104 12 102 20 97.5 28"
+                          fill="none" stroke="#2A3137" stroke-width="1.5" opacity=".75"/>
+                    <!-- eye block + wedge, where the haft passes through -->
+                    <path d="M87 -11 L107 -9.5 L106 8 L86 9 Z" fill="#3B434B"/>
+                    <path d="M87 -11 L107 -9.5" stroke="#98A2AA" stroke-width="1.2"/>
+                    <path d="M93 -6 L101 -5.4 M93 2 L101 2.4" stroke="#B08050" stroke-width="2.1" stroke-linecap="round"/>
+                    <path d="M84 -31 C101 -25 113 -13 114 0 C115 13 109 24 99 32
+                             C104 20 106 10 104 0 C102 -11 95 -22 84 -31 Z"
+                          fill="none" stroke="#1E242A" stroke-width="1.5" stroke-linejoin="round"/>
+            </g>
+          </svg>
+        </div>
+        <div class="prop-meta">
+          <h3>Miner's pickaxe</h3>
+          <p>Hickory haft under a cross-bound leather grip, a steel collar where the head is hung, and a
+          forged crescent that crosses the haft and comes to a point at both ends. The head is taller
+          than it is wide, which is what stops a pick silhouetting as a spear — the first attempt did.</p>
+          <p class="spec">grip (0,0) · eye x=87–107 · points (84,−31) and (99,32) · 63 tall on a 119 haft</p>
+        </div>
+      </div>
+
+      <!-- AXE -->
+      <div class="prop">
+        <div class="prop-art">
+          <svg viewBox="0 0 760 260" role="img" aria-label="A felling axe drawn in isolation: curved hickory haft with a fawn's foot knob and a bearded steel bit with a polished edge.">
+            <defs>
+              <linearGradient id="aSteel" x1=".1" y1="0" x2=".5" y2="1">
+                <stop offset="0" stop-color="#CFD7DC"/><stop offset=".4" stop-color="#8A949C"/><stop offset="1" stop-color="#3E464E"/>
+              </linearGradient>
+              <linearGradient id="aHaft" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#B08050"/><stop offset=".5" stop-color="#8C6038"/><stop offset="1" stop-color="#5E3F22"/>
+              </linearGradient>
+            </defs>
+            <rect width="760" height="260" fill="var(--stage-sky-b)"/>
+            <g transform="translate(150,140) scale(3.4)">
+              <!-- curved hickory haft, fawn's-foot knob -->
+                    <path d="M-22 2.6 Q-27 4.6 -25 7.4 Q-21 9 -17 6.2 L-16 5 Q-6 1.2 12 -.6 Q44 -3.6 74 -5.4 L88 -6 L88 .4 L74 1 Q44 2.8 13 5.6 Q-4 7.3 -16 9.2 Z" fill="url(#aHaft)"/>
+                    <path d="M-12 4.4 Q22 .9 84 -3" stroke="#C79A66" stroke-width=".85" opacity=".5" fill="none"/>
+                    <path d="M-10 7.6 Q24 4 86 .2" stroke="#4A3018" stroke-width=".75" opacity=".55" fill="none"/>
+                    <path d="M-22 2.6 Q-27 4.6 -25 7.4 Q-21 9 -17 6.2 L-4 4.6 L-5 9.4 Z" fill="#3E2917"/>
+                    <path d="M-20 3.6 L-19 8.4 M-15 3.2 L-14 8.2 M-10 2.8 L-9 7.8" stroke="#6A4526" stroke-width="1.1" stroke-linecap="round"/>
+                    <!-- HEAD: eye block + a fan-shaped bit. PROPORTION is what makes this read, not curve
+                         tweaking - a straight top edge, a beard below, and a small head on a long haft. Symmetric flaring is what makes a spade, so it cannot
+                         silhouette as a spade. Three earlier attempts flared symmetrically from a
+                         waist at roughly square proportions and all three read as a shovel. -->
+                    <path d="M95 -10 L109.5 -11.5 C113.5 -6 114.5 0 112.5 6.5 C110.5 13 105 18 98.5 19.5 L95 9.5 Z" fill="url(#aSteel)"/>
+                    <path d="M110.5 -9.5 C114 -4 114.5 1.5 112 8 C110 13 106 17 101 18.8" fill="none" stroke="#F2F7FA" stroke-width="1.9" stroke-linecap="round"/>
+                    <path d="M98 -9.5 L108 -10.5 C112 -5.5 113 0 111 6 C109 11.5 104 15.5 99 17 L97.5 12 C101.5 6 102 -2 98 -9.5 Z"
+                          fill="#3E464E" opacity=".38"/>
+                    <path d="M98 -9 C102.5 -2 103 6 99 16" fill="none" stroke="#252C32" stroke-width="1.4" opacity=".6"/>
+                    <path d="M84 -8.5 L96 -10 L96 10 L84 8.5 Z" fill="#414A52"/>
+                    <path d="M86 -6.5 L94 -7.6 L94 7.6 L86 6.5 Z" fill="#333B43"/>
+                    <path d="M86 -6.5 L94 -7.6" stroke="#9AA4AC" stroke-width="1"/>
+                    <path d="M87.5 -3 L92.5 -3.6 M87.5 3 L92.5 3.4" stroke="#B08050" stroke-width="1.7" stroke-linecap="round"/>
+                    <path d="M95 -10 L109.5 -11.5 C113.5 -6 114.5 0 112.5 6.5 C110.5 13 105 18 98.5 19.5 L95 9.5 Z" fill="none" stroke="#1E242A" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M84 -8.5 L96 -10 L96 10 L84 8.5 Z" fill="none" stroke="#1E242A" stroke-width="1.4" stroke-linejoin="round"/>
+            </g>
+          </svg>
+        </div>
+        <div class="prop-meta">
+          <h3>Felling axe</h3>
+          <p>A haft with real curve and a fawn's-foot knob so the hand has something to pull against.
+          The head is an eye block plus a bit with a STRAIGHT top edge running on from the haft,
+          the mass dropping into a beard below it — asymmetry plus a small head on a long haft (about
+          4:1, as a real felling axe is) is what makes it an axe rather than a spade. Polish is carried only on the middle of the edge, where a
+          working axe is actually sharpened. <b>This is the weakest of the three and the one I'd most
+          like a steer on</b> — it took six passes; the silhouette is right now, but of the three this is the one I would still hand to a proper illustrator.</p>
+          <p class="spec">grip (0,0) · eye x=84–98 · flat top (95,−10)→(109.5,−11.5) · beard to (98.5,19.5) · 30 tall on a 110 haft</p>
+        </div>
+      </div>
+
+      <!-- ROD -->
+      <div class="prop">
+        <div class="prop-art">
+          <svg viewBox="0 0 760 190" role="img" aria-label="A fishing rod drawn in isolation: cork handle, brass reel seat, centre-pin reel, tapered blank with whipped wire guides and a tip ring.">
+            <defs>
+              <linearGradient id="rCork" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#D2AC77"/><stop offset="1" stop-color="#9A7442"/>
+              </linearGradient>
+              <linearGradient id="rBlank" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#6A4E33"/><stop offset=".45" stop-color="#4A3320"/><stop offset="1" stop-color="#2C1E12"/>
+              </linearGradient>
+              <linearGradient id="rBrass" x1="0" y1="0" x2=".4" y2="1">
+                <stop offset="0" stop-color="#E4C486"/><stop offset=".5" stop-color="#B98B4C"/><stop offset="1" stop-color="#6E4F24"/>
+              </linearGradient>
+            </defs>
+            <rect width="760" height="190" fill="var(--stage-sky-b)"/>
+            <g transform="translate(70,74) scale(2.95)">
+              <path d="M-18 -4 Q-22 0 -18 4 L-14 4 L-14 -4 Z" fill="#4A3A24"/>
+              <path d="M-14 -4.6 L20 -3.8 L20 3.8 L-14 4.6 Z" fill="url(#rCork)"/>
+              <g fill="#7E5E32" opacity=".55">
+                <circle cx="-9" cy="-1.4" r=".9"/><circle cx="-4" cy="1.8" r=".8"/><circle cx="1" cy="-2.2" r=".9"/>
+                <circle cx="6" cy="1.2" r=".85"/><circle cx="11" cy="-1.6" r=".8"/><circle cx="16" cy="2" r=".9"/>
+                <circle cx="-6" cy="-3" r=".6"/><circle cx="9" cy="3" r=".65"/><circle cx="3" cy="3.2" r=".55"/>
+              </g>
+              <path d="M20 -4 L34 -3.4 L34 3.4 L20 4 Z" fill="url(#rBrass)"/>
+              <path d="M22 -3.8 L22 3.8 M31 -3.5 L31 3.6" stroke="#6E4F24" stroke-width="1.1"/>
+              <circle cx="27" cy="13" r="11" fill="url(#rBrass)"/>
+              <circle cx="27" cy="13" r="11" fill="none" stroke="#5E4321" stroke-width="1.4"/>
+              <circle cx="27" cy="13" r="7.4" fill="none" stroke="#7E5C2C" stroke-width="1.2"/>
+              <path d="M27 4 L27 22 M18.6 13 L35.4 13 M21 7 L33 19 M33 7 L21 19" stroke="#8A6634" stroke-width="1.3"/>
+              <circle cx="27" cy="13" r="2.8" fill="#4E3A1C"/>
+              <circle cx="34" cy="19" r="2.1" fill="#E4C486"/>
+              <path d="M34 -3.2 L96 -2.2 L96 2.2 L34 3.2 Z" fill="url(#rBlank)"/>
+              <path d="M40 -1.4 L94 -.9" stroke="#8A6740" stroke-width=".7" opacity=".5"/>
+              <path d="M38 -3.4 L38 3.4 M46 -3.3 L46 3.3" stroke="#B0402E" stroke-width="1.6"/>
+              <path d="M96 -2.2 L150 -1.5 L150 1.5 L96 2.2 Z" fill="url(#rBlank)"/>
+              <path d="M112 -1.9 L110 -8 M118 -1.8 L120 -8" stroke="#9AA3AA" stroke-width="1.3"/>
+              <path d="M110 -8 Q115 -12 120 -8" fill="none" stroke="#B7C0C6" stroke-width="1.5"/>
+              <path d="M110 -2.4 L112 -2.3 M118 -2.3 L120 -2.2" stroke="#B0402E" stroke-width="2.2"/>
+              <path d="M150 -1.5 L186 -1 L186 1 L150 1.5 Z" fill="url(#rBlank)"/>
+              <path d="M162 -1.3 L160 -6.4 M168 -1.2 L170 -6.4" stroke="#9AA3AA" stroke-width="1.1"/>
+              <path d="M160 -6.4 Q165 -9.8 170 -6.4" fill="none" stroke="#B7C0C6" stroke-width="1.3"/>
+              <path d="M159 -1.7 L161 -1.6 M167 -1.6 L169 -1.5" stroke="#B0402E" stroke-width="1.9"/>
+              <path d="M186 -1 L226 -.35 L226 .35 L186 1 Z" fill="url(#rBlank)"/>
+              <path d="M198 -.9 L196 -4.8 M203 -.85 L205 -4.8" stroke="#9AA3AA" stroke-width=".95"/>
+              <path d="M196 -4.8 Q200.5 -7.6 205 -4.8" fill="none" stroke="#B7C0C6" stroke-width="1.1"/>
+              <path d="M195 -1.3 L197 -1.25 M203 -1.2 L205 -1.15" stroke="#B0402E" stroke-width="1.6"/>
+              <circle cx="228" cy="-2.6" r="2.4" fill="none" stroke="#C2CBD1" stroke-width="1.2"/>
+              <path d="M226 0 L227.4 -1" stroke="#9AA3AA" stroke-width="1.2"/>
+            </g>
+          </svg>
+        </div>
+        <div class="prop-meta">
+          <h3>River rod</h3>
+          <p>Speckled cork over a brass reel seat, a spoked centre-pin, and a blank in three segments so it
+          can bend. Wire guides are whipped in red thread at the seams — the detail that says "rod" faster
+          than the taper does.</p>
+          <p class="spec">butt (0,0) · seat x=20–34 · joints x=96 / 150 / 186 · tip ring (228, −2.6)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CLOSING ==================== -->
+<section class="closing">
+  <div class="wrap">
+    <h2>What these commit us to</h2>
+    <p style="max-width:64ch;color:var(--ink-soft)">Approving these three fixes four things for every skill
+    that follows: one articulated figure with fourteen joints, tools authored in their own local frame,
+    environments built from real materials rather than a tinted silhouette, and a four-beat motion grammar —
+    anticipation, action, impact, recovery — that a smith's hammer, a fletcher's knife and a runecrafter's
+    channel all fit inside. Nothing is wired into the game yet.</p>
+
+    <div class="ask">
+      <div>
+        <h3>Figure</h3>
+        <p>Is this the hero? Build, clothing and read at phone size all carry to every other skill.</p>
+      </div>
+      <div>
+        <h3>Weight</h3>
+        <p>Does the pick land heavy enough, and does the axe swing wide enough to feel different from it?</p>
+      </div>
+      <div>
+        <h3>Density</h3>
+        <p>Environments are drawn to this level of detail. Right amount, or is the stage getting busy?</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var body = document.body, pp = document.getElementById('pp');
+  var sp = document.getElementById('sp'), spv = document.getElementById('spv');
+  var rig = document.getElementById('rig');
+
+  pp.addEventListener('click', function(){
+    var paused = body.classList.toggle('paused');
+    pp.setAttribute('aria-pressed', String(paused));
+    pp.textContent = paused ? '▶ Play' : '⏸ Pause';
+  });
+
+  function speed(){
+    var v = parseFloat(sp.value);
+    document.querySelectorAll('.plate').forEach(function(p){ p.style.setProperty('--speed', v); });
+    spv.textContent = v.toFixed(2) + '×';
+  }
+  sp.addEventListener('input', speed);
+  speed();
+
+  rig.addEventListener('click', function(){
+    var on = body.classList.toggle('rig-on');
+    rig.setAttribute('aria-pressed', String(on));
+  });
+})();
+</script>
