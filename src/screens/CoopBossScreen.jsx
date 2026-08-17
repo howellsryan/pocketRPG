@@ -12,7 +12,7 @@ import CoopLootShare from '../components/CoopLootShare.jsx'
 import CoopRaidLobby from '../components/CoopRaidLobby.jsx'
 import CoopChatPanel from '../components/CoopChatPanel.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
-import { CombatFightHead, CombatPrayerBlock } from '../components/CombatHud.jsx'
+import { CombatFightHead } from '../components/CombatHud.jsx'
 import { CombatMonsterInfoSheet } from './CombatMobileSheets.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { openCoopFeed } from '../cloud/coopFeed.js'
@@ -500,6 +500,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           targetHp={{ current: coopStageTarget?.currentHP ?? 0, max: coopStageTarget?.hitpoints ?? 1 }}
           actorSplats={playerSplats}
           targetSplats={coopStageSplats}
+          showCorners
+          actorPrayer={typeof combatState?.maxPrayerPoints === 'number' ? { current: combatState.prayerPoints, max: combatState.maxPrayerPoints } : null}
           label={`You versus ${coopStageTarget?.name || bossName}`}
         />
 
@@ -538,9 +540,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           </div>
         )}
 
-        {typeof combatState?.maxPrayerPoints === 'number' && (
-          <CombatPrayerBlock current={combatState.prayerPoints} max={combatState.maxPrayerPoints} />
-        )}
+        {/* Prayer pool now reads from the stage's top-left corner
+            (showCorners/actorPrayer above) — no bar block here. */}
 
         {boss?.respawnCountdown > 0 && (
           <div class="cb-respawn">

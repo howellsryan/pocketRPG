@@ -1349,6 +1349,29 @@ html, body, #app {
 .inkc-splat--actor { left: 17%; }
 .inkc-splat--target { left: 61%; }
 
+/* Mobile-HUD-only "current/max" corner readout — replaces the Prayer bar
+   block that used to sit below the whole stage (CombatScreen mobile branch,
+   CoopBossScreen). Desktop's 3-pane layout never sets showCorners, so these
+   never render there. */
+.inkc-corner {
+  position: absolute;
+  top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  line-height: 1.3;
+}
+.inkc-corner--actor { left: 8px; align-items: flex-start; }
+.inkc-corner--target { right: 8px; align-items: flex-end; }
+/* Prayer is never ramped by value — always the same blue the removed bar's
+   own number used (CombatHud.jsx's CombatPrayerBlock, #7ec8ff). */
+.inkc-corner__prayer { color: #7ec8ff; }
+
 @media (prefers-reduced-motion: no-preference) {
   /* One shot per token, not a loop — a combat cycle IS one swing, so the
      motion plays once and holds at rest until the next token arrives. The

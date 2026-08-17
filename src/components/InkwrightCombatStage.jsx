@@ -59,6 +59,14 @@ import { HitSplatLayer } from './HitSplat.jsx'
  *                 died can never bleed a frame into the next one's first swing.
  *                 Omit (stays null) for a caller with no such boundary — CoopBossScreen
  *                 doesn't restart the same way a solo auto-fight does.
+ *   showCorners — mobile-HUD-only: renders "current/max" text in the stage's
+ *                 top-left (actor HP + Prayer) and top-right (target HP)
+ *                 corners, replacing the bar block the mobile HUD used to show
+ *                 below the stage. Both desktop CombatScreen callers must
+ *                 leave this false/omitted — it shares actorHp/targetHp with
+ *                 the mini bars above each head rather than taking its own copy.
+ *   actorPrayer — { current, max } for the corner's Prayer line, or null to
+ *                 omit it (no prayer pool this fight). Ignored unless showCorners.
  *   label       — accessible description
  */
 const STAGE_W = 260
@@ -82,7 +90,7 @@ const SHOT_DY = TORSO_CY - SHOT_ORIGIN_Y
 export default function InkwrightCombatStage({
   actor, target, actorSwing = null, targetSwing = null,
   actorHp = null, targetHp = null, actorSplats = null, targetSplats = null,
-  resetKey = null, label = 'Combat',
+  resetKey = null, showCorners = false, actorPrayer = null, label = 'Combat',
 }) {
   // Hooks run every render, before the early return.
   const frozen = useRef({})
@@ -172,6 +180,43 @@ export default function InkwrightCombatStage({
           magic bolt above flies to, so the flash and the impact agree. */}
       <div class="inkc-splat inkc-splat--actor" aria-hidden="true"><HitSplatLayer splats={actorSplats} /></div>
       <div class="inkc-splat inkc-splat--target" aria-hidden="true"><HitSplatLayer splats={targetSplats} /></div>
+
+      {/* Mobile-HUD-only corner readout — replaces the Prayer bar block that
+          used to sit below the whole stage. Desktop's 3-pane layout keeps its
+          own separate bars and never sets showCorners. */}
+      {showCorners && (
+        <div class="inkc-corner inkc-corner--actor" aria-hidden="true">
+          <CornerStat hp={actorHp} />
+          {actorPrayer && <div class="inkc-corner__prayer">{Math.ceil(actorPrayer.current || 0)}/{actorPrayer.max}</div>}
+        </div>
+      )}
+      {showCorners && (
+        <div class="inkc-corner inkc-corner--target" aria-hidden="true">
+          <CornerStat hp={targetHp} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Green above half, yellow above a quarter, red below — the one HP ramp this
+ * whole stage uses, shared by MiniHpBar (the bar above a head) and CornerStat
+ * (the "current/max" text in a mobile-HUD corner) so the two can never
+ * disagree about what colour a given HP fraction reads as. */
+function hpRampColor(pct) {
+  return pct > 0.5 ? 'var(--color-hp-green)' : pct > 0.25 ? 'var(--color-hp-yellow)' : 'var(--color-hp-red)'
+}
+
+/** The corner's HP line — same "current/max" shape and the same colour ramp
+ * as the mini bar above the head it belongs to, just legible as text instead
+ * of a sliver too small to hold a number. Renders nothing without HP data,
+ * same as MiniHpBar, rather than a permanent "0/0". */
+function CornerStat({ hp }) {
+  if (!hp || !(Number(hp.max) > 0)) return null
+  const pct = Math.max(0, Math.min(1, Number(hp.current || 0) / Number(hp.max)))
+  return (
+    <div class="inkc-corner__hp" style={{ color: hpRampColor(pct) }}>
+      {Math.max(0, Math.round(hp.current || 0))}/{hp.max}
     </div>
   )
 }
@@ -196,7 +241,7 @@ function MiniHpBar({ cx, hp }) {
   // tries to render it.
   const barH = 5
   const x = cx - w / 2
-  const color = pct > 0.5 ? 'var(--color-hp-green)' : pct > 0.25 ? 'var(--color-hp-yellow)' : 'var(--color-hp-red)'
+  const color = hpRampColor(pct)
   return (
     <g class="inkc-hpbar">
       <rect class="inkc-hpbar__track" x={x} y="6" width={w} height={barH} rx="2.4" />

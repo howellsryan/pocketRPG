@@ -34,19 +34,3 @@ export function CombatFightHead({ icon, accent, name, nameColor, sub, meta, comb
   )
 }
 
-export function CombatPrayerBlock({ current, max }) {
-  return (
-    <div class="cb-hpblock">
-      <div class="cb-hplabel">
-        <span>🙏 Prayer</span>
-        <span class="cb-hplabel__v" style={{ color: '#7ec8ff' }}>{Math.ceil(current || 0)}/{max}</span>
-      </div>
-      <div class="h-2 rounded-full bg-[rgba(255,255,255,0.07)] overflow-hidden">
-        <div
-          class="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#7ec8ff]"
-          style={{ width: `${Math.max(0, Math.min(100, ((current || 0) / max) * 100))}%` }}
-        />
-      </div>
-    </div>
-  )
-}

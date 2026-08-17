@@ -69,7 +69,7 @@ import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal, killPresentsFullModal } from '../utils/lootModal.js'
 import { emitKillReveal } from '../utils/rewardReveal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
-import { CombatFightHead, CombatPrayerBlock } from '../components/CombatHud.jsx'
+import { CombatFightHead } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
@@ -3369,6 +3369,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       actorSplats={playerSplats}
       targetSplats={stageTargetSplats}
       resetKey={fightSeqRef.current}
+      showCorners={!isDesktopCombatLayout}
+      actorPrayer={typeof combat?.maxPrayerPoints === 'number' ? { current: combat.prayerPoints, max: combat.maxPrayerPoints } : null}
       label={`You versus ${spriteMonster.name}`}
     />
   )
@@ -3860,10 +3862,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
               {addPanel}
 
-              {/* Prayer pool */}
-              {typeof combat?.maxPrayerPoints === 'number' && (
-                <CombatPrayerBlock current={combat.prayerPoints} max={combat.maxPrayerPoints} />
-              )}
+              {/* Prayer pool now reads from the stage's top-left corner
+                  (showCorners/actorPrayer above) — no bar block here. */}
 
               {/* Slayer task indicator */}
               {doesSlayerTaskMatchMonster(slayerTask?.monsterId, m.id) && (
