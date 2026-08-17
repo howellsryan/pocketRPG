@@ -48,6 +48,12 @@ import { HitSplatLayer } from './HitSplat.jsx'
  *                 dying plays the collapse animation and holds its end pose
  *   actorSwing  — swing token (utils/actionSprites.js) or null; a new `id` replays
  *   targetSwing — same, for the target's own strike
+ *   actorConsume— consume token (utils/actionSprites.js makeConsumeToken) or null;
+ *                 a new `id` replays a one-shot hand-to-mouth gesture (eating food,
+ *                 drinking a potion/brew). Actor-only — enemies don't eat, so there
+ *                 is no targetConsume. Independent of actorSwing/motion: it plays
+ *                 regardless of which weapon is equipped or whether a swing is
+ *                 also in flight.
  *   actorHp     — { current, max } for the small bar above the actor's head, or null
  *   targetHp    — same, for the bar above the target's head
  *   actorSplats — hit splats (utils/hitSplats.js) that land ON the actor — damage
@@ -70,25 +76,44 @@ import { HitSplatLayer } from './HitSplat.jsx'
  *   label       — accessible description
  */
 const STAGE_W = 260
-// Torso anchor, shared by the hit-splat overlay and the magic bolt's landing
-// point — the same coordinate both draws to, or the flash and the impact
-// visually disagree about where the hit landed.
+// Torso anchor, shared by the hit-splat overlay and each shot's landing
+// point — the same coordinate every projectile draws to, or the flash and
+// the impact visually disagree about where the hit landed.
 const TORSO_CX = 76
 const TORSO_CY = 68
-// CombatShot is authored once in the ACTOR's own unmirrored space (see its
-// own comment below) and travels from the orb/hand at local (106,34) to the
-// OPPONENT's torso — which, in that same unmirrored space, sits at
+// Each shot is authored once in the ACTOR's own unmirrored space (see
+// CombatShot's own comment below) and travels from ITS OWN drawn origin to
+// the OPPONENT's torso — which, in that same unmirrored space, sits at
 // STAGE_W - TORSO_CX (the mirror puts the target's local TORSO_CX there).
-// The same dx/dy is reused for the enemy's own outgoing shot: its whole side
-// is already wrapped in the mirror transform, so it lands on the actor's
-// torso for free.
-const SHOT_ORIGIN_X = 106
-const SHOT_ORIGIN_Y = 34
-const SHOT_DX = (STAGE_W - TORSO_CX) - SHOT_ORIGIN_X
-const SHOT_DY = TORSO_CY - SHOT_ORIGIN_Y
+// The two projectiles are drawn at different points on the arm (the bow's
+// arrowhead at the string, the staff's orb above the hand), so each needs
+// its OWN dx/dy computed from its OWN origin — reusing one pair for both
+// (as this used to) sends the arrow to wherever the bolt's origin implies,
+// which is not where the arrow itself starts, and it lands short, near the
+// ground instead of on the torso. The same dx/dy is reused for the enemy's
+// own outgoing shot: its whole side is already wrapped in the mirror
+// transform, so it lands on the actor's torso for free.
+const BOLT_ORIGIN_X = 106
+const BOLT_ORIGIN_Y = 34
+const BOLT_DX = (STAGE_W - TORSO_CX) - BOLT_ORIGIN_X
+const BOLT_DY = TORSO_CY - BOLT_ORIGIN_Y
+// The arrowhead's drawn tip (see CombatShot's arrow path: "M124 64 L116 58 ...").
+const ARROW_ORIGIN_X = 124
+const ARROW_ORIGIN_Y = 64
+const ARROW_DX = (STAGE_W - TORSO_CX) - ARROW_ORIGIN_X
+const ARROW_DY = TORSO_CY - ARROW_ORIGIN_Y
+
+/** Exported so the geometry bug this exists to prevent — reusing one
+ * origin's offset for both projectiles — can be caught without mounting the
+ * component (tests/inkwrightCombatShot.test.ts). Melee has no shot. */
+export function shotOffset(kind) {
+  if (kind === 'ranged') return { dx: ARROW_DX, dy: ARROW_DY }
+  if (kind === 'magic') return { dx: BOLT_DX, dy: BOLT_DY }
+  return null
+}
 
 export default function InkwrightCombatStage({
-  actor, target, actorSwing = null, targetSwing = null,
+  actor, target, actorSwing = null, targetSwing = null, actorConsume = null,
   actorHp = null, targetHp = null, actorSplats = null, targetSplats = null,
   resetKey = null, showCorners = false, actorPrayer = null, label = 'Combat',
 }) {
@@ -140,12 +165,21 @@ export default function InkwrightCombatStage({
             style={{ '--inkc-dur': `${a.swingMs}ms` }}
           >
             <InkwrightFigure>
-              <g class="inkc-arm">
+              {/* Keyed independently of the swing wrapper above: an eat/drink
+                  gesture can land on any tick, mid-swing-gap or not, and must
+                  restart its own animation without waiting on or disturbing
+                  the weapon swing's own key. While it plays, the item glyph
+                  replaces the weapon — the arm rotates far enough toward the
+                  head that the tool would otherwise appear to swing at it. */}
+              <g
+                key={`ae${actorConsume ? actorConsume.id : 0}`}
+                class={`inkc-arm${actorConsume ? ' is-eating' : ''}`}
+              >
                 <Limb d="M84 58 L94 62 L100 64" w={11} />
-                <CombatTool kind={a.motion} accent={a.accent} />
+                {actorConsume ? <CombatConsume /> : <CombatTool kind={a.motion} accent={a.accent} />}
               </g>
             </InkwrightFigure>
-            {actorSwing && <CombatShot kind={a.motion} dx={SHOT_DX} dy={SHOT_DY} accent={a.accent} />}
+            {actorSwing && <CombatShot kind={a.motion} accent={a.accent} />}
           </g>
         </g>
 
@@ -170,7 +204,7 @@ export default function InkwrightCombatStage({
                 {t.motion && !dying && <CombatTool kind={t.motion} accent={target.accent} />}
               </g>
             </InkwrightFigure>
-            {targetSwinging && <CombatShot kind={t.motion} dx={SHOT_DX} dy={SHOT_DY} accent={target.accent} />}
+            {targetSwinging && <CombatShot kind={t.motion} accent={target.accent} />}
           </g>
         </g>
       </svg>
@@ -250,6 +284,14 @@ function MiniHpBar({ cx, hp }) {
   )
 }
 
+/** Held at the grip (100,64) exactly like a weapon, so the gesture's own arm
+ * rotation (`.inkc-arm.is-eating`, index.css) carries it toward the head for
+ * free — swap-for-the-weapon rather than a whole extra limb, matching how
+ * the enemy's own weapon is always-drawn-at-the-grip (CombatTool's doc). */
+function CombatConsume() {
+  return <circle class="inkc-consume" cx="100" cy="64" r="5" />
+}
+
 /** Every weapon shaft passes through the hand at (100,64), same rule as the
  * skilling tools — a weapon that doesn't touch the grip reads as floating
  * alongside the arm rather than held in it. `accent` tints only the
@@ -288,11 +330,15 @@ function CombatTool({ kind, accent }) {
 /** The thing that crosses the lane: an arrow for ranged, a bolt for magic,
  * nothing for melee (which connects in reach, not at range). Authored in the
  * ACTOR's own local space and reused unchanged for the enemy's shot — the
- * enemy's wrapping mirror transform is what sends it the other way. */
-function CombatShot({ kind, dx, dy, accent }) {
+ * enemy's wrapping mirror transform is what sends it the other way. Each
+ * kind travels its OWN dx/dy (see the ARROW_/BOLT_ constants above) because
+ * the two are drawn from different origins on the arm. */
+function CombatShot({ kind, accent }) {
+  const offset = shotOffset(kind)
+  if (!offset) return null
   if (kind === 'ranged') {
     return (
-      <g class="inkc-shot inkc-shot--arrow" style={{ '--inkc-shot-dx': `${dx}px`, '--inkc-shot-dy': `${dy}px` }}>
+      <g class="inkc-shot inkc-shot--arrow" style={{ '--inkc-shot-dx': `${offset.dx}px`, '--inkc-shot-dy': `${offset.dy}px` }}>
         {/* Fletching, shaft, head — a projectile has to read at a glance mid-
             flight, so it is drawn bigger and bolder than the tool it left. */}
         <path d="M96 64 L94 60 M96 64 L94 68" />
@@ -301,13 +347,10 @@ function CombatShot({ kind, dx, dy, accent }) {
       </g>
     )
   }
-  if (kind === 'magic') {
-    return (
-      <g class="inkc-shot inkc-shot--bolt" style={{ '--inkc-shot-dx': `${dx}px`, '--inkc-shot-dy': `${dy}px` }}>
-        <circle class="inkc-bolt-trail" cx="106" cy="34" r="10" style={accent ? { fill: accent } : undefined} />
-        <circle cx="106" cy="34" r="6" style={accent ? { fill: accent } : undefined} />
-      </g>
-    )
-  }
-  return null
+  return (
+    <g class="inkc-shot inkc-shot--bolt" style={{ '--inkc-shot-dx': `${offset.dx}px`, '--inkc-shot-dy': `${offset.dy}px` }}>
+      <circle class="inkc-bolt-trail" cx="106" cy="34" r="10" style={accent ? { fill: accent } : undefined} />
+      <circle cx="106" cy="34" r="6" style={accent ? { fill: accent } : undefined} />
+    </g>
+  )
 }

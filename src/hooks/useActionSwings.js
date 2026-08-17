@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks'
-import { SWING_MAX_MS } from '../utils/actionSprites.js'
+import { SWING_MAX_MS, EAT_ANIM_MS, makeConsumeToken } from '../utils/actionSprites.js'
 
 /**
  * Holds the latest swing token per side for a combat stage (InkwrightCombatStage
@@ -49,4 +49,32 @@ export function useActionSwings() {
   }, [])
 
   return { swings, pushSwings }
+}
+
+/**
+ * Same expiring-token shape as useActionSwings, single slot: holds the
+ * actor's latest "eating/drinking" gesture token and lets it go once its
+ * animation is over (EAT_ANIM_MS, not SWING_MAX_MS — the gesture has its own
+ * fixed duration, see actionSprites.js). A held token would replay the
+ * gesture on the next unrelated remount, same failure mode as a held swing.
+ */
+export function useConsumeToken() {
+  const [token, setToken] = useState(null)
+  const timerRef = useRef(null)
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }, [])
+
+  const pushConsume = useCallback(() => {
+    const next = makeConsumeToken()
+    setToken(next)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null
+      setToken(prev => (prev?.id === next.id ? null : prev))
+    }, EAT_ANIM_MS)
+  }, [])
+
+  return { token, pushConsume }
 }
