@@ -16,6 +16,8 @@ import {
   monsterCombatSprite,
   swingsFromCombatEvents,
   swingsFromCoopEvents,
+  EAT_ANIM_MS,
+  makeConsumeToken,
 } from '../src/utils/actionSprites.js'
 import gameIcons from '../src/data/gameIcons.json'
 
@@ -333,6 +335,19 @@ describe('swingsFromCombatEvents', () => {
     const a = swingsFromCombatEvents([{ type: 'playerHit', damage: 1 }]).player
     const b = swingsFromCombatEvents([{ type: 'playerHit', damage: 1 }]).player
     expect(a!.id).not.toBe(b!.id)
+  })
+})
+
+describe('makeConsumeToken — the eat/drink gesture token', () => {
+  it('issues a fresh id per call so a repeat gesture replays instead of being ignored', () => {
+    const a = makeConsumeToken()
+    const b = makeConsumeToken()
+    expect(a.id).not.toBe(b.id)
+  })
+
+  it('has a positive, finite duration to hold the gesture\'s CSS animation', () => {
+    expect(EAT_ANIM_MS).toBeGreaterThan(0)
+    expect(Number.isFinite(EAT_ANIM_MS)).toBe(true)
   })
 })
 

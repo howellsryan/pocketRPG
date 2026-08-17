@@ -63,7 +63,7 @@ import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { swingsFromCombatEvents, playerCombatSprite, monsterCombatSprite } from '../utils/actionSprites.js'
-import { useActionSwings } from '../hooks/useActionSwings.js'
+import { useActionSwings, useConsumeToken } from '../hooks/useActionSwings.js'
 import InkwrightCombatStage from '../components/InkwrightCombatStage.jsx'
 import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal, killPresentsFullModal } from '../utils/lootModal.js'
@@ -500,6 +500,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // its motion is over, so nothing between fights, respawns or target switches
   // is left holding a swing that could replay.
   const { swings, pushSwings } = useActionSwings()
+  const { token: actorConsume, pushConsume } = useConsumeToken()
   const combatRef = useRef(null)
   // Bumped exactly at a new-fight boundary (startFight/continueFight/startRaid),
   // never on an ordinary re-render — InkwrightCombatStage clears its frozen
@@ -1944,7 +1945,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }
 
   const continueFight = (monster) => {
-    const { combatType: weaponCombatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
+    // equipmentRef, not `equipment` — scheduleAutoFight defers this call by
+    // AUTO_FIGHT_RESTART_MS via setTimeout, so the closure that actually runs
+    // is the one captured at kill time. A weapon swap during that wait updates
+    // equipmentRef.current immediately but never reaches that stale `equipment`
+    // binding, so the restarted fight (and its sprite) kept animating with
+    // whatever was equipped at the moment of the kill — same class of bug
+    // equipmentRef exists to prevent everywhere else mid-fight (e.g. the
+    // live-fight spell-sync effect above, which already reads the ref).
+    const { combatType: weaponCombatType, spell, needsSpell } = resolveMagicSpell(equipmentRef.current, itemsData, activeCombatSpell, spellsData)
     // A magic weapon with no castable spell fights with melee instead of
     // stopping the auto-fight — see resolveMagicSpell.
     const combatType = needsSpell ? 'melee' : weaponCombatType
@@ -2171,6 +2180,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (!brew) return
     // A brew is a combo item — one per combo-delay; drop extra taps.
     if (combatRef.current?.active && (combatRef.current.comboCooldown || 0) > 0) return
+    pushConsume()
     if (newInv[idx].quantity > 1) {
       newInv[idx] = { ...newInv[idx], quantity: newInv[idx].quantity - 1 }
     } else {
@@ -2233,6 +2243,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       const cd = combo ? (combatRef.current.comboCooldown || 0) : (combatRef.current.eatCooldown || 0)
       if (cd > 0) return
     }
+    pushConsume()
     if (newInv[foodIdx].quantity > 1) {
       newInv[foodIdx] = { ...newInv[foodIdx], quantity: newInv[foodIdx].quantity - 1 }
     } else {
@@ -2338,6 +2349,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     // Potions are combo items — one per combo-delay; drop extra taps.
     if (combatRef.current.comboCooldown > 0) return
+    pushConsume()
 
     // Remove potion from inventory — unlimited-use items (e.g. Imbued Brain) never deplete.
     if (!potion.unlimited) {
@@ -3363,6 +3375,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         dying: spriteMonster.currentHP <= 0,
       }}
       actorSwing={swings.player}
+      actorConsume={actorConsume}
       targetSwing={swings.monster}
       actorHp={{ current: currentHP, max: getMaxHP() }}
       targetHp={{ current: spriteMonster.currentHP, max: spriteMonster.hitpoints }}

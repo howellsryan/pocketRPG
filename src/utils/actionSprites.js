@@ -184,6 +184,24 @@ function makeSwing(side, hit) {
   return { id: swingSeq, side, hit }
 }
 
+// How long the actor's hand-to-mouth gesture (eating food, drinking a potion
+// or brew) plays. Unlike a swing this has no equipment-driven cadence to
+// scale off — nothing in the data models an "eating speed" — so a fixed
+// flourish is the correct answer here, not a law violation; the monster
+// death collapse (index.css `inkcMonsterDeath`, 900ms) is the same kind of
+// deliberately-fixed one-shot.
+export const EAT_ANIM_MS = 640
+
+/** A consume token, same shape/purpose as a swing token (`id` changes so the
+ * renderer can restart the CSS animation by key) but with no side/hit — it
+ * is always the actor's own gesture, never the target's, and always plays
+ * regardless of outcome. Shares the swing sequence counter so ids never
+ * collide with a genuine swing's. */
+export function makeConsumeToken() {
+  swingSeq += 1
+  return { id: swingSeq }
+}
+
 /**
  * Map one PvE tick's events to at most one swing per side. Returns
  * { player, monster } — either a swing token or null.
