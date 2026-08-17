@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PocketRPG · Weapon Forge</title>
+<!--
+  REVIEW HARNESS — not wired into the game yet.
+
+  A proposed replacement for InkwrightCombatStage.jsx's CombatTool() weapon
+  shapes. The shipped shapes are stroked lines and flat blobs; these are
+  profile-drawn silhouettes with real taper, a point, a bevel, an edge glint,
+  a guard, a bound grip and a pommel.
+
+  Deliberately self-contained (no fetch of /src/data), so it works on the
+  deployed site as well as the dev server — unlike public/inkwright-viewer.html.
+
+  WHAT IS SHARED WITH PRODUCTION, transcribed rather than approximated:
+    - the figure geometry, verbatim from src/components/InkwrightFigure.jsx
+    - the timing law from src/utils/actionSprites.js (actionCycleMs,
+      swingDurationMs and its BASE/SLOPE/clamp constants)
+    - the swing keyframes from src/index.css (.inkc-* melee/smash/lunge/
+      ranged/magic + inkcShotFly), transcribed into JS lerps so the string
+      draw and the nocked arrow can be driven off the same phase
+    - the ten WEAPON_ICON_TYPES and which motion/variant each one plays
+
+  WHAT IS NEW, and the whole point of this page: WEAPONS below. Each weapon is
+  authored in its OWN local frame — origin at the hand, +X toward the tip,
+  +Y toward the edge — and placed with translate(grip) rotate(angle). The
+  shipped shapes are authored directly in stage coordinates, which is why they
+  read as blobs: every curve has to be pre-rotated by hand, so nobody ever
+  drew a real profile. In a local frame a blade is just a taper to a point.
+-->
+<style>
+  :root {
+    --bg:#141210; --panel:#1e1a16; --line:#342c23; --ui:#ece4d6; --soft:#b0a593; --ember:#e08a4a;
+    --mono: ui-monospace, Menlo, monospace;
+    --fm-ease: cubic-bezier(.34,1.1,.64,1);
+  }
+  * { box-sizing: border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--ui); font-family:system-ui,sans-serif; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 22px 18px 70px; display:flex; flex-direction:column; gap:20px; }
+  h1 { font-size: 21px; margin: 0; }
+  .sub { color: var(--soft); font-size: 13px; margin: 6px 0 0; max-width: 74ch; line-height:1.5; }
+
+  .stages { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 860px) { .stages { grid-template-columns: 1fr; } }
+  .card { border:1px solid var(--line); border-radius: 10px; overflow:hidden; background:var(--panel); }
+  .card__label { display:flex; justify-content:space-between; padding:7px 12px; border-bottom:1px solid var(--line); font:10px var(--mono); letter-spacing:.09em; text-transform:uppercase; color:var(--soft); }
+
+  /* The two theme grounds carry the real semantic tokens the figure paints
+     with (src/index.css §3.1), so the weapon is judged against the ink and
+     parchment it will actually sit on — not this page's chrome. */
+  .ground { padding: 10px; }
+  .ground svg { display:block; width:100%; height:auto; }
+  .ground--light { background:#e9dcbd; --ink:#1a1a0e; --raised:#f6efdd; --panelc:#d8c69e; --glint:#ffffff; --shade:rgba(0,0,0,.20); }
+  .ground--dark  { background:#141414; --ink:#e9dcbd; --raised:#2a2724; --panelc:#3a352f; --glint:#ffffff; --shade:rgba(0,0,0,.34); }
+
+  .console { display:grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .cell { background:var(--panel); padding:12px 14px 14px; display:flex; flex-direction:column; gap:8px; }
+  .cell label, .cell__head { font:10px var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--soft); }
+  .cell__head { display:flex; justify-content:space-between; gap:8px; }
+  .cell__head b { font:11px var(--mono); color:var(--ember); text-transform:none; letter-spacing:0; }
+  button { font:inherit; font-size:13px; color:var(--ui); background:var(--bg); border:1px solid var(--line); border-radius:7px; padding:8px 9px; cursor:pointer; min-height:38px; width:100%; }
+  button.on { border-color: var(--ember); color: var(--ember); }
+  input[type=range] { width:100%; accent-color:var(--ember); min-height:26px; }
+  .btn-row { display:flex; gap:7px; }
+
+  .picker { display:grid; grid-template-columns: repeat(auto-fit,minmax(112px,1fr)); gap:7px; }
+  .pick { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:7px 8px 8px; cursor:pointer; display:flex; flex-direction:column; gap:5px; text-align:left; }
+  .pick.on { border-color:var(--ember); }
+  .pick__art { background:#e9dcbd; border-radius:5px; height:46px; --ink:#1a1a0e; --raised:#f6efdd; --panelc:#d8c69e; --glint:#fff; --shade:rgba(0,0,0,.2); }
+  .pick__art svg { display:block; width:100%; height:100%; }
+  .pick__name { font-size:11.5px; }
+  .pick__meta { font:9px var(--mono); color:var(--soft); letter-spacing:.05em; text-transform:uppercase; }
+
+  .tints { display:flex; flex-wrap:wrap; gap:6px; }
+  .tint { width:30px; height:30px; border-radius:6px; border:2px solid transparent; cursor:pointer; padding:0; }
+  .tint.on { border-color:var(--ui); }
+
+  .rack { display:grid; grid-template-columns: 1fr; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .rack__row { display:grid; grid-template-columns: 116px 1fr 1fr; gap:1px; background:var(--line); }
+  @media (max-width: 760px) { .rack__row { grid-template-columns: 96px 1fr; } .rack__cell--dark { display:none; } }
+  .rack__name { background:var(--panel); padding:11px 12px; display:flex; flex-direction:column; gap:3px; justify-content:center; }
+  .rack__name b { font-size:12.5px; font-weight:600; }
+  .rack__name span { font:9px var(--mono); color:var(--soft); text-transform:uppercase; letter-spacing:.06em; }
+  .rack__cell { padding:8px 12px; display:flex; align-items:center; }
+  .rack__cell svg { display:block; width:100%; height:auto; }
+
+  .hands { display:grid; grid-template-columns: repeat(auto-fit,minmax(178px,1fr)); gap:8px; }
+  .hand { border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .hand__label { padding:5px 9px; background:var(--panel); border-bottom:1px solid var(--line); font:9.5px var(--mono); letter-spacing:.07em; text-transform:uppercase; color:var(--soft); }
+  .hand__art svg { display:block; width:100%; height:auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Weapon Forge</h1>
+    <p class="sub">Re-drawn combat weapons for the Inkwright stage — proposal only, nothing here is wired into the game yet. Each weapon is authored in its own local frame (origin at the hand, blade along +X) so it can be drawn as a real profile: taper, point, bevel, edge glint, guard, bound grip, pommel. Same figure, same timing law, same swing keyframes as the shipped stage.</p>
+  </header>
+
+  <section class="stages">
+    <div class="card">
+      <div class="card__label"><span>Light · parchment</span><span id="lbl-light">—</span></div>
+      <div class="ground ground--light" id="stage-light"></div>
+    </div>
+    <div class="card">
+      <div class="card__label"><span>Dark · iron</span><span id="lbl-dark">—</span></div>
+      <div class="ground ground--dark" id="stage-dark"></div>
+    </div>
+  </section>
+
+  <section class="console">
+    <div class="cell">
+      <div class="cell__head"><span>Attack speed</span><b id="out-ticks">4t</b></div>
+      <input type="range" id="rng-ticks" min="2" max="9" step="1" value="4">
+      <div class="cell__head" style="color:var(--soft)"><span id="out-timing">—</span></div>
+    </div>
+    <div class="cell">
+      <div class="cell__head"><span>Scrub swing</span><b id="out-scrub">0%</b></div>
+      <input type="range" id="rng-scrub" min="0" max="1000" step="1" value="0">
+      <button id="btn-play" class="on">Pause</button>
+    </div>
+    <div class="cell">
+      <label>Material tint</label>
+      <div class="tints" id="tints"></div>
+    </div>
+    <div class="cell">
+      <label>Stage</label>
+      <div class="btn-row">
+        <button id="btn-enemy" class="on">Enemy on</button>
+        <button id="btn-zoom">Zoom</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="cell__head" style="margin-bottom:8px"><span>Weapon type · WEAPON_ICON_TYPES</span></div>
+    <div class="picker" id="picker"></div>
+  </section>
+
+  <section>
+    <div class="cell__head" style="margin-bottom:8px"><span>In hand · every weapon, one pose</span><b id="hand-phase">rest</b></div>
+    <input type="range" id="rng-hand" min="0" max="100" step="1" value="0" style="margin-bottom:9px">
+    <div class="hands" id="hands"></div>
+  </section>
+
+  <section>
+    <div class="cell__head" style="margin-bottom:8px"><span>Rack · full profile, both themes</span></div>
+    <div class="rack" id="rack"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Timing law, transcribed from src/utils/actionSprites.js ──────────────
+  var TICK_MS = 600, SWING_BASE_MS = 200, SWING_PER_CYCLE = 0.11, SWING_MIN_MS = 240, SWING_MAX_MS = 1000;
+  function actionCycleMs(ticks) { var t = Math.max(1, Math.floor(Number(ticks) || 0) || 1); return t * TICK_MS; }
+  function swingDurationMs(cycleMs) {
+    return Math.min(SWING_MAX_MS, Math.max(SWING_MIN_MS, Math.round(SWING_BASE_MS + cycleMs * SWING_PER_CYCLE)));
+  }
+
+  // ── Stage geometry, from InkwrightCombatStage.jsx ────────────────────────
+  var STAGE_W = 260, STAGE_H = 128, TORSO_CX = 76, TORSO_CY = 68;
+  var GRIP_X = 100, GRIP_Y = 64;              // the hand — every weapon's own origin
+  var ENEMY_TORSO_X = STAGE_W - TORSO_CX;     // where a shot lands, in unmirrored space
+
+  // ── Materials ───────────────────────────────────────────────────────────
+  // Blade colour is the item's own tint (getItemIconTint); everything else is
+  // fixed, because a leather wrap and an oak haft read the same whatever the
+  // blade is made of. The guard is derived from the tint rather than fixed, so
+  // a bronze hilt never sits on a rune blade.
+  var TINTS = [
+    ['Bronze', '#b87333'], ['Iron', '#8c8c8c'], ['Steel', '#cdd2d8'], ['Black', '#3b3f46'],
+    ['Mithril', '#3550c4'], ['Adamant', '#3aa55f'], ['Rune', '#5fd0e0'], ['Dragon', '#d23b2f'],
+    ['Runeforged', '#b7e4ff'], ['Gold', '#f39c12'],
+  ];
+  var WOOD = '#7a5433', LEATHER = '#4e3626';
+
+  function mix(hex, target, f) {
+    var n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    var t = parseInt(target.slice(1), 16), tr = (t >> 16) & 255, tg = (t >> 8) & 255, tb = t & 255;
+    function c(a, bb) { return Math.round(a + (bb - a) * f); }
+    return '#' + ((1 << 24) + (c(r, tr) << 16) + (c(g, tg) << 8) + c(b, tb)).toString(16).slice(1);
+  }
+  var darken = function (hex, f) { return mix(hex, '#000000', f); };
+
+  // ── Part roles → paint. One place, so a new part can only be drawn in a
+  //    vocabulary the whole set already uses. `sw` overrides stroke width. ──
+  function paint(role, tint, accent, sw) {
+    var guard = darken(tint, 0.42);
+    switch (role) {
+      case 'blade':  return 'fill="' + tint + '" stroke="var(--ink)" stroke-width="' + (sw || 1.9) + '" stroke-linejoin="round"';
+      case 'guard':  return 'fill="' + guard + '" stroke="var(--ink)" stroke-width="' + (sw || 1.8) + '" stroke-linejoin="round"';
+      case 'wood':   return 'fill="' + WOOD + '" stroke="var(--ink)" stroke-width="' + (sw || 1.8) + '" stroke-linejoin="round"';
+      case 'grip':   return 'fill="' + LEATHER + '" stroke="var(--ink)" stroke-width="' + (sw || 1.8) + '" stroke-linejoin="round"';
+      case 'orb':    return 'fill="' + accent + '" stroke="var(--ink)" stroke-width="' + (sw || 1.8) + '"';
+      // A blade only reads as SHARP if the light runs along one edge and the
+      // other side falls away. These two do all the work at this scale.
+      case 'glint':  return 'fill="none" stroke="var(--glint)" stroke-width="' + (sw || 1.2) + '" stroke-linecap="round" opacity="0.55"';
+      case 'shade':  return 'fill="var(--shade)" stroke="none"';
+      case 'line':   return 'fill="none" stroke="var(--ink)" stroke-width="' + (sw || 1.1) + '" stroke-linecap="round" opacity="0.34"';
+      case 'string': return 'fill="none" stroke="var(--ink)" stroke-width="' + (sw || 1.6) + '" stroke-linecap="round"';
+      case 'limb':   return 'fill="none" stroke="' + WOOD + '" stroke-width="' + (sw || 3.6) + '" stroke-linecap="round"';
+      case 'limbink':return 'fill="none" stroke="var(--ink)" stroke-width="' + (sw || 5.6) + '" stroke-linecap="round"';
+      default:       return 'fill="none" stroke="var(--ink)" stroke-width="1.6"';
+    }
+  }
+
+  function svgNode(tag, d, role, sw, extra) {
+    return '<' + tag + ' ' + (tag === 'path' ? 'd="' + d + '"' : d) + ' ' + paint(role, svgNode.tint, svgNode.accent, sw) + (extra || '') + '/>';
+  }
+
+  // ── THE WEAPONS ─────────────────────────────────────────────────────────
+  // Local frame per weapon: origin = the hand at (100,64); +X = toward the
+  // tip; +Y = the edge side (which, at the drawn angle, is the leading face of
+  // a downward swing — so the sharp side leads). `angle` places it.
+  //
+  // Part order is paint order: blade body, then the bevel shade, then the
+  // glint, then the furniture. Drawing the glint before the shade loses it.
+  var WEAPONS = {
+    sword: {
+      label: 'Sword', motion: 'melee', angle: -39,
+      // A knightly arming sword: lenticular blade, straight quillons swept
+      // very slightly forward, a wheel pommel. The taper is the whole read —
+      // a constant-width bar is what the shipped stroked line renders as.
+      // Blade-to-hilt is ~3:1; nearer 2:1 and it silhouettes as a dagger.
+      parts: function () { return [
+        ['path', 'M-19 -4.2 L-7 -4.2 L-7 4.2 L-19 4.2 Z', 'grip'],
+        ['circle', 'cx="-21.5" cy="0" r="4.2"', 'guard'],
+        ['path', 'M-16 -4.2 L-16 4.2 M-12.5 -4.2 L-12.5 4.2 M-9 -4.2 L-9 4.2', 'line', 1.1],
+        ['path', 'M-8 -10.5 Q-3 -8.4 -3 0 Q-3 8.4 -8 10.5 Q-6.2 5.4 -6.2 0 Q-6.2 -5.4 -8 -10.5 Z', 'guard'],
+        // Edges near-parallel for four fifths, then the point. A blade that
+        // tapers from the guard is a dagger silhouette, which is what the
+        // first pass of this page drew.
+        ['path', 'M-3 -4.4 L42 -3.6 L56 0 L42 3.6 L-3 4.4 Z', 'blade'],
+        ['path', 'M-3 4.4 L42 3.6 L56 0 L42 1.3 L-3 1.7 Z', 'shade'],
+        ['path', 'M4 0 L42 0', 'line', 1.3],
+        ['path', 'M1 -3.1 L41 -2.5 L53 -0.6', 'glint', 1.4],
+      ]; },
+    },
+
+    scimitar: {
+      label: 'Scimitar', motion: 'melee', angle: -34,
+      // Curved, single-edged, belly two-thirds out, converging to a real
+      // point where BOTH boundaries meet — a tip that ends in a flat chisel
+      // is the thing that reads "blunt". The EDGE is the convex boundary, so
+      // the sharp side leads the downward swing.
+      parts: function () { return [
+        ['path', 'M-19 -4 L-6 -4.2 L-6 4.2 L-19 4 Z', 'grip'],
+        ['path', 'M-24 -3.4 Q-27.5 0 -22 4.8 L-19 4 L-19 -4 Z', 'guard'],
+        ['path', 'M-6 -11 Q-1 -9 -1 0 Q-1 9 -6 11 Q-4 5.5 -4 0 Q-4 -5.5 -6 -11 Z', 'guard'],
+        ['path', 'M-1 -4 C16 -10.5 34 -18 58 -26 C42 -9 20 2 -1 5 Z', 'blade'],
+        ['path', 'M-1 5 C20 2 42 -9 58 -26 C43 -5.5 21 4.6 -1 7.2 Z', 'shade'],
+        ['path', 'M1.5 -2.2 C17 -8.5 33 -15 53 -22.5', 'glint', 1.4],
+        ['path', 'M0.5 3.4 C20 0.4 39 -9 54 -23', 'glint', 1],
+      ]; },
+    },
+
+    rapier: {
+      label: 'Rapier', motion: 'melee', variant: 'lunge', angle: -37,
+      // Long, needle-thin, straight, diamond section. The swept hilt is what
+      // says "rapier" at a glance — but it has to stay SMALL against a very
+      // long blade, or the weapon reads as a cup on a stick.
+      parts: function () { return [
+        ['path', 'M-19 -2.8 L-8 -3 L-8 3 L-19 2.8 Z', 'grip'],
+        ['circle', 'cx="-21.5" cy="0" r="3.4"', 'guard'],
+        // The knuckle bow has to LAND on the pommel and the rear quillon has to
+        // leave the cup — drawn floating clear of both, they read as debris
+        // beside the hilt rather than as part of it.
+        ['path', 'M-5 8.4 C-15 10.5 -22 6 -21.5 0', 'guard', 2.2, ' fill="none"'],
+        ['path', 'M-5.5 -7.5 L-15 -11.5', 'guard', 2.2, ' fill="none" stroke-linecap="round"'],
+        ['path', 'M-2.5 -12 L0 -12 L0 12 L-2.5 12 Z', 'guard'],
+        ['ellipse', 'cx="-5" cy="0" rx="3.8" ry="8.2"', 'guard'],
+        ['path', 'M-5 -6.8 C-0.5 -3.8 -0.5 3.8 -5 6.8', 'line', 1.1],
+        ['path', 'M-1.5 -2 L46 -1.2 L72 0 L46 1.2 L-1.5 2 Z', 'blade'],
+        ['path', 'M-1.5 2 L46 1.2 L72 0 L46 0.4 L-1.5 0.7 Z', 'shade'],
+        ['path', 'M2 -1.2 L48 -0.7 L68 0', 'glint', 0.9],
+      ]; },
+    },
+
+    godsword: {
+      label: 'Godsword', motion: 'melee', variant: 'smash', angle: -41,
+      // A two-handed greatsword. It has to read BIG next to the sword above,
+      // and big is WIDTH plus a long two-hand hilt, not just a longer stripe:
+      // twin fullers, a heavy winged crossguard with a central boss, three
+      // bindings on the grip, a disc pommel.
+      parts: function () { return [
+        ['path', 'M-34 -5.4 L-9 -5.8 L-9 5.8 L-34 5.4 Z', 'grip'],
+        ['path', 'M-38 -7 Q-44 0 -38 7 L-34 5.4 L-34 -5.4 Z', 'guard'],
+        ['path', 'M-28 -5.5 L-28 5.5 M-21 -5.7 L-21 5.7 M-14 -5.8 L-14 5.8', 'line', 1.3],
+        // Wings SWEPT FORWARD along the blade, not a symmetrical bar — that
+        // asymmetry is what separates this silhouette from the sword's at a
+        // glance, which mattered more than any amount of extra length.
+        ['path', 'M-13 -14 L4 -22 L8 -16 L-3 -9 Q-3 0 -3 9 L8 16 L4 22 L-13 14 Q-7 7 -7 0 Q-7 -7 -13 -14 Z', 'guard'],
+        ['circle', 'cx="-5" cy="0" r="4.6"', 'guard'],
+        ['path', 'M-3 -10.5 L50 -9 L74 0 L50 9 L-3 10.5 Z', 'blade'],
+        ['path', 'M-3 10.5 L50 9 L74 0 L50 3.6 L-3 4.2 Z', 'shade'],
+        ['path', 'M8 -4.2 L52 -3.4 M8 4.2 L52 3.4', 'line', 1.4],
+        ['path', 'M2 -8 L48 -6.8 L68 -1.2', 'glint', 1.8],
+      ]; },
+    },
+
+    maul: {
+      label: 'Maul', motion: 'melee', variant: 'smash', angle: -43,
+      // A two-handed sledge: banded haft, a heavy head with a FLAT STRIKING
+      // FACE at the far end and a shadowed body behind it. A head with no
+      // visible face (the shipped rotated hexagon) has no mass — it reads as
+      // a plate stuck on a line.
+      parts: function () { return [
+        ['path', 'M-34 -3.6 L28 -4.2 L28 4.2 L-34 3.6 Z', 'wood'],
+        ['path', 'M-37 -4.6 L-31 -4.8 L-31 4.8 L-37 4.6 Z', 'guard'],
+        ['path', 'M-25 -4.4 L-25 4.4 M-16 -4.5 L-16 4.5', 'line', 1.2],
+        ['path', 'M22 -6 L27 -6.2 L27 6.2 L22 6 Z', 'guard'],
+        ['path', 'M27 -12 L34 -16.5 L46 -16.5 L53 -10.5 L53 10.5 L46 16.5 L34 16.5 L27 12 Z', 'blade'],
+        ['path', 'M27 12 L34 16.5 L46 16.5 L53 10.5 L53 1.5 L46 5 L34 4 L27 3.4 Z', 'shade'],
+        ['path', 'M46 -16.5 L53 -10.5 L53 10.5 L46 16.5 Z', 'blade', 1.7],
+        ['path', 'M47.5 -12.5 L51 -9.5 L51 9.5 L47.5 12.5', 'glint', 1.4],
+        ['path', 'M34 -16.5 L34 16.5', 'line', 1.2],
+        ['circle', 'cx="39.5" cy="-9" r="2.1"', 'line', 1.2],
+        ['circle', 'cx="39.5" cy="9" r="2.1"', 'line', 1.2],
+      ]; },
+    },
+
+    mace: {
+      label: 'Mace', motion: 'melee', angle: -38,
+      // A one-handed flanged mace: two big side flanges, a nose spike, a
+      // collar where the head meets the haft. A sphere (what ships today) is
+      // a morning star, not a mace, and reads as a lollipop.
+      parts: function () { return [
+        ['path', 'M-19 -3.6 L-6 -3.8 L-6 3.8 L-19 3.6 Z', 'grip'],
+        ['circle', 'cx="-21.5" cy="0" r="3.6"', 'guard'],
+        ['path', 'M-6 -3.6 L21 -3 L21 3 L-6 3.6 Z', 'guard'],
+        ['path', 'M19 -5.6 L24 -5.8 L24 5.8 L19 5.6 Z', 'guard'],
+        // The flanges are SEPARATE outlined petals laid over the head's barrel,
+        // not notches cut into one outline — overlapping strokes are what make
+        // them read as individual blades instead of a single pentagon blob.
+        ['path', 'M24 -5.6 L42 -4.6 L48 0 L42 4.6 L24 5.6 Z', 'blade'],
+        ['path', 'M25 -5 L29 -16 L38.5 -13 L40.5 -3.8 Z', 'blade'],
+        ['path', 'M25 5 L29 16 L38.5 13 L40.5 3.8 Z', 'blade'],
+        ['path', 'M25 5 L29 16 L38.5 13 L40.5 3.8 Z', 'shade'],
+        ['path', 'M24 5.6 L42 4.6 L48 0 L42 1.3 L24 1.7 Z', 'shade'],
+        ['path', 'M27 -6 L30.5 -13.6 L36.6 -11.4', 'glint', 1.3],
+        ['path', 'M43 -2.8 L47 0 L43 2.8', 'glint', 1.1],
+      ]; },
+    },
+
+    bow: {
+      label: 'Bow', motion: 'ranged', angle: 0, shot: 'arrow', shotFrom: [-15, 0],
+      // Held across the body, limbs vertical, +X toward the target. A recurve:
+      // limbs bending away from the archer, tips flicking back toward it. The
+      // riser is the thick middle the hand actually holds and the arrow shelf
+      // sits on — without them the whole thing reads as a piece of wire, which
+      // is exactly what the shipped single stroked curve is.
+      // Sized and offset FORWARD of the fist rather than centred on it: a bow
+      // tall enough to read is tall enough to cross the hood, and a limb tip
+      // drawn through the figure's own head is the one flaw nobody stops
+      // seeing. The riser sits ahead of the grip, which is also where it sits
+      // on a real bow — the hand is behind the belly, not on the centreline.
+      parts: function (ph) {
+        var pull = drawPull(ph);            // 0 at rest → 1 at full draw
+        var nock = -1 - 16 * pull;
+        var limbD = 'M-2 -44 C4 -43 8.5 -39 10.5 -34 C13.5 -23 12 -10 9 0 C12 10 13.5 23 10.5 34 C8.5 39 4 43 -2 44';
+        var arrowOn = 0.12 + 0.88 * pull;
+        return [
+          ['path', limbD, 'limbink', 6.6, ' fill="none"'],
+          ['path', limbD, 'limb', 3.9, ' fill="none"'],
+          ['path', 'M5.5 -15 L17 -13.5 L17 13.5 L5.5 15 Z', 'grip'],
+          ['path', 'M9.5 -11.5 L9.5 11.5 M13.5 -12.5 L13.5 12.5', 'line', 1.2],
+          ['path', 'M15 -3.2 L23 -3.2 L18.5 0 L15 2.4 Z', 'wood', 1.4],
+          ['path', 'M-2 -44 L' + nock + ' 0 L-2 44', 'string', 1.8],
+          ['path', 'M' + nock + ' 0 L' + (nock + 48) + ' 0', 'line', 2.2, ' opacity="' + arrowOn + '"'],
+          ['path', 'M' + (nock + 48) + ' 0 L' + (nock + 39) + ' -4.6 M' + (nock + 48) + ' 0 L' + (nock + 39) + ' 4.6', 'line', 2.2, ' opacity="' + arrowOn + '"'],
+          ['path', 'M' + (nock + 3) + ' 0 L' + (nock + 10) + ' -3.8 M' + (nock + 3) + ' 0 L' + (nock + 10) + ' 3.8', 'line', 1.7, ' opacity="' + arrowOn + '"'],
+        ];
+      },
+    },
+
+    crossbow: {
+      label: 'Crossbow', motion: 'ranged', angle: -6, shot: 'bolt', shotFrom: [30, -7],
+      // A crossbow is a MACHINE, and the read is stock + trigger + short STIFF
+      // limbs, not a small bow: a long slim tiller, a butt at the shoulder end,
+      // a prod bolted across the front, the string latched back to the nut.
+      parts: function (ph) {
+        var release = drawPull(ph);           // the nut lets go as the shot goes
+        var latch = 5 + 12 * release;
+        return [
+          // The butt stops just behind the fist. A tiller drawn to its true
+          // length runs back through the figure's own torso, which reads as
+          // the crossbow being impaled in the archer rather than shouldered.
+          ['path', 'M-19 -4.4 L-13 -6.6 L16 -6.2 L31 -4.4 L31 1.6 L14 3.6 L-8 6.4 L-19 4.4 Z', 'wood'],
+          ['path', 'M-13 -6.6 L-13 5.8 M8 -6.2 L8 4.4', 'line', 1.2],
+          ['path', 'M-19 -4.4 L-13 -6.6 L-13 5.8 L-19 4.4 Z', 'grip'],
+          ['path', 'M-1 5.4 L0 11 L-4.5 11.2 L-6 6 Z', 'guard'],
+          ['path', 'M22 -7.4 L31 -7.4 L31 2.4 L22 2.4 Z', 'guard'],
+          ['path', 'M25 -26 C33 -17 34.5 -7 30.5 -0.5 C34.5 6 33 16 25 25', 'limbink', 6, ' fill="none"'],
+          ['path', 'M25 -26 C33 -17 34.5 -7 30.5 -0.5 C34.5 6 33 16 25 25', 'limb', 3.4, ' fill="none"'],
+          ['path', 'M25 -26 L' + latch.toFixed(1) + ' -0.5 L25 25', 'string', 1.6],
+          ['path', 'M' + latch.toFixed(1) + ' -7 L30 -7', 'line', 2.4],
+          ['path', 'M30 -7 L24.5 -10.2 M30 -7 L24.5 -3.8', 'line', 2.4],
+        ];
+      },
+    },
+
+    staff: {
+      label: 'Staff', motion: 'magic', angle: -58, shot: 'orb', shotFrom: [52, 0],
+      // A quarterstaff with a three-pronged claw CRADLING the orb — the claws
+      // are drawn before the orb so their tips pass behind it and the thing
+      // reads as held rather than balanced on top. That claw is the whole
+      // difference between "wizard's staff" and the shipped bead-on-a-line.
+      parts: function () { return [
+        ['path', 'M-34 -3.2 L36 -3.8 L36 3.8 L-34 3.2 Z', 'wood'],
+        ['path', 'M-37 -4.2 L-31 -4.4 L-31 4.4 L-37 4.2 Z', 'guard'],
+        ['path', 'M-4 -3.8 L-4 3.8 M8 -3.7 L8 3.7', 'line', 1.2],
+        ['path', 'M-26 -4.6 L-13 -4.8 L-13 4.8 L-26 4.6 Z', 'grip'],
+        ['path', 'M30 -5.6 L36 -5.8 L36 5.8 L30 5.6 Z', 'guard'],
+        ['path', 'M36 -3 C44 -12 53 -15 60 -10', 'limbink', 5.8, ' fill="none"'],
+        ['path', 'M36 3 C44 12 53 15 60 10', 'limbink', 5.8, ' fill="none"'],
+        ['path', 'M38 0 C46 -1 54 -3 59 -7', 'limbink', 5, ' fill="none"'],
+        ['path', 'M36 -3 C44 -12 53 -15 60 -10', 'limb', 3.2, ' fill="none"'],
+        ['path', 'M36 3 C44 12 53 15 60 10', 'limb', 3.2, ' fill="none"'],
+        ['path', 'M38 0 C46 -1 54 -3 59 -7', 'limb', 2.6, ' fill="none"'],
+        ['circle', 'cx="52" cy="0" r="8.4"', 'orb'],
+        ['circle', 'cx="49.2" cy="-2.8" r="2.8"', 'glint', 0, ' fill="var(--glint)" stroke="none" opacity="0.45"'],
+      ]; },
+    },
+
+    wand: {
+      label: 'Wand', motion: 'magic', angle: -42, shot: 'orb', shotFrom: [28, 0],
+      // Short, tapered, banded, a CUT gem at the tip rather than a bead — the
+      // facet lines are what make it read as a focus and not a twig.
+      parts: function () { return [
+        ['path', 'M-17 -3.4 L-4 -3.2 L-4 3.2 L-17 3.4 Z', 'grip'],
+        ['circle', 'cx="-19.5" cy="0" r="3.2"', 'guard'],
+        ['path', 'M-14 -3.4 L-14 3.4 M-9 -3.3 L-9 3.3', 'line', 1],
+        ['path', 'M-4 -3.2 L20 -1.9 L20 1.9 L-4 3.2 Z', 'wood'],
+        ['path', 'M6 -2.7 L6 2.7 M14 -2.2 L14 2.2', 'guard', 1.8, ' stroke-linecap="round"'],
+        ['path', 'M20 0 L26.5 -7 L34 0 L26.5 7 Z', 'orb'],
+        ['path', 'M20 0 L34 0 M26.5 -7 L26.5 7', 'line', 1, ' opacity="0.5"'],
+        ['path', 'M22.5 -1.8 L26.5 -5.2', 'glint', 1.3],
+      ]; },
+    },
+  };
+  var ORDER = ['sword', 'scimitar', 'rapier', 'godsword', 'maul', 'mace', 'bow', 'crossbow', 'staff', 'wand'];
+
+  // ── Swing keyframes, transcribed from src/index.css .inkc-* ──────────────
+  function lerpTrack(t, pts) {
+    if (t <= pts[0][0]) return pts[0][1];
+    for (var i = 1; i < pts.length; i++) {
+      if (t <= pts[i][0]) {
+        var a = pts[i - 1], b = pts[i];
+        return a[1] + (b[1] - a[1]) * (t - a[0]) / (b[0] - a[0]);
+      }
+    }
+    return pts[pts.length - 1][1];
+  }
+  var TRACKS = {
+    melee: { rot: [[0,-8],[0.42,-58],[0.62,46],[1,-8]] },
+    smash: { rot: [[0,-8],[0.38,-92],[0.60,58],[1,-8]] },
+    lunge: { rot: [[0,-4],[0.36,-9],[0.62,3],[1,-4]], tx: [[0,0],[0.36,-3],[0.62,10],[1,0]], ty: [[0,0],[0.36,1],[0.62,-8],[1,0]] },
+    ranged:{ rot: [[0,-4],[0.55,-20],[0.64,-2],[1,-4]] },
+    magic: { rot: [[0,-4],[0.58,-15],[0.70,12],[1,-4]] },
+  };
+  function trackKey(w) { return w.variant || w.motion; }
+  // How far the string is pulled, at phase ph — peaks exactly where the
+  // keyframes release (0.58-0.64, the same window inkcShotFly launches in).
+  function drawPull(ph) { return lerpTrack(ph, [[0,0],[0.55,1],[0.62,1],[0.68,0],[1,0]]); }
+  function shotAlpha(ph) { return ph < 0.58 ? 0 : ph > 0.97 ? 0 : 1; }
+  function shotTravel(ph) { return ph <= 0.62 ? 0 : Math.min(1, (ph - 0.62) / 0.34); }
+
+  // ── Figure, verbatim from src/components/InkwrightFigure.jsx ─────────────
+  function limb(d, w, back) {
+    return '<path d="' + d + '" fill="none" stroke="var(--ink)" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"/>' +
+           '<path d="' + d + '" fill="none" stroke="var(--' + (back ? 'panelc' : 'raised') + ')" stroke-width="' + (w - 6.2) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  function figureBody() {
+    var cloth = 'fill="var(--raised)" stroke="var(--ink)" stroke-width="3.1" stroke-linejoin="round"';
+    return limb('M72 84 L63 96 L55 103', 12, true) + limb('M78 84 L86 97 L95 104', 13, false) +
+      limb('M78 60 L68 70 L66 78', 10, true) +
+      '<path d="M67 54 Q64 72 66 86 L86 86 Q88 72 86 54 Z" ' + cloth + '/>' +
+      '<path d="M66.5 73 L86.5 73" fill="none" stroke="var(--ink)" stroke-width="4.3" stroke-linecap="round"/>' +
+      '<path d="M65 57 Q57 45 62 32 Q69 21 81 23 Q94 26 94 41 Q94 51 89 57 Z" ' + cloth + '/>' +
+      '<path d="M85 33 Q93 36 92 45 Q90 52 84 53 Q80 43 85 33 Z" fill="var(--ink)" opacity="0.85"/>' +
+      '<path d="M64 53 Q76 63 90 53 Q92 60 86 65 L68 65 Q62 60 64 53 Z" fill="var(--panelc)" stroke="var(--ink)" stroke-width="3.1" stroke-linejoin="round"/>';
+  }
+
+  // ── Rendering ───────────────────────────────────────────────────────────
+  var state = { weapon: 'sword', tint: '#cdd2d8', ticks: 4, playing: true, cursor: 0, enemy: true, zoom: false };
+
+  // Everything on screen is addressable — #w=godsword&scrub=48&zoom=1&ticks=7 —
+  // so a specific frame of a specific weapon can be linked in review rather
+  // than described ("the bit where the blade is behind his head").
+  (function readHash() {
+    var h = (location.hash || '').replace(/^#/, '');
+    if (!h) return;
+    h.split('&').forEach(function (pair) {
+      var kv = pair.split('='), k = kv[0], v = decodeURIComponent(kv[1] || '');
+      if (k === 'w' && WEAPONS[v]) state.weapon = v;
+      if (k === 'tint' && /^#?[0-9a-f]{6}$/i.test(v)) state.tint = v[0] === '#' ? v : '#' + v;
+      if (k === 'ticks' && Number(v) >= 2 && Number(v) <= 9) state.ticks = Number(v);
+      if (k === 'zoom') state.zoom = v !== '0';
+      if (k === 'enemy') state.enemy = v !== '0';
+      if (k === 'scrub') { state.cursor = Math.max(0, Math.min(1, Number(v) / 100)); state.playing = false; }
+    });
+  })();
+
+  function weaponMarkup(key, ph) {
+    var w = WEAPONS[key];
+    svgNode.tint = state.tint;
+    svgNode.accent = '#7ec8ff';
+    return w.parts(ph).map(function (p) {
+      return svgNode(p[0], p[1], p[2], p[3], p[4]);
+    }).join('');
+  }
+
+  function armedArm(key, ph) {
+    var w = WEAPONS[key];
+    return '<g class="arm">' + limb('M84 58 L94 62 L100 64', 11, false) +
+      '<g transform="translate(' + GRIP_X + ' ' + GRIP_Y + ') rotate(' + w.angle + ')">' + weaponMarkup(key, ph) + '</g></g>';
+  }
+
+  function shotMarkup(key, ph) {
+    var w = WEAPONS[key];
+    if (!w.shot) return '';
+    var a = shotAlpha(ph);
+    if (!a) return '';
+    // Authored at the weapon's own muzzle in stage space, then translated
+    // toward the opponent's torso — the same "one origin per shot kind" rule
+    // InkwrightCombatStage's ARROW_/BOLT_/ORB_ constants exist to enforce.
+    var rad = w.angle * Math.PI / 180;
+    var ox = GRIP_X + w.shotFrom[0] * Math.cos(rad) - w.shotFrom[1] * Math.sin(rad);
+    var oy = GRIP_Y + w.shotFrom[0] * Math.sin(rad) + w.shotFrom[1] * Math.cos(rad);
+    var k = shotTravel(ph);
+    var dx = (ENEMY_TORSO_X - ox) * k, dy = (TORSO_CY - oy) * k;
+    var body = w.shot === 'orb'
+      ? '<circle cx="0" cy="0" r="10" fill="#7ec8ff" opacity="0.3"/><circle cx="0" cy="0" r="6" fill="#7ec8ff" stroke="var(--ink)" stroke-width="2"/>'
+      : w.shot === 'bolt'
+        ? '<path d="M-8 0 L8 0 M8 0 L2 -3.6 M8 0 L2 3.6 M-8 0 L-4 -3 M-8 0 L-4 3" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>'
+        : '<path d="M-14 0 L14 0 M14 0 L6 -5 M14 0 L6 5 M-14 0 L-11 -3.6 M-14 0 L-11 3.6" fill="none" stroke="var(--ink)" stroke-width="3.2" stroke-linecap="round"/>';
+    return '<g transform="translate(' + (ox + dx).toFixed(2) + ' ' + (oy + dy).toFixed(2) + ')" opacity="' + a + '">' + body + '</g>';
+  }
+
+  function buildStage(host) {
+    var vb = state.zoom ? '58 6 118 116' : '0 0 ' + STAGE_W + ' ' + STAGE_H;
+    host.innerHTML =
+      '<svg viewBox="' + vb + '">' +
+        '<path d="M12 108 H' + (STAGE_W - 12) + '" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" opacity="0.26"/>' +
+        '<ellipse cx="76" cy="108" rx="21" ry="3.2" fill="var(--ink)" opacity="0.09"/>' +
+        '<ellipse cx="' + (STAGE_W - 76) + '" cy="108" rx="21" ry="3.2" fill="var(--ink)" opacity="0.09"/>' +
+        '<g class="side-a"><g class="fig">' + figureBody() + '<g class="arm-host"></g></g><g class="shot-host"></g></g>' +
+        '<g class="side-b" transform="translate(' + STAGE_W + ',0) scale(-1,1)"><g class="fig">' + figureBody() + '<g class="arm-host"></g></g></g>' +
+      '</svg>';
+    var svg = host.firstChild;
+    return {
+      svg: svg,
+      armA: svg.querySelector('.side-a .arm-host'),
+      armB: svg.querySelector('.side-b .arm-host'),
+      shot: svg.querySelector('.shot-host'),
+      sideB: svg.querySelector('.side-b'),
+    };
+  }
+
+  // The arm pivots about the shoulder in the SVG's own coordinate space, not
+  // its bounding box — same rule (and same failure) as .inkc-arm in index.css.
+  function poseArm(node, ph, key) {
+    var tr = TRACKS[trackKey(WEAPONS[key])];
+    var rot = lerpTrack(ph, tr.rot);
+    var tx = tr.tx ? lerpTrack(ph, tr.tx) : 0;
+    var ty = tr.ty ? lerpTrack(ph, tr.ty) : 0;
+    node.setAttribute('transform', 'translate(84 58) rotate(' + rot.toFixed(2) + ') translate(' + tx.toFixed(2) + ' ' + ty.toFixed(2) + ') translate(-84 -58)');
+  }
+
+  var stages = [];
+  function rebuild() {
+    stages = [buildStage(document.getElementById('stage-light')), buildStage(document.getElementById('stage-dark'))];
+    var w = WEAPONS[state.weapon];
+    var cyc = actionCycleMs(state.ticks), sw = swingDurationMs(cyc);
+    document.getElementById('lbl-light').textContent = w.label + ' · ' + w.motion + (w.variant ? ' · ' + w.variant : '');
+    document.getElementById('lbl-dark').textContent = state.ticks + 't · swing ' + sw + 'ms';
+  }
+
+  var start = performance.now();
+  function frame(now) {
+    var cyc = actionCycleMs(state.ticks), sw = swingDurationMs(cyc);
+    if (state.playing) state.cursor = ((now - start) % cyc) / cyc;
+    var c = state.cursor;
+    // The swing occupies swingMs of the cycle and the REST IS THE GAP — that
+    // gap is what a slow weapon actually looks like (actionSprites.js), so it
+    // is deliberately dead time here too, not filled with idle motion.
+    var swingFrac = sw / cyc;
+    var ph = c < swingFrac ? c / swingFrac : 1;
+    var phRest = c < swingFrac ? ph : 0;
+
+    stages.forEach(function (s) {
+      s.armA.innerHTML = armedArm(state.weapon, phRest);
+      poseArm(s.armA.firstChild, phRest, state.weapon);
+      s.shot.innerHTML = shotMarkup(state.weapon, phRest);
+      s.sideB.style.display = state.enemy ? '' : 'none';
+      if (state.enemy) {
+        s.armB.innerHTML = armedArm(state.weapon, 0);
+        poseArm(s.armB.firstChild, 0, state.weapon);
+      }
+    });
+
+    document.getElementById('out-scrub').textContent = Math.round(c * 100) + '%';
+    if (state.playing) document.getElementById('rng-scrub').value = Math.round(c * 1000);
+    requestAnimationFrame(frame);
+  }
+
+  // ── Rack: each weapon horizontal at full size, so the profile can be read
+  //    without the figure in the way. viewBox comes from the real bbox. ─────
+  function rackSvg(key) {
+    return '<svg class="rack-svg" viewBox="-46 -30 128 60"><g>' + weaponMarkup(key, 0) + '</g></svg>';
+  }
+  function buildRack() {
+    var host = document.getElementById('rack');
+    host.innerHTML = ORDER.map(function (key) {
+      var w = WEAPONS[key];
+      return '<div class="rack__row">' +
+        '<div class="rack__name"><b>' + w.label + '</b><span>' + w.motion + (w.variant ? ' · ' + w.variant : '') + '</span></div>' +
+        '<div class="rack__cell ground--light">' + rackSvg(key) + '</div>' +
+        '<div class="rack__cell rack__cell--dark ground--dark">' + rackSvg(key) + '</div>' +
+      '</div>';
+    }).join('');
+    // Fit each drawing to its own extents — a wand and a godsword are wildly
+    // different lengths, and one shared viewBox makes the small ones vanish.
+    // ONE SCALE for every row, centred on each weapon's own bbox. Fitting each
+    // drawing to its own extents (the obvious thing, and the first thing this
+    // page did) normalises away the only property the rack exists to show —
+    // a wand and a godsword came out the same size on screen, so there was no
+    // way to see that they are not the same size in the hand.
+    Array.prototype.forEach.call(host.querySelectorAll('.rack-svg'), function (svg) {
+      var b = svg.firstChild.getBBox();
+      var cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      svg.setAttribute('viewBox', (cx - 80) + ' ' + (cy - 58) + ' 160 116');
+      svg.style.maxHeight = '158px';
+      svg.style.margin = '0 auto';
+    });
+  }
+
+  // ── In-hand contact sheet: the same figure holding all ten, at one shared
+  //    phase. Judging a weapon on the rack is judging it in a museum case —
+  //    what matters is the silhouette IN THE FIST at the moment of a swing,
+  //    where the arm, the hand blob and the body all crop into it. ──────────
+  function handSvg(key, ph) {
+    var w = WEAPONS[key];
+    var tr = TRACKS[trackKey(w)];
+    var rot = lerpTrack(ph, tr.rot);
+    var tx = tr.tx ? lerpTrack(ph, tr.tx) : 0;
+    var ty = tr.ty ? lerpTrack(ph, tr.ty) : 0;
+    return '<svg viewBox="30 -4 150 124">' +
+      '<path d="M12 108 H172" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" opacity="0.26"/>' +
+      '<ellipse cx="76" cy="108" rx="21" ry="3.2" fill="var(--ink)" opacity="0.09"/>' +
+      figureBody() +
+      '<g transform="translate(84 58) rotate(' + rot.toFixed(2) + ') translate(' + tx.toFixed(2) + ' ' + ty.toFixed(2) + ') translate(-84 -58)">' +
+        armedArm(key, ph) +
+      '</g></svg>';
+  }
+  function buildHands() {
+    var ph = Number(document.getElementById('rng-hand').value) / 100;
+    document.getElementById('hand-phase').textContent = ph === 0 ? 'rest' : Math.round(ph * 100) + '% of swing';
+    document.getElementById('hands').innerHTML = ORDER.map(function (key) {
+      return '<div class="hand"><div class="hand__label">' + WEAPONS[key].label + '</div>' +
+        '<div class="hand__art ground--light">' + handSvg(key, ph) + '</div></div>';
+    }).join('');
+  }
+
+  function buildPicker() {
+    var host = document.getElementById('picker');
+    host.innerHTML = ORDER.map(function (key) {
+      var w = WEAPONS[key];
+      return '<button class="pick' + (key === state.weapon ? ' on' : '') + '" data-k="' + key + '">' +
+        '<span class="pick__art"><svg class="pick-svg" viewBox="-40 -26 110 52"><g>' + weaponMarkup(key, 0) + '</g></svg></span>' +
+        '<span class="pick__name">' + w.label + '</span>' +
+        '<span class="pick__meta">' + w.motion + (w.variant ? ' · ' + w.variant : '') + '</span>' +
+      '</button>';
+    }).join('');
+    Array.prototype.forEach.call(host.querySelectorAll('.pick-svg'), function (svg) {
+      var b = svg.firstChild.getBBox(), p = 4;
+      svg.setAttribute('viewBox', (b.x - p) + ' ' + (b.y - p) + ' ' + (b.width + p * 2) + ' ' + (b.height + p * 2));
+    });
+    Array.prototype.forEach.call(host.querySelectorAll('.pick'), function (b) {
+      b.onclick = function () { state.weapon = b.getAttribute('data-k'); buildPicker(); rebuild(); };
+    });
+  }
+
+  function buildTints() {
+    var host = document.getElementById('tints');
+    host.innerHTML = TINTS.map(function (t) {
+      return '<button class="tint' + (t[1] === state.tint ? ' on' : '') + '" title="' + t[0] + '" data-c="' + t[1] + '" style="background:' + t[1] + '"></button>';
+    }).join('');
+    Array.prototype.forEach.call(host.querySelectorAll('.tint'), function (b) {
+      b.onclick = function () { state.tint = b.getAttribute('data-c'); buildTints(); buildPicker(); buildRack(); buildHands(); };
+    });
+  }
+
+  function syncTiming() {
+    var cyc = actionCycleMs(state.ticks), sw = swingDurationMs(cyc);
+    document.getElementById('out-ticks').textContent = state.ticks + 't';
+    document.getElementById('out-timing').textContent = 'cycle ' + cyc + 'ms · swing ' + sw + 'ms · gap ' + (cyc - sw) + 'ms';
+  }
+
+  document.getElementById('rng-ticks').oninput = function () { state.ticks = parseInt(this.value, 10); syncTiming(); rebuild(); };
+  document.getElementById('rng-scrub').oninput = function () {
+    state.playing = false;
+    var b = document.getElementById('btn-play'); b.classList.remove('on'); b.textContent = 'Play';
+    state.cursor = parseInt(this.value, 10) / 1000;
+  };
+  document.getElementById('btn-play').onclick = function () {
+    state.playing = !state.playing;
+    this.classList.toggle('on', state.playing);
+    this.textContent = state.playing ? 'Pause' : 'Play';
+    if (state.playing) start = performance.now() - state.cursor * actionCycleMs(state.ticks);
+  };
+  document.getElementById('btn-enemy').onclick = function () {
+    state.enemy = !state.enemy; this.classList.toggle('on', state.enemy); this.textContent = state.enemy ? 'Enemy on' : 'Enemy off';
+  };
+  document.getElementById('btn-zoom').onclick = function () {
+    state.zoom = !state.zoom; this.classList.toggle('on', state.zoom); rebuild();
+  };
+
+  document.getElementById('rng-ticks').value = state.ticks;
+  document.getElementById('rng-scrub').value = Math.round(state.cursor * 1000);
+  document.getElementById('btn-enemy').classList.toggle('on', state.enemy);
+  document.getElementById('btn-enemy').textContent = state.enemy ? 'Enemy on' : 'Enemy off';
+  document.getElementById('btn-zoom').classList.toggle('on', state.zoom);
+  if (!state.playing) { var pb = document.getElementById('btn-play'); pb.classList.remove('on'); pb.textContent = 'Play'; }
+  document.getElementById('rng-hand').oninput = buildHands;
+  buildTints(); buildPicker(); buildRack(); buildHands(); syncTiming(); rebuild();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
