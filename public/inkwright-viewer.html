@@ -34,6 +34,17 @@
 
   If this page and the real component disagree, the real component is right;
   fix this file to match, not the other way round.
+
+  REALISM DRAFT (temporary exception to the rule above): the tool/prop/figure
+  geometry below is currently AHEAD of InkwrightStage.jsx/InkwrightFigure.jsx
+  — a prototype pass making the skilling art (axe/pickaxe/rod, tree/rock/
+  water, the figure) read as tapered, shaded objects instead of flat blobs,
+  using the same local-shading/glint-bevel technique src/utils/weaponShapes.js
+  already shipped for combat weapons. It intentionally lives here FIRST, with
+  no changes to src/**, so it can be reviewed before touching production. Once
+  approved, port the shapes back into Tool()/Prop()/InkwrightFigure.jsx (and
+  promote the paint roles into index.css's `.ink-*` block) in the same pass
+  that removes this note.
 -->
 <style>
   :root {
@@ -158,6 +169,19 @@
   var SVG_NS = 'http://www.w3.org/2000/svg';
   function el(name, attrs) { var n = document.createElementNS(SVG_NS, name); if (attrs) for (var k in attrs) n.setAttribute(k, attrs[k]); return n; }
 
+  // ── Realism-pass paint, mirroring src/utils/weaponShapes.js's roles ─────
+  // A blade/tool head reads as SHARP/SOLID from three things, same recipe the
+  // weapon pass used: near-parallel boundaries converging late, both meeting
+  // at one point, and a bevel (a `shade` fill on the dull face + a `glint`
+  // stroke on the lit edge). Applied here to axe/pick heads, and reused for
+  // rock facets and canopy volume, which are the same "a surface catches
+  // light unevenly" problem. WOOD/STEEL/GLINT match .inkc-w-wood/.inkc-w-guard/
+  // .inkc-w-glint's fixed hexes (not theme-varied there either); SHADE matches
+  // --blade-shade's per-theme alpha exactly, computed per stage below.
+  var WOOD = '#7a5433';
+  var STEEL = '#6d6257';
+  var GLINT = 'rgba(255,255,255,0.55)';
+
   var state = { skill: 'mining', product: null, tempoTicks: 4, playing: true, cursor: 0, yieldToken: 0, lastYieldAt: -1 };
   var DATA = { skills: null, items: null, bespoke: null };
 
@@ -210,6 +234,7 @@
     var ink = mode === 'light' ? 'var(--text-strong-l)' : 'var(--text-strong-d)';
     var cloth = mode === 'light' ? 'var(--surface-raised-l)' : 'var(--surface-raised-d)';
     var cloth2 = mode === 'light' ? 'var(--surface-panel-l)' : 'var(--surface-panel-d)';
+    var shade = mode === 'light' ? 'rgba(0,0,0,0.20)' : 'rgba(0,0,0,0.34)'; // matches --blade-shade per theme
 
     var svg = el('svg', { viewBox: '0 0 200 128' });
     svg.appendChild(el('path', { d: 'M12 108 H188', stroke: ink, 'stroke-width': 2, 'stroke-linecap': 'round', opacity: 0.26, fill: 'none' }));
@@ -234,12 +259,25 @@
 
     var fig = el('g', { class: 'ink-fig' });
     fig.appendChild((function () { var g = el('g'); g.appendChild(limb('M72 84 L63 96 L55 103', 12, true)); g.appendChild(limb('M78 84 L86 97 L95 104', 13, false)); return g; })());
+    // Boot flares at each foot — a limb that just stops mid-stroke reads as a
+    // stick; a small flared silhouette at the ground contact grounds it.
+    fig.appendChild(part('path', { d: 'M50.5 101 L58 103.5 L55.5 106.5 L48 104.3 Z', fill: cloth2, 'stroke-width': 1.7 }));
+    fig.appendChild(part('path', { d: 'M90.5 102.5 L98 104.8 L95.8 107.8 L88.3 105.7 Z', fill: cloth2, 'stroke-width': 1.7 }));
     fig.appendChild(limb('M78 60 L68 70 L66 78', 10, true));
     fig.appendChild(part('path', { d: 'M67 54 Q64 72 66 86 L86 86 Q88 72 86 54 Z', fill: cloth }));
+    // Drape folds — thin, low-opacity, following the tunic's own taper rather
+    // than a straight line, so the cloth reads as hanging fabric with weight
+    // instead of a flat panel.
+    fig.appendChild(part('path', { d: 'M71 58 Q69 71 71 84', fill: 'none', 'stroke-width': 1, opacity: 0.28 }));
+    fig.appendChild(part('path', { d: 'M81 58 Q83 71 81 84', fill: 'none', 'stroke-width': 1, opacity: 0.28 }));
     fig.appendChild(part('path', { d: 'M66.5 73 L86.5 73', fill: 'none', 'stroke-width': 4.3 }));
     fig.appendChild(part('path', { d: 'M65 57 Q57 45 62 32 Q69 21 81 23 Q94 26 94 41 Q94 51 89 57 Z', fill: cloth }));
     var hollow = el('path', { d: 'M85 33 Q93 36 92 45 Q90 52 84 53 Q80 43 85 33 Z', fill: ink }); hollow.style.opacity = 0.85;
     fig.appendChild(hollow);
+    // Lit rim on the hood's opposite (near) side — a cloth highlight, not a
+    // metal glint, so the material read stays distinct from the tool's own
+    // bevel. Same "surface catches light unevenly" idea, different substance.
+    fig.appendChild(part('path', { d: 'M63 34 Q66 26 74 23.5', fill: 'none', stroke: cloth, 'stroke-width': 1.3, opacity: 0.6 }));
     fig.appendChild(part('path', { d: 'M64 53 Q76 63 90 53 Q92 60 86 65 L68 65 Q62 60 64 53 Z', fill: cloth2 }));
 
     var arm = el('g', { class: 'ink-arm' });
@@ -255,25 +293,67 @@
     host.appendChild(bar);
     var pct = document.createElement('div'); pct.className = 'bar__pct'; host.appendChild(pct);
 
-    return { ink: ink, cloth: cloth, cloth2: cloth2, W: W, part: part, limb: limb, fig: fig, arm: arm, tool: toolG, propHost: propHost, payoffHost: payoffHost, fill: fill, pct: pct };
+    return { ink: ink, cloth: cloth, cloth2: cloth2, shade: shade, W: W, part: part, limb: limb, fig: fig, arm: arm, tool: toolG, propHost: propHost, payoffHost: payoffHost, fill: fill, pct: pct };
+  }
+
+  // Tapered wood haft: a filled taper (wide at the hand, narrow at the head)
+  // rather than a uniform stroked line, plus a couple of grain ticks — the
+  // same "taper reads as a real object, a stroke reads as a wire" fix the
+  // weapon pass applied to blades, applied here to the thing the blade is
+  // mounted on. `d` is the taper's own path; grain ticks are optional local
+  // marks along it.
+  function haft(p, d, grain) {
+    var g = el('g');
+    g.appendChild(p('path', { d: d, fill: WOOD, 'stroke-width': 1.6 }));
+    (grain || []).forEach(function (gd) { g.appendChild(p('path', { d: gd, fill: 'none', 'stroke-width': 0.9, opacity: 0.3 })); });
+    return g;
   }
 
   function drawTool(s, motion) {
     s.tool.innerHTML = '';
-    var p = s.part;
+    var p = s.part, shade = s.shade;
     if (motion === 'chop') {
-      s.tool.appendChild(s.limb('M92 70 L124 52', 7, true));
-      s.tool.appendChild(p('path', { d: 'M117 45 L128 47 Q135 54 128 61 L117 60 Z', fill: s.cloth2 }));
-      s.tool.appendChild(p('path', { d: 'M128 47 Q135 54 128 61', fill: 'none', stroke: s.cloth, 'stroke-width': 2.4 }));
-      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 9 }));
+      // Haft, curved slightly toward the head. Head: a poll (blunt mass
+      // behind the eye) plus a crescent bit whose outer (edge) boundary
+      // carries the glint and whose inner (dull) face carries the shade —
+      // the same bevel recipe weaponShapes.js documents for "sharp".
+      s.tool.appendChild(haft(p, 'M93 71.5 Q104 65 111 60 L120 50.5 L122.2 52.7 L113 62.5 Q105 69 96 75 Z',
+        ['M99 68 L102.4 65.4', 'M107 62.5 L110.2 60']));
+      // A wedge, not a leaf: two straight-edged horn corners (top and bottom
+      // of the bit) with the curved cutting edge bulging out BETWEEN them.
+      // The earlier all-curves version rounded through both corners and read
+      // as a blob — an axe head needs at least one real angle to silhouette
+      // as metal rather than foliage.
+      s.tool.appendChild(p('path', { d: 'M110 46.5 L117.5 43 L121 47.5 L113.5 51 Z', fill: STEEL, 'stroke-width': 1.6 }));
+      s.tool.appendChild(p('path', { d: 'M113 44.5 L120.5 41.5 L136 35 Q147 39.5 149.5 47.5 Q151 55 143.5 60.5 L138 63.5 L120.5 53 Z', fill: STEEL, 'stroke-width': 1.6 }));
+      s.tool.appendChild(p('path', { d: 'M138 63.5 L120.5 53 L128 50.5 L137 58.5 L143.5 60.5 Z', fill: shade, stroke: 'none' }));
+      s.tool.appendChild(p('path', { d: 'M121 42.5 L135.5 36.5 Q146 40.5 148.3 48', fill: 'none', stroke: GLINT, 'stroke-width': 1.3 }));
+      s.tool.appendChild(p('path', { d: 'M96 68.5 L104.5 63.5', fill: 'none', 'stroke-width': 9 }));
     } else if (motion === 'fish') {
-      s.tool.appendChild(s.limb('M92 72 L138 36', 5.4, true));
-      s.tool.appendChild(p('circle', { cx: 103, cy: 63, r: 3.2, fill: s.cloth2 }));
-      s.tool.appendChild(p('path', { d: 'M138 36 Q150 62 156 95', fill: 'none', 'stroke-width': 1.1, opacity: 0.55 }));
-      s.tool.appendChild(p('circle', { cx: 156, cy: 96, r: 2.6, fill: s.cloth }));
+      // Tapered rod (thick at the grip, whip-thin at the tip, a slight bow),
+      // a reel with a winding handle, two line guides shrinking toward the
+      // tip, and a two-tone bobber (cap + body) in place of a bare circle.
+      s.tool.appendChild(haft(p, 'M92 75 Q102 71.4 112 63.3 Q124.2 54.3 138.3 36.8 L139.5 37.7 Q125.3 55.5 113.1 64.6 Q102.5 72.4 93.2 76.5 Z'));
+      s.tool.appendChild(p('circle', { cx: 103, cy: 63, r: 3.6, fill: STEEL, 'stroke-width': 1.5 }));
+      s.tool.appendChild(p('path', { d: 'M106 60.4 L108.6 58.1', fill: 'none', 'stroke-width': 1.5 }));
+      s.tool.appendChild(p('circle', { cx: 110.4, cy: 66.3, r: 1.3, fill: 'none', 'stroke-width': 1, opacity: 0.65 }));
+      s.tool.appendChild(p('circle', { cx: 123, cy: 55.8, r: 1.05, fill: 'none', 'stroke-width': 0.9, opacity: 0.6 }));
+      s.tool.appendChild(p('path', { d: 'M138.5 37 Q149.5 68 148 108', fill: 'none', 'stroke-width': 1.1, opacity: 0.55 }));
+      s.tool.appendChild(p('ellipse', { cx: 148, cy: 110, rx: 2.6, ry: 3.4, fill: s.cloth, 'stroke-width': 1.4 }));
+      s.tool.appendChild(el('path', { d: 'M145.6 108.4 Q148 105.4 150.4 108.4 Q148 109.6 145.6 108.4 Z', fill: '#b5402f' }));
     } else {
-      s.tool.appendChild(s.limb('M92 70 L128 50', 7, true));
-      s.tool.appendChild(p('path', { d: 'M120 37 L131 48 L135 61 L125 52 Z', fill: s.cloth2 }));
+      // Haft crosses to a horizontal eye bar, then two curved tapered
+      // points sweep away from it — the "double-pointed head straddling the
+      // haft's end" the original comment described, now actually pointed
+      // (taper-to-tip) rather than a stroked diamond.
+      s.tool.appendChild(haft(p, 'M93 72 Q106 65 114 59 L121.5 51.5 L123.7 53.7 L115 62 Q106 69.5 95.5 76 Z',
+        ['M101 68.5 L104.4 65.9', 'M109.5 62.5 L112.7 60']));
+      s.tool.appendChild(p('path', { d: 'M111 44 L127 40.5 L129.5 45.5 L113.5 49.5 Z', fill: STEEL, 'stroke-width': 1.6 }));
+      s.tool.appendChild(p('path', { d: 'M124 41.5 Q136 32 143 20 Q140.5 30 136 39 Q131 46 125.5 46.5 Q122.5 44 124 41.5 Z', fill: STEEL, 'stroke-width': 1.6 }));
+      s.tool.appendChild(p('path', { d: 'M136 39 Q140.5 30 143 20 Q141.5 28.5 137.5 37.5 Z', fill: shade, stroke: 'none' }));
+      s.tool.appendChild(p('path', { d: 'M125.5 40.5 Q134.5 32.5 141 22', fill: 'none', stroke: GLINT, 'stroke-width': 1.2 }));
+      s.tool.appendChild(p('path', { d: 'M114 47 Q118.5 56 116.5 66 Q112.5 58.5 111.5 49.5 Q112 46.5 114 47 Z', fill: STEEL, 'stroke-width': 1.6 }));
+      s.tool.appendChild(p('path', { d: 'M116.5 66 Q112.5 58.5 111.5 49.5 Q113 53 114.5 59.5 Z', fill: shade, stroke: 'none' }));
       s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 9 }));
     }
   }
@@ -290,27 +370,84 @@
     return outer;
   }
 
+  // Stump texture: growth rings on the cut face, bark grooves down the
+  // standing base. Unconditional, like the original stump quad — drawn by
+  // both drawProp and drawPayoff, never just the piece that visibly changes.
+  function appendStumpDetail(parent, p, ink) {
+    parent.appendChild(el('ellipse', { cx: 141, cy: 79, rx: 8.6, ry: 2.3, fill: 'none', stroke: ink, 'stroke-width': 1.1, opacity: 0.5 }));
+    parent.appendChild(el('ellipse', { cx: 141, cy: 79, rx: 5.2, ry: 1.4, fill: 'none', stroke: ink, 'stroke-width': 0.9, opacity: 0.4 }));
+    parent.appendChild(p('path', { d: 'M136.2 96 Q135.6 88 136.5 81', fill: 'none', 'stroke-width': 1, opacity: 0.3 }));
+    parent.appendChild(p('path', { d: 'M145.8 96 Q146.4 88 145.5 81', fill: 'none', 'stroke-width': 1, opacity: 0.3 }));
+  }
+
+  // Layered canopy: a shaded back lobe and a mid lobe sit BEHIND the original
+  // silhouette (kept exactly as authored, now the sunlit front lobe), then a
+  // highlight rim over the top — volume from three overlapping reads instead
+  // of one flat blob, the same "a surface catches light unevenly" fix as the
+  // tool heads and the rock, applied to foliage instead of metal.
+  function appendCanopy(parent, p, tint) {
+    // Three DISTINCTLY OFFSET lobes, not concentric insets of the same
+    // silhouette — nested copies of one circle just anti-alias into a bigger
+    // circle (reads as a glossy fruit), where real foliage is an asymmetric
+    // cluster of clumps. Back lobe sits up-right and low-opacity, mid lobe
+    // down-left and mid-opacity, front lobe is the original silhouette
+    // unchanged, at full tint with the only outline — so the whole thing
+    // still reads as ONE canopy, just one with depth. No glint: foliage
+    // isn't a polished surface, and a rim highlight is what made the earlier
+    // pass read as a sphere.
+    var back = p('path', { d: 'M138 50 Q124 45 127 30 Q130 17 146 15 Q164 13 169 28 Q173 43 158 50 Q148 55 138 50 Z', fill: tint, stroke: 'none' });
+    back.style.opacity = 0.24;
+    parent.appendChild(back);
+    var mid = p('path', { d: 'M122 67 Q104 61 108 43 Q112 25 132 23 Q154 21 158 39 Q162 59 144 67 Q133 71 122 67 Z', fill: tint, stroke: 'none' });
+    mid.style.opacity = 0.4;
+    parent.appendChild(mid);
+    var front = p('path', { d: 'M130 62 Q112 56 116 38 Q120 20 140 18 Q162 16 166 34 Q170 54 152 62 Z', fill: tint });
+    front.style.opacity = 0.68;
+    parent.appendChild(front);
+  }
+
   function drawProp(s, motion, tint, fishArt, broken) {
     var p = s.part, g = el('g');
     if (motion === 'chop') {
       g.appendChild(p('path', { d: 'M132 108 Q131.4 92 133.2 79 L148.8 79 Q150.4 92 150 108 Z', fill: tint }));
+      appendStumpDetail(g, p, s.ink);
       var faller = el('g', { class: 'ink-faller' });
-      var canopy = p('path', { d: 'M130 62 Q112 56 116 38 Q120 20 140 18 Q162 16 166 34 Q170 54 152 62 Z', fill: tint }); canopy.style.opacity = 0.55;
-      faller.appendChild(canopy);
-      faller.appendChild(p('path', { d: 'M133.2 79 Q134 68 135 58 L147 58 Q148 68 148.8 79 Z', fill: tint }));
+      appendCanopy(faller, p, tint);
+      var trunk = p('path', { d: 'M133.2 79 Q134 68 135 58 L147 58 Q148 68 148.8 79 Z', fill: tint });
+      faller.appendChild(trunk);
+      faller.appendChild(p('path', { d: 'M137.3 76 Q137.9 68 138.5 60.5', fill: 'none', 'stroke-width': 0.9, opacity: 0.28 }));
+      faller.appendChild(p('path', { d: 'M143.9 76 Q143.3 68 142.7 60.5', fill: 'none', 'stroke-width': 0.9, opacity: 0.28 }));
       g.appendChild(faller);
       s.notch = p('path', { d: 'M133.2 70 L133.2 70 L133.2 79 Z', fill: s.ink, stroke: 'none' });
       faller.appendChild(s.notch);
       s.faller = faller;
     } else if (motion === 'fish') {
+      // Reeds at the bank's lip, behind the water so they read as growing at
+      // the edge rather than floating on the surface.
+      g.appendChild(p('path', { d: 'M99.5 97 Q97.6 89.5 99.3 82.8', fill: 'none', 'stroke-width': 1.1, opacity: 0.4 }));
+      g.appendChild(p('path', { d: 'M104.5 95.2 Q104 86.8 106.4 79.6', fill: 'none', 'stroke-width': 1.1, opacity: 0.4 }));
+      g.appendChild(p('path', { d: 'M109.6 96.3 Q110.7 88.6 109 82.3', fill: 'none', 'stroke-width': 1, opacity: 0.35 }));
       g.appendChild(p('path', { d: 'M104 128 L118 96 H196 V128 Z', fill: tint, opacity: 0.16 }));
+      // A darker band beneath the surface reads as depth rather than a flat
+      // wash the same tone all the way down.
+      g.appendChild(p('path', { d: 'M112 112 Q140 109 168 112 T196 112 L196 128 L104 128 Z', fill: s.shade, stroke: 'none', opacity: 0.4 }));
       g.appendChild(p('path', { d: 'M118 96 Q130 92 142 96 T168 96 T196 96', fill: 'none', 'stroke-width': 4.3 }));
+      g.appendChild(p('path', { d: 'M124 103 Q136 100 148 103 T172 103 T196 103', fill: 'none', 'stroke-width': 2, opacity: 0.4 }));
       if (fishArt) s.idleFish = fishGroup(s, fishArt, 152, 112, 26, 'ink-fish-idle is-working');
       if (s.idleFish) g.appendChild(s.idleFish);
     } else {
       g.appendChild(p('path', { d: 'M130 108 Q123 96 129 85 Q135 75 148 73 Q161 72 166 84 Q171 96 165 105 Q160 109 152 108 Z', fill: tint }));
       g.appendChild(p('path', { d: 'M143 89 L150 87 L157 92', fill: 'none', 'stroke-width': 1.9, opacity: 0.7 }));
       g.appendChild(p('path', { d: 'M143 89 L141 108', fill: 'none', 'stroke-width': 1.9, opacity: 0.7 }));
+      // Extra facet seams plus a shaded facet and a lit rim — same bevel
+      // recipe as the tool heads, so the rock reads as cut stone rather than
+      // a flat-tinted pebble. Purely decorative overlay: the outer silhouette
+      // and the break seams above are untouched, so the shard fly-apart
+      // animation (keyed to those exact corners) is unaffected.
+      g.appendChild(p('path', { d: 'M130 108 L143 89', fill: 'none', 'stroke-width': 1.3, opacity: 0.4 }));
+      g.appendChild(p('path', { d: 'M148 73 L143 89', fill: 'none', 'stroke-width': 1.3, opacity: 0.4 }));
+      g.appendChild(p('path', { d: 'M143 89 L150 87 L157 92 L166 84 Q171 96 165 105 Q160 109 152 108 L141 108 Z', fill: s.shade, stroke: 'none' }));
+      g.appendChild(p('path', { d: 'M133 80.5 Q140.5 76 148.5 74.5', fill: 'none', stroke: GLINT, 'stroke-width': 1.3, opacity: 0.75 }));
     }
     return g;
   }
@@ -325,10 +462,16 @@
     var p = s.part, g = el('g');
     if (motion === 'chop') {
       g.appendChild(p('path', { d: 'M132 108 Q131.4 92 133.2 79 L148.8 79 Q150.4 92 150 108 Z', fill: tint }));
+      appendStumpDetail(g, p, s.ink);
     }
     if (motion === 'fish') {
+      g.appendChild(p('path', { d: 'M99.5 97 Q97.6 89.5 99.3 82.8', fill: 'none', 'stroke-width': 1.1, opacity: 0.4 }));
+      g.appendChild(p('path', { d: 'M104.5 95.2 Q104 86.8 106.4 79.6', fill: 'none', 'stroke-width': 1.1, opacity: 0.4 }));
+      g.appendChild(p('path', { d: 'M109.6 96.3 Q110.7 88.6 109 82.3', fill: 'none', 'stroke-width': 1, opacity: 0.35 }));
       g.appendChild(p('path', { d: 'M104 128 L118 96 H196 V128 Z', fill: tint, opacity: 0.16 }));
+      g.appendChild(p('path', { d: 'M112 112 Q140 109 168 112 T196 112 L196 128 L104 128 Z', fill: s.shade, stroke: 'none', opacity: 0.4 }));
       g.appendChild(p('path', { d: 'M118 96 Q130 92 142 96 T168 96 T196 96', fill: 'none', 'stroke-width': 4.3 }));
+      g.appendChild(p('path', { d: 'M124 103 Q136 100 148 103 T172 103 T196 103', fill: 'none', 'stroke-width': 2, opacity: 0.4 }));
     }
     if (motion === 'mine') {
       var shards = [
@@ -346,8 +489,7 @@
     } else if (motion === 'chop') {
       var fall = el('g', { class: 'ink-fall' });
       fall.style.transformOrigin = '141px 79px'; fall.style.transformBox = 'view-box';
-      var canopy = p('path', { d: 'M130 62 Q112 56 116 38 Q120 20 140 18 Q162 16 166 34 Q170 54 152 62 Z', fill: tint }); canopy.style.opacity = 0.55;
-      fall.appendChild(canopy);
+      appendCanopy(fall, p, tint);
       fall.appendChild(p('path', { d: 'M133.2 79 Q134 68 135 58 L147 58 Q148 68 148.8 79 Z', fill: tint }));
       g.appendChild(fall);
       s.fall = fall;
