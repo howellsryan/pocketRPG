@@ -3360,6 +3360,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // fights melee, and Rapid takes a tick off a ranged swing.
   const playerSprite = playerCombatSprite(equipment, itemsData, { combatType: combat.combatType, stance: combat.stance })
   const monsterSprite = monsterCombatSprite(spriteMonster)
+  // The actual equipped weapon, not just the style it fights with — draws its
+  // own bespoke icon in the stage's hand (InkwrightCombatStage's CombatWeaponIcon)
+  // in place of the generic per-style blade/bow/staff shape.
+  const playerWeaponItem = equipment?.weapon?.itemId ? itemsData[equipment.weapon.itemId] : null
   // Whichever splat stream belongs to what's actually shown — an add has its
   // own HP bar and its own splats (addSplats), so a targeted add must not
   // borrow the boss's monsterSplats or a hit on the add would flash on a
@@ -3367,7 +3371,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const stageTargetSplats = targetedAdd(combat) ? addSplats : monsterSplats
   const spriteStage = (
     <InkwrightCombatStage
-      actor={{ ...playerSprite, accent: getStyleArt(playerSprite.motion).color }}
+      actor={{ ...playerSprite, accent: getStyleArt(playerSprite.motion).color, weaponItem: playerWeaponItem }}
       target={{
         icon: spriteMonsterArt.icon,
         accent: spriteMonsterArt.accent,

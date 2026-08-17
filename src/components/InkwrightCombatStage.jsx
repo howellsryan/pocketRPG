@@ -1,6 +1,9 @@
 import { useRef } from 'preact/hooks'
 import InkwrightFigure, { Limb } from './InkwrightFigure.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
+import gameIconsData from '../data/gameIcons.json'
+import bespokeIconsData from '../data/bespokeIcons.json'
+import { resolveItemIcon } from '../utils/itemIconResolve.js'
 
 /**
  * Inkwright's combat presentation: two figures facing each other — the
@@ -37,12 +40,19 @@ import { HitSplatLayer } from './HitSplat.jsx'
  * to prevent, same as ActionSpriteStage's `--as-dur`.
  *
  * Props (identical shape to ActionSpriteStage, plus the additions below):
- *   actor       — { motion: 'melee'|'ranged'|'magic', swingMs, accent } — NOTE this
- *                 also carries a `tool` field (ACTION_SPRITES' old glyph key, e.g.
- *                 'sword'/'bow'/'staff') that this component must NOT read; `motion`
+ *   actor       — { motion: 'melee'|'ranged'|'magic', swingMs, accent, weaponItem } —
+ *                 NOTE this also carries a `tool` field (ACTION_SPRITES' old glyph key,
+ *                 e.g. 'sword'/'bow'/'staff') that this component must NOT read; `motion`
  *                 is the one that names both the CSS keyframe family and CombatTool's
  *                 branch. Reading `.tool` here compiles fine and is silently wrong —
  *                 it renders every style as melee, since 'bow'/'staff' match neither
+ *                 `weaponItem` — the actual equipped weapon (item object from
+ *                 itemsData, or null/undefined unarmed) — is what the actor's own
+ *                 hand draws, via CombatWeaponIcon's bespoke-icon art, in place of
+ *                 CombatTool's generic per-style shape; CombatTool is now the
+ *                 fallback for unarmed and for anything with no resolvable icon.
+ *                 The enemy side has no equivalent — it stays the generic mirrored
+ *                 rig (CLAUDE.md's "per-monster art" is separate, deferred work).
  *                 CombatTool's 'ranged'/'magic' check and fall through to its default.
  *   target      — { accent, sprite?, dying? } — sprite present means it acts back;
  *                 dying plays the collapse animation and holds its end pose
@@ -176,7 +186,9 @@ export default function InkwrightCombatStage({
                 class={`inkc-arm${actorConsume ? ' is-eating' : ''}`}
               >
                 <Limb d="M84 58 L94 62 L100 64" w={11} />
-                {actorConsume ? <CombatConsume /> : <CombatTool kind={a.motion} accent={a.accent} />}
+                {actorConsume ? <CombatConsume /> : (
+                  <CombatWeaponIcon item={a.weaponItem} motion={a.motion} accent={a.accent} />
+                )}
               </g>
             </InkwrightFigure>
             {actorSwing && <CombatShot kind={a.motion} accent={a.accent} />}
@@ -292,12 +304,73 @@ function CombatConsume() {
   return <circle class="inkc-consume" cx="100" cy="64" r="5" />
 }
 
+// Every bespoke weapon icon (src/data/bespokeIcons.json) is authored on the
+// same 512x512 canvas, business end toward the top-right and grip toward the
+// bottom-centre — swords/axes/maces/spears/staves are drawn upright and
+// rotated -22° to -45° about their own centre, bows are drawn upright with
+// no rotation at all (see docs/action-animations.md's per-family notes if
+// this ever needs re-deriving). That convention is what makes ONE anchor per
+// MOTION — not per item — land all 151 weapons close enough to "held": the
+// icon's own centre goes near the hand, nudged up-right so the grip half (of
+// a pre-rotated icon) lands ON the hand and the business end reaches out to
+// roughly where CombatTool's generic blade used to point. `scale` is tuned
+// against the icon's full 512-unit canvas, not its drawn content, so it
+// looks small relative to the padding a css inspector would show.
+export const WEAPON_ICON_ANCHOR = {
+  melee:  { scale: 0.16, dx: 18, dy: -10 },
+  ranged: { scale: 0.14, dx: 0,  dy: 0 },
+  magic:  { scale: 0.15, dx: 7,  dy: -6 },
+}
+
+/** Exported so the fallback this exists to prevent — a malformed or
+ * unexpected viewBox silently anchoring a weapon off-canvas — can be tested
+ * without mounting the component (tests/inkwrightCombatWeaponIcon.test.ts). */
+export function viewBoxCenter(viewBox) {
+  const parts = String(viewBox || '0 0 512 512').split(/\s+/).map(Number)
+  const [minX, minY, w, h] = parts.length === 4 && parts.every(n => Number.isFinite(n)) ? parts : [0, 0, 512, 512]
+  return [minX + w / 2, minY + h / 2]
+}
+
+/** The player's actual weapon, drawn from its own bespoke inventory icon
+ * instead of CombatTool's generic per-style shape — CLAUDE.md's "the stage
+ * shows the style, not the item" is deliberately reversed here (was
+ * `docs/action-animations.md`'s "Deliberately not done" list; updated in the
+ * same change). Falls back to CombatTool for unarmed (no item) and for
+ * anything with no bespoke/glyph icon at all — today that's only unarmed,
+ * since every weapon in items.json has bespoke art. No tint/tool-body
+ * styling: bespoke icons are full-colour art, drawn exactly as authored,
+ * same as everywhere else GameIcon renders one. */
+function CombatWeaponIcon({ item, motion, accent }) {
+  if (!item) return <CombatTool kind={motion} accent={accent} />
+  const icon = resolveItemIcon(item, {
+    bespoke: typeof bespokeIconsData !== 'undefined' ? bespokeIconsData : null,
+    glyphs: typeof gameIconsData !== 'undefined' ? gameIconsData : null,
+  })
+  if (icon.kind === 'none') return <CombatTool kind={motion} accent={accent} />
+  const anchor = WEAPON_ICON_ANCHOR[motion] || WEAPON_ICON_ANCHOR.melee
+  const [vbx, vby] = viewBoxCenter(icon.viewBox)
+  const cx = 100 + anchor.dx
+  const cy = 64 + anchor.dy
+  return (
+    <g transform={`translate(${cx},${cy}) scale(${anchor.scale}) translate(${-vbx},${-vby})`}>
+      <g
+        {...(icon.tint ? { fill: icon.tint } : {})}
+        style={{ ...(icon.tint && { color: icon.tint }), ...(icon.glow && { filter: icon.glow }) }}
+        dangerouslySetInnerHTML={{ __html: icon.body }}
+      />
+    </g>
+  )
+}
+
 /** Every weapon shaft passes through the hand at (100,64), same rule as the
  * skilling tools — a weapon that doesn't touch the grip reads as floating
  * alongside the arm rather than held in it. `accent` tints only the
  * projectile-adjacent bits (bowstring glow, orb) — the weapon body itself
  * stays flat ink/cloth like everything else Inkwright draws; a fully
- * accent-coloured weapon would be the one non-ink object on the whole stage. */
+ * accent-coloured weapon would be the one non-ink object on the whole stage.
+ * Now the FALLBACK renderer — CombatWeaponIcon draws the actual equipped
+ * weapon's bespoke icon whenever one resolves — kept unarmed's plain blade
+ * and every existing shape for whatever no icon can be found for. */
 function CombatTool({ kind, accent }) {
   if (kind === 'ranged') {
     return (

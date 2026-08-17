@@ -168,6 +168,26 @@ between attacks, because `t` (the frozen/current target sprite) is already avail
 before the first swing token ever arrives — `target.sprite` is computed every render
 from `monsterCombatSprite`, independent of whether anything is mid-swing.
 
+**The actor's own weapon is the actual equipped item, drawn from its bespoke
+inventory icon — `CombatWeaponIcon` in `InkwrightCombatStage.jsx`.** This reverses
+the "per-weapon art" line that used to sit under "Deliberately not done" below: every
+weapon in `items.json` already has a `bespokeIcons.json` entry (151/151), so there was
+no coverage gap to design around. It costs no new art and no per-item authoring
+because `bespokeIcons.json`'s weapon entries already share one convention — a
+512×512 canvas, business end toward the top-right, grip toward the bottom-centre,
+swords/axes/maces/spears/staves pre-rotated -22° to -45° about their own centre and
+bows drawn upright with no rotation at all. `WEAPON_ICON_ANCHOR` exploits that: ONE
+anchor+scale per `motion` (melee/ranged/magic), not per item, is enough to land all
+151 weapons close enough to "held" — the icon's own centre lands near the hand,
+nudged up-right so a pre-rotated icon's grip half sits on the hand and its business
+end reaches out to roughly where `CombatTool`'s generic blade used to point. Bespoke
+icons render exactly as authored (full colour, no tint) — the one place on this stage
+that isn't flat ink, because the item is the point. `CombatTool` is now purely the
+FALLBACK: unarmed (no weapon item) and anything with no resolvable icon at all render
+the old generic per-style shape instead, unchanged. **Scoped to the actor only** — the
+enemy still draws the generic mirrored `CombatTool`, per-monster art is still the
+separate, deferred gap described two paragraphs up.
+
 **A swing is ONE-SHOT, not a loop** — `.inkc-fig--<motion>.is-swinging .inkc-arm`
 plays once per token and holds at rest until the next one, exactly the cadence
 `ActionSpriteStage` already established ("Why a swing is a token, not a boolean",
@@ -305,9 +325,6 @@ passes its own `icon` override before assuming it is uniform — `GatherScreen` 
 - **Boss adds** do not get their own stage. The stage follows the enemy the player is
   actually targeting; a stack of them would push the fight off a phone screen, the
   same reason only one add HP bar is drawn.
-- **Per-weapon art.** The stage shows the *style*, not the item — a scimitar and a
-  godsword both draw the same blade. Style is what the player needs to read
-  mid-fight; the item is already in the equipment pane.
 - **Per-monster art for the enemy.** Today every monster is the same rig with a
   coloured aura. Real per-monster silhouettes are the obvious next step and were
   explicitly deferred, not forgotten — see "Inkwright — the combat figures" above.
