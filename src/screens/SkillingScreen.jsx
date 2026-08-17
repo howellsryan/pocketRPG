@@ -7,6 +7,8 @@ import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillInfoBanner from '../components/SkillInfoBanner.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
+import InkwrightStage from '../components/InkwrightStage.jsx'
+import { inkwrightPlan } from '../utils/inkwright.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
@@ -988,9 +990,27 @@ Shop value: ×1.1
   const inventoryBlocked = skilling.action?.category !== 'reward'
     && skillingActionBlockedByFullInventory(skilling.action, inventory, itemsData)
 
+  // The figure, for the skills that have a motion. `skilling.action.ticks` is
+  // already the TOOL-ADJUSTED cost (getEffectiveToolActionTicks, stored on the
+  // session at start), so a Rune pickaxe strikes visibly faster than a Bronze
+  // one without this call site knowing tools exist. Built here rather than in
+  // SkillActivePanel because that panel is core and these modules are
+  // game-chunk only (§12).
+  const inkPlan = inkwrightPlan(selectedSkill, skilling.action.ticks)
+  const inkStage = inkPlan ? (
+    <InkwrightStage
+      plan={inkPlan}
+      product={producedItem}
+      yieldToken={skilling.totalActions}
+      paused={inventoryBlocked}
+      label={`${skilling.action.name} in progress`}
+    />
+  ) : null
+
   return (
     <SkillActivePanel
       skill={selectedSkill}
+      stage={inkStage}
       title={skilling.action.name}
       subtitle={inventoryBlocked ? 'Inventory full — paused' : null}
       progress={progress}

@@ -1271,7 +1271,12 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
       if (ev.type === 'monsterDeath') {
         kill = { bossId: next.bossId, monster: ev.monster, xpGained: { ...(ev.xpGained || {}) } }
       }
-      events.push({ ...ev, characterId: member.characterId, isTarget })
+      // `roomWide` rides alongside `isTarget` because the two answer different
+      // questions: who the boss is FACING, and who its swing actually REACHED.
+      // A room-wide attacker damages every member above while naming only one
+      // as the target, so a consumer reading `isTarget` alone concludes nobody
+      // else was hit.
+      events.push({ ...ev, characterId: member.characterId, isTarget, roomWide })
     }
 
     if (member.hp <= 0) {

@@ -1,0 +1,1210 @@
+<title>Inkwright Rig</title>
+<style>
+  :root {
+    --studio:      #121110;
+    --panel:       #1b1917;
+    --panel-hi:    #232019;
+    --rule:        #2f2a23;
+    --rule-soft:   #221f1a;
+    --text:        #e8e2d4;
+    --muted:       #8b8375;
+    --faint:       #5d574c;
+    --gold:        #d4a017;
+    --gold-hi:     #f0c040;
+
+    /* The two grounds the character must survive. Literal game values. */
+    --stage-parch: #e9dcbd;
+    --stage-iron:  #141414;
+
+    --display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    --ui: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--studio);
+    color: var(--text);
+    font-family: var(--ui);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 22px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+
+  .mast {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .mast h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 30px;
+    letter-spacing: 0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 7px;
+  }
+  .mast p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    max-width: 54ch;
+  }
+  .readout {
+    display: flex;
+    gap: 22px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+  }
+  .readout div { text-align: right; }
+  .readout dt {
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 3px;
+  }
+  .readout dd { margin: 0; font-size: 17px; color: var(--text); }
+  .readout dd.phase { color: var(--gold); font-size: 13px; padding-top: 3px; }
+
+  /* ── Stage pair ───────────────────────────────────────────── */
+
+  .stages {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .stage {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .stage__label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .swatch {
+    width: 11px; height: 11px;
+    border-radius: 2px;
+    border: 1px solid var(--rule);
+    flex-shrink: 0;
+  }
+  .stage__floor { padding: 18px 14px 14px; }
+  .stage__floor svg { display: block; width: 100%; height: auto; }
+
+  /* Both grounds are painted literally — this page is the one place they
+     must appear together, so neither follows the viewer's theme. */
+  .ground-parch { background: var(--stage-parch); }
+  .ground-iron  { background: var(--stage-iron); }
+
+  /* ── In-game progress bar replica ─────────────────────────── */
+
+  .bar {
+    position: relative;
+    height: 9px;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 14px;
+  }
+  .ground-parch .bar { background: rgba(26,26,14,0.13); }
+  .ground-iron  .bar { background: rgba(255,255,255,0.07); }
+  .bar__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #8b6914, var(--gold-hi));
+    min-width: 8px;
+  }
+  .bar__pct {
+    margin-top: 6px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ground-parch .bar__pct { color: rgba(26,26,14,0.5); }
+  .ground-iron  .bar__pct { color: rgba(245,230,200,0.5); }
+
+  /* ── Controls ─────────────────────────────────────────────── */
+
+  .console {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1px;
+    background: var(--rule-soft);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .cell {
+    background: var(--panel);
+    padding: 15px 16px 17px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .cell > label,
+  .cell__head {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .cell__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+  }
+  .cell__head b {
+    margin-left: auto;
+    white-space: nowrap;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  select, button {
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--panel-hi);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 8px 10px;
+    cursor: pointer;
+    width: 100%;
+    min-height: 38px;
+  }
+  select:focus-visible,
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+  button:hover { border-color: var(--faint); }
+  button[aria-pressed="true"] {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #17140d;
+    font-weight: 600;
+  }
+  .btn-row { display: flex; gap: 8px; }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--gold);
+    min-height: 30px;
+  }
+
+  .verbs { display: flex; gap: 6px; }
+  .verbs button { padding: 8px 4px; font-size: 12.5px; }
+
+  /* ── Tint ladder ──────────────────────────────────────────── */
+
+  .ladder-wrap { display: flex; flex-direction: column; gap: 11px; }
+  .ladder-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .ladder-head h2 {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .ladder-head span { color: var(--muted); font-size: 12.5px; }
+  .ladder-head code { font-family: var(--mono); font-size: 11.5px; color: var(--text); }
+  .ladder {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    gap: 8px;
+  }
+  .rung {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 9px 9px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    cursor: pointer;
+    text-align: left;
+    min-height: 0;
+  }
+  .rung[aria-pressed="true"] { border-color: var(--gold); }
+  .rung__chip {
+    height: 22px;
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.09);
+  }
+  .rung__chip--art {
+    height: 40px;
+    background: var(--panel-hi);
+    display: grid;
+    place-items: center;
+  }
+  .rung__chip--art svg { width: 34px; height: 34px; display: block; }
+  .rung__name {
+    font-size: 11.5px;
+    line-height: 1.25;
+    color: var(--text);
+  }
+  .rung__meta {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Notes ────────────────────────────────────────────────── */
+
+  .notes {
+    border-top: 1px solid var(--rule);
+    padding-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 22px;
+  }
+  .note h3 {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 7px;
+  }
+  .note p { margin: 0; color: var(--muted); font-size: 13px; }
+  .note em { color: var(--text); font-style: normal; font-weight: 600; }
+  .note code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text);
+    background: var(--panel);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+
+  .guides { display: none; }
+  .show-guides .guides { display: block; }
+
+  @media (max-width: 720px) {
+    .stages { grid-template-columns: 1fr; }
+    .mast { align-items: flex-start; }
+    .readout { gap: 16px; }
+  }
+
+  @keyframes chipFly {
+    from { opacity: 1; transform: translate(0,0) rotate(0deg); }
+    to   { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--dr)); }
+  }
+  .chip { animation: chipFly 620ms ease-out forwards; }
+
+  @keyframes puffOut {
+    from { opacity: 0.5; transform: translate(0,0) scale(0.4); }
+    to   { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.9); }
+  }
+  .puff { animation: puffOut 760ms ease-out forwards; }
+
+  @keyframes yieldPop {
+    0%   { opacity: 0; transform: translate(0,0) scale(0.5); }
+    22%  { opacity: 1; transform: translate(0,-13px) scale(1.12); }
+    72%  { opacity: 1; transform: translate(0,-19px) scale(1); }
+    100% { opacity: 0; transform: translate(0,-30px) scale(0.95); }
+  }
+  .yield { animation: yieldPop 1000ms ease-out forwards; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chip, .puff, .yield { animation-duration: 1ms !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <div>
+      <div class="eyebrow">Skilling rig · preview</div>
+      <h1>Inkwright</h1>
+      <p>One inked-vector figure, reused across every skill. The tool and the motion change per verb; the resource colour drives the prop, never the character.</p>
+    </div>
+    <dl class="readout">
+      <div><dt>Action</dt><dd id="ro-ticks">—</dd></div>
+      <div><dt>Swings</dt><dd id="ro-swings">—</dd></div>
+      <div><dt>Progress</dt><dd id="ro-pct">—</dd></div>
+      <div><dt>Phase</dt><dd class="phase" id="ro-phase">—</dd></div>
+    </dl>
+  </header>
+
+  <section class="stages" aria-label="Character on both game themes">
+    <div class="stage">
+      <div class="stage__label">
+        <span>Light theme · parchment</span>
+        <span class="swatch" style="background:var(--stage-parch)"></span>
+      </div>
+      <div class="stage__floor ground-parch" id="floor-parch"></div>
+    </div>
+    <div class="stage">
+      <div class="stage__label">
+        <span>Dark theme · iron</span>
+        <span class="swatch" style="background:var(--stage-iron)"></span>
+      </div>
+      <div class="stage__floor ground-iron" id="floor-iron"></div>
+    </div>
+  </section>
+
+  <section class="console" aria-label="Rig controls">
+    <div class="cell">
+      <label id="lbl-verb">Verb</label>
+      <div class="verbs" role="group" aria-labelledby="lbl-verb" id="verb-group"></div>
+    </div>
+
+    <div class="cell">
+      <label for="sel-action">Resource</label>
+      <select id="sel-action"></select>
+    </div>
+
+    <div class="cell">
+      <div class="cell__head"><span>Swing tempo</span><b id="out-swings">—</b></div>
+      <input type="range" id="rng-swings" min="450" max="1500" step="25" value="800" aria-label="Milliseconds per swing">
+      <div class="cell__head" style="color:var(--faint)"><span id="swing-period">—</span></div>
+    </div>
+
+    <div class="cell">
+      <div class="cell__head"><span>Scrub whole cycle</span><b id="out-scrub">0%</b></div>
+      <input type="range" id="rng-scrub" min="0" max="1000" step="1" value="0" aria-label="Scrub through the full cycle including the payoff">
+      <div class="btn-row">
+        <button id="btn-play" aria-pressed="true">Pause</button>
+        <button id="btn-guides" aria-pressed="false">Guides</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="ladder-wrap" aria-label="Resource tint range">
+    <div class="ladder-head">
+      <h2 id="ladder-title">Tint ladder</h2>
+      <span id="ladder-note"></span>
+    </div>
+    <div class="ladder" id="ladder"></div>
+  </section>
+
+  <section class="notes">
+    <div class="note">
+      <h3>Tick-locked</h3>
+      <p>Every action swings at the same tempo. A longer one takes <em>more</em> strikes, not slower ones — runeforged ore is 23 swings, tin is 3. The last one lands exactly as the bar reaches 100%.</p>
+    </div>
+    <div class="note">
+      <h3>The payoff</h3>
+      <p>The rock bursts into shards. The trunk lets go at the notch the axe has been cutting, topples and drops, leaving a stump. The rod snaps up and the catch is taken out of the air by hand.</p>
+    </div>
+    <div class="note">
+      <h3>Ink flips, figure doesn't</h3>
+      <p>The outline takes its colour from the ground — dark ink on parchment, warm bone on iron. Same geometry, same rig, two semantic tokens.</p>
+    </div>
+    <div class="note">
+      <h3>Cost</h3>
+      <p>Around 70 SVG primitives and one transform per part per frame, plus 8.6 KB of fish art lifted straight from <code>bespokeIcons.json</code>. No sprite sheets, no WebGL, no new dependency.</p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var TICK_MS = 600;
+  var IMPACT_PH = 0.70;   // phase within a swing where the tool lands
+
+  // Rig anchors. Everything the arm carries is positioned in the figure's
+  // own space and rotated about the shoulder, so tools stay in the hand.
+  var SHOULDER = [84, 58];
+  var HAND     = [100, 64];
+  var ROD_TIP  = [138, 36];
+
+  // Real actions from src/data/skills.json, with the tint each product
+  // resolves to through getItemIconTint / resolveIconTint.
+  var VERBS = {
+    mine: {
+      label: 'Mine',
+      payoffMs: 900,
+      actions: [
+        { id:'tin',        name:'Tin ore',        lvl:1,  ticks:4,  tint:'#e8d5a8' },
+        { id:'copper',     name:'Copper ore',     lvl:1,  ticks:4,  tint:'#b87333' },
+        { id:'clay',       name:'Clay',           lvl:1,  ticks:4,  tint:'#e8d5a8' },
+        { id:'iron',       name:'Iron ore',       lvl:15, ticks:5,  tint:'#8c8c8c' },
+        { id:'coal',       name:'Coal',           lvl:30, ticks:6,  tint:'#2b2b2b' },
+        { id:'gold',       name:'Gold ore',       lvl:40, ticks:6,  tint:'#f39c12' },
+        { id:'mithril',    name:'Mithril ore',    lvl:55, ticks:7,  tint:'#3550c4' },
+        { id:'adamantite', name:'Adamantite ore', lvl:70, ticks:8,  tint:'#3aa55f' },
+        { id:'runite',     name:'Runeforged ore', lvl:85, ticks:30, tint:'#b7e4ff' }
+      ]
+    },
+    chop: {
+      label: 'Chop',
+      payoffMs: 1500,
+      actions: [
+        { id:'normal',   name:'Logs',          lvl:1,  ticks:4,  tint:'#c9a96e' },
+        { id:'oak',      name:'Oak logs',      lvl:15, ticks:5,  tint:'#a07444' },
+        { id:'willow',   name:'Willow logs',   lvl:30, ticks:6,  tint:'#b08a55' },
+        { id:'teak',     name:'Teak logs',     lvl:35, ticks:7,  tint:'#7a5228' },
+        { id:'maple',    name:'Maple logs',    lvl:45, ticks:7,  tint:'#8a6234' },
+        { id:'mahogany', name:'Mahogany logs', lvl:50, ticks:8,  tint:'#5c3015' },
+        { id:'yew',      name:'Yew logs',      lvl:60, ticks:8,  tint:'#6b4420' },
+        { id:'magic',    name:'Magic logs',    lvl:75, ticks:9,  tint:'#3498db' },
+        { id:'redwood',  name:'Redwood logs',  lvl:90, ticks:10, tint:'#c0372b' }
+      ]
+    },
+    fish: {
+      label: 'Fish',
+      payoffMs: 1400,
+      actions: [
+        { id:'shrimps',    name:'Shrimps',    lvl:1,  ticks:4,  tint:'#cdb0b8' },
+        { id:'trout',      name:'Trout',      lvl:20, ticks:5,  tint:'#e0a7a0' },
+        { id:'tuna',       name:'Tuna',       lvl:35, ticks:6,  tint:'#3f6d8c' },
+        { id:'crab',       name:'Crab',       lvl:40, ticks:6,  tint:'#a78a86' },
+        { id:'eel',        name:'Eel',        lvl:50, ticks:7,  tint:'#566472' },
+        { id:'karam',      name:'Karam',      lvl:65, ticks:8,  tint:'#e0a7a0' },
+        { id:'shark',      name:'Shark',      lvl:76, ticks:8,  tint:'#97a4b0' },
+        { id:'manta_ray',  name:'Manta ray',  lvl:85, ticks:9,  tint:'#8a929c' },
+        { id:'anglerfish', name:'Anglerfish', lvl:90, ticks:10, tint:'#e0a7a0' }
+      ]
+    }
+  };
+
+  var state = {
+    verb: 'mine',
+    action: VERBS.mine.actions[3],
+    tempo: 800,   // ms per swing, held constant across every action
+    playing: true,
+    guides: false,
+    cursor: 0,          // 0..1 across the WHOLE cycle (action + payoff)
+    lastImpact: -1,
+    broke: false,
+    yielded: false,
+    dusted: false
+  };
+
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  function el(name, attrs) {
+    var n = document.createElementNS(SVG_NS, name);
+    if (attrs) for (var k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function easeOut(t) { return 1 - Math.pow(1 - t, 2.2); }
+  function easeIn(t)  { return Math.pow(t, 2.6); }
+
+  // A long action is more swings at the same tempo — never a slower swing.
+  function swingCount() {
+    return Math.max(1, Math.round(state.action.ticks * TICK_MS / state.tempo));
+  }
+  function periodCount() {
+    var n = swingCount();
+    return state.verb === 'fish' ? n : (n - 1 + IMPACT_PH);
+  }
+
+  function cycleMs()   { return state.action.ticks * TICK_MS + VERBS[state.verb].payoffMs; }
+  function actionFrac(){ return (state.action.ticks * TICK_MS) / cycleMs(); }
+
+  // A point carried by the arm, in page space, for a given arm rotation.
+  function carried(pt, armDeg, bob) {
+    var a = armDeg * Math.PI / 180;
+    var dx = pt[0] - SHOULDER[0], dy = pt[1] - SHOULDER[1];
+    return [SHOULDER[0] + dx * Math.cos(a) - dy * Math.sin(a),
+            SHOULDER[1] + dx * Math.sin(a) + dy * Math.cos(a) + bob];
+  }
+
+  // ── The rig ───────────────────────────────────────────────────
+  // Inked vector: one uniform outline weight, flat fills, no interior
+  // detail that dies below 90px. Parts are <g> nodes the loop rotates.
+
+  function buildStage(host, mode) {
+    host.innerHTML = '';
+
+    var ink   = mode === 'parch' ? '#1a1a0e' : '#e9dcbd';
+    var cloth = mode === 'parch' ? '#f6efdd' : '#2a2724';
+    var cloth2= mode === 'parch' ? '#d3bf93' : '#3d372f';
+    var shade = mode === 'parch' ? 'rgba(26,26,14,0.10)' : 'rgba(233,220,189,0.09)';
+
+    var svg = el('svg', { viewBox: '0 0 200 128', role: 'img' });
+    svg.setAttribute('aria-label', 'Character performing the ' + state.verb + ' animation');
+
+    var W = 3.1; // one ink weight everywhere — the defining constraint
+
+    svg.appendChild(el('path', {
+      d: 'M12 108 H188', stroke: ink, 'stroke-width': 2, 'stroke-linecap': 'round', opacity: 0.28
+    }));
+    svg.appendChild(el('ellipse', { cx: 76, cy: 108, rx: 23, ry: 3.4, fill: shade }));
+
+    var propG = el('g');
+    svg.appendChild(propG);
+
+    var fig = el('g');
+    svg.appendChild(fig);
+
+    var common = { stroke: ink, 'stroke-width': W, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' };
+    function part(name, attrs) {
+      var a = {};
+      for (var k in common) a[k] = common[k];
+      for (var j in attrs) a[j] = attrs[j];
+      return el(name, a);
+    }
+    // An outlined limb: one ink stroke, one narrower cloth stroke on top.
+    // Drawing it the other way round gives a stick with a halo.
+    function limb(d, thickness, fillCol) {
+      var g = el('g');
+      g.appendChild(el('path', { d: d, fill: 'none', stroke: ink, 'stroke-width': thickness,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+      g.appendChild(el('path', { d: d, fill: 'none', stroke: fillCol, 'stroke-width': thickness - W * 2,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+      return g;
+    }
+
+    fig.appendChild(limb('M72 84 L63 96 L55 103', 12, cloth2));   // back leg
+    fig.appendChild(limb('M78 84 L86 97 L95 104', 13, cloth));    // front leg
+
+    var armBack = limb('M78 60 L68 70 L66 78', 10, cloth2);
+    fig.appendChild(armBack);
+
+    // Torso — a cinched tunic with enough mass to carry the limbs.
+    var torso = el('g');
+    torso.appendChild(part('path', { d: 'M67 54 Q64 72 66 86 L86 86 Q88 72 86 54 Z', fill: cloth }));
+    torso.appendChild(part('path', { d: 'M66.5 73 L86.5 73', fill: 'none', 'stroke-width': W + 1.4 }));
+    fig.appendChild(torso);
+
+    // Head — a hood that drapes FORWARD over the brow. The earlier version
+    // peaked upward, which read as an animal ear rather than a cowl.
+    var head = el('g');
+    head.appendChild(part('path', {
+      d: 'M65 57 Q57 45 62 32 Q69 21 81 23 Q94 26 94 41 Q94 51 89 57 Z', fill: cloth
+    }));
+    // Shadowed opening, set into the front of the hood.
+    head.appendChild(el('path', {
+      d: 'M85 33 Q93 36 92 45 Q90 52 84 53 Q80 43 85 33 Z', fill: ink, opacity: 0.88
+    }));
+    // Mantle across the shoulders, tying hood to torso.
+    head.appendChild(part('path', {
+      d: 'M64 53 Q76 63 90 53 Q92 60 86 65 L68 65 Q62 60 64 53 Z', fill: cloth2
+    }));
+    fig.appendChild(head);
+
+    // Front arm + tool. Everything rotates about the shoulder together.
+    var armFront = el('g');
+    armFront.appendChild(limb('M84 58 L94 62 L100 64', 11, cloth));
+    var toolG = el('g');
+    armFront.appendChild(toolG);
+    fig.appendChild(armFront);
+
+    var overlay = el('g');
+    svg.appendChild(overlay);
+
+    var guides = el('g', { class: 'guides', opacity: 0.55 });
+    [SHOULDER, HAND, [148, 108]].forEach(function (p) {
+      guides.appendChild(el('circle', { cx: p[0], cy: p[1], r: 2, fill: 'none', stroke: '#d4a017', 'stroke-width': 0.9 }));
+      guides.appendChild(el('path', { d: 'M' + (p[0]-6) + ' ' + p[1] + ' H' + (p[0]+6), stroke: '#d4a017', 'stroke-width': 0.5 }));
+      guides.appendChild(el('path', { d: 'M' + p[0] + ' ' + (p[1]-6) + ' V' + (p[1]+6), stroke: '#d4a017', 'stroke-width': 0.5 }));
+    });
+    svg.appendChild(guides);
+
+    var fx = el('g');
+    svg.appendChild(fx);
+
+    host.appendChild(svg);
+
+    var bar = document.createElement('div');
+    bar.className = 'bar';
+    var fill = document.createElement('div');
+    fill.className = 'bar__fill';
+    bar.appendChild(fill);
+    host.appendChild(bar);
+    var pct = document.createElement('div');
+    pct.className = 'bar__pct';
+    host.appendChild(pct);
+
+    return {
+      ink: ink, cloth: cloth, cloth2: cloth2, W: W,
+      fig: fig, torso: torso, head: head, armFront: armFront, armBack: armBack,
+      tool: toolG, prop: propG, overlay: overlay, fx: fx, fill: fill, pct: pct, part: part, limb: limb
+    };
+  }
+
+  // ── Tools ─────────────────────────────────────────────────────
+  // Each shaft passes THROUGH the hand at (100,64) and shows a grip, so
+  // the tool reads as held rather than floating alongside the arm.
+
+  function drawTool(s) {
+    s.tool.innerHTML = '';
+    var p = s.part;
+
+    if (state.verb === 'mine') {
+      s.tool.appendChild(s.limb('M92 70 L128 50', 7, s.cloth2));            // shaft
+      s.tool.appendChild(p('path', {                                        // pick head
+        d: 'M120 38 Q135 46 128 62', fill: 'none', 'stroke-width': 8
+      }));
+      s.tool.appendChild(p('path', {
+        d: 'M120 38 Q135 46 128 62', fill: 'none', stroke: s.cloth, 'stroke-width': 2.6
+      }));
+      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 9, stroke: s.ink }));
+      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 4.4, stroke: s.cloth }));
+
+    } else if (state.verb === 'chop') {
+      s.tool.appendChild(s.limb('M92 70 L124 52', 7, s.cloth2));            // shaft
+      s.tool.appendChild(p('path', {                                        // blade
+        d: 'M117 45 L128 47 Q135 54 128 61 L117 60 Z', fill: s.cloth2
+      }));
+      s.tool.appendChild(p('path', {                                        // cutting edge
+        d: 'M128 47 Q135 54 128 61', fill: 'none', stroke: s.cloth, 'stroke-width': 2.4
+      }));
+      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 9, stroke: s.ink }));
+      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 4.4, stroke: s.cloth }));
+
+    } else {
+      s.tool.appendChild(s.limb('M92 72 L138 36', 5.4, s.cloth2));          // rod
+      s.tool.appendChild(p('circle', { cx: 103, cy: 63, r: 3.2, fill: s.cloth }));   // reel
+    }
+  }
+
+  // ── Props ─────────────────────────────────────────────────────
+  // Each prop stores the nodes the payoff animates, so nothing is
+  // rebuilt per frame — the loop only writes transforms.
+
+  var ROCK = 'M130 108 Q123 96 129 85 Q135 75 148 73 Q161 72 166 84 Q171 96 165 105 Q160 109 152 108 Z';
+  var SHARDS = [
+    { d: 'M130 108 Q123 96 129 85 L143 89 L141 108 Z',           dx: -18, dy:  -7, rot: -58 },
+    { d: 'M129 85 Q135 75 148 73 L150 87 L143 89 Z',             dx:  -8, dy: -25, rot: -88 },
+    { d: 'M148 73 Q161 72 166 84 L157 92 L150 87 Z',             dx:  14, dy: -24, rot:  72 },
+    { d: 'M143 89 L150 87 L157 92 L166 84 Q171 96 165 105 Q160 109 152 108 L141 108 Z', dx: 22, dy: -5, rot: 46 }
+  ];
+
+  // The nine raw-fish bodies lifted verbatim from src/data/bespokeIcons.json,
+  // so the water shows the same art the inventory does.
+  var FISH_ART = {
+    shrimps: { s: 0.042, body: '<defs><linearGradient id="raw_shrimps_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6d2d8"/><stop offset="0.55" stop-color="#cdb0b8"/><stop offset="1" stop-color="#9a7f88"/></linearGradient></defs><g stroke="#3a1c10" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><path d="M150 150 C 280 130 380 200 384 300 C 388 372 332 420 262 420 C 184 420 132 364 138 300 C 144 256 176 232 214 240 C 178 210 162 180 150 150 Z" fill="url(#raw_shrimps_b)"/><path d="M384 300 C 410 280 416 250 408 224 M384 312 C 414 312 436 296 448 272" stroke="#9a7f88" stroke-width="14" fill="none"/><path d="M196 296 C 220 286 250 286 270 298 M204 336 C 230 326 262 326 286 338 M222 372 C 246 364 274 364 296 374" stroke="#9a7f88" stroke-width="9" fill="none"/><circle cx="180" cy="186" r="11" fill="#2a1208" stroke="none"/><path d="M150 150 L120 120 M158 158 L128 150" stroke="#9a7f88" stroke-width="7" fill="none"/></g>' },
+    trout: { s: 0.055, body: '<defs><linearGradient id="raw_trout_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3c8c2"/><stop offset="0.55" stop-color="#e0a7a0"/><stop offset="1" stop-color="#a86f68"/></linearGradient></defs><g stroke="#2a2018" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><polygon points="396,256 466,200 448,256 466,312 396,300" fill="#a86f68"/><path d="M92 256 C 168 182 332 182 404 232 L422 256 L404 280 C 332 330 168 330 92 256 Z" fill="url(#raw_trout_b)"/><polygon points="232,200 290,128 314,206" fill="#a86f68"/><path d="M104 250 C 180 296 300 300 360 288 L360 312 C 280 322 168 312 110 282 Z" fill="#f3c8c2" stroke="none"/><circle cx="156" cy="240" r="13" fill="#2a2018" stroke="none"/><circle cx="151" cy="235" r="4" fill="#fff" stroke="none"/><path d="M186 226 L186 286 M212 222 L212 290" stroke="#a86f68" stroke-width="6" fill="none"/></g>' },
+    tuna: { s: 0.065, body: '<defs><linearGradient id="raw_tuna_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#13293a"/><stop offset="0.5" stop-color="#3f6d8c"/><stop offset="1" stop-color="#eaf4fb"/></linearGradient></defs><g stroke="#0d1b26" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><path d="M96 256 C 130 216 200 196 288 200 C 348 204 392 224 420 256 C 392 288 348 308 288 312 C 200 316 130 296 96 256 Z" fill="url(#raw_tuna_b)"/><path d="M394 232 C 424 208 448 196 470 198 C 458 220 452 240 450 256 C 452 272 458 294 470 314 C 448 316 424 304 394 280 Z" fill="#13293a"/><path d="M244 200 C 250 160 268 128 288 118 C 292 152 288 184 278 206 Z" fill="#13293a"/><path d="M170 270 C 190 300 210 322 200 340 C 176 326 156 300 154 276 Z" fill="#13293a"/><path d="M330 208 L338 192 L344 210 L354 194 L360 210 L370 196 L376 210 L386 200 L392 210" stroke="#f2c94c" stroke-width="6" fill="none"/><path d="M112 268 C 182 296 282 300 362 288 C 366 300 362 308 356 310 C 272 322 172 318 120 292 Z" fill="#eaf4fb" stroke="none"/><circle cx="150" cy="246" r="13" fill="#0d1b26" stroke="none"/><circle cx="145" cy="241" r="4" fill="#fff" stroke="none"/></g>' },
+    crab: { s: 0.052, body: '<defs><radialGradient id="raw_crab_s" cx="0.4" cy="0.32" r="0.8"><stop offset="0" stop-color="#cdb6b0"/><stop offset="0.6" stop-color="#a78a86"/><stop offset="1" stop-color="#6f5a58"/></radialGradient></defs><g stroke="#3a2c2a" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><path d="M120 300 C 96 280 92 252 110 240 M392 300 C 416 280 420 252 402 240" fill="none" stroke="#9a8480" stroke-width="16"/><path d="M150 330 L100 350 M150 360 L104 392 M362 330 L412 350 M362 360 L408 392" stroke="#9a8480" stroke-width="14" fill="none"/><path d="M140 230 C 110 218 100 244 116 264 C 132 282 120 252 150 256 Z" fill="url(#raw_crab_s)"/><path d="M372 230 C 402 218 412 244 396 264 C 380 282 392 252 362 268 Z" fill="url(#raw_crab_s)"/><ellipse cx="256" cy="296" rx="138" ry="92" fill="url(#raw_crab_s)"/><path d="M150 280 C 220 300 292 300 362 280" stroke="#6f5a58" stroke-width="8" fill="none"/><ellipse cx="214" cy="262" rx="18" ry="22" fill="#f0e6e2" stroke="#3a2c2a" stroke-width="8"/><ellipse cx="298" cy="262" rx="18" ry="22" fill="#f0e6e2" stroke="#3a2c2a" stroke-width="8"/><circle cx="214" cy="266" r="8" fill="#2a1f1e" stroke="none"/><circle cx="298" cy="266" r="8" fill="#2a1f1e" stroke="none"/></g>' },
+    eel: { s: 0.068, body: '<defs><linearGradient id="raw_eel_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8896a4"/><stop offset="0.55" stop-color="#566472"/><stop offset="1" stop-color="#33404c"/></linearGradient></defs><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M110 150 C 200 170 180 250 256 270 C 340 292 330 380 410 392" stroke="#1f2228" stroke-width="62"/><path d="M110 150 C 200 170 180 250 256 270 C 340 292 330 380 410 392" stroke="url(#raw_eel_b)" stroke-width="44"/><path d="M120 150 C 196 168 184 240 250 262" stroke="#8896a4" stroke-width="8"/></g><g stroke="#1f2228" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"><path d="M110 150 C 70 138 60 168 84 184 C 104 196 96 168 124 172 Z" fill="url(#raw_eel_b)"/><circle cx="98" cy="158" r="8" fill="#ffd24a" stroke="none"/></g>' },
+    karam: { s: 0.058, body: '<defs><linearGradient id="raw_karam_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3c8c2"/><stop offset="0.55" stop-color="#e0a7a0"/><stop offset="1" stop-color="#a86f68"/></linearGradient></defs><g stroke="#2a2018" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><polygon points="396,256 466,200 448,256 466,312 396,300" fill="#a86f68"/><path d="M92 256 C 168 182 332 182 404 232 L422 256 L404 280 C 332 330 168 330 92 256 Z" fill="url(#raw_karam_b)"/><polygon points="232,200 290,128 314,206" fill="#a86f68"/><path d="M104 250 C 180 296 300 300 360 288 L360 312 C 280 322 168 312 110 282 Z" fill="#f3c8c2" stroke="none"/><circle cx="156" cy="240" r="13" fill="#2a2018" stroke="none"/><circle cx="151" cy="235" r="4" fill="#fff" stroke="none"/><path d="M186 226 L186 286 M212 222 L212 290" stroke="#a86f68" stroke-width="6" fill="none"/></g>' },
+    shark: { s: 0.08, body: '<defs><linearGradient id="raw_shark_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8d0d8"/><stop offset="0.5" stop-color="#97a4b0"/><stop offset="1" stop-color="#6a7580"/></linearGradient></defs><g stroke="#2a323a" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><polygon points="404,250 472,196 452,254 474,330 402,288" fill="#7d8a96"/><path d="M72 268 C 150 214 250 206 360 232 C 392 240 414 250 414 262 C 414 274 392 286 360 296 C 250 322 150 320 92 296 C 76 290 66 278 72 268 Z" fill="url(#raw_shark_b)"/><polygon points="236,214 312,118 320,224" fill="#7d8a96"/><polygon points="196,300 232,372 286,312" fill="#7d8a96"/><path d="M96 286 C 170 312 280 312 356 300 C 360 312 356 320 350 322 C 270 334 168 330 104 304 Z" fill="#dbe2e8" stroke="none"/><circle cx="140" cy="258" r="13" fill="#2a323a" stroke="none"/><path d="M76 276 C 100 290 128 294 156 292" fill="none" stroke="#2a323a" stroke-width="7"/></g>' },
+    manta_ray: { s: 0.072, body: '<defs><radialGradient id="raw_manta_ray_b" cx="0.5" cy="0.38" r="0.7"><stop offset="0" stop-color="#b4bcc6"/><stop offset="0.6" stop-color="#8a929c"/><stop offset="1" stop-color="#565d66"/></radialGradient></defs><g stroke="#2a2620" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><path d="M256 150 C 320 156 360 196 420 256 C 372 276 372 300 396 336 C 340 320 300 322 256 332 C 212 322 172 320 116 336 C 140 300 140 276 92 256 C 152 196 192 156 256 150 Z" fill="url(#raw_manta_ray_b)"/><path d="M256 332 C 256 380 250 420 256 456 C 262 420 256 380 256 332 Z" fill="#565d66"/><path d="M236 178 L218 156 M276 178 L294 156" stroke="#565d66" stroke-width="9" fill="none"/><circle cx="226" cy="210" r="9" fill="#2a2620" stroke="none"/><circle cx="286" cy="210" r="9" fill="#2a2620" stroke="none"/><path d="M150 256 C 200 246 312 246 362 256" stroke="#b4bcc6" stroke-width="7" fill="none"/></g>' },
+    anglerfish: { s: 0.06, body: '<defs><linearGradient id="raw_anglerfish_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3c8c2"/><stop offset="0.55" stop-color="#e0a7a0"/><stop offset="1" stop-color="#a86f68"/></linearGradient></defs><g stroke="#2a2018" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"><polygon points="396,256 466,200 448,256 466,312 396,300" fill="#a86f68"/><path d="M92 256 C 168 182 332 182 404 232 L422 256 L404 280 C 332 330 168 330 92 256 Z" fill="url(#raw_anglerfish_b)"/><polygon points="232,200 290,128 314,206" fill="#a86f68"/><path d="M104 250 C 180 296 300 300 360 288 L360 312 C 280 322 168 312 110 282 Z" fill="#f3c8c2" stroke="none"/><circle cx="156" cy="240" r="13" fill="#2a2018" stroke="none"/><circle cx="151" cy="235" r="4" fill="#fff" stroke="none"/><path d="M186 226 L186 286 M212 222 L212 290" stroke="#a86f68" stroke-width="6" fill="none"/></g>' },
+  };
+
+  var TREE_PIVOT = [141, 79];   // the cut, not the roots
+
+  function drawProp(s) {
+    s.prop.innerHTML = '';
+    s.overlay.innerHTML = '';
+    s.rockBody = s.shards = s.shardG = s.tree = s.stump = s.notch = s.fishNode = s.lineNode = null;
+    var p = s.part;
+    var tint = state.action.tint;
+
+    if (state.verb === 'mine') {
+      var body = el('g');
+      body.appendChild(p('path', { d: ROCK, fill: tint }));
+      body.appendChild(el('path', { d: 'M150 87 L157 92 L166 84 Q171 96 165 105 Q160 109 152 108 L141 108 L143 89 Z',
+        fill: 'rgba(0,0,0,0.13)' }));
+      body.appendChild(p('path', { d: 'M143 89 L150 87 L157 92', fill: 'none', 'stroke-width': s.W - 1.2 }));
+      body.appendChild(p('path', { d: 'M143 89 L141 108', fill: 'none', 'stroke-width': s.W - 1.2 }));
+      s.prop.appendChild(body);
+      s.rockBody = body;
+
+      var shardG = el('g', { opacity: 0 });
+      s.shards = [];
+      SHARDS.forEach(function (sh) {
+        var node = p('path', { d: sh.d, fill: tint, 'stroke-width': s.W - 0.4 });
+        shardG.appendChild(node);
+        s.shards.push(node);
+      });
+      s.prop.appendChild(shardG);
+      s.shardG = shardG;
+
+    } else if (state.verb === 'chop') {
+      // The stump is the trunk BELOW the cut and never moves. The faller is
+      // everything above it, hinged at the notch — so the trunk lets go where
+      // the axe has been landing rather than snapping off at the roots.
+      s.stump = el('g');
+      s.stump.appendChild(p('path', { d: 'M132 108 Q131.4 92 133.2 79 L148.8 79 Q150.4 92 150 108 Z', fill: tint }));
+      s.cutFace = p('path', { d: 'M133.2 79 L148.8 79 L148.4 75 L133.6 75 Z', fill: s.cloth2, opacity: 0 });
+      s.stump.appendChild(s.cutFace);
+      s.prop.appendChild(s.stump);
+
+      var tree = el('g');
+      tree.appendChild(p('path', {                                    // canopy
+        d: 'M140 60 Q116 56 118 38 Q120 21 138 19 Q158 17 163 33 Q167 53 144 60 Z',
+        fill: tint, opacity: 0.5
+      }));
+      tree.appendChild(p('path', {                                    // trunk above the cut
+        d: 'M133.2 79 Q134 68 135 58 L147 58 Q148 68 148.8 79 Z', fill: tint
+      }));
+      tree.appendChild(el('path', { d: 'M142 58 Q143.5 68 144.4 79 L148.8 79 Q148 68 147 58 Z', fill: 'rgba(0,0,0,0.13)' }));
+      s.notch = el('path', { d: 'M133.2 70 L133.2 70 L133.2 79 Z', fill: s.ink });
+      tree.appendChild(s.notch);
+      s.prop.appendChild(tree);
+      s.tree = tree;
+
+    } else {
+      s.prop.appendChild(el('path', { d: 'M112 96 H196 V128 H112 Z', fill: tint, opacity: 0.16 }));
+      s.prop.appendChild(p('path', { d: 'M112 96 Q126 92 140 96 T166 96 T196 96', fill: 'none', 'stroke-width': s.W - 0.6 }));
+      var art = FISH_ART[state.action.id];
+      var fish = el('g');
+      var inner = el('g', { transform: 'scale(' + art.s + ') translate(-256,-256)' });
+      inner.innerHTML = art.body;
+      fish.appendChild(inner);
+      s.lineNode = p('path', { d: '', fill: 'none', 'stroke-width': 1.1, opacity: 0.7, stroke: s.ink });
+      s.overlay.appendChild(s.lineNode);
+      s.overlay.appendChild(fish);
+      s.fishNode = fish;
+    }
+  }
+
+  function resetProp(s) {
+    if (s.rockBody) s.rockBody.setAttribute('opacity', 1);
+    if (s.shardG)   s.shardG.setAttribute('opacity', 0);
+    if (s.shards)   s.shards.forEach(function (n) { n.setAttribute('transform', ''); n.setAttribute('opacity', 1); });
+    if (s.tree)   { s.tree.setAttribute('transform', ''); s.tree.setAttribute('opacity', 1); }
+    if (s.cutFace)  s.cutFace.setAttribute('opacity', 0);
+    if (s.notch)    s.notch.setAttribute('d', 'M133.2 70 L133.2 70 L133.2 79 Z');
+    if (s.fishNode) s.fishNode.setAttribute('opacity', 1);
+  }
+
+  // ── Poses ─────────────────────────────────────────────────────
+
+  function swingPose(ph) {
+    if (state.verb === 'fish') {
+      var lift = Math.sin(ph * Math.PI * 2) * 7;
+      var tug = ph > 0.78 ? Math.sin((ph - 0.78) / 0.22 * Math.PI) * 13 : 0;
+      return { arm: -6 - lift - tug, torso: lift * 0.14, bob: Math.sin(ph * Math.PI * 2) * 0.7 };
+    }
+    var windEnd = 0.52;
+    var up = state.verb === 'chop' ? -62 : -78;
+    var down = state.verb === 'chop' ? 30 : 40;
+
+    if (ph < windEnd) {
+      var t = easeOut(ph / windEnd);
+      return { arm: -8 + (up + 8) * t, torso: -3 * t, bob: -0.9 * t };
+    }
+    if (ph < IMPACT_PH) {
+      var t2 = easeIn((ph - windEnd) / (IMPACT_PH - windEnd));
+      return { arm: up + (down - up) * t2, torso: -3 + 7 * t2, bob: -0.9 + 2.4 * t2 };
+    }
+    var t3 = (ph - IMPACT_PH) / (1 - IMPACT_PH);
+    var settle = 1 - easeOut(t3);
+    return { arm: -8 + (down + 8) * settle, torso: 4 * settle, bob: 1.5 * settle };
+  }
+
+  function payoffPose(q) {
+    if (state.verb === 'fish') {
+      // Yank, hold the catch in the air, reach out, take it by hand.
+      var arm;
+      if (q < 0.22)      arm = lerp(-6, -64, easeOut(q / 0.22));
+      else if (q < 0.62) arm = lerp(-64, -30, easeOut((q - 0.22) / 0.40));
+      else if (q < 0.80) arm = lerp(-30, -16, (q - 0.62) / 0.18);
+      else               arm = lerp(-16, -8, (q - 0.80) / 0.20);
+      var lean = q < 0.30 ? -5 * (q / 0.30) : -5 * (1 - (q - 0.30) / 0.70);
+      return { arm: arm, torso: lean, bob: q < 0.25 ? -1.4 * (q / 0.25) : -1.4 * (1 - (q - 0.25) / 0.75) };
+    }
+    var down = state.verb === 'chop' ? 30 : 40;
+    var t = easeOut(clamp(q / 0.45, 0, 1));
+    return { arm: lerp(down, -8, t), torso: lerp(4, 0, t), bob: lerp(1.5, 0, t) };
+  }
+
+  // ── Payoff: what happens to the prop ──────────────────────────
+
+  function applyPayoff(s, q) {
+    if (state.verb === 'mine') {
+      s.rockBody.setAttribute('opacity', 0);
+      s.shardG.setAttribute('opacity', 1);
+      s.shards.forEach(function (node, i) {
+        var sh = SHARDS[i];
+        var x = sh.dx * q, y = sh.dy * q + 54 * q * q, r = sh.rot * q;
+        node.setAttribute('transform',
+          'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') rotate(' + r.toFixed(1) + ' 148 91)');
+        node.setAttribute('opacity', q < 0.55 ? 1 : clamp(1 - (q - 0.55) / 0.40, 0, 1));
+      });
+      return;
+    }
+
+    if (state.verb === 'chop') {
+      s.cutFace.setAttribute('opacity', 1);
+      var rot, drop = 0;
+      if (q < 0.10)      rot = -3 * (q / 0.10);                            // creak backwards
+      else if (q < 0.62) { var t = (q - 0.10) / 0.52; rot = -3 + 87 * (t * t); }  // gathers speed
+      else               rot = 84;
+      // Hinged at the cut, the trunk also drops to the ground once it lets go.
+      if (q >= 0.44) { var d = clamp((q - 0.44) / 0.30, 0, 1); drop = 29 * d * d; }
+      if (q >= 0.74) drop = 29 - 3.5 * Math.sin(clamp((q - 0.74) / 0.13, 0, 1) * Math.PI);
+      s.tree.setAttribute('transform', 'translate(0,' + drop.toFixed(2) + ') rotate(' +
+        rot.toFixed(2) + ' ' + TREE_PIVOT[0] + ' ' + TREE_PIVOT[1] + ')');
+      s.tree.setAttribute('opacity', q < 0.86 ? 1 : clamp(1 - (q - 0.86) / 0.14, 0, 1));
+      return;
+    }
+
+    // Fish — the catch leaves the water on the line and arcs to the hand.
+    var pose = payoffPose(q);
+    var hand = carried(HAND, pose.arm, pose.bob);
+    var t2 = clamp((q - 0.04) / 0.66, 0, 1);
+    var fx = lerp(158, hand[0], t2);
+    var fy = lerp(104, hand[1], t2) - 36 * Math.sin(t2 * Math.PI);
+    var wob = Math.sin(q * Math.PI * 9) * (1 - t2) * 8;
+
+    if (q < 0.80) {
+      s.fishNode.setAttribute('opacity', 1);
+      s.fishNode.setAttribute('transform', 'translate(' + fx.toFixed(1) + ',' + fy.toFixed(1) +
+        ') rotate(' + (lerp(-25, -150, t2) + wob).toFixed(1) + ')');
+    } else {
+      s.fishNode.setAttribute('opacity', 0);   // taken in hand
+    }
+
+    var tip = carried(ROD_TIP, pose.arm, pose.bob);
+    if (q < 0.80) {
+      s.lineNode.setAttribute('opacity', 0.7);
+      s.lineNode.setAttribute('d', 'M' + tip[0].toFixed(1) + ' ' + tip[1].toFixed(1) +
+        ' Q' + ((tip[0] + fx) / 2).toFixed(1) + ' ' + ((tip[1] + fy) / 2 + 8).toFixed(1) +
+        ' ' + fx.toFixed(1) + ' ' + fy.toFixed(1));
+    } else {
+      s.lineNode.setAttribute('opacity', 0);
+    }
+  }
+
+  // Swing-time prop motion: the notch the axe cuts, the fish in the water.
+  function applySwingProp(s, p, segment, pose) {
+    if (state.verb === 'chop' && s.notch) {
+      var depth = 2 + 11 * p;
+      s.notch.setAttribute('d', 'M133.2 70 L' + (133.2 + depth).toFixed(1) + ' 74.5 L133.2 79 Z');
+    }
+    if (state.verb === 'fish' && s.lineNode) {
+      var tip = carried(ROD_TIP, pose.arm, pose.bob);
+      s.lineNode.setAttribute('opacity', 0.7);
+      s.lineNode.setAttribute('d', 'M' + tip[0].toFixed(1) + ' ' + tip[1].toFixed(1) +
+        ' Q' + ((tip[0] + 158) / 2).toFixed(1) + ' ' + (tip[1] + 28).toFixed(1) + ' 158 102');
+      if (s.fishNode) {
+        var wob = Math.sin(segment * Math.PI * 4) * 2.6;
+        s.fishNode.setAttribute('opacity', 1);
+        s.fishNode.setAttribute('transform', 'translate(' + (158 + wob).toFixed(1) + ',104) rotate(-6)');
+      }
+    }
+  }
+
+  // ── Effects ───────────────────────────────────────────────────
+
+  function impactOrigin() {
+    return state.verb === 'mine' ? [134, 84] : state.verb === 'chop' ? [135, 75] : [158, 100];
+  }
+
+  function spawnChips(s, n, spread) {
+    var o = impactOrigin();
+    for (var i = 0; i < n; i++) {
+      var c = el('rect', {
+        x: o[0], y: o[1],
+        width: 2.6 + Math.random() * 2.4, height: 2.2 + Math.random() * 2,
+        rx: 0.6, fill: state.action.tint
+      });
+      c.setAttribute('class', 'chip');
+      var ang = (-140 + Math.random() * 110) * Math.PI / 180;
+      var dist = 5 + Math.random() * spread;
+      c.style.setProperty('--dx', (Math.cos(ang) * dist).toFixed(1) + 'px');
+      c.style.setProperty('--dy', (Math.sin(ang) * dist).toFixed(1) + 'px');
+      c.style.setProperty('--dr', Math.round(-220 + Math.random() * 440) + 'deg');
+      s.fx.appendChild(c);
+      (function (node) { setTimeout(function () { node.remove(); }, 700); })(c);
+    }
+  }
+
+  function spawnPuffs(s, x, y, n) {
+    for (var i = 0; i < n; i++) {
+      var c = el('circle', { cx: x + (Math.random() * 20 - 10), cy: y, r: 2.4 + Math.random() * 2.6,
+        fill: s.ink, opacity: 0.4 });
+      c.setAttribute('class', 'puff');
+      c.style.setProperty('--dx', Math.round(-7 + Math.random() * 14) + 'px');
+      c.style.setProperty('--dy', Math.round(-6 - Math.random() * 5) + 'px');
+      s.fx.appendChild(c);
+      (function (node) { setTimeout(function () { node.remove(); }, 820); })(c);
+    }
+  }
+
+  function spawnYield(s, x, y) {
+    var g = el('g');
+    g.setAttribute('class', 'yield');
+    g.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ')');
+    g.appendChild(el('circle', { r: 6.5, fill: state.action.tint, stroke: s.ink, 'stroke-width': 2 }));
+    s.fx.appendChild(g);
+    (function (node) { setTimeout(function () { node.remove(); }, 1100); })(g);
+  }
+
+  // ── Frame ─────────────────────────────────────────────────────
+
+  var stages = [];
+  var start = performance.now();
+
+  function rebuild() {
+    stages = [
+      buildStage(document.getElementById('floor-parch'), 'parch'),
+      buildStage(document.getElementById('floor-iron'), 'iron')
+    ];
+    stages.forEach(function (s) { drawTool(s); drawProp(s); });
+  }
+
+  function frame(now) {
+    var total = cycleMs();
+    if (state.playing) state.cursor = ((now - start) % total) / total;
+
+    var c = state.cursor;
+    var aFrac = actionFrac();
+    var inPayoff = c >= aFrac;
+    var barP = clamp(c / aFrac, 0, 1);   // the bar tracks the ACTION only
+
+    var pose, phaseLabel;
+
+    if (!inPayoff) {
+      if (state.broke) { stages.forEach(resetProp); state.broke = false; state.yielded = false; state.dusted = false; state.lastImpact = -1; }
+
+      // Swings are spaced so the LAST impact lands exactly at bar 100%.
+      var n = swingCount();
+      var segment = (c / aFrac) * periodCount();
+      var idx = Math.floor(segment);
+      var ph = segment - idx;
+      pose = swingPose(ph);
+      phaseLabel = 'swing ' + Math.min(idx + 1, n) + '/' + n;
+
+      // Mid-action impacts. The final one is the break, handled below.
+      if (state.playing && state.verb !== 'fish' && ph >= IMPACT_PH && idx < n - 1 && idx !== state.lastImpact) {
+        state.lastImpact = idx;
+        stages.forEach(function (s) { spawnChips(s, 5, 8); });
+      }
+      stages.forEach(function (s) { applySwingProp(s, barP, segment, pose); });
+
+    } else {
+      var q = (c - aFrac) / (1 - aFrac);
+      pose = payoffPose(q);
+      phaseLabel = state.verb === 'mine' ? 'smashing'
+                 : state.verb === 'chop' ? (q < 0.44 ? 'cracking' : q < 0.76 ? 'falling' : 'settling')
+                 : (q < 0.80 ? 'landing' : 'grabbed');
+
+      if (!state.broke) {
+        state.broke = true;
+        stages.forEach(function (s) {
+          if (state.verb === 'mine') spawnChips(s, 12, 15);
+          else if (state.verb === 'chop') spawnChips(s, 8, 12);
+        });
+      }
+
+      stages.forEach(function (s) { applyPayoff(s, q); });
+
+      if (state.verb === 'chop' && !state.dusted && q >= 0.74) {
+        state.dusted = true;
+        stages.forEach(function (s) { spawnPuffs(s, 172, 106, 5); });
+      }
+
+      var yieldAt = state.verb === 'mine' ? 0.50 : state.verb === 'chop' ? 0.82 : 0.80;
+      if (!state.yielded && q >= yieldAt) {
+        state.yielded = true;
+        stages.forEach(function (s) {
+          if (state.verb === 'fish') { var h = carried(HAND, pose.arm, pose.bob); spawnYield(s, h[0], h[1]); }
+          else spawnYield(s, state.verb === 'chop' ? 138 : 148, 86);
+        });
+      }
+    }
+
+    stages.forEach(function (s) {
+      s.armFront.setAttribute('transform', 'rotate(' + pose.arm.toFixed(2) + ' ' + SHOULDER[0] + ' ' + SHOULDER[1] + ')');
+      s.armBack.setAttribute('transform', 'rotate(' + (-pose.arm * 0.26).toFixed(2) + ' 78 60)');
+      s.torso.setAttribute('transform', 'rotate(' + pose.torso.toFixed(2) + ' 76 86)');
+      s.head.setAttribute('transform', 'rotate(' + (pose.torso * 1.4).toFixed(2) + ' 76 57)');
+      s.fig.setAttribute('transform', 'translate(0,' + pose.bob.toFixed(2) + ')');
+      var pv = Math.round(barP * 100);
+      s.fill.style.width = pv + '%';
+      s.pct.textContent = pv + '%';
+    });
+
+    document.getElementById('ro-pct').textContent = Math.round(barP * 100) + '%';
+    document.getElementById('ro-phase').textContent = phaseLabel;
+    document.getElementById('out-scrub').textContent = Math.round(c * 100) + '%';
+    if (state.playing) document.getElementById('rng-scrub').value = Math.round(c * 1000);
+
+    requestAnimationFrame(frame);
+  }
+
+  // ── Controls ──────────────────────────────────────────────────
+
+  function syncReadout() {
+    var a = state.action;
+    document.getElementById('ro-ticks').textContent = a.ticks + 't · ' + (a.ticks * TICK_MS / 1000).toFixed(1) + 's';
+    document.getElementById('ro-swings').textContent = swingCount();
+    document.getElementById('out-swings').textContent = state.tempo + 'ms';
+    var per = (a.ticks * TICK_MS) / periodCount();
+    document.getElementById('swing-period').innerHTML =
+      '<span>' + swingCount() + ' swings · ' + Math.round(per) + 'ms each · ' +
+      VERBS[state.verb].payoffMs + 'ms payoff</span><b>' +
+      (per < 430 ? 'frantic' : per > 1700 ? 'sluggish' : 'reads well') + '</b>';
+    document.getElementById('ladder-title').textContent =
+      VERBS[state.verb].label + (state.verb === 'fish' ? ' · catch' : ' · tint ladder');
+    document.getElementById('ladder-note').innerHTML = state.verb === 'fish'
+      ? 'Every raw fish resolves to the same <code>#f4a08c</code> tint, so the bespoke icon — not colour — is what tells them apart.'
+      : 'Real values from <code>getItemIconTint</code> — the prop recolours, the figure does not.';
+  }
+
+  function hardReset() {
+    state.broke = false; state.yielded = false; state.dusted = false; state.lastImpact = -1;
+    stages.forEach(resetProp);
+  }
+
+  function buildVerbs() {
+    var g = document.getElementById('verb-group');
+    g.innerHTML = '';
+    Object.keys(VERBS).forEach(function (k) {
+      var b = document.createElement('button');
+      b.textContent = VERBS[k].label;
+      b.setAttribute('aria-pressed', String(k === state.verb));
+      b.onclick = function () {
+        state.verb = k;
+        state.action = VERBS[k].actions[Math.min(3, VERBS[k].actions.length - 1)];
+        buildVerbs(); buildActions(); buildLadder(); rebuild(); hardReset(); syncReadout();
+        start = performance.now();
+      };
+      g.appendChild(b);
+    });
+  }
+
+  function buildActions() {
+    var sel = document.getElementById('sel-action');
+    sel.innerHTML = '';
+    VERBS[state.verb].actions.forEach(function (a) {
+      var o = document.createElement('option');
+      o.value = a.id;
+      o.textContent = a.name + '  ·  Lv ' + a.lvl + '  ·  ' + a.ticks + 't';
+      o.selected = a.id === state.action.id;
+      sel.appendChild(o);
+    });
+    sel.onchange = function () {
+      state.action = VERBS[state.verb].actions.filter(function (a) { return a.id === sel.value; })[0];
+      buildLadder();
+      stages.forEach(function (s) { drawProp(s); });
+      hardReset(); syncReadout();
+    };
+  }
+
+  function buildLadder() {
+    var l = document.getElementById('ladder');
+    l.innerHTML = '';
+    VERBS[state.verb].actions.forEach(function (a) {
+      var b = document.createElement('button');
+      b.className = 'rung';
+      b.setAttribute('aria-pressed', String(a.id === state.action.id));
+      var chip = document.createElement('div');
+      chip.className = 'rung__chip';
+      if (state.verb === 'fish' && FISH_ART[a.id]) {
+        chip.classList.add('rung__chip--art');
+        chip.innerHTML = '<svg viewBox="0 0 512 512" aria-hidden="true">' + FISH_ART[a.id].body + '</svg>';
+      } else {
+        chip.style.background = a.tint;
+      }
+      var nm = document.createElement('div');
+      nm.className = 'rung__name';
+      nm.textContent = a.name;
+      var mt = document.createElement('div');
+      mt.className = 'rung__meta';
+      mt.textContent = 'Lv ' + a.lvl + ' · ' + (state.verb === 'fish' ? 'bespoke' : a.tint);
+      b.appendChild(chip); b.appendChild(nm); b.appendChild(mt);
+      b.onclick = function () {
+        state.action = a;
+        buildActions(); buildLadder();
+        stages.forEach(function (s) { drawProp(s); });
+        hardReset(); syncReadout();
+      };
+      l.appendChild(b);
+    });
+  }
+
+  document.getElementById('rng-swings').oninput = function () {
+    state.tempo = parseInt(this.value, 10);
+    state.lastImpact = -1;
+    syncReadout();
+  };
+
+  document.getElementById('rng-scrub').oninput = function () {
+    state.playing = false;
+    var btn = document.getElementById('btn-play');
+    btn.setAttribute('aria-pressed', 'false');
+    btn.textContent = 'Play';
+    var next = parseInt(this.value, 10) / 1000;
+    if (next < state.cursor) hardReset();   // scrubbing backwards restores the prop
+    state.cursor = next;
+  };
+
+  document.getElementById('btn-play').onclick = function () {
+    state.playing = !state.playing;
+    this.setAttribute('aria-pressed', String(state.playing));
+    this.textContent = state.playing ? 'Pause' : 'Play';
+    if (state.playing) start = performance.now() - state.cursor * cycleMs();
+  };
+
+  document.getElementById('btn-guides').onclick = function () {
+    state.guides = !state.guides;
+    this.setAttribute('aria-pressed', String(state.guides));
+    document.body.classList.toggle('show-guides', state.guides);
+  };
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    state.playing = false;
+    state.cursor = 0.5;
+    var pb = document.getElementById('btn-play');
+    pb.setAttribute('aria-pressed', 'false');
+    pb.textContent = 'Play';
+  }
+
+  buildVerbs();
+  buildActions();
+  buildLadder();
+  rebuild();
+  syncReadout();
+  requestAnimationFrame(frame);
+})();
+</script>

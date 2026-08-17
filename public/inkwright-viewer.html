@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PocketRPG · Inkwright Viewer</title>
+<!--
+  Standalone dev harness (NOT part of the app bundle) — same pattern as
+  public/3d-preview.html. Open via the Vite dev server (note the configured
+  base path, vite.config.js):
+    http://localhost:5173/pocketrpg/inkwright-viewer.html
+  It fetches /src/data/*.json directly, which only Vite dev serves (the
+  deployed site stages `public/` verbatim but not `src/` — see
+  scripts/stage-site.mjs's ROOT_ASSETS). This is a local tool, not a page any
+  player reaches.
+
+  WHY A SECOND COPY OF THE GEOMETRY: the real component is Preact JSX
+  (src/components/InkwrightStage.jsx), and this page is plain HTML/JS with no
+  build step, so it cannot import that file directly — a browser cannot
+  execute JSX. What it CAN share with production, and does, so the two
+  cannot quietly drift on the numbers that matter:
+    - The SVG path data below is copied verbatim from InkwrightStage.jsx's
+      Tool()/Prop() functions. If you change a shape there, paste it here too.
+    - The CSS keyframes below are copied verbatim from src/index.css's
+      `.ink-*` block (same rule and keyframe NAMES on purpose, for diffing).
+    - The timing law is NOT reimplemented from scratch — it's the same
+      formula in src/utils/inkwright.js (TARGET_STRIKE_MS, MAX_STRIKES,
+      strikes = round(cycle/target), period = round(cycle/strikes)),
+      transcribed here rather than approximated.
+    - Fish species art is FETCHED at runtime from the real
+      /src/data/bespokeIcons.json, exactly like bespokeFishArt() in
+      InkwrightStage.jsx resolves it — not hand-copied per species, so a new
+      fish's art shows up here with no changes to this file.
+
+  If this page and the real component disagree, the real component is right;
+  fix this file to match, not the other way round.
+-->
+<style>
+  :root {
+    --bg:#161310; --panel:#201b16; --line:#362e25; --ink:#ece4d6; --soft:#b3a894; --ember:#e08a4a;
+    --mono: ui-monospace, Menlo, monospace;
+    --stage-parch: #e9dcbd; --stage-iron: #141414;
+
+    /* The real semantic tokens InkwrightStage draws from (src/index.css §3.1),
+       copied per-theme so the figure looks exactly as it does in game. */
+    --text-strong-l: #1a1a0e; --surface-raised-l: #f6efdd; --surface-panel-l: #d8c69e; --surface-sunken-l: rgba(26,26,14,0.06);
+    --text-strong-d: #e9dcbd; --surface-raised-d: #2a2724; --surface-panel-d: #3a352f; --surface-sunken-d: rgba(233,220,189,0.05);
+    --fm-ease: cubic-bezier(.34,1.1,.64,1);
+  }
+  * { box-sizing: border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,sans-serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 60px; display:flex; flex-direction:column; gap:22px; }
+
+  h1 { font-size: 22px; margin: 0; letter-spacing: .01em; }
+  .sub { color: var(--soft); font-size: 13px; margin: 6px 0 0; max-width: 62ch; }
+
+  .stages { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .stages { grid-template-columns: 1fr; } }
+  .stage-card { border:1px solid var(--line); border-radius: 10px; overflow:hidden; }
+  .stage-card__label { display:flex; justify-content:space-between; padding:7px 12px; background:var(--panel); border-bottom:1px solid var(--line); font:11px var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--soft); }
+  .stage-floor { padding: 16px; }
+  .stage-floor svg { display:block; width:100%; height:auto; }
+  .ground-parch { background: var(--stage-parch); }
+  .ground-iron  { background: var(--stage-iron); }
+
+  .bar { position:relative; height:8px; border-radius:999px; overflow:hidden; margin-top:12px; }
+  .ground-parch .bar { background: rgba(26,26,14,0.13); }
+  .ground-iron  .bar { background: rgba(255,255,255,0.08); }
+  .bar__fill { position:absolute; inset:0 auto 0 0; border-radius:999px; background: linear-gradient(90deg,#8b6914,#f0c040); min-width:6px; }
+  .bar__pct { margin-top:5px; text-align:right; font:10px var(--mono); }
+  .ground-parch .bar__pct { color: rgba(26,26,14,.5); }
+  .ground-iron  .bar__pct { color: rgba(233,220,189,.5); }
+
+  .console { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .cell { background:var(--panel); padding:13px 15px 15px; display:flex; flex-direction:column; gap:8px; }
+  .cell label, .cell__head { font:10px var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--soft); }
+  .cell__head { display:flex; justify-content:space-between; gap:8px; }
+  .cell__head b { font:11px var(--mono); color:var(--ember); text-transform:none; letter-spacing:0; }
+  select, button { font:inherit; font-size:13px; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:7px; padding:8px 9px; cursor:pointer; width:100%; min-height:38px; }
+  button.on { border-color: var(--ember); color: var(--ember); }
+  input[type=range] { width:100%; accent-color:var(--ember); min-height:26px; }
+  .verbs { display:flex; gap:6px; }
+  .verbs button { padding:8px 4px; font-size:12.5px; }
+  .btn-row { display:flex; gap:8px; }
+
+  .ladder { display:grid; grid-template-columns: repeat(auto-fit,minmax(84px,1fr)); gap:7px; }
+  .rung { background:var(--panel); border:1px solid var(--line); border-radius:7px; padding:8px; display:flex; flex-direction:column; gap:6px; cursor:pointer; text-align:left; }
+  .rung.on { border-color:var(--ember); }
+  .rung__chip { height:20px; border-radius:4px; border:1px solid rgba(255,255,255,.1); }
+  .rung__chip--art { background:var(--bg); display:grid; place-items:center; height:34px; }
+
+  /* The rig, mirroring src/index.css: rotation is about a FIXED point in the
+     SVG's own coordinate space, not the element's bounding-box centre (the
+     browser default) — without transform-box: view-box, the shoulder pivot
+     resolves to wherever the arm's own bbox happens to centre, which swings
+     the whole tool off to the side rather than through the hand. */
+  .ink-fig { transform-box: view-box; transform-origin: 76px 100px; }
+  .ink-arm { transform-box: view-box; transform-origin: 84px 58px; }
+  .rung__chip--art svg { width:26px; height:26px; }
+  .rung__name { font-size:11px; }
+  .rung__meta { font:9px var(--mono); color:var(--soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Inkwright Viewer</h1>
+    <p class="sub">Local mirror of the shipped skilling figure (mining, woodcutting, fishing). Fetches real skills/items/bespoke-icon data at runtime — dev server only.</p>
+  </header>
+
+  <section class="stages">
+    <div class="stage-card"><div class="stage-card__label"><span>Light · parchment</span></div><div class="stage-floor ground-parch" id="floor-light"></div></div>
+    <div class="stage-card"><div class="stage-card__label"><span>Dark · iron</span></div><div class="stage-floor ground-iron" id="floor-dark"></div></div>
+  </section>
+
+  <section class="console">
+    <div class="cell">
+      <label>Skill</label>
+      <div class="verbs" id="verb-group"></div>
+    </div>
+    <div class="cell">
+      <label for="sel-action">Resource</label>
+      <select id="sel-action"></select>
+    </div>
+    <div class="cell">
+      <div class="cell__head"><span>Effective ticks</span><b id="out-ticks">—</b></div>
+      <input type="range" id="rng-ticks" min="1" max="30" step="1" value="4">
+      <div class="cell__head" style="color:var(--soft)"><span id="tempo-readout">—</span></div>
+    </div>
+    <div class="cell">
+      <div class="cell__head"><span>Scrub cycle</span><b id="out-scrub">0%</b></div>
+      <input type="range" id="rng-scrub" min="0" max="1000" step="1" value="0">
+      <button id="btn-play" class="on">Pause</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="cell__head" style="margin-bottom:8px"><span id="ladder-title">Tint ladder</span></div>
+    <div class="ladder" id="ladder"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var TICK_MS = 600;
+  // ── Timing law, transcribed from src/utils/inkwright.js — see file header. ──
+  var TARGET_STRIKE_MS = 800;
+  var MAX_STRIKES = 40;
+  function actionCycleMs(ticks) { var t = Math.max(1, Math.floor(Number(ticks) || 0) || 1); return t * TICK_MS; }
+  function inkwrightPlan(cycleMs) {
+    var strikes = Math.max(1, Math.min(MAX_STRIKES, Math.round(cycleMs / TARGET_STRIKE_MS)));
+    var strikePeriodMs = Math.round(cycleMs / strikes);
+    return { strikes: strikes, strikePeriodMs: strikePeriodMs, payoffMs: Math.min(900, Math.round(strikePeriodMs * 1.1)) };
+  }
+
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  function el(name, attrs) { var n = document.createElementNS(SVG_NS, name); if (attrs) for (var k in attrs) n.setAttribute(k, attrs[k]); return n; }
+
+  var state = { skill: 'mining', product: null, tempoTicks: 4, playing: true, cursor: 0, yieldToken: 0, lastYieldAt: -1 };
+  var DATA = { skills: null, items: null, bespoke: null };
+
+  // ── Content, straight from the real data files ──────────────────────────
+  var SKILL_META = {
+    mining:      { motion: 'mine', prop: 'rock' },
+    woodcutting: { motion: 'chop', prop: 'tree' },
+    fishing:     { motion: 'fish', prop: 'water' },
+  };
+
+  // Mirrors getItemIconTint's tier rules for exactly the tiers these skills
+  // use, since that resolver is core JS (not JSX) but still not importable
+  // without a bundler here. Not needed for fishing — see bespokeFishArt below.
+  var TIER_TINT = {
+    tin_ore:'#e8d5a8', copper_ore:'#b87333', clay:'#e8d5a8', rune_essence:'#e8d5a8',
+    iron_ore:'#8c8c8c', coal:'#2b2b2b', gold_ore:'#f39c12', mithril_ore:'#3550c4',
+    adamantite_ore:'#3aa55f', runeforged_ore:'#b7e4ff',
+    logs:'#c9a96e', oak_logs:'#a07444', willow_logs:'#b08a55', teak_logs:'#7a5228',
+    maple_logs:'#8a6234', mahogany_logs:'#5c3015', yew_logs:'#6b4420', magic_logs:'#3498db', redwood_logs:'#c0372b',
+  };
+
+  // getItemIconTint's raw_* rule (itemIcons.js): every raw ingredient — not
+  // just fish — is this one flat colour. It is still what the WATER plane
+  // and shoreline wash in, same as production; only the fish's own body skips
+  // it in favour of its bespoke art (see bespokeFishArt/fishGroup below).
+  var RAW_TINT = '#f4a08c';
+  function tintFor(productId) {
+    if (TIER_TINT[productId]) return TIER_TINT[productId];
+    if (String(productId || '').indexOf('raw_') === 0) return RAW_TINT;
+    return '#b3a894';
+  }
+
+  // Mirrors bespokeFishArt() in InkwrightStage.jsx: a bespoke lookup by item
+  // id, viewBox parsed with a 512x512 fallback, no tint (every fish here is
+  // non-tintable pre-rendered art). Kept this small on purpose — the actual
+  // resolution order (bespoke -> glyph -> none) lives in
+  // src/utils/itemIconResolve.js; this only needs the bespoke branch because
+  // every fishing product has one.
+  function bespokeFishArt(productId) {
+    var entry = DATA.bespoke && DATA.bespoke[productId];
+    if (!entry) return null;
+    var vb = (entry.viewBox || '0 0 512 512').split(/\s+/).map(Number);
+    return { body: entry.body, cx: vb[0] + vb[2] / 2, cy: vb[1] + vb[3] / 2, size: Math.max(vb[2], vb[3]) };
+  }
+
+  // ── The rig, copied verbatim from InkwrightStage.jsx's render output ────
+
+  function buildStage(host, mode) {
+    host.innerHTML = '';
+    var ink = mode === 'light' ? 'var(--text-strong-l)' : 'var(--text-strong-d)';
+    var cloth = mode === 'light' ? 'var(--surface-raised-l)' : 'var(--surface-raised-d)';
+    var cloth2 = mode === 'light' ? 'var(--surface-panel-l)' : 'var(--surface-panel-d)';
+
+    var svg = el('svg', { viewBox: '0 0 200 128' });
+    svg.appendChild(el('path', { d: 'M12 108 H188', stroke: ink, 'stroke-width': 2, 'stroke-linecap': 'round', opacity: 0.26, fill: 'none' }));
+    var shadow = el('ellipse', { cx: 76, cy: 108, rx: 23, ry: 3.4, fill: ink }); shadow.style.opacity = 0.09;
+    svg.appendChild(shadow);
+
+    var propHost = el('g'); svg.appendChild(propHost);
+    var payoffHost = el('g'); svg.appendChild(payoffHost);
+
+    var W = 3.1;
+    function part(name, attrs) {
+      var a = { stroke: ink, 'stroke-width': W, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' };
+      for (var k in attrs) a[k] = attrs[k];
+      return el(name, a);
+    }
+    function limb(d, w, back) {
+      var g = el('g');
+      g.appendChild(el('path', { d: d, fill: 'none', stroke: ink, 'stroke-width': w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+      g.appendChild(el('path', { d: d, fill: 'none', stroke: back ? cloth2 : cloth, 'stroke-width': w - 6.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+      return g;
+    }
+
+    var fig = el('g', { class: 'ink-fig' });
+    fig.appendChild((function () { var g = el('g'); g.appendChild(limb('M72 84 L63 96 L55 103', 12, true)); g.appendChild(limb('M78 84 L86 97 L95 104', 13, false)); return g; })());
+    fig.appendChild(limb('M78 60 L68 70 L66 78', 10, true));
+    fig.appendChild(part('path', { d: 'M67 54 Q64 72 66 86 L86 86 Q88 72 86 54 Z', fill: cloth }));
+    fig.appendChild(part('path', { d: 'M66.5 73 L86.5 73', fill: 'none', 'stroke-width': 4.3 }));
+    fig.appendChild(part('path', { d: 'M65 57 Q57 45 62 32 Q69 21 81 23 Q94 26 94 41 Q94 51 89 57 Z', fill: cloth }));
+    var hollow = el('path', { d: 'M85 33 Q93 36 92 45 Q90 52 84 53 Q80 43 85 33 Z', fill: ink }); hollow.style.opacity = 0.85;
+    fig.appendChild(hollow);
+    fig.appendChild(part('path', { d: 'M64 53 Q76 63 90 53 Q92 60 86 65 L68 65 Q62 60 64 53 Z', fill: cloth2 }));
+
+    var arm = el('g', { class: 'ink-arm' });
+    arm.appendChild(limb('M84 58 L94 62 L100 64', 11, false));
+    var toolG = el('g'); arm.appendChild(toolG);
+    fig.appendChild(arm);
+    svg.appendChild(fig);
+
+    host.appendChild(svg);
+
+    var bar = document.createElement('div'); bar.className = 'bar';
+    var fill = document.createElement('div'); fill.className = 'bar__fill'; bar.appendChild(fill);
+    host.appendChild(bar);
+    var pct = document.createElement('div'); pct.className = 'bar__pct'; host.appendChild(pct);
+
+    return { ink: ink, cloth: cloth, cloth2: cloth2, W: W, part: part, limb: limb, fig: fig, arm: arm, tool: toolG, propHost: propHost, payoffHost: payoffHost, fill: fill, pct: pct };
+  }
+
+  function drawTool(s, motion) {
+    s.tool.innerHTML = '';
+    var p = s.part;
+    if (motion === 'chop') {
+      s.tool.appendChild(s.limb('M92 70 L124 52', 7, true));
+      s.tool.appendChild(p('path', { d: 'M117 45 L128 47 Q135 54 128 61 L117 60 Z', fill: s.cloth2 }));
+      s.tool.appendChild(p('path', { d: 'M128 47 Q135 54 128 61', fill: 'none', stroke: s.cloth, 'stroke-width': 2.4 }));
+      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 9 }));
+    } else if (motion === 'fish') {
+      s.tool.appendChild(s.limb('M92 72 L138 36', 5.4, true));
+      s.tool.appendChild(p('circle', { cx: 103, cy: 63, r: 3.2, fill: s.cloth2 }));
+      s.tool.appendChild(p('path', { d: 'M138 36 Q150 62 156 95', fill: 'none', 'stroke-width': 1.1, opacity: 0.55 }));
+      s.tool.appendChild(p('circle', { cx: 156, cy: 96, r: 2.6, fill: s.cloth }));
+    } else {
+      s.tool.appendChild(s.limb('M92 70 L128 50', 7, true));
+      s.tool.appendChild(p('path', { d: 'M120 37 L131 48 L135 61 L125 52 Z', fill: s.cloth2 }));
+      s.tool.appendChild(p('path', { d: 'M96 68 L104 64', fill: 'none', 'stroke-width': 9 }));
+    }
+  }
+
+  // Fish placement mirrors FishArt() in InkwrightStage.jsx.
+  function fishGroup(s, art, cx, cy, width, cls) {
+    var scale = width / (art.size || 512);
+    var outer = el('g', { class: cls });
+    outer.style.transformOrigin = cx + 'px ' + cy + 'px';
+    outer.style.transformBox = 'view-box';
+    var inner = el('g', { transform: 'translate(' + cx + ' ' + cy + ') scale(' + scale + ') translate(' + (-art.cx) + ' ' + (-art.cy) + ')' });
+    inner.innerHTML = art.body;
+    outer.appendChild(inner);
+    return outer;
+  }
+
+  function drawProp(s, motion, tint, fishArt, broken) {
+    var p = s.part, g = el('g');
+    if (motion === 'chop') {
+      g.appendChild(p('path', { d: 'M132 108 Q131.4 92 133.2 79 L148.8 79 Q150.4 92 150 108 Z', fill: tint }));
+      var faller = el('g', { class: 'ink-faller' });
+      var canopy = p('path', { d: 'M130 62 Q112 56 116 38 Q120 20 140 18 Q162 16 166 34 Q170 54 152 62 Z', fill: tint }); canopy.style.opacity = 0.55;
+      faller.appendChild(canopy);
+      faller.appendChild(p('path', { d: 'M133.2 79 Q134 68 135 58 L147 58 Q148 68 148.8 79 Z', fill: tint }));
+      g.appendChild(faller);
+      s.notch = p('path', { d: 'M133.2 70 L133.2 70 L133.2 79 Z', fill: s.ink, stroke: 'none' });
+      faller.appendChild(s.notch);
+      s.faller = faller;
+    } else if (motion === 'fish') {
+      g.appendChild(p('path', { d: 'M104 128 L118 96 H196 V128 Z', fill: tint, opacity: 0.16 }));
+      g.appendChild(p('path', { d: 'M118 96 Q130 92 142 96 T168 96 T196 96', fill: 'none', 'stroke-width': 4.3 }));
+      if (fishArt) s.idleFish = fishGroup(s, fishArt, 152, 112, 26, 'ink-fish-idle is-working');
+      if (s.idleFish) g.appendChild(s.idleFish);
+    } else {
+      g.appendChild(p('path', { d: 'M130 108 Q123 96 129 85 Q135 75 148 73 Q161 72 166 84 Q171 96 165 105 Q160 109 152 108 Z', fill: tint }));
+      g.appendChild(p('path', { d: 'M143 89 L150 87 L157 92', fill: 'none', 'stroke-width': 1.9, opacity: 0.7 }));
+      g.appendChild(p('path', { d: 'M143 89 L141 108', fill: 'none', 'stroke-width': 1.9, opacity: 0.7 }));
+    }
+    return g;
+  }
+
+  // Mirrors that InkwrightStage.jsx's own Prop() draws the STUMP (tree) and
+  // the WATER PLANE + SHORELINE (fishing) unconditionally — both the intact
+  // and the broken call redraw them — so the payoff instance needs its own
+  // copy too, not just the bit that visibly changes. Missing this left the
+  // payoff floating a falling trunk with no stump under it, and a rising fish
+  // with no water at all once the intact layer faded out.
+  function drawPayoff(s, motion, tint, fishArt) {
+    var p = s.part, g = el('g');
+    if (motion === 'chop') {
+      g.appendChild(p('path', { d: 'M132 108 Q131.4 92 133.2 79 L148.8 79 Q150.4 92 150 108 Z', fill: tint }));
+    }
+    if (motion === 'fish') {
+      g.appendChild(p('path', { d: 'M104 128 L118 96 H196 V128 Z', fill: tint, opacity: 0.16 }));
+      g.appendChild(p('path', { d: 'M118 96 Q130 92 142 96 T168 96 T196 96', fill: 'none', 'stroke-width': 4.3 }));
+    }
+    if (motion === 'mine') {
+      var shards = [
+        ['M130 108 Q123 96 129 85 L143 89 L141 108 Z', 'a'],
+        ['M129 85 Q135 75 148 73 L150 87 L143 89 Z', 'b'],
+        ['M148 73 Q161 72 166 84 L157 92 L150 87 Z', 'c'],
+        ['M143 89 L150 87 L157 92 L166 84 Q171 96 165 105 Q160 109 152 108 L141 108 Z', 'd'],
+      ];
+      shards.forEach(function (sh) {
+        var n = p('path', { d: sh[0], fill: tint, 'stroke-width': s.W - 0.4 });
+        n.classList.add('ink-shard', 'ink-shard--' + sh[1]);
+        n.style.transformOrigin = '148px 91px'; n.style.transformBox = 'view-box';
+        g.appendChild(n);
+      });
+    } else if (motion === 'chop') {
+      var fall = el('g', { class: 'ink-fall' });
+      fall.style.transformOrigin = '141px 79px'; fall.style.transformBox = 'view-box';
+      var canopy = p('path', { d: 'M130 62 Q112 56 116 38 Q120 20 140 18 Q162 16 166 34 Q170 54 152 62 Z', fill: tint }); canopy.style.opacity = 0.55;
+      fall.appendChild(canopy);
+      fall.appendChild(p('path', { d: 'M133.2 79 Q134 68 135 58 L147 58 Q148 68 148.8 79 Z', fill: tint }));
+      g.appendChild(fall);
+      s.fall = fall;
+    } else {
+      if (fishArt) g.appendChild(fishGroup(s, fishArt, 156, 100, 22, 'ink-catch'));
+      else g.appendChild(p('path', { d: 'M149 104 Q156 99 164 104 Q156 109 149 104 Z', fill: tint, 'stroke-width': 2.4 }));
+    }
+    return g;
+  }
+
+  var stages = [];
+  var start = performance.now();
+
+  function rebuild() {
+    var meta = SKILL_META[state.skill];
+    var tint = tintFor(state.product); // water plane + shoreline; fish body ignores this
+    var fishArt = state.skill === 'fishing' ? bespokeFishArt(state.product) : null;
+
+    stages = [buildStage(document.getElementById('floor-light'), 'light'), buildStage(document.getElementById('floor-dark'), 'dark')];
+    stages.forEach(function (s) {
+      drawTool(s, meta.motion);
+      s.propHost.appendChild(drawProp(s, meta.motion, tint, fishArt, false));
+      s.payoffNode = drawPayoff(s, meta.motion, tint, fishArt);
+      s.motion = meta.motion; s.tint = tint; s.fishArt = fishArt;
+    });
+  }
+
+  function poseFor(motion, ph) {
+    // Transcribed from src/index.css's inkStrikeMine/Chop/Fish + inkBodyWork.
+    if (motion === 'fish') return { arm: lerp3(ph, [0, -6], [0.4, -13], [0.82, -2], [1, -6]), body: 0 };
+    var arm = motion === 'chop'
+      ? lerp3(ph, [0, -8], [0.46, -58], [0.68, 30], [1, -8])
+      : lerp3(ph, [0, -8], [0.46, -74], [0.68, 40], [1, -8]);
+    var body = lerp3(ph, [0, 0], [0.46, -1.4], [0.68, 2.2], [1, 0]);
+    return { arm: arm, body: body };
+  }
+  function lerp3(t, a, b, c, d) {
+    if (t <= a[0]) return a[1];
+    if (t <= b[0]) return a[1] + (b[1] - a[1]) * (t - a[0]) / (b[0] - a[0]);
+    if (t <= c[0]) return b[1] + (c[1] - b[1]) * (t - b[0]) / (c[0] - b[0]);
+    return c[1] + (d[1] - c[1]) * (t - c[0]) / (d[0] - c[0]);
+  }
+
+  function frame(now) {
+    var meta = SKILL_META[state.skill];
+    var cycleMs = actionCycleMs(state.tempoTicks);
+    var plan = inkwrightPlan(cycleMs);
+    var payoffFrac = plan.payoffMs / (cycleMs + plan.payoffMs);
+    var total = cycleMs + plan.payoffMs;
+
+    if (state.playing) state.cursor = ((now - start) % total) / total;
+    var c = state.cursor;
+    var actionFrac = cycleMs / total;
+    var inPayoff = c >= actionFrac;
+    var barP = Math.min(1, c / actionFrac);
+
+    var pose;
+    if (!inPayoff) {
+      var seg = (c / actionFrac) * plan.strikes;
+      var idx = Math.floor(seg), ph = seg - idx;
+      pose = poseFor(meta.motion, ph);
+      if (idx !== state.lastYieldAt && idx === 0 && ph < 0.02) state.lastYieldAt = -2; // armed for next completion
+    } else {
+      var q = (c - actionFrac) / (1 - actionFrac);
+      pose = poseFor(meta.motion, Math.min(1, q / 0.45));
+      if (state.lastYieldAt !== state.yieldToken) { state.yieldToken++; state.lastYieldAt = state.yieldToken; rebuildPayoffKey(); }
+    }
+
+    stages.forEach(function (s) {
+      s.arm.style.transform = 'rotate(' + pose.arm.toFixed(2) + 'deg)';
+      s.fig.style.transform = 'translateY(' + (pose.body * 0.15).toFixed(2) + 'px)';
+      var pv = Math.round(barP * 100);
+      s.fill.style.width = pv + '%';
+      s.pct.textContent = pv + '%';
+
+      var breaking = inPayoff;
+      s.propHost.style.opacity = breaking ? 0 : 1;
+      s.payoffHost.style.opacity = breaking ? 1 : 0;
+      if (breaking && s.payoffHost.childNodes.length === 0) s.payoffHost.appendChild(s.payoffNode);
+      if (!breaking && s.payoffHost.childNodes.length) { s.payoffHost.innerHTML = ''; }
+
+      if (breaking && s.motion === 'mine') {
+        var q2 = (c - actionFrac) / (1 - actionFrac);
+        Array.prototype.forEach.call(s.payoffHost.querySelectorAll('.ink-shard'), function (n, i) {
+          var offs = [[-13,16,-46],[-6,9,-70],[10,11,58],[16,14,36]][i];
+          n.style.transform = 'translate(' + (offs[0]*q2).toFixed(1) + 'px,' + (offs[1]*q2).toFixed(1) + 'px) rotate(' + (offs[2]*q2).toFixed(1) + 'deg)';
+        });
+      }
+      if (breaking && s.motion === 'chop' && s.payoffHost.querySelector('.ink-fall')) {
+        var q3 = (c - actionFrac) / (1 - actionFrac);
+        var rot = q3 < 0.14 ? -4 * (q3/0.14) : q3 < 0.7 ? -4 + 82*((q3-0.14)/0.56) : q3 < 0.88 ? 78 + 6*((q3-0.7)/0.18) : 84;
+        var drop = q3 < 0.14 ? 0 : 29 * Math.min(1, (q3-0.14)/0.74);
+        s.payoffHost.querySelector('.ink-fall').style.transform = 'translateY(' + drop.toFixed(1) + 'px) rotate(' + rot.toFixed(1) + 'deg)';
+      }
+      if (breaking && s.motion === 'fish' && s.payoffHost.querySelector('.ink-catch')) {
+        var q4 = (c - actionFrac) / (1 - actionFrac);
+        var t = Math.min(1, q4 / 0.55 * 0.55 + (q4 > 0.55 ? (q4-0.55)/0.45*0.45 : 0));
+        var dx = q4 < 0.55 ? -14*(q4/0.55) : -14 - 12*((q4-0.55)/0.45);
+        var dy = q4 < 0.55 ? -34*(q4/0.55) : -34 - 12*((q4-0.55)/0.45);
+        var rot = q4 < 0.55 ? -38*(q4/0.55) : -38 - 58*((q4-0.55)/0.45);
+        s.payoffHost.querySelector('.ink-catch').style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) rotate(' + rot.toFixed(1) + 'deg)';
+      }
+      if (!breaking && s.idleFish) {
+        var wob = Math.sin(now / (plan.strikePeriodMs || 800) * Math.PI * 2);
+        s.idleFish.style.transform = 'translate(' + (3 - 7*Math.abs(wob)).toFixed(1) + 'px,' + (wob*1.6).toFixed(1) + 'px) rotate(' + (wob*3).toFixed(1) + 'deg)';
+      }
+      if (breaking && s.motion === 'chop' && s.notch) { /* frozen at final depth during payoff */ }
+      if (!breaking && s.motion === 'chop' && s.notch) {
+        var depth = 2 + 11 * barP;
+        s.notch.setAttribute('d', 'M133.2 70 L' + (133.2+depth).toFixed(1) + ' 74.5 L133.2 79 Z');
+      }
+    });
+
+    document.getElementById('out-scrub').textContent = Math.round(c * 100) + '%';
+    if (state.playing) document.getElementById('rng-scrub').value = Math.round(c * 1000);
+    requestAnimationFrame(frame);
+  }
+  function rebuildPayoffKey() { /* new payoff instance each completion — no persistent state to reset here */ }
+
+  // ── Controls, wired against real fetched data ───────────────────────────
+
+  function actionsFor(skill) { return (DATA.skills[skill] && DATA.skills[skill].actions) || []; }
+
+  function syncTempo() {
+    var cycleMs = actionCycleMs(state.tempoTicks);
+    var plan = inkwrightPlan(cycleMs);
+    document.getElementById('out-ticks').textContent = state.tempoTicks + 't';
+    document.getElementById('tempo-readout').innerHTML =
+      '<span>' + plan.strikes + ' strikes · ' + plan.strikePeriodMs + 'ms each</span>';
+  }
+
+  function buildVerbs() {
+    var g = document.getElementById('verb-group'); g.innerHTML = '';
+    Object.keys(SKILL_META).forEach(function (skill) {
+      var b = document.createElement('button');
+      b.textContent = skill.charAt(0).toUpperCase() + skill.slice(1);
+      if (skill === state.skill) b.classList.add('on');
+      b.onclick = function () {
+        state.skill = skill;
+        var actions = actionsFor(skill);
+        state.product = actions[Math.min(3, actions.length - 1)].product;
+        state.tempoTicks = actions[Math.min(3, actions.length - 1)].ticks;
+        document.getElementById('rng-ticks').value = state.tempoTicks;
+        buildVerbs(); buildActions(); buildLadder(); syncTempo(); rebuild();
+      };
+      g.appendChild(b);
+    });
+  }
+
+  function buildActions() {
+    var sel = document.getElementById('sel-action'); sel.innerHTML = '';
+    actionsFor(state.skill).forEach(function (a) {
+      var o = document.createElement('option');
+      o.value = a.product;
+      o.textContent = (DATA.items[a.product] ? DATA.items[a.product].name : a.product) + '  ·  Lv ' + a.level + '  ·  ' + a.ticks + 't';
+      o.selected = a.product === state.product;
+      sel.appendChild(o);
+    });
+    sel.onchange = function () {
+      var a = actionsFor(state.skill).filter(function (x) { return x.product === sel.value; })[0];
+      state.product = a.product; state.tempoTicks = a.ticks;
+      document.getElementById('rng-ticks').value = a.ticks;
+      buildLadder(); syncTempo(); rebuild();
+    };
+  }
+
+  function buildLadder() {
+    var l = document.getElementById('ladder'); l.innerHTML = '';
+    document.getElementById('ladder-title').textContent =
+      state.skill.charAt(0).toUpperCase() + state.skill.slice(1) + (state.skill === 'fishing' ? ' · catch' : ' · tint ladder');
+    actionsFor(state.skill).forEach(function (a) {
+      var b = document.createElement('div');
+      b.className = 'rung' + (a.product === state.product ? ' on' : '');
+      var chip = document.createElement('div');
+      if (state.skill === 'fishing') {
+        chip.className = 'rung__chip rung__chip--art';
+        var art = bespokeFishArt(a.product);
+        if (art) chip.innerHTML = '<svg viewBox="0 0 512 512">' + art.body + '</svg>';
+      } else {
+        chip.className = 'rung__chip';
+        chip.style.background = tintFor(a.product);
+      }
+      var nm = document.createElement('div'); nm.className = 'rung__name';
+      nm.textContent = DATA.items[a.product] ? DATA.items[a.product].name : a.product;
+      var mt = document.createElement('div'); mt.className = 'rung__meta';
+      mt.textContent = 'Lv ' + a.level;
+      b.appendChild(chip); b.appendChild(nm); b.appendChild(mt);
+      b.onclick = function () {
+        state.product = a.product; state.tempoTicks = a.ticks;
+        document.getElementById('rng-ticks').value = a.ticks;
+        buildActions(); buildLadder(); syncTempo(); rebuild();
+      };
+      l.appendChild(b);
+    });
+  }
+
+  document.getElementById('rng-ticks').oninput = function () { state.tempoTicks = parseInt(this.value, 10); syncTempo(); };
+  document.getElementById('rng-scrub').oninput = function () {
+    state.playing = false;
+    document.getElementById('btn-play').classList.remove('on');
+    document.getElementById('btn-play').textContent = 'Play';
+    state.cursor = parseInt(this.value, 10) / 1000;
+  };
+  document.getElementById('btn-play').onclick = function () {
+    state.playing = !state.playing;
+    this.classList.toggle('on', state.playing);
+    this.textContent = state.playing ? 'Pause' : 'Play';
+    if (state.playing) start = performance.now() - state.cursor * (actionCycleMs(state.tempoTicks) + inkwrightPlan(actionCycleMs(state.tempoTicks)).payoffMs);
+  };
+
+  // ── Boot: fetch the real data, then build ───────────────────────────────
+  // Vite's dev server prefixes EVERY path under vite.config.js's `base`
+  // ('/pocketrpg/' today), including raw src/ reads and this page itself —
+  // not just the built app. A RELATIVE path (no leading slash) sidesteps the
+  // question entirely: the browser resolves it against wherever this
+  // document actually is, so it needs no knowledge of `base` and keeps
+  // working if that value ever changes. A leading-slash `/src/...` doesn't
+  // (it 404s the moment this page isn't served from the domain root, which
+  // it never is under `npm run dev`), and a hand-reconstructed prefix off
+  // `location.pathname` is the same bug rewritten — it has to independently
+  // track what `base` resolves to instead of just letting the browser do it.
+  function srcData(name) { return fetch('src/data/' + name, { cache: 'no-store' }).then(function (r) {
+    if (!r.ok) throw new Error(name + ': HTTP ' + r.status);
+    return r.json();
+  }); }
+
+  Promise.all([
+    srcData('skills.json'),
+    srcData('items.json'),
+    srcData('bespokeIcons.json'),
+  ]).then(function (res) {
+    DATA.skills = res[0]; DATA.items = res[1]; DATA.bespoke = res[2];
+    var startActions = actionsFor('mining');
+    state.product = startActions[3].product;
+    state.tempoTicks = startActions[3].ticks;
+    document.getElementById('rng-ticks').value = state.tempoTicks;
+    buildVerbs(); buildActions(); buildLadder(); syncTempo(); rebuild();
+    requestAnimationFrame(frame);
+  }).catch(function (e) {
+    document.querySelector('.wrap').innerHTML =
+      '<p style="color:#e0564b">Could not load /src/data/*.json — this page only works under <code>npm run dev</code> (Vite serves the repo root), not the deployed site or a plain file:// open.<br><br>' + e.message + '</p>';
+  });
+})();
+</script>
+</body>
+</html>
