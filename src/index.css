@@ -1411,6 +1411,19 @@ html, body, #app {
   .inkc-fig--ranged.is-swinging .inkc-arm:not(.is-eating) { animation: inkcRangedDraw var(--inkc-dur) var(--fm-ease); }
   .inkc-fig--magic.is-swinging .inkc-arm:not(.is-eating)  { animation: inkcMagicCast  var(--inkc-dur) var(--fm-ease); }
 
+  /* Godsword/maul (utils/actionSprites.js isSmashWeaponType): a bigger,
+     higher wind-up and a bigger downward arc than the standard slash —
+     `.is-smash` is an ADDITIONAL class alongside `--melee`, not a fourth
+     motion, so it needs one extra class selector to outrank the plain melee
+     rule above by specificity rather than by source order. */
+  @keyframes inkcSmashSwing {
+    0%   { transform: rotate(-8deg); }
+    38%  { transform: rotate(-92deg); }
+    60%  { transform: rotate(58deg); }
+    100% { transform: rotate(-8deg); }
+  }
+  .inkc-fig--melee.is-smash.is-swinging .inkc-arm:not(.is-eating) { animation: inkcSmashSwing var(--inkc-dur) var(--fm-ease); }
+
   /* The orb charges through the same window the arm steadies in, then holds
      invisible once the bolt itself takes over at launch. */
   @keyframes inkcOrbCharge {
@@ -1442,6 +1455,7 @@ html, body, #app {
     100%     { opacity: 0; transform: translate(var(--inkc-shot-dx), var(--inkc-shot-dy)); }
   }
   .inkc-fig--ranged.is-swinging .inkc-shot--arrow,
+  .inkc-fig--ranged.is-swinging .inkc-shot--crossbow,
   .inkc-fig--magic.is-swinging .inkc-shot--bolt { animation: inkcShotFly var(--inkc-dur) linear; }
 
   /* Eating/drinking: raises the hand (holding the item glyph in place of the

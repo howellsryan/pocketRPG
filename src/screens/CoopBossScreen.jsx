@@ -487,7 +487,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
             the same place with the same timing law — read off THIS member's
             weapon and the boss's current form. */}
         <InkwrightCombatStage
-          actor={{ ...coopPlayerSprite, accent: getStyleArt(coopPlayerSprite.motion).color, weaponItem: weapon }}
+          actor={{ ...coopPlayerSprite, accent: getStyleArt(coopPlayerSprite.motion).color }}
           target={{
             icon: coopStageArt.icon,
             accent: coopStageArt.accent,

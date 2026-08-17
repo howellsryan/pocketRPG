@@ -37,4 +37,23 @@ describe('InkwrightCombatStage — shotOffset', () => {
   it('has no shot for melee, which connects in reach rather than at range', () => {
     expect(shotOffset('melee')).toBeNull()
   })
+
+  it('gives a crossbow its own shorter bolt offset instead of the arrow\'s', () => {
+    const arrow = shotOffset('ranged')
+    const bolt = shotOffset('ranged', 'crossbow')
+    expect(bolt).not.toBeNull()
+    expect(bolt).not.toEqual(arrow)
+  })
+
+  it('lands the crossbow bolt on the torso from its own drawn origin', () => {
+    // Bolt tip is drawn at local (116, 64); the enemy's torso sits at (184, 68).
+    const { dx, dy } = shotOffset('ranged', 'crossbow')!
+    expect(116 + dx).toBe(184)
+    expect(64 + dy).toBe(68)
+  })
+
+  it('every other ranged weapon still fires an arrow, not a bolt', () => {
+    expect(shotOffset('ranged', 'bow')).toEqual(shotOffset('ranged'))
+    expect(shotOffset('ranged', undefined)).toEqual(shotOffset('ranged'))
+  })
 })

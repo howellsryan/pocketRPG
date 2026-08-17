@@ -168,32 +168,46 @@ between attacks, because `t` (the frozen/current target sprite) is already avail
 before the first swing token ever arrives — `target.sprite` is computed every render
 from `monsterCombatSprite`, independent of whether anything is mid-swing.
 
-**The actor's own weapon is the actual equipped item, drawn from its bespoke
-inventory icon — `CombatWeaponIcon` in `InkwrightCombatStage.jsx`.** This reverses
-the "per-weapon art" line that used to sit under "Deliberately not done" below: every
-weapon in `items.json` already has a `bespokeIcons.json` entry (151/151), so there was
-no coverage gap to design around. It costs no new art and no per-item authoring because
-`bespokeIcons.json`'s weapon entries share one 512×512 canvas roughly centred at
-(256,256), which is what makes ONE anchor+scale per `motion` (melee/ranged/magic), not
-per item, land all 151 close enough to "held": the icon's own centre goes near the hand,
-nudged toward the business end so the grip half sits on the hand. That canvas hides TWO
-different authoring conventions, though, and only one nudges correctly on its own — a
-blade drawn diagonally in absolute coordinates (dragon_scimitar and its tier-mates)
-already leans up-right, but the larger family (maces, longswords, spears, staves, wands,
-godswords, mauls...) is drawn upright and then rotated a NEGATIVE angle about its own
-centre, which swings the business end up-LEFT instead. Anchored the same way, a dragon
-mace's head landed over the wielder's own face with its pommel dangling out past the
-hand — obvious on a mace (two round masses of near-equal weight at each end), easy to
-miss on a thin dagger or staff at a glance. `needsMirror` reads each icon's own
-`rotate(angle …)` to tell the two families apart — a NEGATIVE angle mirrors (one sign
-flip on the transform's X scale, centred on the same anchor), a positive angle or no
-rotate at all (the bow family) does not. Bespoke
-icons render exactly as authored (full colour, no tint) — the one place on this stage
-that isn't flat ink, because the item is the point. `CombatTool` is now purely the
-FALLBACK: unarmed (no weapon item) and anything with no resolvable icon at all render
-the old generic per-style shape instead, unchanged. **Scoped to the actor only** — the
-enemy still draws the generic mirrored `CombatTool`, per-monster art is still the
-separate, deferred gap described two paragraphs up.
+**The actor's own weapon is drawn as one of TEN hand-drawn shapes, keyed by the
+equipped item's TYPE and coloured by its MATERIAL** — `WEAPON_ICON_TYPES` in
+`utils/actionSprites.js`, drawn by `CombatTool` in `InkwrightCombatStage.jsx`: sword,
+scimitar, rapier, godsword, maul, mace, bow, crossbow, staff, wand. This is the
+SECOND attempt at "the weapon should look like the weapon." The first embedded the
+actual `bespokeIcons.json` inventory icon per item and was reverted: that icon set
+mixes authoring conventions with no single anchor that lands all 151 of them
+correctly, and a mace icon anchored wrong (its head landing over the wielder's own
+face, pommel dangling out past the hand) reads far worse than a merely-generic shape
+ever did. This version costs a small FIXED set of shapes to get right instead of 151
+individual ones — `weaponIconTypeFor(item)` classifies by the item's own id first
+("dragon_scimitar" → scimitar outranks its mechanical stats), falling back to
+attack style + two-handedness only for a name the rules don't recognise. Every item
+within a type is told apart only by `weaponTint` (`getItemIconTint`, the same tier
+colouring the Armoury/inventory already use) — a bronze scimitar and a dragon
+scimitar are the same silhouette in different colours, same as the real weapons
+elsewhere in the game. `accent` (the style colour) is unchanged and stays scoped to
+projectile-adjacent bits only (bowstring/prod glow, orb) — material tint and style
+accent are two different colours answering two different questions, and conflating
+them would make an accent-tinted weapon the one non-ink-and-not-material object on
+the stage. **Scoped to the actor only** — the enemy still draws the generic mirrored
+`CombatTool` (no `weaponIconType`/`weaponTint`, so it falls to the plain per-motion
+default: sword/bow/staff), per-monster art is still the separate, deferred gap
+described two paragraphs up.
+
+**Godsword and maul play a heavier two-handed smash** instead of the standard
+one-handed swing — `isSmashWeaponType` gates an extra `.is-smash` class onto the
+actor's `.inkc-fig` wrapper (melee only), which needs one more class selector than
+the plain `inkcMeleeSwing` rule to outrank it by specificity. `inkcSmashSwing` winds
+up higher (-92° vs -58°) and swings further through (58° vs 46°) — a bigger arc reads
+as a heavier weapon without needing a second drawn arm; the rig only has one
+grippable hand, so "two-handed" is conveyed by the shape (both are drawn bulkier than
+a one-handed weapon) and the motion, not by literally repositioning the back arm.
+
+**A crossbow fires a bolt, not an arrow.** `CombatShot` and `shotOffset` both take
+`weaponIconType` alongside `kind` now — a crossbow's bolt is short and stubby, fired
+from its own shorter origin (the prod, not a full bowstring draw), so it needed its
+own offset constants and its own CSS class (`.inkc-shot--crossbow`, added to the
+`inkcShotFly` selector) rather than reusing the magic orb's `.inkc-shot--bolt`, which
+would have been the same generic name for a different animal.
 
 **A swing is ONE-SHOT, not a loop** — `.inkc-fig--<motion>.is-swinging .inkc-arm`
 plays once per token and holds at rest until the next one, exactly the cadence
@@ -203,12 +217,12 @@ above). The GAP between tokens
 nothing in `.inkc-*` tries to fill that gap with more motion, which would be the
 skilling law bleeding into a system that deliberately doesn't use it.
 
-**The shot** (ranged arrow, magic bolt) is authored once, in the ACTOR's own local
-coordinates, and reused unchanged for the enemy's own attack — the enemy's wrapping
-mirror sends it the other way for free, same as the weapon geometry. It stays
+**The shot** (bow arrow, crossbow bolt, magic orb) is authored once, in the ACTOR's own
+local coordinates, and reused unchanged for the enemy's own attack — the enemy's
+wrapping mirror sends it the other way for free, same as the weapon geometry. It stays
 invisible through the wind-up/charge (`0%, 58%` in `inkcShotFly`), appears right as
-the string or the orb releases, and crosses to roughly the other figure's torso before
-the swing ends. Melee has no shot at all — it connects in reach, not at range.
+the string/prod or the orb releases, and crosses to roughly the other figure's torso
+before the swing ends. Melee has no shot at all — it connects in reach, not at range.
 
 **Struck flashes are named by who takes them, not who swung** — `enemyFlashes` /
 `playerFlashes`, not `actorStruck` / `targetStruck`. The actor's swing landing flashes
@@ -230,6 +244,26 @@ they're spelled out rather than left implicit.
    (no `infinite`), duration `var(--inkc-dur)`.
 5. Nothing to register in `build_single.cjs` unless you added a FILE — a new style
    inside the existing three files needs no build changes.
+
+### Extending to a weapon shape
+
+1. Add the id pattern (or, failing that, the mechanical fallback) to
+   `NAME_TYPE_RULES`/`weaponIconTypeFor` in `actionSprites.js`, and add the new type
+   to `WEAPON_ICON_TYPES`. `tests/actionSprites.test.ts`'s structural test asserts
+   every shipped weapon classifies to a real type — a name pattern that matches
+   nothing still needs a mechanical fallback or that test fails.
+2. Draw it in `CombatTool()` (`InkwrightCombatStage.jsx`): shaft/blade through the
+   grip at (100,64) same as every other shape; colour the MATERIAL part (blade/head/
+   body, never the grip) with `tint`, falling back to `var(--surface-raised)` when
+   unarmed passes none. `accent` stays reserved for projectile-adjacent bits only.
+3. If it's genuinely a smash weapon (two-handed, meant to read heavy), add it to
+   `SMASH_WEAPON_TYPES` in `actionSprites.js` — melee only, `isSmashWeaponType` gates
+   `.is-smash` and nothing reads it outside that motion.
+4. If it fires its own distinct projectile (not the default arrow/orb), branch it in
+   `shotOffset` and `CombatShot`, and give it its own CSS class in the `inkcShotFly`
+   selector — reusing another kind's class silently attaches the wrong animation
+   (or none), the exact bug the crossbow-vs-magic-orb naming collision would have
+   been if `.inkc-shot--bolt` had been reused instead of adding `--crossbow`.
 
 ## Inkwright — the skilling figure
 

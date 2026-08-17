@@ -8,10 +8,13 @@ import { describe, expect, it } from 'vitest'
 import {
   ACTION_TICK_MS,
   ACTION_SPRITES,
+  WEAPON_ICON_TYPES,
   actionCycleMs,
   swingDurationMs,
   spriteStyleKey,
   actionSpriteFor,
+  weaponIconTypeFor,
+  isSmashWeaponType,
   playerCombatSprite,
   monsterCombatSprite,
   swingsFromCombatEvents,
@@ -20,13 +23,14 @@ import {
   makeConsumeToken,
 } from '../src/utils/actionSprites.js'
 import gameIcons from '../src/data/gameIcons.json'
+import realItemsData from '../src/data/items.json'
 
 const itemsData: Record<string, any> = {
-  rune_scimitar: { attackStyle: 'slash', attackSpeed: 4 },
-  armadyl_godsword: { attackStyle: 'slash', attackSpeed: 7 },
-  magic_shortbow: { attackStyle: 'ranged', attackSpeed: 3 },
-  ancient_staff: { attackStyle: 'magic', attackSpeed: 5 },
-  no_speed_dagger: { attackStyle: 'stab' },
+  rune_scimitar: { id: 'rune_scimitar', attackStyle: 'slash', attackSpeed: 4 },
+  armadyl_godsword: { id: 'armadyl_godsword', attackStyle: 'slash', attackSpeed: 7 },
+  magic_shortbow: { id: 'magic_shortbow', attackStyle: 'ranged', attackSpeed: 3 },
+  ancient_staff: { id: 'ancient_staff', attackStyle: 'magic', attackSpeed: 5 },
+  no_speed_dagger: { id: 'no_speed_dagger', attackStyle: 'stab' },
 }
 
 describe('actionCycleMs — the cadence is the tick speed', () => {
@@ -110,6 +114,78 @@ describe('style → sprite', () => {
   })
 })
 
+// weaponIconTypeFor picks which of CombatTool's ten hand-drawn shapes an
+// equipped weapon draws as (InkwrightCombatStage.jsx) — the second attempt at
+// "the weapon should look like the weapon", after embedding the actual
+// bespoke inventory icon per item (reverted: no single anchor lands all 151
+// of them correctly). One shape per TYPE this time, told apart only by tint.
+describe('weaponIconTypeFor', () => {
+  it('reads the shape straight off a name that says what it is', () => {
+    expect(weaponIconTypeFor({ id: 'dragon_scimitar', attackStyle: 'slash' })).toBe('scimitar')
+    expect(weaponIconTypeFor({ id: 'ghraxis_rapier', attackStyle: 'stab' })).toBe('rapier')
+    expect(weaponIconTypeFor({ id: 'grondar_godsword', attackStyle: 'slash', twoHanded: true })).toBe('godsword')
+    expect(weaponIconTypeFor({ id: 'ancient_maul', attackStyle: 'crush', twoHanded: true })).toBe('maul')
+    expect(weaponIconTypeFor({ id: 'bronze_mace', attackStyle: 'crush' })).toBe('mace')
+    expect(weaponIconTypeFor({ id: 'verin_s_flail', attackStyle: 'crush' })).toBe('mace')
+    expect(weaponIconTypeFor({ id: 'dragon_warhammer', attackStyle: 'crush' })).toBe('mace')
+    expect(weaponIconTypeFor({ id: 'ancestral_wand', attackStyle: 'magic' })).toBe('wand')
+    expect(weaponIconTypeFor({ id: 'battlestaff', attackStyle: 'magic' })).toBe('staff')
+    expect(weaponIconTypeFor({ id: 'shortbow', attackStyle: 'ranged', ammoType: 'arrow' })).toBe('bow')
+    expect(weaponIconTypeFor({ id: 'adamant_crossbow', attackStyle: 'ranged', ammoType: 'bolt' })).toBe('crossbow')
+  })
+
+  it('checks crossbow before the bare bow pattern — a crossbow id also contains "bow"', () => {
+    expect(weaponIconTypeFor({ id: 'zephyra_crossbow', attackStyle: 'ranged' })).toBe('crossbow')
+  })
+
+  it('does not misread "bowyers_knife" as a bow — the regression this pattern fixed', () => {
+    expect(weaponIconTypeFor({ id: 'bowyers_knife', attackStyle: 'stab' })).toBe('sword')
+  })
+
+  it('falls back to the mechanical style when the name says nothing', () => {
+    expect(weaponIconTypeFor({ id: 'zesta_longsword', attackStyle: 'slash' })).toBe('sword')
+    expect(weaponIconTypeFor({ id: 'trident_of_venom', attackStyle: 'magic' })).toBe('staff')
+    expect(weaponIconTypeFor({ id: 'colossal_ballista', attackStyle: 'ranged', ammoType: 'javelin' })).toBe('bow')
+    expect(weaponIconTypeFor({ id: 'torvek_s_hammers', attackStyle: 'crush' })).toBe('mace')
+    expect(weaponIconTypeFor({ id: 'dravok_s_greataxe', attackStyle: 'crush', twoHanded: true })).toBe('maul')
+    expect(weaponIconTypeFor({ id: 'scythe_of_vythar', attackStyle: 'slash', twoHanded: true })).toBe('godsword')
+  })
+
+  it('returns null for unarmed rather than guessing a shape', () => {
+    expect(weaponIconTypeFor(null)).toBeNull()
+    expect(weaponIconTypeFor(undefined)).toBeNull()
+  })
+
+  // Structural instead of a hand-maintained per-item mirror list (testing.md):
+  // every weapon actually shipped must classify to a real shape, so a new
+  // weapon with a name none of the rules recognise still gets SOMETHING
+  // sane instead of silently falling through CombatTool to its own default.
+  it('classifies every shipped weapon item to one of the ten known shapes', () => {
+    const weapons = (Array.isArray(realItemsData) ? realItemsData : Object.values(realItemsData) as any[])
+      .filter((i: any) => i.slot === 'weapon')
+    expect(weapons.length).toBeGreaterThan(50)
+    for (const w of weapons) {
+      const type = weaponIconTypeFor(w)
+      expect(WEAPON_ICON_TYPES, `${w.id} → ${type}`).toContain(type)
+    }
+  })
+})
+
+describe('isSmashWeaponType', () => {
+  it('is true only for the two-handed smash weapons', () => {
+    expect(isSmashWeaponType('godsword')).toBe(true)
+    expect(isSmashWeaponType('maul')).toBe(true)
+  })
+
+  it('is false for every other shape, including unarmed (null)', () => {
+    for (const type of WEAPON_ICON_TYPES.filter((t) => t !== 'godsword' && t !== 'maul')) {
+      expect(isSmashWeaponType(type)).toBe(false)
+    }
+    expect(isSmashWeaponType(null as any)).toBe(false)
+    expect(isSmashWeaponType(undefined as any)).toBe(false)
+  })
+})
+
 describe('playerCombatSprite', () => {
   it('reads the tool and the speed off the equipped weapon', () => {
     const scim = playerCombatSprite({ weapon: { itemId: 'rune_scimitar' } }, itemsData)
@@ -174,6 +250,28 @@ describe('playerCombatSprite', () => {
       expect(sprite.speedTicks).toBe(4)
       expect(sprite.swingMs).toBeGreaterThan(0)
     }
+  })
+
+  it('carries the equipped weapon\'s shape and material tint onto the sprite', () => {
+    const scim = playerCombatSprite({ weapon: { itemId: 'rune_scimitar' } }, itemsData)
+    expect(scim.weaponIconType).toBe('scimitar')
+    // No tier prefix on this fixture id → falls to the generic weapon tint.
+    expect(scim.weaponTint).toBe('var(--color-parchment)')
+  })
+
+  it('resolves the real tier tint for a real tiered item id', () => {
+    const dragonScim = playerCombatSprite(
+      { weapon: { itemId: 'dragon_scimitar' } },
+      { dragon_scimitar: { id: 'dragon_scimitar', attackStyle: 'slash', attackSpeed: 4 } },
+    )
+    expect(dragonScim.weaponIconType).toBe('scimitar')
+    expect(dragonScim.weaponTint).toBe('var(--tier-dragon)')
+  })
+
+  it('gives unarmed no weapon shape and no tint to draw', () => {
+    const unarmed = playerCombatSprite({}, itemsData)
+    expect(unarmed.weaponIconType).toBeNull()
+    expect(unarmed.weaponTint).toBeNull()
   })
 })
 
