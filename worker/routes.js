@@ -14,6 +14,7 @@ import * as route_apiActionsSlayerComplete from '../functions/api/actions/slayer
 import * as route_apiActivityProgress from '../functions/api/activity-progress.js'
 import * as route_apiAdminBackfillLevels from '../functions/api/admin/backfill-levels.js'
 import * as route_apiAdminCatalog from '../functions/api/admin/catalog.js'
+import * as route_apiAdminGrantCredits from '../functions/api/admin/grant-credits.js'
 import * as route_apiAdminGrantItem from '../functions/api/admin/grant-item.js'
 import * as route_apiAdminItemLoss from '../functions/api/admin/item-loss.js'
 import * as route_apiAdminRestoreSave from '../functions/api/admin/restore-save.js'
@@ -87,6 +88,7 @@ export const ROUTE_MODULES = [
   { file: "api/activity-progress.js", module: route_apiActivityProgress },
   { file: "api/admin/backfill-levels.js", module: route_apiAdminBackfillLevels },
   { file: "api/admin/catalog.js", module: route_apiAdminCatalog },
+  { file: "api/admin/grant-credits.js", module: route_apiAdminGrantCredits },
   { file: "api/admin/grant-item.js", module: route_apiAdminGrantItem },
   { file: "api/admin/item-loss.js", module: route_apiAdminItemLoss },
   { file: "api/admin/restore-save.js", module: route_apiAdminRestoreSave },

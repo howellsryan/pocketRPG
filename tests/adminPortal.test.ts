@@ -14,11 +14,11 @@ const SECRET = 'a-very-long-admin-portal-secret'
 let raw: any
 let env: any
 
-function character(id: number, username: string, { isBot = 0, deletedAt = null as number | null, withSave = true, totalLevel = 42 } = {}) {
+function character(id: number, username: string, { isBot = 0, deletedAt = null as number | null, withSave = true, totalLevel = 42, credits = 0 } = {}) {
   raw.prepare(
     `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at, deleted_at)
-     VALUES (?, 1, ?, 0, 0, 0, 0, 0, 0, ?, 3, ?, 0, ?)`,
-  ).run(id, username, totalLevel, isBot, deletedAt)
+     VALUES (?, 1, ?, 0, 0, 0, ?, 0, 0, ?, 3, ?, 0, ?)`,
+  ).run(id, username, credits, totalLevel, isBot, deletedAt)
   if (withSave) {
     raw.prepare(`INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision) VALUES (?, NULL, '{}', 0, 1)`).run(id)
   }
@@ -107,6 +107,12 @@ describe('GET /api/admin/catalog', () => {
     character(1, 'alice', { withSave: false })
     const body = await (await catalogGet({ request: catalogReq(SECRET), env } as any)).json()
     expect(body.characters[0].hasSave).toBe(false)
+  })
+
+  it('reports each character\'s credit balance, even with no save at all', async () => {
+    character(1, 'alice', { withSave: false, credits: 250 })
+    const body = await (await catalogGet({ request: catalogReq(SECRET), env } as any)).json()
+    expect(body.characters[0]).toMatchObject({ credits: 250, hasSave: false })
   })
 
   it('returns every item, name-sorted, with the stackability the grant form needs', async () => {

@@ -30,7 +30,7 @@ export async function onRequestGet({ request, env }) {
   // cannot be written to at all (loadAnyCharacterWithSave filters them out), so
   // offering either in the dropdown would only produce failed grants.
   const rows = await env.DB.prepare(
-    `SELECT c.id, c.username, c.total_level, c.combat_level, c.is_ironman, c.is_one_life, s.save_revision
+    `SELECT c.id, c.username, c.total_level, c.combat_level, c.is_ironman, c.is_one_life, c.credits, s.save_revision
        FROM characters c
        LEFT JOIN saves s ON s.character_id = c.id
       WHERE c.deleted_at IS NULL AND c.is_bot = 0
@@ -45,8 +45,12 @@ export async function onRequestGet({ request, env }) {
     combatLevel: Number(row.combat_level) || 0,
     isIronman: Boolean(row.is_ironman),
     isOneLife: Boolean(row.is_one_life),
-    // A character that has never synced has no save to grant into; the portal
-    // greys these out rather than letting the grant fail at the endpoint.
+    // Credits live on this row directly, unlike items — a credit grant needs
+    // no save at all, so this is shown even for a character with none.
+    credits: Number(row.credits) || 0,
+    // A character that has never synced has no save to grant items into; the
+    // portal greys the item-grant pane out rather than letting it fail at the
+    // endpoint. Credit grants are unaffected.
     hasSave: row.save_revision !== null && row.save_revision !== undefined,
   }))
 
