@@ -1444,15 +1444,21 @@ html, body, #app {
   }
   /* The terminal tackle's own motion — line/float/catch, in STAGE space —
      is driven off the rod tip's OWN computed path (docs/action-animations.md
-     has the trig), not a free-running bob: idle sway damped to a few
-     pixels, the haul lifting it well clear of the water, matching whatever
-     the rod tip is actually doing above it. */
+     has the trig), not a free-running bob: idle sway damped to a quarter of
+     the tip's real excursion (slack absorbs a small twitch), the haul
+     tracking it in full so the line stays visibly attached to the tip
+     instead of lagging behind it. These are the tip's actual displacement
+     at each stop — composing .ink-fig's body rotation (76,100), .ink-arm's
+     rotation (84,58) and the three rod-segment bends through the tool's own
+     translate(100,64) rotate(-10) scale(.4) — not eyeballed: the previous
+     values used quarter-damping at every stop, including the haul, which is
+     what let the line detach from the tip during the big -15deg arm swing. */
   @keyframes inkRig {
     0%, 48% { transform: translate(0,0); }
-    53%     { transform: translate(0.5px,3px); }
-    62%     { transform: translate(-1px,-2px); }
-    78%     { transform: translate(-3px,-11px); }
-    92%     { transform: translate(-1px,-3px); }
+    53%     { transform: translate(0.1px,2.8px); }
+    62%     { transform: translate(-1.6px,-3.5px); }
+    78%     { transform: translate(-10.2px,-28.4px); }
+    92%     { transform: translate(-2.4px,-9.9px); }
     100%    { transform: translate(0,0); }
   }
   @keyframes inkFloatBob {
