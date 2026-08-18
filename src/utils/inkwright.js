@@ -48,20 +48,58 @@ export const INKWRIGHT_MOTIONS = {
   mine: { motion: 'mine', prop: 'rock',  label: 'Mining' },
   chop: { motion: 'chop', prop: 'tree',  label: 'Woodcutting' },
   fish: { motion: 'fish', prop: 'water', label: 'Fishing' },
+
+  // Tier A (docs/skill-animations-proposal.md): same pattern as the three
+  // above, wired onto the existing timing law — a motion, a prop, nothing
+  // structurally new.
+  kindle: { motion: 'kindle', prop: 'logpile',    label: 'Firemaking' },
+  cook:   { motion: 'cook',   prop: 'cookfire',   label: 'Cooking' },
+  smith:  { motion: 'smith',  prop: 'anvil',      label: 'Smithing' },
+  craft:  { motion: 'craft',  prop: 'bench',      label: 'Crafting' },
+  fletch: { motion: 'fletch', prop: 'shavehorse', label: 'Fletching' },
+  brew:   { motion: 'brew',   prop: 'mortar',     label: 'Herblore' },
+  weave:  { motion: 'weave',  prop: 'runealtar',  label: 'Runecrafting' },
+
+  // Prayer is one keyframe family (`commune`) with three payoff dressings,
+  // picked by the action id's prefix (inkwrightMotionForSkill's second
+  // arg) rather than by skill name alone — the only skill in this tier
+  // where that's true.
+  prayer_bury:    { motion: 'commune', prop: 'grave',       pose: 'bury',    label: 'Burying bones' },
+  prayer_altar:   { motion: 'commune', prop: 'gildedAltar', pose: 'altar',   label: 'Praying at the gilded altar' },
+  prayer_scatter: { motion: 'commune', prop: 'dust',        pose: 'scatter', label: 'Scattering gargoyle dust' },
 }
 
-// Only the three skills whose action is a physical strike at a resource. Every
-// other skill keeps the orb until it gets a motion of its own — a row here with
-// no keyframes renders a figure holding a tool perfectly still.
+// Skills whose action is a physical strike/gesture at a resource. Every other
+// skill keeps the orb until it gets a motion of its own — a row here with no
+// keyframes renders a figure holding a tool perfectly still.
 const SKILL_MOTIONS = {
   mining: 'mine',
   woodcutting: 'chop',
   fishing: 'fish',
+  firemaking: 'kindle',
+  cooking: 'cook',
+  smithing: 'smith',
+  crafting: 'craft',
+  fletching: 'fletch',
+  herblore: 'brew',
+  runecraft: 'weave',
 }
 
-/** The motion key for a skill, or null if it has no figure yet. */
-export function inkwrightMotionForSkill(skill) {
-  const key = SKILL_MOTIONS[String(skill || '').toLowerCase()]
+// Prayer's three sub-poses share one motion family but pick a different prop
+// off the action id's own prefix — the same `startsWith('altar_')` branch
+// SkillingScreen already uses for the gilded-altar Construction gate.
+function prayerMotionKey(actionId) {
+  const id = String(actionId || '')
+  if (id.startsWith('altar_')) return 'prayer_altar'
+  if (id.startsWith('scatter_')) return 'prayer_scatter'
+  return 'prayer_bury'
+}
+
+/** The motion key for a skill, or null if it has no figure yet. `actionId` is
+ * only consulted for prayer, whose pose depends on which action is running. */
+export function inkwrightMotionForSkill(skill, actionId) {
+  const skillKey = String(skill || '').toLowerCase()
+  const key = skillKey === 'prayer' ? prayerMotionKey(actionId) : SKILL_MOTIONS[skillKey]
   return key ? INKWRIGHT_MOTIONS[key] : null
 }
 
@@ -82,8 +120,8 @@ export function hasInkwrightMotion(skill) {
  * Returns null for a skill with no figure, so callers can fall back to the orb
  * with a single truthiness check.
  */
-export function inkwrightPlan(skill, ticks) {
-  const sprite = inkwrightMotionForSkill(skill)
+export function inkwrightPlan(skill, ticks, actionId) {
+  const sprite = inkwrightMotionForSkill(skill, actionId)
   if (!sprite) return null
 
   const cycleMs = actionCycleMs(ticks)

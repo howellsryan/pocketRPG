@@ -151,6 +151,14 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
   )
 }
 
+// Tier A backdrops are grouped by SETTING rather than one bespoke scene per
+// prop — firemaking's log pile and cooking's skewer both sit at a hearth,
+// smithing/crafting/fletching/herblore all work a bench, runecraft and every
+// prayer pose read as a small shrine.
+const HEARTH_PROPS = new Set(['logpile', 'cookfire'])
+const WORKSHOP_PROPS = new Set(['anvil', 'bench', 'shavehorse', 'mortar'])
+const SHRINE_PROPS = new Set(['runealtar', 'grave', 'gildedAltar', 'dust'])
+
 /** The scene behind the figure and its prop — a strata'd cave wall for
  * mining, a forest edge for woodcutting, a far bank and water for fishing.
  * Fixed, atmospheric colour (not theme tokens): a cave is dark and a river
@@ -173,6 +181,34 @@ function Backdrop({ kind }) {
         <path class="ink-treeline" d="M0 108 L6 84 L12 108 Z" />
         <path class="ink-treeline" d="M14 108 L21 78 L28 108 Z" />
         <path class="ink-treeline" d="M2 96 Q22 88 40 96 Q54 100 78 97 L78 108 L0 108 Z" />
+      </g>
+    )
+  }
+  // Backdrop is grouped by SETTING, not one bespoke scene per prop — a
+  // hearth is a hearth whether it's cooking food or catching a log pile,
+  // same "one shape per economy" the props themselves follow.
+  if (HEARTH_PROPS.has(kind)) {
+    return (
+      <g class="ink-scene ink-scene--hearth">
+        <path class="ink-hearth-wall" d="M0 108 L0 60 L34 52 L60 62 L60 108 Z" />
+        <path class="ink-hearth-stone" d="M6 108 L6 88 L26 82 L46 90 L46 108 Z" />
+      </g>
+    )
+  }
+  if (WORKSHOP_PROPS.has(kind)) {
+    return (
+      <g class="ink-scene ink-scene--workshop">
+        <path class="ink-workshop-wall" d="M0 108 L0 56 L70 56 L70 108 Z" />
+        <path class="ink-workshop-shelf" d="M6 74 L46 74 L46 80 L6 80 Z" />
+      </g>
+    )
+  }
+  if (SHRINE_PROPS.has(kind)) {
+    return (
+      <g class="ink-scene ink-scene--shrine">
+        <path class="ink-shrine-stone" d="M4 108 L10 66 L18 66 L22 108 Z" />
+        <path class="ink-shrine-stone" d="M46 108 L52 70 L58 70 L62 108 Z" />
+        <path class="ink-shrine-glow" d="M0 104 Q35 96 70 104 L70 108 L0 108 Z" />
       </g>
     )
   }
@@ -238,6 +274,75 @@ function Tool({ kind }) {
             </g>
           </g>
         </g>
+      </g>
+    )
+  }
+  if (kind === 'kindle') {
+    return (
+      <g transform="translate(100,64) rotate(24) scale(.55)">
+        <path class="ink-tool-haft" d="M-16 -3 Q-19 0 -16 3 L8 2.4 L8 -2.4 Z" />
+        <path class="ink-tool-grip" d="M-16 -3 Q-19 0 -16 3 L-4 2.6 L-4 -2.6 Z" />
+        {/* A fire steel's own curved loop, not a bladed head — the small
+            radius is what reads as a striker rather than a shrunk axe. */}
+        <path class="ink-tool-head" d="M8 -4 C20 -8 30 -3 29 5 C28 12 18 14 9 9 Z" />
+        <path class="ink-tool-edge" d="M9 -2 C18 -5 25 -1 24 5" />
+      </g>
+    )
+  }
+  if (kind === 'cook') {
+    return (
+      <g transform="translate(100,64) rotate(15) scale(.5)">
+        <path class="ink-tool-haft" d="M-18 -2.4 Q-20 0 -18 2.4 L58 1.6 L58 -1.6 Z" />
+        <path class="ink-tool-grip" d="M-18 -2.4 Q-20 0 -18 2.4 L-2 2 L-2 -2 Z" />
+        <path class="ink-tool-head" d="M58 -3 L70 -3 L70 3 L58 3 Z" />
+        <path class="ink-tool-edge" d="M62 -3 L62 3 M66 -3 L66 3" />
+      </g>
+    )
+  }
+  if (kind === 'smith') {
+    return (
+      <g transform="translate(100,64) rotate(18) scale(.55)">
+        <path class="ink-tool-haft" d="M-17 -2.6 Q-19 0 -17 2.6 L58 1.8 L58 -1.8 Z" />
+        <path class="ink-tool-grip" d="M-17 -2.6 Q-19 0 -17 2.6 L0 2.2 L0 -2.2 Z" />
+        {/* A rectangular block, not a crescent — proportion is what makes
+            this read as a hammer rather than a shrunk pick. */}
+        <path class="ink-tool-head" d="M50 -14 L78 -14 L78 14 L50 14 Z" />
+        <path class="ink-tool-edge" d="M78 -14 L86 -8 L86 8 L78 14" />
+        <path class="ink-tool-wedge" d="M50 -6 L78 -6 M50 6 L78 6" />
+      </g>
+    )
+  }
+  // Crafting's knife and fletching's knife are the same tool per
+  // docs/skill-animations-proposal.md — one shape reads close enough for
+  // both, so it doesn't need a second one.
+  if (kind === 'craft' || kind === 'fletch') {
+    return (
+      <g transform="translate(100,64) rotate(12) scale(.55)">
+        <path class="ink-tool-haft" d="M-16 -2.6 Q-18 0 -16 2.6 L10 2 L10 -2 Z" />
+        <path class="ink-tool-grip" d="M-16 -2.6 Q-18 0 -16 2.6 L-4 2.3 L-4 -2.3 Z" />
+        <path class="ink-tool-head" d="M10 -3 L46 -1 L52 0 L46 1 L10 3 Z" />
+        <path class="ink-tool-edge" d="M12 2.3 L48 0.6" />
+      </g>
+    )
+  }
+  if (kind === 'brew') {
+    return (
+      <g transform="translate(100,64) rotate(30) scale(.5)">
+        <path class="ink-tool-haft" d="M-14 -3 Q-16 0 -14 3 L26 2 L26 -2 Z" />
+        <path class="ink-tool-grip" d="M-14 -3 Q-16 0 -14 3 L-2 2.6 L-2 -2.6 Z" />
+        {/* The pestle's own blunt, rounded head — a mortar needs crushing
+            weight, not an edge. */}
+        <path class="ink-tool-head" d="M22 -6 C32 -6 34 6 22 6 Z" />
+      </g>
+    )
+  }
+  // Runecraft (weave) and prayer (commune) are bare-handed per the proposal
+  // — no tool, just a closed hand at the grip so the arm doesn't read as
+  // ending in a stump.
+  if (kind === 'weave' || kind === 'commune') {
+    return (
+      <g transform="translate(100,64)">
+        <circle class="ink-skin-fill" cx="0" cy="0" r="4.4" />
       </g>
     )
   }
@@ -409,6 +514,209 @@ function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
             so there is never a second fish visible at once. */}
         {!broken && fishArt && (
           <FishArt art={fishArt} cx={158} cy={112} width={22} className={`ink-fish-idle${swinging ? ' is-working' : ''}`} />
+        )}
+      </g>
+    )
+  }
+
+  // Firemaking. The pile itself never disappears (only the top logs give
+  // way to catch), same "resource stays, fragments change" rule the rock's
+  // shards and the tree's chips follow — most actions here have no
+  // `product` at all, so the payoff IS the flame catching, not an item pop.
+  if (kind === 'logpile') {
+    return (
+      <g>
+        <path class="ink-res" d="M98 108 L98 98 L142 98 L142 108 Z" />
+        {/* The top layer sits close to the flint striker's own short reach
+            (docs/action-animations.md's measured-arithmetic methodology,
+            traced by hand for this tool's shorter-than-a-pickaxe radius) —
+            stacked higher than a resting pile would sit on its own. */}
+        {!broken && <path class="ink-res" d="M102 98 L102 76 L138 76 L138 98 Z" />}
+        {broken && (
+          <g class="ink-flame">
+            <path class="ink-flame-body" d="M118 100 Q112 88 122 78 Q120 88 128 84 Q134 90 130 100 Q136 92 138 98 Q140 104 132 108 L118 108 Z" />
+            <path class="ink-flame-core" d="M122 100 Q120 92 126 86 Q126 94 130 92 Q133 98 128 104 Z" />
+          </g>
+        )}
+      </g>
+    )
+  }
+
+  // Cooking. The fire is stationary and always lit (a hearth doesn't go out
+  // between meals) — only the food over it toggles raw/steaming, same
+  // always-there furniture pattern the anvil/mortar/bench below all share.
+  if (kind === 'cookfire') {
+    return (
+      <g>
+        <path class="ink-flame-body" d="M110 108 Q104 96 114 86 Q112 96 120 92 Q126 98 122 108 Q128 100 130 106 Q132 108 128 108 Z" />
+        <path class="ink-flame-core" d="M114 108 Q112 100 118 94 Q118 102 122 100 Q124 106 120 108 Z" />
+        <path class="ink-grate" d="M100 88 L140 88 M106 84 L106 92 M114 84 L114 92 M122 84 L122 92 M130 84 L130 92" />
+        {!broken && <path class="ink-res" d="M110 78 Q120 72 130 78 Q128 84 120 85 Q112 84 110 78 Z" />}
+        {broken && (
+          <>
+            <g class="ink-steam ink-steam--a"><path d="M114 76 Q112 68 116 62" /></g>
+            <g class="ink-steam ink-steam--b"><path d="M126 76 Q128 68 124 62" /></g>
+          </>
+        )}
+      </g>
+    )
+  }
+
+  // Smithing. The anvil is the stationary part of the prop, like the tree's
+  // trunk or fishing's water — the bar on top is what transforms/breaks.
+  if (kind === 'anvil') {
+    return (
+      <g>
+        <path class="ink-anvil-body" d="M92 108 L92 98 L100 92 L150 92 L158 98 L158 108 Z" />
+        <path class="ink-anvil-horn" d="M150 92 L172 90 L172 96 L152 98 Z" />
+        {!broken && <path class="ink-res" d="M114 84 L140 83 L142 90 L112 91 Z" />}
+        {broken && (
+          <>
+            <g class="ink-spark ink-spark--a"><path d="M120 82 L124 74" /></g>
+            <g class="ink-spark ink-spark--b"><path d="M132 80 L136 71" /></g>
+            <g class="ink-spark ink-spark--c"><path d="M144 82 L149 75" /></g>
+          </>
+        )}
+      </g>
+    )
+  }
+
+  // Crafting. A workbench under whatever material is being worked — hide,
+  // gem or bar, tinted by the same product-tint trick mining/woodcutting use.
+  if (kind === 'bench') {
+    // The knife's own short reach (same measured-tip methodology as the
+    // logpile above) puts the working surface at chest height, not the
+    // low bench a heavier tool like the hammer can reach past.
+    return (
+      <g>
+        <path class="ink-bench-top" d="M96 68 L166 68 L166 72 L96 72 Z" />
+        <path class="ink-bench-leg" d="M100 72 L100 108 M162 72 L162 108" />
+        {!broken && <path class="ink-res" d="M112 58 Q126 52 142 58 Q140 66 126 67 Q114 66 112 58 Z" />}
+        {broken && (
+          <>
+            <path class="ink-res ink-scrap ink-scrap--a" d="M112 58 L126 55 L124 64 Z" />
+            <path class="ink-res ink-scrap ink-scrap--b" d="M126 55 L142 58 L128 64 Z" />
+          </>
+        )}
+      </g>
+    )
+  }
+
+  // Fletching. A shaving horse (its own low-slung frame, not the flat
+  // workbench above) with a log laid across it; the payoff reuses the
+  // tree's own wood-chip shapes (`.ink-chip`) — a shaving is a wood chip.
+  // Raised to the same chest-height reach as crafting's bench, same knife.
+  if (kind === 'shavehorse') {
+    return (
+      <g>
+        <path class="ink-bench-leg" d="M100 108 L112 68 M150 108 L138 68" />
+        <path class="ink-bench-top" d="M108 70 L142 70 L142 74 L108 74 Z" />
+        {!broken && <path class="ink-res" d="M96 68 L156 66 L156 70 L96 72 Z" />}
+        {broken && (
+          <>
+            <g class="ink-chip ink-chip--a"><path d="M112 66 L119 64 L121 69 L114 71 Z" /></g>
+            <g class="ink-chip ink-chip--b"><path d="M128 65 L135 64 L136 69 L129 70 Z" /></g>
+          </>
+        )}
+      </g>
+    )
+  }
+
+  // Herblore. Ingredients ground in the mortar's bowl; the payoff is the
+  // finished vial standing in it, per the proposal's "vial pops" note. The
+  // pestle is a short tool too, so the bowl sits on its own raised stand
+  // rather than the ground.
+  if (kind === 'mortar') {
+    return (
+      <g>
+        <path class="ink-mortar-bowl" d="M100 88 Q98 76 108 72 L146 72 Q156 76 154 88 Z" />
+        <path class="ink-bench-leg" d="M108 88 L108 108 M146 88 L146 108" />
+        {!broken && <path class="ink-res" d="M112 76 Q127 70 142 76 Q140 82 127 83 Q114 82 112 76 Z" />}
+        {broken && (
+          <g class="ink-vial">
+            <path class="ink-res" d="M122 58 L122 72 Q116 78 118 84 Q127 88 136 84 Q138 78 132 72 L132 58 Z" />
+            <path class="ink-vial-neck" d="M122 58 L132 58 L132 54 L122 54 Z" />
+          </g>
+        )}
+      </g>
+    )
+  }
+
+  // Runecraft. A small stone dais holding the essence mound; the payoff is
+  // the essence resolving into the specific rune's own shape/tint.
+  if (kind === 'runealtar') {
+    return (
+      <g>
+        <path class="ink-altar-dais" d="M90 108 L90 100 L150 100 L150 108 Z" />
+        <path class="ink-altar-rim" d="M96 100 L96 96 L144 96 L144 100 Z" />
+        {/* The essence sits close to the raised hands — a channel doesn't
+            need contact the way a strike does, but it should still read as
+            aimed at something, not gesturing into empty air. */}
+        {!broken && <path class="ink-res" d="M104 90 Q116 84 128 90 Q126 96 116 97 Q106 96 104 90 Z" />}
+        {broken && (
+          <g class="ink-rune-glow">
+            <path class="ink-res" d="M116 74 L124 88 L116 96 L108 88 Z" />
+          </g>
+        )}
+      </g>
+    )
+  }
+
+  // Prayer — bury. The mound of earth never disappears; only the bones on
+  // top do, sinking in behind a small scatter of dust (`.ink-dust`, shared
+  // with the scatter pose below).
+  if (kind === 'grave') {
+    return (
+      <g>
+        <path class="ink-grave-mound" d="M96 108 Q100 96 128 94 Q156 96 160 108 Z" />
+        {/* Bones sit close to the body — a bare hand's reach is short, and
+            the kneel (inkBodyCommune's own translate, index.css) is what
+            carries it down to the mound, not the arm alone. */}
+        {!broken && <path class="ink-res" d="M96 96 L104 90 L118 92 L124 98 L110 100 Z" />}
+        {broken && (
+          <>
+            <g class="ink-dust ink-dust--a"><circle cx="120" cy="92" r="1.6" /></g>
+            <g class="ink-dust ink-dust--b"><circle cx="132" cy="90" r="1.4" /></g>
+            <g class="ink-dust ink-dust--c"><circle cx="126" cy="86" r="1.2" /></g>
+          </>
+        )}
+      </g>
+    )
+  }
+
+  // Prayer — gilded altar. Bones placed on an ornate golden altar; the
+  // payoff is the "hands raised into a golden updraft" beat from the
+  // proposal, not an item — the altar grants XP only, like bury.
+  if (kind === 'gildedAltar') {
+    return (
+      <g>
+        <path class="ink-gilded-altar" d="M92 108 L92 96 L100 90 L156 90 L164 96 L164 108 Z" />
+        <path class="ink-gilded-trim" d="M96 96 L160 96 L160 100 L96 100 Z" />
+        {!broken && <path class="ink-res" d="M98 88 L106 82 L122 84 L128 90 L114 92 Z" />}
+        {broken && (
+          <g class="ink-updraft">
+            <path d="M118 86 Q120 70 116 56" />
+            <path d="M128 86 Q126 66 132 52" />
+            <path d="M138 86 Q142 70 138 58" />
+          </g>
+        )}
+      </g>
+    )
+  }
+
+  // Prayer — scatter gargoyle dust. No furniture at all: a handful set down
+  // ahead of the figure, cast into the same dust-mote payoff the grave uses.
+  if (kind === 'dust') {
+    return (
+      <g>
+        {!broken && <path class="ink-res" d="M98 108 Q96 100 108 98 Q120 100 118 108 Z" />}
+        {broken && (
+          <>
+            <g class="ink-dust ink-dust--a"><circle cx="94" cy="94" r="1.6" /></g>
+            <g class="ink-dust ink-dust--b"><circle cx="108" cy="88" r="1.4" /></g>
+            <g class="ink-dust ink-dust--c"><circle cx="122" cy="92" r="1.5" /></g>
+            <g class="ink-dust ink-dust--d"><circle cx="132" cy="100" r="1.2" /></g>
+          </>
         )}
       </g>
     )
