@@ -385,7 +385,7 @@ const SCRIPT = `
     for (var i = 0; i < catalog.characters.length; i++){
       var c = catalog.characters[i];
       if (q && c.username.toLowerCase().indexOf(q) === -1 && String(c.id) !== q) continue;
-      var marks = ['#' + c.id, 'level ' + c.totalLevel];
+      var marks = ['#' + c.id, 'level ' + c.totalLevel, num(c.credits) + ' credits'];
       if (c.isIronman) marks.push('ironman');
       if (c.isOneLife) marks.push('one life');
       if (!c.hasSave) marks.push('never synced — cannot grant');
@@ -719,8 +719,10 @@ const SCRIPT = `
   function setPane(next){
     pane = next;
     $('pane-grant-tab').setAttribute('aria-selected', String(next === 'grant'));
+    $('pane-credits-tab').setAttribute('aria-selected', String(next === 'credits'));
     $('pane-salvage-tab').setAttribute('aria-selected', String(next === 'salvage'));
     $('pane-grant').hidden = next !== 'grant';
+    $('pane-credits').hidden = next !== 'credits';
     $('pane-salvage').hidden = next !== 'salvage';
   }
 
@@ -745,6 +747,7 @@ const SCRIPT = `
     if (chosen && chosen.isIronman) marks.push('ironman');
     if (chosen && chosen.isOneLife) marks.push('one life');
     if (chosen) marks.push('total level ' + chosen.totalLevel);
+    if (chosen) marks.push(num(chosen.credits) + ' credits');
     if (marks.length) el.appendChild(document.createTextNode(' — ' + marks.join(' · ')));
   }
 
@@ -908,6 +911,69 @@ const SCRIPT = `
     });
   }
 
+  function renderCreditsReceipt(body, dryRun){
+    var rows = [
+      ['Character', body.username + '  #' + body.character_id],
+      ['Amount', num(body.amount)],
+      ['Credits before', num(body.before)],
+      ['Credits after', num(body.after)],
+    ];
+    ledgerRows('credits-receipt-body', rows);
+    $('credits-receipt-tag').className = 'fm-tag ' + (dryRun ? 'fm-tag--brass' : 'fm-tag--verdigris');
+    $('credits-receipt-tag').textContent = dryRun ? 'Preview only — nothing written' : 'Granted';
+    $('credits-receipt').hidden = false;
+    $('credits-receipt').scrollIntoView({ block: 'nearest' });
+  }
+
+  function grantCredits(dryRun){
+    var msg = $('credits-msg');
+    msg.hidden = true;
+    $('credits-receipt').hidden = true;
+    var characterId = Number(selectedCharacter);
+    var amount = Math.floor(Number($('credits-amount').value));
+    if (!characterId) return message(msg, 'err', 'Choose a character.');
+    if (!(amount >= 1)) return message(msg, 'err', 'Amount must be at least 1.');
+
+    var form = $('credits-form');
+    form.classList.add('spin');
+    $('credits-preview-btn').disabled = true;
+    $('credits-grant-btn').disabled = true;
+
+    fetch('/api/admin/grant-credits', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({
+        character_id: characterId,
+        amount: amount,
+        dry_run: !!dryRun,
+        reason: $('credits-reason').value || 'admin portal',
+      }),
+    }).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(body){
+        return { status: res.status, body: body };
+      });
+    }).then(function(r){
+      if (r.status === 401) return lock('That secret is no longer valid. Enter it again.');
+      if (r.status >= 400 || !r.body || !r.body.ok) return message(msg, 'err', errorText(r.status, r.body));
+      renderCreditsReceipt(r.body, !!dryRun);
+      if (!dryRun){
+        message(msg, 'ok', 'Granted.');
+        // Reflect the new balance immediately, rather than waiting on a reload
+        // of the whole catalog — the receipt already proved the write landed.
+        for (var i = 0; i < catalog.characters.length; i++){
+          if (catalog.characters[i].id === characterId) catalog.characters[i].credits = r.body.after;
+        }
+        refreshLists();
+      }
+    }).catch(function(){
+      message(msg, 'err', 'Could not reach the server.');
+    }).then(function(){
+      form.classList.remove('spin');
+      $('credits-preview-btn').disabled = false;
+      $('credits-grant-btn').disabled = false;
+    });
+  }
+
   function unlock(){
     // Trimmed so what the "not stored" hint implies matches what actually gets
     // compared — the header itself is auto-trimmed by fetch() regardless.
@@ -972,7 +1038,16 @@ const SCRIPT = `
     $('tab-player').addEventListener('click', function(){ setView('player'); });
     $('tab-server').addEventListener('click', function(){ setView('server'); });
     $('pane-grant-tab').addEventListener('click', function(){ setPane('grant'); });
+    $('pane-credits-tab').addEventListener('click', function(){ setPane('credits'); });
     $('pane-salvage-tab').addEventListener('click', function(){ setPane('salvage'); });
+    $('credits-preview-btn').addEventListener('click', function(){ grantCredits(true); });
+    $('credits-grant-btn').addEventListener('click', function(){ grantCredits(false); });
+    var creditsChips = document.querySelectorAll('#credits-amount-chips button');
+    for (var j = 0; j < creditsChips.length; j++){
+      creditsChips[j].addEventListener('click', function(e){
+        $('credits-amount').value = e.currentTarget.getAttribute('data-qty');
+      });
+    }
     $('incidents-btn').addEventListener('click', loadIncidents);
     $('incident-filter').addEventListener('input', renderIncidents);
     $('incident-open-btn').addEventListener('click', openIncidentInPlayer);
@@ -1067,6 +1142,7 @@ const BODY = `
 
             <nav class="subnav" role="tablist" aria-label="Player action">
               <button id="pane-grant-tab" type="button" role="tab" aria-selected="true" aria-controls="pane-grant">Grant</button>
+              <button id="pane-credits-tab" type="button" role="tab" aria-selected="false" aria-controls="pane-credits">Credits</button>
               <button id="pane-salvage-tab" type="button" role="tab" aria-selected="false" aria-controls="pane-salvage">Salvage</button>
             </nav>
 
@@ -1129,6 +1205,45 @@ const BODY = `
                 <table class="fm-ledger">
                   <thead><tr><th>Entry</th><th>Value</th></tr></thead>
                   <tbody id="receipt-body"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="pane-credits" role="tabpanel" aria-labelledby="pane-credits-tab" hidden>
+              <div id="credits-form">
+                <div class="fm-rule-head"><span>One-off boost</span></div>
+                <p class="fm-lore">A free credit grant — a refund, a welcome bonus, goodwill. No item leaves the vault and no save is touched.</p>
+                <div class="field">
+                  <label for="credits-amount">Amount</label>
+                  <input id="credits-amount" type="number" min="1" max="100000" step="1" value="1" class="fm-num-input">
+                  <div class="chips" id="credits-amount-chips">
+                    <button type="button" data-qty="1">1</button>
+                    <button type="button" data-qty="5">5</button>
+                    <button type="button" data-qty="10">10</button>
+                    <button type="button" data-qty="25">25</button>
+                    <button type="button" data-qty="50">50</button>
+                    <button type="button" data-qty="100">100</button>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="credits-reason">Reason (optional — kept with the grant)</label>
+                  <input id="credits-reason" type="text" autocomplete="off" spellcheck="false" maxlength="200" placeholder="e.g. refund, welcome bonus">
+                </div>
+
+                <div class="actions">
+                  <button id="credits-preview-btn" type="button" class="fm-btn fm-btn--brass">Preview</button>
+                  <button id="credits-grant-btn" type="button" class="fm-btn fm-btn--ember">Grant</button>
+                </div>
+                <p id="credits-msg" class="msg" hidden></p>
+              </div>
+
+              <div id="credits-receipt" hidden>
+                <div class="fm-rule-head"><span>Ledger entry</span></div>
+                <p><span id="credits-receipt-tag" class="fm-tag"></span></p>
+                <table class="fm-ledger">
+                  <thead><tr><th>Entry</th><th>Value</th></tr></thead>
+                  <tbody id="credits-receipt-body"></tbody>
                 </table>
               </div>
             </section>
