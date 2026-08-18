@@ -122,6 +122,8 @@
   --ink-ember-light: #f0a94e;
   --ink-stone: #7a7469;
   --ink-stone-shade: #4f4a41;
+  --ink-bone: #e6dfc8;
+  --ink-bone-shade: #9c9480;
 
   --font-display: 'Cinzel', serif;
   --font-body: 'Nunito', sans-serif;
@@ -1248,22 +1250,62 @@ html, body, #app {
 .ink-bench-top    { fill: var(--ink-haft-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
 .ink-bench-leg    { fill: none; stroke: var(--ink-bark-shade); stroke-width: 2.4; stroke-linecap: round; }
 .ink-anvil-body   { fill: var(--tier-iron); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
-.ink-anvil-horn   { fill: var(--tier-iron); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; opacity: 0.9; }
+.ink-anvil-horn   { fill: var(--tier-iron); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-anvil-face   { fill: var(--tier-steel); opacity: 0.5; }
 .ink-mortar-bowl  { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
-.ink-vial-neck    { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 1.3; }
-.ink-altar-dais   { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
-.ink-altar-rim    { fill: var(--ink-stone-shade); }
-.ink-grave-mound  { fill: var(--ink-bark-shade); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; opacity: 0.85; }
+.ink-mortar-rim   { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
+.ink-mortar-stand { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-vial-neck    { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-vial-cork    { fill: var(--ink-cork); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-vial-shine   { fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; opacity: 0.35; }
+.ink-altar-dais   { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
+.ink-altar-stone  { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; }
+.ink-altar-carve  { fill: none; stroke: var(--tier-jewel-blue); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; opacity: 0.75; }
+.ink-grave-mound  { fill: var(--ink-bark); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
+.ink-grave-hollow { fill: var(--ink-bark-shade); stroke: none; }
 .ink-gilded-altar { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
-.ink-gilded-trim  { fill: var(--tier-gold); opacity: 0.85; }
-.ink-grate        { fill: none; stroke: var(--tier-iron); stroke-width: 1.4; }
+.ink-gilded-trim  { fill: var(--tier-gold); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-candle       { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 1.4; stroke-linejoin: round; }
+.ink-urn          { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
+.ink-urn-mouth    { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-spit         { fill: none; stroke: var(--ink-bark); stroke-width: 2.2; stroke-linecap: round; }
+.ink-stave        { fill: var(--ink-haft); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-stave-nock   { fill: none; stroke: var(--text-strong); stroke-width: 1.6; stroke-linecap: round; }
+.ink-herb         { fill: none; stroke: var(--ink-leaf); stroke-width: 1.8; stroke-linecap: round; }
+.ink-herb-leaf    { fill: var(--ink-leaf); stroke: var(--ink-leaf); stroke-width: 1.2; stroke-linejoin: round; }
+.ink-rune-mark    { fill: none; stroke: var(--text-strong); stroke-width: 1.6; stroke-linecap: round; opacity: 0.6; }
+
+/* Logs, drawn end-on so they can never read as planks. */
+.ink-log-face { fill: var(--ink-bark); stroke: var(--text-strong); stroke-width: 2.2; }
+.ink-log-ring { fill: none; stroke: var(--ink-haft); stroke-width: 1.3; opacity: 0.85; }
+.ink-log-side { fill: var(--ink-bark-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+
+/* Bones — prayer's whole readability. Kept pale against every backdrop it
+   is laid on (earth, gold), which is why this is its own token and not
+   --ink-tint: prayer's actions grant XP with no product, so there is no
+   item colour to inherit in the first place. */
+.ink-bone        { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-bone-socket { fill: var(--text-strong); stroke: none; }
+.ink-bone-shade  { fill: var(--ink-bone-shade); stroke: var(--ink-bone-shade); stroke-width: 1.2; stroke-linecap: round; }
+
+/* Hot metal on the anvil, a fish's eye, the shaving horse's clamp, the
+   essence's charge — the small marks that name each scene. */
+.ink-hot           { fill: var(--ink-ember); opacity: 0.85; }
+.ink-fish-eye      { fill: var(--text-strong); }
+.ink-clamp         { fill: none; stroke: var(--ink-bark-shade); stroke-width: 2.2; stroke-linecap: round; }
+.ink-clamp-jaw     { fill: var(--ink-haft-shade); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-essence-spark { fill: none; stroke: var(--tier-jewel-blue); stroke-width: 1.6; stroke-linecap: round; opacity: 0.8; }
+.ink-cast          { fill: var(--text-soft); opacity: 0; transform-box: view-box; transform-origin: 150px 66px; }
 
 /* Tier A payoff particles — sparks, dust, steam, updraft. Position/scatter
    keyframes for the lettered variants live in the reduced-motion-gated
    block below, same split as .ink-shard/.ink-chip above. */
 .ink-spark  { fill: none; stroke: var(--ink-ember-light); stroke-width: 1.6; stroke-linecap: round; transform-box: view-box; transform-origin: 130px 82px; }
 .ink-scrap  { transform-box: view-box; transform-origin: 127px 60px; }
-.ink-dust   { fill: var(--text-soft); opacity: 0.6; transform-box: view-box; }
+/* Gargoyle dust and grave dust. Given its own pale mineral tone rather than
+   --text-soft: at 1.5px a mote the colour of body text is a speck of dirt on
+   the screen, and the scatter pose has nothing else to show. */
+.ink-dust   { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 0.8; opacity: 0.9; transform-box: view-box; }
 .ink-steam  { fill: none; stroke: var(--text-soft); stroke-width: 1.4; stroke-linecap: round; opacity: 0.7; transform-box: view-box; transform-origin: 120px 76px; }
 .ink-updraft { fill: none; stroke: var(--tier-gold); stroke-width: 1.6; stroke-linecap: round; opacity: 0.8; }
 .ink-flame-body { fill: var(--ink-ember); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
@@ -1698,39 +1740,93 @@ html, body, #app {
     100% { transform: translate(0,0) rotate(0deg); }
   }
 
-  /* Prayer — one shared gesture for all three poses (bury/altar/scatter):
-     reach down, hold, rise — reads as kneel-and-place, kneel-and-raise, or
-     a casting arc depending only on which prop it's aimed at. */
-  @keyframes inkArmCommune {
+  /* Prayer — three separate acts, not one gesture wearing three props.
+     BURY: a spade digs, lifts, and pats the earth down. The figure stays
+     standing on the ground line throughout — an earlier version translated
+     the whole body 18px down to fake a kneel and pushed its boots straight
+     through the floor. Reach belongs to the tool (Tool()'s `bury` spade),
+     never to a body that has nowhere to go. */
+  @keyframes inkArmBury {
+    0%   { transform: rotate(-6deg); }
+    30%  { transform: rotate(-24deg); }
+    52%  { transform: rotate(8deg); }
+    60%  { transform: rotate(11deg); }
+    82%  { transform: rotate(-14deg); }
+    100% { transform: rotate(-6deg); }
+  }
+  @keyframes inkArmBackBury {
     0%   { transform: rotate(0deg); }
-    35%  { transform: rotate(28deg); }
-    55%  { transform: rotate(32deg); }
-    80%  { transform: rotate(-18deg); }
+    30%  { transform: rotate(-12deg); }
+    52%  { transform: rotate(6deg); }
+    82%  { transform: rotate(-7deg); }
     100% { transform: rotate(0deg); }
   }
-  @keyframes inkArmBackCommune {
+  @keyframes inkHeadBury {
     0%   { transform: rotate(0deg); }
-    35%  { transform: rotate(14deg); }
-    55%  { transform: rotate(16deg); }
-    80%  { transform: rotate(-9deg); }
+    30%  { transform: rotate(2deg); }
+    56%  { transform: rotate(7deg); }
     100% { transform: rotate(0deg); }
   }
-  @keyframes inkHeadCommune {
-    0%   { transform: rotate(0deg); }
-    55%  { transform: rotate(6deg); }
-    80%  { transform: rotate(-3deg); }
-    100% { transform: rotate(0deg); }
-  }
-  /* A bare hand's reach from the shoulder alone (~17px radius) can never
-     get down to the ground — the whole BODY has to drop for a kneel to
-     reach the grave/altar/dust prop below it, the same measured-tip
-     discipline the tool skills use, just carried by translate instead of
-     a tool's own length. */
-  @keyframes inkBodyCommune {
+  @keyframes inkBodyBury {
     0%   { transform: translate(0,0) rotate(0deg); }
-    55%  { transform: translate(0,18px) rotate(4deg); }
-    80%  { transform: translate(0,-2px) rotate(-2deg); }
+    30%  { transform: translate(-1.4px,0) rotate(-2deg); }
+    56%  { transform: translate(1.4px,0) rotate(3deg); }
+    82%  { transform: translate(0.4px,0) rotate(-1deg); }
     100% { transform: translate(0,0) rotate(0deg); }
+  }
+
+  /* OFFER: both hands rise from the altar's slab and hold, palms up. A
+     slow, even lift — the only Tier A motion with no impact frame at all,
+     because nothing is being struck. */
+  @keyframes inkArmOffer {
+    0%   { transform: rotate(14deg); }
+    45%  { transform: rotate(-34deg); }
+    70%  { transform: rotate(-38deg); }
+    100% { transform: rotate(14deg); }
+  }
+  @keyframes inkArmBackOffer {
+    0%   { transform: rotate(8deg); }
+    45%  { transform: rotate(-20deg); }
+    70%  { transform: rotate(-23deg); }
+    100% { transform: rotate(8deg); }
+  }
+  @keyframes inkHeadOffer {
+    0%   { transform: rotate(0deg); }
+    60%  { transform: rotate(-7deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkBodyOffer {
+    0%   { transform: rotate(0deg); }
+    60%  { transform: rotate(-2.5deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  /* SCATTER: a low gather at the urn, then a wide throw across the body —
+     the arc is the whole read, so it travels much further than the other
+     two and holds at the top of the cast while the motes fly. */
+  @keyframes inkArmScatter {
+    0%   { transform: rotate(26deg); }
+    34%  { transform: rotate(30deg); }
+    58%  { transform: rotate(-30deg); }
+    74%  { transform: rotate(-36deg); }
+    100% { transform: rotate(26deg); }
+  }
+  @keyframes inkArmBackScatter {
+    0%   { transform: rotate(0deg); }
+    34%  { transform: rotate(10deg); }
+    58%  { transform: rotate(-14deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkHeadScatter {
+    0%   { transform: rotate(4deg); }
+    58%  { transform: rotate(-5deg); }
+    100% { transform: rotate(4deg); }
+  }
+  @keyframes inkBodyScatter {
+    0%   { transform: rotate(1.5deg); }
+    34%  { transform: rotate(3deg); }
+    58%  { transform: rotate(-3deg); }
+    100% { transform: rotate(1.5deg); }
   }
 
   .ink-fig--kindle.is-working .ink-arm      { animation: inkArmKindle var(--ink-strike) var(--fm-ease) infinite; }
@@ -1765,10 +1861,32 @@ html, body, #app {
   .ink-fig--weave.is-working .ink-head     { animation: inkHeadWeave var(--ink-strike) ease-in-out infinite; }
   .ink-fig--weave.is-working               { animation: inkBodyWeave var(--ink-strike) ease-in-out infinite; }
 
-  .ink-fig--commune.is-working .ink-arm      { animation: inkArmCommune var(--ink-strike) ease-in-out infinite; }
-  .ink-fig--commune.is-working .ink-arm-back { animation: inkArmBackCommune var(--ink-strike) ease-in-out infinite; }
-  .ink-fig--commune.is-working .ink-head     { animation: inkHeadCommune var(--ink-strike) ease-in-out infinite; }
-  .ink-fig--commune.is-working               { animation: inkBodyCommune var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--bury.is-working .ink-arm      { animation: inkArmBury var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--bury.is-working .ink-arm-back { animation: inkArmBackBury var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--bury.is-working .ink-head     { animation: inkHeadBury var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--bury.is-working               { animation: inkBodyBury var(--ink-strike) var(--fm-ease) infinite; }
+
+  .ink-fig--offer.is-working .ink-arm      { animation: inkArmOffer var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--offer.is-working .ink-arm-back { animation: inkArmBackOffer var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--offer.is-working .ink-head     { animation: inkHeadOffer var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--offer.is-working               { animation: inkBodyOffer var(--ink-strike) ease-in-out infinite; }
+
+  .ink-fig--scatter.is-working .ink-arm      { animation: inkArmScatter var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--scatter.is-working .ink-arm-back { animation: inkArmBackScatter var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--scatter.is-working .ink-head     { animation: inkHeadScatter var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--scatter.is-working               { animation: inkBodyScatter var(--ink-strike) ease-in-out infinite; }
+  /* The thrown handful, phase-locked to the arm that throws it: nothing
+     until the cast starts, then out and gone before the next gather. */
+  @keyframes inkCastFly {
+    0%, 34% { opacity: 0; transform: translate(-26px, 14px); }
+    58%     { opacity: 0.55; transform: translate(-6px, 2px); }
+    82%     { opacity: 0.3; transform: translate(8px, -2px); }
+    100%    { opacity: 0; transform: translate(16px, 2px); }
+  }
+  /* Scoped to the element itself, not through a sibling combinator: the
+     prop layer is drawn BEFORE the figure, so `.ink-fig ~ .ink-prop` can
+     never match (the same mistake the reel's own selector once made). */
+  .ink-cast.is-working { animation: inkCastFly var(--ink-strike) ease-out infinite; }
 
   /* Payoffs. Each runs once per completed action and returns the prop to rest,
      because the engine starts the next action immediately — there is no dead
@@ -1934,9 +2052,34 @@ html, body, #app {
   .ink-payoff--weave { animation: inkPayoffWeave var(--ink-payoff) ease-out; }
   .ink-payoff--weave .ink-rune-glow { transform-box: view-box; transform-origin: 116px 85px; animation: inkRuneGlow var(--ink-payoff) ease-out; }
 
-  /* Prayer's three poses share one payoff fade and one dust-mote scatter
-     (the gilded altar adds its own updraft on top). */
+  /* Prayer. Each pose gets its own payoff because each ACT ends
+     differently: bones sink into the earth, bones dissolve upward into the
+     altar's light, dust flies out on the wind. */
   @keyframes inkPayoffCommune { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
+  /* The bones go DOWN into the hollow and fade as the earth takes them —
+     the single beat that says "buried" rather than "dropped". */
+  @keyframes inkBoneSink {
+    0%   { opacity: 1; transform: translateY(-6px); }
+    45%  { opacity: 1; transform: translateY(2px); }
+    100% { opacity: 0; transform: translateY(7px); }
+  }
+  @keyframes inkBoneRise {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-16px) scale(0.82); }
+  }
+  .ink-payoff--bury    { animation: inkPayoffCommune var(--ink-payoff) ease-out; }
+  .ink-payoff--offer   { animation: inkPayoffCommune var(--ink-payoff) ease-out; }
+  .ink-payoff--scatter { animation: inkPayoffCommune var(--ink-payoff) ease-out; }
+  .ink-bone-sink { transform-box: view-box; transform-origin: 140px 86px; animation: inkBoneSink var(--ink-payoff) ease-in; }
+  .ink-bone-rise { transform-box: view-box; transform-origin: 138px 74px; animation: inkBoneRise var(--ink-payoff) ease-out; }
+  .ink-payoff--bury .ink-dust--a    { animation: inkDustA var(--ink-payoff) ease-out; }
+  .ink-payoff--bury .ink-dust--b    { animation: inkDustB var(--ink-payoff) ease-out; }
+  .ink-payoff--bury .ink-dust--c    { animation: inkDustC var(--ink-payoff) ease-out; }
+  .ink-payoff--offer .ink-updraft   { animation: inkUpdraftRise var(--ink-payoff) ease-out; }
+  .ink-payoff--scatter .ink-dust--a { animation: inkDustA var(--ink-payoff) ease-out; }
+  .ink-payoff--scatter .ink-dust--b { animation: inkDustB var(--ink-payoff) ease-out; }
+  .ink-payoff--scatter .ink-dust--c { animation: inkDustC var(--ink-payoff) ease-out; }
+  .ink-payoff--scatter .ink-dust--d { animation: inkDustD var(--ink-payoff) ease-out; }
   @keyframes inkDustA {
     0%   { transform: translate(0,0); opacity: 0.6; }
     100% { transform: translate(-9px,-10px); opacity: 0; }
@@ -1958,12 +2101,6 @@ html, body, #app {
     30%  { opacity: 0.8; transform: translateY(-2px); }
     100% { opacity: 0; transform: translateY(-14px); }
   }
-  .ink-payoff--commune { animation: inkPayoffCommune var(--ink-payoff) ease-out; }
-  .ink-payoff--commune .ink-dust--a { animation: inkDustA var(--ink-payoff) ease-out; }
-  .ink-payoff--commune .ink-dust--b { animation: inkDustB var(--ink-payoff) ease-out; }
-  .ink-payoff--commune .ink-dust--c { animation: inkDustC var(--ink-payoff) ease-out; }
-  .ink-payoff--commune .ink-dust--d { animation: inkDustD var(--ink-payoff) ease-out; }
-  .ink-payoff--commune .ink-updraft { animation: inkUpdraftRise var(--ink-payoff) ease-out; }
 
   @keyframes inkYieldPop {
     0%   { opacity: 0; transform: translateY(6px) scale(0.6); }

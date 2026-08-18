@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 // @ts-ignore
 import {
   inkwrightPlan,
@@ -43,7 +45,8 @@ describe('inkwright — which skills have a figure', () => {
     // — so this checks the prop is drawable, not that motion === key.
     const knownMotions = new Set([
       'mine', 'chop', 'fish',
-      'kindle', 'cook', 'smith', 'craft', 'fletch', 'brew', 'weave', 'commune',
+      'kindle', 'cook', 'smith', 'craft', 'fletch', 'brew', 'weave',
+      'bury', 'offer', 'scatter',
     ])
     for (const key of Object.keys(INKWRIGHT_MOTIONS)) {
       const m = INKWRIGHT_MOTIONS[key]
@@ -64,9 +67,34 @@ describe('inkwright — which skills have a figure', () => {
     expect(inkwrightMotionForSkill('prayer', 'altar_dragon_bones')?.prop).toBe('gildedAltar')
     expect(inkwrightMotionForSkill('prayer', 'scatter_gargoyle_dust')?.prop).toBe('dust')
     expect(inkwrightMotionForSkill('prayer')?.prop).toBe('grave')
-    // All three share one keyframe family — the proposal's cheaper option.
-    for (const id of ['bury_dragon_bones', 'altar_dragon_bones', 'scatter_gargoyle_dust']) {
-      expect(inkwrightMotionForSkill('prayer', id)?.motion).toBe('commune')
+    // Each pose is its own motion, not one gesture wearing three props:
+    // digging, offering and casting look nothing like each other, and the
+    // shared version read as none of them.
+    expect(inkwrightMotionForSkill('prayer', 'bury_bones')?.motion).toBe('bury')
+    expect(inkwrightMotionForSkill('prayer', 'altar_bones')?.motion).toBe('offer')
+    expect(inkwrightMotionForSkill('prayer', 'scatter_gargoyle_dust')?.motion).toBe('scatter')
+  })
+
+  // Same precedent as tests/theme.test.ts and tests/itemIconParity.test.ts:
+  // the CSS is the other half of this contract, and a motion row whose
+  // keyframes were never written renders a figure standing perfectly still
+  // holding a tool — which looks like a hang, not like a missing animation.
+  it('every motion has a keyframe family and a drawn prop', () => {
+    const css = readFileSync(resolve(__dirname, '../src/index.css'), 'utf8')
+    const stage = readFileSync(resolve(__dirname, '../src/components/InkwrightStage.jsx'), 'utf8')
+    // Scoped to Prop()'s own body: Backdrop() branches on the same prop names,
+    // so searching the whole file would pass a prop that has a scene but
+    // nothing to strike.
+    const propBody = stage.slice(stage.indexOf('function Prop({'))
+    for (const key of Object.keys(INKWRIGHT_MOTIONS)) {
+      const { motion, prop } = INKWRIGHT_MOTIONS[key]
+      expect(css, `${motion} has no arm keyframes`)
+        .toContain(`.ink-fig--${motion}.is-working .ink-arm`)
+      // The payoff beat is what the player reads as "the action completed".
+      expect(css, `${motion} has no payoff rule`).toContain(`.ink-payoff--${motion}`)
+      // A prop Prop() cannot draw falls through to the rock silhouette, so
+      // smithing would silently mine a boulder.
+      expect(propBody, `${prop} is not drawn by Prop()`).toContain(`kind === '${prop}'`)
     }
   })
 

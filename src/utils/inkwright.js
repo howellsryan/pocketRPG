@@ -60,13 +60,15 @@ export const INKWRIGHT_MOTIONS = {
   brew:   { motion: 'brew',   prop: 'mortar',     label: 'Herblore' },
   weave:  { motion: 'weave',  prop: 'runealtar',  label: 'Runecrafting' },
 
-  // Prayer is one keyframe family (`commune`) with three payoff dressings,
-  // picked by the action id's prefix (inkwrightMotionForSkill's second
-  // arg) rather than by skill name alone — the only skill in this tier
-  // where that's true.
-  prayer_bury:    { motion: 'commune', prop: 'grave',       pose: 'bury',    label: 'Burying bones' },
-  prayer_altar:   { motion: 'commune', prop: 'gildedAltar', pose: 'altar',   label: 'Praying at the gilded altar' },
-  prayer_scatter: { motion: 'commune', prop: 'dust',        pose: 'scatter', label: 'Scattering gargoyle dust' },
+  // Prayer is three DIFFERENT acts, picked by the action id's prefix
+  // (inkwrightMotionForSkill's second arg) rather than by skill name alone —
+  // the only skill in this tier where that's true. They were one shared
+  // `commune` gesture first and that was the wrong economy: digging a hole,
+  // laying bones on an altar and casting dust to the wind look nothing like
+  // each other, so one motion read as none of them.
+  prayer_bury:    { motion: 'bury',    prop: 'grave',       pose: 'bury',    label: 'Burying bones' },
+  prayer_altar:   { motion: 'offer',   prop: 'gildedAltar', pose: 'altar',   label: 'Praying at the gilded altar' },
+  prayer_scatter: { motion: 'scatter', prop: 'dust',        pose: 'scatter', label: 'Scattering gargoyle dust' },
 }
 
 // Skills whose action is a physical strike/gesture at a resource. Every other
