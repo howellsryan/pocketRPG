@@ -135,7 +135,7 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
             does not rotate rigidly with the blank. Its own motion is driven
             off the rod tip's own measured path (inkRigMotion, index.css),
             same technique the review artifact validated. */}
-        {prop === 'water' && <FishingRig fishArt={fishArt} broke={broke} swinging={swinging} />}
+        {prop === 'water' && <FishingRig fishArt={fishArt} broke={broke} swinging={swinging} yieldToken={yieldToken} />}
       </svg>
 
       {/* What the action produced, popped on the yield. An HTML sibling
@@ -266,8 +266,18 @@ function Tool({ kind }) {
  * gravity, it does not swing rigidly with the blank. `.ink-rig`'s keyframes
  * (index.css) are the rod tip's own measured path instead: damped to a
  * quarter during the idle sway (slack absorbs it), full during the haul
- * (which is what actually lifts the catch clear of the water). */
-function FishingRig({ fishArt, broke, swinging }) {
+ * (which is what actually lifts the catch clear of the water).
+ *
+ * The float stays mounted continuously — the catch is a SEPARATE layer on
+ * top of it, keyed on `yieldToken` so it remounts (and its one-shot CSS
+ * animation replays) on every yield, then fades itself out and holds that
+ * state (`animation-fill-mode: forwards`) rather than snapping back to its
+ * start pose the instant the payoff clock runs out. A cross-tree selector
+ * scoped through `.ink-payoff--fish` looked like it drove this once, but
+ * `.ink-catch-rise` isn't a descendant of that element — it's a sibling, in
+ * this same STAGE-space group — so it never matched; the animation is
+ * self-contained on `.ink-catch-rise` now. */
+function FishingRig({ fishArt, broke, swinging, yieldToken }) {
   return (
     <g class={`ink-rig${swinging ? ' is-working' : ''}`}>
       {/* Anchored at the rod tip's own REST position (190,47) — computed from
@@ -278,13 +288,11 @@ function FishingRig({ fishArt, broke, swinging }) {
           floating in the air above the pond, the same trap the old fishing
           rod's own line-length comment was written to avoid. */}
       <path class="ink-rod-line" d="M190 47 Q186 72 178 100" />
-      {!broke && (
-        <g class="ink-float-idle">
-          <circle class="ink-tool-float" cx="178" cy="100" r="3.6" />
-        </g>
-      )}
+      <g class="ink-float-idle">
+        <circle class="ink-tool-float" cx="178" cy="100" r="3.6" />
+      </g>
       {broke && (
-        <g class="ink-catch-rise">
+        <g key={yieldToken} class="ink-catch-rise">
           {fishArt
             ? <FishArt art={fishArt} cx={178} cy={98} width={24} className="ink-catch" />
             : <path class="ink-catch ink-catch--fallback" d="M169 98 Q178 92 187 98 Q178 104 169 98 Z" />}
@@ -335,40 +343,53 @@ function FishArt({ art, cx, cy, width, className }) {
  * bobbing. */
 function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
   if (kind === 'tree') {
+    // Every coordinate here is authored directly at the size this stage
+    // actually renders at — NOT scaled down at runtime from a bigger canvas.
+    // An earlier version wrapped a much-larger canopy in a single
+    // translate/scale "shrink it to fit" transform; the arithmetic checked
+    // out on paper (canopy bottom and trunk top landed on the same y), but
+    // the RESULT read as a squat blob sitting on a barely-visible stump —
+    // proportion has to be judged on the actual render, not derived once
+    // and trusted. A proper trunk (50 units, roughly the figure's own
+    // torso+leg height) under a canopy clearly wider and taller than it is
+    // what makes this read as a standing tree rather than a fallen one.
     return (
       <g>
-        {/* Canopy: an irregular silhouette with a scalloped underside, then
-            one lit clump — a broken outline reads as leaf mass, stacked flat
-            ellipses (the previous version) read as broccoli. */}
         {!broken && (
-          <g class="ink-faller" transform="translate(28,30.24) scale(.72)">
-            <path class="ink-canopy" d="M108 66 C92 66 80 58 79 46 C78 36 86 28 96 27 C100 18 112 13 122 16 C134 10 148 12 152 22 C160 24 164 34 160 42 C166 48 164 58 154 62 C150 68 138 70 126 66 Z" />
-            <path class="ink-canopy-lit" d="M96 42 C92 46 93 52 98 54 C104 56 110 52 109 46 C108 40 101 38 96 42 Z" />
-            <path class="ink-canopy-lit" d="M128 26 C122 29 122 37 129 40 C137 43 144 37 142 30 C141 25 133 23 128 26 Z" />
-            <path class="ink-bough" d="M114 66 Q108 58 100 54" />
-            <path class="ink-bough" d="M119 62 Q130 54 138 51" />
+          <g class="ink-faller">
+            <path class="ink-canopy" d="M122 18 C100 18 86 30 86 46 C86 58 98 66 116 68 L128 68 C146 66 158 58 158 46 C158 30 144 18 122 18 Z" />
+            <path class="ink-canopy-lit" d="M100 36 C95 40 96 47 102 50 C109 53 116 48 115 41 C114 35 106 32 100 36 Z" />
+            <path class="ink-canopy-lit" d="M132 24 C125 27 125 35 132 39 C140 42 148 36 146 29 C144 24 137 21 132 24 Z" />
+            <path class="ink-bough" d="M116 68 Q108 60 98 54" />
+            <path class="ink-bough" d="M128 64 Q138 56 148 51" />
           </g>
         )}
         {/* Trunk + notch — the trunk never moves, the notch STAYS CUT between
             swings so the loop reads as progress, and the fall hinges from
-            exactly where the axe has been landing. */}
-        <g transform="translate(28,30.24) scale(.72)">
-          <path class="ink-trunk" d="M112 108 Q109 88 112 66 L126 66 Q129 88 126 108 Z" />
-          <g class="ink-notch">
-            <path class="ink-notch-face" d="M114 88 L128 94 L114 100 Z" />
-            <path class="ink-notch-lit" d="M114 88 L128 94 L116 97 Z" />
-          </g>
+            exactly where the axe has been landing (measured against the
+            axe's own reach — src/components/InkwrightStage.jsx's Tool()). */}
+        <path class="ink-trunk" d="M113 108 Q110 86 114 60 L124 60 Q128 86 125 108 Z" />
+        <g class="ink-notch">
+          <path class="ink-notch-face" d="M114 82 L126 88 L114 94 Z" />
+          <path class="ink-notch-lit" d="M114 82 L126 88 L116 91 Z" />
         </g>
+        {/* The payoff is wood chips flying out of the notch, not the whole
+            tree toppling — the same "the resource stays, only fragments
+            fly" pattern the rock's own payoff uses (its ink-shard--a/b/c/d
+            below). A repeatable action can't end each cycle by felling the
+            tree it's about to cut again; a full topple also had to stay
+            visibly "down" for most of its own duration to read as a fall at
+            all, which is most of a short action's total cycle — exactly
+            what made a 2-tick action look like it was chopping a tree that
+            was already on the ground. */}
         {broken && (
-          <g class="ink-fall">
-            <g transform="translate(28,30.24) scale(.72)">
-              <path class="ink-canopy" d="M108 66 C92 66 80 58 79 46 C78 36 86 28 96 27 C100 18 112 13 122 16 C134 10 148 12 152 22 C160 24 164 34 160 42 C166 48 164 58 154 62 C150 68 138 70 126 66 Z" />
-              <path class="ink-canopy-lit" d="M96 42 C92 46 93 52 98 54 C104 56 110 52 109 46 C108 40 101 38 96 42 Z" />
-              <path class="ink-bough" d="M114 66 Q108 58 100 54" />
-              <path class="ink-bough" d="M119 62 Q130 54 138 51" />
-              <path class="ink-trunk" d="M112 90 Q110 78 112 66 L126 66 Q128 78 126 90 Z" />
-            </g>
-          </g>
+          <g class="ink-chip ink-chip--a"><path d="M116 84 L123 82 L125 87 L118 89 Z" /></g>
+        )}
+        {broken && (
+          <g class="ink-chip ink-chip--b"><path d="M114 88 L120 87 L121 92 L115 93 Z" /></g>
+        )}
+        {broken && (
+          <g class="ink-chip ink-chip--c"><path d="M118 90 L125 89 L126 94 L119 95 Z" /></g>
         )}
       </g>
     )

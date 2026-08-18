@@ -1276,16 +1276,33 @@ html, body, #app {
 .ink-arm-back { transform-box: view-box; transform-origin: 78px 58px; }
 .ink-head     { transform-box: view-box; transform-origin: 76px 33px; }
 .ink-fig      { transform-box: view-box; transform-origin: 76px 100px; }
-.ink-faller, .ink-fall { transform-box: view-box; transform-origin: 114px 78px; }
 .ink-shard    { transform-box: view-box; transform-origin: 130px 90px; }
-.ink-fish-idle, .ink-catch, .ink-float-idle, .ink-catch-rise { transform-box: view-box; }
+.ink-fish-idle, .ink-catch { transform-box: view-box; }
+/* .ink-float-idle and .ink-catch-rise are the ANIMATED wrappers themselves
+   (inkFloatBob / inkCatchRise apply directly to them) and carry no inline
+   transform-origin the way FishArt's own <g> does — left at the view-box
+   default (50% 50% of the whole 200x128 stage, i.e. the canvas centre) they
+   rotate the float/catch through a wide arc around a point ~85 units away
+   from where either is actually drawn, instead of turning in place. Anchor
+   each at its own drawn position: the float circle's (cx,cy), and the
+   catch's spawn point (matching FishingRig's <FishArt cx={178} cy={98}>). */
+.ink-float-idle { transform-box: view-box; transform-origin: 178px 100px; }
+.ink-catch-rise { transform-box: view-box; transform-origin: 178px 98px; }
 /* The fishing rod's blank bends as a CHAIN — three nested joints, each
    pivoting at its own segment's start as placed by the tool's outer
    translate/rotate/scale (InkwrightStage.jsx's Tool()). */
-.ink-rod-seg1 { transform-box: view-box; transform-origin: 138px 57px; }
-.ink-rod-seg2 { transform-box: view-box; transform-origin: 159px 54px; }
-.ink-rod-seg3 { transform-box: view-box; transform-origin: 173px 51px; }
-.ink-rod-reel { transform-box: view-box; transform-origin: 112px 67px; }
+/* fill-box, not view-box: these joints sit inside the swinging .ink-arm, so
+   a view-box (outer-canvas) origin is only correct while the arm is at rest
+   and drifts as it rotates. fill-box resolves against each element's own
+   local geometry, which the arm's rotation can't perturb. Offsets are 0 on
+   x because every segment's content starts exactly at its joint (nothing
+   extends back past x=0 in local space); y offsets are measured off the
+   element's own getBBox() so the origin lands on the joint, not the box
+   center. */
+.ink-rod-seg1 { transform-box: fill-box; transform-origin: 0px 10px; }
+.ink-rod-seg2 { transform-box: fill-box; transform-origin: 0px 8.1px; }
+.ink-rod-seg3 { transform-box: fill-box; transform-origin: 0px 6.2px; }
+.ink-rod-reel { transform-box: fill-box; transform-origin: 50% 50%; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* ═══ MINING — a wind-up, a committed drop, a dead stop on the rock. ═══
@@ -1394,32 +1411,36 @@ html, body, #app {
      curve, which is what a single rotated rod can never fake. */
   @keyframes inkRodSeg1 {
     0%, 48% { transform: rotate(0deg); }
+    58%     { transform: rotate(3deg); }
+    70%     { transform: rotate(5deg); }
+    78%     { transform: rotate(4deg); }
+    92%     { transform: rotate(1deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  @keyframes inkRodSeg2 {
+    0%, 48% { transform: rotate(0deg); }
+    58%     { transform: rotate(4deg); }
+    70%     { transform: rotate(7deg); }
+    78%     { transform: rotate(5deg); }
+    92%     { transform: rotate(1.5deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  @keyframes inkRodSeg3 {
+    0%, 48% { transform: rotate(0deg); }
     58%     { transform: rotate(5deg); }
     70%     { transform: rotate(9deg); }
     78%     { transform: rotate(7deg); }
     92%     { transform: rotate(2deg); }
     100%    { transform: rotate(0deg); }
   }
-  @keyframes inkRodSeg2 {
-    0%, 48% { transform: rotate(0deg); }
-    58%     { transform: rotate(8deg); }
-    70%     { transform: rotate(14deg); }
-    78%     { transform: rotate(10deg); }
-    92%     { transform: rotate(3deg); }
-    100%    { transform: rotate(0deg); }
-  }
-  @keyframes inkRodSeg3 {
-    0%, 48% { transform: rotate(0deg); }
-    58%     { transform: rotate(11deg); }
-    70%     { transform: rotate(19deg); }
-    78%     { transform: rotate(14deg); }
-    92%     { transform: rotate(4deg); }
-    100%    { transform: rotate(0deg); }
-  }
+  /* A steady turn across the whole haul, not a burst — the previous version
+     span 260deg inside an 18%-of-cycle window (~130ms), which read as a
+     blur/wobble rather than reeling. Winds continuously while the fish is
+     being pulled in, holds through landing. */
   @keyframes inkReel {
     0%, 62% { transform: rotate(0deg); }
-    80%     { transform: rotate(-260deg); }
-    100%    { transform: rotate(-260deg); }
+    92%     { transform: rotate(-150deg); }
+    100%    { transform: rotate(-150deg); }
   }
   /* The terminal tackle's own motion — line/float/catch, in STAGE space —
      is driven off the rod tip's OWN computed path (docs/action-animations.md
@@ -1499,28 +1520,46 @@ html, body, #app {
   .ink-payoff--mine .ink-shard--c { animation: inkShardC var(--ink-payoff) ease-in; }
   .ink-payoff--mine .ink-shard--d { animation: inkShardD var(--ink-payoff) ease-in; }
 
-  /* The trunk lets go at the notch, topples, and drops — a hinge at chest
-     height leaves it in mid-air otherwise. */
-  @keyframes inkPayoffChop { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
-  @keyframes inkTreeFall {
-    0%   { transform: rotate(0deg) translateY(0); }
-    14%  { transform: rotate(-4deg) translateY(0); }
-    70%  { transform: rotate(78deg) translateY(14px); }
-    88%  { transform: rotate(84deg) translateY(29px); }
-    100% { transform: rotate(84deg) translateY(29px); }
+  /* Wood chips burst from the notch — the tree stays standing, same
+     "resource stays, fragments fly" shape as the rock's own shard payoff
+     just above. See InkwrightStage.jsx's Prop() for why this replaced a
+     full tree-topple. */
+  @keyframes inkChipA {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    100% { transform: translate(-10px, 14px) rotate(-52deg); }
   }
+  @keyframes inkChipB {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    100% { transform: translate(4px, 16px) rotate(64deg); }
+  }
+  @keyframes inkChipC {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    100% { transform: translate(-4px, 18px) rotate(-30deg); }
+  }
+  .ink-chip { fill: var(--ink-brass); stroke: var(--text-strong); stroke-width: 1.4; stroke-linejoin: round; transform-box: view-box; transform-origin: 120px 88px; }
+  .ink-payoff--chop .ink-chip--a { animation: inkChipA var(--ink-payoff) ease-in; }
+  .ink-payoff--chop .ink-chip--b { animation: inkChipB var(--ink-payoff) ease-in; }
+  .ink-payoff--chop .ink-chip--c { animation: inkChipC var(--ink-payoff) ease-in; }
+  @keyframes inkPayoffChop { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
   .ink-payoff--chop { animation: inkPayoffChop var(--ink-payoff) ease-out; }
-  .ink-payoff--chop .ink-fall { animation: inkTreeFall var(--ink-payoff) cubic-bezier(0.5, 0, 0.85, 0.5); }
 
-  /* The catch breaks the surface and arcs toward the hand. */
+  /* The catch breaks the surface, arcs toward the hand, then fades and HOLDS
+     that faded state (forwards) so it never snaps back to the water the
+     instant the clock runs out — the next bite is a fresh element (keyed on
+     yieldToken in FishingRig), not this one resetting. Self-contained on
+     .ink-catch-rise itself: it is a STAGE-space sibling of .ink-payoff, not
+     a descendant, so a selector scoped through .ink-payoff--fish can never
+     reach it. */
   @keyframes inkPayoffFish { 0%, 86% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes inkCatchRise {
-    0%   { transform: translate(0,0) rotate(0deg); }
-    55%  { transform: translate(-10px,-24px) rotate(-30deg); }
-    100% { transform: translate(-18px,-32px) rotate(-70deg); }
+    0%   { opacity: 0; transform: translate(0,0) rotate(0deg); }
+    8%   { opacity: 1; transform: translate(0,0) rotate(0deg); }
+    55%  { opacity: 1; transform: translate(-10px,-24px) rotate(-30deg); }
+    85%  { opacity: 1; transform: translate(-18px,-32px) rotate(-70deg); }
+    100% { opacity: 0; transform: translate(-18px,-32px) rotate(-70deg); }
   }
   .ink-payoff--fish { animation: inkPayoffFish var(--ink-payoff) ease-out; }
-  .ink-payoff--fish .ink-catch-rise { animation: inkCatchRise var(--ink-payoff) ease-out; }
+  .ink-catch-rise { animation: inkCatchRise var(--ink-payoff) ease-out forwards; }
 
   @keyframes inkYieldPop {
     0%   { opacity: 0; transform: translateY(6px) scale(0.6); }
