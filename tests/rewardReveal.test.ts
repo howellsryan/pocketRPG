@@ -67,6 +67,18 @@ describe('mergeRevealQueue', () => {
     expect(card.icon).toBe('🐄')
   })
 
+  it('keeps a merged card purple once any absorbed kill was epic', () => {
+    const first = mergeRevealQueue([], reveal({ epic: true }))
+    const merged = mergeRevealQueue(first, reveal({ epic: false }))
+    expect(merged[0].epic).toBe(true)
+  })
+
+  it('leaves an all-ordinary merged card gold', () => {
+    const first = mergeRevealQueue([], reveal({ epic: false }))
+    const merged = mergeRevealQueue(first, reveal({ epic: false }))
+    expect(merged[0].epic).toBe(false)
+  })
+
   it('does not mutate the queue it was handed', () => {
     const first = reveal()
     const queue = [first]

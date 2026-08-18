@@ -37,8 +37,10 @@ export function splatsFromCombatEvents(events) {
     } else if (ev.type === 'specialHit') {
       for (const hit of ev.hits || []) dealt.push(makeHitSplat(hit))
     } else if (ev.type === 'summonHit') {
-      // The summon always attacks the boss, never the add.
-      monster.push(makeHitSplat(ev.damage, 'summon'))
+      // The summon always attacks the boss, never the add. Multi-hit
+      // creatures (Steel Titan = 3) carry each swing in `hits` — splat every
+      // one, or a triple hit reads as a single combined number.
+      for (const hit of ev.hits || [ev.damage]) monster.push(makeHitSplat(hit, 'summon'))
     } else if (ev.type === 'monsterHit') {
       player.push(makeHitSplat(ev.damage))
     } else if (ev.type === 'monsterMiss') {
@@ -86,7 +88,7 @@ export function splatsFromCoopEvents(events, selfCharacterId) {
     } else if (ev.type === 'specialHit') {
       for (const hit of ev.hits || []) dealt.push(makeHitSplat(hit))
     } else if (ev.type === 'summonHit') {
-      boss.push(makeHitSplat(ev.damage, 'summon'))
+      for (const hit of ev.hits || [ev.damage]) boss.push(makeHitSplat(hit, 'summon'))
     } else if (mine && ev.isTarget && (ev.type === 'monsterHit' || ev.type === 'dragonfireHit')) {
       player.push(makeHitSplat(ev.damage))
     } else if (mine && ev.isTarget && ev.type === 'monsterMiss') {
