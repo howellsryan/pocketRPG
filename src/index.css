@@ -124,6 +124,14 @@
   --ink-stone-shade: #4f4a41;
   --ink-bone: #e6dfc8;
   --ink-bone-shade: #9c9480;
+  /* Spell light. Its own pair rather than --tier-jewel-purple because this is
+     a MATERIAL (the colour magic arrives in — a staff orb, a bolt in flight, a
+     rune circle), not an item tier, and it needs a lit companion tone the tier
+     scale has no reason to carry. The other three schools a spell can arrive
+     in already have tokens: gold (--tier-gold), fire (--ink-ember-light) and
+     nature (--ink-leaf-light). */
+  --ink-arcane: #7d5bd6;
+  --ink-arcane-light: #b79bf0;
 
   --font-display: 'Cinzel', serif;
   --font-body: 'Nunito', sans-serif;
@@ -1234,6 +1242,11 @@ html, body, #app {
 .ink-scene--hearth .ink-hearth-stone { fill: var(--ink-stone-shade); opacity: 0.6; }
 .ink-scene--workshop .ink-workshop-wall  { fill: var(--ink-bark-shade); opacity: 0.3; }
 .ink-scene--workshop .ink-workshop-shelf { fill: var(--ink-haft-shade); opacity: 0.55; }
+.ink-scene--sanctum .ink-sanctum-wall    { fill: var(--ink-stone-shade); opacity: 0.3; }
+.ink-scene--sanctum .ink-sanctum-glass   { fill: var(--ink-arcane); opacity: 0.32; }
+.ink-scene--sanctum .ink-sanctum-arch    { fill: none; stroke: var(--ink-stone); stroke-width: 2.4; stroke-linejoin: round; opacity: 0.9; }
+.ink-scene--sanctum .ink-sanctum-mullion { fill: none; stroke: var(--ink-stone); stroke-width: 1.6; opacity: 0.75; }
+.ink-scene--sanctum .ink-sanctum-shelf   { fill: var(--ink-stone-shade); opacity: 0.5; }
 .ink-scene--shrine .ink-shrine-stone { fill: var(--ink-stone-shade); opacity: 0.55; }
 .ink-scene--shrine .ink-shrine-glow  { fill: var(--tier-gold); opacity: 0.12; }
 
@@ -1273,6 +1286,79 @@ html, body, #app {
 .ink-rune-mark    { fill: none; stroke: var(--text-strong); stroke-width: 1.6; stroke-linecap: round; opacity: 0.6; }
 
 /* Logs, drawn end-on so they can never read as planks. */
+/* Tier E — construction. The workpiece wears --ink-tint, which for this one
+   skill comes from the MATERIAL rather than a product (a build has none), so
+   the four plank tiers visibly build in four different woods. */
+.ink-build-beam   { fill: var(--ink-tint); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-build-post   { fill: var(--ink-tint); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+/* The far side of the piece, shaded so four legs read as four legs rather
+   than as two thick ones. */
+.ink-build-leg    { fill: var(--ink-haft-shade); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; opacity: 0.85; }
+.ink-build-stack  { fill: var(--ink-tint); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; opacity: 0.9; }
+.ink-build-grain  { fill: none; stroke: var(--ink-haft-shade); stroke-width: 1.1; stroke-linecap: round; opacity: 0.5; }
+.ink-nail         { fill: var(--ink-brass); stroke: var(--text-strong); stroke-width: 0.8; }
+.ink-finish-glint { fill: none; stroke: var(--tier-gold); stroke-width: 1.8; stroke-linecap: round; opacity: 0; }
+.ink-tool-claw-slot { fill: none; stroke: var(--text-strong); stroke-width: 1.4; stroke-linecap: round; opacity: 0.6; }
+
+/* Tier G — magic. The staff is combat's own profile (weaponShapes.js), so its
+   claws and orb are painted here to match: an ink-weight outer stroke with a
+   brass core, the same two-pass treatment InkwrightFigure's Limb uses. */
+/* The plinth every pedestal spell works over. Lighter than the shrine's own
+   stone (prayer/runecraft) on purpose: this one is the hero prop of its
+   scene rather than scenery behind one, and at --ink-stone-shade it read as
+   a dark anvil. */
+.ink-plinth-base  { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-plinth-shaft { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
+.ink-plinth-cap   { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
+.ink-plinth-flute { fill: none; stroke: var(--ink-stone-shade); stroke-width: 1.4; stroke-linecap: round; opacity: 0.8; }
+.ink-staff-claw     { fill: none; stroke: var(--text-strong); stroke-width: 5.2; stroke-linecap: round; }
+.ink-staff-claw-lit { fill: none; stroke: var(--ink-brass); stroke-width: 2.8; stroke-linecap: round; }
+.ink-tool-orb       { fill: var(--ink-arcane); stroke: var(--text-strong); stroke-width: 1.8; transform-box: fill-box; transform-origin: 50% 50%; }
+.ink-tool-orb-core  { fill: var(--ink-arcane-light); opacity: 0.85; }
+
+/* The school a spell arrives in, carried as one custom property so every part
+   of the effect (bolt core, halo, trail, the flash it lands in) reads the same
+   colour from one place instead of four parallel selector families. */
+.ink-bolt--gold,   .ink-zap--gold,   .ink-flash--gold   { --ink-spell: var(--tier-gold); }
+.ink-bolt--fire,   .ink-zap--fire,   .ink-flash--fire   { --ink-spell: var(--ink-ember-light); }
+.ink-bolt--nature, .ink-zap--nature, .ink-flash--nature { --ink-spell: var(--ink-leaf-light); }
+.ink-bolt--arcane, .ink-zap--arcane, .ink-flash--arcane { --ink-spell: var(--ink-arcane-light); }
+.ink-bolt       { opacity: 0; transform-box: view-box; transform-origin: 124px 52px; }
+.ink-bolt-core  { fill: var(--ink-spell); stroke: var(--text-strong); stroke-width: 1; }
+.ink-bolt-halo  { fill: var(--ink-spell); opacity: 0.3; }
+.ink-bolt-trail { fill: none; stroke: var(--ink-spell); stroke-width: 2.6; stroke-linecap: round; opacity: 0.45; }
+.ink-zap        { fill: none; stroke: var(--ink-spell); stroke-width: 2; opacity: 0; transform-box: view-box; transform-origin: 158px 50px; }
+.ink-flash      { fill: none; stroke: var(--ink-spell); stroke-width: 2.6; opacity: 0; transform-box: view-box; transform-origin: 158px 50px; }
+.ink-subject    { transform-box: view-box; transform-origin: 158px 50px; }
+.ink-rune-ring  { fill: none; stroke: var(--ink-arcane-light); stroke-width: 1.6; opacity: 0.5; }
+.ink-rune-glyph { fill: none; stroke: var(--ink-arcane-light); stroke-width: 1.6; stroke-linecap: round; opacity: 0.7; }
+.ink-rune-circle { transform-box: view-box; transform-origin: 158px 104px; }
+.ink-coin       { opacity: 0; transform-box: view-box; transform-origin: 158px 52px; }
+.ink-coin ellipse { fill: var(--tier-gold); stroke: var(--text-strong); stroke-width: 1.2; }
+.ink-coin path    { fill: none; stroke: var(--ink-brass-shade); stroke-width: 1; }
+.ink-mote       { fill: var(--ink-leaf-light); opacity: 0; transform-box: view-box; }
+.ink-enchant-burst { fill: none; stroke: var(--ink-arcane-light); stroke-width: 2; stroke-linecap: round; opacity: 0; transform-box: view-box; transform-origin: 158px 66px; }
+.ink-channel-mote { fill: var(--ink-arcane-light); opacity: 0; transform-box: view-box; transform-origin: 107px 25px; }
+
+/* The practice dummy curse and stun are cast at. Sackcloth and straw, not a
+   person — see InkwrightStage's `hexDummy` for why this is deliberately not
+   the mirrored rig combat uses for an enemy. */
+.ink-dummy-foot   { fill: none; stroke: var(--ink-haft); stroke-width: 3.2; stroke-linecap: round; }
+.ink-dummy-base   { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-dummy-post   { fill: var(--ink-haft); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+/* Sackcloth, in the pale linen tone rather than the shaded one: at
+   --ink-bone-shade the dummy read as sheet metal, which made the whole thing
+   look like a machine instead of a stuffed sack. */
+.ink-dummy-sack   { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
+.ink-dummy-seam   { fill: none; stroke: var(--ink-bark-shade); stroke-width: 1.4; opacity: 0.7; }
+.ink-dummy-head   { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 2; }
+.ink-dummy-tie    { fill: none; stroke: var(--ink-bark-shade); stroke-width: 1.8; stroke-linecap: round; }
+.ink-dummy-target { fill: none; stroke: var(--tier-jewel-red); stroke-width: 1.6; opacity: 0.8; }
+.ink-dummy-rock   { transform-box: view-box; transform-origin: 158px 108px; }
+.ink-straw        { fill: none; stroke: var(--ink-brass); stroke-width: 1.4; stroke-linecap: round; }
+.ink-straw-fly    { fill: none; stroke: var(--ink-brass); stroke-width: 1.4; stroke-linecap: round; opacity: 0; transform-box: view-box; }
+.ink-hex-sigil    { fill: none; stroke: var(--ink-arcane-light); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transform-box: view-box; transform-origin: 158px 66px; }
+
 .ink-log-face { fill: var(--ink-bark); stroke: var(--text-strong); stroke-width: 2.2; }
 .ink-log-ring { fill: none; stroke: var(--ink-haft); stroke-width: 1.3; opacity: 0.85; }
 .ink-log-side { fill: var(--ink-bark-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
@@ -2095,6 +2181,359 @@ html, body, #app {
     30%  { opacity: 0.8; transform: translateY(-2px); }
     100% { opacity: 0; transform: translateY(-14px); }
   }
+
+
+  /* ═══ TIER E — CONSTRUCTION. Smithing's four-phase shape at a carpenter's
+     weight: a hammer driving a nail is a shorter, quicker blow than a smith
+     flattening a bar, and it stops dead on the wood instead of rebounding.
+     The impact keyframe holds the arm at 0deg because that is exactly where
+     the hammer's face lands on the workpiece's rail — the placement in
+     InkwrightStage's Tool() is solved for that angle, so retuning this
+     number means re-deriving that one. ═══ */
+  @keyframes inkArmBuild {
+    0%   { transform: rotate(-14deg); }
+    42%  { transform: rotate(-44deg); }
+    58%  { transform: rotate(-6deg); }
+    64%  { transform: rotate(-2deg); }
+    100% { transform: rotate(-14deg); }
+  }
+  @keyframes inkArmBackBuild {
+    0%   { transform: rotate(0deg); }
+    42%  { transform: rotate(-15deg); }
+    58%  { transform: rotate(8deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkHeadBuild {
+    0%   { transform: rotate(0deg); }
+    42%  { transform: rotate(5deg); }
+    58%  { transform: rotate(-4deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkBodyBuild {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    42%  { transform: translate(-1.6px,-1px) rotate(-2.2deg); }
+    58%  { transform: translate(1.6px,0.9px) rotate(2.8deg); }
+    64%  { transform: translate(0.6px,0.3px) rotate(0.9deg); }
+    100% { transform: translate(0,0) rotate(0deg); }
+  }
+
+  /* ═══ TIER G — MAGIC. Three motions, one staff.
+
+     CAST: charge and release. The arm draws back and UP (the orb rises and
+     brightens), then drives forward through the rest pose to a short
+     follow-through — the release frame is 55%, which is when the bolt
+     appears at the muzzle and when the orb dumps its charge. There is no
+     impact frame here at all: nothing is struck, so the beat that matters is
+     the bolt LANDING, ~30% of the cycle later (inkZapHit / inkDummyRock). ═══ */
+  @keyframes inkArmCast {
+    0%   { transform: rotate(-6deg); }
+    38%  { transform: rotate(-30deg); }
+    55%  { transform: rotate(6deg); }
+    62%  { transform: rotate(4deg); }
+    100% { transform: rotate(-6deg); }
+  }
+  @keyframes inkArmBackCast {
+    0%   { transform: rotate(0deg); }
+    38%  { transform: rotate(-12deg); }
+    55%  { transform: rotate(5deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkHeadCast {
+    0%   { transform: rotate(0deg); }
+    38%  { transform: rotate(-3deg); }
+    58%  { transform: rotate(4deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkBodyCast {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    38%  { transform: translate(-1.4px,0) rotate(-2deg); }
+    55%  { transform: translate(1.6px,0) rotate(2.2deg); }
+    100% { transform: translate(0,0) rotate(0deg); }
+  }
+  /* The orb is the charge meter. It swells through the wind-up and empties on
+     release — without it a cast is an arm moving and a bolt appearing, with
+     nothing connecting the two. */
+  @keyframes inkOrbCharge {
+    0%, 12% { transform: scale(0.85); opacity: 0.7; }
+    45%     { transform: scale(1.35); opacity: 1; }
+    56%     { transform: scale(0.55); opacity: 0.45; }
+    100%    { transform: scale(0.85); opacity: 0.7; }
+  }
+
+  /* HEX: the same charge, thrown harder and lower. A curse is aimed at
+     something that flinches, so the release travels further through and the
+     dummy takes it (inkDummyRock) instead of an object glinting. */
+  @keyframes inkArmHex {
+    0%   { transform: rotate(-4deg); }
+    30%  { transform: rotate(-26deg); }
+    52%  { transform: rotate(16deg); }
+    60%  { transform: rotate(13deg); }
+    100% { transform: rotate(-4deg); }
+  }
+  @keyframes inkArmBackHex {
+    0%   { transform: rotate(0deg); }
+    30%  { transform: rotate(-14deg); }
+    52%  { transform: rotate(9deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkHeadHex {
+    0%   { transform: rotate(0deg); }
+    30%  { transform: rotate(-4deg); }
+    56%  { transform: rotate(6deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkBodyHex {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    30%  { transform: translate(-2px,0) rotate(-2.6deg); }
+    52%  { transform: translate(2.2px,0) rotate(3deg); }
+    100% { transform: translate(0,0) rotate(0deg); }
+  }
+
+  /* ENCHANT: a HELD channel, and the one motion in this file that never
+     returns to the figure's rest pose while it runs. An enchantment is 30
+     ticks — 23 strike periods — and a rise-and-lower per period reads as
+     pumping a bellows, not as pouring light into an amulet. So both arms stay
+     up and only breathe, and what pulses is the stream (inkChannelFall). */
+  @keyframes inkArmEnchant {
+    0%   { transform: rotate(-40deg); }
+    50%  { transform: rotate(-46deg); }
+    100% { transform: rotate(-40deg); }
+  }
+  @keyframes inkArmBackEnchant {
+    0%   { transform: rotate(-22deg); }
+    50%  { transform: rotate(-27deg); }
+    100% { transform: rotate(-22deg); }
+  }
+  @keyframes inkHeadEnchant {
+    0%   { transform: rotate(2deg); }
+    50%  { transform: rotate(-2deg); }
+    100% { transform: rotate(2deg); }
+  }
+  @keyframes inkBodyEnchant {
+    0%   { transform: translate(0,0) rotate(-1deg); }
+    50%  { transform: translate(0,-1.2px) rotate(-2deg); }
+    100% { transform: translate(0,0) rotate(-1deg); }
+  }
+
+  /* The spell in flight, and what it does when it arrives. Both flight paths
+     start at the muzzle's release position (124,52) and end on their own
+     target: the pedestal's subject (158,53) and the dummy's painted mark
+     (158,70) — one keyframe each rather than one shared path, because a bolt
+     that stops 17 units above a dummy reads as a miss. */
+  @keyframes inkBoltFly {
+    0%, 54% { opacity: 0; transform: translate(0,0) scale(0.5); }
+    58%     { opacity: 1; transform: translate(3px,0) scale(1); }
+    84%     { opacity: 1; transform: translate(30px,1px) scale(0.95); }
+    93%     { opacity: 0; transform: translate(34px,1px) scale(0.7); }
+    100%    { opacity: 0; transform: translate(34px,1px) scale(0.7); }
+  }
+  @keyframes inkBoltFlyHex {
+    0%, 51% { opacity: 0; transform: translate(0,0) scale(0.5); }
+    55%     { opacity: 1; transform: translate(3px,2px) scale(1); }
+    84%     { opacity: 1; transform: translate(30px,16px) scale(0.95); }
+    93%     { opacity: 0; transform: translate(34px,18px) scale(0.7); }
+    100%    { opacity: 0; transform: translate(34px,18px) scale(0.7); }
+  }
+  @keyframes inkZapHit {
+    0%, 82% { opacity: 0; transform: scale(0.45); }
+    88%     { opacity: 0.9; transform: scale(1); }
+    100%    { opacity: 0; transform: scale(1.3); }
+  }
+  @keyframes inkDummyRock {
+    0%, 82% { transform: rotate(0deg); }
+    88%     { transform: rotate(-4deg); }
+    94%     { transform: rotate(2deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  /* The channel: three motes down one path on staggered delays, so the stream
+     reads as continuous rather than as one dot going round again. */
+  @keyframes inkChannelFall {
+    0%   { opacity: 0; transform: translate(0,0) scale(0.5); }
+    15%  { opacity: 0.9; transform: translate(8px,4px) scale(1); }
+    70%  { opacity: 0.85; transform: translate(40px,22px) scale(0.9); }
+    100% { opacity: 0; transform: translate(51px,28px) scale(0.45); }
+  }
+  @keyframes inkSubjectFloat {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50%      { transform: translateY(-3px) rotate(3deg); }
+  }
+  @keyframes inkCirclePulse {
+    0%, 100% { opacity: 0.7; }
+    50%      { opacity: 1; }
+  }
+
+  .ink-fig--build.is-working .ink-arm      { animation: inkArmBuild var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--build.is-working .ink-arm-back { animation: inkArmBackBuild var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--build.is-working .ink-head     { animation: inkHeadBuild var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--build.is-working               { animation: inkBodyBuild var(--ink-strike) var(--fm-ease) infinite; }
+
+  .ink-fig--cast.is-working .ink-arm      { animation: inkArmCast var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--cast.is-working .ink-arm-back { animation: inkArmBackCast var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--cast.is-working .ink-head     { animation: inkHeadCast var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--cast.is-working               { animation: inkBodyCast var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--cast.is-working .ink-tool-orb { animation: inkOrbCharge var(--ink-strike) ease-in-out infinite; }
+
+  .ink-fig--hex.is-working .ink-arm      { animation: inkArmHex var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--hex.is-working .ink-arm-back { animation: inkArmBackHex var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--hex.is-working .ink-head     { animation: inkHeadHex var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--hex.is-working               { animation: inkBodyHex var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--hex.is-working .ink-tool-orb { animation: inkOrbCharge var(--ink-strike) ease-in-out infinite; }
+
+  .ink-fig--enchant.is-working .ink-arm      { animation: inkArmEnchant var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--enchant.is-working .ink-arm-back { animation: inkArmBackEnchant var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--enchant.is-working .ink-head     { animation: inkHeadEnchant var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--enchant.is-working               { animation: inkBodyEnchant var(--ink-strike) ease-in-out infinite; }
+
+  /* Scoped to the elements themselves, never through a sibling combinator:
+     the bolt and the channel are drawn AFTER the figure but the prop layer
+     comes BEFORE it, so `.ink-fig ~ .ink-prop` can never match — the same
+     mistake the fishing reel's own selector once made. */
+  .ink-bolt--cast.is-working { animation: inkBoltFly var(--ink-strike) ease-out infinite; }
+  .ink-bolt--hex.is-working  { animation: inkBoltFlyHex var(--ink-strike) ease-out infinite; }
+  .ink-zap.is-working        { animation: inkZapHit var(--ink-strike) ease-out infinite; }
+  .ink-dummy-rock.is-working { animation: inkDummyRock var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-subject.is-floating   { animation: inkSubjectFloat calc(var(--ink-strike) * 2) ease-in-out infinite; }
+  .ink-rune-circle.is-working { animation: inkCirclePulse calc(var(--ink-strike) * 2) ease-in-out infinite; }
+  .ink-channel.is-working .ink-channel-mote--a { animation: inkChannelFall var(--ink-strike) linear infinite; }
+  .ink-channel.is-working .ink-channel-mote--b { animation: inkChannelFall var(--ink-strike) linear infinite; animation-delay: calc(var(--ink-strike) * -0.33); }
+  .ink-channel.is-working .ink-channel-mote--c { animation: inkChannelFall var(--ink-strike) linear infinite; animation-delay: calc(var(--ink-strike) * -0.66); }
+
+
+  /* Tier E/G payoffs. Same rule as every one above: hold the scene until late
+     in the window, then fade — the engine starts the next action immediately,
+     so there is no dead time to linger in. */
+
+  /* CONSTRUCTION: the part just paid for drops into place and settles, with
+     sawdust and two nail sparks off the blow. Only the newest part animates
+     (InkwrightStage's `built`/`ink-fit`) — settling the whole piece every
+     action would say the furniture was assembled from scratch each time,
+     which is the exact opposite of what this prop exists to show. */
+  /* Held later than the resource payoffs above (80% -> 92%): those props
+     shatter and respawn, so a blink between the payoff fading and the intact
+     prop returning is invisible. A chair, a plinth and a dummy are all still
+     STANDING there, and a persistent object flickering out for a fifth of the
+     beat reads as a glitch. */
+  @keyframes inkPayoffBuild { 0%, 92% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes inkFit {
+    0%   { opacity: 0.3; transform: translateY(-9px); }
+    55%  { opacity: 1; transform: translateY(1.6px); }
+    76%  { transform: translateY(-0.8px); }
+    100% { transform: translateY(0); }
+  }
+  @keyframes inkGlint {
+    0%   { opacity: 0; transform: scale(0.4); }
+    35%  { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(1); }
+  }
+  .ink-payoff--build { animation: inkPayoffBuild var(--ink-payoff) ease-out; }
+  .ink-payoff--build .ink-fit       { animation: inkFit var(--ink-payoff) var(--fm-ease); }
+  .ink-payoff--build .ink-dust--a   { animation: inkDustA var(--ink-payoff) ease-out; }
+  .ink-payoff--build .ink-dust--b   { animation: inkDustB var(--ink-payoff) ease-out; }
+  .ink-payoff--build .ink-spark--a  { animation: inkSparkA var(--ink-payoff) ease-out; }
+  .ink-payoff--build .ink-spark--b  { animation: inkSparkB var(--ink-payoff) ease-out; }
+  .ink-payoff--build .ink-finish-glint { transform-box: view-box; transform-origin: 163px 38px; animation: inkGlint var(--ink-payoff) ease-out; }
+
+  /* MAGIC: one flash shape for every school, coloured by --ink-spell, plus
+     whatever that particular spell leaves behind — coins, embers, green
+     motes. The flash is shared on purpose: the transformation is the same
+     event in all three, and only its colour and its residue differ. */
+  @keyframes inkPayoffCast { 0%, 92% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes inkFlashBurst {
+    0%   { opacity: 0; transform: scale(0.35); }
+    25%  { opacity: 0.95; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.6); }
+  }
+  @keyframes inkCoinA {
+    0%   { opacity: 0; transform: translate(0,6px) scale(0.5); }
+    30%  { opacity: 1; transform: translate(-4px,-7px) scale(1); }
+    100% { opacity: 0; transform: translate(-11px,-21px) scale(0.9); }
+  }
+  @keyframes inkCoinB {
+    0%   { opacity: 0; transform: translate(0,6px) scale(0.5); }
+    30%  { opacity: 1; transform: translate(1px,-10px) scale(1); }
+    100% { opacity: 0; transform: translate(3px,-26px) scale(0.9); }
+  }
+  @keyframes inkCoinC {
+    0%   { opacity: 0; transform: translate(0,6px) scale(0.5); }
+    30%  { opacity: 1; transform: translate(5px,-6px) scale(1); }
+    100% { opacity: 0; transform: translate(12px,-20px) scale(0.9); }
+  }
+  @keyframes inkMoteA {
+    0%   { opacity: 0; transform: translate(0,0); }
+    25%  { opacity: 0.9; transform: translate(-3px,-6px); }
+    100% { opacity: 0; transform: translate(-9px,-18px); }
+  }
+  @keyframes inkMoteB {
+    0%   { opacity: 0; transform: translate(0,0); }
+    25%  { opacity: 0.9; transform: translate(1px,-7px); }
+    100% { opacity: 0; transform: translate(2px,-22px); }
+  }
+  @keyframes inkMoteC {
+    0%   { opacity: 0; transform: translate(0,0); }
+    25%  { opacity: 0.9; transform: translate(4px,-6px); }
+    100% { opacity: 0; transform: translate(10px,-17px); }
+  }
+  .ink-payoff--cast { animation: inkPayoffCast var(--ink-payoff) ease-out; }
+  .ink-payoff--cast .ink-flash { animation: inkFlashBurst var(--ink-payoff) ease-out; }
+  .ink-payoff--cast .ink-coin--a { animation: inkCoinA var(--ink-payoff) ease-out; }
+  .ink-payoff--cast .ink-coin--b { animation: inkCoinB var(--ink-payoff) ease-out; }
+  .ink-payoff--cast .ink-coin--c { animation: inkCoinC var(--ink-payoff) ease-out; }
+  .ink-payoff--cast .ink-mote--a { animation: inkMoteA var(--ink-payoff) ease-out; }
+  .ink-payoff--cast .ink-mote--b { animation: inkMoteB var(--ink-payoff) ease-out; }
+  .ink-payoff--cast .ink-mote--c { animation: inkMoteC var(--ink-payoff) ease-out; }
+  /* Superheat's embers reuse smithing's own spark keyframes — hot metal
+     throwing sparks is the same event whether a hammer or a spell did it —
+     but they leave the pedestal, not an anvil, so this overrides just the
+     pivot (more specific than the bare .ink-spark rule). */
+  .ink-payoff--cast .ink-spark   { transform-origin: 158px 50px; }
+  .ink-payoff--cast .ink-spark--a { animation: inkSparkA var(--ink-payoff) ease-out; }
+  .ink-payoff--cast .ink-spark--b { animation: inkSparkB var(--ink-payoff) ease-out; }
+  .ink-payoff--cast .ink-spark--c { animation: inkSparkC var(--ink-payoff) ease-out; }
+
+  @keyframes inkPayoffEnchant { 0%, 92% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes inkEnchantBurst {
+    0%   { opacity: 0; transform: scale(0.5); }
+    30%  { opacity: 1; transform: scale(1.05); }
+    100% { opacity: 0; transform: scale(1.4); }
+  }
+  .ink-payoff--enchant { animation: inkPayoffEnchant var(--ink-payoff) ease-out; }
+  .ink-payoff--enchant .ink-flash { animation: inkFlashBurst var(--ink-payoff) ease-out; }
+  .ink-payoff--enchant .ink-enchant-burst { animation: inkEnchantBurst var(--ink-payoff) ease-out; }
+
+  /* HEX: the sigil lands, the dummy takes it properly (a bigger knock than
+     the per-cast rock above), and straw comes loose. */
+  @keyframes inkPayoffHex { 0%, 92% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes inkHexFlash {
+    0%   { opacity: 0; transform: scale(0.6); }
+    20%  { opacity: 1; transform: scale(1.05); }
+    60%  { opacity: 0.8; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.15); }
+  }
+  @keyframes inkDummyStruck {
+    0%   { transform: rotate(0deg); }
+    18%  { transform: rotate(-7deg); }
+    45%  { transform: rotate(4deg); }
+    72%  { transform: rotate(-2deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkStrawA {
+    0%   { opacity: 0.9; transform: translate(0,0) rotate(0deg); }
+    100% { opacity: 0; transform: translate(-10px,-8px) rotate(-40deg); }
+  }
+  @keyframes inkStrawB {
+    0%   { opacity: 0.9; transform: translate(0,0) rotate(0deg); }
+    100% { opacity: 0; transform: translate(11px,-7px) rotate(38deg); }
+  }
+  @keyframes inkStrawC {
+    0%   { opacity: 0.9; transform: translate(0,0) rotate(0deg); }
+    100% { opacity: 0; transform: translate(2px,-14px) rotate(16deg); }
+  }
+  .ink-payoff--hex { animation: inkPayoffHex var(--ink-payoff) ease-out; }
+  .ink-payoff--hex .ink-hex-sigil   { animation: inkHexFlash var(--ink-payoff) ease-out; }
+  .ink-payoff--hex .ink-dummy-rock  { animation: inkDummyStruck var(--ink-payoff) var(--fm-ease); }
+  .ink-payoff--hex .ink-straw-fly--a { animation: inkStrawA var(--ink-payoff) ease-out; }
+  .ink-payoff--hex .ink-straw-fly--b { animation: inkStrawB var(--ink-payoff) ease-out; }
+  .ink-payoff--hex .ink-straw-fly--c { animation: inkStrawC var(--ink-payoff) ease-out; }
 
   @keyframes inkYieldPop {
     0%   { opacity: 0; transform: translateY(6px) scale(0.6); }

@@ -51,11 +51,17 @@ import gameIconsData from '../data/gameIcons.json'
  * Props:
  *   plan       — from inkwrightPlan(): motion, prop, strikePeriodMs, payoffMs
  *   product    — the item being produced, for the icon and its tint
+ *   subject    — the item being WORKED ON (consumed), for the tint and, on a
+ *                prop that shows it, its own art: the plank a build eats, the
+ *                amulet under an enchantment, the item being alchemised. Two
+ *                skills need this because neither takes its colour from a
+ *                product — construction has none at all, and magic's whole
+ *                subject matter is the thing on the pedestal.
  *   yieldToken — completed-action count; a change replays the payoff
  *   paused     — true when the action is stalled (inventory full), freezing the figure
  *   label      — accessible description
  */
-export default function InkwrightStage({ plan, product = null, yieldToken = 0, paused = false, label = null }) {
+export default function InkwrightStage({ plan, product = null, subject = null, yieldToken = 0, paused = false, label = null }) {
   if (!plan) return null
 
   const { motion, prop, strikePeriodMs, payoffMs } = plan
@@ -63,18 +69,28 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
   // The resource takes its colour from the item it yields, through the same
   // resolver the inventory uses — so copper reads copper and mithril blue
   // without this component knowing a single ore exists.
-  const tint = (product && getItemIconTint(product)) || 'var(--text-soft)'
-  // Fishing is the one skill where the "resource" IS the item — a rock is
-  // always a rock, but a shark and a shrimp are different animals. Every raw
-  // fish resolves to the same flat colour through getItemIconTint (there is
-  // no tier ladder for fish), so a tinted silhouette could never tell a
-  // shark from a shrimp — the real bespoke art has to, the same art the
-  // inventory already shows for that item.
-  const fishArt = prop === 'water' ? bespokeFishArt(product) : null
+  const tint = ((product || subject) && getItemIconTint(product || subject)) || 'var(--text-soft)'
+  // Two props are the item rather than merely coloured by it. Fishing was the
+  // first: a rock is always a rock, but a shark and a shrimp are different
+  // animals, and every raw fish resolves to the same flat colour through
+  // getItemIconTint (there is no tier ladder for fish), so a tinted
+  // silhouette could never tell them apart — the real bespoke art has to.
+  // Magic's pedestal is the same problem in a different skill: what is on it
+  // IS the spell's subject matter, and an amulet, an ore and a cowhide are
+  // only distinguishable as themselves.
+  const itemArt = prop === 'water'
+    ? bespokeItemArt(product)
+    : (PEDESTAL_PROPS.has(prop) ? bespokeItemArt(subject) : null)
   // Nothing has given way until an action has actually completed. Rendering
   // the payoff at mount shattered the rock the instant the screen opened,
   // and popped a reward for an action nobody had finished.
   const broke = yieldToken > 0
+  // Construction's one structural difference from every other prop: the
+  // workpiece is not consumed and respawned, it GAINS a part per completed
+  // action and starts a fresh frame once it is finished (BUILD_STAGES parts,
+  // one plank each). `built` is which part was added last, so the payoff can
+  // settle exactly that piece into place.
+  const built = yieldToken % BUILD_STAGES
 
   return (
     <div
@@ -95,11 +111,11 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
             as the next one — left up, the broken pieces fly over a rock that
             is still standing there whole. */}
         <g key={`pr${yieldToken}`} class={`ink-prop${broke ? ' is-breaking' : ''}`}>
-          <Prop kind={prop} fishArt={fishArt} swinging={swinging} />
+          <Prop kind={prop} itemArt={itemArt} swinging={swinging} built={built} />
         </g>
         {broke && (
           <g key={`p${yieldToken}`} class={`ink-payoff ink-payoff--${motion}`}>
-            <Prop kind={prop} broken fishArt={fishArt} />
+            <Prop kind={prop} broken itemArt={itemArt} built={built} />
           </g>
         )}
 
@@ -135,7 +151,17 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
             does not rotate rigidly with the blank. Its own motion is driven
             off the rod tip's own measured path (inkRigMotion, index.css),
             same technique the review artifact validated. */}
-        {prop === 'water' && <FishingRig fishArt={fishArt} broke={broke} swinging={swinging} yieldToken={yieldToken} />}
+        {prop === 'water' && <FishingRig fishArt={itemArt} broke={broke} swinging={swinging} yieldToken={yieldToken} />}
+
+        {/* The spell leaving the staff. STAGE space, like the fishing tackle
+            and for the same reason: it is launched by the arm but not carried
+            by it — once it is away it belongs to the room, not to the hand.
+            Drawn at the muzzle's own RELEASE position (124,52 — the orb's
+            place once the arm has swung through to +6deg) so the flight
+            keyframe starts from where the orb actually is at the frame it
+            appears on, rather than being translated into place first. */}
+        <SpellBolt motion={motion} prop={prop} swinging={swinging} />
+        {motion === 'enchant' && <ChannelStream swinging={swinging} />}
       </svg>
 
       {/* What the action produced, popped on the yield. An HTML sibling
@@ -156,8 +182,31 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
 // smithing/crafting/fletching/herblore all work a bench, runecraft and every
 // prayer pose read as a small shrine.
 const HEARTH_PROPS = new Set(['logpile', 'cookfire'])
-const WORKSHOP_PROPS = new Set(['anvil', 'bench', 'shavehorse', 'mortar'])
+const WORKSHOP_PROPS = new Set(['anvil', 'bench', 'shavehorse', 'mortar', 'scaffold'])
 const SHRINE_PROPS = new Set(['runealtar', 'grave', 'gildedAltar', 'dust'])
+// Tier G — magic works in a sanctum, which is deliberately NOT the shrine
+// runecraft and prayer share: a rune altar is a place you bring essence TO,
+// a sanctum is a room you work in. Sharing the scene would have made every
+// caster look like they were runecrafting.
+const SANCTUM_PROPS = new Set(['alchPedestal', 'smeltPedestal', 'transmutePedestal', 'enchantPedestal', 'hexDummy'])
+// The props that stand the spell's SUBJECT on a plinth and draw its real art
+// (see InkwrightStage's `subject`). The dummy is the one magic prop that
+// doesn't: a curse is cast at something, not on something.
+const PEDESTAL_PROPS = new Set(['alchPedestal', 'smeltPedestal', 'transmutePedestal', 'enchantPedestal'])
+// Which colour the spell leaves the staff in. A school, not a tint: this is
+// the one thing telling a superheat from a transmutation at a glance, since
+// both are a caster pointing a staff at an item on a plinth.
+const SPELL_SCHOOL = {
+  alchPedestal: 'gold',
+  smeltPedestal: 'fire',
+  transmutePedestal: 'nature',
+  enchantPedestal: 'arcane',
+  hexDummy: 'arcane',
+}
+// How many planks make one piece of furniture before the next frame goes up.
+// Four: a frame, a seat, its posts, its back — any fewer and the piece never
+// looks finished, any more and a short session never sees one completed.
+const BUILD_STAGES = 4
 
 /** The scene behind the figure and its prop — a strata'd cave wall for
  * mining, a forest edge for woodcutting, a far bank and water for fishing.
@@ -200,6 +249,20 @@ function Backdrop({ kind }) {
       <g class="ink-scene ink-scene--workshop">
         <path class="ink-workshop-wall" d="M0 108 L0 56 L70 56 L70 108 Z" />
         <path class="ink-workshop-shelf" d="M6 74 L46 74 L46 80 L6 80 Z" />
+      </g>
+    )
+  }
+  if (SANCTUM_PROPS.has(kind)) {
+    return (
+      <g class="ink-scene ink-scene--sanctum">
+        <path class="ink-sanctum-wall" d="M0 108 L0 40 L66 40 L66 108 Z" />
+        {/* A pointed arch with a mullion. The POINT is the whole read — a
+            square opening in a wall is a window in any building, an arch is
+            a tower. */}
+        <path class="ink-sanctum-glass" d="M18 92 L18 62 Q32 44 46 62 L46 92 Z" />
+        <path class="ink-sanctum-mullion" d="M32 48 L32 92 M18 74 L46 74" />
+        <path class="ink-sanctum-arch" d="M18 92 L18 62 Q32 44 46 62 L46 92" />
+        <path class="ink-sanctum-shelf" d="M4 96 L14 96 L14 108 L4 108 Z" />
       </g>
     )
   }
@@ -367,6 +430,70 @@ function Tool({ kind }) {
       </g>
     )
   }
+  // Construction — a claw hammer, and it is drawn the way a claw hammer
+  // actually is: the head crosses the haft, striking face on one side and a
+  // curved fork on the other. Smithing's cross-peen runs ALONG its haft
+  // instead, which is what keeps the two hammers this game now draws from
+  // reading as the same tool. The face's own local contact point (54,14) is
+  // what the placement below is solved for — at the impact frame (arm -6deg,
+  // inkArmBuild) it lands on (133.8,73.5), the top edge of the workpiece's
+  // apron rail (Prop's `scaffold`). Reach from the shoulder is fixed by the scale
+  // alone, so the scale, that rail and the impact angle move together or the
+  // hammer misses the wood.
+  if (kind === 'build') {
+    return (
+      <g transform="translate(100,64) rotate(10) scale(.63)">
+        {/* Haft first and stopping short: it passes BEHIND the head, which is
+            what a hammer's eye actually does and what keeps the head reading
+            as one solid object rather than a block with a window in it. */}
+        <path class="ink-tool-haft" d="M-18 -2.8 Q-20 0 -18 2.8 L54 2.4 L54 -2.4 Z" />
+        <path class="ink-tool-grip" d="M-18 -2.8 Q-20 0 -18 2.8 L4 2.6 L4 -2.6 Z" />
+        <path class="ink-tool-wedge" d="M-13 -1.8 L-2 -1.8 M-13 1.8 L-2 1.8" />
+        {/* Claw first, so its root passes behind the head. Small and hooked,
+            not long and sweeping: drawn big it stops being a claw and becomes
+            a crescent, which at this size is a PICKAXE — the one silhouette
+            in this file it must not be mistaken for. */}
+        <path class="ink-tool-head" d="M45 -11 C41 -18 34 -22 28 -21 C25 -19.5 24.5 -16 26 -13 C29.5 -15 33 -14 37 -11 C41 -8 43.5 -5 45 -2 Z" />
+        <path class="ink-tool-claw-slot" d="M30 -17 C34 -15 38 -12 41.5 -8" />
+        {/* The head: one capsule ACROSS the haft, domed at the striking end.
+            The crossing is the whole difference between this and every other
+            tool the figure holds, and the dome is what separates a hammer
+            from a mallet. */}
+        <path class="ink-tool-head" d="M44 -11 L64 -11 L64 11 Q54 16 44 11 Z" />
+        <path class="ink-tool-edge" d="M46.5 12.6 Q54 15.6 61.5 12.6" />
+        <path class="ink-tool-edge" d="M47 -8 L47 9" />
+      </g>
+    )
+  }
+  // Magic — one staff for all three casting motions, drawn from the same
+  // profile combat's own `staff` uses (weaponShapes.js): a quarterstaff with
+  // a three-pronged claw CRADLING the orb, claws before the orb so their
+  // tips pass behind it. One character with one kit is the whole point of
+  // the shared figure, and a caster who swaps staves between the fight
+  // screen and the spellbook screen would break it.
+  //
+  // The orb sits at local (52,0); at this placement that is 28.6 units from
+  // the grip along -34deg, and the bolt's own launch point (SpellBolt) is
+  // where that lands once the arm has swung through to its release angle.
+  if (kind === 'cast' || kind === 'hex' || kind === 'enchant') {
+    return (
+      <g transform="translate(100,64) rotate(-34) scale(.55)">
+        <path class="ink-tool-haft" d="M-34 -3.2 L36 -3.8 L36 3.8 L-34 3.2 Z" />
+        <path class="ink-tool-collar" d="M-37 -4.2 L-31 -4.4 L-31 4.4 L-37 4.2 Z" />
+        <path class="ink-tool-grip" d="M-26 -4.6 L-13 -4.8 L-13 4.8 L-26 4.6 Z" />
+        <path class="ink-tool-wedge" d="M-4 -3.6 L-4 3.6 M8 -3.5 L8 3.5" />
+        <path class="ink-tool-collar" d="M30 -5.6 L36 -5.8 L36 5.8 L30 5.6 Z" />
+        <path class="ink-staff-claw" d="M36 -3 C44 -12 53 -15 60 -10" />
+        <path class="ink-staff-claw" d="M36 3 C44 12 53 15 60 10" />
+        <path class="ink-staff-claw" d="M38 0 C46 -1 54 -3 59 -7" />
+        <path class="ink-staff-claw-lit" d="M36 -3 C44 -12 53 -15 60 -10" />
+        <path class="ink-staff-claw-lit" d="M36 3 C44 12 53 15 60 10" />
+        <path class="ink-staff-claw-lit" d="M38 0 C46 -1 54 -3 59 -7" />
+        <circle class="ink-tool-orb" cx="52" cy="0" r="9.6" />
+        <circle class="ink-tool-orb-core" cx="49" cy="-3" r="3.6" />
+      </g>
+    )
+  }
   // Runecraft, and prayer's altar/scatter poses: bare-handed. A closed fist
   // at the grip so the arm reads as a limb rather than a stroke that stops
   // in mid-air (the same treatment InkwrightFigure gives its back arm).
@@ -430,7 +557,7 @@ function FishingRig({ fishArt, broke, swinging, yieldToken }) {
       {broke && (
         <g key={yieldToken} class="ink-catch-rise">
           {fishArt
-            ? <FishArt art={fishArt} cx={178} cy={98} width={24} className="ink-catch" />
+            ? <ItemArt art={fishArt} cx={178} cy={98} width={24} className="ink-catch" />
             : <path class="ink-catch ink-catch--fallback" d="M169 98 Q178 92 187 98 Q178 104 169 98 Z" />}
         </g>
       )}
@@ -444,7 +571,7 @@ function FishingRig({ fishArt, broke, swinging, yieldToken }) {
 // the flat tint. Returns null only if the data hasn't loaded yet (chunk not
 // ready) or an unmapped item slips through, and the water just stays empty
 // rather than guess at a placeholder.
-export function bespokeFishArt(product) {
+export function bespokeItemArt(product) {
   if (!product) return null
   const icon = resolveItemIcon(product, {
     bespoke: typeof bespokeIconsData !== 'undefined' ? bespokeIconsData : null,
@@ -459,7 +586,7 @@ export function bespokeFishArt(product) {
 // into this stage's frame and recentred on (cx, cy). A CSS animation on the
 // OUTER group composes with this positioning transform rather than fighting
 // it — same layering as .ink-arm's rotation around a fixed origin.
-function FishArt({ art, cx, cy, width, className }) {
+function ItemArt({ art, cx, cy, width, className }) {
   const scale = width / (art.size || 512)
   return (
     <g class={className} style={{ transformOrigin: `${cx}px ${cy}px` }}>
@@ -468,6 +595,83 @@ function FishArt({ art, cx, cy, width, className }) {
         {...(art.tint ? { fill: art.tint } : {})}
         dangerouslySetInnerHTML={{ __html: art.body }}
       />
+    </g>
+  )
+}
+
+
+/** The plinth all three pedestal spells work over — a base, a waisted
+ * column and a cap slab wide enough to stand something on. Drawn once and
+ * shared rather than per spell, so the three can never drift into looking
+ * like three different rooms; it reuses prayer/runecraft's own stone classes
+ * for the same reason a bench is a bench in every workshop scene. Its top
+ * surface is y=66, which is what the subject art's 26-unit box is centred
+ * against (158,52). */
+function Pedestal() {
+  return (
+    <g>
+      {/* Stepped base, tapered shaft, capital — a plinth, in that order.
+          Drawn as a waisted body with a wide top it read as an ANVIL, which
+          is the one thing on this stage a caster must not appear to be
+          working at (smithing already has one, two screens away). */}
+      <path class="ink-plinth-base" d="M134 108 L134 101 L182 101 L182 108 Z" />
+      <path class="ink-plinth-base" d="M139 101 L139 95 L177 95 L177 101 Z" />
+      <path class="ink-plinth-shaft" d="M147 95 L149 72 L167 72 L169 95 Z" />
+      <path class="ink-plinth-flute" d="M153 92 L154.5 75 M163 92 L161.5 75" />
+      <path class="ink-plinth-cap" d="M141 66 L175 66 L175 72 L141 72 Z" />
+      <path class="ink-plinth-cap" d="M144 62 L172 62 L172 66 L144 66 Z" />
+    </g>
+  )
+}
+
+/** What stands on the plinth when the item's own art hasn't resolved (the
+ * game chunk not loaded yet, or an unmapped id) — a plain tinted ingot in
+ * the colour the item would have had, rather than an empty pedestal that
+ * reads as a spell being cast at nothing. */
+function Ingot() {
+  return (
+    <g>
+      <path class="ink-res" d="M147 42 L169 42 L173 58 L143 58 Z" />
+      <path class="ink-facet" d="M150 49 L166 49" />
+    </g>
+  )
+}
+
+/** The spell in flight, from the staff's orb to whatever is being cast at.
+ * A STAGE-space sibling of the figure, exactly like the fishing tackle and
+ * for the same reason: it is launched by the arm but not carried by it.
+ *
+ * Both cast targets sit on the same spot (the pedestal's subject at (158,53),
+ * the dummy's painted mark at (158,70)) so one flight path serves both — a
+ * second path would be two things to keep in agreement for no visible gain.
+ * The bolt is drawn at the muzzle's RELEASE position, not its rest position:
+ * the orb has already swung through to (124,52) by the frame the bolt first
+ * appears on, so a bolt drawn at rest would have to be translated into place
+ * before it could fly, and that correction is exactly the kind of thing that
+ * silently stops matching the arm when a keyframe is retuned. */
+function SpellBolt({ motion, prop, swinging }) {
+  if (motion !== 'cast' && motion !== 'hex') return null
+  const school = SPELL_SCHOOL[prop] || 'arcane'
+  return (
+    <g class={`ink-bolt ink-bolt--${school} ink-bolt--${motion}${swinging ? ' is-working' : ''}`}>
+      <path class="ink-bolt-trail" d="M108 49 Q116 50 124 52" />
+      <circle class="ink-bolt-halo" cx="124" cy="52" r="7" />
+      <circle class="ink-bolt-core" cx="124" cy="52" r="3.4" />
+    </g>
+  )
+}
+
+/** Enchanting's channel: light running off the raised staff and down into
+ * the item, three motes on staggered delays so the stream reads as
+ * continuous rather than as one repeating dot. Its own sibling group for the
+ * same reason the bolt is one — and separate from the bolt because a channel
+ * is not a projectile: it never leaves, it pours. */
+function ChannelStream({ swinging }) {
+  return (
+    <g class={`ink-channel${swinging ? ' is-working' : ''}`}>
+      <circle class="ink-channel-mote ink-channel-mote--a" cx="110" cy="28" r="2.6" />
+      <circle class="ink-channel-mote ink-channel-mote--b" cx="110" cy="28" r="2.1" />
+      <circle class="ink-channel-mote ink-channel-mote--c" cx="110" cy="28" r="2.4" />
     </g>
   )
 }
@@ -528,7 +732,7 @@ function Longbone({ rotate }) {
  * apart. `swinging` only matters to the idle float, so it can freeze with
  * the figure when the action is stalled (inventory full) rather than keep
  * bobbing. */
-function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
+function Prop({ kind, broken = false, itemArt = null, swinging = true, built = 0 }) {
   if (kind === 'tree') {
     // Every coordinate here is authored directly at the size this stage
     // actually renders at — NOT scaled down at runtime from a bigger canvas.
@@ -594,8 +798,8 @@ function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
         {/* Idling: the actual species, roaming below the surface. Hidden the
             instant the payoff starts (FishingRig's sibling group takes over),
             so there is never a second fish visible at once. */}
-        {!broken && fishArt && (
-          <FishArt art={fishArt} cx={158} cy={112} width={22} className={`ink-fish-idle${swinging ? ' is-working' : ''}`} />
+        {!broken && itemArt && (
+          <ItemArt art={itemArt} cx={158} cy={112} width={22} className={`ink-fish-idle${swinging ? ' is-working' : ''}`} />
         )}
       </g>
     )
@@ -896,6 +1100,211 @@ function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
             <g class="ink-dust ink-dust--b"><circle cx="134" cy="66" r="2.2" /></g>
             <g class="ink-dust ink-dust--c"><circle cx="150" cy="62" r="2.5" /></g>
             <g class="ink-dust ink-dust--d"><circle cx="166" cy="66" r="2" /></g>
+          </>
+        )}
+      </g>
+    )
+  }
+
+
+  // Construction. A chair taking shape on the workshop floor — the ONE prop
+  // in this file that is not consumed and respawned. `built` names the part
+  // added last (0 = a fresh frame, then seat, posts, back), so a session
+  // visibly assembles furniture instead of replaying the same blow forever;
+  // the piece the payoff drops into place is exactly that one.
+  //
+  // The frame's apron rail is at y=73..80 and the hammer's face lands on its
+  // top edge (see Tool's `build`). Every part added after it grows UP and
+  // AWAY from that rail, because the nail the figure is hitting cannot move:
+  // reach from the shoulder is fixed, so a workpiece that climbed with the
+  // build would leave the hammer swinging at air.
+  if (kind === 'scaffold') {
+    const newest = built
+    const fit = (index) => (broken && index === newest ? ' ink-fit' : '')
+    return (
+      <g>
+        {/* Offcuts stacked out of the way — the detail that says workshop
+            rather than "a chair happens to be standing here". */}
+        <path class="ink-build-stack" d="M182 98 L198 98 L198 102 L182 102 Z" />
+        <path class="ink-build-stack" d="M180 103 L198 103 L198 107 L180 107 Z" />
+
+        {/* The frame: four legs and the apron rail they are pegged to. */}
+        <g class={`ink-build-part${fit(0)}`}>
+          <path class="ink-build-leg" d="M136 77 L135 103 L142 103 L143 77 Z" />
+          <path class="ink-build-leg" d="M162 77 L162 103 L169 103 L169 77 Z" />
+          <path class="ink-build-post" d="M127 79 L125 108 L134 108 L135 79 Z" />
+          <path class="ink-build-post" d="M157 79 L157 108 L166 108 L164 79 Z" />
+          <path class="ink-build-beam" d="M124 73 L170 73 L170 80 L124 80 Z" />
+          <path class="ink-build-grain" d="M128 76.5 L166 76.5" />
+          <circle class="ink-nail" cx="134" cy="76" r="1.5" />
+          <circle class="ink-nail" cx="160" cy="76" r="1.5" />
+        </g>
+
+        {/* Seat. */}
+        {built >= 1 && (
+          <g class={`ink-build-part${fit(1)}`}>
+            <path class="ink-build-beam" d="M120 65 L176 65 L176 73 L120 73 Z" />
+            <path class="ink-build-grain" d="M120 69 L176 69 M148 65 L148 73" />
+          </g>
+        )}
+        {/* Back posts, rising off the rear of the seat. */}
+        {built >= 2 && (
+          <g class={`ink-build-part${fit(2)}`}>
+            <path class="ink-build-leg" d="M168 65 L168 38 L175 38 L175 65 Z" />
+            <path class="ink-build-post" d="M156 65 L156 36 L165 36 L165 65 Z" />
+            <circle class="ink-nail" cx="160.5" cy="62" r="1.4" />
+          </g>
+        )}
+        {/* Crest rail and slat — the parts that finish it as a CHAIR rather
+            than a bench with two sticks on the end. */}
+        {built >= 3 && (
+          <g class={`ink-build-part${fit(3)}`}>
+            <path class="ink-build-beam" d="M152 33 L179 33 L179 41 L152 41 Z" />
+            <path class="ink-build-beam" d="M154 47 L177 47 L177 54 L154 54 Z" />
+            <path class="ink-build-grain" d="M152 37 L179 37 M154 50.5 L177 50.5" />
+          </g>
+        )}
+
+        {broken && (
+          <>
+            <g class="ink-dust ink-dust--a"><circle cx="130" cy="74" r="1.9" /></g>
+            <g class="ink-dust ink-dust--b"><circle cx="137" cy="72" r="1.6" /></g>
+            <g class="ink-spark ink-spark--a"><path d="M132 74 L127 66" /></g>
+            <g class="ink-spark ink-spark--b"><path d="M136 73 L138 65" /></g>
+            {/* Only the blow that finishes the piece gets a flourish — it is
+                the beat that tells the player a whole thing got made, which a
+                per-plank sparkle would drown out. */}
+            {built === BUILD_STAGES - 1 && (
+              <g class="ink-finish-glint">
+                <path d="M144 30 L144 40 M139 35 L149 35" />
+                <path d="M186 46 L186 54 M182 50 L190 50" />
+              </g>
+            )}
+          </>
+        )}
+      </g>
+    )
+  }
+
+  // Magic — the three pedestal spells. Same plinth, same cast: what tells
+  // them apart is the SUBJECT standing on it (its own real art, resolved
+  // through the same path fishing's species art uses) and the colour the
+  // spell arrives in. That is deliberate economy — an alchemist, a smelter
+  // and a transmuter are one person doing one thing to three different
+  // objects, and drawing three sets of furniture would say otherwise.
+  if (PEDESTAL_PROPS.has(kind)) {
+    const enchanting = kind === 'enchantPedestal'
+    return (
+      <g>
+        {enchanting && (
+          // The circle is what makes an enchantment a RITUAL rather than
+          // another zap: it is drawn on the floor, so it reads before the
+          // figure has moved at all.
+          <g class={`ink-rune-circle${swinging ? ' is-working' : ''}`}>
+            <ellipse class="ink-rune-ring" cx="158" cy="104" rx="36" ry="9" />
+            <ellipse class="ink-rune-ring" cx="158" cy="104" rx="28" ry="7" />
+            <path class="ink-rune-glyph" d="M128 104 L133 101 M158 96 L158 100 M188 104 L183 101 M143 108 L146 105 M173 108 L170 105" />
+          </g>
+        )}
+        <Pedestal />
+        {!broken && (
+          <g class={`ink-subject${enchanting && swinging ? ' is-floating' : ''}`}>
+            {itemArt
+              ? <ItemArt art={itemArt} cx={158} cy={48} width={30} className="ink-subject-art" />
+              : <Ingot />}
+            {/* The spell landing on every pulse, not only on the completed
+                action — gated on the payoff alone, the loop was a caster
+                throwing light at an object that never once reacted. */}
+            <circle class={`ink-zap ink-zap--${SPELL_SCHOOL[kind]}${swinging ? ' is-working' : ''}`} cx="158" cy="50" r="16" />
+          </g>
+        )}
+        {broken && (
+          <>
+            <circle class={`ink-flash ink-flash--${SPELL_SCHOOL[kind]}`} cx="158" cy="50" r="18" />
+            {kind === 'alchPedestal' && (
+              // Alchemy's payoff is the one that does not transform into a
+              // thing you can see on the plinth — the item leaves as coins,
+              // so the coins have to be the beat.
+              <g class="ink-coins">
+                <g class="ink-coin ink-coin--a"><ellipse cx="150" cy="52" rx="4.4" ry="3.4" /><path d="M147 52 L153 52" /></g>
+                <g class="ink-coin ink-coin--b"><ellipse cx="159" cy="48" rx="4.8" ry="3.7" /><path d="M156 48 L162 48" /></g>
+                <g class="ink-coin ink-coin--c"><ellipse cx="167" cy="53" rx="4.2" ry="3.2" /><path d="M164 53 L170 53" /></g>
+              </g>
+            )}
+            {kind === 'smeltPedestal' && (
+              <>
+                <g class="ink-spark ink-spark--a"><path d="M152 54 L146 44" /></g>
+                <g class="ink-spark ink-spark--b"><path d="M158 52 L158 40" /></g>
+                <g class="ink-spark ink-spark--c"><path d="M164 54 L171 45" /></g>
+              </>
+            )}
+            {kind === 'transmutePedestal' && (
+              <>
+                <g class="ink-mote ink-mote--a"><circle cx="150" cy="54" r="2.4" /></g>
+                <g class="ink-mote ink-mote--b"><circle cx="158" cy="50" r="2.7" /></g>
+                <g class="ink-mote ink-mote--c"><circle cx="166" cy="54" r="2.2" /></g>
+              </>
+            )}
+            {enchanting && (
+              <g class="ink-enchant-burst">
+                <path d="M158 34 L158 22 M141 44 L131 38 M175 44 L185 38" />
+                <ellipse class="ink-rune-ring" cx="158" cy="104" rx="36" ry="9" />
+              </g>
+            )}
+          </>
+        )}
+      </g>
+    )
+  }
+
+  // Magic — curse and stun. The one non-combat spell with nothing to stand
+  // on a plinth, so it needs something that can be hexed: a straw dummy,
+  // which is also how it would actually be practised. Deliberately NOT the
+  // mirrored player rig combat uses for its enemy — that trick is reserved
+  // for thieving's mark (docs/skill-animations-proposal.md, Tier C), and a
+  // second person standing there being cursed for XP reads as something
+  // else entirely.
+  if (kind === 'hexDummy') {
+    return (
+      <g>
+        {/* A cross-braced foot, so the post reads as something stood up to be
+            hit rather than something growing out of the floor. */}
+        <path class="ink-dummy-foot" d="M140 108 L158 96 M176 108 L158 96" />
+        <path class="ink-dummy-base" d="M142 108 Q158 101 174 108 Z" />
+        <g class={`ink-dummy-rock${swinging && !broken ? ' is-working' : ''}`}>
+          <path class="ink-dummy-post" d="M154 108 L154 42 L162 42 L162 108 Z" />
+          {/* The crossbar has to stick WELL clear of the sack or the dummy
+              reads as a bollard: at six units of overhang the sack's own
+              outline swallowed it. */}
+          <path class="ink-dummy-post" d="M126 62 L190 62 L190 68 L126 68 Z" />
+          {/* Straw bursting from every cut end — the detail that separates a
+              dummy from a signpost. */}
+          <path class="ink-straw" d="M128 62 L120 55 M130 61 L124 52 M188 62 L196 55 M186 61 L192 52" />
+          <path class="ink-dummy-sack" d="M145 54 Q158 47 171 54 L176 84 Q158 92 140 84 Z" />
+          <path class="ink-dummy-seam" d="M142 72 Q158 79 174 72" />
+          <path class="ink-dummy-seam" d="M147 58 Q158 63 169 58" />
+          <ellipse class="ink-dummy-head" cx="158" cy="39" rx="11" ry="10.5" />
+          <path class="ink-straw" d="M150 31 L146 24 M158 29 L158 21 M166 31 L170 24" />
+          {/* Tied at the neck: a sack with a cord around it is a dummy's
+              head, an untied circle is a snowman's. */}
+          <path class="ink-dummy-tie" d="M150 46 Q158 50 166 46" />
+          <path class="ink-dummy-tie" d="M153 44 L152 49 M163 44 L164 49" />
+          {/* A painted mark, so a bolt landing on it has somewhere to land. */}
+          <circle class="ink-dummy-target" cx="158" cy="70" r="9" />
+          <circle class="ink-dummy-target" cx="158" cy="70" r="3.8" />
+        </g>
+        {broken && (
+          <>
+            {/* The hex itself: a sigil struck over the dummy, and the straw
+                it knocks loose. */}
+            <g class="ink-hex-sigil">
+              <circle cx="158" cy="66" r="18" />
+              <path d="M158 50 L172 74 L144 74 Z" />
+              <path d="M158 58 L158 74 M151 68 L165 68" />
+            </g>
+            <g class="ink-straw-fly ink-straw-fly--a"><path d="M146 62 L138 56" /></g>
+            <g class="ink-straw-fly ink-straw-fly--b"><path d="M170 62 L178 56" /></g>
+            <g class="ink-straw-fly ink-straw-fly--c"><path d="M158 52 L160 43" /></g>
           </>
         )}
       </g>

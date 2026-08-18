@@ -6,6 +6,8 @@ import Modal from '../components/Modal.jsx'
 import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
+import InkwrightStage from '../components/InkwrightStage.jsx'
+import { inkwrightPlan } from '../utils/inkwright.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick } from '../engine/skilling.js'
 import { emptySession } from '../engine/activitySession.js'
@@ -280,9 +282,36 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
     const xpPerHr = skilling.startedAt && (Date.now() - skilling.startedAt) > 5000
       ? formatNumber(Math.round(skilling.totalXP / ((Date.now() - skilling.startedAt) / 3600000)))
       : '—'
+    // The caster at work. Which of magic's five acts this is comes off the
+    // action id (inkwrightPlan's third argument), the same way prayer picks
+    // its pose. `subject` is what the spell is being cast ON and is drawn as
+    // its own real art on the pedestal — the alchemised item the player
+    // picked, or the action's material. High alchemy has no `product` in the
+    // data but very much has a payoff, so coins stand in as what it yields.
+    // Built here rather than in SkillActivePanel because that panel is core
+    // and these modules are game-chunk only (§12).
+    const action = skilling.action
+    const subjectId = action.type === 'alchemy'
+      ? selectedAlchemyItem?.itemId
+      : Object.keys(action.materials || {})[0]
+    const stageProduct = action.type === 'alchemy'
+      ? itemsData.coins
+      : (action.product ? itemsData[action.product] : null)
+    const inkPlan = inkwrightPlan('magic', action.ticks, action.id)
+    const inkStage = inkPlan ? (
+      <InkwrightStage
+        plan={inkPlan}
+        product={stageProduct}
+        subject={subjectId ? itemsData[subjectId] : null}
+        yieldToken={skilling.totalActions}
+        label={`${action.name} in progress`}
+      />
+    ) : null
+
     return (
       <SkillActivePanel
         skill="magic"
+        stage={inkStage}
         title={skilling.action.name}
         progress={progress}
         stats={[
