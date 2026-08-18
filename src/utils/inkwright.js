@@ -69,6 +69,25 @@ export const INKWRIGHT_MOTIONS = {
   prayer_bury:    { motion: 'bury',    prop: 'grave',       pose: 'bury',    label: 'Burying bones' },
   prayer_altar:   { motion: 'offer',   prop: 'gildedAltar', pose: 'altar',   label: 'Praying at the gilded altar' },
   prayer_scatter: { motion: 'scatter', prop: 'dust',        pose: 'scatter', label: 'Scattering gargoyle dust' },
+
+  // Tier E — construction. Smithing's shape (a hammer landing on a fixed
+  // point) with the one difference the tier is named for: the workpiece
+  // PERSISTS and gains a part per completed action instead of respawning
+  // identical, so a build session visibly assembles furniture.
+  build: { motion: 'build', prop: 'scaffold', label: 'Building' },
+
+  // Tier G — magic away from combat. One caster, five spells worth telling
+  // apart, picked off the action id (magicMotionKey) exactly the way prayer
+  // picks its pose. `cast` is one keyframe family shared by three props:
+  // point the staff, charge, release — what changes between alchemy,
+  // superheating and transmuting is the SPELL and its target, not the body.
+  // Enchanting is a sustained channel and cursing is aimed at something
+  // that flinches, so those two are motions of their own.
+  magic_alch:      { motion: 'cast',    prop: 'alchPedestal',      label: 'Alchemy' },
+  magic_smelt:     { motion: 'cast',    prop: 'smeltPedestal',     label: 'Superheating' },
+  magic_transmute: { motion: 'cast',    prop: 'transmutePedestal', label: 'Transmuting' },
+  magic_enchant:   { motion: 'enchant', prop: 'enchantPedestal',   label: 'Enchanting' },
+  magic_hex:       { motion: 'hex',     prop: 'hexDummy',          label: 'Casting' },
 }
 
 // Skills whose action is a physical strike/gesture at a resource. Every other
@@ -85,6 +104,7 @@ const SKILL_MOTIONS = {
   fletching: 'fletch',
   herblore: 'brew',
   runecraft: 'weave',
+  construction: 'build',
 }
 
 // Prayer's three sub-poses share one motion family but pick a different prop
@@ -97,11 +117,31 @@ function prayerMotionKey(actionId) {
   return 'prayer_bury'
 }
 
+// Magic's five acts, picked off the action id the same way prayer's three
+// are. The id is used rather than skills.json's `type` field because the
+// caller only ever has an id in hand (inkwrightMotionForSkill's signature),
+// and the two agree one-for-one across every shipped spell. An unrecognised
+// id falls to the transmute pedestal — every non-combat spell on this screen
+// turns one item into another, so that is the honest default for new content
+// rather than a guess at a gesture.
+function magicMotionKey(actionId) {
+  const id = String(actionId || '')
+  if (id.startsWith('enchant_')) return 'magic_enchant'
+  if (id === 'high_alch') return 'magic_alch'
+  if (id === 'superheat') return 'magic_smelt'
+  if (id === 'curse' || id === 'stun') return 'magic_hex'
+  return 'magic_transmute'
+}
+
 /** The motion key for a skill, or null if it has no figure yet. `actionId` is
- * only consulted for prayer, whose pose depends on which action is running. */
+ * only consulted for prayer and magic, whose pose depends on which action is
+ * running. */
 export function inkwrightMotionForSkill(skill, actionId) {
   const skillKey = String(skill || '').toLowerCase()
-  const key = skillKey === 'prayer' ? prayerMotionKey(actionId) : SKILL_MOTIONS[skillKey]
+  let key
+  if (skillKey === 'prayer') key = prayerMotionKey(actionId)
+  else if (skillKey === 'magic') key = magicMotionKey(actionId)
+  else key = SKILL_MOTIONS[skillKey]
   return key ? INKWRIGHT_MOTIONS[key] : null
 }
 

@@ -13,6 +13,8 @@ import {
 import { actionCycleMs } from '../src/utils/actionSprites.js'
 // @ts-ignore
 import skillsData from '../src/data/skills.json'
+// @ts-ignore
+import { BUILDING_ACTIONS } from '../src/engine/construction.js'
 
 // docs/skill-animations-proposal.md Tier A: pure content on the existing
 // mining/woodcutting/fishing system, no new component or timing behaviour.
@@ -22,12 +24,18 @@ const FIGURE_SKILLS = [
   'mining', 'woodcutting', 'fishing',
   'firemaking', 'cooking', 'smithing', 'crafting', 'fletching', 'herblore', 'runecraft',
 ]
-const NO_FIGURE_SKILLS = ['agility', 'magic']
+// Tier E/G. Neither is listed above: construction's actions live in
+// engine/construction.js rather than skills.json, and magic's motion depends
+// on the action id (alchemy/enchant/superheat/transmute/hex) the same way
+// prayer's does. Both are covered on their own below.
+const NO_FIGURE_SKILLS = ['agility', 'thieving']
 
 describe('inkwright — which skills have a figure', () => {
-  it('covers every gathering/production skill wired so far, plus prayer', () => {
+  it('covers every gathering/production skill wired so far, plus prayer, construction and magic', () => {
     for (const skill of FIGURE_SKILLS) expect(hasInkwrightMotion(skill)).toBe(true)
     expect(hasInkwrightMotion('prayer')).toBe(true)
+    expect(hasInkwrightMotion('construction')).toBe(true)
+    expect(hasInkwrightMotion('magic')).toBe(true)
     for (const skill of NO_FIGURE_SKILLS) {
       expect(hasInkwrightMotion(skill)).toBe(false)
       expect(inkwrightPlan(skill, 4)).toBeNull()
@@ -39,6 +47,8 @@ describe('inkwright — which skills have a figure', () => {
       'rock', 'tree', 'water',
       'logpile', 'cookfire', 'anvil', 'bench', 'shavehorse', 'mortar', 'runealtar',
       'grave', 'gildedAltar', 'dust',
+      'scaffold',
+      'alchPedestal', 'smeltPedestal', 'transmutePedestal', 'enchantPedestal', 'hexDummy',
     ])
     // One CSS keyframe family (`.ink-fig--<motion>`) may be shared by several
     // INKWRIGHT_MOTIONS keys — prayer's three poses all animate as `commune`
@@ -47,6 +57,7 @@ describe('inkwright — which skills have a figure', () => {
       'mine', 'chop', 'fish',
       'kindle', 'cook', 'smith', 'craft', 'fletch', 'brew', 'weave',
       'bury', 'offer', 'scatter',
+      'build', 'cast', 'enchant', 'hex',
     ])
     for (const key of Object.keys(INKWRIGHT_MOTIONS)) {
       const m = INKWRIGHT_MOTIONS[key]
@@ -98,6 +109,43 @@ describe('inkwright — which skills have a figure', () => {
     }
   })
 
+  it('magic picks its act from the action id, defaulting to a transmutation', () => {
+    expect(inkwrightMotionForSkill('magic', 'high_alch')?.prop).toBe('alchPedestal')
+    expect(inkwrightMotionForSkill('magic', 'superheat')?.prop).toBe('smeltPedestal')
+    expect(inkwrightMotionForSkill('magic', 'tan_leather')?.prop).toBe('transmutePedestal')
+    expect(inkwrightMotionForSkill('magic', 'plank_make')?.prop).toBe('transmutePedestal')
+    expect(inkwrightMotionForSkill('magic', 'enchant_onyx_bolts')?.prop).toBe('enchantPedestal')
+    expect(inkwrightMotionForSkill('magic', 'curse')?.prop).toBe('hexDummy')
+    expect(inkwrightMotionForSkill('magic', 'stun')?.prop).toBe('hexDummy')
+    // A spell this table has never heard of still gets a figure — every
+    // non-combat spell on that screen turns one item into another.
+    expect(inkwrightMotionForSkill('magic', 'brand_new_spell')?.prop).toBe('transmutePedestal')
+    // Alchemy, superheating and transmuting are one CAST wearing three
+    // targets; enchanting and cursing are motions of their own.
+    expect(inkwrightMotionForSkill('magic', 'high_alch')?.motion).toBe('cast')
+    expect(inkwrightMotionForSkill('magic', 'superheat')?.motion).toBe('cast')
+    expect(inkwrightMotionForSkill('magic', 'enchant_ruby')?.motion).toBe('enchant')
+    expect(inkwrightMotionForSkill('magic', 'stun')?.motion).toBe('hex')
+  })
+
+  it('every magic action in skills.json resolves to a real prop', () => {
+    const props = new Set(['alchPedestal', 'smeltPedestal', 'transmutePedestal', 'enchantPedestal', 'hexDummy'])
+    for (const action of skillsData.magic.actions) {
+      const plan = inkwrightPlan('magic', action.ticks, action.id)!
+      expect(props, `${action.id} resolved to ${plan.prop}`).toContain(plan.prop)
+    }
+  })
+
+  it('every building action resolves to the bench figure', () => {
+    expect(BUILDING_ACTIONS.length).toBeGreaterThan(0)
+    for (const action of BUILDING_ACTIONS) {
+      const plan = inkwrightPlan('construction', action.ticks, action.id)!
+      expect(plan.motion).toBe('build')
+      expect(plan.prop).toBe('scaffold')
+      expect(plan.strikes).toBeGreaterThanOrEqual(1)
+    }
+  })
+
   it('every prayer action in skills.json resolves to a real pose', () => {
     for (const action of skillsData.prayer.actions) {
       const plan = inkwrightPlan('prayer', action.ticks, action.id)!
@@ -121,6 +169,12 @@ describe('inkwright — the cadence law', () => {
     }
     for (const action of skillsData.prayer.actions) {
       const plan = inkwrightPlan('prayer', action.ticks, action.id)!
+      expect(plan.strikes).toBeGreaterThanOrEqual(1)
+      expect(Math.abs(plan.strikePeriodMs * plan.strikes - plan.cycleMs))
+        .toBeLessThanOrEqual(plan.strikes)
+    }
+    for (const action of [...skillsData.magic.actions, ...BUILDING_ACTIONS]) {
+      const plan = inkwrightPlan(action.runeReq ? 'magic' : 'construction', action.ticks, action.id)!
       expect(plan.strikes).toBeGreaterThanOrEqual(1)
       expect(Math.abs(plan.strikePeriodMs * plan.strikes - plan.cycleMs))
         .toBeLessThanOrEqual(plan.strikes)

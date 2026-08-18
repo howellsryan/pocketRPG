@@ -4,6 +4,8 @@ import SkillIcon from '../components/SkillIcon.jsx'
 import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
+import InkwrightStage from '../components/InkwrightStage.jsx'
+import { inkwrightPlan } from '../utils/inkwright.js'
 import SectionHeader from '../components/SectionHeader.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick } from '../engine/skilling.js'
@@ -152,9 +154,27 @@ export default function ConstructionScreen({ onBack, onStopBack }) {
     const xpPerHr = skilling.startedAt && (Date.now() - skilling.startedAt) > 5000
       ? formatNumber(Math.round(skilling.totalXP / ((Date.now() - skilling.startedAt) / 3600000)))
       : '—'
+    // The figure at the bench. Construction is the one skill whose stage
+    // takes its colour from the MATERIAL rather than a product — a build
+    // consumes a plank and yields nothing to pop — so the plank tier is what
+    // the workpiece is made of on screen. Built here rather than in
+    // SkillActivePanel because that panel is core and these modules are
+    // game-chunk only (§12).
+    const plankId = Object.keys(skilling.action.materials || {})[0]
+    const inkPlan = inkwrightPlan('construction', skilling.action.ticks, skilling.action.id)
+    const inkStage = inkPlan ? (
+      <InkwrightStage
+        plan={inkPlan}
+        subject={plankId ? itemsData[plankId] : null}
+        yieldToken={skilling.totalActions}
+        label={`${skilling.action.name} in progress`}
+      />
+    ) : null
+
     return (
       <SkillActivePanel
         skill="construction"
+        stage={inkStage}
         title={skilling.action.name}
         progress={progress}
         stats={[

@@ -18,7 +18,7 @@ the *why*; the skill is the *how*.
 | Shape | two figures facing off, mirrored | a figure working a resource |
 | Sprite | articulated inked figure + weapon | articulated inked figure + tool + environment |
 | Cadence | one cycle = one swing | one action = several strikes, one yield |
-| Wired | solo combat, co-op/raid | mining, woodcutting, fishing |
+| Wired | solo combat, co-op/raid | every skilling action with a motion — gathering, production, prayer, construction, non-combat magic |
 
 They are two PRESENTATIONS, not two timing systems: both take their cadence from
 `actionCycleMs` in `src/utils/actionSprites.js` (combat directly; skilling through its
@@ -434,12 +434,74 @@ faster than a Bronze one for free; passing the base cost silently throws that aw
 |---|---|---|
 | Solo combat, co-op/raid | `.inkc-*` | shipped — same shared figure, redrawn realistic (see above) |
 | Mining, woodcutting, fishing | `.ink-*` | shipped — the fidelity baseline (real tools, real environments, measured placement) every future skill in this tier now targets |
-| Firemaking, cooking, smithing, crafting, fletching, herblore, runecraft, prayer, agility, dungeoneering, thieving, hunter, construction, summoning, magic (utility) | `.ink-*` | next — full coverage plan and per-skill motion concepts in `docs/skill-animations-proposal.md`; build to the tier this file describes, not the pre-realism bar |
+| Firemaking, cooking, smithing, crafting, fletching, herblore, runecraft, prayer | `.ink-*` | shipped — Tier A, pure content on the system above |
+| Construction, magic (non-combat) | `.ink-*` | shipped — Tiers E and G, the first two screens off `SkillingScreen` (see below) |
+| Agility, dungeoneering, thieving, hunter, summoning | `.ink-*` | next — full coverage plan and per-skill motion concepts in `docs/skill-animations-proposal.md`; build to the tier this file describes, not the pre-realism bar |
 | Slayer | — | no action of its own — trains via `CombatScreen`, already covered by `.inkc-*` |
 | Farming | — | out of scope for the Inkwright stage; patch-based UI, not a `SkillActivePanel` action loop |
-| Thieving, hunter, agility, farming, construction, summoning | — | own screens, not on `SkillActivePanel`; needs a look first |
-| Magic, prayer, slayer, dungeoneering | — | no physical strike; may not want a figure at all |
+| Thieving, hunter, agility, summoning | — | own screens; each already renders `SkillActivePanel`, so wiring is a `stage` prop and the work is the motion design |
 | Open world | neither | baked GLB clips, `src/utils/combatWindup.js` — deliberately separate |
+
+## Tiers E and G — a workpiece that persists, and a spell with a target
+
+The two tiers built after Tier A, and the first animations wired into screens
+other than `SkillingScreen`. Both screens (`ConstructionScreen`, `MagicScreen`)
+already rendered `SkillActivePanel`, so the wiring was a `stage` prop each; the
+work was the motion design, exactly as the coverage proposal predicted.
+
+**Construction is the one prop that is not consumed and respawned.** Every
+other resource in this file breaks and comes back identical — a rock, a log
+pile, a bar. A build spends a plank and the piece it is spent on has to still
+be there, one part further along, or the player is watching the same blow
+forever. So `scaffold` draws a chair at `built = yieldToken % BUILD_STAGES`
+(frame → seat → back posts → back rails, then a fresh frame), and the payoff
+settles **only the newest part** into place: settling the whole piece every
+action would say the furniture was assembled from scratch each time, which is
+the opposite of what the prop exists to show. Its colour comes from the
+MATERIAL rather than a product — a build yields nothing to pop — which is why
+`InkwrightStage` grew a `subject` prop, and why the four plank tiers visibly
+build in four different woods.
+
+**The hammer is drawn as a claw hammer, and that cost three attempts.** The
+head has to cross the haft (a striking face on one side, a hooked claw on the
+other) or it is not a hammer; drawn with a long sweeping claw it becomes a
+crescent, which at this size is the PICKAXE that already exists two skills
+over; and drawn as deep as the first version it read as an adze burying
+itself in the bench. The shipped head is sized to the beam it lands on. The
+placement arithmetic is the usual one and it is three numbers that move
+together, not one: the tool's `scale`, the impact keyframe's arm angle
+(`inkArmBuild`, -6deg) and the workpiece's apron rail (y=73) — the face's own
+local contact point lands on (133.8,73.5), the rail's top edge.
+
+**Magic is five acts on three motions, picked off the action id** the way
+prayer's three poses are (`magicMotionKey`). Alchemy, superheating and
+transmuting share one `cast` — point the staff, charge the orb, release —
+because they ARE the same act: what changes is the spell and the thing it
+lands on, not the body. Enchanting is a HELD channel: it runs 30 ticks, i.e.
+23 strike periods, and an arm that rises and lowers 23 times reads as pumping
+a bellows rather than pouring light into an amulet, so both arms stay up and
+only the stream pulses. Cursing is aimed at something that flinches — a straw
+practice dummy, deliberately not the mirrored player rig combat uses for its
+enemy (that trick is reserved for thieving's mark) — and the dummy rocks on
+every bolt that lands, not only on the completed action.
+
+Three details carry the realism, and each replaced something that read wrong:
+
+- **The pedestal shows the spell's real subject.** `subject` resolves through
+  the same `bespokeItemArt` path fishing uses for its species, so an alchemy
+  is the actual item the player picked standing on the plinth, a superheat is
+  the actual ore and an enchantment is the actual amulet. A tinted generic
+  blob could not tell any of those apart — the same argument the fishing
+  plate settled once already.
+- **A school colour, not a tint.** `--ink-spell` is set once per effect by a
+  modifier class (gold / fire / nature / arcane) and read by the bolt, its
+  halo and trail, the per-cast zap and the payoff flash. Without it a
+  superheat and a transmutation are one caster pointing a staff at a plinth.
+- **The plinth is a plinth.** Drawn first as a waisted body under a wide slab
+  it read as an ANVIL, which is the one thing a caster must not appear to be
+  working at — smithing already has one, two screens away. Stepped base,
+  tapered shaft, capital, in lighter stone than the shrine's, because here it
+  is the hero prop rather than scenery.
 
 ## Extending to a skill
 
