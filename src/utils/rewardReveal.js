@@ -1,4 +1,6 @@
+import itemsData from '../data/items.json'
 import { killRevealRewards } from './lootModal.js'
+import { hasEpicLootDrop } from './itemValue.js'
 
 /**
  * Fire the reward-reveal overlay for a completed clue/minigame/quest. The
@@ -8,26 +10,31 @@ import { killRevealRewards } from './lootModal.js'
  * card, alongside the reward chips.
  *
  * `mergeKey` (optional) folds a reveal into the queued card carrying the same
- * key instead of queueing behind it — see mergeRevealQueue.
+ * key instead of queueing behind it — see mergeRevealQueue. `epic` (optional)
+ * requests the purple/legendary treatment — same predicate as the full-screen
+ * loot modal's theme (hasEpicLootDrop), so a boss's card and a raid's modal
+ * agree on what counts as a big drop.
  */
-export function emitRewardReveal(title, icon, rewards, levelUps = [], mergeKey = null) {
+export function emitRewardReveal(title, icon, rewards, levelUps = [], mergeKey = null, epic = false) {
   if (typeof window === 'undefined' || !Array.isArray(rewards) || rewards.length === 0) return
-  window.dispatchEvent(new CustomEvent('pocketrpg:reward-reveal', { detail: { title, icon, rewards, levelUps, mergeKey } }))
+  window.dispatchEvent(new CustomEvent('pocketrpg:reward-reveal', { detail: { title, icon, rewards, levelUps, mergeKey, epic } }))
 }
 
 /**
- * Announce an ordinary (non-boss, non-raid) kill's loot. This is the whole
- * post-kill UI for those fights — they no longer stop on the full-screen loot
- * modal — so it must not queue: a cow dies well inside the card's lifetime, and
- * a queue would show loot from four kills ago. Merging by monster means a grind
- * reads as one running "Cow Slain ×7" card instead.
+ * Announce a kill's loot — ordinary monster or boss alike (only a raid
+ * completion still earns the full-screen modal, CLAUDE.md §6). This is the
+ * whole post-kill UI for those fights, so it must not queue: a cow (or a
+ * boss re-armed by auto-fight) dies well inside the card's lifetime, and a
+ * queue would show loot from four kills ago. Merging by monster means a
+ * grind reads as one running "Cow Slain ×7" card instead.
  *
  * A kill that dropped nothing shows nothing; the combat log already said so.
  */
 export function emitKillReveal(monsterId, monsterName, drops) {
   const rewards = killRevealRewards(drops)
   if (rewards.length === 0) return
-  emitRewardReveal(`${monsterName || 'Monster'} Slain`, '⚔️', rewards, [], `kill:${monsterId || monsterName}`)
+  const epic = hasEpicLootDrop(drops, itemsData)
+  emitRewardReveal(`${monsterName || 'Monster'} Slain`, '⚔️', rewards, [], `kill:${monsterId || monsterName}`, epic)
 }
 
 function mergeRewardLists(existing, incoming) {
@@ -69,6 +76,9 @@ export function mergeRevealQueue(queue, reveal) {
     rev: (prev.rev || 0) + 1,
     rewards: mergeRewardLists(prev.rewards, reveal.rewards),
     levelUps: [...(prev.levelUps || []), ...(reveal.levelUps || [])],
+    // Once a merged card has shown a legendary drop it stays purple — an
+    // ordinary kill folded in afterward must not downgrade it back to gold.
+    epic: !!prev.epic || !!reveal.epic,
   }
   return list.map((r, i) => (i === at ? merged : r))
 }
