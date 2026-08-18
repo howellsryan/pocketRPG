@@ -753,7 +753,12 @@ function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
 
   // Herblore. A stone mortar on a stand with herb sprigs standing out of it
   // — leaves, not a lump, so the bowl reads as full of something growable.
-  // The payoff is the finished potion: a round-bottomed vial with a cork.
+  // The payoff is steam off the bowl, not a drawn vial — mirroring cooking's
+  // steam and mining's shards, the same "resource stays, only an EFFECT
+  // changes" rule every other prop in this file follows. A hand-drawn potion
+  // here (this used to draw one) duplicated the ink-yield overlay's own
+  // bespoke icon of the actual brewed item, putting two different-looking
+  // potions on screen for the one payoff; the overlay is the only reveal.
   if (kind === 'mortar') {
     return (
       <g>
@@ -771,12 +776,10 @@ function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
           </g>
         )}
         {broken && (
-          <g class="ink-vial">
-            <path class="ink-vial-neck" d="M116 48 L128 48 L128 58 L116 58 Z" />
-            <path class="ink-vial-cork" d="M115 43 L129 43 L129 49 L115 49 Z" />
-            <path class="ink-res" d="M116 56 L128 56 Q140 64 138 74 Q136 84 122 84 Q108 84 106 74 Q104 64 116 56 Z" />
-            <path class="ink-vial-shine" d="M114 66 Q112 72 114 78" />
-          </g>
+          <>
+            <g class="ink-steam ink-steam--a"><path d="M112 74 Q108 64 114 56" /></g>
+            <g class="ink-steam ink-steam--b"><path d="M132 74 Q136 64 130 56" /></g>
+          </>
         )}
       </g>
     )
