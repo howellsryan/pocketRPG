@@ -64,13 +64,15 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
   // resolver the inventory uses — so copper reads copper and mithril blue
   // without this component knowing a single ore exists.
   const tint = (product && getItemIconTint(product)) || 'var(--text-soft)'
-  // Fishing is the one skill where the "resource" IS the item — a rock is
-  // always a rock, but a shark and a shrimp are different animals. Every raw
-  // fish resolves to the same flat colour through getItemIconTint (there is
-  // no tier ladder for fish), so a tinted silhouette could never tell a
-  // shark from a shrimp — the real bespoke art has to, the same art the
-  // inventory already shows for that item.
-  const fishArt = prop === 'water' ? bespokeFishArt(product) : null
+  // Fishing and herblore are the two skills where the "resource" (or its
+  // payoff) IS the item — a rock is always a rock, but a shark and a shrimp
+  // are different animals, and an attack potion and a prayer potion are
+  // different bottles. Both resolve to the same flat colour through
+  // getItemIconTint (there is no tier ladder for fish, and a potion's tint is
+  // already a full bottle illustration in its own right), so a tinted
+  // silhouette could never tell them apart — the real bespoke art has to, the
+  // same art the inventory already shows for that item.
+  const itemArt = (prop === 'water' || prop === 'mortar') ? bespokeItemArt(product) : null
   // Nothing has given way until an action has actually completed. Rendering
   // the payoff at mount shattered the rock the instant the screen opened,
   // and popped a reward for an action nobody had finished.
@@ -95,11 +97,11 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
             as the next one — left up, the broken pieces fly over a rock that
             is still standing there whole. */}
         <g key={`pr${yieldToken}`} class={`ink-prop${broke ? ' is-breaking' : ''}`}>
-          <Prop kind={prop} fishArt={fishArt} swinging={swinging} />
+          <Prop kind={prop} itemArt={itemArt} swinging={swinging} />
         </g>
         {broke && (
           <g key={`p${yieldToken}`} class={`ink-payoff ink-payoff--${motion}`}>
-            <Prop kind={prop} broken fishArt={fishArt} />
+            <Prop kind={prop} broken itemArt={itemArt} />
           </g>
         )}
 
@@ -135,7 +137,7 @@ export default function InkwrightStage({ plan, product = null, yieldToken = 0, p
             does not rotate rigidly with the blank. Its own motion is driven
             off the rod tip's own measured path (inkRigMotion, index.css),
             same technique the review artifact validated. */}
-        {prop === 'water' && <FishingRig fishArt={fishArt} broke={broke} swinging={swinging} yieldToken={yieldToken} />}
+        {prop === 'water' && <FishingRig fishArt={itemArt} broke={broke} swinging={swinging} yieldToken={yieldToken} />}
       </svg>
 
       {/* What the action produced, popped on the yield. An HTML sibling
@@ -430,7 +432,7 @@ function FishingRig({ fishArt, broke, swinging, yieldToken }) {
       {broke && (
         <g key={yieldToken} class="ink-catch-rise">
           {fishArt
-            ? <FishArt art={fishArt} cx={178} cy={98} width={24} className="ink-catch" />
+            ? <BespokeItemArt art={fishArt} cx={178} cy={98} width={24} className="ink-catch" />
             : <path class="ink-catch ink-catch--fallback" d="M169 98 Q178 92 187 98 Q178 104 169 98 Z" />}
         </g>
       )}
@@ -438,13 +440,16 @@ function FishingRig({ fishArt, broke, swinging, yieldToken }) {
   )
 }
 
-// Every raw fish has a bespoke entry (checked against skills.json's fishing
-// products) and none are `tintable`, so this always comes back as the item's
-// own multi-tone art with no tint to apply — unlike ore/logs, whose colour IS
-// the flat tint. Returns null only if the data hasn't loaded yet (chunk not
-// ready) or an unmapped item slips through, and the water just stays empty
-// rather than guess at a placeholder.
-export function bespokeFishArt(product) {
+// Every raw fish (and every herblore potion) has a bespoke entry, and none
+// are `tintable`, so this always comes back as the item's own multi-tone art
+// with no tint to apply — unlike ore/logs, whose colour IS the flat tint. A
+// potion's bespoke body is a complete bottle illustration (glass + liquid +
+// cork) in its own right, same as a fish is a complete animal — nesting
+// either inside a second hand-drawn vial/silhouette is what puts two
+// different-looking items on screen for the one payoff. Returns null only if
+// the data hasn't loaded yet (chunk not ready) or an unmapped item slips
+// through, and the caller falls back to a generic shape rather than guess.
+export function bespokeItemArt(product) {
   if (!product) return null
   const icon = resolveItemIcon(product, {
     bespoke: typeof bespokeIconsData !== 'undefined' ? bespokeIconsData : null,
@@ -455,11 +460,12 @@ export function bespokeFishArt(product) {
   return { body: icon.body, tint: icon.tint, cx: vx + vw / 2, cy: vy + vh / 2, size: Math.max(vw, vh) }
 }
 
-// The fish's own art, scaled from its native (typically 512x512) viewBox down
-// into this stage's frame and recentred on (cx, cy). A CSS animation on the
-// OUTER group composes with this positioning transform rather than fighting
-// it — same layering as .ink-arm's rotation around a fixed origin.
-function FishArt({ art, cx, cy, width, className }) {
+// The item's own bespoke art, scaled from its native (typically 512x512)
+// viewBox down into this stage's frame and recentred on (cx, cy). A CSS
+// animation on the OUTER group composes with this positioning transform
+// rather than fighting it — same layering as .ink-arm's rotation around a
+// fixed origin.
+function BespokeItemArt({ art, cx, cy, width, className }) {
   const scale = width / (art.size || 512)
   return (
     <g class={className} style={{ transformOrigin: `${cx}px ${cy}px` }}>
@@ -528,7 +534,7 @@ function Longbone({ rotate }) {
  * apart. `swinging` only matters to the idle float, so it can freeze with
  * the figure when the action is stalled (inventory full) rather than keep
  * bobbing. */
-function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
+function Prop({ kind, broken = false, itemArt = null, swinging = true }) {
   if (kind === 'tree') {
     // Every coordinate here is authored directly at the size this stage
     // actually renders at — NOT scaled down at runtime from a bigger canvas.
@@ -594,8 +600,8 @@ function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
         {/* Idling: the actual species, roaming below the surface. Hidden the
             instant the payoff starts (FishingRig's sibling group takes over),
             so there is never a second fish visible at once. */}
-        {!broken && fishArt && (
-          <FishArt art={fishArt} cx={158} cy={112} width={22} className={`ink-fish-idle${swinging ? ' is-working' : ''}`} />
+        {!broken && itemArt && (
+          <BespokeItemArt art={itemArt} cx={158} cy={112} width={22} className={`ink-fish-idle${swinging ? ' is-working' : ''}`} />
         )}
       </g>
     )
@@ -753,7 +759,12 @@ function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
 
   // Herblore. A stone mortar on a stand with herb sprigs standing out of it
   // — leaves, not a lump, so the bowl reads as full of something growable.
-  // The payoff is the finished potion: a round-bottomed vial with a cork.
+  // The payoff is the finished potion — the item's own bespoke bottle art,
+  // same as fishing's catch-rise, because every potion's bespoke body is
+  // already a complete vial illustration. A second, hand-drawn generic vial
+  // here (as this used to be) put two differently-styled potions on screen
+  // for the one payoff; only an item with no bespoke/glyph art at all falls
+  // back to the plain silhouette below.
   if (kind === 'mortar') {
     return (
       <g>
@@ -771,12 +782,16 @@ function Prop({ kind, broken = false, fishArt = null, swinging = true }) {
           </g>
         )}
         {broken && (
-          <g class="ink-vial">
-            <path class="ink-vial-neck" d="M116 48 L128 48 L128 58 L116 58 Z" />
-            <path class="ink-vial-cork" d="M115 43 L129 43 L129 49 L115 49 Z" />
-            <path class="ink-res" d="M116 56 L128 56 Q140 64 138 74 Q136 84 122 84 Q108 84 106 74 Q104 64 116 56 Z" />
-            <path class="ink-vial-shine" d="M114 66 Q112 72 114 78" />
-          </g>
+          itemArt
+            ? <BespokeItemArt art={itemArt} cx={122} cy={64} width={32} className="ink-vial" />
+            : (
+              <g class="ink-vial">
+                <path class="ink-vial-neck" d="M116 48 L128 48 L128 58 L116 58 Z" />
+                <path class="ink-vial-cork" d="M115 43 L129 43 L129 49 L115 49 Z" />
+                <path class="ink-res" d="M116 56 L128 56 Q140 64 138 74 Q136 84 122 84 Q108 84 106 74 Q104 64 116 56 Z" />
+                <path class="ink-vial-shine" d="M114 66 Q112 72 114 78" />
+              </g>
+            )
         )}
       </g>
     )
