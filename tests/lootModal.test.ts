@@ -83,12 +83,12 @@ describe('lootRowsForModal', () => {
   })
 })
 
-// Which kills stop the game. A boss or a raid earns the full-screen takeover;
-// everything else announces itself on a card and keeps fighting, so a slayer
-// grind isn't a modal every ten seconds.
+// Which kills stop the game. Only a raid completion earns the full-screen
+// takeover; a standalone boss now announces on a card and keeps fighting,
+// same as any other monster, so a boss farm isn't a modal every kill.
 describe('killPresentsFullModal', () => {
-  it('stops on a boss', () => {
-    expect(killPresentsFullModal({ isBossKill: true, raidId: null })).toBe(true)
+  it('does not stop on a standalone boss anymore', () => {
+    expect(killPresentsFullModal({ isBossKill: true, raidId: null })).toBe(false)
   })
 
   it('stops on a raid completion even though the final boss is the kill', () => {

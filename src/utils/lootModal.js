@@ -1,10 +1,11 @@
 import { getItemUnitValue } from './itemValue.js'
 
-// Only a boss or a raid earns the full-screen loot modal. Every other kill
-// announces itself as a reward-reveal card instead and the fight carries on —
-// a grind must not stop dead on a modal once per cow.
-export function killPresentsFullModal({ isBossKill, raidId } = {}) {
-  return isBossKill === true || !!raidId
+// Only a raid completion earns the full-screen loot modal — a whole run's
+// worth of loot is a genuine takeover moment. A standalone boss now announces
+// itself the same way an ordinary monster does: a reward-reveal card, so the
+// fight carries on instead of stopping dead on a modal every kill.
+export function killPresentsFullModal({ raidId } = {}) {
+  return !!raidId
 }
 
 /**

@@ -46,6 +46,7 @@ export default function RewardRevealOverlay() {
         rev: 0,
         rewards,
         levelUps,
+        epic: !!detail.epic,
       }
       setQueue(prev => mergeRevealQueue(prev, reveal))
     }
@@ -64,8 +65,11 @@ export default function RewardRevealOverlay() {
   const dismiss = () => setQueue(prev => prev.slice(1))
 
   // Same visual language as the system toasts (Toast.jsx compact card): solid
-  // dark card, gold accent bar + icon tile, countdown strip — plus the item chips
-  // that make the reveal a reveal.
+  // dark card, accent bar + icon tile, countdown strip — plus the item chips
+  // that make the reveal a reveal. Gold by default; a legendary drop (same
+  // predicate as the full-screen loot modal's purple theme) swaps the accent
+  // to purple via one CSS var rather than branching every class below.
+  const accent = current.epic ? '#b06bf5' : 'var(--color-gold)'
   return (
     <div
       class="pointer-events-none fixed inset-x-0 z-[70] flex justify-center px-4"
@@ -76,20 +80,21 @@ export default function RewardRevealOverlay() {
         role="status"
         key={current.id}
         class="toast-enter pointer-events-auto relative w-full max-w-sm cursor-pointer overflow-hidden rounded-2xl pl-4 pr-3.5 py-3.5 shadow-[0_10px_28px_rgba(0,0,0,0.4)] bg-[rgba(26,26,26,0.96)] backdrop-blur-sm border border-[rgba(255,255,255,0.08)]"
+        style={{ '--reveal-accent': accent }}
       >
-        <div class="absolute left-0 top-0 bottom-0 w-1 bg-[var(--color-gold)]" />
+        <div class="absolute left-0 top-0 bottom-0 w-1 bg-[var(--reveal-accent)]" />
         <div class="flex items-center gap-3">
-          <div class="w-[38px] h-[38px] flex-shrink-0 rounded-xl flex items-center justify-center text-lg bg-[rgba(255,255,255,0.05)] border border-[var(--color-gold-light)]">
+          <div class="w-[38px] h-[38px] flex-shrink-0 rounded-xl flex items-center justify-center text-lg bg-[rgba(255,255,255,0.05)] border border-[var(--reveal-accent)]">
             {current.icon}
           </div>
           <div class="flex-1 min-w-0 text-[14px] font-semibold text-[var(--color-parchment)] leading-snug">{current.title}</div>
           {current.count > 1 && (
-            <div class="flex-shrink-0 text-[13px] font-bold text-[var(--color-gold)]">×{current.count.toLocaleString()}</div>
+            <div class="flex-shrink-0 text-[13px] font-bold text-[var(--reveal-accent)]">×{current.count.toLocaleString()}</div>
           )}
         </div>
         {current.levelUps.length > 0 && (
           <div class="mt-2.5 pt-2.5 border-t border-[rgba(255,255,255,0.08)]">
-            <div class="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-gold)] opacity-80 mb-1.5">Levels Gained</div>
+            <div class="text-[10px] font-semibold uppercase tracking-wider text-[var(--reveal-accent)] opacity-80 mb-1.5">Levels Gained</div>
             <div class="flex flex-col gap-1">
               {current.levelUps.map(l => {
                 const art = getSkillArt(l.skill)
@@ -98,7 +103,7 @@ export default function RewardRevealOverlay() {
                   <div key={`lvl:${l.skill}`} class="flex items-center gap-1.5 text-[12px] text-[var(--color-parchment)]">
                     <GameIcon iconKey={art.icon} size={16} color={art.accent} />
                     <span class="flex-1 min-w-0 truncate">{name}</span>
-                    <span class="font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{l.from} → {l.to}</span>
+                    <span class="font-[var(--font-mono)] font-bold text-[var(--reveal-accent)]">{l.from} → {l.to}</span>
                   </div>
                 )
               })}
@@ -115,7 +120,7 @@ export default function RewardRevealOverlay() {
                 <div key={`xp:${r.skill}`} class="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-2 py-1">
                   <GameIcon iconKey={art.icon} size={20} color={art.accent} />
                   <span class="text-[12px] text-[var(--color-parchment)]">{name}</span>
-                  <span class="text-[11px] font-bold text-[var(--color-gold)]">+{r.xp.toLocaleString()} XP</span>
+                  <span class="text-[11px] font-bold text-[var(--reveal-accent)]">+{r.xp.toLocaleString()} XP</span>
                 </div>
               )
             }
@@ -124,7 +129,7 @@ export default function RewardRevealOverlay() {
               <div key={r.itemId} class="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-2 py-1">
                 <GameIcon item={item} size={20} />
                 <span class="text-[12px] text-[var(--color-parchment)]">{item?.name || r.itemId}</span>
-                {r.quantity > 1 && <span class="text-[11px] font-bold text-[var(--color-gold)]">×{r.quantity.toLocaleString()}</span>}
+                {r.quantity > 1 && <span class="text-[11px] font-bold text-[var(--reveal-accent)]">×{r.quantity.toLocaleString()}</span>}
               </div>
             )
           })}
@@ -132,7 +137,7 @@ export default function RewardRevealOverlay() {
         )}
         <div
           key={`bar:${current.id}:${current.rev}`}
-          class="absolute left-0 bottom-0 h-[3px] w-full skill-toast-shrink bg-[var(--color-gold)]"
+          class="absolute left-0 bottom-0 h-[3px] w-full skill-toast-shrink bg-[var(--reveal-accent)]"
           style={{ animationDuration: `${REVEAL_LIFETIME_MS}ms` }}
         />
       </div>

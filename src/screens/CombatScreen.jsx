@@ -365,7 +365,7 @@ function MonsterDropList({ monster, itemsData, grindman = false }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, isGrindman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget, updateGrimReaperStash } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, isGrindman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget, updateGrimReaperStash } = useGame()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showWildernessEntry, setShowWildernessEntry] = useState(false)
@@ -868,9 +868,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
         if (ev.type === 'summonHit') {
           const cname = getSummoningCreature(ev.creatureId)?.name || 'Creature'
+          const swingHits = ev.hits || [ev.damage]
+          const anyHit = swingHits.some(h => h > 0)
           setLog(prev => [...prev.slice(-20), {
-            text: ev.damage > 0 ? `Your ${cname} hits ${ev.damage}` : `Your ${cname} misses`,
-            type: ev.damage > 0 ? 'hit' : 'miss',
+            text: anyHit ? `Your ${cname} hits ${swingHits.map(h => h > 0 ? h : 'miss').join(' + ')}` : `Your ${cname} misses`,
+            type: anyHit ? 'hit' : 'miss',
             time: Date.now()
           }])
         }
@@ -1054,7 +1056,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             type: 'raid',
             time: Date.now()
           }])
-          addToast('🏆 Raid complete! Check your loot!', 'levelup')
           // Track raid KC
           if (ev.raidId && state.raid) {
             const raidId = ev.raidId
@@ -2122,29 +2123,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // a single boss/monster, re-arm the fight and trigger the same skip the
   // top-nav uses (boss instant-kill or 1-hour idle skip), so the player can
   // chain skips without manually clicking Fight Again then Skip.
+  // The full-screen modal is raid-only now (§6) — a standalone boss kill
+  // announces on the reward-reveal card like any other monster, so this skip
+  // path only ever needs to handle a raid.
   const skipAgain = async () => {
     const modal = lootModal
-    if (!modal || modal.loading) return
-
-    if (modal.raidId) {
-      setLootModal(null)
-      await new Promise(r => requestAnimationFrame(r))
-      await skipEntireRaid({
-        raidId: modal.raidId,
-        monster: modal.monster,
-        slayerXpGained: modal.slayerXpGained || 0,
-        isBossKill: modal.isBossKill,
-        hardMode: modal.hardMode === true,
-      })
-      return
-    }
-
+    if (!modal || modal.loading || !modal.raidId) return
     setLootModal(null)
-    // Hard mode has to survive the next pull: the raw table would quietly hand
-    // back the normal boss while the drop rates stay whatever the switch says.
-    const original = monstersTableFor(monstersData, modal.hardMode === true)[modal.monster.id]
-    if (original) continueFight(original)
-    skipHourHandlerRef?.current?.()
+    await new Promise(r => requestAnimationFrame(r))
+    await skipEntireRaid({
+      raidId: modal.raidId,
+      monster: modal.monster,
+      slayerXpGained: modal.slayerXpGained || 0,
+      isBossKill: modal.isBossKill,
+      hardMode: modal.hardMode === true,
+    })
   }
 
   // Register the full-raid skip for the top-nav Skip button. The nav button
@@ -3390,8 +3383,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   return (
     <div class={`forge-shell h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
-      {/* Back button */}
-      <BackLink onClick={stopAndBack} className="mb-3" />
+      {/* Back button — on mobile the raid track rides this same row instead of
+          costing its own full-width block above the fight header. */}
+      <div class="flex items-center gap-2 mb-3">
+        <BackLink onClick={stopAndBack} />
+        {!isDesktopCombatLayout && combat.raid && (
+          <div class="flex-1 min-w-0 flex items-center gap-1.5">
+            <span class="text-[9px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-50 flex-shrink-0">
+              Boss {combat.raid.currentBossIndex + 1}/{combat.raid.bosses.length}
+            </span>
+            <div class="flex-1 flex gap-0.5 min-w-0">
+              {combat.raid.bosses.map((bossId, i) => (
+                <div
+                  key={bossId}
+                  class={`flex-1 h-1 rounded-full ${
+                    i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' :
+                    i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' :
+                    'bg-[var(--color-void-border)]'
+                  }`}
+                  title={monstersData[bossId]?.name || bossId}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Pane container — single flex column on mobile, 3-pane grid on desktop.
           DOM order is [stats, inventory, console] so mobile flow stays
@@ -3849,21 +3865,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 aside={m.hardModeActive && <HardModeTag />}
               />
 
-              {/* Raid progress */}
-              {combat.raid && (
-                <div class="mb-2 bg-[var(--color-void)] border border-[var(--color-void-border)] rounded-lg px-3 py-2">
-                  <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-[10px] font-semibold text-[var(--color-gold)]">{raidsData[combat.raid.raidId]?.name || 'Raid'}</span>
-                    <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-60">Boss {combat.raid.currentBossIndex + 1}/{combat.raid.bosses.length}</span>
-                  </div>
-                  <div class="flex gap-1">
-                    {combat.raid.bosses.map((bossId, i) => (
-                      <div key={bossId} class={`flex-1 h-1.5 rounded-full ${i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' : i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' : 'bg-[var(--color-void-border)]'}`} title={monstersData[bossId]?.name || bossId} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {spriteStage}
 
               {/* Both combatants' HP is now the mini bar above their own head
@@ -4115,11 +4116,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="max-h-96 overflow-y-auto flex flex-col gap-2">
             {(() => {
               const summoningLevel = getLevelFromXP(stats.summoning?.xp || 0)
-              return SUMMONING_CREATURES.map(c => {
-                const unlocked = summoningLevel >= c.level
+              // Only list what's actually pickable — level met and a pouch in
+              // hand. A creature the player can't yet afford or unlock just
+              // clutters the sheet with rows that can never be tapped.
+              const available = SUMMONING_CREATURES.filter(c => summoningLevel >= c.level && countItem(inventory, c.pouch) > 0)
+              if (available.length === 0) {
+                return (
+                  <p class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center py-4">
+                    No summoning pouches ready. Craft or buy one to summon a creature.
+                  </p>
+                )
+              }
+              return available.map(c => {
                 const pouches = countItem(inventory, c.pouch)
                 const scrolls = countItem(inventory, c.scroll)
-                const canSummon = unlocked && pouches > 0 && !combat?.summon
+                const canSummon = !combat?.summon
                 return (
                   <button key={c.id} disabled={!canSummon} onClick={canSummon ? () => handleSummon(c.id) : undefined}
                     class={`flex items-center gap-3 p-2.5 rounded-lg text-left ${canSummon ? 'active:opacity-80' : 'opacity-45 cursor-default'}`}
@@ -4134,11 +4145,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         {pouches} pouch{pouches === 1 ? '' : 'es'} · {scrolls} scroll{scrolls === 1 ? '' : 's'}
                       </div>
                     </div>
-                    {!unlocked
-                      ? <span class="text-[10px] text-[var(--color-blood-light)] font-bold">Lv {c.level}</span>
-                      : pouches <= 0
-                        ? <span class="text-[10px] text-[var(--color-blood-light)]">No pouch</span>
-                        : <span class="text-[11px] text-[var(--color-gold)] font-bold">Summon</span>}
+                    <span class="text-[11px] text-[var(--color-gold)] font-bold">Summon</span>
                   </button>
                 )
               })
@@ -4219,50 +4226,40 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </Modal>
       )}
 
-      {/* Loot Modal */}
+      {/* Loot Modal — raid completion only (§6); a standalone boss kill uses
+          the reward-reveal card below like any other monster. */}
       {lootModal && (() => {
         const drops = !lootModal.loading && lootModal.loot ? lootModal.loot : []
         const { hero, heroItem: heroItemData, rest, total: lootTotal } = shapeLootForModal(drops, itemsData)
-        const isRaid = !!lootModal.raidId
 
         return (
           <LootResultModal
             theme={!lootModal.loading && hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
             kind="loot"
-            eyebrow={isRaid ? 'Raid Complete' : (lootModal.isBossKill ? 'Boss Defeated' : 'Monster Slain')}
-            title={isRaid
-              ? (raidsData[lootModal.raidId]?.name || 'Raid')
-              : (lootModal.monster?.name || 'Monster')}
-            sub={isRaid
-              ? undefined
-              : undefined}
+            eyebrow="Raid Complete"
+            title={raidsData[lootModal.raidId]?.name || 'Raid'}
             heroItem={!lootModal.loading && heroItemData ? heroItemData : null}
             heroName={!lootModal.loading && hero ? (heroItemData?.name || hero.itemId) : null}
             heroQuantity={!lootModal.loading && hero ? hero.quantity : null}
             heroGp={!lootModal.loading && hero ? hero.totalGp : 0}
             heroUnitGp={!lootModal.loading && hero ? hero.unitGp : 0}
             skipLabel={!lootModal.loading && getToken() && getCharacterId()
-              ? (isRaid ? `Skip raid (${hardModeSkipCost(raidsData[lootModal.raidId]?.skipCost ?? 1, isHardMode('raids', lootModal.raidId))})` : 'Skip')
+              ? `Skip raid (${hardModeSkipCost(raidsData[lootModal.raidId]?.skipCost ?? 1, isHardMode('raids', lootModal.raidId))})`
               : null}
             onSkip={skipAgain}
             loot={!lootModal.loading && rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
             lootTitle="Loot Secured"
             lootTotal={lootTotal}
             primaryAction={!lootModal.loading ? {
-              label: isRaid ? 'Raid Again' : 'Fight Again',
+              label: 'Raid Again',
               onClick: () => {
-                if (isRaid) {
-                  const raid = raidsData[lootModal.raidId]
-                  if (raid) startRaid(raid)
-                } else {
-                  const original = monstersTableFor(monstersData, lootModal.hardMode === true)[lootModal.monster.id]
-                  if (original) continueFight(original)
-                }
+                const raid = raidsData[lootModal.raidId]
+                if (raid) startRaid(raid)
                 setLootModal(null)
               },
             } : null}
             secondaryAction={!lootModal.loading ? {
-              label: isRaid ? 'Leave' : 'Run Away',
+              label: 'Leave',
               onClick: () => {
                 setLootModal(null)
                 stopAndBack()

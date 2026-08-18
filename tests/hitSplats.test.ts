@@ -26,12 +26,21 @@ describe('splatsFromCombatEvents', () => {
 
   it('maps a summonHit to an orange-variant monster splat', () => {
     const { monster, player } = splatsFromCombatEvents([
-      { type: 'summonHit', creatureId: 'dragon', damage: 14, monsterHP: 40 },
+      { type: 'summonHit', creatureId: 'dragon', damage: 14, hits: [14], monsterHP: 40 },
     ])
     expect(monster).toHaveLength(1)
     expect(monster[0].value).toBe(14)
     expect(monster[0].variant).toBe('summon')
     expect(player).toHaveLength(0)
+  })
+
+  it('maps each summonHit swing to its own splat — a Steel Titan hits 3 times, not once', () => {
+    const { monster } = splatsFromCombatEvents([
+      { type: 'summonHit', creatureId: 'steel_titan', damage: 43, hits: [14, 20, 9], monsterHP: 40 },
+    ])
+    expect(monster).toHaveLength(3)
+    expect(monster.map((s) => s.value)).toEqual([14, 20, 9])
+    expect(monster.every((s) => s.variant === 'summon')).toBe(true)
   })
 
   it('maps each specialHit hit to its own monster splat', () => {
@@ -170,6 +179,13 @@ describe('splatsFromCoopEvents', () => {
     ], 1)
     expect(add.map((s) => s.value)).toEqual([9])
     expect(boss.map((s) => s.value)).toEqual([4])
+  })
+
+  it('splats each swing of a multi-hit summon separately', () => {
+    const { boss } = splatsFromCoopEvents([
+      { type: 'summonHit', characterId: 1, damage: 43, hits: [14, 20, 9] },
+    ], 1)
+    expect(boss.map((s) => s.value)).toEqual([14, 20, 9])
   })
 
   it('splats each hit of a special separately', () => {
