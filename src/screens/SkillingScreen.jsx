@@ -996,7 +996,7 @@ Shop value: ×1.1
   // one without this call site knowing tools exist. Built here rather than in
   // SkillActivePanel because that panel is core and these modules are
   // game-chunk only (§12).
-  const inkPlan = inkwrightPlan(selectedSkill, skilling.action.ticks)
+  const inkPlan = inkwrightPlan(selectedSkill, skilling.action.ticks, skilling.action.id)
   const inkStage = inkPlan ? (
     <InkwrightStage
       plan={inkPlan}

@@ -140,9 +140,14 @@ enemy-mirror half of the combat stage.
 
 ## Open questions
 
-1. **Prayer**: one `commune` motion with three payoff poses (bury / altar /
-   scatter), or three fully separate motions? The three-poses approach is
-   cheaper and keeps prayer as one row in `SKILL_MOTIONS`.
+1. ~~**Prayer**: one `commune` motion with three payoff poses (bury / altar /
+   scatter), or three fully separate motions?~~ **Answered: three motions**
+   (`bury`, `offer`, `scatter`). The shared gesture was built first and read
+   as none of the three acts — digging a hole, laying bones on an altar and
+   casting dust to the wind have nothing in common to share. Bury also needs
+   a **spade**: a bare hand reaches ~17px from the shoulder and the ground is
+   44px below it, and closing that gap by translating the whole figure down
+   pushed its boots through the ground line.
 2. **Thieving**: ship success-only for v1 (loop replays, no fail pose), or is
    a distinct "noticed" stumble/flash worth building now?
 3. **Summoning**: plain `GameIcon` payoff (consistent, cheap) or a small
