@@ -22,6 +22,7 @@ import { useActionSwings } from '../hooks/useActionSwings.js'
 import InkwrightCombatStage from '../components/InkwrightCombatStage.jsx'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
+import { emitKillReveal } from '../utils/rewardReveal.js'
 import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal, foughtThisKill, isRaidPayingBoss } from '../engine/coopBossEngine.js'
 import { coopRaidSummary, raidProgress } from '../engine/coopRaidEngine.js'
 import { appendChatLines, chatLinesFromCoopEvents } from '../utils/coopChat.js'
@@ -227,15 +228,23 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     // Read names off the beat, not the render closure — this callback is
     // captured once for the life of the session, so anything from render is
     // stale by the time a kill lands. The kill arrives as an event on the
-    // room's own beat, so the winner sees their loot modal whether or not they
-    // were looking at the moment the boss died.
+    // room's own beat, so the winner sees their loot whether or not they were
+    // looking at the moment the boss died.
     for (const ev of events) {
       if (ev.type !== 'killSettled') continue
       const raidCleared = events.find((e) => e.type === 'raidComplete')
       const killedName = raidCleared?.raidName || monstersData?.[nextState?.bossId]?.name || 'The boss'
       const outcome = coopKillOutcome(ev, characterId)
       if (outcome.kind === 'loot') {
-        setLootModal({ monsterName: killedName, loot: outcome.loot, killCount: outcome.killCount, isRaid: !!raidCleared })
+        // Only a raid completion still earns the full-screen modal (CLAUDE.md
+        // §6) — an ordinary boss kill announces itself as a reward-reveal card,
+        // same as solo, so the group fight carries on instead of stopping dead
+        // on a modal every kill.
+        if (raidCleared) {
+          setLootModal({ monsterName: killedName, loot: outcome.loot, killCount: outcome.killCount })
+        } else {
+          emitKillReveal(nextState?.bossId, killedName, outcome.loot)
+        }
       } else if (outcome.kind === 'diverged') {
         addToast?.('Your loot could not be granted — something else changed your save. Leave and rejoin.', 'error')
       } else if (outcome.kind === 'failed') {
@@ -339,14 +348,15 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
 
   // Built before the lobby branch below and rendered by BOTH: clearing a raid
   // settles the loot and puts the party back in its lobby on the same tick, so
-  // a modal rendered only by the fight view is set and never seen.
+  // a modal rendered only by the fight view is set and never seen. Raid-only
+  // now — an ordinary boss kill announces via emitKillReveal instead (above).
   const lootModalNode = lootModal ? (() => {
     const { hero, heroItem, rest, total } = shapeLootForModal(lootModal.loot, itemsData)
     return (
       <LootResultModal
         theme={hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
         kind="loot"
-        eyebrow={lootModal.isRaid ? 'Raid Complete' : 'Boss Defeated'}
+        eyebrow="Raid Complete"
         title={lootModal.monsterName}
         sub={lootModal.killCount ? `Kill ${lootModal.killCount.toLocaleString()}` : undefined}
         heroItem={heroItem}
@@ -357,7 +367,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
         loot={rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
         lootTitle="Loot Secured"
         lootTotal={total}
-        primaryAction={{ label: lootModal.isRaid ? 'Back to Lobby' : 'Keep Fighting', onClick: () => setLootModal(null) }}
+        primaryAction={{ label: 'Back to Lobby', onClick: () => setLootModal(null) }}
         onClose={() => setLootModal(null)}
       >
         {(lootModal.loot?.length ?? 0) === 0 && (
