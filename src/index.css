@@ -1255,9 +1255,6 @@ html, body, #app {
 .ink-mortar-bowl  { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
 .ink-mortar-rim   { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
 .ink-mortar-stand { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
-.ink-vial-neck    { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
-.ink-vial-cork    { fill: var(--ink-cork); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
-.ink-vial-shine   { fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; opacity: 0.35; }
 .ink-altar-dais   { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
 .ink-altar-stone  { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; }
 .ink-altar-carve  { fill: none; stroke: var(--tier-jewel-blue); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; opacity: 0.75; }
@@ -2036,13 +2033,9 @@ html, body, #app {
   .ink-payoff--fletch .ink-chip--b { animation: inkChipB var(--ink-payoff) ease-in; }
 
   @keyframes inkPayoffBrew { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
-  @keyframes inkVialPop {
-    0%   { opacity: 0; transform: scale(0.5); }
-    45%  { opacity: 1; transform: scale(1.12); }
-    100% { opacity: 1; transform: scale(1); }
-  }
   .ink-payoff--brew { animation: inkPayoffBrew var(--ink-payoff) ease-out; }
-  .ink-payoff--brew .ink-vial { transform-box: view-box; transform-origin: 127px 72px; animation: inkVialPop var(--ink-payoff) ease-out; }
+  .ink-payoff--brew .ink-steam--a { animation: inkSteamA var(--ink-payoff) ease-out; }
+  .ink-payoff--brew .ink-steam--b { animation: inkSteamB var(--ink-payoff) ease-out; }
 
   @keyframes inkPayoffWeave { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes inkRuneGlow {
