@@ -1489,6 +1489,10 @@ html, body, #app {
    this file) also sets a transform-origin and would otherwise win on source
    order — which threw the stolen coins up at the mark's collar. */
 .ink-coin.ink-coin--steal { transform-origin: 112px 92px; }
+/* A gem-reward mark (Tzraar) steals a specific gem instead of coins —
+   ItemArt already sets its own inline transform-origin, this only adds the
+   transform-box the coin burst gets from the rule above. */
+.ink-gem-steal      { opacity: 0; transform-box: view-box; }
 .ink-finger         { fill: none; stroke: var(--ink-skin-shade); stroke-width: 1.5; stroke-linecap: round; }
 .ink-stall-post     { fill: var(--ink-haft); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
 .ink-stall-counter  { fill: var(--ink-haft-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
@@ -2881,6 +2885,7 @@ html, body, #app {
   .ink-payoff--pickpocket .ink-purse-lift { animation: inkPurseLift var(--ink-payoff) ease-out forwards; }
   .ink-payoff--pickpocket .ink-coin--a    { animation: inkCoinA var(--ink-payoff) ease-out; }
   .ink-payoff--pickpocket .ink-coin--b    { animation: inkCoinB var(--ink-payoff) ease-out; }
+  .ink-payoff--pickpocket .ink-gem-steal  { animation: inkCoinA var(--ink-payoff) ease-out; }
 
   @keyframes inkPayoffInfuse { 0%, 92% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes inkWispRise {

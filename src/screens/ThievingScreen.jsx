@@ -134,7 +134,11 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
 
           // Tzraar-style gem targets reward a gem (at the Jeweller's rate) per
           // pickpocket. Gems are non-stackable — take a free slot, else bank.
+          // lastGemId carries the specific gem into the steal animation's
+          // purse payoff (a miss keeps the previous one rather than clearing
+          // it, so the animation never has nothing to show).
           let gemGained = 0
+          let lastGemId = thievingRef.current?.lastGemId || null
           if (state.npc.gemReward) {
             const gemId = rollGemReward(state.npc.gems)
             if (gemId) {
@@ -147,6 +151,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
                 updateBankDirect({ [gemId]: 1 })
               }
               gemGained = 1
+              lastGemId = gemId
             }
           }
 
@@ -175,7 +180,8 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
             totalXP: (thievingRef.current.totalXP || 0) + grantedXP,
             totalCoins: (thievingRef.current.totalCoins || 0) + ev.coins,
             totalSeeds: (thievingRef.current.totalSeeds || 0) + seedGained,
-            totalGems: (thievingRef.current.totalGems || 0) + gemGained
+            totalGems: (thievingRef.current.totalGems || 0) + gemGained,
+            lastGemId
           }
         }
       }
@@ -195,14 +201,14 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
       npc: state.npc,
       totalTicks: ticks,
       ticksRemaining: state.ticksRemaining,
-      session: { startedAt: state.startedAt, actions: state.totalPickpockets || 0, xp: state.totalXP || 0, coins: state.totalCoins || 0, items: 0, seeds: state.totalSeeds || 0, gems: state.totalGems || 0, tokens: 0 },
+      session: { startedAt: state.startedAt, actions: state.totalPickpockets || 0, xp: state.totalXP || 0, coins: state.totalCoins || 0, items: 0, seeds: state.totalSeeds || 0, gems: state.totalGems || 0, tokens: 0, lastGemId: state.lastGemId || null },
     }, { skipCloudSync: true })
   }
 
   const buildResumedState = (task) => {
     const npc = thievingData.npcs.find(n => n.id === task.npc?.id)
     if (!npc) return null
-    const state = { ...createThievingState(npc), totalPickpockets: task.session?.actions || 0, totalXP: task.session?.xp || 0, totalCoins: task.session?.coins || 0, totalSeeds: task.session?.seeds || 0, totalGems: task.session?.gems || 0, startedAt: task.session?.startedAt || Date.now() }
+    const state = { ...createThievingState(npc), totalPickpockets: task.session?.actions || 0, totalXP: task.session?.xp || 0, totalCoins: task.session?.coins || 0, totalSeeds: task.session?.seeds || 0, totalGems: task.session?.gems || 0, lastGemId: task.session?.lastGemId || null, startedAt: task.session?.startedAt || Date.now() }
     const ticks = npc.pickpocketTicks || 4
     if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= ticks) state.ticksRemaining = task.ticksRemaining
     return state
@@ -234,6 +240,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
       totalCoins: 0,
       totalSeeds: 0,
       totalGems: 0,
+      lastGemId: null,
       startedAt
     }
     setThieving(state)
@@ -296,7 +303,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
                 chip={npc.seedReward
                   ? <><span>🌱</span> seeds</>
                   : npc.gemReward
-                  ? <><span>💎</span> gems</>
+                  ? <><GameIcon item={itemsData.diamond} size={16} /> gems</>
                   : <><GameIcon iconKey="coins" size={16} color="var(--color-gold)" /> {npc.coins.toLocaleString()} / pocket</>}
                 active={activeTask?.type === 'thieving' && activeTask.npc?.id === npc.id}
                 locked={!available}
@@ -325,7 +332,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
   const rewardStats = thieving.npc.seedReward
     ? [{ label: 'Seeds collected', value: <><span>🌱</span> {(thieving.totalSeeds || 0).toLocaleString()}</> }]
     : thieving.npc.gemReward
-    ? [{ label: 'Gems collected', value: <><span>💎</span> {(thieving.totalGems || 0).toLocaleString()}</> }]
+    ? [{ label: 'Gems collected', value: <><GameIcon item={itemsData.diamond} size={14} /> {(thieving.totalGems || 0).toLocaleString()}</> }]
     : [
         { label: 'Coins earned', value: <>{coinIcon} {thieving.totalCoins.toLocaleString()}</> },
         { label: 'Coins / hr', value: xpPerHr ? <>{coinIcon} {Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—', accent: !!xpPerHr },
@@ -337,7 +344,11 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
   // slower), so a longer pickpocket is more dips, not slower ones. Built here
   // rather than in SkillActivePanel because that panel is core and these
   // modules are game-chunk only (§12).
-  const stealProduct = thieving.npc.seedReward || thieving.npc.gemReward ? null : itemsData.coins
+  const stealProduct = thieving.npc.seedReward
+    ? null
+    : thieving.npc.gemReward
+    ? (itemsData[thieving.lastGemId] || null)
+    : itemsData.coins
   const inkPlan = inkwrightPlan('thieving', getPickpocketTicks(thieving.npc), thieving.npc.id)
   const inkStage = inkPlan ? (
     <InkwrightStage
