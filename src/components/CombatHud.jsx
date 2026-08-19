@@ -1,5 +1,7 @@
 import GameIcon from './GameIcon.jsx'
 import SkillEmblem from './SkillEmblem.jsx'
+import HPBar from './HPBar.jsx'
+import { HitSplatLayer } from './HitSplat.jsx'
 
 // Shared building blocks for the mobile combat HUD, used by BOTH the solo
 // CombatScreen and the co-op CoopBossScreen so the two fights look identical.
@@ -34,3 +36,45 @@ export function CombatFightHead({ icon, accent, name, nameColor, sub, meta, comb
   )
 }
 
+// Bars-only readouts for the classic combat screen (the `combatAnimations`
+// setting turned off). The animated stage draws the same numbers above each
+// figure instead, so only one of the two is ever mounted.
+export function CombatHPBlock({ label, current, max, splats, valueColor, right }) {
+  const shown = Math.max(0, Math.round(current || 0))
+  return (
+    <div class="cb-hpblock">
+      <div class="cb-hplabel">
+        <span>{label}</span>
+        {right ? (
+          <span class="cb-hplabel__right">
+            {right}
+            <span class="cb-hplabel__v" style={valueColor ? { color: valueColor } : undefined}>{shown}/{max}</span>
+          </span>
+        ) : (
+          <span class="cb-hplabel__v" style={valueColor ? { color: valueColor } : undefined}>{shown}/{max}</span>
+        )}
+      </div>
+      <div class="relative">
+        <HPBar current={Math.max(0, current || 0)} max={max} size="large" />
+        <HitSplatLayer splats={splats} />
+      </div>
+    </div>
+  )
+}
+
+export function CombatPrayerBlock({ current, max }) {
+  return (
+    <div class="cb-hpblock">
+      <div class="cb-hplabel">
+        <span>🙏 Prayer</span>
+        <span class="cb-hplabel__v" style={{ color: '#7ec8ff' }}>{Math.ceil(current || 0)}/{max}</span>
+      </div>
+      <div class="h-2 rounded-full bg-[rgba(255,255,255,0.07)] overflow-hidden">
+        <div
+          class="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#7ec8ff]"
+          style={{ width: `${Math.max(0, Math.min(100, ((current || 0) / max) * 100))}%` }}
+        />
+      </div>
+    </div>
+  )
+}

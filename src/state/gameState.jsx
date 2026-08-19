@@ -84,6 +84,7 @@ export function GameProvider({ children }) {
   const [autoBankExcludedItems, setAutoBankExcludedItemsState] = useState(new Set())
   const [showInfoToasts, setShowInfoToastsState] = useState(false)
   const [backgroundCombat, setBackgroundCombatState] = useState(false)
+  const [combatAnimations, setCombatAnimationsState] = useState(true)
   const [theme, setThemeState] = useState(() => readStoredThemePreference() || DEFAULT_THEME_PREFERENCE)
   // Live snapshot of the running fight, published by CombatScreen each tick so the
   // desktop combat indicator can render the monster's HP as a progress bar while
@@ -212,7 +213,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets, savedGrimReaper] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedCombatAnimations, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets, savedGrimReaper] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -220,7 +221,7 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
-      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets'),
+      getSetting('backgroundCombat'), getSetting('combatAnimations'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets'),
       getSetting('grimReaper')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
@@ -736,6 +737,7 @@ export function GameProvider({ children }) {
     setAutoBankExcludedItemsState(autoBankExcludedItemIdsSet)
     setShowInfoToastsState(savedShowInfoToasts === true) // default false
     setBackgroundCombatState(savedBackgroundCombat === true) // default false
+    setCombatAnimationsState(savedCombatAnimations !== false) // default true
     // Cross-device convenience only: a locally stored choice always wins, so
     // the save mirror can never override what this device is already showing.
     if (!readStoredThemePreference() && savedTheme) {
@@ -1107,6 +1109,11 @@ export function GameProvider({ children }) {
   const updateBackgroundCombat = useCallback((enabled) => {
     setBackgroundCombatState(enabled)
     saveSetting('backgroundCombat', enabled)
+  }, [])
+
+  const updateCombatAnimations = useCallback((enabled) => {
+    setCombatAnimationsState(enabled)
+    saveSetting('combatAnimations', enabled)
   }, [])
 
   // localStorage first: the save is locked during PvP/co-op/world sessions, so
@@ -1540,6 +1547,7 @@ export function GameProvider({ children }) {
       bankConfig,
       showInfoToasts,
       backgroundCombat,
+      combatAnimations,
       theme,
       equipmentPresets,
       quickPrayers,
@@ -1945,7 +1953,7 @@ export function GameProvider({ children }) {
     // travel confirm that then navigates) should use this, not `activeTask`.
     getActiveTask: () => activeTaskInternalRef.current,
     activeTask, autoBankLoot, autoBankExcludedItems, toggleAutoBankExclusion, bankConfig, showInfoToasts, updateShowInfoToasts, theme, updateTheme,
-    backgroundCombat, updateBackgroundCombat, combatStatus, publishCombatStatus,
+    backgroundCombat, updateBackgroundCombat, combatAnimations, updateCombatAnimations, combatStatus, publishCombatStatus,
     equipmentPresets, updateEquipmentPresets,
     quickPrayers, updateQuickPrayers,
     unlockedFeatures, unlockFeature,

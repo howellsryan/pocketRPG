@@ -69,7 +69,7 @@ import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal, killPresentsFullModal } from '../utils/lootModal.js'
 import { emitKillReveal } from '../utils/rewardReveal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
-import { CombatFightHead } from '../components/CombatHud.jsx'
+import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
@@ -365,7 +365,7 @@ function MonsterDropList({ monster, itemsData, grindman = false }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, isGrindman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget, updateGrimReaperStash } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, isGrindman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, combatAnimations, quickPrayers, updateQuickPrayers, hardModeTargets, applyHardModeTarget, updateGrimReaperStash } = useGame()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showWildernessEntry, setShowWildernessEntry] = useState(false)
@@ -3358,7 +3358,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // borrow the boss's monsterSplats or a hit on the add would flash on a
   // figure representing something else entirely.
   const stageTargetSplats = targetedAdd(combat) ? addSplats : monsterSplats
-  const spriteStage = (
+  // Null on the classic screen: every readout the stage absorbed (both HP
+  // bars, the prayer pool) is rendered as its own bar below instead.
+  const spriteStage = !combatAnimations ? null : (
     <InkwrightCombatStage
       actor={{ ...playerSprite, accent: getStyleArt(playerSprite.motion).color }}
       target={{
@@ -3426,8 +3428,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       {spriteStage}
 
-      {/* Monster identity — the HP bar itself is above the character in the
-          stage now, not duplicated here. */}
+      {/* Monster identity — with the stage on, the HP bar itself is above the
+          character there rather than duplicated here. */}
       <div class="mb-3">
         <div class="flex items-center justify-between mb-1">
           <span class="text-sm font-semibold text-[var(--color-parchment)]">
@@ -3445,6 +3447,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
           </span>
         </div>
+        {!combatAnimations && (
+          <div class="relative">
+            <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
+            <HitSplatLayer splats={monsterSplats} />
+          </div>
+        )}
       </div>
 
       {addPanel}
@@ -3474,12 +3482,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
       )}
 
-      {/* Active potions — your HP bar is above your own character in the stage. */}
+      {/* Your HP — with the stage on, the bar itself rides above your own
+          character there and only the potion badges need a home. */}
       <div class="mb-2">
         <div class="flex items-center justify-between mb-0.5">
           <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>
           <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
         </div>
+        {!combatAnimations && (
+          <div class="relative">
+            <HPBar current={currentHP} max={getMaxHP()} size="large" />
+            <HitSplatLayer splats={playerSplats} />
+          </div>
+        )}
       </div>
 
       {/* Prayer pool — drains while prayers are active; restored by prayer/super restore potions */}
@@ -3867,17 +3882,39 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
               {spriteStage}
 
-              {/* Both combatants' HP is now the mini bar above their own head
-                  in the stage, with hit splats landing on them directly — no
-                  duplicate bar block here. Active potions still need a home. */}
-              <div class="mb-2 flex justify-end">
-                <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
-              </div>
+              {/* The stage carries both HP bars above their own figure, so it
+                  leaves only the potion badges to place; the classic screen
+                  has no stage and needs the bars themselves back. */}
+              {combatAnimations ? (
+                <div class="mb-2 flex justify-end">
+                  <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
+                </div>
+              ) : (
+                <>
+                  <CombatHPBlock
+                    label="Enemy Hitpoints"
+                    current={m.currentHP}
+                    max={m.hitpoints}
+                    splats={monsterSplats}
+                  />
+                  <CombatHPBlock
+                    label="Your Hitpoints"
+                    current={currentHP}
+                    max={getMaxHP()}
+                    splats={playerSplats}
+                    valueColor="#7ce88a"
+                    right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
+                  />
+                </>
+              )}
 
               {addPanel}
 
-              {/* Prayer pool now reads from the stage's top-left corner
-                  (showCorners/actorPrayer above) — no bar block here. */}
+              {/* Prayer pool reads from the stage's top-left corner
+                  (showCorners/actorPrayer above) unless the stage is off. */}
+              {!combatAnimations && typeof combat?.maxPrayerPoints === 'number' && (
+                <CombatPrayerBlock current={combat.prayerPoints} max={combat.maxPrayerPoints} />
+              )}
 
               {/* Slayer task indicator */}
               {doesSlayerTaskMatchMonster(slayerTask?.monsterId, m.id) && (
