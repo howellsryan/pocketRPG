@@ -2,10 +2,11 @@
 
 Status: **partly built.** Mining/woodcutting/fishing shipped first, then
 **Tier A** (firemaking, cooking, smithing, crafting, fletching, herblore,
-runecraft, prayer) and **Tiers E and G** (construction, non-combat magic).
-What each of those actually became — and what it cost to get there — is in
-`docs/action-animations.md`; the tiers below are the plan for the rest
-(B, C, D, F).
+runecraft, prayer), **Tiers E and G** (construction, non-combat magic) and
+**Tiers C, D and F** (thieving, hunter, summoning). What each of those
+actually became — and what it cost to get there — is in
+`docs/action-animations.md`; **Tier B (agility, dungeoneering) is all that is
+left**.
 
 ## Where we start from
 
@@ -26,7 +27,7 @@ Two things make this cheaper than it looks:
    figure instead of the static orb — the plumbing is not the work, the
    **motion design** is.
 
-**Farming and slayer are out of scope for this pass** (skipped per your call).
+**Farming and slayer are out of scope** (skipped per your call).
 Dungeoneering folds into Tier B alongside agility below — its "clear floor"
 actions are the same traversal shape as an obstacle course, just dressed as
 a dungeon instead of a course.
@@ -78,7 +79,7 @@ motion family, two prop/payoff dressings:
   floor completion, mirroring agility's lap pop but with tokens instead of
   coins.
 
-### Tier C — interact with a subject that reacts (thieving)
+### Tier C — interact with a subject that reacts (thieving) — **BUILT**
 
 Reuses a trick combat already proved: **mirror the actor's own rig,
 recoloured**, for the NPC being pickpocketed — no new character art, same as
@@ -88,10 +89,18 @@ the combat enemy.
 - **Motion**: player figure reaches in with a quick hand-dip, withdraws with
   the loot.
 - **Payoff**: coin/item pop, NPC unchanged (still unaware) — the loop just
-  replays. See open question 2 on whether a "noticed" fail state is worth a
-  second pose for v1.
+  replays.
 
-### Tier D — set a device and wait (hunter)
+Shipped almost exactly as written, with two corrections the tier did not
+anticipate. The mark is NOT mirrored — they face the same way the player does,
+which is what makes them a back turned rather than a confrontation — and the
+recolour is a scoped custom-property override rather than combat's aura, which
+turned out to be three CSS lines and a better result. The reach is the real
+work: the fingertip's distance from the shoulder is fixed by rotation, so
+everything stealable has to be drawn on that one circle. Three props, because
+a cake stall is furniture and a guard is not a farmer.
+
+### Tier D — set a device and wait (hunter) — **BUILT**
 
 Structurally the closest existing shape is **fishing's idle-then-catch
 pattern** (a roaming prey silhouette near a trap, waiting), not
@@ -99,9 +108,17 @@ mining/woodcutting's continuous strike:
 
 - **Motion**: one "set" beat at the start (kneel, place trap), then the
   figure stands by while the prop sits armed.
-- **Prop**: trap, armed → sprung, with the catch (bespoke small-creature
-  silhouette, same "borrow the item's own art" trick fishing uses for fish)
-  breaking free on payoff.
+- **Prop**: trap, armed → sprung, with the catch breaking free on payoff.
+
+The "one set beat then stand by" half could not survive the timing law: a hunt
+is 20 ticks, i.e. 15 beats, and a beat has to be the same every time. So the
+beat became one NEAR-MISS — the quarry noses the bait, the trapper hauls, the
+quarry bolts — and because the loop is phase-locked, the last haul of the
+action is the one that lands. The trap is a spring-pole snare (leaves at the
+tip, or a bent pole is a shepherd's crook), and the catch is hoisted by its
+ankles. The quarry is drawn rather than borrowed: two silhouettes, a beast and
+a hooded traveller, picked off the action id, because five of the seven
+targets are people.
 
 ### Tier E — build at a bench (construction) — **BUILT**
 
@@ -118,13 +135,17 @@ prop, because construction has no product to take its colour from; and the
 claw hammer had to be redrawn three times before it stopped reading as the
 pickaxe mining already uses.
 
-### Tier F — charge / infuse (summoning)
+### Tier F — charge / infuse (summoning) — **BUILT**
 
 Closest to runecraft's channel gesture: figure kneels over a pouch/shard,
-two-hand charging motion, pouch glows on the payoff beat. Cheapest version
-pops the product's ordinary `GameIcon` like every other skill; open question
-3 is whether a small familiar-silhouette pop is worth the extra art for this
-one skill.
+two-hand charging motion, pouch glows on the payoff beat.
+
+Shipped standing at an obelisk rather than kneeling, and one-handed rather
+than two: the rig's back arm cannot come round to the front without inverting
+its elbow, which enchanting had already settled the same way. What floats over
+the rune plate is always the creature's POUCH — no charm has bespoke art, so
+every one of them resolves to the same generic glyph disc, while every pouch
+and scroll has its own. Open question 3 answered as both (below).
 
 ### Tier G — cast a utility spell (magic, non-combat) — **BUILT**
 
@@ -154,11 +175,17 @@ since the body does the same thing in both.
    were NOT almost unchanged — construction needed a persistent workpiece and
    a hammer that isn't the pickaxe, and magic needed a held channel and a
    per-school spell colour on top of the combat cast.
-3. **Tier D (hunter)** — reuses fishing's idle/catch shape.
-4. **Tier B (agility, dungeoneering)** — new traversal motion family, shared
-   by both skills once built.
-5. **Tiers C and F (thieving, summoning)** — the remaining new motion
-   families, most design + CSS work.
+3. ~~**Tier D (hunter)** — reuses fishing's idle/catch shape.~~ **Done** — and
+   it did not reuse fishing's shape so much as invert it: the device catches,
+   the hand only triggers.
+4. ~~**Tiers C and F (thieving, summoning)** — the remaining new motion
+   families, most design + CSS work.~~ **Done**, and they were the cheapest of
+   the three: the mark is the existing rig recoloured, and the rite is one
+   pedestal prop with a new colour.
+5. **Tier B (agility, dungeoneering)** — new traversal motion family, shared
+   by both skills once built. The only tier left, and still the one with a
+   genuinely new problem in it: the figure moves across the stage instead of
+   working a fixed point.
 
 ## Open questions
 
@@ -170,10 +197,17 @@ since the body does the same thing in both.
    a **spade**: a bare hand reaches ~17px from the shoulder and the ground is
    44px below it, and closing that gap by translating the whole figure down
    pushed its boots through the ground line.
-2. **Thieving**: ship success-only for v1 (loop replays, no fail pose), or is
-   a distinct "noticed" stumble/flash worth building now?
-3. **Summoning**: plain `GameIcon` payoff (consistent, cheap) or a small
-   familiar-silhouette pop (nicer, more art)?
+2. ~~**Thieving**: ship success-only for v1 (loop replays, no fail pose), or is
+   a distinct "noticed" stumble/flash worth building now?~~ **Answered by the
+   engine, not by taste: success-only.** `processThievingTick` only ever emits
+   `pickpocketSuccess` — there is no failure to animate, and a flinch would
+   show the player something the game cannot do.
+3. ~~**Summoning**: plain `GameIcon` payoff (consistent, cheap) or a small
+   familiar-silhouette pop (nicer, more art)?~~ **Answered: both.** A wisp
+   bursts out of the flash and the ordinary `GameIcon` still pops. One generic
+   spirit serves every creature — what comes out of a pouch on the bench is a
+   wisp, not the beast — so the "more art" was one shape, not one per
+   familiar.
 4. **Dungeoneering**: is sharing the traversal motion family with agility
    (same run/step rig, different prop and payoff) the right amount of reuse,
    or should it feel more distinct given it's a signature skill?

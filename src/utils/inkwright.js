@@ -88,6 +88,29 @@ export const INKWRIGHT_MOTIONS = {
   magic_transmute: { motion: 'cast',    prop: 'transmutePedestal', label: 'Transmuting' },
   magic_enchant:   { motion: 'enchant', prop: 'enchantPedestal',   label: 'Enchanting' },
   magic_hex:       { motion: 'hex',     prop: 'hexDummy',          label: 'Casting' },
+
+  // Tier D — hunter. The one skill whose action is a WAIT, not a strike: a
+  // snare is set once and springs once. The beat is therefore a near-miss
+  // (the quarry creeps to the bait, the trapper takes up the trigger line,
+  // the quarry shies off) and the trap only fires on the payoff — the same
+  // shape fishing already ships, where every beat is a full attempt and only
+  // the last one lands. Two props for one device: what is on the trail is a
+  // beast or a person, and a snare that hoists a cow is not the same picture
+  // as one that hoists a wizard.
+  hunter_beast: { motion: 'snare', prop: 'snareBeast', label: 'Hunting' },
+  hunter_mark:  { motion: 'snare', prop: 'snareMark',  label: 'Hunting' },
+
+  // Tier C — thieving. One dip per beat, the mark none the wiser, the purse
+  // only coming free on the last. Three props because the targets are not one
+  // thing: a cake stall is furniture, and an armoured guard is not a farmer.
+  thieving_mark:  { motion: 'pickpocket', prop: 'mark',      label: 'Pickpocketing' },
+  thieving_guard: { motion: 'pickpocket', prop: 'markGuard', label: 'Pickpocketing' },
+  thieving_stall: { motion: 'pickpocket', prop: 'stall',     label: 'Stealing' },
+
+  // Tier F — summoning. A charge, not a blow: both hands push spirit light
+  // into the thing floating over the obelisk, and what comes out of it on the
+  // payoff is the familiar taking shape.
+  infuse: { motion: 'infuse', prop: 'obelisk', label: 'Infusing' },
 }
 
 // Skills whose action is a physical strike/gesture at a resource. Every other
@@ -105,6 +128,7 @@ const SKILL_MOTIONS = {
   herblore: 'brew',
   runecraft: 'weave',
   construction: 'build',
+  summoning: 'infuse',
 }
 
 // Prayer's three sub-poses share one motion family but pick a different prop
@@ -133,14 +157,42 @@ function magicMotionKey(actionId) {
   return 'magic_transmute'
 }
 
+// Hunter's quarry, off the action id. Only two answers matter to the drawing
+// — something on four legs or something on two — because the trap, the trail
+// and the trapper are identical either way. The default is the beast, which
+// is what "hunting" means before the content says otherwise; a new humanoid
+// target has to be named here, so this list is the one thing to update when
+// one is added.
+const HUNTER_HUMANOIDS = new Set([
+  'hunt_wizard', 'hunt_jeweller', 'hunt_merchant', 'hunt_grim_reaper', 'hunt_master_trader',
+])
+
+function hunterMotionKey(actionId) {
+  return HUNTER_HUMANOIDS.has(String(actionId || '')) ? 'hunter_mark' : 'hunter_beast'
+}
+
+// Thieving's target, off the NPC id. A stall has no pockets and an armoured
+// guard is not a farmer, and those are the only two distinctions the stage
+// can actually draw — everyone else is the same mark in the same clothes.
+const THIEVING_GUARDS = new Set(['guard', 'knight', 'ardougne_knight'])
+
+function thievingMotionKey(npcId) {
+  const id = String(npcId || '')
+  if (id.endsWith('_stall')) return 'thieving_stall'
+  if (THIEVING_GUARDS.has(id)) return 'thieving_guard'
+  return 'thieving_mark'
+}
+
 /** The motion key for a skill, or null if it has no figure yet. `actionId` is
- * only consulted for prayer and magic, whose pose depends on which action is
- * running. */
+ * only consulted for the skills whose pose depends on which action (or which
+ * target) is running: prayer, magic, hunter and thieving. */
 export function inkwrightMotionForSkill(skill, actionId) {
   const skillKey = String(skill || '').toLowerCase()
   let key
   if (skillKey === 'prayer') key = prayerMotionKey(actionId)
   else if (skillKey === 'magic') key = magicMotionKey(actionId)
+  else if (skillKey === 'hunter') key = hunterMotionKey(actionId)
+  else if (skillKey === 'thieving') key = thievingMotionKey(actionId)
   else key = SKILL_MOTIONS[skillKey]
   return key ? INKWRIGHT_MOTIONS[key] : null
 }

@@ -3,7 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createThievingState, processThievingTick, rollGemReward } from '../engine/thieving.js'
+import { createThievingState, processThievingTick, rollGemReward, getPickpocketTicks } from '../engine/thieving.js'
 import { skillingActionBlockedByFullInventory } from '../engine/skilling.js'
 import { emptySession } from '../engine/activitySession.js'
 import itemsData from '../data/items.json'
@@ -16,6 +16,8 @@ import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillInfoBanner from '../components/SkillInfoBanner.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
+import InkwrightStage from '../components/InkwrightStage.jsx'
+import { inkwrightPlan } from '../utils/inkwright.js'
 import skillsData from '../data/skills.json'
 
 const thievingData = skillsData.thieving
@@ -328,9 +330,27 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
         { label: 'Coins / hr', value: xpPerHr ? <>{coinIcon} {Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—', accent: !!xpPerHr },
       ]
   const inventoryBlocked = skillingActionBlockedByFullInventory(rewardFitCheck(thieving.npc), inventory, itemsData)
+  // The thief and the mark. Which target is standing there comes off the NPC
+  // id (inkwrightPlan's third argument), the same way prayer and magic pick
+  // their poses; the tick cost is the NPC's own (Master Farmer and Tzraar are
+  // slower), so a longer pickpocket is more dips, not slower ones. Built here
+  // rather than in SkillActivePanel because that panel is core and these
+  // modules are game-chunk only (§12).
+  const stealProduct = thieving.npc.seedReward || thieving.npc.gemReward ? null : itemsData.coins
+  const inkPlan = inkwrightPlan('thieving', getPickpocketTicks(thieving.npc), thieving.npc.id)
+  const inkStage = inkPlan ? (
+    <InkwrightStage
+      plan={inkPlan}
+      product={stealProduct}
+      yieldToken={thieving.totalPickpockets}
+      paused={inventoryBlocked}
+      label={`Pickpocketing ${thieving.npc.name}`}
+    />
+  ) : null
   return (
     <SkillActivePanel
       skill="thieving"
+      stage={inkStage}
       title={thieving.npc.name}
       subtitle={inventoryBlocked ? 'Inventory full — paused' : thieving.npc.description}
       progress={progress}

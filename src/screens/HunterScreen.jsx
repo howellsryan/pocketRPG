@@ -6,6 +6,8 @@ import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillInfoBanner from '../components/SkillInfoBanner.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
+import InkwrightStage from '../components/InkwrightStage.jsx'
+import { inkwrightPlan } from '../utils/inkwright.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createHunterState, processHunterTick } from '../engine/hunter.js'
@@ -353,10 +355,26 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
     : null
 
   const inventoryBlocked = skillingActionBlockedByFullInventory(HUNTER_FIT_CHECK, inventory, itemsData)
+  // The trapper at the snare. Which quarry walks the trail comes off the
+  // action id (inkwrightPlan's third argument), the same way prayer and magic
+  // pick their poses — a hunt has no `product` to colour the scene with,
+  // because what a catch yields is a reward table roll. Built here rather
+  // than in SkillActivePanel because that panel is core and these modules are
+  // game-chunk only (§12).
+  const inkPlan = inkwrightPlan('hunter', hunter.action.ticks, hunter.action.id)
+  const inkStage = inkPlan ? (
+    <InkwrightStage
+      plan={inkPlan}
+      yieldToken={hunter.totalActions}
+      paused={inventoryBlocked}
+      label={`${hunter.action.name} in progress`}
+    />
+  ) : null
   return (
     <>
     <SkillActivePanel
       skill="hunter"
+      stage={inkStage}
       title={hunter.action.name}
       subtitle={inventoryBlocked ? 'Inventory full — paused' : hunter.action.description}
       progress={progress}

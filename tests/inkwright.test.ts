@@ -15,6 +15,8 @@ import { actionCycleMs } from '../src/utils/actionSprites.js'
 import skillsData from '../src/data/skills.json'
 // @ts-ignore
 import { BUILDING_ACTIONS } from '../src/engine/construction.js'
+// @ts-ignore
+import { SUMMONING_CREATURES, getPouchRecipe, getScrollRecipe, CRAFT_ACTION_TICKS } from '../src/engine/summoning.js'
 
 // docs/skill-animations-proposal.md Tier A: pure content on the existing
 // mining/woodcutting/fishing system, no new component or timing behaviour.
@@ -27,8 +29,12 @@ const FIGURE_SKILLS = [
 // Tier E/G. Neither is listed above: construction's actions live in
 // engine/construction.js rather than skills.json, and magic's motion depends
 // on the action id (alchemy/enchant/superheat/transmute/hex) the same way
-// prayer's does. Both are covered on their own below.
-const NO_FIGURE_SKILLS = ['agility', 'thieving']
+// prayer's does. Both are covered on their own below. Tiers C/D/F (thieving,
+// hunter, summoning) are the same shape and are covered below too — thieving
+// and hunter pick their prop off the target's id, and summoning's actions are
+// built by engine/summoning.js rather than living in skills.json.
+// Agility is the last skill on the coverage plan (Tier B) with no figure yet.
+const NO_FIGURE_SKILLS = ['agility']
 
 describe('inkwright — which skills have a figure', () => {
   it('covers every gathering/production skill wired so far, plus prayer, construction and magic', () => {
@@ -36,6 +42,9 @@ describe('inkwright — which skills have a figure', () => {
     expect(hasInkwrightMotion('prayer')).toBe(true)
     expect(hasInkwrightMotion('construction')).toBe(true)
     expect(hasInkwrightMotion('magic')).toBe(true)
+    expect(hasInkwrightMotion('hunter')).toBe(true)
+    expect(hasInkwrightMotion('thieving')).toBe(true)
+    expect(hasInkwrightMotion('summoning')).toBe(true)
     for (const skill of NO_FIGURE_SKILLS) {
       expect(hasInkwrightMotion(skill)).toBe(false)
       expect(inkwrightPlan(skill, 4)).toBeNull()
@@ -49,6 +58,9 @@ describe('inkwright — which skills have a figure', () => {
       'grave', 'gildedAltar', 'dust',
       'scaffold',
       'alchPedestal', 'smeltPedestal', 'transmutePedestal', 'enchantPedestal', 'hexDummy',
+      'snareBeast', 'snareMark',
+      'mark', 'markGuard', 'stall',
+      'obelisk',
     ])
     // One CSS keyframe family (`.ink-fig--<motion>`) may be shared by several
     // INKWRIGHT_MOTIONS keys — prayer's three poses all animate as `commune`
@@ -58,6 +70,7 @@ describe('inkwright — which skills have a figure', () => {
       'kindle', 'cook', 'smith', 'craft', 'fletch', 'brew', 'weave',
       'bury', 'offer', 'scatter',
       'build', 'cast', 'enchant', 'hex',
+      'snare', 'pickpocket', 'infuse',
     ])
     for (const key of Object.keys(INKWRIGHT_MOTIONS)) {
       const m = INKWRIGHT_MOTIONS[key]
@@ -146,6 +159,90 @@ describe('inkwright — which skills have a figure', () => {
     }
   })
 
+  it('hunter picks its quarry from the action id, defaulting to a beast', () => {
+    expect(inkwrightMotionForSkill('hunter', 'hunt_cow')?.prop).toBe('snareBeast')
+    expect(inkwrightMotionForSkill('hunter', 'hunt_herbi')?.prop).toBe('snareBeast')
+    expect(inkwrightMotionForSkill('hunter', 'hunt_wizard')?.prop).toBe('snareMark')
+    expect(inkwrightMotionForSkill('hunter', 'hunt_master_trader')?.prop).toBe('snareMark')
+    // New content is a beast until the humanoid list says otherwise — one
+    // trap, one motion, so an unrecognised target still gets a figure.
+    expect(inkwrightMotionForSkill('hunter', 'hunt_brand_new_thing')?.prop).toBe('snareBeast')
+    expect(inkwrightMotionForSkill('hunter')?.motion).toBe('snare')
+  })
+
+  it('every hunter action in skills.json resolves to a real trap', () => {
+    expect(skillsData.hunter.actions.length).toBeGreaterThan(0)
+    for (const action of skillsData.hunter.actions) {
+      const plan = inkwrightPlan('hunter', action.ticks, action.id)!
+      expect(['snareBeast', 'snareMark'], `${action.id} resolved to ${plan.prop}`).toContain(plan.prop)
+      expect(plan.motion).toBe('snare')
+    }
+  })
+
+  it('thieving picks its target from the npc id — stall, guard or plain mark', () => {
+    expect(inkwrightMotionForSkill('thieving', 'cake_stall')?.prop).toBe('stall')
+    expect(inkwrightMotionForSkill('thieving', 'guard')?.prop).toBe('markGuard')
+    expect(inkwrightMotionForSkill('thieving', 'knight')?.prop).toBe('markGuard')
+    expect(inkwrightMotionForSkill('thieving', 'ardougne_knight')?.prop).toBe('markGuard')
+    expect(inkwrightMotionForSkill('thieving', 'villager')?.prop).toBe('mark')
+    expect(inkwrightMotionForSkill('thieving', 'elf')?.prop).toBe('mark')
+    // Everyone the table has never heard of is somebody with pockets.
+    expect(inkwrightMotionForSkill('thieving', 'brand_new_target')?.prop).toBe('mark')
+    expect(inkwrightMotionForSkill('thieving')?.motion).toBe('pickpocket')
+  })
+
+  it('every thieving npc in skills.json resolves to a real target', () => {
+    const props = new Set(['mark', 'markGuard', 'stall'])
+    expect(skillsData.thieving.npcs.length).toBeGreaterThan(0)
+    for (const npc of skillsData.thieving.npcs) {
+      const plan = inkwrightPlan('thieving', npc.pickpocketTicks || 4, npc.id)!
+      expect(props, `${npc.id} resolved to ${plan.prop}`).toContain(plan.prop)
+      expect(plan.strikes).toBeGreaterThanOrEqual(1)
+    }
+    // Every stall in the data is furniture, and every furniture target must
+    // reach the stall prop — a stall drawn as a person is a mark being robbed
+    // who is not there.
+    const stalls = skillsData.thieving.npcs.filter((n: any) => n.id.endsWith('_stall'))
+    expect(stalls.length).toBeGreaterThan(0)
+    for (const npc of stalls) {
+      expect(inkwrightMotionForSkill('thieving', npc.id)?.prop).toBe('stall')
+    }
+  })
+
+  it('every quarry and every target kind is actually reached by real content', () => {
+    // HUNTER_HUMANOIDS and THIEVING_GUARDS are hand-maintained id lists in
+    // inkwright.js, and a typo in one is invisible: the target quietly falls
+    // to the default prop and stays there forever. Nothing else in this file
+    // would notice — the "resolves to a real prop" tests above pass either
+    // way. What a typo cannot survive is a prop nothing reaches.
+    const hunterProps = new Set(
+      skillsData.hunter.actions.map((a: any) => inkwrightMotionForSkill('hunter', a.id)!.prop),
+    )
+    expect(hunterProps).toEqual(new Set(['snareBeast', 'snareMark']))
+    const thievingProps = new Set(
+      skillsData.thieving.npcs.map((n: any) => inkwrightMotionForSkill('thieving', n.id)!.prop),
+    )
+    expect(thievingProps).toEqual(new Set(['mark', 'markGuard', 'stall']))
+  })
+
+  it('every summoning recipe resolves to the obelisk', () => {
+    expect(SUMMONING_CREATURES.length).toBeGreaterThan(0)
+    for (const creature of SUMMONING_CREATURES) {
+      for (const recipe of [getPouchRecipe(creature), getScrollRecipe(creature)]) {
+        expect(recipe).toBeTruthy()
+        const plan = inkwrightPlan('summoning', CRAFT_ACTION_TICKS, `summon_${creature.id}`)!
+        expect(plan.prop).toBe('obelisk')
+        expect(plan.motion).toBe('infuse')
+        expect(plan.strikes).toBeGreaterThanOrEqual(1)
+      }
+      // The stage draws the FIRST material's own art on the plate (the charm
+      // for a pouch, the pouch for a scroll batch), which is the only thing
+      // telling two infusions apart — so a recipe must have one.
+      expect(Object.keys(getPouchRecipe(creature).materials)[0]).toBe(creature.charm)
+      expect(Object.keys(getScrollRecipe(creature).materials)[0]).toBe(creature.pouch)
+    }
+  })
+
   it('every prayer action in skills.json resolves to a real pose', () => {
     for (const action of skillsData.prayer.actions) {
       const plan = inkwrightPlan('prayer', action.ticks, action.id)!
@@ -178,6 +275,33 @@ describe('inkwright — the cadence law', () => {
       expect(plan.strikes).toBeGreaterThanOrEqual(1)
       expect(Math.abs(plan.strikePeriodMs * plan.strikes - plan.cycleMs))
         .toBeLessThanOrEqual(plan.strikes)
+    }
+    for (const action of skillsData.hunter.actions) {
+      const plan = inkwrightPlan('hunter', action.ticks, action.id)!
+      expect(Math.abs(plan.strikePeriodMs * plan.strikes - plan.cycleMs))
+        .toBeLessThanOrEqual(plan.strikes)
+    }
+    for (const npc of skillsData.thieving.npcs) {
+      const plan = inkwrightPlan('thieving', npc.pickpocketTicks || 4, npc.id)!
+      expect(Math.abs(plan.strikePeriodMs * plan.strikes - plan.cycleMs))
+        .toBeLessThanOrEqual(plan.strikes)
+    }
+  })
+
+  it('holds the tempo for the three tiers whose actions are not in skills.json shape', () => {
+    // Hunter, thieving and summoning between them span 2 ticks (an infusion)
+    // to 20 (a hunt) — the widest spread any single pass has added, and the
+    // one place a new motion could quietly fall outside the tempo window the
+    // whole system is tuned in.
+    const plans = [
+      ...skillsData.hunter.actions.map((a: any) => inkwrightPlan('hunter', a.ticks, a.id)!),
+      ...skillsData.thieving.npcs.map((n: any) => inkwrightPlan('thieving', n.pickpocketTicks || 4, n.id)!),
+      inkwrightPlan('summoning', CRAFT_ACTION_TICKS)!,
+    ]
+    for (const plan of plans) {
+      expect(plan.strikePeriodMs).toBeGreaterThanOrEqual(TARGET_STRIKE_MS * 0.55)
+      expect(plan.strikePeriodMs).toBeLessThanOrEqual(TARGET_STRIKE_MS * 1.45)
+      expect(plan.payoffMs).toBeLessThanOrEqual(plan.strikePeriodMs * 1.15)
     }
   })
 
