@@ -113,7 +113,7 @@ const COMBAT_CATEGORIES = [
     key: 'dagganoth_kings',
     label: 'Nagadoth Kings',
     icon: '👹',
-    ids: ['nagadoth_rex', 'nagadoth_prime', 'nagadoth_supreme'],
+    ids: ['nagadoth_rex', 'nagadoth_prime', 'nagadoth_supreme', 'nagadoth_queen'],
   },
   {
     key: 'wilderness',

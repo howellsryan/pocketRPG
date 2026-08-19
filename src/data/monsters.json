@@ -4078,6 +4078,286 @@
     ],
     "legacy_id": "dagganoth_supreme"
   },
+  "nagadoth_queen": {
+    "id": "nagadoth_queen",
+    "name": "Nagadoth Queen",
+    "boss": true,
+    "hardMode": true,
+    "combatLevel": 606,
+    "hitpoints": 300,
+    "stats": {
+      "attack": 180,
+      "strength": 160,
+      "defence": 200,
+      "magic": 400,
+      "ranged": 180
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 100,
+      "slash": 100,
+      "crush": 100,
+      "magic": 100,
+      "ranged": 100
+    },
+    "multiForm": true,
+    "formSwitchMin": 2,
+    "formSwitchMax": 5,
+    "initialForm": "melee",
+    "forms": {
+      "melee": {
+        "displayName": "Melee Phase",
+        "icon": "🗡️",
+        "attackStyle": "crush",
+        "maxHit": 42,
+        "attackBonus": 0,
+        "strengthBonus": 0
+      },
+      "ranged": {
+        "displayName": "Ranged Phase",
+        "icon": "🏹",
+        "attackStyle": "ranged",
+        "maxHit": 42,
+        "attackBonus": 0,
+        "strengthBonus": 0
+      },
+      "magic": {
+        "displayName": "Magic Phase",
+        "icon": "✨",
+        "attackStyle": "magic",
+        "maxHit": 42,
+        "attackBonus": 0,
+        "strengthBonus": 0
+      }
+    },
+    "killCountRequirement": {
+      "nagadoth_rex": 1,
+      "nagadoth_prime": 1,
+      "nagadoth_supreme": 1
+    },
+    "spawnsAdd": {
+      "monsterIds": [
+        "nagadoth_rex_summon",
+        "nagadoth_prime_summon",
+        "nagadoth_supreme_summon"
+      ],
+      "firstSpawnAfterAttacks": [
+        7,
+        10
+      ],
+      "respawnAfterAttacks": [
+        7,
+        10
+      ]
+    },
+    "drops": [
+      {
+        "itemId": "nagadoth_bones",
+        "quantity": 5,
+        "chance": 1,
+        "noted": true
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          5000,
+          8000
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "runeforged_platelegs",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "runeforged_platebody",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "dragon_axe",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "ring_of_royalty",
+        "quantity": 1,
+        "chance": 0.00390625
+      },
+      {
+        "itemId": "greenthorn_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "duskroot",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "sunblossom",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "emberleaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "wyrmspice",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cinderbloom",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "stonefern",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "mistvine",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "marshflax",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "clue_scroll_master",
+        "quantity": 1,
+        "chance": 0.02
+      }
+    ]
+  },
+  "nagadoth_rex_summon": {
+    "id": "nagadoth_rex_summon",
+    "name": "Summoned Nagadoth Rex",
+    "icon": "🦖",
+    "isAdd": true,
+    "summonedBy": "nagadoth_queen",
+    "combatLevel": 303,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 90,
+      "strength": 80,
+      "defence": 100,
+      "magic": 10,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 10,
+      "ranged": 50
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "nagadoth_prime_summon": {
+    "id": "nagadoth_prime_summon",
+    "name": "Summoned Nagadoth Prime",
+    "icon": "👹",
+    "isAdd": true,
+    "summonedBy": "nagadoth_queen",
+    "combatLevel": 303,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 100,
+      "magic": 200,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 50,
+      "ranged": 10
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "nagadoth_supreme_summon": {
+    "id": "nagadoth_supreme_summon",
+    "name": "Summoned Nagadoth Supreme",
+    "icon": "🏹",
+    "isAdd": true,
+    "summonedBy": "nagadoth_queen",
+    "combatLevel": 303,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 100,
+      "magic": 1,
+      "ranged": 90
+    },
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 10,
+      "ranged": 50
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
   "crazy_archaeologist": {
     "id": "crazy_archaeologist",
     "name": "Crazy Archaeologist",

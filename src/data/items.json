@@ -7791,6 +7791,37 @@
     "isGeneralStore": false,
     "isBossUnique": true
   },
+  "ring_of_royalty": {
+    "id": "ring_of_royalty",
+    "name": "Ring of Royalty",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 16,
+      "rangedStrength": 14,
+      "magicDamage": 12,
+      "meleeDamage": 6
+    },
+    "requirements": {},
+    "shopValue": 200000000,
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
   "archers_ring": {
     "id": "archers_ring",
     "legacy_item_id": "archers_ring",

@@ -22,7 +22,7 @@ import { countItem } from './inventory.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
 import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, randomFormSwitchThreshold, recordDefenceBonusDrain, applyDefenceBonusDrain, clearDefenceBonusDrain } from './bossForms.js'
-import { getAddSpec, addDefinitionsFor, selectAddDefinition, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
+import { getAddSpec, addDefinitionsFor, selectAddDefinition, addPicksAtRandom, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
 import { grindmanDropChance } from './grindman.js'
 import { applyNotedDrops } from './notedDrops.js'
@@ -1193,8 +1193,14 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         // Resolved at spawn time, not at fight start: a style-rotating boss
         // summons the minion matching the form it is in when the timer lands.
         state.addsSpawned = (state.addsSpawned || 0) + 1
+        const spec = getAddSpec(state.monster)
         const spawned = prepareAdd(
-          selectAddDefinition(state.addDefinitions, monster, state.addsSpawned - 1) || state.addDefinition,
+          selectAddDefinition(
+            state.addDefinitions,
+            monster,
+            state.addsSpawned - 1,
+            addPicksAtRandom(spec) ? Math.random : null,
+          ) || state.addDefinition,
           state.addsSpawned,
         )
         if (!Array.isArray(state.adds)) state.adds = []
@@ -1202,7 +1208,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         // Straight into the next wait: leaving one alive is what lets the stack
         // grow, so the countdown restarts even while the field is not empty.
         state.addSpawnCountdown = liveAdds(state).length < (state.maxActiveAdds || 1)
-          ? rollRespawnDelay(getAddSpec(state.monster))
+          ? rollRespawnDelay(spec)
           : null
         events.push({
           type: 'addSpawned',

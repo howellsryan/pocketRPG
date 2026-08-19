@@ -16,17 +16,28 @@ const DEFAULT_MAX_ACTIVE = 1
 export function getAddSpec(monster) {
   const spec = monster?.spawnsAdd
   if (!spec || typeof spec !== 'object') return null
-  if (!spec.monsterId && !spec.monsterIdByStyle) return null
+  if (!spec.monsterId && !spec.monsterIdByStyle && !spec.monsterIds) return null
   return spec
 }
 
 /**
  * Every add a spec can summon, keyed by the boss form that summons it. A spec
- * naming one `monsterId` collapses to a single `default` entry, so callers
- * never branch on which authoring shape was used.
+ * naming one `monsterId` collapses to a single `default` entry, and a
+ * `monsterIds` LIST keys by monster id — deliberately a key no form can match,
+ * so such a spec always falls through to the random branch below rather than
+ * accidentally colliding with a form name. Callers never branch on which
+ * authoring shape was used.
  */
 export function addDefinitionsFor(spec, monstersData) {
   if (!spec || !monstersData) return null
+  if (Array.isArray(spec.monsterIds)) {
+    const out = {}
+    for (const id of spec.monsterIds) {
+      const definition = monstersData[id]
+      if (definition) out[id] = definition
+    }
+    return Object.keys(out).length ? out : null
+  }
   const byStyle = spec.monsterIdByStyle
   if (byStyle && typeof byStyle === 'object') {
     const out = {}
@@ -49,14 +60,40 @@ export function addDefinitionsFor(spec, monstersData) {
  * CYCLES on `spawnCount`. A stack of minions is then a mixed group rather than
  * four copies of whichever variant happened to be listed first, which is also
  * what makes every authored variant reachable at all.
+ *
+ * Pass `random` for a spec that summons an unpredictable one instead (see
+ * `addPicksAtRandom`); leave it out and the pick stays deterministic, which is
+ * what the pre-fight info panel needs.
+ *
+ * @param {Record<string, any>|null} definitions
+ * @param {any} monster
+ * @param {number} [spawnCount]
+ * @param {(() => number)|null} [random]
  */
-export function selectAddDefinition(definitions, monster, spawnCount = 0) {
+export function selectAddDefinition(definitions, monster, spawnCount = 0, random = null) {
   if (!definitions) return null
   const forForm = monster?.currentForm ? definitions[monster.currentForm] : null
   if (forForm) return forForm
   if (definitions.default) return definitions.default
   const all = Object.values(definitions)
+  if (!all.length) return null
+  if (typeof random === 'function') return all[Math.floor(random() * all.length)] || all[0]
   return all[Math.abs(Math.floor(spawnCount) || 0) % all.length] || null
+}
+
+/**
+ * True for a spec that summons an unpredictable one of its roster rather than
+ * the one matching the boss's form. Authored as `monsterIds` — a LIST, with no
+ * style to key on — so the shape itself is the declaration and a caller cannot
+ * hold a random spec and pick deterministically by accident.
+ *
+ * The roll is passed IN rather than taken here, because `selectAddDefinition`
+ * has to stay callable with no randomness at all: the info panel previews a
+ * boss's minion before the fight starts, and a preview that reshuffles every
+ * render is noise.
+ */
+export function addPicksAtRandom(spec) {
+  return Array.isArray(spec?.monsterIds) && spec.monsterIds.length > 0
 }
 
 /** How many adds this boss may have on the field at once. */

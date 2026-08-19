@@ -22,7 +22,7 @@
 // same spec the solo fight and the co-op room read), so a second boss with
 // minions needs a lair and a model — not code.
 import monstersData from '../../src/data/monsters.json'
-import { getAddSpec, addDefinitionsFor, selectAddDefinition, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay } from '../../src/engine/bossAdds.js'
+import { getAddSpec, addDefinitionsFor, selectAddDefinition, addPicksAtRandom, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay } from '../../src/engine/bossAdds.js'
 import { makeNpc, type NpcState } from './npc'
 import type { TickContext, TickResult } from './tick'
 
@@ -44,12 +44,18 @@ export function maxMinions(monsterId: string): number {
  * Which minion this monster summons for its `spawnCount`-th summon. A style-keyed
  * spec CYCLES: a boss that fields several at once is flanked by a mixed group,
  * and every authored variant reaches the field — passing nothing here is what
- * made only the first-listed sentinel ever appear.
+ * made only the first-listed sentinel ever appear. A `monsterIds` roster picks
+ * at random instead, so the same roll happens out here as in the solo fight.
  */
 export function minionMonsterId(monsterId: string, spawnCount = 0): string | null {
   const spec = summonSpec(monsterId)
   if (!spec) return null
-  const definition = selectAddDefinition(addDefinitionsFor(spec, monstersData), monsters[monsterId], spawnCount)
+  const definition = selectAddDefinition(
+    addDefinitionsFor(spec, monstersData),
+    monsters[monsterId],
+    spawnCount,
+    addPicksAtRandom(spec) ? Math.random : null,
+  )
   return (definition as { id?: string } | null)?.id ?? null
 }
 

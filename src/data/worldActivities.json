@@ -2787,6 +2787,10 @@
       "ref": "nagadoth_supreme"
     },
     {
+      "kind": "combat",
+      "ref": "nagadoth_queen"
+    },
+    {
       "kind": "farming",
       "ref": "ardougne"
     },
