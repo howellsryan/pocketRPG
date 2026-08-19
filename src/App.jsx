@@ -40,6 +40,7 @@ import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
 import TravelPrompt from './components/TravelPrompt.jsx'
+import TravelStatusModal from './components/TravelStatusModal.jsx'
 import InventoryFullPrompt from './components/InventoryFullPrompt.jsx'
 import { advanceTravel, travelDestName, travelLeftoverMs } from './engine/travel.js'
 import { advanceJourneyPhase, advanceJourneyOffline, journeyStatus, planClueJourney, planQuestJourney } from './engine/journeys.js'
@@ -3396,7 +3397,13 @@ function GameApp() {
             panel replace the SideNav/Header chrome on small screens. */}
         <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} />
         <ToastContainer />
-        <TravelPrompt onNavigate={navigate} originScreen={screen} originScreenData={actionData} />
+        <TravelPrompt originScreen={screen} originScreenData={actionData} />
+        {/* Confirming a gated action's travel prompt no longer redirects to the
+            World Map — this shows the same status on whatever screen the player
+            is already on. Always mounted (like TravelPrompt) — it gates on
+            `screen` itself, see its own header comment for why that isn't the
+            same as App choosing when to mount it. */}
+        <TravelStatusModal screen={screen} onGoToWorldMap={() => navigate(SCREENS.WORLD_MAP)} onAutoStart={resumeAutoStart} />
         <InventoryFullPrompt
           open={inventoryFull === 'prompt'}
           onBank={bankFullInventory}

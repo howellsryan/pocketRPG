@@ -3,11 +3,9 @@ import { useState, useEffect } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
 import { isPlaceVaryingSkillRef, autoStartFromTask, placeActivities, activityLockReason } from '../engine/worldContent.js'
 import { SCREENS } from '../utils/constants.js'
-import { createTravelTask, travelFraction, travelDestName, travelCancelLocation } from '../engine/travel.js'
-import { journeyStatus, teleportIntoJourney, planQuestJourney } from '../engine/journeys.js'
-import { teleportCheck, deductRunes, formatRuneCost, teleportRuneCost } from '../engine/teleports.js'
+import { createTravelTask, travelFraction, travelDestName, formatTravelTicks } from '../engine/travel.js'
+import { planQuestJourney } from '../engine/journeys.js'
 import TeleportRuneCost from '../components/TeleportRuneCost.jsx'
-import { getLevelFromXP } from '../engine/experience.js'
 import { PlaceIcon, PlaceScene, WorldTerrain } from '../components/PlaceArt.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import { getSkillArt } from '../utils/skillArt.js'
@@ -15,6 +13,8 @@ import WaxSeal from '../components/WaxSeal.jsx'
 import ActivityPickerModal from '../components/ActivityPickerModal.jsx'
 import PlaceMapView from '../components/PlaceMapView.jsx'
 import SlayerMasterModal from '../components/SlayerMasterModal.jsx'
+import TravelStatusContent from '../components/TravelStatusContent.jsx'
+import { useTravelStatus } from '../hooks/useTravelStatus.js'
 import { placeHasMap } from '../engine/placeMaps.js'
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
 import { usePanZoomStage } from '../hooks/usePanZoomStage.js'
@@ -40,16 +40,6 @@ function FacilityGlyph({ fid, fac }) {
  * the player's current location. Current location is read from the save blob
  * (`worldLocation`).
  */
-
-// Travel durations surface as wall-clock time (600ms ticks) — players never
-// see raw tick counts on this screen.
-const wmTravelTime = (ticks) => {
-  const s = Math.round((Number(ticks) || 0) * 0.6)
-  if (s < 60) return `${s}s`
-  const m = Math.floor(s / 60)
-  const r = s % 60
-  return r ? `${m}m ${r}s` : `${m}m`
-}
 
 // Group a place's `{ kind, ref }` activities into [kind, [ref, ...]] pairs in a stable
 // kind order for the hub's grouped list.
@@ -101,15 +91,14 @@ function fakeTaskFor(kind, ref) {
 
 export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } = {}) {
   const {
-    worldLocation, updateWorldLocation, activeTask, setActiveTask, addToast, requestActivityStart,
-    inventory, bank, equipment, stats, itemsData, updateInventory, updateBankDirect, grantXP,
+    worldLocation, activeTask, setActiveTask, addToast, requestActivityStart,
+    inventory, bank, equipment, stats, itemsData,
     completedQuests, bossKillCounts, killCountsLoaded, questQueue, removeFromQuestQueue,
     unlockedMinigameItems,
   } = useGame()
   const world = getWorld()
   const here = getPlace(worldLocation) ? worldLocation : world.start
   const travel = activeTask?.type === 'travel' ? activeTask : null
-  const magicLevel = getLevelFromXP(stats?.magic?.xp || 0)
 
   const beginTravel = (destId) => {
     const task = createTravelTask(here, destId)
@@ -119,69 +108,25 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     addToast(`🧭 Travelling to ${travelDestName(task)}`, 'info')
   }
 
-  // Instant magic travel: needs the place's Magic level + runes (world.json
-  // `teleport`), consumes them inventory-first like spellcasting, grants Magic XP.
-  // Teleporting supersedes whatever occupied the single task slot — the same rule
-  // as starting a walk — except a journey walking leg, which re-plans from the
-  // landing place (landing on the waypoint itself skips straight to the search).
-  // The rune bill rides along with the check so both teleport buttons can show
-  // what a cast costs — including when it is locked, which is exactly when the
-  // player needs to know what to go and buy.
-  const teleCheckFor = (destId) => {
-    const chk = teleportCheck(destId, { magicLevel, inventory, bank, equipment, itemsData })
-    return { ...chk, runeCost: teleportRuneCost(chk.runes, { inventory, bank, itemsData }) }
-  }
-
-  const castTeleport = (destId) => {
-    if (destId === here && !travel) return
-    if (travel?.journey?.phase === 'search') {
-      addToast(`You're searching ${travelDestName(travel)} — finish or abandon the journey first.`, 'warning')
-      return
-    }
-    const chk = teleCheckFor(destId)
-    if (!chk.ok) {
-      addToast(chk.reason, 'error')
-      return
-    }
-    let nextTask = null
-    let searching = false
-    if (travel?.journey) {
-      const re = teleportIntoJourney(travel, destId)
-      if (!re) {
-        addToast('The trail cannot continue from there.', 'error')
-        return
-      }
-      nextTask = re.task
-      searching = re.searching
-    }
-    const paid = deductRunes(chk.runes, inventory)
-    if (!paid) {
-      addToast('Not enough runes.', 'error')
-      return
-    }
-    // Teleporting straight to the place a walked action was headed for still
-    // auto-starts it on arrival — parity with walking or skipping the trail.
-    const pendingAutoStart = (travel && !travel.journey && travel.autoStart && destId === travel.dest)
-      ? travel.autoStart : null
-    updateInventory(paid.inventory)
-    if (Object.keys(paid.bankUpdates).length > 0) updateBankDirect(paid.bankUpdates)
-    grantXP('magic', chk.xp)
-    updateWorldLocation(destId)
-    setActiveTask(nextTask)
-    setOpenId(null)
-    // Landing free (not resuming a journey): open the place's own map (when it
-    // has one) or its hub so its activities are one tap away. A pending action
-    // instead resumes straight into its screen; mid-journey teleports keep the
-    // map clear.
-    if (pendingAutoStart) {
+  // Teleport check/cast + turn-back are shared with TravelStatusModal (the
+  // same status shown on any other screen) via useTravelStatus — one source
+  // of truth for the rune bill and what landing does. Landing free (not
+  // resuming a journey or a gated action) opens the place's own map (when it
+  // has one) or its hub here, since this screen is the one place with a hub
+  // to open; TravelStatusModal has none, so it leaves onLandedFree unset.
+  const { teleCheckFor, castTeleport, cancelTravel } = useTravelStatus({
+    onAutoStart: (autoStart, returnTo) => {
+      setOpenId(null)
       setMapPlaceId(null)
       setSlayerMasterId(null)
-      onAutoStart?.(pendingAutoStart)
-    } else if (!nextTask && placeHasMap(destId)) setMapPlaceId(destId)
-    else if (!nextTask) setOpenId(destId)
-    const name = getPlace(destId)?.name || destId
-    addToast(searching ? `Teleported to ${name} — the search begins` : `Teleported to ${name}`, 'info')
-  }
+      onAutoStart?.(autoStart, returnTo)
+    },
+    onLandedFree: (destId) => {
+      setOpenId(null)
+      if (placeHasMap(destId)) setMapPlaceId(destId)
+      else setOpenId(destId)
+    },
+  })
 
   // Clicking an activity row in the place hub acts exactly like clicking it from its own
   // screen: starts immediately if we're already at a place that offers it, or opens the
@@ -266,22 +211,6 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     setOpenId(null)
     setMapPlaceId(null)
     addToast(`🗺️ Journey begun: ${quest.name} — ${jt.journey.steps.length} places to visit`, 'info')
-  }
-  // Turning back keeps the legs already walked: snap to the last node fully reached
-  // (plan §9 #2) rather than reverting the whole journey to its origin. Abandoning a
-  // clue/quest journey costs nothing but the time spent — the scroll/quest is only
-  // consumed on the final search.
-  const cancelTravel = () => {
-    if (!travel) return
-    const journey = !!travel.journey
-    const stopAt = travelCancelLocation(travel)
-    setActiveTask(null)
-    if (stopAt && stopAt !== here) {
-      updateWorldLocation(stopAt)
-      addToast(`${journey ? 'Journey abandoned' : 'Travel cancelled'} — you stop at ${getPlace(stopAt)?.name || stopAt}`, 'info')
-    } else {
-      addToast(journey ? 'Journey abandoned' : 'Travel cancelled', 'info')
-    }
   }
 
   const [openId, setOpenId] = useState(null)
@@ -424,49 +353,20 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
           <button onClick={fitAll} title="Fit map" aria-label="Fit map">⤢</button>
         </div>
 
-        {/* travel banner — a plain trip, or a Phase 5 clue/quest journey with steps */}
-        {travel && (() => {
-          const js = journeyStatus(travel)
-          // Skip the walk: teleport straight to the leg's destination (journeys
-          // then start their search there). Hidden mid-search — nothing to skip.
-          const tele = js?.searching ? null : teleCheckFor(travel.dest)
-          return (
-            <div class="forge-shell wm-travelbar" role="status">
-              <div class="wm-travelbar-top">
-                <span class="wm-travelbar-lead">
-                  {js
-                    ? <>{js.icon} {js.searching ? <>Searching <b>{travelDestName(travel)}</b></> : <>Following the trail to <b>{travelDestName(travel)}</b></>}</>
-                    : <>Travelling to <b>{travelDestName(travel)}</b></>}
-                </span>
-                <span class="wm-travelbar-ticks">{wmTravelTime((travel.totalTicks ?? 0) - (travel.ticksRemaining ?? 0))} / {wmTravelTime(travel.totalTicks ?? 0)}</span>
-              </div>
-              <div class="wm-track"><div class="wm-track-fill" style={{ width: Math.round(travelFraction(travel) * 100) + '%' }} /></div>
-              <div class="wm-travelbar-route">
-                {js
-                  ? `${js.name} — step ${js.step} of ${js.steps}`
-                  : `Route: ${(travel.path || []).map((id) => getPlace(id)?.name || id).join(' → ')}`}
-              </div>
-              <div class="wm-travelbar-actions">
-                {tele && (
-                  <button
-                    class={`wm-travelbar-tele${tele.ok ? '' : ' is-locked'}`}
-                    onClick={() => tele.ok ? castTeleport(travel.dest) : null}
-                    disabled={!tele.ok}
-                    title={tele.ok ? `Consumes ${formatRuneCost(tele.runes, itemsData)} · +${tele.xp} Magic XP` : tele.reason}
-                  >
-                    <span class="wm-travelbar-tele__lead">
-                      <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--text-faint)'} size={16} /> Teleport ahead
-                    </span>
-                    {/* The cost used to live in a title attribute, which a phone
-                        never shows. */}
-                    <TeleportRuneCost runes={tele.runeCost} size={13} />
-                  </button>
-                )}
-                <button class="wm-travelbar-cancel" onClick={cancelTravel}>{js ? 'Abandon journey' : 'Turn back'}</button>
-              </div>
-            </div>
-          )
-        })()}
+        {/* travel banner — a plain trip, or a Phase 5 clue/quest journey with steps.
+            Content shared with TravelStatusModal via TravelStatusContent — this is
+            just the map's own chrome around it. */}
+        {travel && (
+          <div class="forge-shell wm-travelbar" role="status">
+            <TravelStatusContent
+              travel={travel}
+              teleCheckFor={teleCheckFor}
+              itemsData={itemsData}
+              onTeleport={() => castTeleport(travel.dest)}
+              onCancel={cancelTravel}
+            />
+          </div>
+        )}
       </div>
 
       {/* place hub */}
@@ -567,7 +467,7 @@ function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTrave
           )}
           {canTravel && (
             <button class="wm-travel-btn" onClick={() => onTravel(place.id)}>
-              Travel here · {wmTravelTime(route.ticks)}
+              Travel here · {formatTravelTicks(route.ticks)}
             </button>
           )}
           {showTeleport && (

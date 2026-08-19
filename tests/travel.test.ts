@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createTravelTask, advanceTravel, travelFraction, travelDestName, travelCancelLocation, travelLeftoverMs } from '../src/engine/travel.js'
+import { createTravelTask, advanceTravel, travelFraction, travelDestName, travelCancelLocation, travelLeftoverMs, formatTravelTicks } from '../src/engine/travel.js'
 import { pathLegs } from '../src/engine/world.js'
 
 describe('createTravelTask', () => {
@@ -132,6 +132,27 @@ describe('travelDestName', () => {
   it('resolves the destination place name', () => {
     expect(travelDestName(createTravelTask('lumbright', 'portsarin')!)).toBe('Port Sarin')
     expect(travelDestName(null as any)).toBe('')
+  })
+})
+
+describe('formatTravelTicks', () => {
+  it('renders sub-minute durations as whole seconds', () => {
+    expect(formatTravelTicks(0)).toBe('0s')
+    expect(formatTravelTicks(1)).toBe('1s') // 0.6s rounds to 1s
+    expect(formatTravelTicks(99)).toBe('59s') // 59.4s rounds to 59s
+  })
+
+  it('renders exact minutes with no leftover seconds', () => {
+    expect(formatTravelTicks(100)).toBe('1m') // 60s exactly
+    expect(formatTravelTicks(200)).toBe('2m') // 120s exactly
+  })
+
+  it('renders minutes with a leftover-seconds remainder', () => {
+    expect(formatTravelTicks(140)).toBe('1m 24s') // 84s
+  })
+
+  it('rounds to the nearest whole second before formatting', () => {
+    expect(formatTravelTicks(1.4)).toBe('1s') // 0.84s rounds to 1s
   })
 })
 
