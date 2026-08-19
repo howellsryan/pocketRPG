@@ -65,14 +65,14 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
       // Single-skill facilities (furnace & anvil / altar / stove) go straight
       // to their skill's training screen, back button returning here.
       const skillId = facilityTrainingSkill(spot.facility)
-      if (skillId === 'magic') onNavigate?.(SCREENS.MAGIC, { returnTo })
-      else if (skillId) onNavigate?.(SCREENS.SKILLS, { skillId, returnTo })
+      if (skillId === 'magic') onNavigate?.(SCREENS.MAGIC, undefined, { returnTo })
+      else if (skillId) onNavigate?.(SCREENS.SKILLS, { skillId }, { returnTo })
       return
     }
     if (type === 'screen') {
       // The Dungeon spot needs to know which place's foes to show, and a
       // returnTo so its back button comes home to this map.
-      onNavigate?.(spot.screen, spot.screen === SCREENS.DUNGEONS ? { placeId: place.id, returnTo } : undefined)
+      onNavigate?.(spot.screen, spot.screen === SCREENS.DUNGEONS ? { placeId: place.id } : undefined, spot.screen === SCREENS.DUNGEONS ? { returnTo } : undefined)
       return
     }
     if (desc.refs.length === 1) onActivate?.(spot.kind, desc.refs[0])
@@ -185,11 +185,11 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
  */
 function PlaceBankModal({ label, onClose, onNavigate, returnTo }) {
   const skillName = (skillId) => skillsData[skillId]?.name || skillId.charAt(0).toUpperCase() + skillId.slice(1)
-  const go = (screen, data) => { onClose(); onNavigate?.(screen, data) }
+  const go = (screen, data) => { onClose(); onNavigate?.(screen, data, { returnTo }) }
   return (
     <Modal title={label} onClose={onClose} className="wm-actmodal-panel" contentClassName="wm-actmodal-content">
       <div class="fm-ledger">
-        <button class="wm-actmodal-row" onClick={() => go(SCREENS.BANK, { returnTo })}>
+        <button class="wm-actmodal-row" onClick={() => go(SCREENS.BANK, undefined)}>
           <span class="wm-actmodal-row__icon"><GameIcon iconKey="coins" size={18} /></span>
           <span class="wm-actmodal-row__name">Use Bank</span>
         </button>
@@ -198,8 +198,8 @@ function PlaceBankModal({ label, onClose, onNavigate, returnTo }) {
             key={skillId}
             class="wm-actmodal-row"
             onClick={() => skillId === 'magic'
-              ? go(SCREENS.MAGIC, { returnTo })
-              : go(SCREENS.SKILLS, { skillId, returnTo })}
+              ? go(SCREENS.MAGIC, undefined)
+              : go(SCREENS.SKILLS, { skillId })}
           >
             <span class="wm-actmodal-row__icon"><GameIcon iconKey={getSkillArt(skillId).icon} size={18} color={getSkillArt(skillId).accent} /></span>
             <span class="wm-actmodal-row__name">Train {skillName(skillId)}</span>
