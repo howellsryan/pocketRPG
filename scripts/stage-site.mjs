@@ -20,6 +20,8 @@ const ROOT_ASSETS = [
   'index.html',
   'public',
   'robots.txt',
+  'sitemap.xml',
+  'manifest.json',
   'hosted.html',
   '_headers',
 ]
