@@ -466,16 +466,17 @@ const LANDING_PRERENDER_SKILLS = [
   'Attack', 'Strength', 'Defence', 'Hitpoints', 'Ranged', 'Magic', 'Prayer', 'Mining',
   'Woodcutting', 'Fishing', 'Farming', 'Smithing', 'Cooking', 'Crafting', 'Herblore', 'Runecrafting',
   'Firemaking', 'Agility', 'Thieving', 'Hunter', 'Slayer', 'Construction', 'Fletching', 'Dungeoneering',
+  'Summoning',
 ];
 const landingPrerenderHTML = `
 <h1>PocketRPG — a browser idle RPG</h1>
-<p>A tick-based idle fantasy RPG set in the world of Eldermoor. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not. Free to play, no download.</p>
+<p>A tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, and complete quests — progress continues whether the app is open or not. Free to play, no download.</p>
 <ul>${LANDING_STATS.map(([value, label]) => `<li><strong>${escapeHtml(value)}</strong> ${escapeHtml(label)}</li>`).join('')}</ul>
 <h2>Features</h2>
 ${LANDING_CARDS.map((c) => `<h3>${escapeHtml(c.title)}</h3><p>${escapeHtml(c.desc)}</p>`).join('\n')}
 <h2>Explore the realm of Eldermoor</h2>
 ${LANDING_PLACES.map((p) => `<h3>${escapeHtml(p.name)} — ${escapeHtml(p.sub)}</h3><p>${escapeHtml(p.blurb)}</p>`).join('\n')}
-<h2>Train 24 skills to 99</h2>
+<h2>Train 25 skills to 99</h2>
 <ul>${LANDING_PRERENDER_SKILLS.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
 `.trim();
 
@@ -860,8 +861,8 @@ const html = `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#e6d8b6">
-<title>PocketRPG — Browser Idle RPG with 24 Skills, Bosses &amp; Raids</title>
-<meta name="description" content="PocketRPG — a tick-based idle fantasy RPG set in the world of Eldermoor. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not. Free to play in your browser, no download.">
+<title>PocketRPG — Browser Idle RPG with 25 Skills, Bosses &amp; Raids</title>
+<meta name="description" content="PocketRPG — a tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, and complete quests — progress continues whether the app is open or not. Free to play in your browser, no download.">
 <link rel="canonical" href="https://pocketrpg.co.uk/">
 <link rel="manifest" href="/manifest.json">
 <!-- Open Graph + Twitter card. lp-map is the most legible single image for a
@@ -873,21 +874,21 @@ const html = `<!DOCTYPE html>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="PocketRPG">
 <meta property="og:url" content="https://pocketrpg.co.uk/">
-<meta property="og:title" content="PocketRPG — Browser Idle RPG with 24 Skills, Bosses &amp; Raids">
-<meta property="og:description" content="A tick-based idle fantasy RPG set in the world of Eldermoor. Train 24 skills, fight bosses, complete quests and raid with a party — progress continues while you're away. Free to play, no download.">
+<meta property="og:title" content="PocketRPG — Browser Idle RPG with 25 Skills, Bosses &amp; Raids">
+<meta property="og:description" content="A tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, complete quests and raid with a party — progress continues while you're away. Free to play, no download.">
 <meta property="og:image" content="https://pocketrpg.co.uk/public/landing/lp-map.webp">
 <meta property="og:image:type" content="image/webp">
 <meta property="og:image:width" content="1108">
 <meta property="og:image:height" content="594">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PocketRPG — Browser Idle RPG with 24 Skills, Bosses &amp; Raids">
-<meta name="twitter:description" content="A tick-based idle fantasy RPG set in the world of Eldermoor. Train 24 skills, fight bosses, complete quests and raid with a party — free to play, no download.">
+<meta name="twitter:title" content="PocketRPG — Browser Idle RPG with 25 Skills, Bosses &amp; Raids">
+<meta name="twitter:description" content="A tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, complete quests and raid with a party — free to play, no download.">
 <meta name="twitter:image" content="https://pocketrpg.co.uk/public/landing/lp-map.webp">
 <!-- VideoGame + WebSite structured data. Kept to fields we can state as fact
      from src/data today (§8 non-negotiables apply to game content, not to
      this — but the same "don't claim what isn't true" discipline does).
      Revisit if pricing/monetization is ever added. -->
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"PocketRPG","url":"https://pocketrpg.co.uk/","description":"A tick-based idle fantasy RPG set in the world of Eldermoor. Train 24 skills, fight bosses, complete quests and raid with a party — progress continues while you're away.","genre":["Idle","RPG","MMO"],"gamePlatform":["Web Browser"],"applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"PocketRPG","url":"https://pocketrpg.co.uk/","description":"A tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, complete quests and raid with a party — progress continues while you're away.","genre":["Idle","RPG","MMO"],"gamePlatform":["Web Browser"],"applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"PocketRPG","url":"https://pocketrpg.co.uk/"}</script>
 <!-- LCP image: the hero Warlord Grondar poster is rendered by JS, so preload
      it here to make the request discoverable from the initial document and

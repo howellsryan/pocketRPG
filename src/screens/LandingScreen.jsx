@@ -37,6 +37,7 @@ const LP_SKILLS = [
   ['cooking', 'Cooking'], ['crafting', 'Crafting'], ['herblore', 'Herblore'], ['runecraft', 'Runecraft'],
   ['firemaking', 'Firemaking'], ['agility', 'Agility'], ['thieving', 'Thieving'], ['hunter', 'Hunter'],
   ['slayer', 'Slayer'], ['construction', 'Construct.'], ['fletching', 'Fletching'], ['dungeoneering', 'Dungeon.'],
+  ['summoning', 'Summoning'],
 ]
 
 const LP_GALLERY = ['ss-home', 'ss-worldmap', 'ss-place', 'ss-combat', 'ss-bosses', 'ss-bank', 'ss-trading', 'ss-collection', 'ss-leaderboard']
