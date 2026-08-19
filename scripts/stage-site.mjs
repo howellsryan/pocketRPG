@@ -20,8 +20,11 @@ const ROOT_ASSETS = [
   'index.html',
   'public',
   'robots.txt',
+  'sitemap.xml',
+  'manifest.json',
   'hosted.html',
   '_headers',
+  'guide',
 ]
 
 /** The open-world client, staged under the prefix its Vite `base` emits. One
@@ -37,7 +40,7 @@ function stage() {
   for (const name of ROOT_ASSETS) {
     const from = join(root, name)
     if (!existsSync(from)) {
-      throw new Error(`stage-site: missing ${name} — run \`npm run rebuild\` first`)
+      throw new Error(`stage-site: missing ${name} — run \`npm run rebuild\` and \`npm run gen:guide\` first`)
     }
     cpSync(from, join(out, name), { recursive: true })
   }

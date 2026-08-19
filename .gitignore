@@ -11,6 +11,8 @@ www/
 .dev.vars
 /index.html
 /game-*.js
+/guide/
+/sitemap.xml
 .tmp/
 public/fonts/
 world/node_modules/

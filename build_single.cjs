@@ -435,6 +435,51 @@ for (const file of fs.readdirSync(landingDir)) {
 }
 const landingImagesJSON = JSON.stringify(landingImagesObj);
 
+// ── Prerendered landing content (crawlability) ──
+// The real interactive landing page only exists after cloudPhase resolves
+// (App.jsx starts at cloudPhase='pending' and shows a bare "Loading…" div),
+// so the raw HTML a non-JS crawler sees was always just the splash screen —
+// invisible to Bing, DuckDuckGo and every LLM crawler, all of which mostly
+// don't execute JS. This fragment is injected into <main id="app"> below,
+// UNDER the opaque full-viewport #app-splash overlay (position:fixed,
+// z-index:9999 — see index.css), so it is never visible to a real browser:
+// the boot script below explicitly clears #app before Preact mounts (Preact's
+// render() does NOT do this itself for pre-existing DOM it didn't create —
+// see the comment at that call site). Deliberately NOT a render of the live
+// LandingScreen component
+// — that drags in GameIcon's icon-resolution pipeline and the WebGL hero,
+// neither of which is safe or worthwhile to execute in Node at build time.
+// Instead it's built straight from landingContent.js's own marketing data
+// (already the single source of truth LandingScreen itself reads), kept to
+// real semantic text a crawler can index.
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+const landingContentModule = { exports: {} };
+new Function(
+  'module', 'exports',
+  esbuild.transformSync(readSrc('screens/landingContent.js'), { loader: 'js', format: 'cjs' }).code
+)(landingContentModule, landingContentModule.exports);
+const { LANDING_STATS, LANDING_PLACES, LANDING_CARDS } = landingContentModule.exports;
+// Mirrors LP_SKILLS in LandingScreen.jsx — keep the two lists in sync.
+const LANDING_PRERENDER_SKILLS = [
+  'Attack', 'Strength', 'Defence', 'Hitpoints', 'Ranged', 'Magic', 'Prayer', 'Mining',
+  'Woodcutting', 'Fishing', 'Farming', 'Smithing', 'Cooking', 'Crafting', 'Herblore', 'Runecrafting',
+  'Firemaking', 'Agility', 'Thieving', 'Hunter', 'Slayer', 'Construction', 'Fletching', 'Dungeoneering',
+  'Summoning',
+];
+const landingPrerenderHTML = `
+<h1>PocketRPG — a browser idle RPG</h1>
+<p>A tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, and complete quests — progress continues whether the app is open or not. Free to play, no download.</p>
+<ul>${LANDING_STATS.map(([value, label]) => `<li><strong>${escapeHtml(value)}</strong> ${escapeHtml(label)}</li>`).join('')}</ul>
+<h2>Features</h2>
+${LANDING_CARDS.map((c) => `<h3>${escapeHtml(c.title)}</h3><p>${escapeHtml(c.desc)}</p>`).join('\n')}
+<h2>Explore the realm of Eldermoor</h2>
+${LANDING_PLACES.map((p) => `<h3>${escapeHtml(p.name)} — ${escapeHtml(p.sub)}</h3><p>${escapeHtml(p.blurb)}</p>`).join('\n')}
+<h2>Train 25 skills to 99</h2>
+<ul>${LANDING_PRERENDER_SKILLS.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
+`.trim();
+
 // Optional Home Screen hero logo, served externally from /public. Falls back
 // to null — and the crossed-swords crest — when the file is absent.
 const logoPath = path.join(__dirname, 'public', 'pocketrpg-logo.png');
@@ -794,7 +839,15 @@ const homeLogo = ${homeLogoJSON};
 
 ${coreJS}
 
-render(h(App, null), document.getElementById('app') || document.querySelector('main'));
+// The prerendered crawlability fragment (see landingPrerenderHTML in
+// build_single.cjs) sits inside #app for a non-JS request. Preact's render()
+// does NOT clear pre-existing DOM it didn't create — passed a container with
+// pre-existing children, it uses them only as a reuse pool for matching new
+// nodes and leaves any it doesn't consume in place, so without this line the
+// app mounts ALONGSIDE the static fragment instead of replacing it.
+const pocketAppRoot = document.getElementById('app') || document.querySelector('main');
+if (pocketAppRoot) pocketAppRoot.textContent = '';
+render(h(App, null), pocketAppRoot);
 document.getElementById('app-splash')?.remove();`;
 
 const minified = esbuild.transformSync(coreScript, SPLIT_MINIFY);
@@ -808,8 +861,35 @@ const html = `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#e6d8b6">
-<title>PocketRPG</title>
-<meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
+<title>PocketRPG — Browser Idle RPG with 25 Skills, Bosses &amp; Raids</title>
+<meta name="description" content="PocketRPG — a tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, and complete quests — progress continues whether the app is open or not. Free to play in your browser, no download.">
+<link rel="canonical" href="https://pocketrpg.co.uk/">
+<link rel="manifest" href="/manifest.json">
+<!-- Open Graph + Twitter card. lp-map is the most legible single image for a
+     share preview (readable at thumbnail size, shows the scale of the world)
+     — none of the painted place scenes read as well cropped that small.
+     1108x594 (1.865:1) is close enough to OG's 1.91:1 ideal that platforms
+     don't visibly letterbox it; declared explicitly since it isn't the
+     canonical 1200x630. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PocketRPG">
+<meta property="og:url" content="https://pocketrpg.co.uk/">
+<meta property="og:title" content="PocketRPG — Browser Idle RPG with 25 Skills, Bosses &amp; Raids">
+<meta property="og:description" content="A tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, complete quests and raid with a party — progress continues while you're away. Free to play, no download.">
+<meta property="og:image" content="https://pocketrpg.co.uk/public/landing/lp-map.webp">
+<meta property="og:image:type" content="image/webp">
+<meta property="og:image:width" content="1108">
+<meta property="og:image:height" content="594">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PocketRPG — Browser Idle RPG with 25 Skills, Bosses &amp; Raids">
+<meta name="twitter:description" content="A tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, complete quests and raid with a party — free to play, no download.">
+<meta name="twitter:image" content="https://pocketrpg.co.uk/public/landing/lp-map.webp">
+<!-- VideoGame + WebSite structured data. Kept to fields we can state as fact
+     from src/data today (§8 non-negotiables apply to game content, not to
+     this — but the same "don't claim what isn't true" discipline does).
+     Revisit if pricing/monetization is ever added. -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"PocketRPG","url":"https://pocketrpg.co.uk/","description":"A tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, complete quests and raid with a party — progress continues while you're away.","genre":["Idle","RPG","MMO"],"gamePlatform":["Web Browser"],"applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"PocketRPG","url":"https://pocketrpg.co.uk/"}</script>
 <!-- LCP image: the hero Warlord Grondar poster is rendered by JS, so preload
      it here to make the request discoverable from the initial document and
      fetch it at high priority. imagesrcset/imagesizes mirror the hero <img>
@@ -834,7 +914,7 @@ ${css}
 <script>if(navigator.standalone){document.documentElement.classList.add('pwa-standalone');var s=document.createElement('style');s.textContent='.pwa-standalone .overflow-y-auto{padding-bottom:env(safe-area-inset-bottom)}';document.head.appendChild(s)}</script>
 <script>['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()},{passive:false})});</script>
 <div id="app-splash"><div class="app-splash__brand">PocketRPG</div><div class="app-splash__sub">Loading your adventure…</div></div>
-<main id="app"></main>
+<main id="app">${landingPrerenderHTML}</main>
 <script>
 ${inlineScript}
 <\/script>

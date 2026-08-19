@@ -5,13 +5,13 @@
 // so the single-file build (which concatenates every module at top level) stays
 // free of duplicate-identifier collisions.
 
-// Headline proof points. Verified against src/data on 2026-07: 24 trainable
+// Headline proof points. Verified against src/data on 2026-08: 25 trainable
 // skills, 168 quests, 14 settlements, 4 world raids, 221 collection-log slots
 // (the server-authoritative total shown in-game).
 export const LANDING_STATS = [
   ['600ms', 'World tick'],
   ['14', 'Settlements'],
-  ['24', 'Skills to 99'],
+  ['25', 'Skills to 99'],
   ['168', 'Quests'],
   ['4', 'Raids'],
   ['221', 'Collectibles'],
@@ -67,7 +67,7 @@ export const LANDING_CARDS = [
   {
     id: 'skills', seal: 'crossed_swords',
     art: ['combat_level', 'pointy_hat', 'mining'],
-    title: '24 Skills',
+    title: '25 Skills',
     desc: 'Master combat, magic, gathering and more — every skill trains live and idles offline, from level 1 to 99. Build your legend.',
   },
   {
@@ -87,7 +87,7 @@ export const LANDING_CARDS = [
 // The iron HUD band above the footer — proof stats dressed as the in-game
 // status pills, plus quick-link medallions. `color` tints the gem glyph.
 export const LANDING_HUD_STATS = [
-  { value: '24',  label: 'Skills',       color: '#3fa06a' },
+  { value: '25',  label: 'Skills',       color: '#3fa06a' },
   { value: '168', label: 'Quests',       color: '#e6c878' },
   { value: '221', label: 'Collectibles', color: '#6f9ad1' },
 ]

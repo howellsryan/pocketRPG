@@ -1,0 +1,19 @@
+{
+  "name": "PocketRPG",
+  "short_name": "PocketRPG",
+  "description": "A tick-based idle fantasy RPG set in the world of Eldermoor. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#e6d8b6",
+  "theme_color": "#e6d8b6",
+  "icons": [
+    {
+      "src": "/public/pocketrpg-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

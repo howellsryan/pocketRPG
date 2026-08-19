@@ -37,6 +37,7 @@ const LP_SKILLS = [
   ['cooking', 'Cooking'], ['crafting', 'Crafting'], ['herblore', 'Herblore'], ['runecraft', 'Runecraft'],
   ['firemaking', 'Firemaking'], ['agility', 'Agility'], ['thieving', 'Thieving'], ['hunter', 'Hunter'],
   ['slayer', 'Slayer'], ['construction', 'Construct.'], ['fletching', 'Fletching'], ['dungeoneering', 'Dungeon.'],
+  ['summoning', 'Summoning'],
 ]
 
 const LP_GALLERY = ['ss-home', 'ss-worldmap', 'ss-place', 'ss-combat', 'ss-bosses', 'ss-bank', 'ss-trading', 'ss-collection', 'ss-leaderboard']
@@ -400,6 +401,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
         <span class="lp-footer__brand lp-gilt">PocketRPG</span>
         <span>Level up while you live your life.</span>
         <span class="lp-footer__url">pocketrpg.co.uk</span>
+        <a href="/guide/">Game Guide</a>
       </footer>
     </div>
   )

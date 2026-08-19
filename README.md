@@ -2,7 +2,7 @@
 
 Menu-driven, tick-based, mobile-first fantasy idle RPG built with deterministic core logic and offline-first persistence.
 
-**Live build**: https://pocketrpg.pages.dev
+**Live build**: https://pocketrpg.co.uk
 
 ---
 

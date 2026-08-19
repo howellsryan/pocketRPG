@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://pocketrpg.co.uk/sitemap.xml
