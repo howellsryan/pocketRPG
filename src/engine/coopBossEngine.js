@@ -69,6 +69,7 @@ export const COOP_BOSSES = {
   nagadoth_prime: {},
   nagadoth_rex: {},
   nagadoth_supreme: {},
+  nagadoth_queen: {},
   threefang_cerberus: {},
   duskmare: {},
   skyrender_kharra: {},

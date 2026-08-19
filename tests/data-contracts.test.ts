@@ -68,6 +68,7 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'dragon_pickaxe',
   'dragon_warhammer',
   'seers_ring',
+  'ring_of_royalty',
   'krylth_hilt',
   'zephyra_hilt',
   'grondar_hilt',

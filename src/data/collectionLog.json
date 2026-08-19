@@ -128,6 +128,15 @@
           ]
         },
         {
+          "id": "nagadoth_queen",
+          "label": "Nagadoth Queen",
+          "icon": "\ud83d\udc51",
+          "items": [
+            "dragon_axe",
+            "ring_of_royalty"
+          ]
+        },
+        {
           "id": "nagadoth_rex",
           "label": "Nagadoth Rex",
           "icon": "\ud83d\udc51",

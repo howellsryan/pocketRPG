@@ -54,6 +54,7 @@ const OUTLINE_SPEC = {
   kodai_robe_top:      ['black', false],
   kodai_robe_bottom:   ['black', false],
   ancient_maul:        ['black', true],
+  ring_of_royalty:     ['gold', true],
   occult_necklace:     ['black', true],
   // Wrath rune — red body with a black rim so it reads as "red & black".
   wrath_rune:          ['black', true],

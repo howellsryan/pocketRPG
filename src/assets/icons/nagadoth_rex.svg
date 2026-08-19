@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="nagadoth_rex_hide" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff8f6c"/><stop offset="0.55" stop-color="#d0402c"/><stop offset="1" stop-color="#5e1204"/>
+    </linearGradient>
+    <linearGradient id="nagadoth_rex_crest" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff8f6c"/><stop offset="1" stop-color="#5e1204"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M 120 232 L 44 196 L 66 268 L 32 316 L 118 300 Z" fill="url(#nagadoth_rex_crest)"/>
+    <path d="M 392 232 L 468 196 L 446 268 L 480 316 L 394 300 Z" fill="url(#nagadoth_rex_crest)"/>
+    <path d="M 176 122 L 150 46 L 214 98 L 256 30 L 298 98 L 362 46 L 336 122 Z" fill="url(#nagadoth_rex_crest)"/>
+    <path d="M 256 78 L 356 132 L 392 232 L 366 330 L 300 396 L 256 420 L 212 396 L 146 330 L 120 232 L 156 132 Z" fill="url(#nagadoth_rex_hide)"/>
+    <path d="M 186 214 L 244 238 L 232 270 L 176 248 Z" fill="#5e1204" stroke-width="9"/>
+    <path d="M 326 214 L 268 238 L 280 270 L 336 248 Z" fill="#5e1204" stroke-width="9"/>
+    <path d="M 196 226 L 226 238 L 220 254 L 190 242 Z" fill="#ffe08a" stroke="none"/>
+    <path d="M 316 226 L 286 238 L 292 254 L 322 242 Z" fill="#ffe08a" stroke="none"/>
+    <path d="M 190 318 L 322 318 L 302 358 L 210 358 Z" fill="#5e1204" stroke-width="10"/>
+    <path d="M 204 328 L 220 376 L 236 328 Z" fill="#ff8f6c" stroke-width="9"/>
+    <path d="M 240 328 L 256 386 L 272 328 Z" fill="#ff8f6c" stroke-width="9"/>
+    <path d="M 276 328 L 292 376 L 308 328 Z" fill="#ff8f6c" stroke-width="9"/>
+  </g>
+</svg>

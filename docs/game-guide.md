@@ -192,6 +192,14 @@ Its drop table is the best shield source in the game. A Wraithbone Shield (1/64)
 
 It also drops onyx bolts (e), charms, large rune stacks, herbs and elite clue scrolls.
 
+## The Nagadoth Queen
+
+The Nagadoth Queen rules the three kings at Ardounne, and she opens only once you have killed Nagadoth Rex, Nagadoth Prime and Nagadoth Supreme at least once each. She is more than twice the king she rules: 450 hitpoints, double their stats, and 100 defence against every style.
+
+She is a tribrid. She fights with melee, ranged and magic in turn, holds a style for two to five attacks and then switches at random. Every style hits for up to 42 and lands as often as the others, so there is no style she is soft on and no prayer you can set and forget. Every seven to ten of her attacks she summons one of her kings — Rex, Prime or Supreme, picked at random and at that king's own strength — and keeps swinging while it is up. Summoned kings drop nothing and do not count as kills; clear one and another follows a few attacks later.
+
+Her table is the kings' table — nagadoth bones, coins, runeforged platebody and platelegs, a Dragon Axe, herbs and master clue scrolls — with two differences. She pays **5 nagadoth bones a kill, noted**, and she is the only source of the **Ring of Royalty** (1/256), which carries every bonus the three kings' rings carry at once: +16 melee strength and +6 melee damage from the Berserker Ring, +14 ranged strength from the Archers Ring and +12 magic damage from the Seers Ring. One ring slot, all three styles.
+
 ## Zaryth
 
 Zaryth is the hardest fight in the realm: 3,500 hitpoints at Faloden, and the throne the god wars were fought under. He opens only once you have killed all four generals — Warlord Grondar, Commander Zephyra, Krylth the Defiler and Skyrender Kharra — at least once each.

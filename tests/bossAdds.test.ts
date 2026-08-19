@@ -160,13 +160,15 @@ describe('Dread Core — killing it', () => {
 
 describe('boss adds are data-driven', () => {
   // The contract a future boss must satisfy to get an add: point spawnsAdd at a
-  // real monster (one id, or one per style), flag that monster isAdd. Nothing
-  // else — no engine change.
+  // real monster (one id, one per style, or a `monsterIds` roster picked at
+  // random), flag that monster isAdd. Nothing else — no engine change.
   it('every spawnsAdd points at real monsters flagged as adds', () => {
     for (const [id, m] of Object.entries(monstersData)) {
       const spec = getAddSpec(m)
       if (!spec) continue
-      const addIds = spec.monsterIdByStyle ? Object.values(spec.monsterIdByStyle) : [spec.monsterId]
+      const addIds = spec.monsterIds
+        ? spec.monsterIds
+        : spec.monsterIdByStyle ? Object.values(spec.monsterIdByStyle) : [spec.monsterId]
       expect(addIds.length, `${id} names no add`).toBeGreaterThan(0)
       for (const addId of addIds) {
         const add = monstersData[addId as string]
