@@ -4,7 +4,10 @@ Companion to the search strategy plan. Everything below needs a human account,
 a payment, or a judgment call outside the repo — nothing here is a code change.
 Shipped in-repo already (branch `claude/seo-idle-rpg-plan-q6bfa4`): OG/Twitter
 cards, canonical link, VideoGame/WebSite JSON-LD, `sitemap.xml` + `robots.txt`
-Sitemap line, PWA `manifest.json`, README live-build link fix.
+Sitemap line, PWA `manifest.json`, README live-build link fix, and a
+prerendered landing fragment in the raw HTML (real stats/features/settlement
+text now sits in `#app`, under the splash, for crawlers that don't run JS —
+previously the entire initial document was just the loading screen).
 
 Decisions on record: keep the `.co.uk` domain. Push **Eldermoor** (the world's
 name) as a secondary brand term in future copy/listings — it's unclaimed
@@ -17,7 +20,7 @@ elsewhere, unlike "Pocket RPG"/"Idle RPG".
 - [ ] Run **URL Inspection → Test Live URL** in Search Console once GSC is verified, to confirm what Google's renderer actually sees post-JS.
 - [ ] Note baseline impressions/position for: brand name, "idle rpg", "browser idle rpg", "idle mmo" — so Phase 2–5 work is measurable in 90 days.
 
-## Content decision needed before Phase 3/4 work continues
+## Content decision needed before Phase 4 work continues
 
 - [ ] **Landing hero H1 copy.** Currently `<h1>PocketRPG</h1>` with "A medieval idle RPG" as an adjacent eyebrow line (`src/screens/LandingScreen.jsx:129`). I didn't touch this — it's the one piece of live marketing copy on the page, and rewriting a player-facing headline unilaterally felt like the wrong call to make without you seeing it first. Suggested replacement if you want it: `<h1>PocketRPG — a browser idle RPG</h1>` (visually can stay styled as just "PocketRPG" with the descriptor in a smaller inline span, so the brand mark doesn't change size). Say the word and I'll make the change + rerun `npm run ci`.
 - [ ] **OG share image.** Shipped using `lp-map.webp` (1108×594) as-is — no image tooling was available in this session to crop a purpose-built 1200×630 crop. Worth a proper design pass later (a hero shot with the logo + tagline baked in reads much better on Discord/Reddit than a cropped screenshot).
