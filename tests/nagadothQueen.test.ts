@@ -20,7 +20,7 @@ import { placesForActivity } from '../src/engine/worldContent.js'
 import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
 import { matchTaskProgress } from '../src/engine/dailyTasks.js'
 import dailyTasks from '../src/data/dailyTasks.json'
-import { getMonsterArt } from '../src/utils/combatArt.js'
+import { getMonsterArt, getCategoryArt } from '../src/utils/combatArt.js'
 
 const monstersData = monsters as Record<string, any>
 const itemsData = items as Record<string, any>
@@ -225,6 +225,13 @@ describe('Nagadoth Queen — entry gate', () => {
 describe('Nagadoth Queen — surfaces', () => {
   it('stands with the kings at Ardounne', () => {
     expect(placesForActivity('combat', QUEEN)).toEqual(placesForActivity('combat', 'nagadoth_rex'))
+  })
+
+  it('fronts the combat picker section she shares with the kings', () => {
+    const art = getCategoryArt('dagganoth_kings')
+    const queenArt = getMonsterArt(queen, undefined)
+    expect(art.icon).toBe(queenArt.icon)
+    expect(art.accent).toBe(queenArt.accent)
   })
 
   it('can be fought as a group', () => {

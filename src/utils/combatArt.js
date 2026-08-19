@@ -30,7 +30,7 @@ export const CATEGORY_ART = {
   "training": { icon: "combat_level", accent: "#cdd6e0", blurb: "Cut your teeth on the weak" },
   "slayer": { icon: "death_skull", accent: "#c0453b", blurb: "Tasks from the Slayer Master" },
   "bossing": { icon: "crowned_skull", accent: "#d8b13a", blurb: "Generals of the eternal war" },
-  "dagganoth_kings": { icon: "horned_skull", accent: "#e0564b", blurb: "The crowned tyrants" },
+  "dagganoth_kings": { icon: "nagadoth_queen", accent: "#5a5468", blurb: "The crowned tyrants" },
   "wilderness": { icon: "spectre", accent: "#8a7ae6", blurb: "High risk, high reward" },
   "dragons_lair": { icon: "dragon_head", accent: "#46a7c4", blurb: "Where the great dragons sleep" },
   "venomcoil_matriarch": { icon: "wyvern", accent: "#3fb56b", blurb: "The serpent queen of the marsh" },
