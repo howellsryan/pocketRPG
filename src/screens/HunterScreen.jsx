@@ -19,11 +19,12 @@ import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
+import { grindmanXP } from '../engine/grindman.js'
 
 const hunterData = skillsData.hunter
 
 export default function HunterScreen({ initialActionId, idleResult, onBack, onStopBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, recordGameEvent, signalInventoryFull, resolveInventoryFull } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, recordGameEvent, signalInventoryFull, resolveInventoryFull, isGrindman } = useGame()
 
   // Hunter catches land in the inventory (each needs a free slot).
   const HUNTER_FIT_CHECK = { dropTable: true }
@@ -97,7 +98,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
 
       for (const ev of events) {
         if (ev.type === 'hunterSuccess') {
-          grantXP('hunter', ev.xp)
+          const grantedXP = grantXP('hunter', ev.xp)
 
           // Catches fill the inventory (banked as a fallback if a rare multi-item
           // drop overflows the slot the tick-top guard reserved).
@@ -113,7 +114,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
           hunterRef.current = {
             ...hunterRef.current,
             totalActions: (hunterRef.current.totalActions || 0) + 1,
-            totalXP: (hunterRef.current.totalXP || 0) + ev.xp
+            totalXP: (hunterRef.current.totalXP || 0) + grantedXP
           }
           if (ev.actionId) recordGameEvent?.({ kind: 'hunter_hunt', actionId: ev.actionId, count: 1 })
         }
@@ -230,7 +231,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
                   <SkillActionRow
                     icon={<SkillIcon skill="hunter" size={26} />}
                     title={action.name}
-                    meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {action.description}</>}
+                    meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {grindmanXP(action.xp, isGrindman)} XP · {action.description}</>}
                     active={activeTask?.type === 'hunter' && activeTask.action?.id === action.id}
                     locked={!available}
                     lockBadge={`LV ${action.level}`}

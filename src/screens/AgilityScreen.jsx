@@ -13,11 +13,12 @@ import SkillInfoBanner from '../components/SkillInfoBanner.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import skillsData from '../data/skills.json'
+import { grindmanXP } from '../engine/grindman.js'
 
 const agilityData = skillsData.agility
 
 export default function AgilityScreen({ initialActionId, idleResult, onBack, onStopBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, isGrindman } = useGame()
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const agilityXP = stats.agility?.xp || 0
@@ -83,7 +84,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack, onS
 
       for (const ev of events) {
         if (ev.type === 'courseComplete') {
-          grantXP('agility', ev.xp)
+          const grantedXP = grantXP('agility', ev.xp)
           if (ev.coinReward > 0) {
             // Coins go to inventory; fall back to bank if full
             const currentInv = [...(inventoryRef.current)]
@@ -105,7 +106,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack, onS
           agilityRef.current = {
             ...agilityRef.current,
             totalLaps: (agilityRef.current.totalLaps || 0) + 1,
-            totalXP: (agilityRef.current.totalXP || 0) + ev.xp,
+            totalXP: (agilityRef.current.totalXP || 0) + grantedXP,
             totalCoins: (agilityRef.current.totalCoins || 0) + ev.coinReward
           }
         }
@@ -226,7 +227,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack, onS
                 key={action.id}
                 icon={<SkillIcon skill="agility" size={26} />}
                 title={action.name}
-                meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {(action.ticks * 0.6).toFixed(1)}s lap</>}
+                meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {grindmanXP(action.xp, isGrindman)} XP · {(action.ticks * 0.6).toFixed(1)}s lap</>}
                 chip={<><GameIcon iconKey="coins" size={16} color="var(--color-gold)" /> {action.coinReward.toLocaleString()} / lap</>}
                 active={activeTask?.type === 'agility' && activeTask.action?.id === action.id}
                 locked={!available}

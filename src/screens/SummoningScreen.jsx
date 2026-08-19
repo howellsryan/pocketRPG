@@ -14,6 +14,7 @@ import { formatNumber } from '../utils/helpers.js'
 import { formatActionDuration } from '../utils/formatters.js'
 import { SUMMONING_CREATURES, getPouchRecipe, getScrollRecipe, SCROLLS_PER_POUCH, CRAFT_ACTION_TICKS, craftableTimes, creatureForPouch, creatureForScroll } from '../engine/summoning.js'
 import itemsData from '../data/items.json'
+import { grindmanXP } from '../engine/grindman.js'
 
 function itemName(id) {
   return itemsData[id]?.name || id
@@ -37,7 +38,7 @@ function actionFor(kind, creature, recipe) {
 }
 
 export default function SummoningScreen({ onBack }) {
-  const { stats, inventory, bank, activeTask, setActiveTask, requestActivityStart, addToast } = useGame()
+  const { stats, inventory, bank, activeTask, setActiveTask, requestActivityStart, addToast, isGrindman } = useGame()
   const summoningLevel = getLevelFromXP(stats.summoning?.xp || 0)
 
   const activeAction = (activeTask?.type === 'skill' && activeTask.skill === 'summoning') ? activeTask.action : null
@@ -127,7 +128,7 @@ export default function SummoningScreen({ onBack }) {
         title={kind === 'pouch' ? `${creature.name} Pouch` : `${creature.name} Scroll (${SCROLLS_PER_POUCH})`}
         active={isActive}
         meta={<>
-          <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {creature.level}</span> · {recipe.xp} XP · {formatActionDuration(CRAFT_ACTION_TICKS)}
+          <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {creature.level}</span> · {grindmanXP(recipe.xp, isGrindman)} XP · {formatActionDuration(CRAFT_ACTION_TICKS)}
           <span class="text-[var(--color-gold)]"> · {maxTimes.toLocaleString()} actions</span>
           {available && !isActive && maxTimes <= 0 && <span class="block text-[var(--color-blood-ember)] mt-1">Not enough materials</span>}
         </>}

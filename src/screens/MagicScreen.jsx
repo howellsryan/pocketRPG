@@ -21,6 +21,7 @@ import { formatActionDuration } from '../utils/formatters.js'
 import { SCREENS } from '../utils/constants.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
+import { grindmanXP } from '../engine/grindman.js'
 
 const ACTION_GROUPS = [
   { key: 'utility_spell', label: 'Utility Spells' },
@@ -53,7 +54,7 @@ function groupActions(actions) {
 
 export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
   const {
-    stats, inventory, bank, equipment, isIronman,
+    stats, inventory, bank, equipment, isIronman, isGrindman,
     grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask
   } = useGame()
 
@@ -266,7 +267,12 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
             updateInventory(newInv)
           }
 
-          grantXP('magic', ev.xp)
+          const grantedXP = grantXP('magic', ev.xp)
+          // Keep totalXP display in sync with the actually-granted (Grindman-cut) value —
+          // processSkillingTick added the base ev.xp before this branch ran.
+          if (grantedXP !== ev.xp) {
+            skillingRef.current = { ...skillingRef.current, totalXP: skillingRef.current.totalXP - ev.xp + grantedXP }
+          }
         }
       }
 
@@ -372,7 +378,7 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
                   icon={productItem ? <GameIcon item={productItem} size={26} /> : <SkillIcon skill="magic" size={26} />}
                   title={action.name}
                   meta={<>
-                    <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {formatActionDuration(action.ticks)}
+                    <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {grindmanXP(action.xp, isGrindman)} XP · {formatActionDuration(action.ticks)}
                     {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) =>
                       staffRuneType === id ? `${staff?.name || 'Staff'} (${itemsData[id]?.name || id})` : `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                     {action.materials && <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
