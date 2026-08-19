@@ -146,6 +146,15 @@
      on a forest floor is not the forest floor. */
   --ink-fur: #7a5c3c;
   --ink-fur-shade: #4d3a24;
+  /* A cow's patches and the soft parts (muzzle, udder). The hide itself is
+     --ink-bone, which is already the palest tone in the set; a patched cow
+     only reads if the patch is close to black against it. */
+  --ink-cow-patch: #2e2721;
+  --ink-muzzle: #d29a94;
+  /* The Grim Reaper's cloth. Darker than --ink-boot, which is the darkest
+     thing the hero wears — the point of this one is that it reads as an
+     absence rather than as a very dark garment. */
+  --ink-void: #14120e;
   /* The thieving mark's clothes. The mark IS the player's own rig (see
      .ink-mark below) with these two swapped in for --ink-leather; a cold
      blue-grey against the hero's brown leather is what stops two identical
@@ -1405,6 +1414,37 @@ html, body, #app {
 .ink-quarry-leg   { fill: none; stroke: var(--ink-fur-shade); stroke-width: 2.6; stroke-linecap: round; }
 .ink-quarry-eye   { fill: var(--text-strong); }
 .ink-quarry-cloak { fill: var(--ink-mark-cloth); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+/* Hunt Cow's own quarry. */
+.ink-cow-hide     { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-cow-patch    { fill: var(--ink-cow-patch); }
+.ink-cow-leg      { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-cow-tail     { fill: none; stroke: var(--ink-bone); stroke-width: 2.6; stroke-linecap: round; }
+.ink-cow-udder    { fill: var(--ink-muzzle); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+.ink-cow-horn     { fill: var(--ink-bone-shade); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+.ink-cow-tuft     { fill: var(--ink-cow-patch); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+.ink-cow-nostril  { fill: var(--text-strong); }
+.ink-hoof         { fill: var(--ink-cow-patch); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+.ink-muzzle       { fill: var(--ink-muzzle); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+/* Hunt Herbi's — one jagged mantle, not a dome with spines drawn on it. */
+/* The animal is GREEN and the pale is only its face: body in leaf, spines a
+   shade lighter over it, snout in bone. Built with a bone-coloured body it
+   read as a white blob with a green patch on its back. */
+.ink-herbi-mantle { fill: var(--ink-leaf); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-herbi-spine  { fill: none; stroke: var(--ink-leaf); stroke-width: 1.4; stroke-linecap: round; }
+.ink-herbi-snout  { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-herbi-nose   { fill: var(--text-strong); }
+.ink-herbi-whisker{ fill: none; stroke: var(--text-strong); stroke-width: 1; stroke-linecap: round; opacity: 0.7; }
+.ink-herbi-ear    { fill: var(--ink-bone-shade); stroke: var(--text-strong); stroke-width: 1.4; stroke-linejoin: round; }
+.ink-herbi-foot   { fill: var(--ink-leaf); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+/* Hunt Grim Reaper's — cloth that reads as an absence, and a scythe. */
+.ink-void-cloth   { fill: var(--ink-void); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-void-fold    { fill: none; stroke: var(--ink-rock-shade); stroke-width: 1.2; opacity: 0.8; }
+.ink-void-hollow  { fill: var(--ink-void); stroke: none; }
+.ink-reaper-eye   { fill: var(--tier-jewel-red); }
+.ink-bone-hand    { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 1.4; }
+.ink-scythe-haft  { fill: var(--ink-haft); stroke: var(--text-strong); stroke-width: 1.4; stroke-linejoin: round; }
+.ink-scythe-blade { fill: var(--tier-steel); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-scythe-edge  { fill: none; stroke: #eef2f4; stroke-width: 1.3; stroke-linecap: round; opacity: 0.85; }
 .ink-quarry-hood  { fill: var(--ink-mark-cloth-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
 .ink-quarry-face  { fill: var(--ink-skin-shade); }
 .ink-quarry-boot  { fill: var(--ink-boot); stroke: var(--text-strong); stroke-width: 1.4; stroke-linejoin: round; }
@@ -1414,6 +1454,9 @@ html, body, #app {
    x=146; change that and change these. */
 .ink-quarry         { transform-box: view-box; --ink-creep: -12px; }
 .ink-quarry--mark   { --ink-creep: -16px; }
+.ink-quarry--cow    { --ink-creep: -8px; }
+.ink-quarry--herbi  { --ink-creep: -12px; }
+.ink-quarry--reaper { --ink-creep: -22px; }
 .ink-hoist          { transform-box: view-box; transform-origin: 178px 39px; }
 /* Pinned to the leaves' own patch of ground: left at the view-box default
    these rotate about the canvas centre, which flings a leaf halfway up the

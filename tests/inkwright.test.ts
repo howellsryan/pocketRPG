@@ -58,7 +58,7 @@ describe('inkwright — which skills have a figure', () => {
       'grave', 'gildedAltar', 'dust',
       'scaffold',
       'alchPedestal', 'smeltPedestal', 'transmutePedestal', 'enchantPedestal', 'hexDummy',
-      'snareBeast', 'snareMark',
+      'snareBeast', 'snareMark', 'snareCow', 'snareHerbi', 'snareReaper',
       'mark', 'markGuard', 'stall',
       'obelisk',
     ])
@@ -106,10 +106,12 @@ describe('inkwright — which skills have a figure', () => {
   it('every motion has a keyframe family and a drawn prop', () => {
     const css = readFileSync(resolve(__dirname, '../src/index.css'), 'utf8')
     const stage = readFileSync(resolve(__dirname, '../src/components/InkwrightStage.jsx'), 'utf8')
-    // Scoped to Prop()'s own body: Backdrop() branches on the same prop names,
-    // so searching the whole file would pass a prop that has a scene but
-    // nothing to strike.
-    const propBody = stage.slice(stage.indexOf('function Prop({'))
+    // Scoped to the drawing half of the file: Backdrop() branches on the same
+    // prop names, so searching the whole file would pass a prop that has a
+    // scene but nothing to strike. Starts at SNARE_QUARRIES rather than at
+    // Prop() itself because hunter's five props are dispatched through that
+    // table instead of through five `kind ===` branches.
+    const propBody = stage.slice(stage.indexOf('const SNARE_QUARRIES'))
     for (const key of Object.keys(INKWRIGHT_MOTIONS)) {
       const { motion, prop } = INKWRIGHT_MOTIONS[key]
       expect(css, `${motion} has no arm keyframes`)
@@ -117,8 +119,11 @@ describe('inkwright — which skills have a figure', () => {
       // The payoff beat is what the player reads as "the action completed".
       expect(css, `${motion} has no payoff rule`).toContain(`.ink-payoff--${motion}`)
       // A prop Prop() cannot draw falls through to the rock silhouette, so
-      // smithing would silently mine a boulder.
-      expect(propBody, `${prop} is not drawn by Prop()`).toContain(`kind === '${prop}'`)
+      // smithing would silently mine a boulder. Two ways to be drawable: a
+      // `kind ===` branch of its own, or a key in the SNARE_QUARRIES table
+      // Prop() dispatches hunter's five quarries through.
+      const drawn = propBody.includes(`kind === '${prop}'`) || propBody.includes(`\n  ${prop}:`)
+      expect(drawn, `${prop} is not drawn by Prop()`).toBe(true)
     }
   })
 
@@ -160,8 +165,10 @@ describe('inkwright — which skills have a figure', () => {
   })
 
   it('hunter picks its quarry from the action id, defaulting to a beast', () => {
-    expect(inkwrightMotionForSkill('hunter', 'hunt_cow')?.prop).toBe('snareBeast')
-    expect(inkwrightMotionForSkill('hunter', 'hunt_herbi')?.prop).toBe('snareBeast')
+    // Three targets are drawn as themselves; the rest fall to the generics.
+    expect(inkwrightMotionForSkill('hunter', 'hunt_cow')?.prop).toBe('snareCow')
+    expect(inkwrightMotionForSkill('hunter', 'hunt_herbi')?.prop).toBe('snareHerbi')
+    expect(inkwrightMotionForSkill('hunter', 'hunt_grim_reaper')?.prop).toBe('snareReaper')
     expect(inkwrightMotionForSkill('hunter', 'hunt_wizard')?.prop).toBe('snareMark')
     expect(inkwrightMotionForSkill('hunter', 'hunt_master_trader')?.prop).toBe('snareMark')
     // New content is a beast until the humanoid list says otherwise — one
@@ -172,9 +179,10 @@ describe('inkwright — which skills have a figure', () => {
 
   it('every hunter action in skills.json resolves to a real trap', () => {
     expect(skillsData.hunter.actions.length).toBeGreaterThan(0)
+    const props = ['snareBeast', 'snareMark', 'snareCow', 'snareHerbi', 'snareReaper']
     for (const action of skillsData.hunter.actions) {
       const plan = inkwrightPlan('hunter', action.ticks, action.id)!
-      expect(['snareBeast', 'snareMark'], `${action.id} resolved to ${plan.prop}`).toContain(plan.prop)
+      expect(props, `${action.id} resolved to ${plan.prop}`).toContain(plan.prop)
       expect(plan.motion).toBe('snare')
     }
   })
@@ -210,15 +218,23 @@ describe('inkwright — which skills have a figure', () => {
   })
 
   it('every quarry and every target kind is actually reached by real content', () => {
-    // HUNTER_HUMANOIDS and THIEVING_GUARDS are hand-maintained id lists in
-    // inkwright.js, and a typo in one is invisible: the target quietly falls
-    // to the default prop and stays there forever. Nothing else in this file
-    // would notice — the "resolves to a real prop" tests above pass either
-    // way. What a typo cannot survive is a prop nothing reaches.
-    const hunterProps = new Set(
-      skillsData.hunter.actions.map((a: any) => inkwrightMotionForSkill('hunter', a.id)!.prop),
+    // HUNTER_QUARRIES, HUNTER_HUMANOIDS and THIEVING_GUARDS are hand-
+    // maintained id lists in inkwright.js, and a typo in one is invisible:
+    // the target quietly falls to the default prop and stays there forever.
+    // Nothing else in this file would notice — the "resolves to a real prop"
+    // tests above pass either way. What a typo cannot survive is a target
+    // landing on the fallback when it was meant to have art of its own.
+    const hunterProps = skillsData.hunter.actions.map(
+      (a: any) => inkwrightMotionForSkill('hunter', a.id)!.prop,
     )
-    expect(hunterProps).toEqual(new Set(['snareBeast', 'snareMark']))
+    // Every shipped hunter action is classified, so none of them reaches the
+    // generic beast. That prop is the fallback for CONTENT NOT YET WRITTEN
+    // (asserted separately above with an unknown id) — the moment a shipped
+    // target lands on it, an id in one of the two lists is misspelt.
+    expect(hunterProps).not.toContain('snareBeast')
+    for (const prop of ['snareCow', 'snareHerbi', 'snareReaper', 'snareMark']) {
+      expect(hunterProps, `nothing reaches ${prop}`).toContain(prop)
+    }
     const thievingProps = new Set(
       skillsData.thieving.npcs.map((n: any) => inkwrightMotionForSkill('thieving', n.id)!.prop),
     )

@@ -884,6 +884,25 @@ function SaplingLeaves({ x, y, flip = false }) {
   )
 }
 
+/** Which quarry each snare prop puts on the trail, and where it stands.
+ *
+ * `scale` and `standX` are two ends of one equation with the creep distance
+ * in `.ink-quarry--<key>` (index.css): every quarry has to arrive at the
+ * noose at x=146 — muzzle, snout or feet, whichever is the part that reaches
+ * the bait — while its far end stays inside the 200-unit frame. Change one
+ * and re-derive the other two.
+ *
+ * `hoistScale` only exists for a quarry too long to hang at its standing
+ * size: the payoff hangs everything from one anchor (170,53), and the Grim
+ * Reaper's scythe would otherwise go through the floor. */
+const SNARE_QUARRIES = {
+  snareBeast:  { key: 'beast',  Art: QuarryBeast,     scale: 0.85, standX: 184 },
+  snareMark:   { key: 'mark',   Art: QuarryTraveller, scale: 1.12, standX: 172 },
+  snareCow:    { key: 'cow',    Art: QuarryCow,       scale: 0.8,  standX: 184 },
+  snareHerbi:  { key: 'herbi',  Art: QuarryHerbi,     scale: 0.8,  standX: 180 },
+  snareReaper: { key: 'reaper', Art: QuarryReaper,    scale: 1,    standX: 168, hoistScale: 0.82 },
+}
+
 /** Hunter's quarry, on four legs — head lowered to the bait, ears up, tail
  * flicked. Drawn in its own local frame with the feet on y=0 and facing LEFT
  * (the trap is downhill of it), so the two quarries can share one placement
@@ -900,6 +919,109 @@ function QuarryBeast() {
       <path class="ink-quarry-leg" d="M-8 -7 L-9 0 M-1 -6 L-1 0 M7 -7 L7 0 M13 -8 L14 0" />
       <path class="ink-quarry-leg" d="M15 -19 Q20 -21 19 -26" />
       <circle class="ink-quarry-eye" cx="-17" cy="-13" r="1.5" />
+    </g>
+  )
+}
+
+/** Hunt Cow's quarry, drawn as a cow rather than left to the generic beast:
+ * the patched hide, the horns and the lowered head grazing at the bait are
+ * the whole reason to hunt one. Same local frame as every other quarry (feet
+ * on y=0, facing LEFT), so it shares the placement table and the creep. */
+function QuarryCow() {
+  return (
+    <g class="ink-quarry-art">
+      {/* Legs as OUTLINED shapes, not strokes: a white leg stroked in white
+          against a white hide is invisible, which is what the first pass drew. */}
+      <path class="ink-cow-leg" d="M-10 -9 L-5 -9 L-5.5 -2 L-10.5 -2 Z" />
+      <path class="ink-cow-leg" d="M-2 -8 L3 -8 L3 -2 L-2 -2 Z" />
+      <path class="ink-cow-leg" d="M7 -9 L12 -9 L12 -2 L7 -2 Z" />
+      <path class="ink-cow-leg" d="M14 -10 L19 -10 L19.5 -2 L14.5 -2 Z" />
+      <path class="ink-hoof" d="M-11 -3.5 L-4.5 -3.5 L-4.5 0 L-11 0 Z" />
+      <path class="ink-hoof" d="M-2.5 -3.5 L3.5 -3.5 L3.5 0 L-2.5 0 Z" />
+      <path class="ink-hoof" d="M6.5 -3.5 L12.5 -3.5 L12.5 0 L6.5 0 Z" />
+      <path class="ink-hoof" d="M14 -3.5 L20 -3.5 L20 0 L14 0 Z" />
+      <path class="ink-cow-tail" d="M17 -25 Q22 -19 20 -10" />
+      <path class="ink-cow-tuft" d="M20 -11 Q23 -7 20 -3 Q17 -7 20 -11 Z" />
+      {/* Barrel body with a FLAT back. Drawn as a rounded blob it read as a
+          dog — the straight topline and the deep brisket are the cow. */}
+      <path class="ink-cow-hide" d="M-14 -26 L7 -27 Q17 -26 18 -17 Q18 -8 10 -7 L-11 -8 Q-17 -12 -14 -26 Z" />
+      <path class="ink-cow-patch" d="M-8 -26.4 Q0 -28 5 -24 Q3 -17 -5 -18 Q-10 -21 -8 -26.4 Z" />
+      <path class="ink-cow-patch" d="M9 -19 Q16 -19 16 -13 Q14 -9 9 -10 Q6 -14 9 -19 Z" />
+      <path class="ink-cow-udder" d="M2 -8 Q7 -8 7 -4 Q4 -2.5 1 -4 Z" />
+      {/* Head tucked DOWN and close, not reaching forward: a grazing cow's
+          muzzle is under its shoulder, and a stretched neck costs 10 units of
+          frame the 200-wide stage does not have. */}
+      <path class="ink-cow-hide" d="M-13 -25 Q-21 -22 -24 -14 L-16 -9 Q-14 -17 -7 -19 Z" />
+      <path class="ink-cow-hide" d="M-24 -19 Q-31 -18 -30.5 -8 Q-30 -3 -23 -4 L-16 -6 L-17 -17 Z" />
+      <path class="ink-cow-patch" d="M-24 -18 L-17 -17 L-18 -10 L-25 -11 Z" />
+      <path class="ink-muzzle" d="M-30 -13 Q-34 -12 -33.5 -6.5 Q-33 -3 -28 -3.5 L-25 -4.5 L-26 -12 Z" />
+      <circle class="ink-cow-nostril" cx="-30" cy="-7.5" r="1.1" />
+      {/* Horns and an ear. Without them a white head with a pink nose is a
+          pig; the horns are what name the animal from across the frame. */}
+      <path class="ink-cow-horn" d="M-26 -19.5 Q-33 -28 -27 -29 Q-24 -24 -23 -19.5 Z" />
+      <path class="ink-cow-horn" d="M-19 -20 Q-22 -28.5 -15 -28 Q-16 -24 -16 -20 Z" />
+      <path class="ink-cow-hide" d="M-24 -16 L-32 -19 L-24 -12 Z" />
+      <circle class="ink-quarry-eye" cx="-22" cy="-15" r="1.4" />
+    </g>
+  )
+}
+
+/** Hunt Herbi's quarry — a spiky green hedgehog. The mantle is drawn as ONE
+ * jagged outline rather than a dome with spikes laid on top, the same trick
+ * the tree's canopy uses: a scalloped silhouette reads as spines, a smooth
+ * one with lines on it reads as a striped rock. */
+function QuarryHerbi() {
+  return (
+    <g class="ink-quarry-art">
+      <path class="ink-herbi-foot" d="M-11 -4 L-6 -4 L-6 0 L-11 0 Z" />
+      <path class="ink-herbi-foot" d="M2 -4 L7 -4 L7 0 L2 0 Z" />
+      <path class="ink-herbi-foot" d="M12 -4 L17 -4 L17 0 L12 0 Z" />
+      {/* ONE closed body: spiky over the back, smooth under the belly. Drawn
+          as a separate body path with the spines laid on top, its own outline
+          showed all round the bottom and the animal read as a green dome
+          sitting on a white saucer. Tips sit on one ellipse and valleys on a
+          smaller one, so every spine points OUTWARD along the back's own
+          curve — a row of upright teeth on a flat base is a hedge. */}
+      <path class="ink-herbi-mantle" d="M-12.6 -6.2 L-18.2 -9.5 L-11.3 -10.0 L-15.3 -14.6 L-8.6 -13.2 L-10.6 -18.6 L-4.7 -15.6 L-4.5 -21.2 L-0.2 -16.8 L2.4 -22.0 L4.7 -16.7 L9.1 -21.0 L9.2 -15.4 L15.2 -18.3 L13.0 -12.9 L19.7 -14.1 L15.5 -9.6 L22.4 -9.0 Q24 -3 15 -1.8 L-11 -2.8 Q-17 -3.4 -12.6 -6.2 Z" />
+      <path class="ink-herbi-spine" d="M-8 -7 L-10.5 -11 M-2 -8 L-3.5 -13 M5 -8 L6.5 -13 M13 -8 L14.5 -12" />
+      {/* Snout, nose and eye, drawn on TOP of everything so the face always
+          wins the overlap — it is the half that says "animal". */}
+      <path class="ink-herbi-snout" d="M-27 -4.5 Q-24 -11 -15 -12.5 L-11 -4 Q-20 -2 -27 -4.5 Z" />
+      <circle class="ink-herbi-nose" cx="-24.5" cy="-5.8" r="2.2" />
+      <path class="ink-herbi-whisker" d="M-22 -9 L-28 -12 M-22 -7.5 L-29 -8" />
+      <circle class="ink-quarry-eye" cx="-14" cy="-10" r="1.8" />
+      <path class="ink-herbi-ear" d="M-12 -13 Q-14 -18 -8 -17.5 Q-7.5 -14.5 -8 -12 Z" />
+    </g>
+  )
+}
+
+/** Hunt Grim Reaper's quarry — a black cowl, a hollow where the face should
+ * be, and a scythe. Deliberately NOT the hooded traveller the merchants and
+ * the wizard share: the traveller is somebody walking a road, and a hooded
+ * figure carrying a scythe is a different thing entirely. Its own hoistScale
+ * exists because the scythe is longer than the figure. */
+function QuarryReaper() {
+  return (
+    <g class="ink-quarry-art">
+      {/* Robe and hood first; the scythe is drawn OVER them, because a haft
+          hidden behind the body is a blade floating above a hood — which is
+          what the first pass looked like, and it read as a hat. */}
+      <path class="ink-void-cloth" d="M-12 -2 L-9 -30 Q-1 -34 7 -30 L10 -2 L6 0 L2 -3 L-2 0 L-6 -3 L-9.5 0 Z" />
+      <path class="ink-void-fold" d="M-4 -29 L-6 -4 M3 -29 L4 -4" />
+      <path class="ink-void-cloth" d="M-9 -29 Q-13 -43 0 -43.5 Q13 -43 9 -29 Q4 -25 0 -25 Q-5 -25 -9 -29 Z" />
+      {/* A hollow, not a face. The two lights inside it are the only thing in
+          the cowl, which is the entire read. */}
+      <path class="ink-void-hollow" d="M-8 -32 Q-2 -37.5 4 -33.5 Q2 -26.5 -4 -28 Z" />
+      <circle class="ink-reaper-eye" cx="-4.4" cy="-32.4" r="1.5" />
+      <circle class="ink-reaper-eye" cx="0.6" cy="-33.4" r="1.5" />
+      {/* Scythe carried over the shoulder: the haft leans BACK from the hand
+          and the blade hooks forward off its top, up and to the rear of the
+          cowl. Drawn upright with the blade above the head instead, the
+          silhouette is a crescent sitting on a hood — which reads as a hat. */}
+      <path class="ink-scythe-haft" d="M5.5 -13 L20 -40 L23.5 -38 L9 -11.5 Z" />
+      <circle class="ink-bone-hand" cx="8" cy="-13.5" r="3.6" />
+      <path class="ink-scythe-blade" d="M22.5 -40.5 C15 -48 4 -49 -2 -43.5 C6 -44.5 14 -42.5 19.5 -37 Z" />
+      <path class="ink-scythe-edge" d="M21.5 -42 C13.5 -49.5 2.5 -50.5 -3.5 -44.5" />
     </g>
   )
 }
@@ -1570,8 +1692,9 @@ function Prop({ kind, broken = false, itemArt = null, swinging = true, built = 0
   // pull on the line. Everything is placed off the noose at (146,101): the
   // stake, the tip cord, the trigger line's own pivot in stage space
   // (SnareLine) and both quarries' creep distances are all measured to it.
-  if (kind === 'snareBeast' || kind === 'snareMark') {
-    const beast = kind === 'snareBeast'
+  if (SNARE_QUARRIES[kind]) {
+    const quarry = SNARE_QUARRIES[kind]
+    const Art = quarry.Art
     if (!broken) {
       return (
         <g>
@@ -1583,12 +1706,12 @@ function Prop({ kind, broken = false, itemArt = null, swinging = true, built = 0
           <path class="ink-sapling" d="M180 108 C178 88 180 70 168 62 C160 56 152 55 144 56 L144.5 60 C152 59.4 158 60.6 164 66 C173 74 184 90 187 108 Z" />
           <SaplingLeaves x={144} y={58} flip />
           <path class="ink-cord" d="M144.5 58 L143.5 87" />
-          <g class={`ink-quarry ink-quarry--${beast ? 'beast' : 'mark'}${swinging ? ' is-working' : ''}`}>
+          <g class={`ink-quarry ink-quarry--${quarry.key}${swinging ? ' is-working' : ''}`}>
             {/* The placement lives on a NESTED group: this element carries the
                 creep animation, and a static transform attribute on the same
                 element is silently discarded the moment that animation starts. */}
-            <g transform={beast ? 'translate(184,108) scale(.85)' : 'translate(172,108) scale(1.12)'}>
-              {beast ? <QuarryBeast /> : <QuarryTraveller />}
+            <g transform={`translate(${quarry.standX},108) scale(${quarry.scale})`}>
+              <Art />
             </g>
           </g>
           <path class="ink-stake" d="M141 106 L141 88 L146 88 L146 106 Z" />
@@ -1620,8 +1743,8 @@ function Prop({ kind, broken = false, itemArt = null, swinging = true, built = 0
               local +x, which threw its whole body out to the RIGHT and
               straight through the pole; a vertical flip hangs it head-down
               where it actually is, with the caught legs still at the rope. */}
-          <g transform={beast ? 'translate(170,53) scale(.85,-.85)' : 'translate(170,53) scale(1.12,-1.12)'}>
-            {beast ? <QuarryBeast /> : <QuarryTraveller />}
+          <g transform={`translate(170,53) scale(${quarry.hoistScale || quarry.scale},${-(quarry.hoistScale || quarry.scale)})`}>
+            <Art />
           </g>
         </g>
         <g class="ink-leaf-fly ink-leaf-fly--a"><path d="M148 96 L138 89" /></g>

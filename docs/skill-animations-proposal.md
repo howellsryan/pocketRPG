@@ -116,9 +116,10 @@ beat became one NEAR-MISS — the quarry noses the bait, the trapper hauls, the
 quarry bolts — and because the loop is phase-locked, the last haul of the
 action is the one that lands. The trap is a spring-pole snare (leaves at the
 tip, or a bent pole is a shepherd's crook), and the catch is hoisted by its
-ankles. The quarry is drawn rather than borrowed: two silhouettes, a beast and
-a hooded traveller, picked off the action id, because five of the seven
-targets are people.
+ankles. The quarry is drawn rather than borrowed, and there are five of them:
+a cow, a herbi and the Grim Reaper get silhouettes of their own, the wizard
+and the three traders share a hooded traveller, and a generic beast is the
+fallback for content not yet written.
 
 ### Tier E — build at a bench (construction) — **BUILT**
 

@@ -537,10 +537,38 @@ Three things the trap needed:
   and through the trunk. A vertical flip hangs it head-down where it already
   is, with the caught legs still at the rope.
 
-Two quarries share one trap and one motion, picked off the action id
-(`HUNTER_HUMANOIDS` in `inkwright.js` — the list to update when a humanoid
-target is added; anything unrecognised is a beast, which is what "hunting"
-means before the content says otherwise). The trigger line is stage-space like
+**Five quarries share one trap and one motion**, picked off the action id and
+placed by one table (`SNARE_QUARRIES` in `InkwrightStage.jsx`). Three targets
+are drawn as themselves because their own silhouette is the reason to hunt
+them — a patched cow with horns and an udder, a small green hedgehog, and the
+Grim Reaper in a black cowl with a scythe over his shoulder. The other four
+share the two generics: a hooded traveller for the merchants and the wizard
+(`HUNTER_HUMANOIDS`), and a generic beast as the fallback for content not yet
+written. Adding a target means a row in `HUNTER_QUARRIES` or an id in
+`HUNTER_HUMANOIDS`; `tests/inkwright.test.ts` asserts no shipped target lands
+on the fallback, which is what a misspelt id looks like.
+
+Each quarry's `scale`, `standX` and its `--ink-creep` are three ends of one
+equation: every one has to arrive at the noose (x=146) with the part that
+reaches the bait — muzzle, snout or feet — while its far end stays inside the
+200-unit frame. The herbi is the one that taught this: drawn at a size that
+felt right it was 50 units long, which left no room between the bait and the
+frame edge to creep in from, and a hedgehog is small anyway.
+
+Three drawing lessons, each paid for twice:
+
+- **A spiky animal is ONE closed silhouette**, jagged over the back and smooth
+  under the belly. Drawn as a body path with a spiky mantle laid on top, the
+  body's own outline showed all round the bottom and the herbi read as a green
+  dome on a white saucer.
+- **Spines point outward along the back's curve** — tips on one ellipse,
+  valleys on a smaller one. A row of upright teeth on a flat base is a hedge.
+- **A scythe goes over the shoulder, not over the head.** Drawn upright with
+  the blade above the cowl, the Reaper's silhouette is a crescent sitting on a
+  hood, which reads as a hat. Leaning the haft back and hooking the blade off
+  its top puts the blade clear of the head.
+
+The trigger line is stage-space like
 the fishing tackle, but for the opposite reason: there the far end was free,
 here it is tied to the ground, so the line turns about the STAKE rather than
 swaying — 3.6 units of hand travel over a 47.4-unit cord is 4.4 degrees.
