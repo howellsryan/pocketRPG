@@ -40,6 +40,7 @@ import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
 import TravelPrompt from './components/TravelPrompt.jsx'
+import TravelStatusModal from './components/TravelStatusModal.jsx'
 import InventoryFullPrompt from './components/InventoryFullPrompt.jsx'
 import { advanceTravel, travelDestName, travelLeftoverMs } from './engine/travel.js'
 import { advanceJourneyPhase, advanceJourneyOffline, journeyStatus, planClueJourney, planQuestJourney } from './engine/journeys.js'
@@ -373,7 +374,14 @@ function GameApp() {
     autoBankExcludedItems, backgroundCombat, combatStatus, settleKingdom, applyKingdomSkip,
     getHoldings, flushLocalSaves, updateGrimReaperStash } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
-  const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
+  // Real back-history, not a computed guess: navigate() pushes the screen being
+  // left onto this stack, and goBack() pops it — so Back always lands on the
+  // actual last screen the player navigated from, however many hops away. A
+  // navigate(..., { replace: true }) skips the push: reserved for hops the
+  // player never really "visited" on their own (the forced jump to the World
+  // Map while travel plays out, arrival auto-resume, boot resume) — pushing
+  // those would make Back stop on a page that was only routed through.
+  const historyStackRef = useRef([])
   const [gameReady, setGameReady] = useState(false)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [skipSaving, setSkipSaving] = useState(false) // true while a paid skip is being persisted before reveal
@@ -2091,8 +2099,16 @@ function GameApp() {
     if (saved) addToast('Game saved.', 'success')
     else addToast('Save failed. Try again.', 'error')
   }
-  // Navigate with optional action data
-  const navigate = (scr, data) => {
+  // Navigate with optional action data. `opts.replace` skips pushing the
+  // outgoing screen onto history — see historyStackRef above. `opts.returnTo`
+  // ({ screen, data }) overrides what gets pushed instead of the naive
+  // "current screen + actionData" — for a real click whose actual visible
+  // context isn't reflected in the App-level screen/actionData pair (e.g. a
+  // spot on the World Map's place-map sub-view, which is local state to
+  // WorldMapScreen: the outer screen is still WORLD_MAP, but its actionData
+  // doesn't necessarily say so, so the plain push would land Back on the
+  // wrong World Map sub-view instead of this one).
+  const navigate = (scr, data, opts) => {
     // Cloud-only destinations are locked in the offline demo.
     if (demoMode && CLOUD_ONLY_SCREENS.has(scr)) {
       notifyDemoLocked()
@@ -2112,10 +2128,10 @@ function GameApp() {
     // resumeAutoStart ones that already know the player is standing at a
     // bank — requestActivityStart is a no-op location check when so.
     if (scr === SCREENS.BANK && !requestActivityStart({ type: 'bank' })) return
-    // Remember where the player came from (screen id only — carrying the old
-    // actionData back could re-fire its auto-start) so back/stop buttons can
-    // return there.
-    if (scr !== screen) prevScreenRef.current = screen
+    if (scr !== screen && !opts?.replace) {
+      const rt = opts?.returnTo
+      historyStackRef.current.push(rt?.screen ? { screen: rt.screen, data: rt.data ?? null } : { screen, data: actionData })
+    }
     // Every activity except combat persists across screens — skills and gathering
     // keep accruing in the background. Combat normally stops when the player
     // leaves; when the background-combat setting is on it keeps ticking for a
@@ -2136,7 +2152,6 @@ function GameApp() {
           key: data?.monsterId || data?.raidId || `combat-${Date.now()}`,
           initialMonsterId: data?.monsterId,
           initialRaidId: data?.raidId,
-          returnTo: data?.returnTo || null,
         })
       }
     }
@@ -2144,38 +2159,54 @@ function GameApp() {
     setScreen(scr)
   }
 
+  // Back always returns to the real last screen: pop history and go there,
+  // routed through navigate() (with replace, so Back never grows the stack)
+  // so the usual demo/combat-lock/bank-gate checks still apply. An empty
+  // stack (e.g. a screen reached before any navigation happened) falls back
+  // to Home.
+  const goBack = () => {
+    const entry = historyStackRef.current.pop()
+    if (entry) navigate(entry.screen, entry.data, { replace: true })
+    else navigate(SCREENS.HOME, undefined, { replace: true })
+  }
+
   // Resume the action a player was travelling to (a gated activity start embedded its
   // descriptor in the travel task's `autoStart`). On arrival we navigate to the owning
   // screen with the same actionData a home shortcut would use, so the screen's existing
   // auto-start effect fires the fight/skilling immediately — even if the player idled
   // away on another screen while travelling.
-  // `returnTo` ({ screen, data }) rides the actionData so the owning screen's back/stop
-  // buttons return to wherever the player actually came from, instead of a hardcoded
-  // destination: the travel task carries the screen (+ its actionData) the player was
-  // on when they confirmed travel (TravelPrompt's originScreen/originScreenData), or an
-  // explicit override from a direct place-map start (no travel needed — WorldMapScreen
-  // passes its own place view). Only truly origin-less starts (a persisted travel task
-  // from before this existed) fall back to the World Map's place view.
+  // `returnTo` ({ screen, data }) is where the owning screen's back/stop buttons should
+  // return to — the screen (+ its actionData) the player was actually on when they
+  // confirmed travel (TravelPrompt's originScreen/originScreenData), or an explicit
+  // override from a direct place-map start (no travel needed — WorldMapScreen passes its
+  // own place view). It's pushed straight onto the real history stack and this hop is a
+  // `replace`, never carried inside actionData — actionData gets wholesale-replaced by
+  // any later same-screen navigate() (e.g. switching skilling actions), which used to
+  // silently drop a returnTo living there and fall back to whatever screen was hopped
+  // through last (the World Map, mid-travel) instead of where the player really came
+  // from. Only truly origin-less starts (a persisted travel task from before this
+  // existed) fall back to the World Map's place view.
   const resumeAutoStart = (autoStart, returnTo) => {
     if (!autoStart || !autoStart.kind) return
     const rt = returnTo || (isWorldMapEnabled() ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
-    const extra = rt ? { returnTo: rt } : {}
+    if (rt?.screen) historyStackRef.current.push({ screen: rt.screen, data: rt.data || null })
+    const opts = { replace: true }
     switch (autoStart.kind) {
-      case 'combat':   navigate(SCREENS.COMBAT, { monsterId: autoStart.monsterId, ...extra }); break
-      case 'raid':     navigate(SCREENS.COMBAT, { raidId: autoStart.raidId, ...extra }); break
-      case 'agility':  navigate(SCREENS.AGILITY, { actionId: autoStart.actionId, ...extra }); break
-      case 'gather':   navigate(SCREENS.GATHER, { gatherTaskId: autoStart.gatherTaskId, ...extra }); break
-      case 'thieving': navigate(SCREENS.SKILLS, { skillId: 'thieving', actionId: autoStart.npcId, ...extra }); break
-      case 'hunter':   navigate(SCREENS.SKILLS, { skillId: 'hunter', actionId: autoStart.actionId, ...extra }); break
+      case 'combat':   navigate(SCREENS.COMBAT, { monsterId: autoStart.monsterId }, opts); break
+      case 'raid':     navigate(SCREENS.COMBAT, { raidId: autoStart.raidId }, opts); break
+      case 'agility':  navigate(SCREENS.AGILITY, { actionId: autoStart.actionId }, opts); break
+      case 'gather':   navigate(SCREENS.GATHER, { gatherTaskId: autoStart.gatherTaskId }, opts); break
+      case 'thieving': navigate(SCREENS.SKILLS, { skillId: 'thieving', actionId: autoStart.npcId }, opts); break
+      case 'hunter':   navigate(SCREENS.SKILLS, { skillId: 'hunter', actionId: autoStart.actionId }, opts); break
       // Farming: open the farm's patch view for the location the player arrived at.
-      case 'farming':  navigate(SCREENS.SKILLS, { skillId: 'farming', locationId: autoStart.locationId, ...extra }); break
-      case 'minigame': navigate(SCREENS.MINIGAMES, { minigameTaskId: autoStart.taskId, ...extra }); break
+      case 'farming':  navigate(SCREENS.SKILLS, { skillId: 'farming', locationId: autoStart.locationId }, opts); break
+      case 'minigame': navigate(SCREENS.MINIGAMES, { minigameTaskId: autoStart.taskId }, opts); break
       // Slayer master reached: the Slayer screen assigns the master's task on mount.
-      case 'slayer':   navigate(SCREENS.SKILLS, { skillId: 'slayer', masterId: autoStart.masterId, ...extra }); break
-      case 'bank':     navigate(SCREENS.BANK, rt ? { ...extra } : undefined); break
+      case 'slayer':   navigate(SCREENS.SKILLS, { skillId: 'slayer', masterId: autoStart.masterId }, opts); break
+      case 'bank':     navigate(SCREENS.BANK, undefined, opts); break
       case 'skill':
-        if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC, rt ? { ...extra } : undefined)
-        else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId, ...extra })
+        if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC, undefined, opts)
+        else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId }, opts)
         break
       default: break
     }
@@ -3265,41 +3296,35 @@ function GameApp() {
     if (demoMode && CLOUD_ONLY_SCREENS.has(screen)) {
       return <DemoLockedScreen screen={screen} onBack={() => navigate(SCREENS.HOME)} />
     }
-    // Screens entered with a returnTo (started from the place map) hand their
-    // back/stop buttons this callback — back to wherever the player came from.
-    const rt = actionData?.returnTo
-    const returnNav = rt?.screen ? () => navigate(rt.screen, rt.data) : undefined
-    // Fallback for screens without a returnTo: back to the previous screen.
-    const prev = prevScreenRef.current
-    const backToPrev = prev ? () => navigate(prev) : undefined
-    // Stop & Back on the skill screens: place-map origin wins, else last screen.
-    const stopBackNav = returnNav || backToPrev
+    // Every screen's Back/Stop & Back is the same real history pop — see
+    // goBack() (and historyStackRef above) for why this replaced a per-screen
+    // computed guess.
     switch (screen) {
       case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STATS:     return <StatsScreen />
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
-      case SCREENS.ARMOURY:   return <ArmouryScreen onBack={backToPrev} />
-      case SCREENS.BANK:      return <BankScreen onBack={returnNav || backToPrev} />
+      case SCREENS.ARMOURY:   return <ArmouryScreen onBack={goBack} />
+      case SCREENS.BANK:      return <BankScreen onBack={goBack} />
       case SCREENS.BANK_HUB:  return <BankHubScreen onNavigate={navigate} />
       case SCREENS.COMBAT:    return null // rendered by the persistent combat host in <main>
-      case SCREENS.DUNGEONS:  return <CombatScreen onNavigate={navigate} dungeonPlaceId={actionData?.placeId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
-      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} initialMasterId={actionData?.masterId} initialLocationId={actionData?.locationId} idleResult={idleResult} onNavigate={navigate} onBack={stopBackNav} onStopBack={stopBackNav} />
-      case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={stopBackNav} onStopBack={stopBackNav} />
-      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={stopBackNav} onStopBack={stopBackNav} />
-      case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} onBack={stopBackNav} onStopBack={stopBackNav} />
+      case SCREENS.DUNGEONS:  return <CombatScreen onNavigate={navigate} dungeonPlaceId={actionData?.placeId} onCombatStatusChange={setIsInCombat} onBack={goBack} onStopBack={goBack} />
+      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} initialMasterId={actionData?.masterId} initialLocationId={actionData?.locationId} idleResult={idleResult} onNavigate={navigate} onBack={goBack} onStopBack={goBack} />
+      case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={goBack} onStopBack={goBack} />
+      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={goBack} onStopBack={goBack} />
+      case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} onBack={goBack} onStopBack={goBack} />
       case SCREENS.WORLD_MAP:   return isWorldMapEnabled() ? <WorldMapScreen onNavigate={navigate} onAutoStart={resumeAutoStart} initialView={actionData?.view} /> : <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
-      case SCREENS.STORE:       return <TradingPostScreen onBack={backToPrev} />
-      case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} onBack={stopBackNav} />
-      case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} onBack={backToPrev} />
-      case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} onBack={backToPrev} onStopBack={stopBackNav} />
+      case SCREENS.STORE:       return <TradingPostScreen onBack={goBack} />
+      case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} onBack={goBack} />
+      case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} onBack={goBack} />
+      case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} onBack={goBack} onStopBack={goBack} />
       case SCREENS.ADVENTURES:     return <AdventuresScreen onNavigate={navigate} />
-      case SCREENS.KINGDOM:        return <KingdomScreen onBack={backToPrev} />
-      case SCREENS.COLLECTION_LOG: return <CollectionLogScreen onBack={backToPrev} />
-      case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={backToPrev} />
+      case SCREENS.KINGDOM:        return <KingdomScreen onBack={goBack} />
+      case SCREENS.COLLECTION_LOG: return <CollectionLogScreen onBack={goBack} />
+      case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={goBack} />
       case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} onShowIntroTour={() => setShowIntroTour(true)} />
-      case SCREENS.CHARACTER_UNLOCKS:   return <CharacterUnlockScreen onBack={backToPrev || (() => navigate(SCREENS.HOME))} />
-      case SCREENS.GRIM_REAPER:        return <GrimReaperScreen onBack={backToPrev || (() => navigate(SCREENS.HOME))} loadGame={loadGame} />
+      case SCREENS.CHARACTER_UNLOCKS:   return <CharacterUnlockScreen onBack={goBack} />
+      case SCREENS.GRIM_REAPER:        return <GrimReaperScreen onBack={goBack} loadGame={loadGame} />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
@@ -3346,12 +3371,11 @@ function GameApp() {
     !!combatStatus?.busy && screen !== SCREENS.DUNGEONS
   const keepCombatMounted = (showWorldCombat || backgroundCombatLive) && !!combatMount
   // Combat Back / Run Away: on the combat screen, return to where the player
-  // came from; backgrounded, just stop the fight and stay put.
+  // came from (real history — see goBack); backgrounded, just stop the fight
+  // and stay put.
   const combatBackHandler = () => {
     if (screen !== SCREENS.COMBAT) return
-    const rt = combatMount?.returnTo
-    if (rt?.screen) navigate(rt.screen, rt.data)
-    else if (prevScreenRef.current) navigate(prevScreenRef.current)
+    goBack()
   }
 
   return (
@@ -3373,7 +3397,13 @@ function GameApp() {
             panel replace the SideNav/Header chrome on small screens. */}
         <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} />
         <ToastContainer />
-        <TravelPrompt onNavigate={navigate} originScreen={screen} originScreenData={actionData} />
+        <TravelPrompt originScreen={screen} originScreenData={actionData} />
+        {/* Confirming a gated action's travel prompt no longer redirects to the
+            World Map — this shows the same status on whatever screen the player
+            is already on. Always mounted (like TravelPrompt) — it gates on
+            `screen` itself, see its own header comment for why that isn't the
+            same as App choosing when to mount it. */}
+        <TravelStatusModal screen={screen} onGoToWorldMap={() => navigate(SCREENS.WORLD_MAP)} onAutoStart={resumeAutoStart} />
         <InventoryFullPrompt
           open={inventoryFull === 'prompt'}
           onBank={bankFullInventory}

@@ -52,6 +52,7 @@ const sourceFiles = [
   'hooks/useEscapeKey.js',
   'hooks/useActionSwings.js',
   'hooks/usePanZoomStage.js',
+  'hooks/useTravelStatus.js',
   'engine/experience.js',
   'engine/combatLevel.js',
   'engine/world.js',
@@ -178,7 +179,9 @@ const sourceFiles = [
   'components/ActivityIcon.js', // -> game chunk (world map / place map only)
   'components/PlaceMapView.js', // -> game chunk (world map / place map only)
   'components/SlayerMasterModal.js', // -> game chunk (world map / place map only)
+  'components/TravelStatusContent.js',
   'components/TravelPrompt.js',
+  'components/TravelStatusModal.js',
   'components/InventoryFullPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',

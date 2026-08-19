@@ -108,3 +108,16 @@ export function travelDestName(task) {
   if (!task || task.type !== 'travel') return ''
   return getPlace(task.dest)?.name || task.dest || ''
 }
+
+// Travel durations round to the nearest whole second (unlike the decimal-second
+// formatActionDuration used for skilling/magic actions) — ticks never divide
+// evenly into 600ms, and fractional seconds read as noise on a travel ETA.
+// Shared by TravelPrompt (the picker's per-option ETA), WorldMapScreen (the
+// inline travel bar) and TravelStatusModal (the same bar shown off-map).
+export function formatTravelTicks(ticks) {
+  const s = Math.round((Number(ticks) || 0) * 0.6)
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  const r = s % 60
+  return r ? `${m}m ${r}s` : `${m}m`
+}

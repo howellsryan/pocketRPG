@@ -2,18 +2,7 @@ import Modal from './Modal.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { getPlace, shortestPath } from '../engine/world.js'
 import { describeActivity } from '../engine/worldContent.js'
-import { SCREENS } from '../utils/constants.js'
-
-// Travel durations round to the nearest whole second (unlike the decimal-second
-// formatActionDuration used for skilling/magic actions) — ticks never divide
-// evenly into 600ms, and fractional seconds read as noise on a travel ETA.
-const formatTravelDuration = (ticks) => {
-  const s = Math.round((Number(ticks) || 0) * 0.6)
-  if (s < 60) return `${s}s`
-  const m = Math.floor(s / 60)
-  const r = s % 60
-  return r ? `${m}m ${r}s` : `${m}m`
-}
+import { formatTravelTicks } from '../engine/travel.js'
 
 /**
  * Travel confirm / location picker. Rendered globally from App; shows itself when a gated
@@ -24,7 +13,7 @@ const formatTravelDuration = (ticks) => {
  * fired (App's `screen`/`actionData`) — carried into the travel task as `returnTo` so
  * arrival's back/stop buttons return there instead of a hardcoded destination.
  */
-export default function TravelPrompt({ onNavigate, originScreen, originScreenData }) {
+export default function TravelPrompt({ originScreen, originScreenData }) {
   const { travelPrompt, worldLocation, startTravelTo, dismissTravelPrompt } = useGame()
   if (!travelPrompt) return null
 
@@ -39,15 +28,14 @@ export default function TravelPrompt({ onNavigate, originScreen, originScreenDat
     ? `${desc.name} is available at more than one place. Choose where to travel:`
     : `${desc.name} is at ${options[0]?.place?.name || 'another place'}. Travel there?`
 
-  // Confirming travel jumps to the World Map so the player can watch their
-  // token walk the route, instead of leaving them stranded on the screen
-  // that triggered the gate (which can no longer do anything useful) — but
-  // the screen they were actually on rides along as returnTo, so arrival
-  // sends them back there instead of the map.
+  // Confirming travel starts the walk right where the player already is —
+  // TravelStatusModal (rendered globally from App) then takes over showing
+  // progress, so there's no need to relocate the player to watch it happen.
+  // The screen they were on still rides along as returnTo, for arrival's
+  // back/stop buttons.
   const chooseDestination = (placeId) => {
     const returnTo = originScreen ? { screen: originScreen, data: originScreenData } : undefined
     startTravelTo(placeId, returnTo)
-    onNavigate?.(SCREENS.WORLD_MAP)
   }
 
   return (
@@ -61,7 +49,7 @@ export default function TravelPrompt({ onNavigate, originScreen, originScreenDat
           {options.map((o) => (
             <button class="wm-tp-option" key={o.id} onClick={() => chooseDestination(o.id)}>
               <span class="wm-tp-place">{o.place?.icon} {o.place?.name || o.id}</span>
-              <span class="wm-tp-ticks">{o.ticks != null ? formatTravelDuration(o.ticks) : '—'}</span>
+              <span class="wm-tp-ticks">{o.ticks != null ? formatTravelTicks(o.ticks) : '—'}</span>
             </button>
           ))}
         </div>
