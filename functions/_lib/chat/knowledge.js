@@ -3516,7 +3516,7 @@ export const KNOWLEDGE_CHUNKS = [
    "daily tasks",
    "tasks"
   ],
-  "text": "Grandmaster daily tasks — one is assigned each day from this pool of 26: Conquer the Crimson Night Theatre, Conquer the Tomb of Arasmus, Vanquish Warlord Grondar, Vanquish Commander Zephyra, Slay the Venomcoil Matriarch, Conquer the Blighted Gauntlet, Slay the Ember Tyrant, Slay the Ashen Crucible, Craft an Onyx Amulet, Cut a Zyrite, Craft Soul Runes, Forge a Visage Shield, Slay the Hellbound Gorilla, Brew Super Combat Potions, Craft Wrath Runes, Fletch Onyx Dragon Bolts, Hunt Master Trader, Cut an Onyx, Slay Nagadoth Prime, Slay Nagadoth Supreme, Slay the Corporeal Horror, Challenge Zaryth, Slay the Threefang Cerberus, Conquer the Vaults of Xyren, Complete a Master Clue, Conquer the Cryptbound Champions."
+  "text": "Grandmaster daily tasks — one is assigned each day from this pool of 27: Conquer the Crimson Night Theatre, Conquer the Tomb of Arasmus, Vanquish Warlord Grondar, Vanquish Commander Zephyra, Slay the Venomcoil Matriarch, Conquer the Blighted Gauntlet, Slay the Ember Tyrant, Slay the Ashen Crucible, Craft an Onyx Amulet, Cut a Zyrite, Craft Soul Runes, Forge a Visage Shield, Slay the Hellbound Gorilla, Brew Super Combat Potions, Craft Wrath Runes, Fletch Onyx Dragon Bolts, Hunt Master Trader, Cut an Onyx, Slay Nagadoth Prime, Slay Nagadoth Supreme, Slay the Nagadoth Queen, Slay the Corporeal Horror, Challenge Zaryth, Slay the Threefang Cerberus, Conquer the Vaults of Xyren, Complete a Master Clue, Conquer the Cryptbound Champions."
  },
  {
   "id": "collection_log_monsters",

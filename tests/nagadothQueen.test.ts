@@ -17,6 +17,9 @@ import { monsterMaxHit, monsterMaxHitRange } from '../src/engine/monsterMaxHit.j
 import { applyForm, isMultiForm, randomFormSwitchThreshold } from '../src/engine/bossForms.js'
 import { COOP_BOSSES } from '../src/engine/coopBossEngine.js'
 import { placesForActivity } from '../src/engine/worldContent.js'
+import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
+import { matchTaskProgress } from '../src/engine/dailyTasks.js'
+import dailyTasks from '../src/data/dailyTasks.json'
 import { getMonsterArt } from '../src/utils/combatArt.js'
 
 const monstersData = monsters as Record<string, any>
@@ -230,5 +233,23 @@ describe('Nagadoth Queen — surfaces', () => {
 
   it('has its own combat emblem', () => {
     expect(getMonsterArt(queen, undefined).icon).toBe('queen_crown')
+  })
+
+  // Zul-Kaar's pool is derived from `boss: true` rather than hand-listed, so the
+  // queen joins it for free — and her summons must never join it with her.
+  it('is assignable by Zul-Kaar, and her summons are not', () => {
+    const pool = SLAYER_MASTERS.find((m: any) => m.id === 'zul_kaar')!.monsterPool
+      .map((e: any) => (typeof e === 'string' ? e : e.id))
+    expect(pool).toContain(QUEEN)
+    for (const summon of SUMMONS) expect(pool, summon).not.toContain(summon)
+  })
+
+  it('carries a Grandmaster daily task for 10 kills', () => {
+    const task = (dailyTasks as any[]).find((t) => t.trigger?.monsterId === QUEEN)
+    expect(task, 'daily task for the queen').toBeDefined()
+    expect(task.tier).toBe('Grandmaster')
+    expect(task.trigger).toEqual({ type: 'boss_kill', monsterId: QUEEN, target: 10 })
+    expect(matchTaskProgress(task, { kind: 'boss_kill', monsterId: QUEEN })).toBe(1)
+    expect(matchTaskProgress(task, { kind: 'boss_kill', monsterId: 'nagadoth_rex' })).toBe(0)
   })
 })
