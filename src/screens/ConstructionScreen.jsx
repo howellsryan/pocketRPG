@@ -15,10 +15,11 @@ import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import itemsData from '../data/items.json'
 import { BUILDING_ACTIONS } from '../engine/construction.js'
+import { grindmanXP } from '../engine/grindman.js'
 
 export default function ConstructionScreen({ onBack, onStopBack }) {
   const {
-    stats, inventory, bank,
+    stats, inventory, bank, isGrindman,
     grantXP, updateInventory, updateBankDirect, addToast,
     setActiveTask, requestActivityStart, activeTask
   } = useGame()
@@ -138,7 +139,12 @@ export default function ConstructionScreen({ onBack, onStopBack }) {
             }
           }
 
-          grantXP('construction', ev.xp)
+          const grantedXP = grantXP('construction', ev.xp)
+          // Keep totalXP display in sync with the actually-granted (Grindman-cut) value —
+          // processSkillingTick added the base ev.xp before this branch ran.
+          if (grantedXP !== ev.xp) {
+            skillingRef.current = { ...skillingRef.current, totalXP: skillingRef.current.totalXP - ev.xp + grantedXP }
+          }
         }
       }
 
@@ -216,7 +222,7 @@ export default function ConstructionScreen({ onBack, onStopBack }) {
               icon={<SkillIcon skill="construction" size={26} />}
               title={action.name}
               meta={<>
-                <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {(action.ticks * 0.6).toFixed(1)}s · Needs: {matName}
+                <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {grindmanXP(action.xp, isGrindman)} XP · {(action.ticks * 0.6).toFixed(1)}s · Needs: {matName}
                 {available && !hasMats && <span class="block text-[var(--color-blood-ember)] mt-1">No {matName} in inventory or bank</span>}
               </>}
               chip={<>{totalMats.toLocaleString()} avail</>}

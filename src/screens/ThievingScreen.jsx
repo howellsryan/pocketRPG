@@ -19,11 +19,12 @@ import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import InkwrightStage from '../components/InkwrightStage.jsx'
 import { inkwrightPlan } from '../utils/inkwright.js'
 import skillsData from '../data/skills.json'
+import { grindmanXP } from '../engine/grindman.js'
 
 const thievingData = skillsData.thieving
 
 export default function ThievingScreen({ initialNpcId, idleResult, onBack, onStopBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, signalInventoryFull, resolveInventoryFull } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, signalInventoryFull, resolveInventoryFull, isGrindman } = useGame()
 
   // Pickpocket output that lands in the inventory: coins (stackable) for most
   // targets, a random seed (Master Farmer) or gem (Tzraar) that needs a free slot.
@@ -107,7 +108,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
 
       for (const ev of events) {
         if (ev.type === 'pickpocketSuccess') {
-          grantXP('thieving', ev.xp)
+          const grantedXP = grantXP('thieving', ev.xp)
 
           // Master Farmer rewards a single seed / sapling per pickpocket
           // (stackable, inventory-first, falling back to the bank).
@@ -171,7 +172,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
           thievingRef.current = {
             ...thievingRef.current,
             totalPickpockets: (thievingRef.current.totalPickpockets || 0) + 1,
-            totalXP: (thievingRef.current.totalXP || 0) + ev.xp,
+            totalXP: (thievingRef.current.totalXP || 0) + grantedXP,
             totalCoins: (thievingRef.current.totalCoins || 0) + ev.coins,
             totalSeeds: (thievingRef.current.totalSeeds || 0) + seedGained,
             totalGems: (thievingRef.current.totalGems || 0) + gemGained
@@ -291,7 +292,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
                 key={npc.id}
                 icon={<SkillIcon skill="thieving" size={26} />}
                 title={npc.name}
-                meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {npc.level}</span> · {npc.xp} XP · {npc.description}</>}
+                meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {npc.level}</span> · {grindmanXP(npc.xp, isGrindman)} XP · {npc.description}</>}
                 chip={npc.seedReward
                   ? <><span>🌱</span> seeds</>
                   : npc.gemReward
