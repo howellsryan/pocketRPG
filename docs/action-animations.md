@@ -436,10 +436,11 @@ faster than a Bronze one for free; passing the base cost silently throws that aw
 | Mining, woodcutting, fishing | `.ink-*` | shipped — the fidelity baseline (real tools, real environments, measured placement) every future skill in this tier now targets |
 | Firemaking, cooking, smithing, crafting, fletching, herblore, runecraft, prayer | `.ink-*` | shipped — Tier A, pure content on the system above |
 | Construction, magic (non-combat) | `.ink-*` | shipped — Tiers E and G, the first two screens off `SkillingScreen` (see below) |
-| Agility, dungeoneering, thieving, hunter, summoning | `.ink-*` | next — full coverage plan and per-skill motion concepts in `docs/skill-animations-proposal.md`; build to the tier this file describes, not the pre-realism bar |
+| Thieving, hunter, summoning | `.ink-*` | shipped — Tiers C, D and F (see below) |
+| Agility, dungeoneering | `.ink-*` | next — Tier B, the traversal motion family; plan in `docs/skill-animations-proposal.md`, built to the tier this file describes, not the pre-realism bar |
 | Slayer | — | no action of its own — trains via `CombatScreen`, already covered by `.inkc-*` |
 | Farming | — | out of scope for the Inkwright stage; patch-based UI, not a `SkillActivePanel` action loop |
-| Thieving, hunter, agility, summoning | — | own screens; each already renders `SkillActivePanel`, so wiring is a `stage` prop and the work is the motion design |
+| Agility | — | own screen; it already renders `SkillActivePanel`, so wiring is a `stage` prop and the work is the motion design |
 | Open world | neither | baked GLB clips, `src/utils/combatWindup.js` — deliberately separate |
 
 ## Tiers E and G — a workpiece that persists, and a spell with a target
@@ -502,6 +503,129 @@ Three details carry the realism, and each replaced something that read wrong:
   working at — smithing already has one, two screens away. Stepped base,
   tapered shaft, capital, in lighter stone than the shrine's, because here it
   is the hero prop rather than scenery.
+
+## Tiers C, D and F — a wait, a mark, and a rite
+
+The three motions after construction and magic, and between them they use
+every extension point this file describes: a prop that does not move, a prop
+that is a second copy of the hero, and a payoff that is a creature.
+
+**Hunter is the only action in the system that is a WAIT.** A spring-pole
+snare is armed once and fires once, so the beat cannot be the trap the way a
+strike is the pickaxe — a 20-tick hunt is 15 beats, and a trap that sprang and
+reset fifteen times per catch is not a trap. The beat is one NEAR-MISS: the
+quarry creeps to the bait at 55%, the trapper hauls the trigger line at 62%,
+the quarry bolts at 74%. Because the strike loop is phase-locked to the action
+(it re-keys on every yield and the strikes divide the cycle exactly), the last
+haul of the action lands on the frame the payoff fires — every earlier one
+misses, which is what hunting is. Fishing had already settled this shape from
+the other direction; hunter is the version where the device, not the hand,
+does the catching.
+
+Three things the trap needed:
+
+- **Leaves at the tip.** A bent brown pole is a shepherd's crook and a
+  straight one is a fence post. The leaves are the only thing saying the trap
+  is powered by a living, springy tree, and they are drawn on both the armed
+  and the sprung pose.
+- **Pole, then quarry, then noose** — that draw order IS the depth of the
+  scene. Drawn quarry-first the pole ran straight through the animal's ribs;
+  drawn noose-first the loop sat behind the thing it was about to close on,
+  which says the trap already failed.
+- **The catch hangs by `scale(1,-1)`, not `rotate(180)`.** A half turn also
+  flips the quarry's own local +x, which threw its whole body out to the right
+  and through the trunk. A vertical flip hangs it head-down where it already
+  is, with the caught legs still at the rope.
+
+**Five quarries share one trap and one motion**, picked off the action id and
+placed by one table (`SNARE_QUARRIES` in `InkwrightStage.jsx`). Three targets
+are drawn as themselves because their own silhouette is the reason to hunt
+them — a patched cow with horns and an udder, a small green hedgehog, and the
+Grim Reaper in a black cowl with a scythe over his shoulder. The other four
+share the two generics: a hooded traveller for the merchants and the wizard
+(`HUNTER_HUMANOIDS`), and a generic beast as the fallback for content not yet
+written. Adding a target means a row in `HUNTER_QUARRIES` or an id in
+`HUNTER_HUMANOIDS`; `tests/inkwright.test.ts` asserts no shipped target lands
+on the fallback, which is what a misspelt id looks like.
+
+Each quarry's `scale`, `standX` and its `--ink-creep` are three ends of one
+equation: every one has to arrive at the noose (x=146) with the part that
+reaches the bait — muzzle, snout or feet — while its far end stays inside the
+200-unit frame. The herbi is the one that taught this: drawn at a size that
+felt right it was 50 units long, which left no room between the bait and the
+frame edge to creep in from, and a hedgehog is small anyway.
+
+Three drawing lessons, each paid for twice:
+
+- **A spiky animal is ONE closed silhouette**, jagged over the back and smooth
+  under the belly. Drawn as a body path with a spiky mantle laid on top, the
+  body's own outline showed all round the bottom and the herbi read as a green
+  dome on a white saucer.
+- **Spines point outward along the back's curve** — tips on one ellipse,
+  valleys on a smaller one. A row of upright teeth on a flat base is a hedge.
+- **A scythe goes over the shoulder, not over the head.** Drawn upright with
+  the blade above the cowl, the Reaper's silhouette is a crescent sitting on a
+  hood, which reads as a hat. Leaning the haft back and hooking the blade off
+  its top puts the blade clear of the head.
+
+The trigger line is stage-space like
+the fishing tackle, but for the opposite reason: there the far end was free,
+here it is tied to the ground, so the line turns about the STAKE rather than
+swaying — 3.6 units of hand travel over a 47.4-unit cord is 4.4 degrees.
+
+**Thieving is where the mirrored-rig trick finally gets used, and it costs
+three CSS lines.** `InkwrightFigure` paints from `var(--ink-leather)` /
+`var(--ink-leather-shade)`, and custom properties inherit, so re-pointing them
+on a `.ink-mark` wrapper dresses the same body in different clothes — combat's
+enemy aura at the same price and with a better result. The mark faces the SAME
+way the player does, not mirrored: that is what makes them a back turned
+rather than a confrontation.
+
+The reach is the whole geometry problem. The hand's fingertip sits 39.2 units
+from the shoulder once the grip offset (16,6) and the drawn forearm are
+composed, and rotation preserves that radius — so the fingertip's locus is a
+CIRCLE, and everything a thief steals has to be drawn on it. The dip angle
+(27deg) and the body's 4px lean put it on (112.5,88.6); the mark's purse hangs
+there, and the stall's cash box sits under the near end of its counter there
+too, which is also where a trader would actually keep it. A box on the counter
+top would have needed a second arm angle for one prop.
+
+Three props, because the targets are not one thing: a cake stall is furniture
+and an armoured guard is not a farmer (`THIEVING_GUARDS`, same maintenance
+shape as the hunter list). And **no fail pose** — `processThievingTick` only
+ever emits `pickpocketSuccess`, so a flinch would animate something the game
+cannot do. That answers the coverage proposal's open question 2 on the
+engine's terms rather than on effort.
+
+Thieving is also the one motion that overrides the shared `.ink-yield`
+position. Its prop is a PERSON, and at the standard 62%/34% the popped coins
+land on the mark's head — reading as loot appearing on the victim rather than
+coming off them. `.ink-stage--pickpocket` moves it to the thief's own side.
+
+**Summoning's rite shows the pouch, never the charm** — and that is a data
+fact, not a taste one: no charm has bespoke art, so every one of them resolves
+to the same generic glyph disc, while every pouch and scroll has its own.
+Making a pouch it is the thing taking shape; infusing scrolls it is the thing
+being spent. Either way the creature is legible, which is the entire job,
+since the figure makes the same push every time. `SUBJECT_ART_PROPS` is the
+set that draws a real item this way — magic's four pedestals, plus the
+obelisk.
+
+The payoff is a familiar taking shape (the proposal's open question 3, and the
+answer is *both*): a wisp bursts out of the flash and the product's ordinary
+`GameIcon` still pops. One generic spirit serves every creature — what comes
+out of a pouch on the bench is a wisp, not the beast. The push is deliberately
+NOT enchanting's held channel: an infusion is two ticks, so there is exactly
+one push in it and holding a pose through 600ms reads as a freeze.
+
+One rest-pose rule came out of this tier and applies to every future motion:
+**a motion whose arm rest angle is not 0deg needs a static `transform` on
+`.ink-fig--<motion> .ink-arm` outside the reduced-motion block.** The keyframes
+are gated off entirely under `prefers-reduced-motion: reduce`, and an unposed
+pickpocket leaves the thief's reaching hand inside the mark's ribs. A CSS
+`transform` property and an `animation` compose fine on the same element —
+unlike a static SVG transform ATTRIBUTE, which the animation silently
+discards.
 
 ## Extending to a skill
 

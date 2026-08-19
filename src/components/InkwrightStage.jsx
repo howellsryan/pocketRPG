@@ -53,10 +53,12 @@ import gameIconsData from '../data/gameIcons.json'
  *   product    — the item being produced, for the icon and its tint
  *   subject    — the item being WORKED ON (consumed), for the tint and, on a
  *                prop that shows it, its own art: the plank a build eats, the
- *                amulet under an enchantment, the item being alchemised. Two
- *                skills need this because neither takes its colour from a
- *                product — construction has none at all, and magic's whole
- *                subject matter is the thing on the pedestal.
+ *                amulet under an enchantment, the item being alchemised, the
+ *                charm going into a pouch. Three skills need this because
+ *                none takes its whole read from a product — construction has
+ *                none at all, magic's subject matter IS the thing on the
+ *                pedestal, and a summoning is only legible as the charm it
+ *                is infusing (every pouch craft otherwise looks identical).
  *   yieldToken — completed-action count; a change replays the payoff
  *   paused     — true when the action is stalled (inventory full), freezing the figure
  *   label      — accessible description
@@ -80,7 +82,7 @@ export default function InkwrightStage({ plan, product = null, subject = null, y
   // only distinguishable as themselves.
   const itemArt = prop === 'water'
     ? bespokeItemArt(product)
-    : (PEDESTAL_PROPS.has(prop) ? bespokeItemArt(subject) : null)
+    : (SUBJECT_ART_PROPS.has(prop) ? bespokeItemArt(subject) : null)
   // Nothing has given way until an action has actually completed. Rendering
   // the payoff at mount shattered the rock the instant the screen opened,
   // and popped a reward for an action nobody had finished.
@@ -94,7 +96,7 @@ export default function InkwrightStage({ plan, product = null, subject = null, y
 
   return (
     <div
-      class="ink-stage"
+      class={`ink-stage ink-stage--${motion}`}
       role="img"
       aria-label={label || `${plan.label} in progress`}
       style={{
@@ -162,6 +164,13 @@ export default function InkwrightStage({ plan, product = null, subject = null, y
             appears on, rather than being translated into place first. */}
         <SpellBolt motion={motion} prop={prop} swinging={swinging} />
         {motion === 'enchant' && <ChannelStream swinging={swinging} />}
+
+        {/* The trapper's trigger line, and the spirit light leaving the
+            summoner's palm. Both are STAGE space for the same reason the
+            fishing tackle and the spell bolt are: one end is anchored to
+            something that is not the hand. */}
+        {motion === 'snare' && <SnareLine swinging={swinging} />}
+        {motion === 'infuse' && <SpiritStream swinging={swinging} />}
       </svg>
 
       {/* What the action produced, popped on the yield. An HTML sibling
@@ -189,10 +198,28 @@ const SHRINE_PROPS = new Set(['runealtar', 'grave', 'gildedAltar', 'dust'])
 // a sanctum is a room you work in. Sharing the scene would have made every
 // caster look like they were runecrafting.
 const SANCTUM_PROPS = new Set(['alchPedestal', 'smeltPedestal', 'transmutePedestal', 'enchantPedestal', 'hexDummy'])
+// Tier D — hunter works a game trail, outdoors and unbuilt. The woodcutting
+// treeline was the obvious thing to reuse and is deliberately not: a felling
+// site is a place with a tree in it, a trapline is undergrowth you are hiding
+// in, and the two skills would have read as each other.
+const WILD_PROPS = new Set(['snareBeast', 'snareMark'])
+// Tier C — thieving happens in a street, in front of the shopfronts the marks
+// belong to. Its own scene rather than the workshop wall for the same reason:
+// a thief in a workshop is a crafter.
+const STREET_PROPS = new Set(['mark', 'markGuard', 'stall'])
+// Tier F — summoning is worked outdoors at a standing obelisk, at dusk. Not
+// the sanctum: a spellbook spell is cast in a room you own, a familiar is
+// bound at a place that was already there.
+const GLADE_PROPS = new Set(['obelisk'])
 // The props that stand the spell's SUBJECT on a plinth and draw its real art
 // (see InkwrightStage's `subject`). The dummy is the one magic prop that
 // doesn't: a curse is cast at something, not on something.
 const PEDESTAL_PROPS = new Set(['alchPedestal', 'smeltPedestal', 'transmutePedestal', 'enchantPedestal'])
+// Every prop that stands the `subject` up and draws its REAL art rather than a
+// tinted stand-in. The obelisk joins magic's four for the same reason they
+// exist: a gold charm and a blue charm are the same silhouette, and which one
+// is being infused is the only thing telling two pouch crafts apart.
+const SUBJECT_ART_PROPS = new Set([...PEDESTAL_PROPS, 'obelisk'])
 // Which colour the spell leaves the staff in. A school, not a tint: this is
 // the one thing telling a superheat from a transmutation at a glance, since
 // both are a caster pointing a staff at an item on a plinth.
@@ -263,6 +290,56 @@ function Backdrop({ kind }) {
         <path class="ink-sanctum-mullion" d="M32 48 L32 92 M18 74 L46 74" />
         <path class="ink-sanctum-arch" d="M18 92 L18 62 Q32 44 46 62 L46 92" />
         <path class="ink-sanctum-shelf" d="M4 96 L14 96 L14 108 L4 108 Z" />
+      </g>
+    )
+  }
+  // A game trail through undergrowth: bracken in the near ground, two trunks
+  // running off the top of the frame behind it. The trunks are CROPPED rather
+  // than drawn whole — a complete little tree reads as woodcutting's felling
+  // site, a trunk with no top reads as being in among them.
+  if (WILD_PROPS.has(kind)) {
+    return (
+      <g class="ink-scene ink-scene--wild">
+        <path class="ink-wild-trunk" d="M12 108 L10 0 L24 0 L22 108 Z" />
+        <path class="ink-wild-trunk" d="M44 96 L42 12 L51 12 L50 96 Z" />
+        <g class="ink-bracken">
+          <path d="M4 104 Q2 92 10 84 M10 84 Q4 86 3 93 M10 84 Q16 87 16 93" />
+          <path d="M28 104 Q28 92 34 85 M34 85 Q28 87 27 93" />
+          <path d="M58 104 Q60 94 54 86 M54 86 Q60 88 61 94" />
+        </g>
+      </g>
+    )
+  }
+  // A street: a plastered shopfront with a shuttered window and a bracket
+  // sign. Kept behind the figures and low-contrast — the scene has two people
+  // standing in it, and anything busier fights them.
+  if (STREET_PROPS.has(kind)) {
+    return (
+      <g class="ink-scene ink-scene--street">
+        <path class="ink-street-wall" d="M0 108 L0 20 L72 20 L72 108 Z" />
+        <path class="ink-street-window" d="M12 40 L44 40 L44 68 L12 68 Z" />
+        <path class="ink-street-shutter" d="M12 40 L12 68 M22 40 L22 68 M34 40 L34 68 M44 40 L44 68 M12 54 L44 54" />
+        <path class="ink-street-sign" d="M56 28 L56 44 M56 30 L68 30" />
+        <path class="ink-street-sign-board" d="M60 32 L74 32 L74 44 L60 44 Z" />
+        <path class="ink-street-cobble" d="M4 104 L18 104 M24 104 L36 104 M42 104 L54 104" />
+      </g>
+    )
+  }
+  // A hillside at dusk, with the first stars out. Flat bands rather than a
+  // gradient (the one rule this file's palette does not bend): a dark ridge
+  // under a lighter sky is all the depth a 128px frame needs.
+  if (GLADE_PROPS.has(kind)) {
+    return (
+      <g class="ink-scene ink-scene--glade">
+        <path class="ink-glade-ridge" d="M0 108 L0 88 Q30 78 62 85 Q92 91 122 86 L122 108 Z" />
+        {/* Points, not plus signs. Drawn as two crossed strokes they read as
+            literal "+" characters printed on the sky. */}
+        <g class="ink-glade-star">
+          <circle cx="22" cy="34" r="1.5" />
+          <circle cx="56" cy="20" r="1.9" />
+          <circle cx="96" cy="42" r="1.3" />
+          <circle cx="38" cy="14" r="1.2" />
+        </g>
       </g>
     )
   }
@@ -494,6 +571,54 @@ function Tool({ kind }) {
       </g>
     )
   }
+  // Hunter — a coil of trigger cord, gripped in a closed fist. The whole
+  // tool is the fist plus three wraps of line around it: the working end of
+  // this "tool" is not in the hand at all, it is the stake 50 units away
+  // (SnareLine, drawn in stage space), so anything longer here would read as
+  // a second, unrelated implement.
+  if (kind === 'snare') {
+    return (
+      <g transform="translate(100,64)">
+        <circle class="ink-skin-fill" cx="0" cy="0" r="4.8" />
+        <path class="ink-cord" d="M-5 -3 Q0 -6 5 -3 M-5.4 0 Q0 -3 5.4 0 M-5 3 Q0 0 5 3" />
+        {/* The spare coil, hanging off the back of the fist. */}
+        <ellipse class="ink-cord-coil" cx="-7" cy="4" rx="4.4" ry="3" />
+      </g>
+    )
+  }
+  // Thieving — no tool at all: the reach IS the tool. This draws the FOREARM
+  // and an open hand continuing on from the figure's own upper arm, which is
+  // what buys the reach a pickpocket needs: the fingertip sits at local
+  // (22,3), i.e. 39.2 units from the shoulder once the grip offset (16,6) and
+  // this group's own rotation are composed. That radius is fixed by rotation,
+  // so it is what the mark's purse (112,88) and the stall's cash box are
+  // placed ON — move one and the other three numbers move with it.
+  if (kind === 'pickpocket') {
+    return (
+      <g transform="translate(100,64) rotate(20)">
+        <path class="ink-skin" d="M-1 -4.4 L13 -3 Q18 -2.6 18 0 Q18 2.6 13 3 L-1 4.4 Z" />
+        {/* The hand: a palm and three fingers reaching on past it. A closed
+            fist here read as a punch — an open, leading hand is the whole
+            difference between reaching into a pocket and hitting someone. */}
+        <path class="ink-skin-fill" d="M15 -3.6 Q21 -4.4 22.6 -1.6 Q23.4 0.4 22 2.4 Q19 4.6 15 3.8 Z" />
+        <path class="ink-finger" d="M20 -2.6 L25.6 -3.6 M21 0.2 L26.4 0.2 M20.4 2.8 L25 3.8" />
+      </g>
+    )
+  }
+  // Summoning — an open palm turned toward the rite, fingers fanned. The
+  // proposal asked for a two-hand charge and this is deliberately one: the
+  // rig's back arm hangs on the far side of the torso and cannot be brought
+  // round to the front without inverting its elbow (enchanting settled the
+  // same question the same way), and a visibly broken shoulder costs more
+  // than the second hand buys.
+  if (kind === 'infuse') {
+    return (
+      <g transform="translate(100,64) rotate(-8)">
+        <path class="ink-skin" d="M-3 -6 Q5 -8.4 10 -4.6 Q13.4 -1 10.6 3 Q6 7.6 -3 5.6 Z" />
+        <path class="ink-finger" d="M9 -5 L16.6 -7.6 M11.4 -1.4 L19.4 -1.8 M10.4 2.6 L17.4 5" />
+      </g>
+    )
+  }
   // Runecraft, and prayer's altar/scatter poses: bare-handed. A closed fist
   // at the grip so the arm reads as a limb rather than a stroke that stops
   // in mid-air (the same treatment InkwrightFigure gives its back arm).
@@ -672,6 +797,254 @@ function ChannelStream({ swinging }) {
       <circle class="ink-channel-mote ink-channel-mote--a" cx="110" cy="28" r="2.6" />
       <circle class="ink-channel-mote ink-channel-mote--b" cx="110" cy="28" r="2.1" />
       <circle class="ink-channel-mote ink-channel-mote--c" cx="110" cy="28" r="2.4" />
+    </g>
+  )
+}
+
+/** The trapper's trigger line, hand to stake, in STAGE space — one end is
+ * tied to the ground, so it cannot live in the tool's rotating local frame
+ * (the fishing tackle's own lesson, arrived at from the opposite direction:
+ * there the far end was free and the near end was the problem).
+ *
+ * It is a stiff, taut cord, so it does not sway: what it does is turn about
+ * the stake as the trapper hauls. The angle is measured rather than picked —
+ * the hand at (100,66) is 47.4 units from the stake at (143,86), the pull
+ * (inkArmSnare, -2deg to -14deg) moves it about 3.6 units, and 3.6/47.4 is
+ * 4.4 degrees. Retune the pull and this follows it. */
+function SnareLine({ swinging }) {
+  return (
+    <g class={`ink-snare-line${swinging ? ' is-working' : ''}`}>
+      <path class="ink-cord" d="M100 66 Q122 79 143 86" />
+    </g>
+  )
+}
+
+/** Spirit light leaving the summoner's palm for the charm on the plate.
+ * Three motes on staggered delays, exactly like the enchantment's channel and
+ * for the same reason — one dot going round again reads as a repeating dot,
+ * not as a stream. Its own component rather than ChannelStream's because the
+ * path is different at both ends: this one starts at a raised open hand
+ * (99,51) and lands on (134,58), not on magic's pedestal. */
+function SpiritStream({ swinging }) {
+  return (
+    <g class={`ink-spirit-stream${swinging ? ' is-working' : ''}`}>
+      {/* A thread of light under the motes: three dots alone read as bubbles,
+          the thread is what makes it a channel going somewhere. */}
+      <path class="ink-spirit-beam" d="M103 51 Q122 53 140 57" />
+      <circle class="ink-spirit-flow ink-spirit-flow--a" cx="103" cy="51" r="3" />
+      <circle class="ink-spirit-flow ink-spirit-flow--b" cx="103" cy="51" r="2.4" />
+      <circle class="ink-spirit-flow ink-spirit-flow--c" cx="103" cy="51" r="2.7" />
+    </g>
+  )
+}
+
+/** The familiar taking shape out of the charm — summoning's payoff, and the
+ * answer to the coverage proposal's open question 3. A creature silhouette
+ * rather than the product's ordinary icon, because the icon already pops
+ * (ink-yield) and the thing worth SHOWING here is that something was
+ * summoned; one generic spirit serves every creature, since what comes out of
+ * a pouch on the bench is a wisp, not the beast itself. */
+function Wisp() {
+  return (
+    <g class="ink-wisp">
+      <path class="ink-wisp-body" d="M134 53 Q134 43 142 43 Q150 43 150 53 Q150 61 142 62 Q134 61 134 53 Z" />
+      <path class="ink-wisp-ear" d="M135 46 L131 37 L140 43 Z" />
+      <path class="ink-wisp-ear" d="M149 46 L153 37 L144 43 Z" />
+      <path class="ink-wisp-tail" d="M142 62 Q136 71 141 79 Q145 85 139 91" />
+      <circle class="ink-wisp-eye" cx="138.4" cy="52" r="1.9" />
+      <circle class="ink-wisp-eye" cx="145.6" cy="52" r="1.9" />
+    </g>
+  )
+}
+
+/** What floats over the obelisk when the charm's own art hasn't resolved
+ * (chunk not loaded, or an unmapped id) — a drawstring pouch in the product's
+ * tint, rather than an empty rite. Magic's `Ingot` for the same reason. */
+function Pouch() {
+  return (
+    <g>
+      <path class="ink-res" d="M131 54 Q142 44 153 54 Q157 66 142 69 Q127 66 131 54 Z" />
+      <path class="ink-facet" d="M133 56 Q142 61 151 56" />
+    </g>
+  )
+}
+
+/** Three leaves at the sapling's tip. Without them a bent brown pole is a
+ * shepherd's crook and a straight one is a fence post — the leaves are the
+ * only thing saying the trap is powered by a living, springy tree. Drawn at
+ * whichever end is currently the tip: `flip` points them back down the bend
+ * for the armed pose, up for the sprung one. */
+function SaplingLeaves({ x, y, flip = false }) {
+  return (
+    <g class="ink-sapling-leaf" transform={`translate(${x} ${y})${flip ? ' scale(-1,1)' : ''}`}>
+      <path d="M0 0 Q5 -7 12 -5 Q7 2 0 0 Z" />
+      <path d="M0 0 Q2 -9 9 -11 Q8 -3 0 0 Z" />
+      <path d="M0 0 Q-2 -8 3 -13 Q6 -6 0 0 Z" />
+    </g>
+  )
+}
+
+/** Which quarry each snare prop puts on the trail, and where it stands.
+ *
+ * `scale` and `standX` are two ends of one equation with the creep distance
+ * in `.ink-quarry--<key>` (index.css): every quarry has to arrive at the
+ * noose at x=146 — muzzle, snout or feet, whichever is the part that reaches
+ * the bait — while its far end stays inside the 200-unit frame. Change one
+ * and re-derive the other two.
+ *
+ * `hoistScale` only exists for a quarry too long to hang at its standing
+ * size: the payoff hangs everything from one anchor (170,53), and the Grim
+ * Reaper's scythe would otherwise go through the floor. */
+const SNARE_QUARRIES = {
+  snareBeast:  { key: 'beast',  Art: QuarryBeast,     scale: 0.85, standX: 184 },
+  snareMark:   { key: 'mark',   Art: QuarryTraveller, scale: 1.12, standX: 172 },
+  snareCow:    { key: 'cow',    Art: QuarryCow,       scale: 0.8,  standX: 184 },
+  snareHerbi:  { key: 'herbi',  Art: QuarryHerbi,     scale: 0.8,  standX: 180 },
+  snareReaper: { key: 'reaper', Art: QuarryReaper,    scale: 1,    standX: 168, hoistScale: 0.82 },
+}
+
+/** Hunter's quarry, on four legs — head lowered to the bait, ears up, tail
+ * flicked. Drawn in its own local frame with the feet on y=0 and facing LEFT
+ * (the trap is downhill of it), so the two quarries can share one placement
+ * transform and one creep keyframe. Small on purpose: it is further down the
+ * trail than the trapper, and a beast drawn at the hero's own scale would
+ * read as standing beside him rather than being stalked. */
+function QuarryBeast() {
+  return (
+    <g class="ink-quarry-art">
+      <path class="ink-quarry-body" d="M-14 -21 Q-2 -26 10 -22 Q16 -20 15 -13 Q14 -7 7 -6 L-8 -7 Q-17 -11 -14 -21 Z" />
+      <path class="ink-quarry-body" d="M-12 -20 Q-20 -18 -24 -10 L-18 -6 Q-15 -13 -8 -15 Z" />
+      <path class="ink-quarry-body" d="M-26 -11 Q-31 -10 -30 -5 Q-29 -2 -24 -3 L-18 -5 L-19 -10 Z" />
+      <path class="ink-quarry-ear" d="M-15 -22 L-18 -29 L-10 -24 Z" />
+      <path class="ink-quarry-leg" d="M-8 -7 L-9 0 M-1 -6 L-1 0 M7 -7 L7 0 M13 -8 L14 0" />
+      <path class="ink-quarry-leg" d="M15 -19 Q20 -21 19 -26" />
+      <circle class="ink-quarry-eye" cx="-17" cy="-13" r="1.5" />
+    </g>
+  )
+}
+
+/** Hunt Cow's quarry, drawn as a cow rather than left to the generic beast:
+ * the patched hide, the horns and the lowered head grazing at the bait are
+ * the whole reason to hunt one. Same local frame as every other quarry (feet
+ * on y=0, facing LEFT), so it shares the placement table and the creep. */
+function QuarryCow() {
+  return (
+    <g class="ink-quarry-art">
+      {/* Legs as OUTLINED shapes, not strokes: a white leg stroked in white
+          against a white hide is invisible, which is what the first pass drew. */}
+      <path class="ink-cow-leg" d="M-10 -9 L-5 -9 L-5.5 -2 L-10.5 -2 Z" />
+      <path class="ink-cow-leg" d="M-2 -8 L3 -8 L3 -2 L-2 -2 Z" />
+      <path class="ink-cow-leg" d="M7 -9 L12 -9 L12 -2 L7 -2 Z" />
+      <path class="ink-cow-leg" d="M14 -10 L19 -10 L19.5 -2 L14.5 -2 Z" />
+      <path class="ink-hoof" d="M-11 -3.5 L-4.5 -3.5 L-4.5 0 L-11 0 Z" />
+      <path class="ink-hoof" d="M-2.5 -3.5 L3.5 -3.5 L3.5 0 L-2.5 0 Z" />
+      <path class="ink-hoof" d="M6.5 -3.5 L12.5 -3.5 L12.5 0 L6.5 0 Z" />
+      <path class="ink-hoof" d="M14 -3.5 L20 -3.5 L20 0 L14 0 Z" />
+      <path class="ink-cow-tail" d="M17 -25 Q22 -19 20 -10" />
+      <path class="ink-cow-tuft" d="M20 -11 Q23 -7 20 -3 Q17 -7 20 -11 Z" />
+      {/* Barrel body with a FLAT back. Drawn as a rounded blob it read as a
+          dog — the straight topline and the deep brisket are the cow. */}
+      <path class="ink-cow-hide" d="M-14 -26 L7 -27 Q17 -26 18 -17 Q18 -8 10 -7 L-11 -8 Q-17 -12 -14 -26 Z" />
+      <path class="ink-cow-patch" d="M-8 -26.4 Q0 -28 5 -24 Q3 -17 -5 -18 Q-10 -21 -8 -26.4 Z" />
+      <path class="ink-cow-patch" d="M9 -19 Q16 -19 16 -13 Q14 -9 9 -10 Q6 -14 9 -19 Z" />
+      <path class="ink-cow-udder" d="M2 -8 Q7 -8 7 -4 Q4 -2.5 1 -4 Z" />
+      {/* Head tucked DOWN and close, not reaching forward: a grazing cow's
+          muzzle is under its shoulder, and a stretched neck costs 10 units of
+          frame the 200-wide stage does not have. */}
+      <path class="ink-cow-hide" d="M-13 -25 Q-21 -22 -24 -14 L-16 -9 Q-14 -17 -7 -19 Z" />
+      <path class="ink-cow-hide" d="M-24 -19 Q-31 -18 -30.5 -8 Q-30 -3 -23 -4 L-16 -6 L-17 -17 Z" />
+      <path class="ink-cow-patch" d="M-24 -18 L-17 -17 L-18 -10 L-25 -11 Z" />
+      <path class="ink-muzzle" d="M-30 -13 Q-34 -12 -33.5 -6.5 Q-33 -3 -28 -3.5 L-25 -4.5 L-26 -12 Z" />
+      <circle class="ink-cow-nostril" cx="-30" cy="-7.5" r="1.1" />
+      {/* Horns and an ear. Without them a white head with a pink nose is a
+          pig; the horns are what name the animal from across the frame. */}
+      <path class="ink-cow-horn" d="M-26 -19.5 Q-33 -28 -27 -29 Q-24 -24 -23 -19.5 Z" />
+      <path class="ink-cow-horn" d="M-19 -20 Q-22 -28.5 -15 -28 Q-16 -24 -16 -20 Z" />
+      <path class="ink-cow-hide" d="M-24 -16 L-32 -19 L-24 -12 Z" />
+      <circle class="ink-quarry-eye" cx="-22" cy="-15" r="1.4" />
+    </g>
+  )
+}
+
+/** Hunt Herbi's quarry — a spiky green hedgehog. The mantle is drawn as ONE
+ * jagged outline rather than a dome with spikes laid on top, the same trick
+ * the tree's canopy uses: a scalloped silhouette reads as spines, a smooth
+ * one with lines on it reads as a striped rock. */
+function QuarryHerbi() {
+  return (
+    <g class="ink-quarry-art">
+      <path class="ink-herbi-foot" d="M-11 -4 L-6 -4 L-6 0 L-11 0 Z" />
+      <path class="ink-herbi-foot" d="M2 -4 L7 -4 L7 0 L2 0 Z" />
+      <path class="ink-herbi-foot" d="M12 -4 L17 -4 L17 0 L12 0 Z" />
+      {/* ONE closed body: spiky over the back, smooth under the belly. Drawn
+          as a separate body path with the spines laid on top, its own outline
+          showed all round the bottom and the animal read as a green dome
+          sitting on a white saucer. Tips sit on one ellipse and valleys on a
+          smaller one, so every spine points OUTWARD along the back's own
+          curve — a row of upright teeth on a flat base is a hedge. */}
+      <path class="ink-herbi-mantle" d="M-12.6 -6.2 L-18.2 -9.5 L-11.3 -10.0 L-15.3 -14.6 L-8.6 -13.2 L-10.6 -18.6 L-4.7 -15.6 L-4.5 -21.2 L-0.2 -16.8 L2.4 -22.0 L4.7 -16.7 L9.1 -21.0 L9.2 -15.4 L15.2 -18.3 L13.0 -12.9 L19.7 -14.1 L15.5 -9.6 L22.4 -9.0 Q24 -3 15 -1.8 L-11 -2.8 Q-17 -3.4 -12.6 -6.2 Z" />
+      <path class="ink-herbi-spine" d="M-8 -7 L-10.5 -11 M-2 -8 L-3.5 -13 M5 -8 L6.5 -13 M13 -8 L14.5 -12" />
+      {/* Snout, nose and eye, drawn on TOP of everything so the face always
+          wins the overlap — it is the half that says "animal". */}
+      <path class="ink-herbi-snout" d="M-27 -4.5 Q-24 -11 -15 -12.5 L-11 -4 Q-20 -2 -27 -4.5 Z" />
+      <circle class="ink-herbi-nose" cx="-24.5" cy="-5.8" r="2.2" />
+      <path class="ink-herbi-whisker" d="M-22 -9 L-28 -12 M-22 -7.5 L-29 -8" />
+      <circle class="ink-quarry-eye" cx="-14" cy="-10" r="1.8" />
+      <path class="ink-herbi-ear" d="M-12 -13 Q-14 -18 -8 -17.5 Q-7.5 -14.5 -8 -12 Z" />
+    </g>
+  )
+}
+
+/** Hunt Grim Reaper's quarry — a black cowl, a hollow where the face should
+ * be, and a scythe. Deliberately NOT the hooded traveller the merchants and
+ * the wizard share: the traveller is somebody walking a road, and a hooded
+ * figure carrying a scythe is a different thing entirely. Its own hoistScale
+ * exists because the scythe is longer than the figure. */
+function QuarryReaper() {
+  return (
+    <g class="ink-quarry-art">
+      {/* Robe and hood first; the scythe is drawn OVER them, because a haft
+          hidden behind the body is a blade floating above a hood — which is
+          what the first pass looked like, and it read as a hat. */}
+      <path class="ink-void-cloth" d="M-12 -2 L-9 -30 Q-1 -34 7 -30 L10 -2 L6 0 L2 -3 L-2 0 L-6 -3 L-9.5 0 Z" />
+      <path class="ink-void-fold" d="M-4 -29 L-6 -4 M3 -29 L4 -4" />
+      <path class="ink-void-cloth" d="M-9 -29 Q-13 -43 0 -43.5 Q13 -43 9 -29 Q4 -25 0 -25 Q-5 -25 -9 -29 Z" />
+      {/* A hollow, not a face. The two lights inside it are the only thing in
+          the cowl, which is the entire read. */}
+      <path class="ink-void-hollow" d="M-8 -32 Q-2 -37.5 4 -33.5 Q2 -26.5 -4 -28 Z" />
+      <circle class="ink-reaper-eye" cx="-4.4" cy="-32.4" r="1.5" />
+      <circle class="ink-reaper-eye" cx="0.6" cy="-33.4" r="1.5" />
+      {/* Scythe carried over the shoulder: the haft leans BACK from the hand
+          and the blade hooks forward off its top, up and to the rear of the
+          cowl. Drawn upright with the blade above the head instead, the
+          silhouette is a crescent sitting on a hood — which reads as a hat. */}
+      <path class="ink-scythe-haft" d="M5.5 -13 L20 -40 L23.5 -38 L9 -11.5 Z" />
+      <circle class="ink-bone-hand" cx="8" cy="-13.5" r="3.6" />
+      <path class="ink-scythe-blade" d="M22.5 -40.5 C15 -48 4 -49 -2 -43.5 C6 -44.5 14 -42.5 19.5 -37 Z" />
+      <path class="ink-scythe-edge" d="M21.5 -42 C13.5 -49.5 2.5 -50.5 -3.5 -44.5" />
+    </g>
+  )
+}
+
+/** Hunter's other quarry — a hooded traveller, for the five targets that are
+ * people rather than animals. Same local frame and the same creep, because a
+ * snare does not care what walks into it. */
+function QuarryTraveller() {
+  return (
+    <g class="ink-quarry-art">
+      {/* Boots and a hand's width of leg BELOW the hem. The first version ran
+          the robe to the ground and the whole quarry read as a canister — a
+          walking figure has to show that it walks. */}
+      <path class="ink-quarry-leg" d="M-5 -13 L-6 -4 M2 -13 L2 -4" />
+      <path class="ink-quarry-boot" d="M-6 0 L-11 0 L-11 -3.6 L-5 -3.6 Z" />
+      <path class="ink-quarry-boot" d="M4 0 L-1 0 L-1 -3.6 L5 -3.6 Z" />
+      {/* A robe that FLARES to its hem: straight sides read as a barrel. */}
+      <path class="ink-quarry-cloak" d="M-10 -12 L-7 -29 Q-1 -32 5 -29 L8 -12 Q-1 -9 -10 -12 Z" />
+      <path class="ink-quarry-cloak" d="M-8 -26 Q-13 -21 -11 -14 L-7 -15 Q-8 -20 -5 -25 Z" />
+      <path class="ink-quarry-hood" d="M-9 -29 Q-10 -39 0 -39.5 Q9 -39 8 -29 Q4 -26 0 -26 Q-5 -26 -9 -29 Z" />
+      {/* The face opening, on the LEFT — it is the only thing saying which
+          way the quarry is walking, and it is walking into the snare. */}
+      <path class="ink-quarry-face" d="M-8 -34.5 Q-3 -36.5 -1.5 -33 Q-3.5 -29 -8 -30.5 Z" />
     </g>
   )
 }
@@ -1305,6 +1678,251 @@ function Prop({ kind, broken = false, itemArt = null, swinging = true, built = 0
             <g class="ink-straw-fly ink-straw-fly--a"><path d="M146 62 L138 56" /></g>
             <g class="ink-straw-fly ink-straw-fly--b"><path d="M170 62 L178 56" /></g>
             <g class="ink-straw-fly ink-straw-fly--c"><path d="M158 52 L160 43" /></g>
+          </>
+        )}
+      </g>
+    )
+  }
+
+  // Tier D — hunter. A spring-pole snare set on a game trail: a sapling
+  // hauled down and pegged to a trigger stake, its noose laid open around a
+  // scatter of bait. The trap is armed ONCE and fires ONCE, which is why this
+  // is the only prop in this file that does not change between beats — what
+  // moves per beat is the quarry (creeping in and bolting) and the trapper's
+  // pull on the line. Everything is placed off the noose at (146,101): the
+  // stake, the tip cord, the trigger line's own pivot in stage space
+  // (SnareLine) and both quarries' creep distances are all measured to it.
+  if (SNARE_QUARRIES[kind]) {
+    const quarry = SNARE_QUARRIES[kind]
+    const Art = quarry.Art
+    if (!broken) {
+      return (
+        <g>
+          {/* Pole FIRST, quarry SECOND, trap LAST. That order is the depth of
+              the scene: the sapling is the far side of the trail, the animal
+              is walking down it, and the noose is lying on the near ground in
+              front of both. Drawn the other way round the pole runs straight
+              through the quarry's ribs, which is what the first pass did. */}
+          <path class="ink-sapling" d="M180 108 C178 88 180 70 168 62 C160 56 152 55 144 56 L144.5 60 C152 59.4 158 60.6 164 66 C173 74 184 90 187 108 Z" />
+          <SaplingLeaves x={144} y={58} flip />
+          <path class="ink-cord" d="M144.5 58 L143.5 87" />
+          <g class={`ink-quarry ink-quarry--${quarry.key}${swinging ? ' is-working' : ''}`}>
+            {/* The placement lives on a NESTED group: this element carries the
+                creep animation, and a static transform attribute on the same
+                element is silently discarded the moment that animation starts. */}
+            <g transform={`translate(${quarry.standX},108) scale(${quarry.scale})`}>
+              <Art />
+            </g>
+          </g>
+          <path class="ink-stake" d="M141 106 L141 88 L146 88 L146 106 Z" />
+          <path class="ink-cord" d="M138 85 L143.5 90 L149 85" />
+          <ellipse class="ink-noose" cx="146" cy="101" rx="19" ry="5.4" />
+          <path class="ink-cord" d="M146 95.8 Q145 92 143.5 88" />
+          <g class="ink-bait">
+            <circle cx="140" cy="101" r="1.5" />
+            <circle cx="147" cy="103" r="1.4" />
+            <circle cx="152" cy="100" r="1.3" />
+            <circle cx="144" cy="99" r="1.2" />
+          </g>
+        </g>
+      )
+    }
+    return (
+      <g>
+        {/* Sprung: the pole whipped upright, the stake kicked out from under
+            it and lying on the ground, and the catch swinging by its ankles.
+            The hoist origin is well LEFT of the pole because a 180-degree
+            rotation flips the quarry's own local +x — hung at the tip it
+            swung straight through the trunk. */}
+        <path class="ink-sapling" d="M181 108 C180 84 178 60 175 38 L181.5 37 C184.5 62 187 86 187.5 108 Z" />
+        <SaplingLeaves x={178} y={36} />
+        <path class="ink-stake ink-stake--kicked" d="M138 102 L156 99 L156.6 103.4 L138.6 106.4 Z" />
+        <g class="ink-hoist">
+          <path class="ink-cord" d="M178 39 L170 53" />
+          {/* scale(1,-1), not rotate(180). A half turn also flips the quarry's
+              local +x, which threw its whole body out to the RIGHT and
+              straight through the pole; a vertical flip hangs it head-down
+              where it actually is, with the caught legs still at the rope. */}
+          <g transform={`translate(170,53) scale(${quarry.hoistScale || quarry.scale},${-(quarry.hoistScale || quarry.scale)})`}>
+            <Art />
+          </g>
+        </g>
+        <g class="ink-leaf-fly ink-leaf-fly--a"><path d="M148 96 L138 89" /></g>
+        <g class="ink-leaf-fly ink-leaf-fly--b"><path d="M160 98 L169 91" /></g>
+        <g class="ink-leaf-fly ink-leaf-fly--c"><path d="M153 92 L154 82" /></g>
+      </g>
+    )
+  }
+
+  // Tier C — thieving. The mark is the player's OWN rig, translated 52 units
+  // right and recoloured through a scoped custom-property override
+  // (.ink-mark, index.css) — the trick combat already proved for its enemy,
+  // and the reason this tier costs no second character. They face the SAME
+  // way the player does, which is what makes them a back turned rather than a
+  // confrontation; the mirror combat uses would have them staring at the
+  // thief.
+  //
+  // The purse hangs at (112,88) — on the circle of radius 39.2 the reaching
+  // hand actually sweeps (see Tool's `pickpocket`), at the back corner of the
+  // mark's belt and just under their own hanging fist. Move it and the tool's
+  // reach has to be re-derived with it.
+  if (kind === 'mark' || kind === 'markGuard') {
+    const guard = kind === 'markGuard'
+    return (
+      <g>
+        <g class={`ink-mark${guard ? ' ink-mark--guard' : ''}${swinging && !broken ? ' is-working' : ''}`}>
+          <g transform="translate(58,0)">
+            <InkwrightFigure>
+              {/* The mark's own front arm, hanging at their side. Supplied
+                  rather than omitted: InkwrightFigure draws only the back
+                  arm, so a mark without this reads as one-armed. */}
+              <g>
+                <Limb d="M84 58 L94 66 L97 76" w={11} />
+                <circle class="ink-skin-fill" cx="97" cy="78" r="4.4" />
+              </g>
+            </InkwrightFigure>
+            {guard && (
+              <g>
+                {/* A domed helm with a nasal bar — the one addition that
+                    turns a townsman into somebody it is dangerous to rob,
+                    without a second body to draw. */}
+                <path class="ink-helm" d="M62 33 Q61 15 77 12 Q93 15 92 33 Q85 29 77 29 Q68 29 62 33 Z" />
+                <path class="ink-helm-rim" d="M60 29 L94 29 L94 34 L60 34 Z" />
+                <path class="ink-helm" d="M85 33 L89 33 L89 44 L85 44 Z" />
+                {/* Spear, planted, with the mark's own fist closed on it. */}
+                <path class="ink-spear-shaft" d="M95 34 L99 34 L100 108 L96 108 Z" />
+                <path class="ink-spear-head" d="M95 34 L95 20 Q97 10 99 20 L99 34 Z" />
+              </g>
+            )}
+          </g>
+        </g>
+        {/* Belt strap. It stays behind on the payoff (cut, with nothing on
+            the end of it) — a purse that vanishes leaves nothing to say a
+            theft happened at all. */}
+        <path class="ink-purse-strap" d="M119.5 80 L113 89" />
+        {!broken && (
+          <g>
+            <path class="ink-purse" d="M104 89 Q112 83 120 89 Q122 97 112 99.5 Q102 97 104 89 Z" />
+            <path class="ink-purse-tie" d="M105 90.5 Q112 94 119 90.5" />
+          </g>
+        )}
+        {broken && (
+          <>
+            <g class="ink-purse-lift">
+              <path class="ink-purse" d="M104 89 Q112 83 120 89 Q122 97 112 99.5 Q102 97 104 89 Z" />
+              <path class="ink-purse-tie" d="M105 90.5 Q112 94 119 90.5" />
+            </g>
+            <g class="ink-coin ink-coin--a ink-coin--steal"><ellipse cx="106" cy="92" rx="3.6" ry="2.8" /><path d="M103.6 92 L108.4 92" /></g>
+            <g class="ink-coin ink-coin--b ink-coin--steal"><ellipse cx="115" cy="94" rx="3.4" ry="2.6" /><path d="M112.6 94 L117.4 94" /></g>
+          </>
+        )}
+      </g>
+    )
+  }
+
+  // Thieving's one target that is furniture. Its cash box sits UNDER the near
+  // end of the counter, which is both where a trader would actually keep it
+  // and the one spot on the reaching hand's arc (112,88) — a box on the
+  // counter top would need a second arm angle for one prop.
+  if (kind === 'stall') {
+    return (
+      <g>
+        <path class="ink-stall-post" d="M106 108 L106 44 L111 44 L111 108 Z" />
+        <path class="ink-stall-post" d="M184 108 L184 44 L189 44 L189 108 Z" />
+        <path class="ink-stall-awning" d="M98 36 L196 36 L192 50 L102 50 Z" />
+        <path class="ink-stall-stripe" d="M120 36 L116 50 M140 36 L136 50 M160 36 L156 50 M180 36 L176 50" />
+        <path class="ink-stall-valance" d="M102 50 Q108 58 114 50 Q120 58 126 50 Q132 58 138 50 Q144 58 150 50 Q156 58 162 50 Q168 58 174 50 Q180 58 186 50 Q189 54 192 50 L192 46 L102 46 Z" />
+        <path class="ink-stall-counter" d="M100 72 L194 72 L194 79 L100 79 Z" />
+        {/* The apron board stops short of the near bay, or it hides the box
+            the whole animation is aimed at. */}
+        <path class="ink-stall-apron" d="M128 79 L190 79 L190 85 L128 85 Z" />
+        <g class="ink-cake">
+          <path d="M132 72 L134 63 L146 63 L148 72 Z" />
+          <path class="ink-cake-ice" d="M134 63 Q140 58 146 63 Z" />
+        </g>
+        <g class="ink-cake">
+          <path d="M152 72 L154 64 L164 64 L166 72 Z" />
+          <path class="ink-cake-ice" d="M154 64 Q159 59 164 64 Z" />
+        </g>
+        <g class="ink-cake">
+          <path d="M170 72 L172 65 L181 65 L183 72 Z" />
+          <path class="ink-cake-ice" d="M172 65 Q176.5 61 181 65 Z" />
+        </g>
+        <path class="ink-box-lid" d="M103 84 L127 84 L131 73 L107 73 Z" />
+        <path class="ink-box" d="M104 104 L104 84 L126 84 L126 104 Z" />
+        <path class="ink-box-band" d="M104 94 L126 94 M114 84 L114 104" />
+        {!broken && (
+          <g class="ink-coin-pile">
+            <ellipse cx="110" cy="90" rx="4.2" ry="2.8" />
+            <ellipse cx="119" cy="91" rx="4.4" ry="2.9" />
+            <ellipse cx="114" cy="86" rx="4.2" ry="2.8" />
+          </g>
+        )}
+        {broken && (
+          <>
+            <g class="ink-coin-pile">
+              <ellipse cx="119" cy="91" rx="4.4" ry="2.9" />
+            </g>
+            <g class="ink-purse-lift">
+              <g class="ink-coin-pile">
+                <ellipse cx="112" cy="88" rx="4.4" ry="2.9" />
+                <path d="M109.6 88 L114.4 88" />
+              </g>
+            </g>
+          </>
+        )}
+      </g>
+    )
+  }
+
+  // Tier F — summoning. A standing obelisk with a lit crystal at its cap, a
+  // rune plate scored into the turf in front of it, and the charm being
+  // infused floating over the plate. The charm is the item's OWN art (the
+  // same path magic's pedestal and fishing's species use) because that is the
+  // only thing telling one pouch craft from another — every one of them is
+  // the same figure making the same push.
+  if (kind === 'obelisk') {
+    return (
+      <g>
+        <g class={`ink-spirit-circle${swinging ? ' is-working' : ''}`}>
+          <ellipse class="ink-spirit-ring" cx="142" cy="102" rx="30" ry="8" />
+          <ellipse class="ink-spirit-ring" cx="142" cy="102" rx="22" ry="6" />
+          <path class="ink-spirit-glyph" d="M116 102 L120 99 M142 94 L142 98 M168 102 L164 99 M129 106 L132 103 M155 106 L152 103" />
+        </g>
+        <path class="ink-obelisk-base" d="M158 108 L160 101 L196 101 L198 108 Z" />
+        <path class="ink-obelisk-base" d="M163 101 L164 96 L192 96 L193 101 Z" />
+        {/* Tall and narrow. Drawn wider and shorter it read as a lighthouse —
+            a standing stone is defined by being much taller than it is broad. */}
+        <path class="ink-obelisk-shaft" d="M166 96 L173 26 L184 26 L190 96 Z" />
+        <path class="ink-obelisk-band" d="M168 78 L188 78 M170 56 L186 56" />
+        {/* A sigil, not a character: two chevrons over a slit. Drawn as a bar,
+            a stem and a second bar it read as a legible written glyph, which
+            is a different and much odder thing for a standing stone to have. */}
+        <path class="ink-obelisk-rune" d="M173 60 L178 65 L183 60 M173 68 L178 63 L183 68 M178 70 L178 74" />
+        <path class="ink-obelisk-cap" d="M172.5 26 L184.5 26 L182 20 L175 20 Z" />
+        {/* The crystal is held ABOVE the cap, not set into it: a stone with a
+            gem in it is a monument, a stone holding one up is a machine that
+            is switched on. */}
+        <path class={`ink-spirit-crystal${swinging ? ' is-working' : ''}`} d="M178 2 L185 11 L178 19 L171 11 Z" />
+        {!broken && (
+          <g>
+            <g class={`ink-subject ink-subject--rite${swinging ? ' is-floating' : ''}`}>
+              {itemArt
+                ? <ItemArt art={itemArt} cx={142} cy={58} width={28} className="ink-subject-art" />
+                : <Pouch />}
+            </g>
+            {/* The charge arriving on every push, not only on the completed
+                action — the same correction magic's own zap needed. */}
+            <circle class={`ink-charge${swinging ? ' is-working' : ''}`} cx="142" cy="58" r="17" />
+          </g>
+        )}
+        {broken && (
+          <>
+            <circle class="ink-flash ink-flash--spirit" cx="142" cy="58" r="25" />
+            <Wisp />
+            <g class="ink-spirit-mote ink-spirit-mote--a"><circle cx="134" cy="62" r="2.4" /></g>
+            <g class="ink-spirit-mote ink-spirit-mote--b"><circle cx="142" cy="58" r="2.7" /></g>
+            <g class="ink-spirit-mote ink-spirit-mote--c"><circle cx="150" cy="62" r="2.2" /></g>
           </>
         )}
       </g>

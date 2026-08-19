@@ -4,13 +4,15 @@ import GameIcon from '../components/GameIcon.jsx'
 import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
+import InkwrightStage from '../components/InkwrightStage.jsx'
+import { inkwrightPlan } from '../utils/inkwright.js'
 import SectionHeader from '../components/SectionHeader.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { formatNumber } from '../utils/helpers.js'
 import { formatActionDuration } from '../utils/formatters.js'
-import { SUMMONING_CREATURES, getPouchRecipe, getScrollRecipe, SCROLLS_PER_POUCH, CRAFT_ACTION_TICKS, craftableTimes } from '../engine/summoning.js'
+import { SUMMONING_CREATURES, getPouchRecipe, getScrollRecipe, SCROLLS_PER_POUCH, CRAFT_ACTION_TICKS, craftableTimes, creatureForPouch, creatureForScroll } from '../engine/summoning.js'
 import itemsData from '../data/items.json'
 
 function itemName(id) {
@@ -67,9 +69,29 @@ export default function SummoningScreen({ onBack }) {
     const actionsPerHr = ratePerHour(session.actions, session.startedAt)
     const xpPerHr = ratePerHour(session.xp, session.startedAt)
     const productItem = itemsData[activeAction.product]
+    // The summoner at the obelisk. What floats over the rune plate is always
+    // the CREATURE'S POUCH, drawn as its own real art: making one, it is the
+    // thing taking shape; infusing scrolls, it is the thing being spent. That
+    // is what tells one infusion from another — the figure makes the same
+    // push every time — and the charms deliberately are not used for it,
+    // because none of them has bespoke art and every one resolves to the same
+    // generic glyph disc. Built here rather than in SkillActivePanel because
+    // that panel is core and these modules are game-chunk only (§12).
+    const riteCreature = creatureForPouch(activeAction.product) || creatureForScroll(activeAction.product)
+    const inkPlan = inkwrightPlan('summoning', totalTicks, activeAction.id)
+    const inkStage = inkPlan ? (
+      <InkwrightStage
+        plan={inkPlan}
+        product={productItem}
+        subject={riteCreature ? itemsData[riteCreature.pouch] : productItem}
+        yieldToken={session.actions || 0}
+        label={`${activeAction.name} in progress`}
+      />
+    ) : null
     return (
       <SkillActivePanel
         skill="summoning"
+        stage={inkStage}
         icon={productItem ? <GameIcon item={productItem} size={50} /> : undefined}
         title={activeAction.name}
         progress={progress}

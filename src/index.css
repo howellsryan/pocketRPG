@@ -132,6 +132,38 @@
      nature (--ink-leaf-light). */
   --ink-arcane: #7d5bd6;
   --ink-arcane-light: #b79bf0;
+  /* Spirit light — summoning's own colour, and the only thing separating an
+     infusion from an enchantment at a glance (both are a figure pouring light
+     into a floating object). Teal rather than a second purple for exactly
+     that reason. */
+  --ink-spirit: #2f8f8a;
+  --ink-spirit-light: #7fe3d6;
+  /* Hemp cord — a trapper's line, noose and coil. Its own tone rather than
+     --ink-haft: rope and a tool handle are both "brown wood" at a glance, and
+     a snare drawn in the haft colour reads as a stick lying on the ground. */
+  --ink-rope: #b79a6a;
+  /* Hunter's quarry. Warmer and lighter than --ink-bark so a beast standing
+     on a forest floor is not the forest floor. */
+  --ink-fur: #7a5c3c;
+  --ink-fur-shade: #4d3a24;
+  /* A cow's patches and the soft parts (muzzle, udder). The hide itself is
+     --ink-bone, which is already the palest tone in the set; a patched cow
+     only reads if the patch is close to black against it. */
+  --ink-cow-patch: #2e2721;
+  --ink-muzzle: #d29a94;
+  /* The Grim Reaper's cloth. Darker than --ink-boot, which is the darkest
+     thing the hero wears — the point of this one is that it reads as an
+     absence rather than as a very dark garment. */
+  --ink-void: #14120e;
+  /* The thieving mark's clothes. The mark IS the player's own rig (see
+     .ink-mark below) with these two swapped in for --ink-leather; a cold
+     blue-grey against the hero's brown leather is what stops two identical
+     bodies reading as one person seen twice. */
+  --ink-mark-cloth: #4a5a6b;
+  --ink-mark-cloth-shade: #2f3b47;
+  /* A market awning. Red-and-white striped canvas is the one thing that says
+     "stall" before any of the goods on it are legible. */
+  --ink-awning: #a8433a;
 
   --font-display: 'Cinzel', serif;
   --font-body: 'Nunito', sans-serif;
@@ -1249,6 +1281,16 @@ html, body, #app {
 .ink-scene--sanctum .ink-sanctum-shelf   { fill: var(--ink-stone-shade); opacity: 0.5; }
 .ink-scene--shrine .ink-shrine-stone { fill: var(--ink-stone-shade); opacity: 0.55; }
 .ink-scene--shrine .ink-shrine-glow  { fill: var(--tier-gold); opacity: 0.12; }
+.ink-scene--wild .ink-wild-trunk      { fill: var(--ink-bark-shade); opacity: 0.4; }
+.ink-scene--wild .ink-bracken         { fill: none; stroke: var(--ink-leaf); stroke-width: 1.6; stroke-linecap: round; opacity: 0.6; }
+.ink-scene--street .ink-street-wall       { fill: var(--ink-stone-shade); opacity: 0.3; }
+.ink-scene--street .ink-street-window     { fill: var(--ink-bark-shade); opacity: 0.5; }
+.ink-scene--street .ink-street-shutter    { fill: none; stroke: var(--ink-haft); stroke-width: 1.2; opacity: 0.55; }
+.ink-scene--street .ink-street-sign       { fill: none; stroke: var(--ink-rock-shade); stroke-width: 1.6; opacity: 0.6; }
+.ink-scene--street .ink-street-sign-board { fill: var(--ink-haft-shade); opacity: 0.5; }
+.ink-scene--street .ink-street-cobble     { fill: none; stroke: var(--ink-stone-shade); stroke-width: 1.4; stroke-linecap: round; opacity: 0.4; }
+.ink-scene--glade .ink-glade-ridge    { fill: var(--ink-leaf); opacity: 0.28; }
+.ink-scene--glade .ink-glade-star     { fill: var(--ink-spirit-light); opacity: 0.55; }
 
 .ink-trunk       { fill: var(--ink-bark); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; }
 .ink-canopy      { fill: var(--ink-leaf); stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; }
@@ -1359,6 +1401,131 @@ html, body, #app {
 .ink-straw-fly    { fill: none; stroke: var(--ink-brass); stroke-width: 1.4; stroke-linecap: round; opacity: 0; transform-box: view-box; }
 .ink-hex-sigil    { fill: none; stroke: var(--ink-arcane-light); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transform-box: view-box; transform-origin: 158px 66px; }
 
+/* ── Tier D — hunter. A spring-pole snare on a game trail. ────────────── */
+.ink-sapling      { fill: var(--ink-bark); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-sapling-leaf { fill: var(--ink-leaf); stroke: var(--text-strong); stroke-width: 1.4; stroke-linejoin: round; }
+.ink-stake        { fill: var(--ink-haft); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-cord         { fill: none; stroke: var(--ink-rope); stroke-width: 1.6; stroke-linecap: round; }
+.ink-cord-coil    { fill: none; stroke: var(--ink-rope); stroke-width: 1.5; }
+.ink-noose        { fill: none; stroke: var(--ink-rope); stroke-width: 1.9; }
+.ink-bait circle  { fill: var(--ink-brass); stroke: var(--text-strong); stroke-width: 0.7; }
+.ink-quarry-body  { fill: var(--ink-fur); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-quarry-ear   { fill: var(--ink-fur-shade); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-quarry-leg   { fill: none; stroke: var(--ink-fur-shade); stroke-width: 2.6; stroke-linecap: round; }
+.ink-quarry-eye   { fill: var(--text-strong); }
+.ink-quarry-cloak { fill: var(--ink-mark-cloth); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+/* Hunt Cow's own quarry. */
+.ink-cow-hide     { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-cow-patch    { fill: var(--ink-cow-patch); }
+.ink-cow-leg      { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-cow-tail     { fill: none; stroke: var(--ink-bone); stroke-width: 2.6; stroke-linecap: round; }
+.ink-cow-udder    { fill: var(--ink-muzzle); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+.ink-cow-horn     { fill: var(--ink-bone-shade); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+.ink-cow-tuft     { fill: var(--ink-cow-patch); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+.ink-cow-nostril  { fill: var(--text-strong); }
+.ink-hoof         { fill: var(--ink-cow-patch); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+.ink-muzzle       { fill: var(--ink-muzzle); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+/* Hunt Herbi's — one jagged mantle, not a dome with spines drawn on it. */
+/* The animal is GREEN and the pale is only its face: body in leaf, spines a
+   shade lighter over it, snout in bone. Built with a bone-coloured body it
+   read as a white blob with a green patch on its back. */
+.ink-herbi-mantle { fill: var(--ink-leaf); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-herbi-spine  { fill: none; stroke: var(--ink-leaf); stroke-width: 1.4; stroke-linecap: round; }
+.ink-herbi-snout  { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-herbi-nose   { fill: var(--text-strong); }
+.ink-herbi-whisker{ fill: none; stroke: var(--text-strong); stroke-width: 1; stroke-linecap: round; opacity: 0.7; }
+.ink-herbi-ear    { fill: var(--ink-bone-shade); stroke: var(--text-strong); stroke-width: 1.4; stroke-linejoin: round; }
+.ink-herbi-foot   { fill: var(--ink-leaf); stroke: var(--text-strong); stroke-width: 1.2; stroke-linejoin: round; }
+/* Hunt Grim Reaper's — cloth that reads as an absence, and a scythe. */
+.ink-void-cloth   { fill: var(--ink-void); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-void-fold    { fill: none; stroke: var(--ink-rock-shade); stroke-width: 1.2; opacity: 0.8; }
+.ink-void-hollow  { fill: var(--ink-void); stroke: none; }
+.ink-reaper-eye   { fill: var(--tier-jewel-red); }
+.ink-bone-hand    { fill: var(--ink-bone); stroke: var(--text-strong); stroke-width: 1.4; }
+.ink-scythe-haft  { fill: var(--ink-haft); stroke: var(--text-strong); stroke-width: 1.4; stroke-linejoin: round; }
+.ink-scythe-blade { fill: var(--tier-steel); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-scythe-edge  { fill: none; stroke: #eef2f4; stroke-width: 1.3; stroke-linecap: round; opacity: 0.85; }
+.ink-quarry-hood  { fill: var(--ink-mark-cloth-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-quarry-face  { fill: var(--ink-skin-shade); }
+.ink-quarry-boot  { fill: var(--ink-boot); stroke: var(--text-strong); stroke-width: 1.4; stroke-linejoin: round; }
+/* How far the quarry creeps in per beat, per quarry — one keyframe, two
+   distances, because the beast is aiming its MUZZLE at the bait and the
+   traveller is walking their FEET into the loop. Both land on the noose at
+   x=146; change that and change these. */
+.ink-quarry         { transform-box: view-box; --ink-creep: -12px; }
+.ink-quarry--mark   { --ink-creep: -16px; }
+.ink-quarry--cow    { --ink-creep: -8px; }
+.ink-quarry--herbi  { --ink-creep: -12px; }
+.ink-quarry--reaper { --ink-creep: -22px; }
+.ink-hoist          { transform-box: view-box; transform-origin: 178px 39px; }
+/* Pinned to the leaves' own patch of ground: left at the view-box default
+   these rotate about the canvas centre, which flings a leaf halfway up the
+   frame instead of spinning it where it fell. Same rule .ink-shard,
+   .ink-chip and .ink-spark each follow. */
+.ink-leaf-fly       { fill: none; stroke: var(--ink-leaf); stroke-width: 1.8; stroke-linecap: round; opacity: 0; transform-box: view-box; transform-origin: 152px 92px; }
+/* The trigger line turns about the STAKE, never about the hand: the far end
+   is tied to the ground. */
+.ink-snare-line     { transform-box: view-box; transform-origin: 143px 86px; }
+
+/* ── Tier C — thieving. The mark is the hero's own rig, recoloured. ───── */
+/* This is the whole mechanism, and it is three lines: InkwrightFigure paints
+   from var(--ink-leather)/var(--ink-leather-shade), and custom properties
+   inherit, so re-pointing them on a wrapper dresses the same body in
+   different clothes. Combat gives its enemy a coloured aura for the same
+   reason and at the same price — no second character. */
+.ink-mark           { transform-box: view-box; transform-origin: 134px 108px; --ink-leather: var(--ink-mark-cloth); --ink-leather-shade: var(--ink-mark-cloth-shade); }
+.ink-mark--guard    { --ink-leather: var(--tier-iron); --ink-leather-shade: var(--ink-rock-shade); }
+.ink-helm           { fill: var(--tier-steel); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-helm-rim       { fill: var(--tier-iron); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-spear-shaft    { fill: var(--ink-haft); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-spear-head     { fill: var(--tier-steel); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+/* The purse is drawn OUTSIDE .ink-mark, so it keeps the root leather tone —
+   a stolen purse the same colour as the coat it came off is invisible. */
+.ink-purse          { fill: var(--ink-leather); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-purse-tie      { fill: none; stroke: var(--ink-brass); stroke-width: 1.4; stroke-linecap: round; }
+.ink-purse-strap    { fill: none; stroke: var(--ink-leather-shade); stroke-width: 2; stroke-linecap: round; }
+.ink-purse-lift     { opacity: 0; transform-box: view-box; transform-origin: 112px 92px; }
+/* Two class selectors, because the base .ink-coin rule (magic's, further down
+   this file) also sets a transform-origin and would otherwise win on source
+   order — which threw the stolen coins up at the mark's collar. */
+.ink-coin.ink-coin--steal { transform-origin: 112px 92px; }
+.ink-finger         { fill: none; stroke: var(--ink-skin-shade); stroke-width: 1.5; stroke-linecap: round; }
+.ink-stall-post     { fill: var(--ink-haft); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-stall-counter  { fill: var(--ink-haft-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-stall-apron    { fill: var(--ink-bark-shade); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-stall-awning   { fill: var(--ink-awning); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-stall-stripe   { fill: none; stroke: var(--ink-bone); stroke-width: 4.4; opacity: 0.85; }
+.ink-stall-valance  { fill: var(--ink-awning); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-cake path      { fill: var(--ink-haft); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-cake .ink-cake-ice { fill: var(--ink-bone); }
+.ink-box            { fill: var(--ink-bark-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-box-lid        { fill: var(--ink-bark); stroke: var(--text-strong); stroke-width: 1.8; stroke-linejoin: round; }
+.ink-box-band       { fill: none; stroke: var(--ink-brass); stroke-width: 1.6; }
+.ink-coin-pile ellipse { fill: var(--tier-gold); stroke: var(--text-strong); stroke-width: 1.2; }
+.ink-coin-pile path    { fill: none; stroke: var(--ink-brass-shade); stroke-width: 1; }
+
+/* ── Tier F — summoning. An obelisk, a rune plate and a familiar. ─────── */
+.ink-obelisk-base   { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-obelisk-shaft  { fill: var(--ink-stone); stroke: var(--text-strong); stroke-width: 2.2; stroke-linejoin: round; }
+.ink-obelisk-cap    { fill: var(--ink-stone-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-obelisk-band   { fill: none; stroke: var(--ink-stone-shade); stroke-width: 1.8; }
+.ink-obelisk-rune   { fill: none; stroke: var(--ink-spirit-light); stroke-width: 1.6; stroke-linecap: round; opacity: 0.75; }
+.ink-spirit-crystal { fill: var(--ink-spirit); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; opacity: 0.8; }
+.ink-spirit-ring    { fill: none; stroke: var(--ink-spirit-light); stroke-width: 1.6; opacity: 0.5; }
+.ink-spirit-glyph   { fill: none; stroke: var(--ink-spirit-light); stroke-width: 1.6; stroke-linecap: round; opacity: 0.7; }
+.ink-spirit-circle  { transform-box: view-box; transform-origin: 142px 102px; }
+.ink-subject--rite  { transform-origin: 142px 58px; }
+.ink-charge         { fill: none; stroke: var(--ink-spirit-light); stroke-width: 2; opacity: 0; transform-box: view-box; transform-origin: 142px 58px; }
+.ink-flash--spirit  { --ink-spell: var(--ink-spirit-light); transform-origin: 142px 58px; }
+.ink-spirit-mote    { fill: var(--ink-spirit-light); opacity: 0; transform-box: view-box; }
+.ink-spirit-flow    { fill: var(--ink-spirit-light); opacity: 0; transform-box: view-box; transform-origin: 103px 51px; }
+.ink-spirit-beam    { fill: none; stroke: var(--ink-spirit-light); stroke-width: 2.2; stroke-linecap: round; opacity: 0.28; }
+.ink-wisp           { opacity: 0; transform-box: view-box; transform-origin: 142px 60px; }
+.ink-wisp-body      { fill: var(--ink-spirit); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
+.ink-wisp-ear       { fill: var(--ink-spirit); stroke: var(--text-strong); stroke-width: 1.6; stroke-linejoin: round; }
+.ink-wisp-tail      { fill: none; stroke: var(--ink-spirit-light); stroke-width: 2.4; stroke-linecap: round; }
+.ink-wisp-eye       { fill: var(--text-strong); }
+
 .ink-log-face { fill: var(--ink-bark); stroke: var(--text-strong); stroke-width: 2.2; }
 .ink-log-ring { fill: none; stroke: var(--ink-haft); stroke-width: 1.3; opacity: 0.85; }
 .ink-log-side { fill: var(--ink-bark-shade); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; }
@@ -1428,6 +1595,23 @@ html, body, #app {
   opacity: 0;
   pointer-events: none;
 }
+/* Thieving is the one motion whose prop is a PERSON, and the shared position
+   above drops the popped loot squarely on the mark's head and shoulder — the
+   coins reading as appearing on the victim rather than being taken off them.
+   Moved to the thief's own side, which is also where the loot actually went. */
+.ink-stage--pickpocket .ink-yield { left: 20%; top: 30%; }
+
+/* Rest poses for the three motions whose arm is nowhere near 0deg. Every
+   animation below overrides these while it plays; what they are for is the
+   moment it is NOT playing — with prefers-reduced-motion: reduce the whole
+   keyframe block is gated off, and an unposed pickpocket leaves the thief's
+   reaching hand inside the mark's ribs rather than at their own hip. A CSS
+   `transform` property and an `animation` on the same element compose fine
+   (unlike a static SVG transform ATTRIBUTE, which the animation discards). */
+.ink-fig--snare .ink-arm       { transform: rotate(-2deg); }
+.ink-fig--pickpocket .ink-arm  { transform: rotate(62deg); }
+.ink-fig--infuse .ink-arm      { transform: rotate(-42deg); }
+.ink-fig--infuse .ink-arm-back { transform: rotate(-12deg); }
 
 /* Motion. The arm carries the strike; the body carries the recoil. Rotation is
    about the shoulder in the SVG's own coordinates, so the tool stays in hand.
@@ -2498,6 +2682,220 @@ html, body, #app {
   }
   .ink-payoff--enchant { animation: inkPayoffEnchant var(--ink-payoff) ease-out; }
   .ink-payoff--enchant .ink-flash { animation: inkFlashBurst var(--ink-payoff) ease-out; }
+
+  /* ═══ TIER D — HUNTER. The only motion in this file that is a WAIT.
+     A snare is armed once and fires once, so the beat cannot be the trap: it
+     is one near-miss. The quarry noses the bait at 55%, the trapper hauls the
+     line at 62%, the quarry bolts at 74% — and because the strike loop is
+     phase-locked to the action (it restarts on every yield and the strikes
+     divide the cycle exactly), the LAST haul of the action lands on the frame
+     the payoff fires. Every earlier one is a miss, which is what hunting is. ═══ */
+  @keyframes inkArmSnare {
+    0%   { transform: rotate(-2deg); }
+    45%  { transform: rotate(0deg); }
+    62%  { transform: rotate(-14deg); }
+    74%  { transform: rotate(-9deg); }
+    100% { transform: rotate(-2deg); }
+  }
+  @keyframes inkArmBackSnare {
+    0%, 45% { transform: rotate(0deg); }
+    62%     { transform: rotate(-9deg); }
+    74%     { transform: rotate(-5deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  @keyframes inkHeadSnare {
+    0%   { transform: rotate(2deg); }
+    45%  { transform: rotate(5deg); }
+    62%  { transform: rotate(-1deg); }
+    100% { transform: rotate(2deg); }
+  }
+  @keyframes inkBodySnare {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    45%  { transform: translate(0.8px,0) rotate(0.8deg); }
+    62%  { transform: translate(-2.4px,-0.6px) rotate(-2.6deg); }
+    74%  { transform: translate(-1px,0) rotate(-1deg); }
+    100% { transform: translate(0,0) rotate(0deg); }
+  }
+  /* The line's own share of that haul, as an angle about the stake rather
+     than a translate: 3.6 units of hand travel over a 47.4-unit cord is 4.4
+     degrees (SnareLine in InkwrightStage.jsx has the arithmetic). Anything
+     bigger detaches the far end from a stake driven into the ground. */
+  @keyframes inkSnareHaul {
+    0%, 45% { transform: rotate(0deg); }
+    62%     { transform: rotate(4.4deg); }
+    74%     { transform: rotate(2.8deg); }
+    100%    { transform: rotate(0deg); }
+  }
+  @keyframes inkQuarryCreep {
+    0%   { transform: translate(0,0); }
+    40%  { transform: translate(calc(var(--ink-creep) * 0.85), 0); }
+    55%  { transform: translate(var(--ink-creep), 0); }
+    64%  { transform: translate(calc(var(--ink-creep) * 0.92), 0); }
+    74%  { transform: translate(calc(var(--ink-creep) * 0.15), -1px); }
+    100% { transform: translate(0,0); }
+  }
+
+  /* ═══ TIER C — THIEVING. One dip per beat: coil, reach, hold, withdraw.
+     The arm's dip angle (27deg) and the body's 4px lean are not free numbers
+     — together they put the fingertip on (112.5,88.6), which is where the
+     mark's purse and the stall's cash box are drawn. The rest pose (62deg)
+     hangs the hand at the thief's own hip, clear of the mark entirely, so the
+     reach reads as a decision rather than as an arm that was already there. ═══ */
+  @keyframes inkArmDip {
+    0%   { transform: rotate(62deg); }
+    28%  { transform: rotate(52deg); }
+    55%  { transform: rotate(27deg); }
+    68%  { transform: rotate(29deg); }
+    100% { transform: rotate(62deg); }
+  }
+  @keyframes inkArmBackDip {
+    0%   { transform: rotate(0deg); }
+    55%  { transform: rotate(8deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkHeadDip {
+    0%   { transform: rotate(0deg); }
+    28%  { transform: rotate(-4deg); }
+    55%  { transform: rotate(4deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkBodyDip {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    28%  { transform: translate(-1px,0) rotate(-1deg); }
+    55%  { transform: translate(4px,0.6px) rotate(2.4deg); }
+    68%  { transform: translate(2.4px,0.4px) rotate(1.4deg); }
+    100% { transform: translate(0,0) rotate(0deg); }
+  }
+  /* The mark never reacts — thieving's engine has no failure event, so a
+     flinch here would animate something the game cannot do. What they do is
+     shift their weight, obliviously, on a slower clock than the thief. */
+  @keyframes inkMarkSway {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    50%      { transform: rotate(-1.4deg) translateY(-0.6px); }
+  }
+
+  /* ═══ TIER F — SUMMONING. A push, not a blow: draw back, drive the charge
+     into the charm, settle. Deliberately not enchanting's held channel — an
+     infusion is two ticks, so there is exactly one push in it and holding a
+     pose through 600ms would read as a freeze. ═══ */
+  @keyframes inkArmInfuse {
+    0%   { transform: rotate(-42deg); }
+    28%  { transform: rotate(-34deg); }
+    55%  { transform: rotate(-57deg); }
+    70%  { transform: rotate(-50deg); }
+    100% { transform: rotate(-42deg); }
+  }
+  @keyframes inkArmBackInfuse {
+    0%   { transform: rotate(-12deg); }
+    55%  { transform: rotate(-19deg); }
+    100% { transform: rotate(-12deg); }
+  }
+  @keyframes inkHeadInfuse {
+    0%   { transform: rotate(-2deg); }
+    55%  { transform: rotate(-6deg); }
+    100% { transform: rotate(-2deg); }
+  }
+  @keyframes inkBodyInfuse {
+    0%   { transform: translate(0,0) rotate(-1deg); }
+    55%  { transform: translate(1.6px,-0.8px) rotate(1.6deg); }
+    100% { transform: translate(0,0) rotate(-1deg); }
+  }
+  @keyframes inkChargePulse {
+    0%, 62% { opacity: 0; transform: scale(0.4); }
+    72%     { opacity: 0.9; transform: scale(1); }
+    100%    { opacity: 0; transform: scale(1.35); }
+  }
+  @keyframes inkSpiritFlow {
+    0%   { opacity: 0; transform: translate(0,0) scale(0.5); }
+    14%  { opacity: 0.95; transform: translate(6px,1px) scale(1); }
+    70%  { opacity: 0.9; transform: translate(24px,5px) scale(0.9); }
+    100% { opacity: 0; transform: translate(31px,7px) scale(0.45); }
+  }
+  @keyframes inkCrystalGlow {
+    0%, 100% { opacity: 0.7; }
+    55%      { opacity: 1; }
+  }
+
+  .ink-fig--snare.is-working .ink-arm      { animation: inkArmSnare var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--snare.is-working .ink-arm-back { animation: inkArmBackSnare var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--snare.is-working .ink-head     { animation: inkHeadSnare var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--snare.is-working               { animation: inkBodySnare var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-snare-line.is-working { animation: inkSnareHaul var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-quarry.is-working     { animation: inkQuarryCreep var(--ink-strike) ease-in-out infinite; }
+
+  .ink-fig--pickpocket.is-working .ink-arm      { animation: inkArmDip var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--pickpocket.is-working .ink-arm-back { animation: inkArmBackDip var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--pickpocket.is-working .ink-head     { animation: inkHeadDip var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--pickpocket.is-working               { animation: inkBodyDip var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-mark.is-working { animation: inkMarkSway calc(var(--ink-strike) * 2) ease-in-out infinite; }
+
+  .ink-fig--infuse.is-working .ink-arm      { animation: inkArmInfuse var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-fig--infuse.is-working .ink-arm-back { animation: inkArmBackInfuse var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--infuse.is-working .ink-head     { animation: inkHeadInfuse var(--ink-strike) ease-in-out infinite; }
+  .ink-fig--infuse.is-working               { animation: inkBodyInfuse var(--ink-strike) var(--fm-ease) infinite; }
+  .ink-charge.is-working          { animation: inkChargePulse var(--ink-strike) ease-out infinite; }
+  .ink-spirit-crystal.is-working  { animation: inkCrystalGlow var(--ink-strike) ease-in-out infinite; }
+  .ink-spirit-circle.is-working   { animation: inkCirclePulse calc(var(--ink-strike) * 2) ease-in-out infinite; }
+  .ink-spirit-stream.is-working .ink-spirit-flow--a { animation: inkSpiritFlow var(--ink-strike) linear infinite; }
+  .ink-spirit-stream.is-working .ink-spirit-flow--b { animation: inkSpiritFlow var(--ink-strike) linear infinite; animation-delay: calc(var(--ink-strike) * -0.33); }
+  .ink-spirit-stream.is-working .ink-spirit-flow--c { animation: inkSpiritFlow var(--ink-strike) linear infinite; animation-delay: calc(var(--ink-strike) * -0.66); }
+
+  /* Tier C/D/F payoffs. All three hold to 92% before fading, like
+     construction's and magic's: the snare, the mark and the obelisk are all
+     still STANDING there when the beat ends, and a persistent object blinking
+     out for a fifth of the beat reads as a glitch. */
+  @keyframes inkPayoffSnare { 0%, 92% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes inkHoistSwing {
+    0%   { transform: rotate(26deg); }
+    40%  { transform: rotate(-9deg); }
+    68%  { transform: rotate(5deg); }
+    100% { transform: rotate(-2deg); }
+  }
+  @keyframes inkLeafFlyA {
+    0%   { opacity: 0.9; transform: translate(0,0) rotate(0deg); }
+    100% { opacity: 0; transform: translate(-11px,-13px) rotate(-46deg); }
+  }
+  @keyframes inkLeafFlyB {
+    0%   { opacity: 0.9; transform: translate(0,0) rotate(0deg); }
+    100% { opacity: 0; transform: translate(12px,-11px) rotate(52deg); }
+  }
+  @keyframes inkLeafFlyC {
+    0%   { opacity: 0.9; transform: translate(0,0) rotate(0deg); }
+    100% { opacity: 0; transform: translate(1px,-16px) rotate(24deg); }
+  }
+  .ink-payoff--snare { animation: inkPayoffSnare var(--ink-payoff) ease-out; }
+  /* forwards, not the default: the catch has to still be hanging where the
+     swing left it when the layer fades, or it snaps back upright first. */
+  .ink-payoff--snare .ink-hoist        { animation: inkHoistSwing var(--ink-payoff) var(--fm-ease) forwards; }
+  .ink-payoff--snare .ink-leaf-fly--a  { animation: inkLeafFlyA var(--ink-payoff) ease-out; }
+  .ink-payoff--snare .ink-leaf-fly--b  { animation: inkLeafFlyB var(--ink-payoff) ease-out; }
+  .ink-payoff--snare .ink-leaf-fly--c  { animation: inkLeafFlyC var(--ink-payoff) ease-out; }
+
+  @keyframes inkPayoffSteal { 0%, 92% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes inkPurseLift {
+    0%   { opacity: 0; transform: translate(0,0) rotate(0deg); }
+    22%  { opacity: 1; transform: translate(-2px,-4px) rotate(-7deg); }
+    100% { opacity: 0.9; transform: translate(-15px,-17px) rotate(-18deg); }
+  }
+  .ink-payoff--pickpocket { animation: inkPayoffSteal var(--ink-payoff) ease-out; }
+  .ink-payoff--pickpocket .ink-purse-lift { animation: inkPurseLift var(--ink-payoff) ease-out forwards; }
+  .ink-payoff--pickpocket .ink-coin--a    { animation: inkCoinA var(--ink-payoff) ease-out; }
+  .ink-payoff--pickpocket .ink-coin--b    { animation: inkCoinB var(--ink-payoff) ease-out; }
+
+  @keyframes inkPayoffInfuse { 0%, 92% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes inkWispRise {
+    0%   { opacity: 0; transform: translateY(7px) scale(0.35); }
+    30%  { opacity: 1; transform: translateY(0) scale(1.05); }
+    72%  { opacity: 1; transform: translateY(-8px) scale(1); }
+    100% { opacity: 0; transform: translateY(-19px) scale(0.9); }
+  }
+  .ink-payoff--infuse { animation: inkPayoffInfuse var(--ink-payoff) ease-out; }
+  .ink-payoff--infuse .ink-flash        { animation: inkFlashBurst var(--ink-payoff) ease-out; }
+  .ink-payoff--infuse .ink-wisp         { animation: inkWispRise var(--ink-payoff) ease-out; }
+  .ink-payoff--infuse .ink-spirit-mote  { transform-origin: 142px 58px; }
+  .ink-payoff--infuse .ink-spirit-mote--a { animation: inkMoteA var(--ink-payoff) ease-out; }
+  .ink-payoff--infuse .ink-spirit-mote--b { animation: inkMoteB var(--ink-payoff) ease-out; }
+  .ink-payoff--infuse .ink-spirit-mote--c { animation: inkMoteC var(--ink-payoff) ease-out; }
   .ink-payoff--enchant .ink-enchant-burst { animation: inkEnchantBurst var(--ink-payoff) ease-out; }
 
   /* HEX: the sigil lands, the dummy takes it properly (a bigger knock than
