@@ -80,9 +80,19 @@ export default function InkwrightStage({ plan, product = null, subject = null, y
   // Magic's pedestal is the same problem in a different skill: what is on it
   // IS the spell's subject matter, and an amulet, an ore and a cowhide are
   // only distinguishable as themselves.
+  // Pickpocketing's payoff is a coin purse by default, but a gem-reward mark
+  // (Tzraar) steals a specific gem instead of coins — draw that gem's own
+  // bespoke art in the purse burst rather than the generic coins.
+  const isGemSteal = (prop === 'mark' || prop === 'markGuard') && product && product.id !== 'coins'
   const itemArt = prop === 'water'
     ? bespokeItemArt(product)
-    : (SUBJECT_ART_PROPS.has(prop) ? bespokeItemArt(subject) : null)
+    : (SUBJECT_ART_PROPS.has(prop) ? bespokeItemArt(subject) : (isGemSteal ? bespokeItemArt(product) : null))
+  // Which purse payoff to draw: a gem target with nothing rolled yet ('none')
+  // gets an empty purse lift rather than borrowing the coin visual — a miss
+  // is not a coin steal.
+  const pickpocketReward = (prop === 'mark' || prop === 'markGuard')
+    ? (isGemSteal ? 'gem' : (product?.id === 'coins' ? 'coins' : 'none'))
+    : null
   // Nothing has given way until an action has actually completed. Rendering
   // the payoff at mount shattered the rock the instant the screen opened,
   // and popped a reward for an action nobody had finished.
@@ -117,7 +127,7 @@ export default function InkwrightStage({ plan, product = null, subject = null, y
         </g>
         {broke && (
           <g key={`p${yieldToken}`} class={`ink-payoff ink-payoff--${motion}`}>
-            <Prop kind={prop} broken itemArt={itemArt} built={built} />
+            <Prop kind={prop} broken itemArt={itemArt} built={built} pickpocketReward={pickpocketReward} />
           </g>
         )}
 
@@ -1105,7 +1115,7 @@ function Longbone({ rotate }) {
  * apart. `swinging` only matters to the idle float, so it can freeze with
  * the figure when the action is stalled (inventory full) rather than keep
  * bobbing. */
-function Prop({ kind, broken = false, itemArt = null, swinging = true, built = 0 }) {
+function Prop({ kind, broken = false, itemArt = null, swinging = true, built = 0, pickpocketReward = null }) {
   if (kind === 'tree') {
     // Every coordinate here is authored directly at the size this stage
     // actually renders at — NOT scaled down at runtime from a bigger canvas.
@@ -1812,8 +1822,15 @@ function Prop({ kind, broken = false, itemArt = null, swinging = true, built = 0
               <path class="ink-purse" d="M104 89 Q112 83 120 89 Q122 97 112 99.5 Q102 97 104 89 Z" />
               <path class="ink-purse-tie" d="M105 90.5 Q112 94 119 90.5" />
             </g>
-            <g class="ink-coin ink-coin--a ink-coin--steal"><ellipse cx="106" cy="92" rx="3.6" ry="2.8" /><path d="M103.6 92 L108.4 92" /></g>
-            <g class="ink-coin ink-coin--b ink-coin--steal"><ellipse cx="115" cy="94" rx="3.4" ry="2.6" /><path d="M112.6 94 L117.4 94" /></g>
+            {pickpocketReward === 'gem' && itemArt && (
+              <ItemArt art={itemArt} cx={112} cy={92} width={13} className="ink-gem-steal" />
+            )}
+            {pickpocketReward === 'coins' && (
+              <>
+                <g class="ink-coin ink-coin--a ink-coin--steal"><ellipse cx="106" cy="92" rx="3.6" ry="2.8" /><path d="M103.6 92 L108.4 92" /></g>
+                <g class="ink-coin ink-coin--b ink-coin--steal"><ellipse cx="115" cy="94" rx="3.4" ry="2.6" /><path d="M112.6 94 L117.4 94" /></g>
+              </>
+            )}
           </>
         )}
       </g>
