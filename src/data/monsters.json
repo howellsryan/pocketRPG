@@ -4084,7 +4084,7 @@
     "boss": true,
     "hardMode": true,
     "combatLevel": 606,
-    "hitpoints": 300,
+    "hitpoints": 450,
     "stats": {
       "attack": 180,
       "strength": 160,

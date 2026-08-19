@@ -30,10 +30,10 @@ const KINGS = ['nagadoth_rex', 'nagadoth_prime', 'nagadoth_supreme']
 const SUMMONS = ['nagadoth_rex_summon', 'nagadoth_prime_summon', 'nagadoth_supreme_summon']
 
 describe('Nagadoth Queen — monster data', () => {
-  it('doubles every one of the kings\' stats', () => {
+  it('doubles every one of the kings\' stats, over three times their health', () => {
     expect(queen.boss).toBe(true)
     expect(queen.hardMode).toBe(true)
-    expect(queen.hitpoints).toBe(2 * monstersData.nagadoth_rex.hitpoints)
+    expect(queen.hitpoints).toBe(450)
     expect(queen.combatLevel).toBe(2 * monstersData.nagadoth_rex.combatLevel)
     // Each king's signature stat, doubled: Rex's attack/strength, Prime's
     // magic, Supreme's ranged, and the defence all three share.
@@ -231,8 +231,16 @@ describe('Nagadoth Queen — surfaces', () => {
     expect(COOP_BOSSES).toHaveProperty(QUEEN)
   })
 
-  it('has its own combat emblem', () => {
-    expect(getMonsterArt(queen, undefined).icon).toBe('queen_crown')
+  // Bespoke art, not a vendored glyph: SkillEmblem renders a bespoke id
+  // as-authored and only falls back to the masked glyph when none exists.
+  it('wears bespoke Nagadoth art, and each summon borrows its king\'s', () => {
+    for (const id of [QUEEN, ...KINGS]) {
+      expect(getMonsterArt(monstersData[id], undefined).icon, id).toBe(id)
+      expect(bespokeIcons, id).toHaveProperty(id)
+    }
+    for (const [summonId, kingId] of SUMMONS.map((s, i) => [s, KINGS[i]] as const)) {
+      expect(getMonsterArt(monstersData[summonId], undefined)).toEqual(getMonsterArt(monstersData[kingId], undefined))
+    }
   })
 
   // Zul-Kaar's pool is derived from `boss: true` rather than hand-listed, so the

@@ -130,13 +130,18 @@ export const MONSTER_ART = {
   "commander_zephyra": { icon: "winged_sword", accent: "#d8b13a" },
   "krylth_the_defiler": { icon: "daemon_skull", accent: "#d8b13a" },
   "skyrender_kharra": { icon: "harpy", accent: "#d8b13a" },
-  "nagadoth_rex": { icon: "dragon_head", accent: "#e0564b" },
-  "nagadoth_prime": { icon: "horned_skull", accent: "#e0564b" },
-  "nagadoth_supreme": { icon: "high_shot", accent: "#e0564b" },
-  "nagadoth_queen": { icon: "queen_crown", accent: "#b06be0" },
-  "nagadoth_rex_summon": { icon: "dragon_head", accent: "#e0564b" },
-  "nagadoth_prime_summon": { icon: "horned_skull", accent: "#e0564b" },
-  "nagadoth_supreme_summon": { icon: "high_shot", accent: "#e0564b" },
+  // Bespoke Nagadoth art, one silhouette recoloured per king so they read as a
+  // family; the Queen wears the crown. A summoned king is the same monster the
+  // player already knows, so it borrows its king's emblem outright. The Queen's
+  // accent is a blackened violet rather than true black — it drives the glow
+  // halo and the combat stage's enemy tint, both of which vanish at #000.
+  "nagadoth_rex": { icon: "nagadoth_rex", accent: "#d0402c" },
+  "nagadoth_prime": { icon: "nagadoth_prime", accent: "#8a3fd0" },
+  "nagadoth_supreme": { icon: "nagadoth_supreme", accent: "#2fae5a" },
+  "nagadoth_queen": { icon: "nagadoth_queen", accent: "#5a5468" },
+  "nagadoth_rex_summon": { icon: "nagadoth_rex", accent: "#d0402c" },
+  "nagadoth_prime_summon": { icon: "nagadoth_prime", accent: "#8a3fd0" },
+  "nagadoth_supreme_summon": { icon: "nagadoth_supreme", accent: "#2fae5a" },
   "crazy_archaeologist": { icon: "scroll_unfurled", accent: "#8a7ae6" },
   "venomcoil_matriarch": { icon: "wyvern", accent: "#3fb56b" },
   "ember_tyrant": { icon: "volcano", accent: "#ef6b3a" },

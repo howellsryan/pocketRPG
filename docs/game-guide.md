@@ -194,7 +194,7 @@ It also drops onyx bolts (e), charms, large rune stacks, herbs and elite clue sc
 
 ## The Nagadoth Queen
 
-The Nagadoth Queen rules the three kings at Ardounne, and she opens only once you have killed Nagadoth Rex, Nagadoth Prime and Nagadoth Supreme at least once each. She is twice the king she rules: 300 hitpoints, double their stats, and 100 defence against every style.
+The Nagadoth Queen rules the three kings at Ardounne, and she opens only once you have killed Nagadoth Rex, Nagadoth Prime and Nagadoth Supreme at least once each. She is more than twice the king she rules: 450 hitpoints, double their stats, and 100 defence against every style.
 
 She is a tribrid. She fights with melee, ranged and magic in turn, holds a style for two to five attacks and then switches at random. Every style hits for up to 42 and lands as often as the others, so there is no style she is soft on and no prayer you can set and forget. Every seven to ten of her attacks she summons one of her kings — Rex, Prime or Supreme, picked at random and at that king's own strength — and keeps swinging while it is up. Summoned kings drop nothing and do not count as kills; clear one and another follows a few attacks later.
 
