@@ -186,8 +186,11 @@ export default function InkwrightStage({ plan, product = null, subject = null, y
       {/* What the action produced, popped on the yield. An HTML sibling
           rather than a foreignObject: GameIcon renders its own <svg>, and
           nesting one inside this one through foreignObject buys nothing but
-          quirks. */}
-      {product && broke && (
+          quirks. A gem steal is the one exception — it already pops out of
+          Tzraar's own purse (the in-scene `ink-gem-steal` art below), so a
+          second copy over on the thief's side would read as coming from
+          nowhere rather than out of the bag it was actually taken from. */}
+      {product && broke && !isGemSteal && (
         <div key={`y${yieldToken}`} class="ink-yield" aria-hidden="true">
           <GameIcon item={product} size={30} />
         </div>
@@ -1823,7 +1826,7 @@ function Prop({ kind, broken = false, itemArt = null, swinging = true, built = 0
               <path class="ink-purse-tie" d="M105 90.5 Q112 94 119 90.5" />
             </g>
             {pickpocketReward === 'gem' && itemArt && (
-              <ItemArt art={itemArt} cx={112} cy={92} width={13} className="ink-gem-steal" />
+              <ItemArt art={itemArt} cx={112} cy={92} width={17} className="ink-gem-steal" />
             )}
             {pickpocketReward === 'coins' && (
               <>
