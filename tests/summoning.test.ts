@@ -45,6 +45,12 @@ describe('summoning — content integrity', () => {
     }
   })
 
+  it('lists creatures sorted by level, 1 through 99', () => {
+    const levels = SUMMONING_CREATURES.map(c => c.level)
+    const sorted = [...levels].sort((a, b) => a - b)
+    expect(levels).toEqual(sorted)
+  })
+
   it('the Summoning cape is a level-99 skill cape', () => {
     const cape = items['summoning_cape']
     expect(cape).toBeDefined()
