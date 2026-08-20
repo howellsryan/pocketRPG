@@ -17198,7 +17198,12 @@
       "magicDamage": 0
     },
     "requirements": {
-      "defence": 42
+      "attack": 42,
+      "ranged": 42,
+      "magic": 42,
+      "strength": 42,
+      "defence": 42,
+      "hitpoints": 42
     },
     "shopValue": 375000,
     "isUntradeable": true,
@@ -17231,7 +17236,12 @@
       "magicDamage": 0
     },
     "requirements": {
-      "defence": 42
+      "attack": 42,
+      "ranged": 42,
+      "magic": 42,
+      "strength": 42,
+      "defence": 42,
+      "hitpoints": 42
     },
     "shopValue": 375000,
     "isUntradeable": true,
@@ -17264,7 +17274,12 @@
       "magicDamage": 0
     },
     "requirements": {
-      "defence": 42
+      "attack": 42,
+      "ranged": 42,
+      "magic": 42,
+      "strength": 42,
+      "defence": 42,
+      "hitpoints": 42
     },
     "shopValue": 375000,
     "isUntradeable": true,
@@ -17297,7 +17312,12 @@
       "magicDamage": 0
     },
     "requirements": {
-      "defence": 42
+      "attack": 42,
+      "ranged": 42,
+      "magic": 42,
+      "strength": 42,
+      "defence": 42,
+      "hitpoints": 42
     },
     "shopValue": 375000,
     "isUntradeable": true,
