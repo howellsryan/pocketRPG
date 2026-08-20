@@ -16883,6 +16883,15 @@
     "shopValue": 750,
     "isGeneralStore": false
   },
+  "ember_shards": {
+    "id": "ember_shards",
+    "name": "Ember Shards",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 600,
+    "isGeneralStore": false,
+    "description": "Searing shards left behind by the Ember Tyrant. Infuse them with a blue charm to make an Ember Minion pouch."
+  },
   "nightfang_bow": {
     "id": "nightfang_bow",
     "legacy_item_id": "dark_bow",
@@ -18929,6 +18938,26 @@
     "shopValue": 90,
     "isGeneralStore": false,
     "description": "Spent one per attack by a summoned steel titan."
+  },
+  "ember_minion_pouch": {
+    "id": "ember_minion_pouch",
+    "name": "Ember Minion Pouch",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 900,
+    "isGeneralStore": false,
+    "description": "Summon an ember minion in combat, or infuse it into 10 Ember Minion Scrolls."
+  },
+  "ember_minion_scroll": {
+    "id": "ember_minion_scroll",
+    "name": "Ember Minion Scroll",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 90,
+    "isGeneralStore": false,
+    "description": "Spent one per attack by a summoned ember minion."
   },
   "summoning_cape": {
     "id": "summoning_cape",

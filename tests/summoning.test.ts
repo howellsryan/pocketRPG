@@ -188,6 +188,18 @@ describe('summoning — combat rolls', () => {
     }
   })
 
+  it('rolls two damage values per creature hit (Ember Minion swings twice)', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0) // force a hit, min damage per swing
+    const emberMinion = getSummoningCreature('ember_minion')!
+    const res = rollSummonAttack(emberMinion, monster)
+    expect(res.hits.length).toBe(2)
+    expect(res.damage).toBe(res.hits.reduce((a, b) => a + b, 0))
+    for (const h of res.hits) {
+      expect(h).toBeGreaterThanOrEqual(1)
+      expect(h).toBeLessThanOrEqual(emberMinion.maxHit)
+    }
+  })
+
   it('a single-hit creature rolls exactly one swing capped at its max hit', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.999999) // near-miss high roll
     const chicken = getSummoningCreature('chicken')!

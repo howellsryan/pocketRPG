@@ -5108,6 +5108,11 @@
         "chance": 1
       },
       {
+        "itemId": "ember_shards",
+        "quantity": 100,
+        "chance": 1
+      },
+      {
         "itemId": "clue_scroll_master",
         "quantity": 1,
         "chance": 0.02

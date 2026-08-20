@@ -107,6 +107,24 @@
       "summonXp": 250,
       "pouchXp": 220,
       "scrollXp": 120
+    },
+    {
+      "id": "ember_minion",
+      "name": "Ember Minion",
+      "level": 99,
+      "charm": "blue_charm",
+      "secondary": "ember_shards",
+      "pouch": "ember_minion_pouch",
+      "scroll": "ember_minion_scroll",
+      "maxHit": 15,
+      "hits": 2,
+      "attackLevel": 100,
+      "attackBonus": 45,
+      "attackStyle": "crush",
+      "accuracyTier": "medium",
+      "summonXp": 200,
+      "pouchXp": 180,
+      "scrollXp": 95
     }
   ]
 }
