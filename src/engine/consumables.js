@@ -103,6 +103,17 @@ export function getActivePotionBoosts(activePotions, itemsData) {
   return totals
 }
 
+// Effective spell-casting level for a spell's `levelReq` gate: base Magic
+// level plus whatever Super Combat / Magic Potion / Imbued Brain currently
+// add. Mirrors the boost combat.js already applies to magic damage
+// (boostedPlayerStats.magic) — a boosted mage can SELECT a spell their base
+// level hasn't reached, not just hit harder with ones they already could.
+export function boostedMagicLevel(baseMagicLevel, activePotions, itemsData) {
+  const base = Math.max(1, Math.floor(Number(baseMagicLevel) || 1))
+  const boost = getActivePotionBoosts(activePotions, itemsData).magic || 0
+  return Math.floor(base + boost)
+}
+
 /**
  * Resolve eating one item straight out of the inventory (outside combat). Pure:
  * returns the next inventory rather than mutating, so the caller only has to

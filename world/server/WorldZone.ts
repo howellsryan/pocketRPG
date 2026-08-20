@@ -74,7 +74,7 @@ import { BURY_XP, healAmount, primaryInvAction, resolveEatTiming, resolveDrink }
 import { checkEquipRequirements, equipItem, placeUnequippedItems, getAttackSpeed } from '../../src/engine/equipment.js'
 import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
 import { applyEat, applyCombo } from '../../src/engine/combat.js'
-import { isComboConsumable } from '../../src/engine/consumables.js'
+import { isComboConsumable, boostedMagicLevel } from '../../src/engine/consumables.js'
 import { hasMasterRejuvenation } from '../../src/engine/specialRegen.js'
 import itemsData from '../../src/data/items.json'
 import { commitFlush, consumeUnits, depositUnits, drainForFlush, emptyPools, mintUnits, restoreFlush, withdrawUnits, type ItemPools, type Tally } from './sessionItems'
@@ -1239,12 +1239,14 @@ export class WorldZone extends Server<Env> {
   }
 
   /** Sets (or clears) the session's combat spell. Level-gated against the
-   * session's Magic level; applies to an active magic fight immediately. */
+   * session's Magic level (boosted by any active Super Combat/Magic
+   * Potion/Imbued Brain, same as the boost already applied to magic damage);
+   * applies to an active magic fight immediately. */
   private handleSetSpell(player: Player, spellId: string | null): void {
     if (spellId !== null) {
       const spell = (spellsJson as Record<string, { name?: string; levelReq?: number } | undefined>)[spellId]
       if (!spell) return
-      const magicLevel = player.stats.magic?.level ?? 1
+      const magicLevel = boostedMagicLevel(player.stats.magic?.level ?? 1, player.activePotions, items)
       if (magicLevel < (spell.levelReq ?? 1)) {
         player.pendingEvents.push({ e: 'msg', text: `You need Magic level ${spell.levelReq} to cast ${spell.name ?? spellId}.` })
         return

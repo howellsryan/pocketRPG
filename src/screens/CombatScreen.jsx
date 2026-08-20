@@ -32,7 +32,7 @@ import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
 import { recordItemLossEntries } from '../engine/lossLedger.js'
 import { HardModeConfirm, HardModeTag, HardModeToggle } from '../components/HardMode.jsx'
 import { liveAdds, targetedAdd } from '../engine/bossAdds.js'
-import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
+import { applyConsumableEffect, isLumiraBrew, isComboConsumable, boostedMagicLevel } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { checkBossRequirementsPure, checkRaidRequirementsPure } from '../engine/combatRequirements.js'
 import { getMonsterSeedDrops } from '../engine/seedDrops.js'
@@ -4143,7 +4143,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
           <div class="max-h-96 overflow-y-auto">
             <SpellSelectGrid
-              magicLevel={getLevelFromXP(stats.magic?.xp || 0)}
+              magicLevel={boostedMagicLevel(getLevelFromXP(stats.magic?.xp || 0), combat?.activePotions, itemsData)}
               activeSpellId={activeCombatSpell?.id || null}
               onSelect={(spell) => {
                 updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage })

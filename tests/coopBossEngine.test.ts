@@ -26,6 +26,7 @@ import {
   describeCoopActionRefusal,
 } from '../src/engine/coopBossEngine.js'
 import { prepareAdd } from '../src/engine/bossAdds.js'
+import { getXPForLevel } from '../src/engine/experience.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 import raidsData from '../src/data/raids.json'
@@ -641,6 +642,31 @@ describe('spell and prayer unlock gates', () => {
     )
     expect(stateNext.members['1'].combat.spellId).toBe('fire_surge')
     expect(events.find((e: any) => e.type === 'actionRefused')).toBeUndefined()
+  })
+
+  it('lets an active magic boost unlock a spell above base Magic level', () => {
+    // fire_surge is levelReq 95; base level 90 falls short, but Imbued Brain's
+    // +18 magic boost clears it — mirrors the boost already applied to damage.
+    const state = memberState({ magic: { xp: getXPForLevel(90) } })
+    state.members['1'].combat.activePotions = { imbued_brain: 300 }
+    const { stateNext, events } = processCoopTick(
+      state, intent({ type: 'change_combat_spell', spellId: 'fire_surge' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.spellId).toBe('fire_surge')
+    expect(events.find((e: any) => e.type === 'actionRefused')).toBeUndefined()
+  })
+
+  it('still refuses a spell the active boost does not reach', () => {
+    // Magic Potion only boosts +4 — 90 + 4 = 94, still short of fire_surge (95).
+    const state = memberState({ magic: { xp: getXPForLevel(90) } })
+    state.members['1'].combat.activePotions = { magic_potion: 300 }
+    const { stateNext, events } = processCoopTick(
+      state, intent({ type: 'change_combat_spell', spellId: 'fire_surge' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.spellId).toBeNull()
+    expect(events.find((e: any) => e.type === 'actionRefused')).toMatchObject({
+      reason: 'spell_level', spellId: 'fire_surge', required: 95, characterId: 1,
+    })
   })
 
   it('still lets a member clear their spell', () => {

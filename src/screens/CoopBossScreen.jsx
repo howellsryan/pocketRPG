@@ -30,6 +30,7 @@ import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
 import { HardModeTag } from '../components/HardMode.jsx'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getLevelFromXP } from '../engine/experience.js'
+import { boostedMagicLevel } from '../engine/consumables.js'
 import { canAffordSpecialAttack } from '../engine/specialAttackEnergy.js'
 import { bossAddsOf } from '../engine/bossAdds.js'
 import itemsData from '../data/items.json'
@@ -661,7 +662,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           </div>
           <div class="max-h-96 overflow-y-auto">
             <SpellSelectGrid
-              magicLevel={getLevelFromXP(stats?.magic?.xp || 0)}
+              magicLevel={boostedMagicLevel(getLevelFromXP(stats?.magic?.xp || 0), combatState?.activePotions, itemsData)}
               activeSpellId={combatState?.spellId || activeCombatSpell?.id || null}
               onSelect={(spell) => {
                 updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage })
