@@ -61,6 +61,17 @@ every weapon from a scimitar up animated identically. If a new action's cadence 
 cadences onto one duration. `tests/actionSprites.test.ts` asserts strict monotonicity
 across the shipped range and will fail if you do.
 
+## The combat stage is player-optional
+
+`combatAnimations` (Settings, default on) removes `InkwrightCombatStage` from BOTH
+combat screens — solo `CombatScreen` and co-op/raid `CoopBossScreen` — and renders
+`CombatHPBlock`/`CombatPrayerBlock` from `CombatHud.jsx` in its place. Skilling has no
+such switch; `InkwrightStage` always renders.
+
+So the combat stage may never be the ONLY home for a readout. Put a new one in the
+bars too, in `CombatHud.jsx` (never in one screen — §20 requires the group fight to
+look like the solo fight), or the players on the classic screen cannot see it.
+
 ## Adding a combat style to Inkwright
 
 A new WEAPON within melee/ranged/magic (a different sword, a different bow) needs

@@ -12,7 +12,7 @@ import CoopLootShare from '../components/CoopLootShare.jsx'
 import CoopRaidLobby from '../components/CoopRaidLobby.jsx'
 import CoopChatPanel from '../components/CoopChatPanel.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
-import { CombatFightHead } from '../components/CombatHud.jsx'
+import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import { CombatMonsterInfoSheet } from './CombatMobileSheets.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { openCoopFeed } from '../cloud/coopFeed.js'
@@ -48,7 +48,7 @@ import monstersData from '../data/monsters.json'
  * way and must not care which.
  */
 export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoin, onDeath, addToast }) {
-  const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell, revertOneLifeMode, recordGameEvent } = useGame()
+  const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell, revertOneLifeMode, recordGameEvent, combatAnimations } = useGame()
   const [state, setState] = useState(null)
   const [error, setError] = useState(null)
   const [bossSplats, setBossSplats] = useState([])
@@ -495,8 +495,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
 
         {/* §20: the group fight looks like the solo fight, so the stage sits in
             the same place with the same timing law — read off THIS member's
-            weapon and the boss's current form. */}
-        <InkwrightCombatStage
+            weapon and the boss's current form. The classic screen turns it off
+            here for the same reason it does solo. */}
+        {combatAnimations && <InkwrightCombatStage
           actor={{ ...coopPlayerSprite, accent: getStyleArt(coopPlayerSprite.motion).color }}
           target={{
             icon: coopStageArt.icon,
@@ -513,11 +514,30 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           showCorners
           actorPrayer={typeof combatState?.maxPrayerPoints === 'number' ? { current: combatState.prayerPoints, max: combatState.maxPrayerPoints } : null}
           label={`You versus ${coopStageTarget?.name || bossName}`}
-        />
+        />}
 
-        <div class="mb-2 flex justify-end">
-          <ActivePotionBadges activePotions={combatState?.activePotions} itemsData={itemsData} />
-        </div>
+        {combatAnimations ? (
+          <div class="mb-2 flex justify-end">
+            <ActivePotionBadges activePotions={combatState?.activePotions} itemsData={itemsData} />
+          </div>
+        ) : (
+          <>
+            <CombatHPBlock
+              label="Enemy Hitpoints"
+              current={boss?.currentHP ?? 0}
+              max={boss?.maxHP ?? 1}
+              splats={bossSplats}
+            />
+            <CombatHPBlock
+              label="Your Hitpoints"
+              current={me?.hp ?? 0}
+              max={me?.maxHP ?? 1}
+              splats={playerSplats}
+              valueColor="#7ce88a"
+              right={<ActivePotionBadges activePotions={combatState?.activePotions} itemsData={itemsData} />}
+            />
+          </>
+        )}
 
         {activeAdd && (
           <div class="cb-qa" style={{ marginBottom: 12 }}>
@@ -550,8 +570,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           </div>
         )}
 
-        {/* Prayer pool now reads from the stage's top-left corner
-            (showCorners/actorPrayer above) — no bar block here. */}
+        {/* Prayer pool reads from the stage's top-left corner
+            (showCorners/actorPrayer above) unless the stage is off. */}
+        {!combatAnimations && typeof combatState?.maxPrayerPoints === 'number' && (
+          <CombatPrayerBlock current={combatState.prayerPoints} max={combatState.maxPrayerPoints} />
+        )}
 
         {boss?.respawnCountdown > 0 && (
           <div class="cb-respawn">
