@@ -111,7 +111,7 @@
     {
       "id": "ember_minion",
       "name": "Ember Minion",
-      "level": 99,
+      "level": 60,
       "charm": "blue_charm",
       "secondary": "ember_shards",
       "pouch": "ember_minion_pouch",
