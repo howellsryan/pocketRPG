@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { makeD1, FakeD1 } from './helpers/d1'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 import { CoopBossRoom } from '../world/server/CoopBossRoom'
-import { joinCoopSession } from '../functions/_lib/game/coopBoss.js'
+import { isCoopSessionLive, joinCoopSession } from '../functions/_lib/game/coopBoss.js'
 import { COOP_SOCKET_LINGER_MS } from '../src/engine/coopSocketProtocol.js'
 
 const BOSS = 'corporeal_horror'
@@ -153,6 +153,12 @@ async function joinAndWarm(characterId: number) {
 
 function roomFor(sessionId: number): any {
   return rooms.get(`coop:${sessionId}`)! as any
+}
+
+/** The heartbeat a reconnect writes is deliberately not awaited by the socket
+ * upgrade — an upgrade must not wait on D1 — so drain it before reading D1. */
+async function flushWrites() {
+  for (let i = 0; i < 5; i++) await Promise.resolve()
 }
 
 beforeEach(() => {
@@ -446,6 +452,95 @@ describe('what a beat costs D1', () => {
     expect(prepare.mock.calls.length).toBeLessThanOrEqual(3)
   })
 
+  it('keeps the save lock through a socket flap the player comes back from', async () => {
+    // The incident this fixes: a phone locks mid-fight, the socket closes, and
+    // the room back-dates the heartbeat by COOP_SOCKET_LINGER_MS so a player who
+    // is really gone gets their save back quickly. The player then comes back
+    // INSIDE that linger — the room keeps them in the fight, but the row still
+    // holds the value that expires 45s after the close. /api/save read that row,
+    // let the idle client write, and the room's copy of the member's save
+    // revision was orphaned: every kill after it was refused as diverged and the
+    // player was paid nothing for the rest of the fight.
+    const sessionId = await joinAndWarm(7)
+    const room = roomFor(sessionId)
+    const ws = await connect(sessionId, 7)
+    room.dirty = true
+    await room.checkpoint(Date.now())
+
+    ws.close(1006, '')
+    room.dirty = true
+    await room.checkpoint(Date.now())
+    expect(await isCoopSessionLive(env as never, 7, Date.now())).toBe(true)
+
+    // Back before the room would let them go, and still fighting from here on.
+    vi.advanceTimersByTime(COOP_SOCKET_LINGER_MS - 5_000)
+    await connect(sessionId, 7)
+    await flushWrites()
+    expect(room.state.members['7'], 'the room let a reconnected member go').toBeTruthy()
+
+    // Past the moment the back-dated row expires, and past the write interval
+    // the old bookkeeping would have blocked the refresh for.
+    vi.advanceTimersByTime(10_000)
+    await room.tick()
+    expect(
+      await isCoopSessionLive(env as never, 7, Date.now()),
+      'the save lock lapsed under a member who is standing in the fight',
+    ).toBe(true)
+  })
+
+  it('lets a member go once their save has moved out from under the room', async () => {
+    // Nothing they do can reach their save again — every later kill settles to
+    // nothing — so fighting on is pure loss. Releasing them writes back (refused,
+    // which is the point: it frees the lock without replaying a stale snapshot)
+    // and closes the socket with a reason the client rejoins from.
+    const sessionId = await joinAndWarm(7)
+    expect(await joinAndWarm(8)).toBe(sessionId)
+    const room = roomFor(sessionId)
+    const ws = await connect(sessionId, 7)
+    await connect(sessionId, 8)
+
+    room.pendingDivergedRelease.add('7')
+    await room.tick()
+
+    expect(room.state.members['7']).toBeFalsy()
+    expect(room.state.members['8'], 'the rest of the room lost their fight too').toBeTruthy()
+    expect(ws.lastFrame('bye')).toMatchObject({ reason: 'ejected' })
+    const held = raw.prepare('SELECT active_coop_session_id AS s FROM characters WHERE id = 7').get()
+    expect(held.s, 'the save stayed locked to a room that had let them go').toBeNull()
+    // Their connection was healthy right up to the release, so the heartbeat is
+    // fresh: without closing the row the browser advertises them in this room
+    // for another 90s, and in two rooms at once once they rejoin elsewhere.
+    const membership = raw.prepare(
+      'SELECT left_at AS l FROM coop_session_members WHERE session_id = ? AND character_id = 7',
+    ).get(sessionId)
+    expect(membership.l, 'the room still lists a member it has let go').not.toBeNull()
+  })
+
+  it('unlocks the save even when the write-back throws', async () => {
+    // The lock release lives INSIDE writeBackMember, so a throw there used to
+    // drop the member from the room while leaving their character pointed at it:
+    // the join path answers `rejoined`, the room answers `not_a_member`, and the
+    // client loops between the two until the crash sweep runs. The diverged
+    // release made that a routine path, and the toast promises the rejoin.
+    const sessionId = await joinAndWarm(7)
+    expect(await joinAndWarm(8)).toBe(sessionId)
+    const room = roomFor(sessionId)
+    await connect(sessionId, 7)
+    // An owner the character row cannot be read under: writeBackMember throws
+    // CHARACTER_NOT_FOUND before it reaches its own release.
+    room.state.members['7'].ownerId = 999
+
+    room.pendingDivergedRelease.add('7')
+    await room.tick()
+
+    expect(room.state.members['7']).toBeFalsy()
+    const row = raw.prepare(
+      'SELECT active_coop_session_id AS s, (SELECT left_at FROM coop_session_members WHERE session_id = ? AND character_id = 7) AS l FROM characters WHERE id = 7',
+    ).get(sessionId)
+    expect(row.s, 'the save stayed locked to a room that had let them go').toBeNull()
+    expect(row.l, 'the membership row still says they are in the fight').not.toBeNull()
+  })
+
   it('refreshes a member’s heartbeat row on its own clock, not on every checkpoint', async () => {
     const sessionId = await joinAndWarm(7)
     const room = roomFor(sessionId)
@@ -455,6 +550,15 @@ describe('what a beat costs D1', () => {
       .filter(([sql]) => String(sql).includes('coop_session_members SET last_seen_at')).length
 
     vi.spyOn(env.DB, 'prepare')
+    // Joining wrote the row, so the next checkpoint has nothing to say about it.
+    room.dirty = true
+    await room.checkpoint(Date.now())
+    expect(heartbeats()).toBe(0)
+
+    // Once the stored value has drifted a write interval behind, it is refreshed
+    // — and only then, however many checkpoints land in between.
+    vi.advanceTimersByTime(31_000)
+    room.lastSeen['7'] = Date.now()
     room.dirty = true
     await room.checkpoint(Date.now())
     expect(heartbeats()).toBe(1)

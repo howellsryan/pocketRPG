@@ -51,6 +51,7 @@ import monstersData from '../../src/data/monsters.json'
 import {
   COOP_ENGINE_DEPS,
   COOP_SESSION_STALE_MS,
+  closeCoopMembership,
   parseSessionState,
   readSession,
   settleCoopKill,
@@ -146,13 +147,43 @@ export class CoopBossRoom {
    * member per fight — it is a retry queue for a failed D1 write, not a
    * per-tick write path. */
   private pendingOneLifeDeaths = new Set<number>()
+  /**
+   * Members whose save moved out from under the room, drained by the next beat.
+   *
+   * Once a write-back has been refused as diverged (isMemberSaveOwned), NOTHING
+   * this member does in this fight can ever reach their save: every later kill
+   * settles to nothing and the leave write-back is refused too. Leaving them in
+   * costs them the rest of the fight — the player who found this had 561 damage
+   * on a 150 threshold and was granted nothing. Letting them go instead is the
+   * recovery: the room releases their lock on the way out, and `ejected` is a
+   * reason the client rejoins from (isRejoinableCoopCloseReason), so they pull
+   * the save the room just wrote and rejoin on a snapshot that owns it.
+   *
+   * Drained a beat LATE on purpose: broadcast() closes the socket of anyone
+   * missing from `members`, so releasing them inside the settlement beat would
+   * swallow the killSettled event that tells them why.
+   */
+  private pendingDivergedRelease = new Set<string>()
   private chatTimes: Record<string, number[]> = {}
   /** Live push connections. A member with an entry here is proving they are
    * present on every beat, so they never reach the 90s poll-staleness path. */
   private conns = new Map<WebSocket, Conn>()
-  /** When each member's heartbeat row was last written, so the checkpoint can
-   * refresh it on its own 30s clock instead of on every 15s checkpoint. */
-  private heartbeatWrittenAt: Record<string, number> = {}
+  /**
+   * What each member's heartbeat row in D1 currently SAYS, not when it was last
+   * written — the row is a mirror of `lastSeen`, and the only question worth
+   * asking of it is how close its value is to expiring.
+   *
+   * Tracking the write TIME instead is what let a save escape the lock mid-fight
+   * (§20). A socket closing back-dates `lastSeen` by COOP_SOCKET_LINGER_MS, and
+   * every checkpoint that followed re-wrote that same stale value and re-armed a
+   * fresh 30s block — so a member who reconnected inside the linger stayed in the
+   * fight while their row kept the value that expires 45s after the close. The
+   * lock lapsed under a live member, the idle client's next push landed, and the
+   * room's copy of their save revision was orphaned: every kill after that was
+   * refused as diverged and the player was paid nothing for the rest of the
+   * fight.
+   */
+  private heartbeatValue: Record<string, number> = {}
   private intentSeq = 0
   private tickTimer: ReturnType<typeof setInterval> | null = null
   private loading: Promise<void> | null = null
@@ -248,7 +279,7 @@ export class CoopBossRoom {
       // caller just wrote, and a retried request must not re-seed their combat
       // state (it would re-arm timers and reset accrued damage).
       if (this.state.members?.[key]) {
-        this.lastSeen[key] = Date.now()
+        this.touchHeartbeat(key, Date.now())
         this.startTicking()
         return jsonResponse({ ok: true, alreadyPresent: true, tick: this.state.tick || 0 })
       }
@@ -313,7 +344,13 @@ export class CoopBossRoom {
         'SELECT character_id, last_seen_at FROM coop_session_members WHERE session_id = ? AND left_at IS NULL',
       ).bind(sessionId).all<{ character_id: number; last_seen_at: number | null }>()
       const seenBy = new Map((seen.results || []).map((r) => [String(r.character_id), Number(r.last_seen_at) || 0]))
-      for (const id of Object.keys(this.state?.members || {})) this.lastSeen[id] = seenBy.get(id) ?? 0
+      for (const id of Object.keys(this.state?.members || {})) {
+        this.lastSeen[id] = seenBy.get(id) ?? 0
+        // What the row says is what the row says — seeding this from the same
+        // read is what stops a reloaded room believing it has just written a
+        // heartbeat it has never written.
+        this.heartbeatValue[id] = seenBy.get(id) ?? 0
+      }
       this.startTicking()
     })()
     try { await this.loading } finally { this.loading = null }
@@ -352,6 +389,7 @@ export class CoopBossRoom {
     try {
       const now = Date.now()
       this.lastTickAt = now
+      await this.releaseDivergedMembers(now)
       await this.ejectStaleMembers(now)
       if (!this.state) return
       if (memberCount(this.state) === 0) {
@@ -449,15 +487,18 @@ export class CoopBossRoom {
         // One event carries every winner's share: a client that is not on the
         // list has to be able to tell "I missed the cut" from "the poll dropped
         // my event", and per-winner events would toast a bystander eight times.
-        settlements: shares.map((s: AnyState) => ({
-          characterId: s.characterId,
-          granted: s.granted || [],
-          killCount: s.killCount ?? null,
-          diverged: !!s.diverged,
-          // A grant that threw must never reach the player as an empty drop
-          // list — that reads as an unlucky kill and hides the outage.
-          failed: !!s.failed,
-        })),
+        settlements: shares.map((s: AnyState) => {
+          if (s.diverged) this.pendingDivergedRelease.add(String(s.characterId))
+          return {
+            characterId: s.characterId,
+            granted: s.granted || [],
+            killCount: s.killCount ?? null,
+            diverged: !!s.diverged,
+            // A grant that threw must never reach the player as an empty drop
+            // list — that reads as an unlucky kill and hides the outage.
+            failed: !!s.failed,
+          }
+        }),
         lootDamageRequired: kill.lootDamageRequired ?? null,
         // Legacy single-winner fields, for a client deployed ahead of this Worker.
         ownerCharacterId: settlement.ownerCharacterId ?? kill.ownerCharacterId ?? null,
@@ -513,8 +554,28 @@ export class CoopBossRoom {
    * their own save for as long as anybody else kept playing.
    */
   private async ejectStaleMembers(now: number): Promise<void> {
-    const stale = staleMemberIds(this.state, this.lastSeen, now, COOP_SESSION_STALE_MS)
-    for (const id of stale) {
+    await this.releaseMembers(staleMemberIds(this.state, this.lastSeen, now, COOP_SESSION_STALE_MS), now)
+  }
+
+  /**
+   * Members the room owes nothing more to, written back and dropped.
+   *
+   * One path for both reasons a member leaves without asking — gone quiet, or
+   * holding a save the room can no longer write (pendingDivergedRelease) — so
+   * the write-back, the state removal and the socket close cannot drift apart
+   * between them. The diverged case's write-back is refused by the same
+   * tripwire that flagged it, which is exactly what is wanted: it releases the
+   * save lock without writing a snapshot over whatever moved it.
+   */
+  private async releaseDivergedMembers(now: number): Promise<void> {
+    if (this.pendingDivergedRelease.size === 0) return
+    const ids = [...this.pendingDivergedRelease]
+    this.pendingDivergedRelease.clear()
+    await this.releaseMembers(ids, now)
+  }
+
+  private async releaseMembers(ids: string[], now: number): Promise<void> {
+    for (const id of ids) {
       const member = this.state?.members?.[id]
       if (!member) continue
       try {
@@ -529,22 +590,37 @@ export class CoopBossRoom {
           sessionId: this.sessionId, characterId: member.characterId, message: (err as Error)?.message || err,
         })
       }
+      // Unconditional, and it is the write-back's REFUSALS that need it rather
+      // than its successes: the lock release lives inside writeBackMember, so a
+      // path that throws leaves the character still pointed at a session the
+      // room has just dropped them from — `joinCoopSession` answers `rejoined`,
+      // the room answers `not_a_member`, and the client cannot break out of that
+      // loop until the crash sweep runs. The membership row needs it too: a
+      // member released while their connection was healthy (the diverged case)
+      // keeps a `left_at NULL` row with a heartbeat that was just refreshed, so
+      // the browser advertises them in a room they are no longer in — for 90s,
+      // and in two rooms at once if they rejoin elsewhere. The stale-eject path
+      // only got away without it because its heartbeat had already lapsed.
+      await closeCoopMembership(this.env as never, this.sessionId, member.characterId)
+        .catch(() => { /* the crash sweep is the backstop behind this */ })
       this.state = removeCoopMember(this.state, member.characterId)
       this.pending = this.pending.filter((i) => String(i.characterId) !== id)
       this.dropSockets(id, 'ejected')
       delete this.lastSeen[id]
       delete this.chatTimes[id]
-      delete this.heartbeatWrittenAt[id]
+      delete this.heartbeatValue[id]
       this.dirty = true
       this.events = pushEvents(this.events, [{
         type: 'memberLeft', tick: this.state?.tick || 0, characterId: member.characterId,
       }], this.state?.tick || 0)
     }
-    if (stale.length > 0) await this.checkpoint(now)
+    if (ids.length > 0) await this.checkpoint(now)
   }
 
   private handlePoll(key: string, body: Record<string, any>): Response {
-    this.lastSeen[key] = Date.now()
+    // The socket fallback is the same proof of life a reconnect is, and a client
+    // that has been polling all along is already inside the write interval.
+    this.touchHeartbeat(key, Date.now())
     this.startTicking()
     const since = Number(body?.sinceTick)
     const currentTick = this.publishedTick
@@ -664,7 +740,9 @@ export class CoopBossRoom {
       frameTimes: [],
     }
     this.conns.set(server, conn)
-    this.lastSeen[key] = Date.now()
+    // A reconnect is proof of life the save lock has to hear about NOW, not at
+    // the next checkpoint — see touchHeartbeat.
+    this.touchHeartbeat(key, Date.now())
     this.startTicking()
 
     server.addEventListener('message', (event: MessageEvent) => {
@@ -823,6 +901,50 @@ export class CoopBossRoom {
     })
   }
 
+  private heartbeatStatement(id: string, seen: number) {
+    return this.env.DB.prepare(
+      'UPDATE coop_session_members SET last_seen_at = ? WHERE session_id = ? AND character_id = ? AND left_at IS NULL',
+    ).bind(seen, this.sessionId, Number(id))
+  }
+
+  /** Would the row still be telling /api/save the truth if it went unwritten?
+   * Backwards (a socket closing) is always written; forwards only once the
+   * stored value has drifted a write interval behind the proof we hold. */
+  private heartbeatIsStale(id: string, seen: number): boolean {
+    const stored = this.heartbeatValue[id] ?? 0
+    return seen < stored || seen - stored >= HEARTBEAT_WRITE_EVERY_MS
+  }
+
+  /**
+   * Proof of life that cannot wait for the next checkpoint.
+   *
+   * A member reconnecting inside the socket linger is live again immediately,
+   * but their row still holds the back-dated value that expires 45s after the
+   * close — and the next checkpoint is up to 15s away in a fight and 60s away in
+   * a lobby, which is long enough for the save lock to lapse under a player who
+   * is standing in the fight swinging. That window is how an /api/save landed
+   * mid-fight and orphaned the room's copy of a member's save revision.
+   *
+   * Not awaited BY THE CALLER: a socket upgrade must not wait on D1 to answer
+   * its 101. It still goes through the room's queue, because the alternative is
+   * a bare write racing the checkpoint's batched one — a reconnect landing
+   * inside a checkpoint's `await` would have its fresh value overtaken by the
+   * batch's back-dated one, leaving `heartbeatValue` describing a row D1 does
+   * not hold and reopening the very window this closes. Stamped optimistically
+   * so a flapping socket cannot storm the row, and re-armed on failure so the
+   * next checkpoint retries.
+   */
+  private touchHeartbeat(key: string, now: number): void {
+    this.lastSeen[key] = now
+    if (!this.sessionId || !this.state?.members?.[key]) return
+    if (!this.heartbeatIsStale(key, now)) return
+    const previous = this.heartbeatValue[key]
+    this.heartbeatValue[key] = now
+    void this.runExclusive(() => this.heartbeatStatement(key, now).run()).catch(() => {
+      if (this.heartbeatValue[key] === now) this.heartbeatValue[key] = previous ?? 0
+    })
+  }
+
   /** Mirrors the live fight back to D1 so the crash sweep has something recent
    * to write members back from, and so the boss picker's HP columns stay fresh. */
   private async checkpoint(now: number): Promise<void> {
@@ -852,20 +974,18 @@ export class CoopBossRoom {
     // member's heartbeat fresh and lock them out of their save until the room
     // emptied, which is the whole bug the per-member clock exists to fix.
     //
-    // Refreshed on its own 30s clock rather than on every checkpoint: the row
-    // only has to stay inside COOP_SESSION_STALE_MS (90s), so writing it four
-    // times a minute per member bought nothing. A heartbeat that moved BACKWARDS
+    // Refreshed against the AGE OF THE VALUE the row already holds rather than a
+    // clock of its own: the row only has to stay inside COOP_SESSION_STALE_MS
+    // (90s), so writing it four times a minute per member buys nothing — but a
+    // row drifting toward that TTL under a live member has to be refreshed
+    // whether or not one was written recently. A heartbeat that moved BACKWARDS
     // is written immediately — that is a socket closing, and the sooner the row
     // says so the sooner the player has their save back.
     for (const id of Object.keys(this.state.members || {})) {
       const seen = this.lastSeen[id] || 0
-      if (seen <= 0) continue
-      const written = this.heartbeatWrittenAt[id] || 0
-      if (seen >= written && now - written < HEARTBEAT_WRITE_EVERY_MS) continue
-      this.heartbeatWrittenAt[id] = now
-      statements.push(this.env.DB.prepare(
-        'UPDATE coop_session_members SET last_seen_at = ? WHERE session_id = ? AND character_id = ? AND left_at IS NULL',
-      ).bind(seen, this.sessionId, Number(id)))
+      if (seen <= 0 || !this.heartbeatIsStale(id, seen)) continue
+      this.heartbeatValue[id] = seen
+      statements.push(this.heartbeatStatement(id, seen))
     }
     // One batch, one round trip: the state row and the heartbeats used to be two
     // awaits inside a beat that is already holding the room.
@@ -887,7 +1007,8 @@ export class CoopBossRoom {
     this.events = []
     this.pending = []
     this.pendingChat = []
+    this.pendingDivergedRelease.clear()
     this.chatTimes = {}
-    this.heartbeatWrittenAt = {}
+    this.heartbeatValue = {}
   }
 }

@@ -954,6 +954,20 @@ function GameApp() {
           const rawHiddenAt = localStorage.getItem('pocketrpg_hiddenAt')
           const localSavedTask = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { return null } })()
           if (!rawHiddenAt) return
+          // A co-op room owned this character for the time that just passed: it
+          // resolved their swings, ate their supplies and banked the XP for it.
+          // Simulating that window here would pay for it a second time out of a
+          // pack the room is authoritative for, and the pull on the way out
+          // discards the result either way — but not before checkCloudNewer has
+          // adopted the room's mid-fight revision, which is what left the client
+          // holding a revision the room's write-back no longer matched. The
+          // stamp is still consumed: kept, the next return would simulate the
+          // fight all over again.
+          if (getActiveCoopSession()) {
+            localStorage.removeItem('pocketrpg_hiddenAt')
+            hiddenAtPerfRef.current = null
+            return
+          }
           const hiddenAt = parseInt(rawHiddenAt, 10)
           const perfNow = performance.now()
           // Prefer the D1 row for the task when available — it's the
@@ -2387,7 +2401,9 @@ function GameApp() {
       if (isSkippingRef.current) return
       if (isScreenRecentlyDriving()) return
       const task = activeTaskRef.current
-      if (!isRunnableBackgroundTask(task)) return
+      // Read the module state, not the `inCoopFight` render state: this closure
+      // is captured once for the life of the subscription.
+      if (!isRunnableBackgroundTask(task, { coopSessionActive: !!getActiveCoopSession() })) return
 
       // Read holdings synchronously: this rebuilds the whole inventory from what
       // it reads, so a copy one commit behind (the refs below are synced by a

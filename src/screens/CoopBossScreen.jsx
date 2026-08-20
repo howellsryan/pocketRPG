@@ -246,7 +246,13 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           emitKillReveal(nextState?.bossId, killedName, outcome.loot)
         }
       } else if (outcome.kind === 'diverged') {
-        addToast?.('Your loot could not be granted — something else changed your save. Leave and rejoin.', 'error')
+        // Never about the damage share — the player who found this had cleared
+        // the threshold five times over. Their save was written from somewhere
+        // else mid-fight, so the room's copy of it went stale and it can no
+        // longer grant anything. The room lets them go on the next beat, which
+        // the feed turns into a rejoin, so say that rather than "leave and
+        // rejoin" at a player who did nothing wrong.
+        addToast?.('Another tab or device changed your save, so this drop could not be granted. Putting you back in the fight…', 'error')
       } else if (outcome.kind === 'failed') {
         addToast?.(`${killedName} defeated, but the loot could not be granted. Leave and rejoin.`, 'error')
       } else {
