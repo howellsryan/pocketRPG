@@ -34,8 +34,19 @@ export function isScreenRecentlyDriving() {
 
 const RUNNABLE_TYPES = new Set(['skill', 'gather', 'agility', 'thieving', 'hunter'])
 
-/** True when the App-level runner should progress this task in the background. */
-export function isRunnableBackgroundTask(task) {
+/**
+ * True when the App-level runner should progress this task in the background.
+ *
+ * `coopSessionActive` is the whole answer on its own: while a co-op room owns
+ * this character the server is resolving their fight and holds their save, so
+ * anything the runner produces here is spent from a pack the room is also
+ * spending from and is thrown away by the pull on the way out. It is a option
+ * rather than a caller-side guard because that is what makes it testable — the
+ * runner already carries three untested guards in JSX and this one decides
+ * whether a player's herbs are consumed for nothing.
+ */
+export function isRunnableBackgroundTask(task, { coopSessionActive = false } = {}) {
+  if (coopSessionActive) return false
   if (!task || !RUNNABLE_TYPES.has(task.type)) return false
   if (task.type === 'skill') {
     // Long-form unlocks (dungeoneering rewards) progress like quests, not here.

@@ -45,7 +45,7 @@ import { RAID_TASK_META } from '../engine/slayerMasters.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel, SELF_HEALING_SPEC_TYPES } from '../engine/specialAttackEnergy.js'
 import { hasMasterRejuvenation, refillSpecialOnEmpty } from '../engine/specialRegen.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
-import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, lastSaveLockCode } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, holdServerOwnedSave, releaseServerOwnedSave, lastSaveLockCode } from '../cloud/sync.js'
 import monstersData from '../data/monsters.json'
 import worldData from '../data/world.json'
 import { placeActivities } from '../engine/worldContent.js'
@@ -1444,9 +1444,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => {
     if (!coopSessionId) return undefined
     suspendSaves()
+    // …and the stronger statement the suspension alone cannot make: the SERVER
+    // owns this save now, so even the teardown beacon has nothing to flush.
+    // Released with the suspension below, not with the session id above — the
+    // server's lock outlives the client's until the leave actually lands.
+    holdServerOwnedSave()
     setActiveCoopSession(coopSessionId)
-    return () => {
+    // One marker, one lifetime: the client-side simulation guards key off the
+    // session id, so nulling it on the first line of cleanup re-armed the idle
+    // catch-up and the background runner for the whole leave round trip — while
+    // the room still owned the save. Everything lifts together, once the server
+    // has actually let go.
+    const release = () => {
       setActiveCoopSession(null)
+      releaseServerOwnedSave()
+      resumeSaves()
+    }
+    return () => {
       // Releasing the client-side suspension is not enough: the server holds
       // `characters.active_coop_session_id` and refuses every save until the
       // membership actually ends. Leaving via the back link already did this
@@ -1455,7 +1469,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       // member heartbeat lapses.
       if (coopLeavingRef.current) {
         coopLeavingRef.current = false
-        resumeSaves()
+        release()
         return
       }
       // Resume saving only AFTER the server has written the fight back and we
@@ -1466,7 +1480,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         .then(() => pullSave())
         .then((pulled) => (pulled?.payload ? applyCloudSave(pulled.payload, pulled.updatedAt).then(loadGame) : null))
         .catch(() => { /* the member heartbeat lapsing covers it */ })
-        .finally(() => resumeSaves())
+        .finally(release)
     }
   }, [coopSessionId])
 

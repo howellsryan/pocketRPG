@@ -507,6 +507,13 @@ describe('what a beat costs D1', () => {
     expect(ws.lastFrame('bye')).toMatchObject({ reason: 'ejected' })
     const held = raw.prepare('SELECT active_coop_session_id AS s FROM characters WHERE id = 7').get()
     expect(held.s, 'the save stayed locked to a room that had let them go').toBeNull()
+    // Their connection was healthy right up to the release, so the heartbeat is
+    // fresh: without closing the row the browser advertises them in this room
+    // for another 90s, and in two rooms at once once they rejoin elsewhere.
+    const membership = raw.prepare(
+      'SELECT left_at AS l FROM coop_session_members WHERE session_id = ? AND character_id = 7',
+    ).get(sessionId)
+    expect(membership.l, 'the room still lists a member it has let go').not.toBeNull()
   })
 
   it('unlocks the save even when the write-back throws', async () => {

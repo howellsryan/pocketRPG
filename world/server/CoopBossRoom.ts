@@ -589,15 +589,20 @@ export class CoopBossRoom {
         console.error('[PocketRPG][coop] eject write-back failed', {
           sessionId: this.sessionId, characterId: member.characterId, message: (err as Error)?.message || err,
         })
-        // The lock release lives inside writeBackMember, so a throw leaves the
-        // character still pointed at a session the room has just dropped them
-        // from: joinCoopSession answers `rejoined` and the room answers
-        // `not_a_member`, which is a lost→rejoin→refused loop the player cannot
-        // break out of until the crash sweep runs. Close the membership by hand
-        // so their next join is a real one.
-        await closeCoopMembership(this.env as never, this.sessionId, member.characterId)
-          .catch(() => { /* the crash sweep is the backstop behind this */ })
       }
+      // Unconditional, and it is the write-back's REFUSALS that need it rather
+      // than its successes: the lock release lives inside writeBackMember, so a
+      // path that throws leaves the character still pointed at a session the
+      // room has just dropped them from — `joinCoopSession` answers `rejoined`,
+      // the room answers `not_a_member`, and the client cannot break out of that
+      // loop until the crash sweep runs. The membership row needs it too: a
+      // member released while their connection was healthy (the diverged case)
+      // keeps a `left_at NULL` row with a heartbeat that was just refreshed, so
+      // the browser advertises them in a room they are no longer in — for 90s,
+      // and in two rooms at once if they rejoin elsewhere. The stale-eject path
+      // only got away without it because its heartbeat had already lapsed.
+      await closeCoopMembership(this.env as never, this.sessionId, member.characterId)
+        .catch(() => { /* the crash sweep is the backstop behind this */ })
       this.state = removeCoopMember(this.state, member.characterId)
       this.pending = this.pending.filter((i) => String(i.characterId) !== id)
       this.dropSockets(id, 'ejected')

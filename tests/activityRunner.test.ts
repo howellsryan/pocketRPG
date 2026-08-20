@@ -38,6 +38,18 @@ function runOneAction(task: any, ctx: any) {
 }
 
 describe('isRunnableBackgroundTask', () => {
+  it('runs nothing while a co-op room owns the character', () => {
+    // The server is resolving this character's swings and holds their save, so
+    // background Herblore here spends herbs out of a pack the room is also
+    // spending from — and the pull on the way out of the fight throws the
+    // products away. A group fight is the only thing the player is doing.
+    const task = { type: 'skill', skill: 'herblore', action: { ticks: 3, product: 'super_attack' } } as any
+    expect(isRunnableBackgroundTask(task, { coopSessionActive: true })).toBe(false)
+    expect(isRunnableBackgroundTask(task, { coopSessionActive: false })).toBe(true)
+    // The default has to stay "run it": every other caller passes no options.
+    expect(isRunnableBackgroundTask(task)).toBe(true)
+  })
+
   it('accepts skill/gather/agility/thieving/hunter tasks', () => {
     expect(isRunnableBackgroundTask({ type: 'skill', skill: 'mining', action: { ticks: 3, product: 'iron_ore' } } as any)).toBe(true)
     expect(isRunnableBackgroundTask({ type: 'gather', gatherTask: { ticks: 3, product: 'bowstring' } } as any)).toBe(true)

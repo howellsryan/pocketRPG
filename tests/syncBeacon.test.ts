@@ -23,7 +23,7 @@ vi.mock('../src/db/saveload.js', () => ({
   applySavePayload: async () => {},
 }))
 
-import { beaconSaveNow, pushNow, resetSyncState } from '../src/cloud/sync.js'
+import { beaconSaveNow, pushNow, resetSyncState, resumeSaves, holdServerOwnedSave, releaseServerOwnedSave, suspendSaves } from '../src/cloud/sync.js'
 
 describe('beaconSaveNow', () => {
   it('queues a beacon carrying the save blob when content is new', () => {
@@ -36,6 +36,59 @@ describe('beaconSaveNow', () => {
     expect(JSON.parse(json).stats.attack.xp).toBe(5)
     // Teardown saves are interactive so the server never idle-ceilings them.
     expect(opts).toMatchObject({ interactive: true, saveRevision: 0 })
+  })
+
+  it('sends nothing while something else owns this character\u2019s save', () => {
+    // A co-op room holds the save for the whole fight (CombatScreen suspends the
+    // loop on the session), and a beacon fires on exactly the event that ends a
+    // co-op socket: the phone locking, the tab going away. Leaking one there
+    // aims the client's pre-fight blob at /api/save for the rest of the fight —
+    // and because a beacon's outcome is unreadable, it also moved the local
+    // revision and settled the ledgers as though the server had taken it.
+    resetSyncState()
+    sendSaveBeacon.mockClear()
+    holdServerOwnedSave()
+    try {
+      expect(beaconSaveNow({ stats: { attack: { xp: 5 } } })).toBe(false)
+      expect(sendSaveBeacon).not.toHaveBeenCalled()
+    } finally {
+      releaseServerOwnedSave()
+    }
+
+    // ...and the hold lifting leaves the beacon working, revision intact.
+    expect(beaconSaveNow({ stats: { attack: { xp: 5 } } })).toBe(true)
+    expect(sendSaveBeacon.mock.calls[0][1]).toMatchObject({ saveRevision: 0 })
+  })
+
+  it('keeps the hold when one fight releases it after the next has taken it', () => {
+    // Leaving a room releases only once the server's write-back has been pulled,
+    // so a player who joins the next room in between has the old room's release
+    // land on top of the new room's hold.
+    resetSyncState()
+    sendSaveBeacon.mockClear()
+    holdServerOwnedSave()
+    holdServerOwnedSave()
+    releaseServerOwnedSave()
+
+    expect(beaconSaveNow({ stats: { attack: { xp: 5 } } })).toBe(false)
+    expect(sendSaveBeacon).not.toHaveBeenCalled()
+    releaseServerOwnedSave()
+  })
+
+  it('still flushes a teardown while a CLIENT-owned operation holds the loop', () => {
+    // suspendSaves is also raised by the paid skip (gameState's lockGame), which
+    // holds the only copy of an hour the server has already charged a credit
+    // for. A teardown there is the flush that saves it, so the beacon must not
+    // be gated on the generic refcount.
+    resetSyncState()
+    sendSaveBeacon.mockClear()
+    suspendSaves()
+    try {
+      expect(beaconSaveNow({ stats: { attack: { xp: 5 } } })).toBe(true)
+      expect(sendSaveBeacon).toHaveBeenCalledTimes(1)
+    } finally {
+      resumeSaves()
+    }
   })
 
   it('skips when content is unchanged since the last successful push', async () => {

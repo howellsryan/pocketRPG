@@ -144,6 +144,17 @@ let hasUnsyncedChanges = false
 // push — that race is what drove the intermittent save_revision_conflict. The
 // operation calls pushNow() directly, which deliberately bypasses this gate.
 let savesSuspended = false
+/**
+ * The SERVER owns this character's save right now — a co-op room is resolving
+ * their swings and holds `characters.active_coop_session_id` (§20).
+ *
+ * Distinct from `savesSuspended`, which a short client-owned operation also
+ * raises: this one means the client's copy is not the truth and the client
+ * re-pulls on the way out, so a write from here is at best discarded and at
+ * worst lands in a gap in the server's lock and orphans the room's copy of the
+ * save revision.
+ */
+let serverOwnedCount = 0
 let saveSuspendCount = 0
 // Set once the server rejects a push with save_revision_conflict — our local
 // state has diverged from the authoritative cloud copy. We stop pushing the
@@ -443,6 +454,17 @@ if (typeof window !== 'undefined') {
 // game lock) can run inside a long one (a co-op boss session, where the server
 // owns the save) without the inner resume lifting the outer suspension.
 export function suspendSaves() { saveSuspendCount += 1; savesSuspended = true }
+/**
+ * Public: the server owns this character's save from here until released. Held
+ * for exactly as long as a co-op session is, alongside suspendSaves.
+ *
+ * Refcounted for the same reason that one is: leaving a fight releases only
+ * after the server's write-back has been pulled, so a player who joins the next
+ * room in between would otherwise have the previous room's release clear a hold
+ * the new fight is depending on.
+ */
+export function holdServerOwnedSave() { serverOwnedCount += 1 }
+export function releaseServerOwnedSave() { serverOwnedCount = Math.max(0, serverOwnedCount - 1) }
 export function resumeSaves() {
   saveSuspendCount = Math.max(0, saveSuspendCount - 1)
   savesSuspended = saveSuspendCount > 0
@@ -512,6 +534,20 @@ export async function pushNow(snapshot, options = {}) {
 export function beaconSaveNow(snapshot) {
   if (!canSync()) return false
   if (conflictPending) return false
+  // A teardown save is still a save, and while the SERVER owns this character's
+  // there is nothing here worth flushing. This was the one writer that ignored
+  // that, and a beacon is the worst possible one to leak: it fires on the very
+  // event that ends a co-op socket (a phone locking, a tab going away), it
+  // carries the client's pre-fight blob with `interactive: true` so the idle
+  // ceiling cannot stop it, and its outcome is unreadable — so it also bumped
+  // lastSaveRevision and settled the ledgers as though it had landed, whether or
+  // not the server refused it.
+  //
+  // Deliberately NOT the savesSuspended refcount: that is also raised by a
+  // blocking client-owned operation (the paid skip, gameState's lockGame), which
+  // holds the only copy of an hour it has already charged a credit for and needs
+  // the teardown flush more than anyone.
+  if (serverOwnedCount > 0) return false
   if (!snapshot) return false
   let data
   try { data = withLiveActiveTask(buildSavePayloadFromSnapshot(snapshot)) } catch { return false }
@@ -721,6 +757,7 @@ export function resetSyncState() {
   lastLockCode = null
   savesSuspended = false
   saveSuspendCount = 0
+  serverOwnedCount = 0
   conflictPending = false
   pendingCriticalSnapshotSource = null
   pendingCriticalReasons.clear()
