@@ -22,7 +22,7 @@ import { grimReaperStashFromDeath } from './grimReaper.js'
 import { getLevelFromXP } from './experience.js'
 import { bankSlayerCredit, creditSlayerTaskKill, emptySlayerCredit } from './slayerKillCredit.js'
 import { KILL_CREDIT_DAMAGE_SHARE, earnedKillCredit, killCreditDamageRequired, killCreditIds } from './killCredit.js'
-import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
+import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect, boostedMagicLevel } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
 import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers } from './roomWideAttacks.js'
@@ -859,8 +859,12 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
       // The server grants this damage and its XP, so the level gate has to be
       // enforced here — the engine itself only ever checked runes, and the
       // client's spellbook filter is not a gate. Mirrors the PvP intent check.
+      // Gated on the BOOSTED level (base + active Super Combat/Magic
+      // Potion/Imbued Brain) so a boosted mage can select a spell their base
+      // level hasn't reached, same as the boost already applied to damage.
       const required = Math.max(1, Math.floor(Number(spell.levelReq) || 1))
-      if (memberLevel(member, 'magic') < required) {
+      const effectiveMagicLevel = boostedMagicLevel(memberLevel(member, 'magic'), member.combat.activePotions, itemsData)
+      if (effectiveMagicLevel < required) {
         events.push({
           type: 'actionRefused', characterId: member.characterId, reason: 'spell_level',
           spellId: action.spellId, name: spell.name, required,

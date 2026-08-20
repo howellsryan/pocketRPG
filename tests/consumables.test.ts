@@ -7,6 +7,7 @@ import {
   getPotionDurationTicks,
   getPotionStatBoost,
   getActivePotionBoosts,
+  boostedMagicLevel,
   applyConsumableEffect,
   isComboConsumable,
   isNormalFood,
@@ -112,6 +113,24 @@ describe('consumables — boosts', () => {
     expect(getPotionDurationTicks(ITEMS.attack_potion)).toBe(500)
     expect(getPotionDurationTicks({})).toBe(500)
     expect(getPotionDurationTicks({ duration: 60 })).toBe(100)
+  })
+
+  it('boostedMagicLevel adds the active magic boost to base level, so a spell above base level unlocks', () => {
+    // 90 base + super_combat's +4 magic boost = 94, still short of Fire Surge (95)
+    expect(boostedMagicLevel(90, { super_combat: 100 }, ITEMS)).toBe(94)
+    // A dedicated magic potion (+4) does the same
+    expect(boostedMagicLevel(90, { magic_potion: 100 }, ITEMS)).toBe(94)
+    // Imbued Brain's bigger boost (+18) clears 95
+    expect(boostedMagicLevel(90, { imbued_brain: 100 }, {
+      ...ITEMS,
+      imbued_brain: { id: 'imbued_brain', type: 'potion', effect: 'magic', boost: 18, duration: 300 },
+    })).toBe(108)
+  })
+
+  it('boostedMagicLevel falls back to base level with no active potions', () => {
+    expect(boostedMagicLevel(90, {}, ITEMS)).toBe(90)
+    expect(boostedMagicLevel(90, null, ITEMS)).toBe(90)
+    expect(boostedMagicLevel(0, {}, ITEMS)).toBe(1)
   })
 })
 
