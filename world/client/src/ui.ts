@@ -149,7 +149,12 @@ ${SCROLL_CSS}
   background: rgba(26, 21, 13, var(--hud-pop)); backdrop-filter: blur(6px);
   border: 1px solid #5a4a30; overflow-y: auto;
 }
-:root[data-hud-sheet="closed"] #hud-body { display: none; }
+/* !important: same tie as data-hud-hidden above — this and the
+   data-hud-orient portrait/landscape #hud-body rules below are equal
+   specificity, and source order alone would let orientation's display
+   win over "closed" whenever both apply, silently no-opping every dismiss
+   path (drag, re-tap-active-tab, and the pane-head close button). */
+:root[data-hud-sheet="closed"] #hud-body { display: none !important; }
 .hud-sheet-handle { display: none; }
 .hud-pane { display: none; }
 .hud-pane.active { display: block; }
@@ -187,13 +192,23 @@ ${SCROLL_CSS}
 }
 :root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-body { right: 58px; border-right: none; }
 :root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-body { left: 58px; border-left: none; }
-.hud-pane-head { display: none; }
-:root[data-hud-orient="landscape"] .hud-pane-head {
-  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
-}
+.hud-pane-head { display: flex; align-items: center; justify-content: space-between; }
 .hud-pane-head b { color: #ffe066; font-weight: 800; font-size: 14px; text-transform: capitalize; }
-.hud-pane-head button { background: none; border: none; color: #a5a284; cursor: pointer; padding: 4px; }
+.hud-pane-head button {
+  background: none; border: none; color: #a5a284; cursor: pointer;
+  min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;
+}
 .hud-pane-head button svg { display: block; }
+:root[data-hud-orient="landscape"] .hud-pane-head { margin-bottom: 8px; }
+/* portrait: the sheet has no room for a full header row, so the collapse
+   button overlays the sticky drag-handle bar (top-right, clear of the
+   centred pill) instead of pushing pane content down — the one visible,
+   tappable way to collapse the sheet without knowing the drag gesture or
+   that re-tapping the active nav icon also closes it. */
+:root[data-hud-orient="portrait"] .hud-pane-head {
+  position: absolute; top: 0; right: 2px; z-index: 2;
+}
+:root[data-hud-orient="portrait"] .hud-pane-head b { display: none; }
 
 /* ---- minimap positioning (minimap.ts owns #minimap; these override its
    default top-right anchor so it sits opposite the landscape rail and clears
