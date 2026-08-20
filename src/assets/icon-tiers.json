@@ -310,7 +310,9 @@
     },
     "seed": {
       "greenthorn_seed": "seed", "miremint_seed": "seed", "duskroot_seed": "seed", "kingsherb_seed": "seed",
-      "graysage_seed": "seed", "bogtuber_seed": "seed", "rynarr_seed": "seed"
+      "graysage_seed": "seed", "bogtuber_seed": "seed", "rynarr_seed": "seed", "sunblossom_seed": "seed",
+      "emberleaf_seed": "seed", "wyrmspice_seed": "seed", "snapdrake_seed": "seed", "cinderbloom_seed": "seed",
+      "stonefern_seed": "seed", "mistvine_seed": "seed", "marshflax_seed": "seed", "thornspire_seed": "seed"
     },
     "sapling": {
       "oak_sapling": "sapling", "willow_sapling": "sapling", "maple_sapling": "sapling", "yew_sapling": "sapling",
