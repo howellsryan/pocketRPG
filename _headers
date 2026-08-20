@@ -3,10 +3,18 @@
 # the edge and that cannot be overridden from _headers — so the SEO audit will
 # still report "blocked from indexing" when run against a *.pages.dev URL.
 # Run Lighthouse against the production domain (pocketrpg.co.uk) to verify.
+#
+# Cross-Origin-Embedder-Policy: credentialless — game portals (e.g. PixelPicked)
+# run their own listing page with COEP: require-corp, which refuses to load any
+# framed document that doesn't itself opt in to a COEP policy. `credentialless`
+# satisfies that opt-in without forcing every cross-origin subresource this site
+# loads to carry a matching Cross-Origin-Resource-Policy header for ALL
+# visitors, embedded or not — the stricter `require-corp` would.
 /*
   X-Robots-Tag: index, follow
   Content-Security-Policy: frame-ancestors *
   Cross-Origin-Resource-Policy: cross-origin
+  Cross-Origin-Embedder-Policy: credentialless
 
 # Long-lived caching for static, content-stable assets (fonts + landing
 # screenshots). These are served from /public by Cloudflare Pages.
