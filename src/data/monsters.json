@@ -5095,6 +5095,12 @@
         }
       }
     },
+    "spawnsAdd": {
+      "monsterId": "ember_minion",
+      "maxActive": 2,
+      "firstSpawnAfterAttacks": [7, 10],
+      "respawnAfterAttacks": [7, 10]
+    },
     "drops": [
       {
         "itemId": "fire_cape",
@@ -5108,6 +5114,38 @@
       }
     ],
     "legacy_id": "jad"
+  },
+  "ember_minion": {
+    "id": "ember_minion",
+    "name": "Ember Minion",
+    "icon": "🔥",
+    "isAdd": true,
+    "summonedBy": "ember_tyrant",
+    "combatLevel": 180,
+    "hitpoints": 45,
+    "stats": {
+      "attack": 220,
+      "strength": 60,
+      "defence": 80,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "melee",
+    "maxHit": 15,
+    "weakness": "magic",
+    "attackBonus": 200,
+    "strengthBonus": 60,
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 40,
+      "magic": 20,
+      "ranged": 40
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
   },
   "ashen_crucible": {
     "id": "ashen_crucible",
