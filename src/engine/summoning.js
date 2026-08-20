@@ -26,7 +26,9 @@ export const CHARM_DROP_CHANCE_MAX = 0.25  // per-kill chance at the top of a br
 export const CRAFT_ACTION_TICKS = 2      // one pouch/scroll batch every 2 ticks
 export const EMPTY_POUCH_ID = 'empty_pouch'
 
-export const SUMMONING_CREATURES = summoningData.creatures
+// Sorted by level so every screen that lists creatures (Summoning, the live
+// combat Summon picker) reads 1→99 regardless of authoring order in the JSON.
+export const SUMMONING_CREATURES = [...summoningData.creatures].sort((a, b) => a.level - b.level)
 
 const CREATURE_BY_ID = Object.fromEntries(SUMMONING_CREATURES.map((c) => [c.id, c]))
 const CREATURE_BY_POUCH = Object.fromEntries(SUMMONING_CREATURES.map((c) => [c.pouch, c]))

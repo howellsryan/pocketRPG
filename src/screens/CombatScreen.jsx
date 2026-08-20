@@ -283,8 +283,9 @@ function MonsterAddStats({ monster }) {
       <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Summoned</h4>
       <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] font-semibold" style={{ color: getStyleArt(add.attackStyle).color }}>
-            {add.icon ? `${add.icon} ` : ''}{add.name}
+          <span class="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: getStyleArt(add.attackStyle).color }}>
+            <SkillEmblem iconKey={getMonsterArt(add).icon} accent={getMonsterArt(add).accent} size={18} glow={0} />
+            {add.name}
           </span>
           <span class="text-[9px] text-[var(--color-parchment)] opacity-50 font-[var(--font-mono)]">Max Hit {maxHit}</span>
         </div>
@@ -3325,7 +3326,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const addPanel = activeAdd && (
     <div class="cb-qa" style={{ marginBottom: 12 }}>
       <div class="cb-hplabel">
-        <span>{activeAdd.icon} {activeAdd.name}</span>
+        <span class="flex items-center gap-1.5">
+          <SkillEmblem iconKey={getMonsterArt(activeAdd).icon} accent={getMonsterArt(activeAdd).accent} size={16} glow={0} />
+          {activeAdd.name}
+        </span>
         <span class="cb-hplabel__v">{Math.max(0, Math.round(activeAdd.currentHP))}/{activeAdd.hitpoints}</span>
       </div>
       <div class="relative mb-2">
@@ -4186,7 +4190,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   <button key={c.id} disabled={!canSummon} onClick={canSummon ? () => handleSummon(c.id) : undefined}
                     class={`flex items-center gap-3 p-2.5 rounded-lg text-left ${canSummon ? 'active:opacity-80' : 'opacity-45 cursor-default'}`}
                     style="background:var(--color-void);border:1px solid var(--color-void-light)">
-                    <GameIcon iconKey="summoning" size={30} />
+                    <GameIcon item={itemsData[c.pouch]} size={30} />
                     <div class="flex-1 min-w-0">
                       <div class="text-[13px] font-bold text-[var(--color-parchment)]">{c.name}</div>
                       <div class="text-[10px] text-[var(--color-parchment)] opacity-55">

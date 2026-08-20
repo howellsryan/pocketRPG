@@ -45,6 +45,12 @@ describe('summoning — content integrity', () => {
     }
   })
 
+  it('lists creatures sorted by level, 1 through 99', () => {
+    const levels = SUMMONING_CREATURES.map(c => c.level)
+    const sorted = [...levels].sort((a, b) => a - b)
+    expect(levels).toEqual(sorted)
+  })
+
   it('the Summoning cape is a level-99 skill cape', () => {
     const cape = items['summoning_cape']
     expect(cape).toBeDefined()
@@ -185,6 +191,18 @@ describe('summoning — combat rolls', () => {
     for (const h of res.hits) {
       expect(h).toBeGreaterThanOrEqual(1)
       expect(h).toBeLessThanOrEqual(titan.maxHit)
+    }
+  })
+
+  it('rolls two damage values per creature hit (Ember Minion swings twice)', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0) // force a hit, min damage per swing
+    const emberMinion = getSummoningCreature('ember_minion')!
+    const res = rollSummonAttack(emberMinion, monster)
+    expect(res.hits.length).toBe(2)
+    expect(res.damage).toBe(res.hits.reduce((a, b) => a + b, 0))
+    for (const h of res.hits) {
+      expect(h).toBeGreaterThanOrEqual(1)
+      expect(h).toBeLessThanOrEqual(emberMinion.maxHit)
     }
   })
 
