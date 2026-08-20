@@ -98,15 +98,6 @@ ${SCROLL_CSS}
 }
 .hud-tab svg, #hud-eye svg { display: block; }
 .hud-tab.active { background: rgba(70, 58, 36, 0.92); color: #ffe066; border-color: #6a5636; }
-/* Collapse handle: always visible so a collapsed rail can be reopened; its
-   siblings (tabs, divider, spacer, world map, settings) fold away and the
-   rail itself shrinks to fit it, reclaiming the screen edge it occupied. */
-.hud-rail-toggle svg { transition: transform 0.15s ease; }
-:root[data-hud-rail="collapsed"] .hud-rail-toggle svg { transform: rotate(180deg); }
-:root[data-hud-rail="collapsed"] #hud-rail-p > *:not(.hud-rail-toggle),
-:root[data-hud-rail="collapsed"] #hud-rail-l > *:not(.hud-rail-toggle) { display: none; }
-:root[data-hud-rail="collapsed"] #hud-rail-p { right: auto; }
-:root[data-hud-rail="collapsed"] #hud-rail-l { bottom: auto; }
 #hud-rail-p, #hud-rail-l { position: fixed; z-index: 12; display: flex; }
 /* portrait: thumb rail across the bottom */
 #hud-rail-p {
@@ -117,7 +108,6 @@ ${SCROLL_CSS}
 }
 #hud-rail-p .rail-spacer { flex: 1; }
 #hud-rail-p .rail-div { width: 1px; height: 28px; background: #4a3d26; flex: none; margin: 0 2px; }
-#hud-rail-l .rail-div { height: 1px; width: 28px; background: #4a3d26; flex: none; margin: 2px 0; }
 /* landscape: slim edge rail on the dock side */
 #hud-rail-l {
   top: 0; bottom: 0; width: 58px; flex-direction: column; align-items: center; gap: 7px;
@@ -714,10 +704,6 @@ const TAB_LABEL: Record<string, string> = {
 // applyLayout so the CSS above does the reflow). ----
 let settings: UxSettings = { minimapMode: null, hudScale: 'normal', dock: 'right', panelOpacity: 0.92, chatAutoFade: true, haptics: true, hideChatBar: false }
 let hudVisible = true
-// Session-only, like hudVisible — not part of UxSettings/localStorage. Folds
-// the tab rail (portrait bottom bar / landscape edge rail) down to just its
-// toggle handle, independent of the eye's hide-everything switch.
-let railCollapsed = false
 let orientation: 'portrait' | 'landscape' = 'portrait'
 let tablet = false
 let sheetHeightPx = 0
@@ -737,20 +723,10 @@ function setSheetOpen(open: boolean): void {
   document.documentElement.setAttribute('data-hud-sheet', open ? 'open' : 'closed')
 }
 
-/** Collapsing folds the tab rail down to its handle and force-closes the
- * sheet — its tabs (the only way to switch or close a specific pane) live in
- * the rail, so leaving the sheet open with them hidden would strand it. */
-function setRailCollapsed(collapsed: boolean): void {
-  railCollapsed = collapsed
-  if (collapsed) setSheetOpen(false)
-  applyLayout()
-}
-
 /** Opens the panel body on `id`: marks the tab + pane active and titles the
  * landscape pane header. Shared by tab taps, the prayer-orb shortcut, and the
  * F1–F5 keys. */
 function selectTab(id: string): void {
-  if (railCollapsed) setRailCollapsed(false)
   setSheetOpen(true)
   for (const tab of document.querySelectorAll('.hud-tab[data-tab]')) {
     tab.classList.toggle('active', tab.getAttribute('data-tab') === id)
@@ -793,8 +769,6 @@ function applyLayout(): void {
   root.setAttribute('data-hud-dock', settings.dock)
   root.setAttribute('data-hud-scale', settings.hudScale)
   root.setAttribute('data-minimap', resolveMinimapMode(settings, tablet))
-  root.setAttribute('data-hud-rail', railCollapsed ? 'collapsed' : 'expanded')
-  syncRailToggleLabels()
   if (hudVisible) root.removeAttribute('data-hud-hidden')
   else root.setAttribute('data-hud-hidden', '1')
   root.style.setProperty('--hud-pop', String(settings.panelOpacity))
@@ -939,47 +913,13 @@ function railActionButton(html: string, title: string, onClick: () => void): HTM
   return btn
 }
 
-function railToggleLabel(): string {
-  return railCollapsed ? 'Show tabs' : 'Collapse tabs'
-}
-
-/** Both rails (portrait + landscape) carry their own handle instance; only one
- * is ever visible at a time (orientation-gated), but keep both labels in sync
- * so whichever becomes visible after a rotation already reads correctly. */
-function syncRailToggleLabels(): void {
-  for (const btn of document.querySelectorAll<HTMLElement>('.hud-rail-toggle')) {
-    btn.title = railToggleLabel()
-    btn.setAttribute('aria-label', railToggleLabel())
-  }
-}
-
-/** Always-visible handle (never folded away by its own collapsed state) that
- * folds the rest of the rail down to just itself, and back. */
-function railToggleButton(): HTMLElement {
-  const btn = document.createElement('div')
-  btn.className = 'hud-tab hud-rail-toggle'
-  btn.title = railToggleLabel()
-  btn.setAttribute('aria-label', railToggleLabel())
-  btn.innerHTML = CHEVRON_SVG
-  btn.addEventListener('click', () => {
-    haptic()
-    setRailCollapsed(!railCollapsed)
-  })
-  return btn
-}
-
 /** One tab rail (both orientations build the same controls; CSS shows whichever
- * matches the current orientation). Collapse handle, then tabs, then a spacer,
- * then World Map + Settings pushed to the far end (right in portrait, bottom
- * in landscape). */
+ * matches the current orientation). Tabs, then a spacer, then World Map +
+ * Settings pushed to the far end (right in portrait, bottom in landscape). */
 function buildRail(id: string, handlers: HudHandlers | undefined, openSettings: () => void): HTMLElement {
   const rail = document.createElement('div')
   rail.id = id
   rail.className = 'hud-hideable'
-  rail.appendChild(railToggleButton())
-  const divider = document.createElement('div')
-  divider.className = 'rail-div'
-  rail.appendChild(divider)
   for (const tab of TABS) rail.appendChild(railTabButton(tab))
   const spacer = document.createElement('div')
   spacer.className = 'rail-spacer'
