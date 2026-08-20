@@ -33,7 +33,14 @@ describe('reward item definitions', () => {
 
   it('defines void king pieces as untradeable minigame rewards', () => {
     for (const id of ['void_king_helm','void_king_top','void_king_robe','void_king_gloves'] as const) {
-      expect(items[id].requirements).toEqual({ defence: 42 })
+      expect(items[id].requirements).toEqual({
+        attack: 42,
+        ranged: 42,
+        magic: 42,
+        strength: 42,
+        defence: 42,
+        hitpoints: 42,
+      })
       expect(items[id].attackBonus).toEqual({ stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 })
       expect(items[id].isUntradeable).toBe(true)
       expect(items[id].shopValue).toBe(375_000)
