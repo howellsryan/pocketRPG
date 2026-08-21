@@ -177,4 +177,81 @@ describe('simulateIdleCombat', () => {
     expect(sim!.chargesConsumed).toBe(2)
   })
 
+  it('sizes the ammo cap off the boosted (not unboosted-baseline) attacks-per-kill', () => {
+    // A tanky target needs multiple hits per kill unboosted. A configured idle
+    // ranging potion + Eagle Eye prayer cuts hits-per-kill, so the same ammo
+    // stock should last for MORE kills than a static unboosted estimate would
+    // predict — sizing the cap off the baseline (the bug) caps both runs at
+    // the same, lower kill count regardless of the boost.
+    const task: any = {
+      stance: 'accurate',
+      monster: { id: 'tough_target', name: 'Tough Target', hitpoints: 60, stats: { defence: 50, magic: 1 }, defenceBonus: { ranged: 40 }, drops: [] }
+    }
+    const stats: any = { ranged: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 }, prayer: { xp: 13_034_431 } }
+    const equipment: any = { weapon: { itemId: 'runeforged_crossbow' }, ammo: { itemId: 'bronze_bolt', quantity: 30 } }
+    const itemsData: any = {
+      runeforged_crossbow: { id: 'runeforged_crossbow', attackStyle: 'ranged', ammoType: 'bolt', attackSpeed: 5, attackBonus: { ranged: 90 }, defenceBonus: {}, otherBonus: { rangedStrength: 0 } },
+      bronze_bolt: { id: 'bronze_bolt', ammoKind: 'bolt' },
+      ranging_potion: { id: 'ranging_potion', type: 'potion', effect: 'ranged', boost: 20, duration: 300 },
+    }
+    const prayersData: any = {
+      eagle_eye: { id: 'eagle_eye', name: 'Eagle Eye', bonusType: 'stat', stat: 'ranged', boostPercent: 15, level: 44, drainPerMinute: 12 },
+    }
+
+    const baseline = simulateIdleCombat(task, 600_000, stats, equipment, Array(28).fill(null), itemsData)
+    expect(baseline!.monstersKilled).toBe(2)
+    expect(baseline!.resourceLimited).toBe(true)
+
+    const boosted = simulateIdleCombat(task, 600_000, stats, equipment, Array(28).fill(null), itemsData, null, { ranging_potion: { quantity: 5 } }, {
+      idlePotions: [{ itemId: 'ranging_potion', quantity: 5 }],
+      idlePrayers: { combatPrayerId: 'eagle_eye', protectionPrayerId: null },
+      prayersData,
+    })
+    expect(boosted!.resourceLimited).toBe(true)
+    expect(boosted!.monstersKilled).toBeGreaterThan(baseline!.monstersKilled)
+    expect(boosted!.monstersKilled).toBe(3)
+  })
+
+  it('sizes the rune cap off the boosted attacks-per-kill, and folds boosted cast counts into spell XP', () => {
+    const task: any = {
+      stance: 'accurate',
+      spell: { id: 'fireball', baseDamage: 20, baseXP: 8, runeReq: { fire_rune: 3, chaos_rune: 1 } },
+      monster: { id: 'tough_target', name: 'Tough Target', hitpoints: 100, stats: { defence: 60, magic: 60 }, defenceBonus: { magic: 40 }, drops: [] }
+    }
+    const stats: any = { magic: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 }, prayer: { xp: 13_034_431 } }
+    const equipment: any = { weapon: { itemId: 'staff' } }
+    const itemsData: any = {
+      staff: { id: 'staff', slot: 'weapon', attackStyle: 'magic', attackSpeed: 5, attackBonus: { magic: 40 }, defenceBonus: {}, otherBonus: { magicDamage: 0 } },
+      magic_potion: { id: 'magic_potion', type: 'potion', effect: 'magic', boost: 60, duration: 300 },
+      fire_rune: { id: 'fire_rune' },
+      chaos_rune: { id: 'chaos_rune' },
+    }
+    const prayersData: any = {
+      mystic_will: { id: 'mystic_will', name: 'Mystic Will', bonusType: 'stat', stat: 'magic', boostPercent: 20, level: 9, drainPerMinute: 3 },
+    }
+    const inventory = Array(28).fill(null)
+    const bank = { fire_rune: { quantity: 269 }, chaos_rune: { quantity: 300 } }
+
+    const baseline = simulateIdleCombat(task, 600_000, stats, equipment, inventory, itemsData, null, bank)
+    expect(baseline!.monstersKilled).toBe(5)
+    expect(baseline!.resourceLimited).toBe(true)
+    expect(baseline!.runesConsumed).toEqual({ fire_rune: 225, chaos_rune: 75 })
+
+    const boosted = simulateIdleCombat(task, 600_000, stats, equipment, inventory, itemsData, null, bank, {
+      idlePotions: [{ itemId: 'magic_potion', quantity: 5 }],
+      idlePrayers: { combatPrayerId: 'mystic_will', protectionPrayerId: null },
+      prayersData,
+    })
+    expect(boosted!.resourceLimited).toBe(true)
+    // Same rune stock, but the boosted run needs fewer casts per kill — it
+    // should clear MORE kills than the static-baseline cap would allow.
+    expect(boosted!.monstersKilled).toBeGreaterThan(baseline!.monstersKilled)
+    expect(boosted!.monstersKilled).toBe(6)
+    // Spell-cast XP must reflect the actual (boosted) cast count, not the
+    // unboosted baseline — it rides the same attacksUsed total the rune cap
+    // now uses. Damage XP is 100 hp * MAGIC_XP_PER_DAMAGE (2) per kill, plus
+    // baseXP (8) per actual cast.
+    expect(boosted!.xpGained.magic).toBe(boosted!.monstersKilled * 200 + boosted!.attacksUsed * 8)
+  })
+
 })

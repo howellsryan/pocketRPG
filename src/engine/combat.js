@@ -582,19 +582,12 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
   }
 
-  // Apply prayer bonuses to player stats from both active prayers
+  // Apply potion bonuses to player stats from all active potions (summed
+  // across potions, via the shared consumables engine — same maths PvP uses).
+  // Applied BEFORE prayer so prayer's percentage multiply also scales the
+  // potion's flat boost — the highest-boost ordering, mirrored by
+  // buildBoostedPlayerStats in idleSupplies.js so live and idle agree.
   let boostedPlayerStats = playerStats
-  if (prayersData && typeof prayersData === 'object') {
-    if (state.activeProtectionPrayer && prayersData[state.activeProtectionPrayer]) {
-      boostedPlayerStats = applyPrayerBonuses(boostedPlayerStats, state.activeProtectionPrayer, prayersData) || boostedPlayerStats
-    }
-    if (state.activeCombatPrayer && prayersData[state.activeCombatPrayer]) {
-      boostedPlayerStats = applyPrayerBonuses(boostedPlayerStats, state.activeCombatPrayer, prayersData) || boostedPlayerStats
-    }
-  }
-
-  // Apply potion bonuses to player stats from all active potions (max per stat,
-  // via the shared consumables engine — same maths PvP uses).
   if (Object.keys(state.activePotions).length > 0 && itemsData && typeof itemsData === 'object') {
     const potBoosts = getActivePotionBoosts(state.activePotions, itemsData)
     boostedPlayerStats = { ...boostedPlayerStats }
@@ -602,6 +595,16 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       if (val && typeof boostedPlayerStats[stat] === 'number') {
         boostedPlayerStats[stat] = Math.floor(boostedPlayerStats[stat] + val)
       }
+    }
+  }
+
+  // Apply prayer bonuses to player stats from both active prayers
+  if (prayersData && typeof prayersData === 'object') {
+    if (state.activeProtectionPrayer && prayersData[state.activeProtectionPrayer]) {
+      boostedPlayerStats = applyPrayerBonuses(boostedPlayerStats, state.activeProtectionPrayer, prayersData) || boostedPlayerStats
+    }
+    if (state.activeCombatPrayer && prayersData[state.activeCombatPrayer]) {
+      boostedPlayerStats = applyPrayerBonuses(boostedPlayerStats, state.activeCombatPrayer, prayersData) || boostedPlayerStats
     }
   }
 
