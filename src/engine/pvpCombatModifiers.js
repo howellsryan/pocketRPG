@@ -1,6 +1,7 @@
 import prayersData from '../data/prayers.json'
 import itemsData from '../data/items.json'
 import { getActivePotionBoosts } from './consumables.js'
+import { getPrayerMagicDamageBonus } from './prayerCombatBonuses.js'
 
 const PVP_MODIFIERS_PROTECTION_PRAYER_IDS = new Set([
   'protection_from_magic',
@@ -52,5 +53,8 @@ function getPrayerMultipliers(prayerId) {
 export function getPvpCombatModifiers(combatant) {
   const prayer = getPrayerMultipliers(combatant?.activeCombatPrayer)
   const potions = getActivePotionBoosts(combatant?.activePotions, itemsData)
-  return { prayer, potions }
+  // Percentage points, not a multiplier like the entries above — it is added
+  // alongside worn magic damage rather than scaling a level.
+  const magicDamagePercent = getPrayerMagicDamageBonus([combatant?.activeCombatPrayer], prayersData)
+  return { prayer, potions, magicDamagePercent }
 }

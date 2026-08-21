@@ -186,9 +186,9 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
   const wornMagicDamage = getEffectiveWornMagicDamage(atkBonuses.otherBonus.magicDamage, attacker.equipment, itemsData)
   let maxHit
   if (typeof maxHitOverride === 'number') {
-    maxHit = magicMaxHit(maxHitOverride, wornMagicDamage + voidMult.magicDamageBonusFlat)
+    maxHit = magicMaxHit(maxHitOverride, wornMagicDamage + voidMult.magicDamageBonusFlat + atkMods.magicDamagePercent)
   } else if (spell) {
-    maxHit = magicMaxHit(spell.baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + getSpellRuneMagicDamage(attacker.equipment, itemsData, spell))
+    maxHit = magicMaxHit(spell.baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + getSpellRuneMagicDamage(attacker.equipment, itemsData, spell) + atkMods.magicDamagePercent)
   } else {
     // No spell, no override — caller is misusing the API. Bail with 0.
     return { hit: false, damage: 0, accuracy: 0, maxHit: 0, attackRoll: atkRoll, defenceRoll: defRoll, style: 'magic' }

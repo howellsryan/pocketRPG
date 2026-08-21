@@ -234,8 +234,9 @@
     "icon": "\ud83d\udd2e",
     "level": 77,
     "drainPerMinute": 40,
-    "description": "+25% Magic, +25% Defence",
+    "description": "+25% Magic, +25% Defence, +5% Magic damage",
     "bonusType": "multi_stat",
+    "magicDamagePercent": 5,
     "stats": {
       "magic": 25,
       "defence": 25

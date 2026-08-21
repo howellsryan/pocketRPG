@@ -33,6 +33,7 @@ import { getDamageReductionPerk, expectedDamageMultiplier, getPrayerDrainMultipl
 import { getMonsterCharmDrops } from './summoning.js'
 import { grindmanDropChance } from './grindman.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
+import { getPrayerMagicDamageBonus } from './prayerCombatBonuses.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import {
   isFoodItem, getFoodHealAmount, isBoostPotion, isPrayerRestorePotion,
@@ -972,7 +973,7 @@ function protectionPrayerCovers(prayerStyle, attackStyle) {
  * Compute average player DPS against a monster.
  * Returns { avgDmgPerHit, weaponSpeed, acc, combatType } so callers can use per-hit granularity.
  */
-function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell = null, slayerTask = null) {
+function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell = null, slayerTask = null, prayerMagicDamage = 0) {
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
@@ -1007,7 +1008,7 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
       ? spell.baseDamage
       : poweredStaffMagicBaseDamage(playerStats.magic || 1, equipment?.weapon ? itemsData[equipment.weapon.itemId] : null)
     const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
-    maxHit = magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + getSpellRuneMagicDamage(equipment, itemsData, spell))
+    maxHit = magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + getSpellRuneMagicDamage(equipment, itemsData, spell) + prayerMagicDamage)
     atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy * slayerAccuracyMult)
     defRoll = monsterMagicDefenceRoll(monster.stats.magic || 1, monster.stats.defence, monster.defenceBonus?.magic || 0)
   } else {
@@ -1203,7 +1204,12 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
       useCombatPrayer ? idlePrayers.combatPrayerId : null,
       prayersData,
     )
-    const hitStats = avgHitStats(layered, equipment, monster, stance, itemsData, task.spell || null, slayerTask)
+    const hitStats = avgHitStats(
+      layered, equipment, monster, stance, itemsData, task.spell || null, slayerTask,
+      // Gated on the same flag as the level boost above, so a drained prayer
+      // pool drops the damage bonus with it.
+      getPrayerMagicDamageBonus(useCombatPrayer ? [idlePrayers.combatPrayerId] : [], prayersData),
+    )
     const incoming = estimateMonsterIncomingPerAttack(monster, equipment, itemsData, layered, stance)
     if (!Number.isFinite(hitStats.avgDmgPerHit) || hitStats.avgDmgPerHit <= 0) {
       return { ...hitStats, hitsNeeded: Infinity, ticksPerKill: Infinity, ticksPerCycle: Infinity, incoming }
@@ -1371,7 +1377,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
       const layeredWithPrayer = useCombatPrayer
         ? buildBoostedPlayerStats(layeredBoostStats, null, idlePrayers.combatPrayerId, prayersData)
         : layeredBoostStats
-      const hitStats = avgHitStats(layeredWithPrayer, equipment, monster, stance, itemsData, task.spell || null, slayerTask)
+      const hitStats = avgHitStats(
+        layeredWithPrayer, equipment, monster, stance, itemsData, task.spell || null, slayerTask,
+        getPrayerMagicDamageBonus(useCombatPrayer ? [idlePrayers.combatPrayerId] : [], prayersData),
+      )
       const incoming = estimateMonsterIncomingPerAttack(monster, equipment, itemsData, layeredWithPrayer, stance)
       if (!Number.isFinite(hitStats.avgDmgPerHit) || hitStats.avgDmgPerHit <= 0) {
         return { ...hitStats, hitsNeeded: Infinity, ticksPerKill: Infinity, ticksPerCycle: Infinity, incoming }

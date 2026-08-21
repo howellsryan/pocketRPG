@@ -11,6 +11,7 @@ import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_P
 import { randInt } from '../utils/helpers.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { poweredStaffMagicBaseDamage } from './combatPrimitives.js'
+import { getPrayerMagicDamageBonus } from './prayerCombatBonuses.js'
 import { getPotionStatBoost, getActivePotionBoosts } from './consumables.js'
 import { applyPrayerDrainTick } from './prayerDrain.js'
 import { applyMonsterResistance } from './monsterDamageRules.js'
@@ -757,6 +758,13 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
 
     const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: target.id })
+    // Magic-damage percentage points from the prayers that are actually lit
+    // this tick (the prayer drain above switches them off when the pool empties,
+    // so an empty pool correctly grants nothing).
+    const prayerMagicDamage = getPrayerMagicDamageBonus(
+      [state.activeCombatPrayer, state.activeProtectionPrayer],
+      prayersData,
+    )
     const voidMult = getCombatSetMultipliers(equipment)
     let damage = 0
     let xpSkills = {}
@@ -962,7 +970,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const magicLevel = boostedPlayerStats.magic || 1
       const baseDamage = poweredStaffMagicBaseDamage(magicLevel, equippedWeapon)
       const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
-      const maxHit = Math.floor(magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat) * (1 + slayerEquipmentBonus.damagePercent / 100))
+      const maxHit = Math.floor(magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + prayerMagicDamage) * (1 + slayerEquipmentBonus.damagePercent / 100))
       damage = rollDamage(acc, maxHit)
 
       if (weaponIsScaleCharged) {
@@ -991,7 +999,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         const acc = hitChance(atkRoll, defRoll)
         const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
         const spellRuneDamage = getSpellRuneMagicDamage(equipment, itemsData, state.spell)
-        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + spellRuneDamage) * (1 + slayerEquipmentBonus.damagePercent / 100))
+        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + spellRuneDamage + prayerMagicDamage) * (1 + slayerEquipmentBonus.damagePercent / 100))
         damage = rollDamage(acc, maxHit)
 
         // Track which runes to consume (excluding those provided by staff)

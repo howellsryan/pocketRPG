@@ -21,6 +21,7 @@ import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { combatLevelFromStats } from '../../../src/engine/combatLevel.js'
 import { resolveMagicSpell } from '../../../src/engine/equipment.js'
 import { applyPrayerBonuses } from '../../../src/engine/combat.js'
+import { getPrayerMagicDamageBonus } from '../../../src/engine/prayerCombatBonuses.js'
 import { completedQuestsFromSave } from '../../../src/engine/questGates.js'
 import { hasRequiredRunes } from '../../../src/engine/runes.js'
 import { getPurchaseRestriction, isOrderBookItem } from '../../../src/engine/storeRules.js'
@@ -189,6 +190,17 @@ function boostedLevels(levels, prayer) {
   return applyPrayerBonuses({ ...levels }, prayer.id, prayersData)
 }
 
+/**
+ * The one prayer effect `boostedLevels` cannot carry: a spell's max hit has no
+ * level term, so a magic prayer's damage bonus (Augury) has to be handed to the
+ * scorer separately or the helper rates magic gear by maths the fight does not
+ * use. Non-magic styles pick prayers with no such bonus, so this is 0 there.
+ */
+function prayerMagicDamageFor(styleOrPrayer, levels) {
+  const prayer = typeof styleOrPrayer === 'string' ? bestPrayerFor(styleOrPrayer, levels) : styleOrPrayer
+  return getPrayerMagicDamageBonus([prayer?.id], prayersData)
+}
+
 /** Worn gear read back as a loadout the scorers accept. */
 function currentLoadout(state, itemsLookup = itemsData) {
   const equipment = {}
@@ -275,8 +287,8 @@ function briefSources(itemId) {
   return Object.keys(out).length ? out : undefined
 }
 
-function upgradeList({ ownedBest, openBest, targets, levels, slayerTask, monsterId, limit = 5 }) {
-  const swaps = loadoutSwaps({ from: ownedBest, to: openBest, itemsData, targets, levels, slayerTask, monsterId })
+function upgradeList({ ownedBest, openBest, targets, levels, slayerTask, monsterId, limit = 5, prayerMagicDamagePercent = 0 }) {
+  const swaps = loadoutSwaps({ from: ownedBest, to: openBest, itemsData, targets, levels, slayerTask, monsterId, prayerMagicDamagePercent })
   return swaps
     .filter((s) => s.to && s.to.itemId !== s.from?.itemId)
     .slice(0, limit)
@@ -339,6 +351,7 @@ export function analyzeDps(state, {
     const ownedBest = optimiseStyle({
       ...baseSearch, style: s, pool: owned, levels: searchLevels, requirementLevels: levels,
       ownedQuantities: quantities, spellFilter: ownsRunesFor,
+      prayerMagicDamagePercent: prayerMagicDamageFor(prayer),
     })
     if (!ownedBest) {
       analysis.styles[s] = { available: false, reason: `No usable ${s} weapon owned (or no ammo for the ones you have).` }
@@ -392,6 +405,7 @@ export function analyzeDps(state, {
       const loadout = optimiseStyle({
         ...baseSearch, style: s, pool: buyable, levels: searchLevels, requirementLevels: levels,
         ownedQuantities: quantities, spellFilter: ownsRunesFor,
+        prayerMagicDamagePercent: prayerMagicDamageFor(s, levels),
       })
       if (loadout && (!bestBuy || loadout.dps > bestBuy.loadout.dps)) bestBuy = { style: s, loadout, searchLevels }
     }
@@ -403,6 +417,7 @@ export function analyzeDps(state, {
       style: current.style, stance: current.stance, spell: current._spell,
       levels: boostedLevels(levels, bestPrayerFor(current.style, levels)),
       equipment: current.equipment, itemsData, slayerTask, monsterId,
+      prayerMagicDamagePercent: prayerMagicDamageFor(current.style, levels),
     })
     : { dps: 0, maxHit: 0, accuracy: 0 }
 
@@ -441,6 +456,7 @@ export function analyzeDps(state, {
         swaps: loadoutSwaps({
           from: current, to: bestEntry._loadout, itemsData, targets,
           levels: bestEntry._levels, slayerTask, monsterId,
+          prayerMagicDamagePercent: prayerMagicDamageFor(bestStyle, levels),
         }).filter((s) => s.to || s.from).slice(0, 8)
           .map((s) => ({ slot: s.slot, wear: s.to?.name || '(nothing)', instead: s.from?.name || '(empty)' })),
       }
@@ -463,6 +479,7 @@ export function analyzeDps(state, {
     const buy = loadoutSwaps({
       from: bestEntry?._loadout?.style === bestBuy.style ? bestEntry._loadout : null,
       to: bestBuy.loadout, itemsData, targets, levels: bestBuy.searchLevels, slayerTask, monsterId,
+      prayerMagicDamagePercent: prayerMagicDamageFor(bestBuy.style, levels),
     })
       .filter((s) => s.to && !owned.has(s.to.itemId))
       .slice(0, 6)
@@ -509,7 +526,10 @@ export function analyzeDps(state, {
     const open = []
     for (const s of styles) {
       const searchLevels = boostedLevels(levels, bestPrayerFor(s, levels))
-      const loadout = optimiseStyle({ ...baseSearch, style: s, pool: fullPool(), levels: searchLevels, requirementLevels: levels })
+      const loadout = optimiseStyle({
+        ...baseSearch, style: s, pool: fullPool(), levels: searchLevels, requirementLevels: levels,
+        prayerMagicDamagePercent: prayerMagicDamageFor(s, levels),
+      })
       if (loadout) open.push({ style: s, loadout, searchLevels })
     }
     open.sort((a, b) => b.loadout.dps - a.loadout.dps)
@@ -523,7 +543,10 @@ export function analyzeDps(state, {
         gainOverOwnedPercent: ownedBest && ownedBest.dps > 0
           ? round(((top.loadout.dps - ownedBest.dps) / ownedBest.dps) * 100, 1)
           : null,
-        items: upgradeList({ ownedBest, openBest: top.loadout, targets, levels: top.searchLevels, slayerTask, monsterId }),
+        items: upgradeList({
+          ownedBest, openBest: top.loadout, targets, levels: top.searchLevels, slayerTask, monsterId,
+          prayerMagicDamagePercent: prayerMagicDamageFor(top.style, levels),
+        }),
       }
       out.notes.push('Upgrades are the best gear in the game they already meet the requirements for — not gear that needs higher levels.')
     }
@@ -535,6 +558,7 @@ export function analyzeDps(state, {
       out.levelGains = levelUplift({
         loadout, targets, levels, itemsData, slayerTask, monsterId,
         boost: (raw) => boostedLevels(raw, bestPrayerFor(bestStyle || 'melee', raw)),
+        prayerMagicDamagePercent: prayerMagicDamageFor(bestStyle || 'melee', levels),
       })
     }
     if (atLevel) {
@@ -546,6 +570,7 @@ export function analyzeDps(state, {
         levels: boostedLevels(raised, prayer), requirementLevels: raised,
         ownedQuantities: gearScope === 'all' ? null : quantities,
         spellFilter: gearScope === 'all' ? null : ownsRunesFor,
+        prayerMagicDamagePercent: prayerMagicDamageFor(prayer),
       })
       if (at) {
         out.atLevel = {

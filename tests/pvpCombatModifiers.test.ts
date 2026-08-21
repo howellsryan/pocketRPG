@@ -6,6 +6,7 @@ describe('pvp combat modifiers', () => {
     expect(getPvpCombatModifiers(undefined as any)).toEqual({
       prayer: { attack: 1, strength: 1, defence: 1, ranged: 1, rangedStrength: 1, magic: 1 },
       potions: { attack: 0, strength: 0, defence: 0, ranged: 0, magic: 0 },
+      magicDamagePercent: 0,
     })
 
     expect(getPvpCombatModifiers({ activeCombatPrayer: 'not_a_prayer' } as any).prayer).toEqual({
@@ -25,6 +26,13 @@ describe('pvp combat modifiers', () => {
     expect(getPvpCombatModifiers({ activeCombatPrayer: 'piety' } as any).prayer).toMatchObject({ attack: 1.2, strength: 1.23, defence: 1.25 })
     expect(getPvpCombatModifiers({ activeCombatPrayer: 'rigour' } as any).prayer).toMatchObject({ ranged: 1.2, rangedStrength: 1.23, defence: 1.25 })
     expect(getPvpCombatModifiers({ activeCombatPrayer: 'augury' } as any).prayer).toMatchObject({ magic: 1.25, defence: 1.25 })
+  })
+
+  it('reports a prayer magic-damage bonus in percentage points, separate from the level multipliers', () => {
+    // A spell's max hit has no level term, so Augury's damage cannot ride the
+    // `prayer` multipliers above — it is added to worn magic damage instead.
+    expect(getPvpCombatModifiers({ activeCombatPrayer: 'augury' } as any).magicDamagePercent).toBe(5)
+    expect(getPvpCombatModifiers({ activeCombatPrayer: 'mystic_lore' } as any).magicDamagePercent).toBe(0)
   })
 
   it('keeps protection prayers neutral in pvp v1', () => {
