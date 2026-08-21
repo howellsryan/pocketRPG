@@ -1452,14 +1452,34 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     prayersData,
   )
 
+  // Void/set multipliers and on-task slayer gear apply to a special exactly as
+  // they do to an ordinary swing. Every special reaches them through the six
+  // helpers below rather than calling the raw formulas, so a new special cannot
+  // silently ship without them — which is what left a Slayer Helmet worth
+  // nothing to a spec while it was worth +15% to every normal hit.
+  // Ordering mirrors processCombatTick exactly: void inside, slayer outside for
+  // damage; both folded into one floor for accuracy.
+  const voidMult = getCombatSetMultipliers(equipment)
+  const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
+  const slayerAccuracyMult = 1 + slayerEquipmentBonus.accuracyPercent / 100
+  const slayerDamageMult = 1 + slayerEquipmentBonus.damagePercent / 100
+  const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
+
+  const specMeleeMaxHit = (effStr) => Math.floor(Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * voidMult.meleeDamage) * slayerDamageMult)
+  const specRangedMaxHit = (effRng) => Math.floor(Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * voidMult.rangedDamage) * slayerDamageMult)
+  const specMagicMaxHit = (baseDamage) => Math.floor(magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + prayerMagicDamage) * slayerDamageMult)
+  const specMeleeAttackRoll = (effAtk) => Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * voidMult.meleeAccuracy * slayerAccuracyMult)
+  const specRangedAttackRoll = (effRng) => Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy * slayerAccuracyMult)
+  const specMagicAttackRoll = (effMag) => Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy * slayerAccuracyMult)
+
   switch (spec.type) {
     case 'double_hit': {
       // Dragon Dagger — two hits at 115% max hit
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * 1.15)
+      const maxHit = Math.floor(specMeleeMaxHit(effStr) * 1.15)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
@@ -1478,9 +1498,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Dragon Scimitar — ignores all monster defence bonuses
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(0, 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1497,7 +1517,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Zul-Kaar's Blade — guaranteed Magic damage, 50-150% of max melee hit, nullified by magic immunity
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxMelee = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxMelee = specMeleeMaxHit(effStr)
       const magicImmune = monster.magicImmune === true || getFormImmunity(monster) === 'magic'
       if (magicImmune) {
         events.push({ type: 'immuneHit', immunity: 'magic', monsterName: monster.name })
@@ -1518,9 +1538,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // hit, the damage range is compressed to 15%–85% of max (no low rolls).
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       // Two independent accuracy rolls; the attack lands if either connects.
@@ -1541,9 +1561,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Abyssal Whip — hit + if not miss, delay monster's next attack by 1 attack cycle
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1562,9 +1582,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Zephyra Godsword — 125% accuracy + 125% max hit
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * 1.25)
+      const maxHit = Math.floor(specMeleeMaxHit(effStr) * 1.25)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * 1.25)
+      const atkRoll = Math.floor(specMeleeAttackRoll(effAtk) * 1.25)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1581,9 +1601,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Lumira Godsword — hit + heal 50% of damage (min 10 HP)
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1602,9 +1622,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Krylth Godsword — hit + freeze monster for stunTicks ticks
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1622,9 +1642,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Grondar Godsword — hit + reduce monster defenceBonus by damage dealt
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1642,9 +1662,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Dragon Warhammer — 150% max hit; on hit, reduce target Defence level by 30% (floor of reduction)
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * 1.5)
+      const maxHit = Math.floor(specMeleeMaxHit(effStr) * 1.5)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1667,9 +1687,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Lumira Sword — normal melee hit + guaranteed magic lightning hit
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const meleeDmg = resist(rollDamage(acc, maxHit))
@@ -1691,8 +1711,8 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Magic Shortbow — two ranged hits at 75% max hit
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
-      const maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * 0.75)
-      const atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+      const maxHit = Math.floor(specRangedMaxHit(effRng) * 0.75)
+      const atkRoll = specRangedAttackRoll(effRng)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
       const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
@@ -1711,7 +1731,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Zephyra Crossbow — guaranteed hit at 125% max hit
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
-      const maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * 1.25)
+      const maxHit = Math.floor(specRangedMaxHit(effRng) * 1.25)
       const damage = randInt(1, Math.max(1, maxHit))
       const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1727,7 +1747,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // all, so the floor is 1: this special can never be a zero.
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
-      const maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * 1.5)
+      const maxHit = Math.floor(specRangedMaxHit(effRng) * 1.5)
       const damage = randInt(1, Math.max(1, maxHit))
       const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1742,9 +1762,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Zaryth Godsword — 150% max hit, healing for half the damage that lands.
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * 1.5)
+      const maxHit = Math.floor(specMeleeMaxHit(effStr) * 1.5)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1763,7 +1783,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Also consumes one scale charge (like a normal blowpipe shot).
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
-      const maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * 1.5)
+      const maxHit = Math.floor(specRangedMaxHit(effRng) * 1.5)
       const damage = randInt(1, Math.max(1, maxHit))
       const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1781,9 +1801,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Krylth Spear — 175% accuracy + stun 2 monster attacks
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * 1.75)
+      const atkRoll = Math.floor(specMeleeAttackRoll(effAtk) * 1.75)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1801,9 +1821,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Dragon Claws — four cascading hits: 100%, 50%, 25%, and 25% of max hit
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const h1 = resist(rollDamage(acc, maxHit))
@@ -1837,9 +1857,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Granite Maul — Quake: three rapid crush hits, each rolling its own damage
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
@@ -1858,8 +1878,8 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Nightfang Bow — fires two arrows at 150% max hit each
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
-      const maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * 1.5)
-      const atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+      const maxHit = Math.floor(specRangedMaxHit(effRng) * 1.5)
+      const atkRoll = specRangedAttackRoll(effRng)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
       const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
@@ -1878,9 +1898,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Dragon Mace — single crush hit at 150% max hit
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * 1.5)
+      const maxHit = Math.floor(specMeleeMaxHit(effStr) * 1.5)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1897,9 +1917,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Boneclaw Rapier — two stab hits at 100% max hit; heals for 100% of second hit's damage
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = wornMeleeMaxHit(effStr, bonuses.otherBonus)
+      const maxHit = specMeleeMaxHit(effStr)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const h1 = resist(rollDamage(acc, maxHit))
@@ -1919,7 +1939,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Stonegale Bow — guaranteed ranged hit at 140% max hit; stuns monster for 1 attack cycle
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
-      const maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * 1.4)
+      const maxHit = Math.floor(specRangedMaxHit(effRng) * 1.4)
       const damage = randInt(1, Math.max(1, maxHit))
       const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1935,9 +1955,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Cindermaw Maul — 125% crush max hit; on hit, reduces monster Defence level by 20%
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * 1.25)
+      const maxHit = Math.floor(specMeleeMaxHit(effStr) * 1.25)
       const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = specMeleeAttackRoll(effAtk)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
@@ -1960,8 +1980,8 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // Thornspine Shortbow — three rapid ranged shots at 70% max hit each
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
-      const maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * 0.7)
-      const atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+      const maxHit = Math.floor(specRangedMaxHit(effRng) * 0.7)
+      const atkRoll = specRangedAttackRoll(effRng)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
       const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
@@ -1981,12 +2001,11 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // to half the damage dealt (up to the pool cap). Damage scales with Magic.
       const magicLevel = playerStats.magic || 1
       const effMag = effectiveMagic(magicLevel)
-      const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
+      const atkRoll = specMagicAttackRoll(effMag)
       const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
       const acc = hitChance(atkRoll, defRoll)
-      const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
       const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 12)
-      const maxHit = magicMaxHit(baseDamage, wornMagicDamage + prayerMagicDamage)
+      const maxHit = specMagicMaxHit(baseDamage)
       const damage = rollDamage(acc, Math.max(1, maxHit))
       const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -2009,12 +2028,11 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       // directly with Magic level (a maxed mage hits far above a normal spell).
       const magicLevel = playerStats.magic || 1
       const effMag = effectiveMagic(magicLevel)
-      const atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * 1.25)
+      const atkRoll = Math.floor(specMagicAttackRoll(effMag) * 1.25)
       const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
       const acc = hitChance(atkRoll, defRoll)
-      const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
       const baseDamage = Math.max(1, Math.floor(magicLevel * 0.6))
-      const maxHit = magicMaxHit(baseDamage, wornMagicDamage + prayerMagicDamage)
+      const maxHit = specMagicMaxHit(baseDamage)
       const damage = rollDamage(acc, Math.max(1, maxHit))
       const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
