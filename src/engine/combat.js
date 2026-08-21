@@ -728,7 +728,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
               state.monster = monster
               return { combatState: state, events }
             }
-            const { combatState: newState, events: specEvents } = applySpecialAttack(state, boostedPlayerStats, equipment, itemsData, slayerTask)
+            const { combatState: newState, events: specEvents } = applySpecialAttack(state, boostedPlayerStats, equipment, itemsData, slayerTask, prayersData)
             // Merge events from special attack
             for (const ev of specEvents) {
               events.push(ev)
@@ -1418,7 +1418,7 @@ export function applyPotionBonuses(playerStats, potionItem) {
  * Consumes specialAttackEnergy per the weapon's energyCost.
  * Regenerates to 100 automatically in processCombatTick on monster death.
  */
-export function applySpecialAttack(combatState, playerStats, equipment, itemsData, slayerTask = null) {
+export function applySpecialAttack(combatState, playerStats, equipment, itemsData, slayerTask = null, prayersData = {}) {
   const weaponEntry = equipment?.weapon
   if (!weaponEntry) return { combatState, events: [] }
   const weapon = itemsData[weaponEntry.itemId]
@@ -1444,6 +1444,13 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
   // swings, per hit, so reported hits still sum to the damage that landed.
   const resist = (dmg) => applyMonsterResistance(dmg, monster, weapon)
   const isOnTask = !!(slayerTask && monster && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id))
+  // `playerStats` here is already the caller's boosted stats, so level boosts
+  // reach every special for free. A prayer's magic damage is the one bonus that
+  // cannot ride a level, so the magic specials below add it themselves.
+  const prayerMagicDamage = getPrayerMagicDamageBonus(
+    [combatState.activeCombatPrayer, combatState.activeProtectionPrayer],
+    prayersData,
+  )
 
   switch (spec.type) {
     case 'double_hit': {
@@ -1979,7 +1986,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const acc = hitChance(atkRoll, defRoll)
       const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
       const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 12)
-      const maxHit = magicMaxHit(baseDamage, wornMagicDamage)
+      const maxHit = magicMaxHit(baseDamage, wornMagicDamage + prayerMagicDamage)
       const damage = rollDamage(acc, Math.max(1, maxHit))
       const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -2007,7 +2014,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const acc = hitChance(atkRoll, defRoll)
       const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
       const baseDamage = Math.max(1, Math.floor(magicLevel * 0.6))
-      const maxHit = magicMaxHit(baseDamage, wornMagicDamage)
+      const maxHit = magicMaxHit(baseDamage, wornMagicDamage + prayerMagicDamage)
       const damage = rollDamage(acc, Math.max(1, maxHit))
       const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual

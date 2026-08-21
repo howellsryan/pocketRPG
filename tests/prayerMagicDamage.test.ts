@@ -5,7 +5,7 @@
 // every path that computes magic damage.
 
 import { describe, expect, it, vi, afterEach } from 'vitest'
-import { createCombatState, processCombatTick } from '../src/engine/combat.js'
+import { createCombatState, processCombatTick, applySpecialAttack } from '../src/engine/combat.js'
 import { simulateIdleCombat } from '../src/engine/idleEngine.js'
 import { getPrayerMagicDamageBonus } from '../src/engine/prayerCombatBonuses.js'
 import { estimateDps } from '../src/engine/dpsCalculator.js'
@@ -91,6 +91,45 @@ describe('Augury raises magic max hit in live combat, not just accuracy', () => 
   it('leaves max hit alone for a magic prayer that only boosts the level', () => {
     expect(liveMaxHit('mystic_will')).toBe(liveMaxHit(null))
   })
+
+  // Powered staves are where the bonus matters most: their damage already
+  // scales on magic level, and casting no spell means no per-cast base XP
+  // diluting the gain.
+  it('raises a powered staff cast, which uses its own base-damage branch', () => {
+    const staffItems: any = {
+      test_trident: {
+        id: 'test_trident', slot: 'weapon', attackStyle: 'magic', attackSpeed: 4,
+        poweredStaff: true,
+        attackBonus: { stab: 0, slash: 0, crush: 0, magic: 60, ranged: 0 },
+        defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+        otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 },
+      },
+    }
+    const staffMaxHit = (activeCombatPrayer: string | null) => {
+      const state: any = createCombatState(buildMonster(), 'magic', 'accurate', null)
+      state.activeCombatPrayer = activeCombatPrayer
+      state.prayerPoints = 99
+      state.maxPrayerPoints = 99
+      forceMaxDamageRoll()
+      const { events } = processCombatTick(
+        state, maxedStats, { weapon: { itemId: 'test_trident' } }, staffItems, prayersData, [], null,
+      )
+      const hit = events.find((e: any) => e.type === 'playerHit')
+      expect(hit).toBeDefined()
+      return hit!.damage as number
+    }
+
+    // Magic 99, no authored anchor -> floor(99/3) + 9 = 42 base damage.
+    expect(staffMaxHit(null)).toBe(magicMaxHit(42, 0))
+
+    // Augury boosts a powered staff TWICE: its +25% takes Magic to 123, which
+    // raises base damage to floor(123/3) + 9 = 50, and its +5% magic damage
+    // then lifts that to 52. Asserting against magicMaxHit(50, 0) isolates the
+    // second contribution — the one this change adds — from the level boost
+    // that was already working.
+    expect(staffMaxHit('augury')).toBe(magicMaxHit(50, 5))
+    expect(staffMaxHit('augury')).toBeGreaterThan(magicMaxHit(50, 0))
+  })
 })
 
 describe('Augury raises magic damage during idle catch-up too', () => {
@@ -115,6 +154,50 @@ describe('Augury raises magic damage during idle catch-up too', () => {
     const augury = idleKills({ combatPrayerId: 'augury' })
     expect(mysticWill).toBeGreaterThan(0)
     expect(augury).toBeGreaterThan(mysticWill)
+  })
+})
+
+// Specials already receive the caller's BOOSTED stats, so prayer/potion level
+// boosts reach them for free. A prayer's magic damage cannot ride a level, so
+// the two magic specials have to add it themselves or Augury raises an ordinary
+// cast but not the spec fired in the same fight.
+describe('magic special attacks get the prayer magic-damage bonus too', () => {
+  const staffItems: any = {
+    volatile_duskmare_staff: {
+      id: 'volatile_duskmare_staff', slot: 'weapon', attackStyle: 'magic', attackSpeed: 4,
+      attackBonus: { stab: 0, slash: 0, crush: 0, magic: 60, ranged: 0 },
+      defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+      otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 },
+      specialAttack: { type: 'volatile_surge', energyCost: 50, description: 'Test surge' },
+    },
+  }
+
+  function specDamage(activeCombatPrayer: string | null) {
+    const state: any = createCombatState(buildMonster(), 'magic', 'accurate', null)
+    state.activeCombatPrayer = activeCombatPrayer
+    state.prayerPoints = 99
+    state.maxPrayerPoints = 99
+    state.specialAttackEnergy = 100
+    forceMaxDamageRoll()
+    const { events } = applySpecialAttack(
+      state, maxedStats, { weapon: { itemId: 'volatile_duskmare_staff' } }, staffItems, null, prayersData,
+    )
+    const hit = events.find((e: any) => e.type === 'specialHit')
+    expect(hit).toBeDefined()
+    return hit!.totalDamage as number
+  }
+
+  it('hits harder under Augury than with no prayer', () => {
+    const plain = specDamage(null)
+    const augury = specDamage('augury')
+    // Magic 99 -> base damage floor(99 * 0.6) = 59, so Augury's +5% is visible.
+    expect(plain).toBe(magicMaxHit(59, 0))
+    expect(augury).toBe(magicMaxHit(59, 5))
+    expect(augury).toBeGreaterThan(plain)
+  })
+
+  it('is unchanged by a magic prayer that only boosts the level', () => {
+    expect(specDamage('mystic_will')).toBe(specDamage(null))
   })
 })
 
