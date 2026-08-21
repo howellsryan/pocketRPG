@@ -214,15 +214,18 @@ export function buildAvailableSupplyMap(supplyList, inventory, bank) {
 
 /**
  * Apply boost potion + combat prayer to the base player stats. Both layers
- * are optional — pass nulls/undefined when the supply has expired.
+ * are optional — pass nulls/undefined when the supply has expired. Potion
+ * (flat add) is applied before prayer (percentage multiply) so the prayer
+ * also scales the potion's boost — the highest-boost ordering, and the same
+ * order `processCombatTick` uses in combat.js so live and idle agree.
  */
 export function buildBoostedPlayerStats(baseStats, boostPotionItem, combatPrayerId, prayersData) {
   let s = { ...baseStats }
-  if (combatPrayerId && prayersData) {
-    s = applyPrayerBonuses(s, combatPrayerId, prayersData) || s
-  }
   if (boostPotionItem) {
     s = applyPotionBonuses(s, boostPotionItem) || s
+  }
+  if (combatPrayerId && prayersData) {
+    s = applyPrayerBonuses(s, combatPrayerId, prayersData) || s
   }
   return s
 }

@@ -228,7 +228,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'get_character_state',
     description:
-      "Get a summary of a character's current game state: coins, per-skill level + XP, total level, total XP, combat level, current + max HP/prayer, the equipped weapon's combat type and attack speed, worn equipment, aggregated equipment bonuses (attack/defence by style, melee/ranged/magic strength & magic damage), best-case max hits (maxHits.melee is the aggressive-stance peak; maxHits.magic is null unless a powered staff is worn since it otherwise depends on the equipped spell), inventory contents (with item names) and bank size. Use get_bank for the actual bank contents.",
+      "Get a summary of a character's current game state: coins, per-skill level + XP, total level, total XP, combat level, current + max HP/prayer, the equipped weapon's combat type and attack speed, worn equipment, aggregated equipment bonuses (attack/defence by style, melee/ranged/magic strength & magic damage), best-case max hits (maxHits.melee is the aggressive-stance peak; maxHits.magic is null unless a powered staff is worn since it otherwise depends on the equipped spell; all of them are UNBUFFED — no prayer or potion is applied, as maxHitsBasis states — so do not present them as what the player hits mid-fight, and use analyze_dps for buffed numbers), inventory contents (with item names) and bank size. Use get_bank for the actual bank contents.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
     annotations: READ('Get character state'),
   },

@@ -13,6 +13,14 @@ import { poweredStaffMagicBaseDamage } from '../../../src/engine/combatPrimitive
 // style); ranged/magic style bonuses don't change the max. Magic is only
 // well-defined for a powered staff (no selected spell here), so it's null
 // otherwise and the model should explain it depends on the equipped spell.
+//
+// UNBUFFED, and uniformly so across all three styles: no prayer and no potion
+// is assumed, because a character sheet has no fight to read one off. That is
+// a real gap against what the player would hit — Piety, Rigour and Augury all
+// raise these, and Augury raises the magic number twice over (its level boost
+// buys accuracy, its magicDamagePercent raises the max hit itself). The payload
+// says so in `maxHitsBasis` rather than guessing a prayer; `analyze_dps` is the
+// tool that picks one and models it.
 function computeMaxHits(stats, equipment) {
   const lvl = (skill) => getLevelFromXP(Number(stats?.[skill]?.xp || 0))
   const bonuses = getEquipmentBonuses(equipment, itemsData)
@@ -84,6 +92,7 @@ export function summarizeSave(saveData) {
     equipment,
     equipmentBonuses: getEquipmentBonuses(rawEquipment, itemsData),
     maxHits: computeMaxHits(state.stats || {}, rawEquipment),
+    maxHitsBasis: 'Worn gear and current levels only — no prayer or potion is applied. Prayers and boosts raise these in a real fight (Augury also adds +5% magic damage on top of its level boost). Use analyze_dps for buffed numbers.',
     inventory,
     inventoryUsed: inventory.length,
     inventoryCapacity: 28,

@@ -67,6 +67,8 @@ Eating food during combat heals you but shares a cooldown, so spamming food dela
 
 Prayers give combat bonuses but drain a prayer pool while active. In the open world the protection prayer you have on shows as an icon over your head, and over everyone else's — you can read what an opponent is praying against before you swing. Your pool's maximum equals your Prayer level, starts each session full, and persists across auto-fight kills. Each prayer drains the pool over time — stronger prayers drain faster — and when the pool hits zero all prayers switch off. Prayer potions restore 20 prayer points and super restores 22, in both live and idle combat. Protection prayers work in the Wilderness, so a PvP fight drains your pool exactly as a boss fight does.
 
+Most prayers raise a skill level, which for melee and ranged raises both how often you hit and how hard. Magic works differently: a spell's damage comes from the spell itself plus your magic damage bonus, and no level raises it — so a magic level boost buys accuracy only. Augury is the exception. On top of its +25% Magic and Defence it adds **+5% magic damage**, which is the only prayer that raises what a spell can hit. It applies to spells and powered staves alike, in live combat, idle catch-up and the Wilderness.
+
 ## Dragonfire
 
 Dragons breathe fire: dragonfire has a 33% chance to proc and can hit up to 50. It is fully blocked by equipment with dragonfire protection (an anti-dragon shield effect) — bring one to any dragon fight or you will take heavy damage.

@@ -200,6 +200,10 @@ export function loadoutBlockedReason({ style, equipment, itemsData, spell }) {
  * the caller applies those through the engine's own `applyPrayerBonuses` so
  * this stays a pure function of the stats it is handed, exactly as
  * `processCombatTick` is of `boostedPlayerStats`.
+ *
+ * `prayerMagicDamagePercent` is the one prayer effect `levels` cannot carry: a
+ * spell's max hit has no level term, so a magic prayer's damage bonus has to
+ * arrive as its own number (getPrayerMagicDamageBonus produces it).
  */
 export function estimateDps({
   style,
@@ -211,6 +215,7 @@ export function estimateDps({
   target,
   slayerTask = null,
   monsterId = null,
+  prayerMagicDamagePercent = 0,
 }) {
   const blocked = loadoutBlockedReason({ style, equipment, itemsData, spell })
   if (blocked) return { dps: 0, maxHit: 0, accuracy: 0, attackSpeedTicks: 0, blocked }
@@ -284,10 +289,10 @@ export function estimateDps({
     const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
     if (weapon?.poweredStaff) {
       const base = poweredStaffMagicBaseDamage(levels.magic, weapon)
-      maxHit = Math.floor(magicMaxHit(base, wornMagicDamage + setMult.magicDamageBonusFlat) * (1 + slayer.damagePercent / 100))
+      maxHit = Math.floor(magicMaxHit(base, wornMagicDamage + setMult.magicDamageBonusFlat + prayerMagicDamagePercent) * (1 + slayer.damagePercent / 100))
     } else {
       const runeDamage = getSpellRuneMagicDamage(equipment, itemsData, spell)
-      maxHit = Math.floor(magicMaxHit(spell.baseDamage, wornMagicDamage + setMult.magicDamageBonusFlat + runeDamage) * (1 + slayer.damagePercent / 100))
+      maxHit = Math.floor(magicMaxHit(spell.baseDamage, wornMagicDamage + setMult.magicDamageBonusFlat + runeDamage + prayerMagicDamagePercent) * (1 + slayer.damagePercent / 100))
     }
     expected = accuracy * meanRoll(maxHit)
   }

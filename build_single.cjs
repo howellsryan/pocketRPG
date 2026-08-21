@@ -80,6 +80,7 @@ const sourceFiles = [
   'engine/specialRegen.js',
   'engine/pvpBotRewards.js',
   'engine/slayerCombatBonuses.js',
+  'engine/prayerCombatBonuses.js',
   'engine/itemSources.js',
   'engine/combatSetBonuses.js',
   'engine/itemMigrations.js',

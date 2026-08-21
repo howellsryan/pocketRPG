@@ -200,6 +200,7 @@ export function optimiseStyle({
   monsterId = null,
   ownedQuantities = null,
   spellFilter = null,
+  prayerMagicDamagePercent = 0,
 }) {
   // `levels` are what the swings are SCORED with (prayer-boosted); gates are
   // read from `requirementLevels`, the character's real ones. Gating on the
@@ -219,7 +220,7 @@ export function optimiseStyle({
     if (loadoutBlockedReason({ style, equipment, itemsData, spell: opts?.spell })) return 0
     return estimateDpsVsTargets(targets, {
       style, stance: opts?.stance ?? null, spell: opts?.spell ?? null,
-      levels, equipment, itemsData, slayerTask, monsterId,
+      levels, equipment, itemsData, slayerTask, monsterId, prayerMagicDamagePercent,
     }).dps
   }
 
@@ -299,7 +300,7 @@ export function optimiseStyle({
   const equipment = equipmentFrom(best.weapon, best.gear)
   const detail = estimateDpsVsTargets(targets, {
     style, stance: best.stance, spell: best.spell,
-    levels, equipment, itemsData, slayerTask, monsterId,
+    levels, equipment, itemsData, slayerTask, monsterId, prayerMagicDamagePercent,
   })
   return {
     style,
@@ -335,7 +336,7 @@ export function optimiseAllStyles(params) {
  * against the `from` loadout — so "the amulet is worth 12%" is a claim about
  * that one change, not about the whole rebuild.
  */
-export function loadoutSwaps({ from, to, itemsData, targets, levels, slayerTask = null, monsterId = null }) {
+export function loadoutSwaps({ from, to, itemsData, targets, levels, slayerTask = null, monsterId = null, prayerMagicDamagePercent = 0 }) {
   if (!to) return []
   const swaps = []
   // A per-swap gain is only meaningful within one style — pricing a ranged
@@ -343,7 +344,7 @@ export function loadoutSwaps({ from, to, itemsData, targets, levels, slayerTask 
   // cross-style recommendation lists the kit with no per-item gains.
   const comparable = !!from && from.style === to.style
   const spell = to._spell || to.spell
-  const baseParams = { style: to.style, stance: to.stance, levels, itemsData, slayerTask, monsterId, spell }
+  const baseParams = { style: to.style, stance: to.stance, levels, itemsData, slayerTask, monsterId, spell, prayerMagicDamagePercent }
   const baseline = comparable ? estimateDpsVsTargets(targets, { ...baseParams, equipment: from.equipment }).dps : 0
 
   for (const slot of EQUIPMENT_SLOTS) {
@@ -376,7 +377,7 @@ export function loadoutSwaps({ from, to, itemsData, targets, levels, slayerTask 
  * "+6.4% from 10 Strength levels" is often the honest answer to "how do I hit
  * harder" when the gear is already best-in-slot.
  */
-export function levelUplift({ loadout, targets, levels, itemsData, steps = [1, 5, 10], slayerTask = null, monsterId = null, maxLevel = 99, boost = (lv) => lv }) {
+export function levelUplift({ loadout, targets, levels, itemsData, steps = [1, 5, 10], slayerTask = null, monsterId = null, maxLevel = 99, boost = (lv) => lv, prayerMagicDamagePercent = 0 }) {
   if (!loadout) return []
   const spell = loadout._spell || loadout.spell
   // `levels` are the character's RAW levels — the ladder a player climbs — and
@@ -385,7 +386,7 @@ export function levelUplift({ loadout, targets, levels, itemsData, steps = [1, 5
   // silently "already maxed".
   const scoreAt = (raw) => estimateDpsVsTargets(targets, {
     style: loadout.style, stance: loadout.stance, spell,
-    levels: boost(raw), equipment: loadout.equipment, itemsData, slayerTask, monsterId,
+    levels: boost(raw), equipment: loadout.equipment, itemsData, slayerTask, monsterId, prayerMagicDamagePercent,
   }).dps
   const base = scoreAt(levels)
   if (!(base > 0)) return []

@@ -33,6 +33,7 @@ import { getDamageReductionPerk, expectedDamageMultiplier, getPrayerDrainMultipl
 import { getMonsterCharmDrops } from './summoning.js'
 import { grindmanDropChance } from './grindman.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
+import { getPrayerMagicDamageBonus } from './prayerCombatBonuses.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import {
   isFoodItem, getFoodHealAmount, isBoostPotion, isPrayerRestorePotion,
@@ -972,7 +973,7 @@ function protectionPrayerCovers(prayerStyle, attackStyle) {
  * Compute average player DPS against a monster.
  * Returns { avgDmgPerHit, weaponSpeed, acc, combatType } so callers can use per-hit granularity.
  */
-function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell = null, slayerTask = null) {
+function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell = null, slayerTask = null, prayerMagicDamage = 0) {
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
@@ -988,11 +989,18 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
 
   let maxHit, atkRoll, defRoll, acc
 
+  // Slayer-task gear (slayer helm and friends) is worth the same on-task
+  // accuracy/damage here as it is in live combat — combat.js applies it in all
+  // three style branches, and idle dropping it made a task idled with a slayer
+  // helm strictly worse than fighting it by hand. Zero off-task, so this is a
+  // no-op for every non-slayer fight (getSlayerTaskEquipmentBonuses gates on
+  // isOnSlayerTask, which also requires monstersRemaining > 0).
+  const slayerAccuracyMult = 1 + slayerEquipmentBonus.accuracyPercent / 100
   if (combatType === 'ranged') {
     const styleBonus = getRangedStyleBonus(stance)
     const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
     maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * voidMult.rangedDamage)
-    atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy)
+    atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy * slayerAccuracyMult)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.ranged || 0)
   } else if (combatType === 'magic') {
     const effMag = effectiveMagic(playerStats.magic || 1)
@@ -1000,8 +1008,8 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
       ? spell.baseDamage
       : poweredStaffMagicBaseDamage(playerStats.magic || 1, equipment?.weapon ? itemsData[equipment.weapon.itemId] : null)
     const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
-    maxHit = magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + getSpellRuneMagicDamage(equipment, itemsData, spell))
-    atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy)
+    maxHit = magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + getSpellRuneMagicDamage(equipment, itemsData, spell) + prayerMagicDamage)
+    atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy * slayerAccuracyMult)
     defRoll = monsterMagicDefenceRoll(monster.stats.magic || 1, monster.stats.defence, monster.defenceBonus?.magic || 0)
   } else {
     // Melee (default)
@@ -1010,9 +1018,13 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
     maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * voidMult.meleeDamage)
     const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-    atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * voidMult.meleeAccuracy)
+    atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * voidMult.meleeAccuracy * slayerAccuracyMult)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle] || 0)
   }
+  // Applied once here rather than per branch: it is the last operation on
+  // maxHit in all three of combat.js's branches, so one shared line is
+  // byte-for-byte what live computes and cannot drift between styles.
+  maxHit = Math.floor(maxHit * (1 + slayerEquipmentBonus.damagePercent / 100))
 
   acc = hitChance(atkRoll, defRoll)
   // Monster damage resistance (spear-gated bosses) — mirrors live combat so a
@@ -1192,7 +1204,12 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
       useCombatPrayer ? idlePrayers.combatPrayerId : null,
       prayersData,
     )
-    const hitStats = avgHitStats(layered, equipment, monster, stance, itemsData, task.spell || null, slayerTask)
+    const hitStats = avgHitStats(
+      layered, equipment, monster, stance, itemsData, task.spell || null, slayerTask,
+      // Gated on the same flag as the level boost above, so a drained prayer
+      // pool drops the damage bonus with it.
+      getPrayerMagicDamageBonus(useCombatPrayer ? [idlePrayers.combatPrayerId] : [], prayersData),
+    )
     const incoming = estimateMonsterIncomingPerAttack(monster, equipment, itemsData, layered, stance)
     if (!Number.isFinite(hitStats.avgDmgPerHit) || hitStats.avgDmgPerHit <= 0) {
       return { ...hitStats, hitsNeeded: Infinity, ticksPerKill: Infinity, ticksPerCycle: Infinity, incoming }
@@ -1202,11 +1219,11 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     return { ...hitStats, hitsNeeded, ticksPerKill, ticksPerCycle: ticksPerKill + RESPAWN_TICKS, incoming }
   }
 
-  // Baseline metrics (used for the resource caps + early outs).
+  // Baseline metrics (used for combat-type detection + the early outs below —
+  // NOT for resource caps, which are sized dynamically per kill further down
+  // since idle potions/prayer change how many attacks a kill actually takes).
   const baseMetrics = getKillMetricsFor(null, false)
   const { avgDmgPerHit, weaponSpeed, combatType } = baseMetrics
-  const hitsNeeded = baseMetrics.hitsNeeded
-  const ticksPerKill = baseMetrics.ticksPerKill
   const ticksPerCycle = baseMetrics.ticksPerCycle
 
   const rangedAmmoFailure = combatType === 'ranged' ? getRangedAmmoRequirementFailure(equipment, itemsData) : null
@@ -1237,12 +1254,11 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   } else if (combatType === 'magic') {
     const isPoweredStaff = !!weaponItem?.poweredStaff
     if (task.spell || isPoweredStaff) {
-      // Spellcasting: base spell XP per cast + damage XP.
-      // Powered staves: no spell selected, only damage XP (same as active combat).
-      const baseSpellXp = task.spell
-        ? (hitsNeeded < Infinity ? hitsNeeded : 0) * (task.spell.baseXP || 0)
-        : 0
-      xpPerKill.magic = Math.floor(baseSpellXp + monster.hitpoints * MAGIC_XP_PER_DAMAGE)
+      // Spellcasting: damage XP here + base spell XP per cast folded in after
+      // the loop (spellCastAttacksTotal), since cast count per kill varies
+      // with idle potion/prayer boosts. Powered staves: no spell selected,
+      // only damage XP (same as active combat).
+      xpPerKill.magic = Math.floor(monster.hitpoints * MAGIC_XP_PER_DAMAGE)
     }
   } else {
     // Melee
@@ -1253,32 +1269,32 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   }
   xpPerKill.hitpoints = Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE)
 
-  // Pre-calculate resource-limited kill caps
-  const attacksPerKill = hitsNeeded < Infinity ? hitsNeeded : 0
-
-  let maxKillsFromAmmo = Infinity
+  // Resource pools (ammo/runes/charges) are drained per-kill inside the
+  // simulation loop below, by that kill's ACTUAL (boosted) attack count —
+  // see `killAttacks`. Sizing these off a static unboosted hits-per-kill
+  // undercounted how many kills a supply lasts whenever idle potions/prayer
+  // were configured, cutting sessions short (`resource_limited`) well before
+  // the real time or real supply ran out.
+  let ammoRemaining = Infinity
   if (combatType === 'ranged' && weaponItem?.ammoType) {
-    const ammoQty = Math.max(0, Number(equipment?.ammo?.quantity) || 0)
-    maxKillsFromAmmo = attacksPerKill > 0 ? Math.floor(ammoQty / attacksPerKill) : 0
+    ammoRemaining = Math.max(0, Number(equipment?.ammo?.quantity) || 0)
   }
 
-  let maxKillsFromRunes = Infinity
-  if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity) {
-    const runesToConsume = getRunesToConsume(task.spell.runeReq, equipment, itemsData)
-    for (const [runeId, qtyPerCast] of Object.entries(runesToConsume)) {
-      const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0)
-      const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0
-      const runesPerKill = qtyPerCast * hitsNeeded
-      if (runesPerKill > 0) {
-        maxKillsFromRunes = Math.min(maxKillsFromRunes, Math.floor((invCount + bankCount) / runesPerKill))
-      }
-    }
+  const runesToConsumePerCast = (combatType === 'magic' && task.spell?.runeReq)
+    ? getRunesToConsume(task.spell.runeReq, equipment, itemsData)
+    : {}
+  const runesRemaining = {}
+  for (const runeId of Object.keys(runesToConsumePerCast)) {
+    const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0)
+    const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0
+    runesRemaining[runeId] = invCount + bankCount
   }
 
   // Scale-charged weapons consume one charge per attack. Cap kills to what the
   // currently loaded charges allow — charges cannot be refilled mid-idle.
   const weaponScaleCharged = !!weaponItem?.scaleCharged
   const startingCharges = weaponEntry?.charges || 0
+  let chargesRemaining = startingCharges
   // Scale-charged armour (shardglass) burns one charge per worn piece per hit
   // taken. Idle is approximate: bonuses aren't recomputed mid-window, so we
   // just tally expected landed hits and drain each piece by that (capped).
@@ -1286,12 +1302,6 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   const armourStartCharges = {}
   for (const slot of armourChargeSlots) armourStartCharges[slot] = equipment[slot]?.charges || 0
   let armourHitsTaken = 0
-  let maxKillsFromCharges = Infinity
-  if (weaponScaleCharged && hitsNeeded < Infinity) {
-    // Scale-charged weapons (ranged, powered-staff magic, scythe melee) consume
-    // one scale per swing — cap idle kills to what loaded charges allow.
-    maxKillsFromCharges = Math.floor(startingCharges / hitsNeeded)
-  }
 
   // Track starting inventory state for delta calculation
   const startingInvState = {}
@@ -1311,7 +1321,13 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   let slayerXpGained = 0
   let remainingTicks = totalTicks
 
-  const maxKillsFromResources = Math.min(maxKillsFromAmmo, maxKillsFromRunes, maxKillsFromCharges)
+  // Actual (boosted) resource consumption, accumulated per kill in the loop.
+  let totalAttacksUsed = 0
+  let ammoConsumedTotal = 0
+  const runesConsumedTotal = {}
+  let chargesConsumedTotal = 0
+  let spellCastAttacksTotal = 0
+  let resourceLimited = false
 
   // ── Supply state ─────────────────────────────────────────────────────────
   const maxHP = stats.hitpoints ? getLevelFromXP(stats.hitpoints.xp || 0) : 10
@@ -1346,7 +1362,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   }
   ensureBoosts()
 
-  while (remainingTicks > 0 && monstersKilled < maxKillsFromResources) {
+  while (remainingTicks > 0) {
     ensureBoosts()
 
     const useCombatPrayer = !!idlePrayers.combatPrayerId && prayerPool > 0
@@ -1361,7 +1377,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
       const layeredWithPrayer = useCombatPrayer
         ? buildBoostedPlayerStats(layeredBoostStats, null, idlePrayers.combatPrayerId, prayersData)
         : layeredBoostStats
-      const hitStats = avgHitStats(layeredWithPrayer, equipment, monster, stance, itemsData, task.spell || null, slayerTask)
+      const hitStats = avgHitStats(
+        layeredWithPrayer, equipment, monster, stance, itemsData, task.spell || null, slayerTask,
+        getPrayerMagicDamageBonus(useCombatPrayer ? [idlePrayers.combatPrayerId] : [], prayersData),
+      )
       const incoming = estimateMonsterIncomingPerAttack(monster, equipment, itemsData, layeredWithPrayer, stance)
       if (!Number.isFinite(hitStats.avgDmgPerHit) || hitStats.avgDmgPerHit <= 0) {
         return { ...hitStats, hitsNeeded: Infinity, ticksPerKill: Infinity, ticksPerCycle: Infinity, incoming }
@@ -1377,7 +1396,34 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
     if (remainingTicks < metrics.ticksPerCycle) break
 
-    const playerAttacks = metrics.hitsNeeded
+    const killAttacks = metrics.hitsNeeded
+
+    // Resource sufficiency for THIS kill, sized off the current (boosted)
+    // attack count — ammo/runes/charges last exactly as long as the swings a
+    // boosted player actually needs, not a static unboosted estimate.
+    if (combatType === 'ranged' && weaponItem?.ammoType && killAttacks > ammoRemaining) {
+      stoppedReason = 'resource_limited'
+      resourceLimited = true
+      break
+    }
+    let runeShortfall = false
+    if (combatType === 'magic' && task.spell?.runeReq) {
+      for (const [runeId, qtyPerCast] of Object.entries(runesToConsumePerCast)) {
+        if (qtyPerCast * killAttacks > (runesRemaining[runeId] || 0)) { runeShortfall = true; break }
+      }
+    }
+    if (runeShortfall) {
+      stoppedReason = 'resource_limited'
+      resourceLimited = true
+      break
+    }
+    if (weaponScaleCharged && killAttacks > chargesRemaining) {
+      stoppedReason = 'resource_limited'
+      resourceLimited = true
+      break
+    }
+
+    const playerAttacks = killAttacks
     const monsterAttacks = Math.max(0, Math.floor(metrics.ticksPerKill / metrics.incoming.monsterAtkSpeed))
     const events = playerAttacks + monsterAttacks
 
@@ -1460,6 +1506,27 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     remainingTicks -= killTicks
     monstersKilled++
 
+    // Drain the resource pools by this kill's actual (boosted) attack count.
+    totalAttacksUsed += killAttacks
+    if (combatType === 'ranged' && weaponItem?.ammoType) {
+      ammoRemaining -= killAttacks
+      ammoConsumedTotal += killAttacks
+    }
+    if (combatType === 'magic' && task.spell?.runeReq) {
+      for (const [runeId, qtyPerCast] of Object.entries(runesToConsumePerCast)) {
+        const used = qtyPerCast * killAttacks
+        runesRemaining[runeId] = (runesRemaining[runeId] || 0) - used
+        runesConsumedTotal[runeId] = (runesConsumedTotal[runeId] || 0) + used
+      }
+    }
+    if (weaponScaleCharged) {
+      chargesRemaining -= killAttacks
+      chargesConsumedTotal += killAttacks
+    }
+    if (combatType === 'magic' && task.spell) {
+      spellCastAttacksTotal += killAttacks
+    }
+
     // Is this kill on the player's currently assigned slayer task monster?
     // (independent of the task-completion cap below, so task-only drops like
     // Imbued Crown/Brain are eligible on the kill that finishes the task too.)
@@ -1530,6 +1597,13 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
   }
 
+  // Fold in spell-cast XP now that the actual (boosted, per-kill-varying)
+  // cast count is known — see xpPerKill.magic above, which only carries the
+  // damage-based portion.
+  if (combatType === 'magic' && task.spell && spellCastAttacksTotal > 0) {
+    xpGained.magic = (xpGained.magic || 0) + Math.floor(spellCastAttacksTotal * (task.spell.baseXP || 0))
+  }
+
   // Post-loop top-up: a real player would eat back to full before stepping
   // away. Mirror that here so a skip never hands the player back near death
   // while food remains. Counted into foodConsumed/itemsConsumed automatically.
@@ -1544,10 +1618,9 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
 
   // Deduct runes for magic combat: consume from inventory first, track bank overflow
   const runesConsumed = {}
-  if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity && monstersKilled > 0) {
-    const runesToConsume = getRunesToConsume(task.spell.runeReq, equipment, itemsData)
-    for (const [runeId, qtyPerCast] of Object.entries(runesToConsume)) {
-      let remaining = qtyPerCast * hitsNeeded * monstersKilled
+  if (combatType === 'magic' && task.spell?.runeReq && monstersKilled > 0) {
+    for (const [runeId, totalQty] of Object.entries(runesConsumedTotal)) {
+      let remaining = totalQty
       for (let i = 0; i < newInv.length && remaining > 0; i++) {
         if (newInv[i]?.itemId === runeId) {
           const consumed = Math.min(newInv[i].quantity, remaining)
@@ -1587,12 +1660,12 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   }
 
   // Track consumed combat resources so callers can mutate equipped state.
-  const ammoConsumed = (combatType === 'ranged' && weaponItem?.ammoType && equipment?.ammo?.itemId && attacksPerKill > 0)
-    ? { itemId: equipment.ammo.itemId, quantity: Math.min(Math.max(0, Number(equipment?.ammo?.quantity) || 0), attacksPerKill * monstersKilled) }
+  const ammoConsumed = (combatType === 'ranged' && weaponItem?.ammoType && equipment?.ammo?.itemId && ammoConsumedTotal > 0)
+    ? { itemId: equipment.ammo.itemId, quantity: Math.min(Math.max(0, Number(equipment?.ammo?.quantity) || 0), ammoConsumedTotal) }
     : null
 
-  const chargesConsumed = weaponScaleCharged && hitsNeeded < Infinity
-    ? Math.min(startingCharges, hitsNeeded * monstersKilled)
+  const chargesConsumed = weaponScaleCharged
+    ? Math.min(startingCharges, chargesConsumedTotal)
     : 0
 
   const armourChargesConsumed = {}
@@ -1604,7 +1677,6 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
   }
 
-  const resourceLimited = (maxKillsFromResources !== Infinity) && (monstersKilled >= maxKillsFromResources) && (remainingTicks >= ticksPerCycle)
   if (resourceLimited && !stoppedReason) stoppedReason = 'resource_limited'
   if (!stoppedReason) stoppedReason = 'completed_elapsed'
 
@@ -1663,7 +1735,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     xpGained, lootGained, lootLost, lootBanked, chargesBanked, runesConsumed,
     monstersKilled, monstersKilledOnTask, finalInventory: newInv,
     slayerXpGained, slayerTaskUpdate, chargesConsumed, armourChargesConsumed, ammoConsumed,
-    attacksUsed: attacksPerKill * monstersKilled, resourceLimited,
+    attacksUsed: totalAttacksUsed, resourceLimited,
     // Idle-supply outputs:
     effectiveElapsedMs,
     stoppedReason,

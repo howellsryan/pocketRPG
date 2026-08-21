@@ -88,6 +88,15 @@ describe('MCP summarizeSave', () => {
     expect(out.maxHits.magic).toBeNull() // dagger is not a powered staff
   })
 
+  it('declares that its max hits exclude prayers and potions', () => {
+    // The numbers are unbuffed by design (a character sheet has no fight to
+    // read a prayer off), so the payload has to say so or the model presents
+    // them as what the player hits mid-fight.
+    const basis = summarizeSave(save).maxHitsBasis
+    expect(basis).toMatch(/no prayer or potion/i)
+    expect(basis).toMatch(/analyze_dps/)
+  })
+
   it('accepts a JSON string as well as an object', () => {
     expect(summarizeSave(JSON.stringify(save)).coins).toBe(12345)
   })
