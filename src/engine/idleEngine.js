@@ -988,11 +988,18 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
 
   let maxHit, atkRoll, defRoll, acc
 
+  // Slayer-task gear (slayer helm and friends) is worth the same on-task
+  // accuracy/damage here as it is in live combat — combat.js applies it in all
+  // three style branches, and idle dropping it made a task idled with a slayer
+  // helm strictly worse than fighting it by hand. Zero off-task, so this is a
+  // no-op for every non-slayer fight (getSlayerTaskEquipmentBonuses gates on
+  // isOnSlayerTask, which also requires monstersRemaining > 0).
+  const slayerAccuracyMult = 1 + slayerEquipmentBonus.accuracyPercent / 100
   if (combatType === 'ranged') {
     const styleBonus = getRangedStyleBonus(stance)
     const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
     maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * voidMult.rangedDamage)
-    atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy)
+    atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy * slayerAccuracyMult)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.ranged || 0)
   } else if (combatType === 'magic') {
     const effMag = effectiveMagic(playerStats.magic || 1)
@@ -1001,7 +1008,7 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
       : poweredStaffMagicBaseDamage(playerStats.magic || 1, equipment?.weapon ? itemsData[equipment.weapon.itemId] : null)
     const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
     maxHit = magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + getSpellRuneMagicDamage(equipment, itemsData, spell))
-    atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy)
+    atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy * slayerAccuracyMult)
     defRoll = monsterMagicDefenceRoll(monster.stats.magic || 1, monster.stats.defence, monster.defenceBonus?.magic || 0)
   } else {
     // Melee (default)
@@ -1010,9 +1017,13 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
     maxHit = Math.floor(wornMeleeMaxHit(effStr, bonuses.otherBonus) * voidMult.meleeDamage)
     const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-    atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * voidMult.meleeAccuracy)
+    atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * voidMult.meleeAccuracy * slayerAccuracyMult)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle] || 0)
   }
+  // Applied once here rather than per branch: it is the last operation on
+  // maxHit in all three of combat.js's branches, so one shared line is
+  // byte-for-byte what live computes and cannot drift between styles.
+  maxHit = Math.floor(maxHit * (1 + slayerEquipmentBonus.damagePercent / 100))
 
   acc = hitChance(atkRoll, defRoll)
   // Monster damage resistance (spear-gated bosses) — mirrors live combat so a
