@@ -218,14 +218,32 @@ function buildBlendShellProxy(THREE, parts) {
 // The group is authored facing +z with feet near y=0; the caller places,
 // rotates, and height-normalises it like any other actor. Motion comes from
 // a rig (rigs.js) writing the pose fields and calling commit().
-export function createBlendShellCreature(THREE, spec) {
+export function createBlendShellCreature(THREE, spec, tintHex) {
   const parts = spec.parts
   const n = parts.length
   // Authored hex goes to the shader verbatim — default color management
   // would linearize it and the raw-GLSL lighting would render everything
   // darker and muddier than the palette says.
-  const palette = (spec.palette || []).map((hex) =>
+  let palette = (spec.palette || []).map((hex) =>
     new THREE.Color().setHex(parseInt(hex.slice(1), 16), THREE.NoColorSpace))
+  // A borrowed archetype template (world/shared/monsterArchetypeFallback.ts —
+  // a monster with no model of its own standing in for one that has a spec)
+  // is re-hued toward the monster's own idle-game palette rather than left in
+  // the template's own colours. Multiplying every part by one ratio, taken
+  // from the body's dominant colour (palette[0]), keeps the authored
+  // light/dark relationships between parts instead of flattening them.
+  if (tintHex && palette.length) {
+    const target = new THREE.Color().setHex(parseInt(tintHex.slice(1), 16), THREE.NoColorSpace)
+    const ref = palette[0]
+    const ratio = new THREE.Vector3(
+      ref.r > 0.02 ? target.r / ref.r : 1,
+      ref.g > 0.02 ? target.g / ref.g : 1,
+      ref.b > 0.02 ? target.b / ref.b : 1,
+    )
+    palette = palette.map((c) => new THREE.Color(
+      Math.min(1, c.r * ratio.x), Math.min(1, c.g * ratio.y), Math.min(1, c.b * ratio.z),
+    ))
+  }
 
   const baseA = parts.map((p) => new THREE.Vector3(...p.a))
   const baseB = parts.map((p) => new THREE.Vector3(...p.b))

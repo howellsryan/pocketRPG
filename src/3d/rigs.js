@@ -28,8 +28,8 @@ const rigEaseOut = (p) => 1 - (1 - p) * (1 - p)
 
 // Spec → living creature: { group, update(dt), trigger(event), setFlash,
 // dispose }. `trigger` accepts 'attack' | 'hit' | 'death' | 'respawn'.
-export function createProcCreature(THREE, spec) {
-  const shell = createBlendShellCreature(THREE, spec)
+export function createProcCreature(THREE, spec, tintHex) {
+  const shell = createBlendShellCreature(THREE, spec, tintHex)
   const { parts, byId, baseA, baseB, mats, overrideA, overrideB, radiusScale } = shell
   const archetype = spec.archetype || 'quadruped'
 

@@ -40,12 +40,16 @@ function rawTop(spec: Spec): number {
   return top || 1
 }
 
-export async function buildProcCreature(monsterId: string, targetHeight: number): Promise<ProcCreature | null> {
-  const spec = creatureSpecFor(monsterId)
+/** `specId` picks which creatures3d spec to build (defaults to `monsterId`'s
+ * own) — the archetype fallback (entities.ts) borrows another monster's spec
+ * as a stand-in shape and re-hues it with `tintHex`, so the two ids diverge
+ * there while `monsterId` still names what's actually standing in the world. */
+export async function buildProcCreature(monsterId: string, targetHeight: number, specId: string = monsterId, tintHex?: string): Promise<ProcCreature | null> {
+  const spec = creatureSpecFor(specId)
   if (!spec) return null
   // Untyped cross-package JS module; THREE injected at runtime.
   const rigs = await import('../../../src/3d/rigs.js')
-  const proc = (rigs as { createProcCreature: (t: typeof THREE, s: Spec) => ProcCreature }).createProcCreature(THREE, spec)
+  const proc = (rigs as { createProcCreature: (t: typeof THREE, s: Spec, tintHex?: string) => ProcCreature }).createProcCreature(THREE, spec, tintHex)
   proc.group.scale.setScalar(targetHeight / rawTop(spec))
   proc.group.traverse((o: THREE.Object3D) => { o.frustumCulled = false })
   return proc

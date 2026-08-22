@@ -7,6 +7,7 @@ import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
 import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
 import { MONSTER_MODELS, FORM_TINT_MIX, FORM_TINT_EMISSIVE, formTintColor } from '../../shared/monsterModels'
 import { footprintRadius } from '../../shared/monsterSize'
+import { resolveArchetypeFallback } from '../../shared/monsterArchetypeFallback'
 import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
 // Shared per-item placement registry — the SAME resolver the combat arena /
 // equip modal uses (src/utils/equipModels.js + src/data/equipmentModels.json),
@@ -315,6 +316,24 @@ function applyMonsterTint(model: THREE.Object3D, tint: Record<string, string> | 
   })
 }
 
+/** Flat single-colour recolour for a BORROWED template GLB (archetype
+ * fallback below) — unlike applyMonsterTint this doesn't know the model's
+ * material names (it wasn't authored for this monster), so it repaints every
+ * material it finds rather than keying off a per-model name table. Cruder
+ * than the named-material tint (no separate shade/highlight material), which
+ * is an acceptable trade for turning a cow into the right species. */
+function applyFlatTint(model: THREE.Object3D, hex: string): void {
+  model.traverse((o) => {
+    if (!(o instanceof THREE.Mesh) || !o.material) return
+    const one = (m: THREE.Material): THREE.Material => {
+      const mm = m.clone() as THREE.MeshStandardMaterial
+      if (mm.color) mm.color.set(hex)
+      return mm
+    }
+    o.material = Array.isArray(o.material) ? o.material.map(one) : one(o.material)
+  })
+}
+
 /** Every clip a monster GLB may be driven by. A rig that ships a clip missing
  * from this list simply never plays it: bound to idle/walk/attack/die only,
  * Zaryth's per-style swings fell back to its melee `attack` for every form, so
@@ -378,10 +397,18 @@ export function applyFormTint(mesh: THREE.Object3D, hex: string | null): void {
 }
 
 /** Loads the registered model for a monster (centred, floored — or hovering,
- * for flyers — and scaled to its target height). Unregistered monsters get the
- * cow path (the Phase 2 default); any load failure gets the box placeholder. */
+ * for flyers — and scaled to its target height). A monster with neither a
+ * model nor a spec of its own borrows one from another monster that shares
+ * its idle-game archetype (monsterArchetypeFallback.ts), re-hued to its own
+ * palette; only an archetype with nothing at all to borrow still falls to the
+ * cow path (the Phase 2 default). Any load failure gets the box placeholder. */
 export async function createMonsterMesh(monsterId: string | undefined): Promise<{ mesh: THREE.Object3D; animator: Animator | null }> {
-  const spec = monsterId ? MONSTER_MODELS[monsterId] : undefined
+  const ownSpec = monsterId ? MONSTER_MODELS[monsterId] : undefined
+  const ownProcSpec = !ownSpec && monsterId ? creatureSpecFor(monsterId) : null
+  const fallback = !ownSpec && !ownProcSpec && monsterId ? resolveArchetypeFallback(monsterId) : null
+
+  const glbFallback = fallback?.kind === 'glb' ? fallback : null
+  const spec = ownSpec ?? (glbFallback ? MONSTER_MODELS[glbFallback.templateId] : undefined)
   if (spec) {
     try {
       const gltf = await loadTemplate(spec.url)
@@ -390,17 +417,23 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       // After disableFrustumCulling — it forces castShadow on everything it
       // walks, so opting out has to come second.
       if (spec.noShadow) model.traverse((obj) => { obj.castShadow = false })
-      applyMonsterTint(model, spec.tint)
+      if (glbFallback) applyFlatTint(model, glbFallback.tintHex)
+      else applyMonsterTint(model, spec.tint)
       const b = spec.bounds
       model.position.set(-(b.minX + b.maxX) / 2, -b.minY + (spec.hover ?? 0), -(b.minZ + b.maxZ) / 2)
       const group = new THREE.Group()
       group.add(model)
-      if (spec.formTint) prepareFormTint(group, model)
-      group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
+      // A borrowed template's own formTint (if any) is keyed to ITS id, not
+      // this monster's — formTintColor(monsterId, form) can never resolve one
+      // for a fallback monster, so setting up the clone-and-track machinery
+      // for it would be dead weight.
+      if (spec.formTint && !glbFallback) prepareFormTint(group, model)
+      const targetHeight = spec.targetHeight * (glbFallback?.heightScale ?? 1)
+      group.scale.setScalar(targetHeight / (b.maxY - b.minY))
       // A large monster's box spans its whole body, or the tap that looks like
       // it landed on the dragon lands on the ground beside its centre tile.
       const bodyTiles = 2 * footprintRadius(monsterId) + 1
-      addPickProxy(group, spec.targetHeight + (spec.hover ?? 0), bodyTiles > 1 ? bodyTiles : undefined)
+      addPickProxy(group, targetHeight + (spec.hover ?? 0), bodyTiles > 1 ? bodyTiles : undefined)
       const animator = makeAnimator(model, gltf, MONSTER_ANIM_CLIPS)
       if (animator?.kind === 'gltf') {
         if (spec.noLocomotionClip) animator.gait = { target: model, baseY: model.position.y, baseRotZ: model.rotation.z }
@@ -417,12 +450,15 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       return { mesh: boxPlaceholder(), animator: null }
     }
   }
-  // No GLB: render a procedural blend-shell creature if the monster has a
-  // creatures3d spec (e.g. Warlord Grondar).
-  if (monsterId && creatureSpecFor(monsterId)) {
+  // No GLB: render a procedural blend-shell creature if the monster has its
+  // own creatures3d spec (e.g. Warlord Grondar), or borrows another
+  // monster's spec as an archetype stand-in (e.g. an uncovered spider-shaped
+  // monster borrowing broodfang_spider's rig, re-hued to its own colour).
+  const procFallback = fallback?.kind === 'proc' ? fallback : null
+  if (monsterId && (ownProcSpec || procFallback)) {
     const height = PROC_TARGET_HEIGHT[monsterId] ?? 2.4
     try {
-      const proc = await buildProcCreature(monsterId, height)
+      const proc = await buildProcCreature(monsterId, height, procFallback?.templateId ?? monsterId, procFallback?.tintHex)
       if (proc) {
         const group = new THREE.Group()
         group.add(proc.group)
