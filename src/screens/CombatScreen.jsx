@@ -3385,6 +3385,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         icon: spriteMonsterArt.icon,
         accent: spriteMonsterArt.accent,
         sprite: monsterSprite,
+        // The live combat copy, not the monsters.json row: a targeted add is
+        // its own creature and must be drawn as one, and a multi-form boss
+        // carries its current form here.
+        monster: spriteMonster,
         dying: spriteMonster.currentHP <= 0,
       }}
       actorSwing={swings.player}

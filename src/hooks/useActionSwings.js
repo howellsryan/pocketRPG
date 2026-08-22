@@ -78,3 +78,44 @@ export function useConsumeToken() {
 
   return { token, pushConsume }
 }
+
+
+/**
+ * Turns a token into a CSS animation restart WITHOUT remounting the element.
+ *
+ * The stage's usual restart mechanism is a `key` change, which unmounts and
+ * remounts the element — and its whole subtree with it. That is fine for a
+ * leaf, and wrong the moment two animations nest: a landed hit remounting the
+ * recoil wrapper also remounts the attack wrapper inside it, and a freshly
+ * mounted element whose animation class is still applied plays that animation
+ * again. The monster appeared to swing because the player hit it.
+ *
+ * A CSS animation also restarts when its `animation-name` changes, and that
+ * touches nothing else in the tree. So an element that WRAPS other animated
+ * elements alternates between two identically-defined keyframes instead of
+ * being keyed: `.is-x-a` and `.is-x-b`.
+ *
+ * Strict alternation, tracked from the token id — not `id % 2`, which is what
+ * a first pass reaches for and which silently fails whenever two consecutive
+ * tokens on this side happen to land on the same parity (the id counter is
+ * shared across both sides of the fight, so they routinely do).
+ *
+ * Returns 'a' | 'b', or null when there is no token.
+ */
+export function useAnimationFlip(token) {
+  const state = useRef({ id: null, flip: false })
+  if (!token) {
+    // Forget the id along with the token. Today's ids come from a module
+    // counter that never resets, so a repeat is impossible — but a per-fight
+    // or per-mount id source would silently swallow a recoil the first time
+    // an id came round again, and that is not a failure anyone would trace
+    // back to here.
+    state.current.id = null
+    return null
+  }
+  if (state.current.id !== token.id) {
+    state.current.id = token.id
+    state.current.flip = !state.current.flip
+  }
+  return state.current.flip ? 'a' : 'b'
+}
