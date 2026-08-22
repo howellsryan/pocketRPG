@@ -222,16 +222,41 @@ const SINGLE_KILL_MONSTER_IDS = new Set(['ember_tyrant', 'ashen_crucible'])
 // (not its final boss's); bosses use the master's bossTaskRange (default
 // [20,50]); everything else rolls within the master's taskRange. `options.rng`
 // overrides Math.random for deterministic assignment.
+// Display name for an assignable task id — a raw monster, the Nagadoth Kings
+// composite, or a raid-completion proxy (which names the raid, not its final
+// boss). Shared by buildSlayerTask and anything else that lists task ids
+// (the info sheet, the block-list screen) so the three special cases can't
+// drift between callers.
+export function resolveSlayerTaskName(monsterId) {
+  const raidMeta = RAID_TASK_META[monsterId]
+  if (monsterId === DAGANNOTH_KINGS_TASK_ID) return 'Nagadoth Kings'
+  if (raidMeta) return raidsData[raidMeta.raidId]?.name || monsterId.replace(/_/g, ' ')
+  return monstersData[monsterId]?.name || monsterId.replace(/_/g, ' ')
+}
+
+// The client's slayerTaskBlocks mirror ([{ monsterId, active }]) reduced to
+// the Set pickSlayerMonster wants — toggled-off blocks keep their purchase
+// but must not narrow the pool, same as the server's own D1 read.
+export function activeSlayerTaskBlockIds(slayerTaskBlocks) {
+  return new Set((slayerTaskBlocks || []).filter(b => b?.active).map(b => b.monsterId))
+}
+
+// Every distinct assignable task id across every master's pool, deduped —
+// what the block-list screen offers and what the server validates a
+// purchase's monsterId against. Includes boss and raid-proxy entries: they
+// are ordinary pool entries like any other.
+export function allBlockableSlayerTaskIds() {
+  const ids = new Set()
+  for (const master of SLAYER_MASTERS) {
+    for (const entry of master.monsterPool) ids.add(getEntryId(entry))
+  }
+  return [...ids]
+}
+
 export function buildSlayerTask(master, monsterId, isBoss, options = {}) {
   const rng = options.rng || Math.random
   const quantityMultiplier = (Number(options.quantityMultiplier) > 0) ? Number(options.quantityMultiplier) : 1
-  const monsterData = monstersData[monsterId]
-  const raidMeta = RAID_TASK_META[monsterId]
-  const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID
-    ? 'Nagadoth Kings'
-    : raidMeta
-      ? (raidsData[raidMeta.raidId]?.name || monsterId.replace(/_/g, ' '))
-      : (monsterData?.name || monsterId.replace(/_/g, ' '))
+  const monsterName = resolveSlayerTaskName(monsterId)
 
   let totalCount
   if (SINGLE_KILL_MONSTER_IDS.has(monsterId)) {
@@ -297,7 +322,16 @@ export function meetsEntrySkillAndQuestGates(entry, slayerLevel, completedQuests
 // that merely DISPLAYS a lock may use it — it would tell a player who has the
 // kills that they do not. Those callers compose the two functions themselves,
 // judging the kill-count half only once the fetch has landed.
-export function isEntryEligible(entry, slayerLevel, completedQuests, bossKillCounts) {
+//
+// `blockedMonsterIds` (a Set, purchased via the Slayer Task Block List — see
+// slayerTaskBlocks.js) checks the ENTRY id, not its resolved sub-monsters: a
+// block targets the assignable task unit itself (Nagadoth Kings, a raid
+// proxy, an ordinary monster), matching what the block-list screen offers
+// via allBlockableSlayerTaskIds. An omitted set narrows nothing — unlike the
+// kill-count gate this only ever removes an option the player already has,
+// so there is no access to protect by failing closed on it.
+export function isEntryEligible(entry, slayerLevel, completedQuests, bossKillCounts, blockedMonsterIds) {
+  if (blockedMonsterIds && blockedMonsterIds.has(getEntryId(entry))) return false
   if (!meetsEntrySkillAndQuestGates(entry, slayerLevel, completedQuests)) return false
   return resolveTaskMonsterIds(getEntryId(entry))
     .every(monsterKey => !unmetKillCountRequirement({ ...monstersData[monsterKey], id: monsterKey }, bossKillCounts))
@@ -311,9 +345,10 @@ const recentTasksByMaster = new Map()
 /**
  * Picks a slayer monster from a master's pool with even distribution.
  *
- * Only monsters whose slayer, quest and kill-count requirements are met (see
- * isEntryEligible — `options.completedQuests`, `options.bossKillCounts`) are
- * considered, and any monster
+ * Only monsters whose slayer, quest and kill-count requirements are met and
+ * are not on the player's active block list (see isEntryEligible —
+ * `options.completedQuests`, `options.bossKillCounts`, `options.blockedMonsterIds`)
+ * are considered, and any monster
  * assigned recently (tracked per master) is skipped until the rest of the
  * eligible pool has been cycled through. This replaces the previous uniform
  * random pick + deterministic first-match fallback, which caused the same task
@@ -326,8 +361,9 @@ export function pickSlayerMonster(master, slayerLevel, options = {}) {
   const history = options.history || recentTasksByMaster
   const completedQuests = options.completedQuests
   const bossKillCounts = options.bossKillCounts
+  const blockedMonsterIds = options.blockedMonsterIds
 
-  const eligible = master.monsterPool.filter(entry => isEntryEligible(entry, slayerLevel, completedQuests, bossKillCounts))
+  const eligible = master.monsterPool.filter(entry => isEntryEligible(entry, slayerLevel, completedQuests, bossKillCounts, blockedMonsterIds))
   if (eligible.length === 0) return null
 
   const recent = history.get(master.id) || []

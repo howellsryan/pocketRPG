@@ -152,6 +152,45 @@ describe('pickSlayerMonster eligibility', () => {
   })
 })
 
+describe('the Slayer Task Block List gate', () => {
+  it('makes a blocked-and-active entry ineligible, and does nothing when omitted', () => {
+    const druven = SLAYER_MASTERS.find(m => m.id === 'duradel')!
+    const target = getEntryId(druven.monsterPool[0])
+    expect(isEntryEligible(target, 99, undefined, undefined, new Set([target]))).toBe(false)
+    expect(isEntryEligible(target, 99, undefined, undefined, new Set())).toBe(true)
+    expect(isEntryEligible(target, 99)).toBe(true)
+  })
+
+  it('leaves a toggled-off (inactive) block eligible — the caller only passes ACTIVE ids', () => {
+    const druven = SLAYER_MASTERS.find(m => m.id === 'duradel')!
+    const target = getEntryId(druven.monsterPool[0])
+    // Simulates the caller filtering slayerTaskBlocks to active-only before
+    // building the Set — an inactive block never reaches this parameter.
+    expect(isEntryEligible(target, 99, undefined, undefined, new Set())).toBe(true)
+  })
+
+  it('pickSlayerMonster never assigns a blocked-and-active monster', () => {
+    const druven = SLAYER_MASTERS.find(m => m.id === 'duradel')!
+    const history = new Map<string, string[]>()
+    const eligible = druven.monsterPool.filter(e => isEntryEligible(e, 99))
+    const blockedMonsterIds = new Set(eligible.slice(0, Math.floor(eligible.length / 2)).map(getEntryId))
+    for (let i = 0; i < 300; i++) {
+      const pick = pickSlayerMonster(druven, 99, { history, blockedMonsterIds })
+      if (!pick) continue
+      expect(blockedMonsterIds.has(pick.monsterId)).toBe(false)
+    }
+  })
+
+  it('returns null when every eligible monster is blocked', () => {
+    const gatedMaster: any = { id: 'test_blocked', monsterPool: ['field_chicken', 'dustpaw_rat'] }
+    const pick = pickSlayerMonster(gatedMaster, 1, {
+      history: new Map(),
+      blockedMonsterIds: new Set(['field_chicken', 'dustpaw_rat']),
+    })
+    expect(pick).toBeNull()
+  })
+})
+
 describe('pickSlayerMonster even distribution', () => {
   it('cycles through every eligible monster before repeating any', () => {
     const valdrin = SLAYER_MASTERS.find(m => m.id === 'vannaka')!

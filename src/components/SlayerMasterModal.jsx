@@ -4,7 +4,7 @@ import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/a
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
-import { SLAYER_MASTERS, RAID_TASK_META, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask } from '../engine/slayerMasters.js'
+import { SLAYER_MASTERS, RAID_TASK_META, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask, activeSlayerTaskBlockIds } from '../engine/slayerMasters.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
 import GameIcon from './GameIcon.jsx'
@@ -19,7 +19,7 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay
   const master = SLAYER_MASTERS.find(m => m.id === masterId)
   const {
     stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot,
-    slayerPerks, completedQuests, bossKillCounts, killCountsLoaded,
+    slayerPerks, completedQuests, bossKillCounts, killCountsLoaded, slayerTaskBlocks,
   } = useGame()
   const [busy, setBusy] = useState(false)
   if (!master) return null
@@ -41,6 +41,7 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay
     const pick = pickSlayerMonster(master, slayerLevel, {
       completedQuests,
       bossKillCounts: killCountsLoaded ? bossKillCounts : null,
+      blockedMonsterIds: killCountsLoaded ? activeSlayerTaskBlockIds(slayerTaskBlocks) : new Set(),
     })
     if (!pick) {
       addToast('No tasks available — raise your slayer level (or finish required quests) for this master.', 'error')

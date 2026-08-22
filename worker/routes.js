@@ -56,6 +56,7 @@ import * as route_apiProfile from '../functions/api/profile.js'
 import * as route_apiPurchase from '../functions/api/purchase.js'
 import * as route_apiSave from '../functions/api/save.js'
 import * as route_apiSkipHour from '../functions/api/skip-hour.js'
+import * as route_apiSlayerBlocks from '../functions/api/slayer/blocks.js'
 import * as route_apiSlayerSkip from '../functions/api/slayer/skip.js'
 import * as route_apiStripeCreateSession from '../functions/api/stripe/create-session.js'
 import * as route_apiStripeWebhook from '../functions/api/stripe/webhook.js'
@@ -130,6 +131,7 @@ export const ROUTE_MODULES = [
   { file: "api/purchase.js", module: route_apiPurchase },
   { file: "api/save.js", module: route_apiSave },
   { file: "api/skip-hour.js", module: route_apiSkipHour },
+  { file: "api/slayer/blocks.js", module: route_apiSlayerBlocks },
   { file: "api/slayer/skip.js", module: route_apiSlayerSkip },
   { file: "api/stripe/create-session.js", module: route_apiStripeCreateSession },
   { file: "api/stripe/webhook.js", module: route_apiStripeWebhook },

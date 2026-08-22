@@ -70,6 +70,7 @@ function assignNextTask(masterId, stats, options) {
     rng: options.rng,
     completedQuests: options.completedQuests,
     history: options.slayerHistory,
+    blockedMonsterIds: options.blockedMonsterIds,
   })
   if (!pick) return null
   const quantityMultiplier = options.slayerPerks?.doubleQuantity ? 2 : 1
@@ -92,6 +93,8 @@ function assignNextTask(masterId, stats, options) {
  *  - autoSlayer      boolean — the unlock is owned.
  *  - slayerPerks     { doubleQuantity } — task-size multiplier for new tasks.
  *  - completedQuests Set/array — quest-gated monster eligibility.
+ *  - blockedMonsterIds Set — purchased Slayer Task Block List entries to skip
+ *                    when rolling the next task (see slayerMasters.js).
  *  - rng             () => number — deterministic assignment in tests.
  *  - slayerHistory   Map — per-master recent-task history (defaults to the
  *                    module-level history inside pickSlayerMonster).

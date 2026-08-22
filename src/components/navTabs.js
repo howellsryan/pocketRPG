@@ -59,4 +59,5 @@ export const SETTINGS_NAV_LINKS = [
   { id: SCREENS.COLLECTION_LOG,    label: 'Collection Log',    iconKey: 'open_book', iconColor: 'var(--color-parchment)' },
   { id: SCREENS.LEADERBOARD,       label: 'Leaderboard',       iconKey: 'progression', iconSize: 22, iconColor: 'var(--color-parchment)' },
   { id: SCREENS.GRIM_REAPER,       label: 'Grim Reaper',       iconKey: 'grim_reaper_reclaim' },
+  { id: SCREENS.SLAYER_TASK_BLOCKS, label: 'Slayer Blocks',    iconKey: 'death_skull' },
 ]

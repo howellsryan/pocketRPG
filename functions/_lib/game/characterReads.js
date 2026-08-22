@@ -40,6 +40,14 @@ export function hardModeTargetsStatement(env, characterId) {
   ).bind(characterId)
 }
 
+// The matching mapper lives in slayerTaskBlocks.js, next to the constants it
+// filters against — same split as hardModeTargetsStatement above.
+export function slayerTaskBlocksStatement(env, characterId) {
+  return env.DB.prepare(
+    'SELECT monster_id, active FROM slayer_task_blocks WHERE character_id = ?',
+  ).bind(characterId)
+}
+
 export function idleStateStatement(env, characterId) {
   return env.DB.prepare(
     'SELECT last_active_at, active_task, updated_at FROM character_idle_state WHERE character_id = ?',

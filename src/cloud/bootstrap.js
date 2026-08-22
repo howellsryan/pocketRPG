@@ -19,13 +19,14 @@
 import { api, getToken, getCharacterId } from './api.js'
 import { mapKillCountEntries } from './killCounts.js'
 import { mapHardModeEntries } from './hardMode.js'
+import { mapSlayerTaskBlockEntries } from './slayerTaskBlocks.js'
 import { primeIdleState } from './idleState.js'
 import { primeActivityProgress } from './activityProgress.js'
 
 /**
  * One round trip for the whole boot.
  *
- * Returns `{ me, killCounts, hardModeKeys, dailyTasks }` and primes the idle /
+ * Returns `{ me, killCounts, hardModeKeys, slayerTaskBlocks, dailyTasks }` and primes the idle /
  * activity-progress caches as a side effect, or `null` if the request failed
  * for any reason — including a 404 from a server without this route.
  */
@@ -62,6 +63,7 @@ export async function fetchBootstrap() {
     me: { identity: res.identity, character: res.character, stripe_links: res.stripe_links, stripe_skus: res.stripe_skus },
     killCounts: mapKillCountEntries(res.killCounts),
     hardModeKeys: mapHardModeEntries(res.hardMode),
+    slayerTaskBlocks: mapSlayerTaskBlockEntries(res.slayerTaskBlocks),
     dailyTasks: res.dailyTasks ?? null,
   }
 }

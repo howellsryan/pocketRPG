@@ -76,6 +76,7 @@ const sourceFiles = [
   'engine/slayerRewards.js',
   'engine/slayerTasks.js',
   'engine/slayerMasters.js',
+  'engine/slayerTaskBlocks.js',
   'engine/slayerKillCredit.js',
   'engine/slayerUnlocks.js',
   'engine/specialAttackEnergy.js',
@@ -170,6 +171,7 @@ const sourceFiles = [
   'cloud/collectionLog.js',
   'cloud/killCounts.js',
   'cloud/hardMode.js',
+  'cloud/slayerTaskBlocks.js',
   // Boot-path only (runs before the cloud phase goes ready), so core — never
   // the game chunk.
   'cloud/bootstrap.js',
@@ -287,6 +289,7 @@ const sourceFiles = [
   'screens/HelpScreen.js',
   'screens/CharacterUnlockScreen.js',
   'screens/GrimReaperScreen.js',
+  'screens/SlayerTaskBlockScreen.js',
   'screens/DemoLockedScreen.js',
   'screens/landingContent.js',
   'components/LandingHero3D.js',
@@ -378,6 +381,7 @@ const GAME_CHUNK_FILES = new Set([
   'screens/HelpScreen.js',
   'screens/CharacterUnlockScreen.js',
   'screens/GrimReaperScreen.js',
+  'screens/SlayerTaskBlockScreen.js',
   'screens/DemoLockedScreen.js',
 ]);
 
