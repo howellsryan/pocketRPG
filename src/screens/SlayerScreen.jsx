@@ -245,10 +245,14 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
     }
   }
 
-  // Blocks the assigned monster from ever being handed out again — it does
-  // NOT skip/cancel the current task, only every future assignment. A
-  // pre-existing but paused (inactive) block is free to re-activate; only a
-  // fresh block costs credits, mirroring SlayerTaskBlockScreen's purchase flow.
+  // Blocks the assigned monster from ever being handed out again, and clears
+  // the current task as a side effect — free (no point/credit cost beyond the
+  // block purchase itself), since the block already makes this task pointless
+  // to keep. A pre-existing but paused (inactive) block is free to
+  // re-activate; only a fresh block costs credits, mirroring
+  // SlayerTaskBlockScreen's purchase flow. The confirmation is a 'warning'
+  // toast, not 'info' — it must not be silenced by the showInfoToasts setting
+  // (src/utils/toastTypes.js).
   const handleBlockCurrentTask = async () => {
     if (!slayerTask) return
     if (!getToken() || !getCharacterId()) {
@@ -256,22 +260,24 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
       return
     }
     const monsterId = slayerTask.monsterId
+    const monsterName = slayerTask.monsterName
     const existing = (slayerTaskBlocks || []).find(b => b.monsterId === monsterId)
     try {
       if (existing) {
-        if (existing.active) { addToast(`${slayerTask.monsterName} is already blocked.`, 'error'); return }
+        if (existing.active) { addToast(`${monsterName} is already blocked.`, 'error'); return }
         await api.setSlayerTaskBlockActive(monsterId, true)
         applySlayerTaskBlockActive(monsterId, true)
-        addToast(`🚫 ${slayerTask.monsterName} blocked again — it won't be assigned as a task again.`, 'info')
-        return
+      } else {
+        const res = await api.purchaseSlayerTaskBlock(monsterId)
+        const remaining = Number(res?.credits_remaining)
+        if (Number.isFinite(remaining)) {
+          window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
+        }
+        applySlayerTaskBlockPurchase(monsterId)
       }
-      const res = await api.purchaseSlayerTaskBlock(monsterId)
-      const remaining = Number(res?.credits_remaining)
-      if (Number.isFinite(remaining)) {
-        window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
-      }
-      applySlayerTaskBlockPurchase(monsterId)
-      addToast(`🚫 ${slayerTask.monsterName} blocked — it won't be assigned as a task again.`, 'info')
+      setSlayerTask(null)
+      requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
+      addToast(`🚫 ${monsterName} blocked — task skipped, it won't be assigned again.`, 'warning')
     } catch (err) {
       if (err?.status === 402) addToast('Not enough credits.', 'error')
       else if (err?.body?.code === 'BLOCK_LIST_FULL') addToast(`Block list is full (max ${SLAYER_TASK_BLOCK_MAX}).`, 'error')

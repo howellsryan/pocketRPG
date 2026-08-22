@@ -42,7 +42,7 @@ export default function SlayerTaskBlockScreen({ onBack }) {
         window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
       }
       applySlayerTaskBlockPurchase(monsterId)
-      addToast(`🚫 ${resolveSlayerTaskName(monsterId)} blocked — it will never be assigned as a task.`, 'info')
+      addToast(`🚫 ${resolveSlayerTaskName(monsterId)} blocked — it will never be assigned as a task.`, 'warning')
       setShowAdd(false)
     } catch (err) {
       if (err?.status === 402) addToast('Not enough credits.', 'error')
@@ -59,7 +59,10 @@ export default function SlayerTaskBlockScreen({ onBack }) {
     try {
       await api.setSlayerTaskBlockActive(monsterId, nextActive)
       applySlayerTaskBlockActive(monsterId, nextActive)
-      addToast(nextActive ? `Block re-activated for ${resolveSlayerTaskName(monsterId)}.` : `Block paused for ${resolveSlayerTaskName(monsterId)} — it can be assigned again.`, 'info')
+      addToast(
+        nextActive ? `Block re-activated for ${resolveSlayerTaskName(monsterId)}.` : `Block paused for ${resolveSlayerTaskName(monsterId)} — it can be assigned again.`,
+        nextActive ? 'warning' : 'info',
+      )
     } catch (err) {
       addToast(err?.message || 'Failed to update block.', 'error')
     } finally {
