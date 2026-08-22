@@ -162,6 +162,7 @@
   --ink-hide-arcane: #7d5bd6;    --ink-hide-arcane-shade: #4b3389;    --ink-hide-arcane-light: #b79bf0;
   --ink-hide-bark: #6b533a;      --ink-hide-bark-shade: #453425;      --ink-hide-bark-light: #8f7a58;
   --ink-hide-flesh: #c08a68;     --ink-hide-flesh-shade: #8c5e43;     --ink-hide-flesh-light: #ddb392;
+  --ink-hide-dairy: #f0ebdd;     --ink-hide-dairy-shade: #201c18;     --ink-hide-dairy-light: #faf7ee;
 
   /* Creature eye-light. A short shared set rather than one per palette: an
      eye is the only part of a monster allowed to be bright, and a

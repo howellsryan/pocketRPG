@@ -334,7 +334,7 @@ const ARCHETYPES = {
       ],
       tail: [
         ['path', 'M-24 -44 Q-34 -34 -32 -16', 'hide', 3.4, { fill: 'none' }],
-        ['path', 'M-32 -18 Q-36 -12 -30 -6 Q-28 -14 -30 -18 Z', 'horn'],
+        ['path', 'M-32 -18 Q-36 -12 -30 -6 Q-28 -14 -30 -18 Z', 'shade'],
       ],
       body: [
         ['path', 'M-26 -44 Q-26 -52 -6 -52 Q18 -52 24 -44 Q26 -34 20 -26 Q0 -20 -16 -24 Q-26 -30 -26 -44 Z', 'hide'],
@@ -343,15 +343,22 @@ const ARCHETYPES = {
         ['path', 'M-21 -4 L-11 -4 L-11 0 L-21 0 Z', 'horn'],
         ['path', 'M12 -34 L11 -2 L19 -2 L20 -34 Z', 'hide'],
         ['path', 'M10 -4 L20 -4 L20 0 L10 0 Z', 'horn'],
+        // Two black Friesian patches over the white coat — layered last so
+        // they read as markings on top of the hide, not a shaded contour.
+        ['path', 'M-2 -50 Q12 -52 20 -44 Q22 -36 14 -30 Q2 -28 -4 -34 Q-6 -44 -2 -50 Z', 'shade'],
+        ['path', 'M-24 -40 Q-24 -48 -14 -48 Q-8 -46 -8 -38 Q-10 -30 -18 -30 Q-24 -32 -24 -40 Z', 'shade'],
       ],
       head: [
         ['path', 'M20 -50 Q32 -52 38 -44 Q42 -38 36 -34 Q26 -30 20 -36 Q16 -44 20 -50 Z', 'hide'],
         ['path', 'M32 -40 Q42 -40 42 -35 Q38 -31 32 -33 Z', 'belly'],
         ['ellipse', { cx: 37, cy: -37, rx: 1.5, ry: 1.1 }, 'pupil'],
         ['ellipse', { cx: 40, cy: -37.4, rx: 1.5, ry: 1.1 }, 'pupil'],
-        // Horns — forward-hooked, which is what turns a cow into a bull.
-        ['path', 'M22 -50 Q16 -60 24 -64 Q22 -57 28 -51 Z', 'horn'],
-        ['path', 'M32 -50 Q34 -60 43 -60 Q36 -56 36 -48 Z', 'horn'],
+        // Horns — the same broad hook silhouette as the original bull horns,
+        // mirrored to sweep up and BACK instead of forward over the muzzle.
+        // A point levelled at the player reads as "about to gore"; cattle at
+        // rest (cows included) carry their horns up and out, not forward.
+        ['path', 'M22 -50 Q14 -60 16 -64 Q18 -57 26 -51 Z', 'horn'],
+        ['path', 'M36 -50 Q34 -60 25 -60 Q32 -56 32 -48 Z', 'horn'],
         ['ellipse', { cx: 27, cy: -45, rx: 2.6, ry: 2 }, 'eye'],
         ['path', 'M27 -47 L27 -43', 'pupil', 1.2],
         ['path', 'M20 -52 Q26 -56 33 -52', 'line'],
