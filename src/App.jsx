@@ -36,6 +36,7 @@ import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
 import HelpScreen from './screens/HelpScreen.jsx'
 import CharacterUnlockScreen from './screens/CharacterUnlockScreen.jsx'
 import GrimReaperScreen from './screens/GrimReaperScreen.jsx'
+import SlayerTaskBlockScreen from './screens/SlayerTaskBlockScreen.jsx'
 import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
@@ -89,6 +90,8 @@ import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
 import { fetchKillCounts } from './cloud/killCounts.js'
 import { fetchHardModeTargets, hardModeKey } from './cloud/hardMode.js'
+import { fetchSlayerTaskBlocks } from './cloud/slayerTaskBlocks.js'
+import { activeSlayerTaskBlockIds } from './engine/slayerMasters.js'
 import { hardModeSkipCost, idleTaskDiedHard } from './engine/hardMode.js'
 import { grimReaperStashFromDeath } from './engine/grimReaper.js'
 import { recordItemLossEntries } from './engine/lossLedger.js'
@@ -367,7 +370,7 @@ const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the d
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, isGrindman, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, syncHardModeTargets, hardModeTargets, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, isGrindman, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, syncHardModeTargets, hardModeTargets, slayerTaskBlocks, syncSlayerTaskBlocks, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
@@ -398,6 +401,7 @@ function GameApp() {
   const [pendingXpChoices, setPendingXpChoices] = useState([]) // [{ rewards, questId, questName }, ...]
   const completedQuestsRef = useRef(completedQuests)
   const pendingXpChoicesRef = useRef(pendingXpChoices)
+  const slayerTaskBlocksRef = useRef(slayerTaskBlocks)
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
   // Offline demo session (no cloud account). Mirrors the persisted demo flag so
@@ -892,6 +896,7 @@ function GameApp() {
   useEffect(() => { idleCombatSetupRef.current = idleCombatSetup }, [idleCombatSetup])
   useEffect(() => { currentHPRef.current = currentHP }, [currentHP])
   useEffect(() => { completedQuestsRef.current = completedQuests }, [completedQuests])
+  useEffect(() => { slayerTaskBlocksRef.current = slayerTaskBlocks }, [slayerTaskBlocks])
   useEffect(() => { pendingXpChoicesRef.current = pendingXpChoices }, [pendingXpChoices])
   useEffect(() => { statsRef.current = stats }, [stats])
   // While a skip's quest cascade is draining the queue, promoteNextQueuedQuestOrClear
@@ -1173,6 +1178,7 @@ function GameApp() {
             completedQuests: completedQuestsRef.current,
             autoBankExcludedItemIds: autoBankExcludedItems,
             isGrindman: getGrindmanMode(),
+            blockedMonsterIds: activeSlayerTaskBlockIds(slayerTaskBlocksRef.current),
           })
           else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
@@ -1839,6 +1845,7 @@ function GameApp() {
       // window where data is missing from the first render.
       const kcPromise = boot ? Promise.resolve(boot.killCounts) : fetchKillCounts()
       const hardModePromise = boot ? Promise.resolve(boot.hardModeKeys) : fetchHardModeTargets()
+      const slayerBlocksPromise = boot ? Promise.resolve(boot.slayerTaskBlocks) : fetchSlayerTaskBlocks()
       const dailyTasksPromise = boot ? Promise.resolve(boot.dailyTasks) : api.getDailyTasks().catch(() => null)
       await checkSave()
       // Pull collection log alongside the save. Fire-and-forget — UI shows a
@@ -1851,6 +1858,12 @@ function GameApp() {
       const hardModeApplied = hardModePromise.then(keys => {
         if (keys) syncHardModeTargets(keys)
       }).catch(() => {})
+      // The Slayer Task Block List is a purchase (§14) — same "server is the
+      // only writer" reasoning as Hard Mode, so this replaces the mirror
+      // wholesale rather than merging.
+      const slayerBlocksApplied = slayerBlocksPromise.then(entries => {
+        if (entries) syncSlayerTaskBlocks(entries)
+      }).catch(() => {})
       // Settled (success OR fail) — let the combat screen render. Local IDB
       // holds a warm copy of both, so a failed fetch shows the cache rather
       // than blocking the screen.
@@ -1860,7 +1873,9 @@ function GameApp() {
       // scales the monster off the mirror. Landing second meant an auto-started
       // boss was built UNSCALED while the server — which reads its own
       // hard_mode_targets on the kill — still paid the doubled drop rates (§14).
-      Promise.all([kcApplied, hardModeApplied]).finally(() => {
+      // The block list joins the same gate for the same reason: a "Get Task"
+      // tap the instant this flips must already see every active block.
+      Promise.all([kcApplied, hardModeApplied, slayerBlocksApplied]).finally(() => {
         markKillCountsLoaded()
       })
       dailyTasksPromise.then(dt => {
@@ -2914,6 +2929,7 @@ function GameApp() {
             completedQuests: completedQuestsRef.current,
             autoBankExcludedItemIds: autoBankExcludedItems,
             isGrindman: getGrindmanMode(),
+            blockedMonsterIds: activeSlayerTaskBlockIds(slayerTaskBlocksRef.current),
           })
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
@@ -3341,6 +3357,7 @@ function GameApp() {
       case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} onShowIntroTour={() => setShowIntroTour(true)} />
       case SCREENS.CHARACTER_UNLOCKS:   return <CharacterUnlockScreen onBack={goBack} />
       case SCREENS.GRIM_REAPER:        return <GrimReaperScreen onBack={goBack} loadGame={loadGame} />
+      case SCREENS.SLAYER_TASK_BLOCKS: return <SlayerTaskBlockScreen onBack={goBack} />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }

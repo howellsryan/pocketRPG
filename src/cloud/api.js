@@ -250,6 +250,19 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ sourceType, sourceId, enabled }),
   }),
+  getSlayerTaskBlocks: () => request('/api/slayer/blocks'),
+  purchaseSlayerTaskBlock: (monsterId) => request('/api/slayer/blocks', {
+    method: 'POST',
+    body: JSON.stringify({ monsterId }),
+  }),
+  setSlayerTaskBlockActive: (monsterId, active) => request('/api/slayer/blocks', {
+    method: 'PATCH',
+    body: JSON.stringify({ monsterId, active }),
+  }),
+  removeSlayerTaskBlock: (monsterId) => request('/api/slayer/blocks', {
+    method: 'DELETE',
+    body: JSON.stringify({ monsterId }),
+  }),
   getDailyTasks: () => request('/api/daily-tasks'),
   completeDailyTask: (payload) => request('/api/daily-tasks/complete', { method: 'POST', body: JSON.stringify(payload) }),
   // `keepalive` for the tab-hide/pagehide flush: an ordinary fetch is cancelled

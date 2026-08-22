@@ -13,7 +13,7 @@ import raidsData from '../data/raids.json'
 import questsData from '../data/quests.json'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
-import { SLAYER_MASTERS, RAID_TASK_META, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask, meetsEntrySkillAndQuestGates } from '../engine/slayerMasters.js'
+import { SLAYER_MASTERS, RAID_TASK_META, resolveTaskMonsterIds, resolveSlayerTaskName, pickSlayerMonster, buildSlayerTask, meetsEntrySkillAndQuestGates, activeSlayerTaskBlockIds } from '../engine/slayerMasters.js'
 import { unmetKillCountRequirement } from '../engine/combatRequirements.js'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
@@ -45,18 +45,13 @@ function getPlayerCombatLevel(stats) {
 // judges the slayer/quest gates on their own and leaves the kill-count gate
 // unstated until the fetch resolves. isEntryEligible's fail-closed default is
 // for assignment, and would tell a player who has the kills that they do not.
-function getTaskInfo(entry, slayerLevel, completedQuests, bossKillCounts) {
+function getTaskInfo(entry, slayerLevel, completedQuests, bossKillCounts, blockedMonsterIds) {
   const id = typeof entry === 'object' ? entry.id : entry
   const isBoss = typeof entry === 'object' && !!entry.boss
   const resolvedIds = resolveTaskMonsterIds(id)
   const resolved = resolvedIds.map(mid => monstersData[mid]).filter(Boolean)
   const lead = resolved[0] || null
-  const raidMeta = RAID_TASK_META[id]
-  const name = id === DAGANNOTH_KINGS_TASK_ID
-    ? 'Nagadoth Kings'
-    : raidMeta
-      ? (raidsData[raidMeta.raidId]?.name || id.replace(/_/g, ' '))
-      : (monstersData[id]?.name || id.replace(/_/g, ' '))
+  const name = resolveSlayerTaskName(id)
   const combatLevel = resolved.length ? Math.max(...resolved.map(m => m.combatLevel || 0)) : 0
   const slayerReq = resolved.length ? Math.max(...resolved.map(m => m.slayerRequirement || 0)) : 0
   const questReq = resolved.map(m => m.questRequirement).find(Boolean) || null
@@ -65,11 +60,12 @@ function getTaskInfo(entry, slayerLevel, completedQuests, bossKillCounts) {
       .map(mid => unmetKillCountRequirement({ ...monstersData[mid], id: mid }, bossKillCounts))
       .find(Boolean) || null)
     : null
+  const blocked = !!blockedMonsterIds?.has(id)
   return {
-    id, isBoss, name, combatLevel, slayerReq, questReq, unmetKill,
+    id, isBoss, name, combatLevel, slayerReq, questReq, unmetKill, blocked,
     monster: lead,
     art: getMonsterArt(lead || { id }),
-    eligible: meetsEntrySkillAndQuestGates(entry, slayerLevel, completedQuests) && !unmetKill,
+    eligible: meetsEntrySkillAndQuestGates(entry, slayerLevel, completedQuests) && !unmetKill && !blocked,
   }
 }
 
@@ -77,8 +73,8 @@ function getTaskInfo(entry, slayerLevel, completedQuests, bossKillCounts) {
 // bestiary's chamber rows. Eligible tasks are full-opacity; tasks gated by the
 // player's Slayer level, an unfinished quest or an unearned kill-count
 // prerequisite are dimmed and show what is missing.
-function SlayerTaskRow({ entry, slayerLevel, completedQuests, bossKillCounts }) {
-  const { name, combatLevel, slayerReq, questReq, unmetKill, monster, art, eligible } = getTaskInfo(entry, slayerLevel, completedQuests, bossKillCounts)
+function SlayerTaskRow({ entry, slayerLevel, completedQuests, bossKillCounts, blockedMonsterIds }) {
+  const { name, combatLevel, slayerReq, questReq, unmetKill, blocked, monster, art, eligible } = getTaskInfo(entry, slayerLevel, completedQuests, bossKillCounts, blockedMonsterIds)
   const questName = questReq ? (questsData.find(q => q.id === questReq)?.name || questReq.replace(/_/g, ' ')) : null
   const killName = unmetKill
     ? `${monstersData[unmetKill.requiredId]?.name || unmetKill.requiredId.replace(/_/g, ' ')}${unmetKill.needed === 1 ? '' : ` ×${unmetKill.needed}`}`
@@ -91,7 +87,7 @@ function SlayerTaskRow({ entry, slayerLevel, completedQuests, bossKillCounts }) 
       <div class="cb-room__body">
         <div class="cb-room__name">{name}</div>
         <div class="cb-room__boss">
-          CB {combatLevel}{slayerReq > 0 ? ` · Slayer ${slayerReq}` : ''}{questName ? ` · ${questName}` : ''}{killName ? ` · Defeat ${killName}` : ''}
+          CB {combatLevel}{slayerReq > 0 ? ` · Slayer ${slayerReq}` : ''}{questName ? ` · ${questName}` : ''}{killName ? ` · Defeat ${killName}` : ''}{blocked ? ' · Blocked' : ''}
         </div>
       </div>
       <div class="cb-room__right">
@@ -103,7 +99,7 @@ function SlayerTaskRow({ entry, slayerLevel, completedQuests, bossKillCounts }) 
 
 // Slide-up bestiary sheet for a slayer master — every monster + boss it can
 // assign, grouped into Monsters and Bosses, matching the combat info design.
-function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, bossKillCounts, onClose }) {
+function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, bossKillCounts, blockedMonsterIds, onClose }) {
   const art = getCategoryArt('slayer')
   const pool = master.monsterPool || []
   const keyOf = e => (typeof e === 'object' ? e.id : e)
@@ -132,7 +128,7 @@ function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, bossKillC
             <>
               <div class="cb-sheet__sec">Monsters</div>
               <div class="cb-rooms">
-                {monsters.map(e => <SlayerTaskRow key={keyOf(e)} entry={e} slayerLevel={slayerLevel} completedQuests={completedQuests} bossKillCounts={bossKillCounts} />)}
+                {monsters.map(e => <SlayerTaskRow key={keyOf(e)} entry={e} slayerLevel={slayerLevel} completedQuests={completedQuests} bossKillCounts={bossKillCounts} blockedMonsterIds={blockedMonsterIds} />)}
               </div>
             </>
           )}
@@ -140,7 +136,7 @@ function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, bossKillC
             <>
               <div class="cb-sheet__sec">Bosses</div>
               <div class="cb-rooms">
-                {bosses.map(e => <SlayerTaskRow key={keyOf(e)} entry={e} slayerLevel={slayerLevel} completedQuests={completedQuests} bossKillCounts={bossKillCounts} />)}
+                {bosses.map(e => <SlayerTaskRow key={keyOf(e)} entry={e} slayerLevel={slayerLevel} completedQuests={completedQuests} bossKillCounts={bossKillCounts} blockedMonsterIds={blockedMonsterIds} />)}
               </div>
             </>
           )}
@@ -154,11 +150,14 @@ function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, bossKillC
 // master on mount — set when the player picked the master from a place on the
 // world map, or just arrived at one after a travel prompt (resumeAutoStart).
 export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot, slayerTasksCompleted, slayerPerks, completedQuests, bossKillCounts, killCountsLoaded, requestActivityStart } = useGame()
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot, slayerTasksCompleted, slayerPerks, completedQuests, bossKillCounts, killCountsLoaded, slayerTaskBlocks, requestActivityStart } = useGame()
   // Kill counts are server-owned and land a fetch after the rest of the state;
   // null until then, which makes isEntryEligible fail closed on the bosses gated
   // by them rather than assign a task nothing will start.
   const gateKillCounts = killCountsLoaded ? bossKillCounts : null
+  // Same fetch, same landing point — the block list is a purchase and must be
+  // in hand before a "Get Task" tap can honour it.
+  const blockedMonsterIds = killCountsLoaded ? activeSlayerTaskBlockIds(slayerTaskBlocks) : new Set()
 
   const [infoMaster, setInfoMaster] = useState(null)
 
@@ -187,9 +186,9 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
     // Evenly distributed pick across the master's eligible monsters — gated by
     // both slayer level and any quest requirement so the player can always fight
     // what they're assigned.
-    const pick = pickSlayerMonster(master, slayerLevel, { completedQuests, bossKillCounts: gateKillCounts })
+    const pick = pickSlayerMonster(master, slayerLevel, { completedQuests, bossKillCounts: gateKillCounts, blockedMonsterIds })
     if (!pick) {
-      addToast('No tasks available — raise your slayer level (or finish required quests) for this master.', 'error')
+      addToast('No tasks available — raise your slayer level (or finish required quests), or unblock a monster for this master.', 'error')
       return
     }
 
@@ -396,6 +395,7 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
         slayerLevel={slayerLevel}
         completedQuests={completedQuests}
         bossKillCounts={gateKillCounts}
+        blockedMonsterIds={blockedMonsterIds}
         onClose={() => setInfoMaster(null)}
       />
     )}

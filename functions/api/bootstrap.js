@@ -29,10 +29,12 @@ import { utcDayKey, nextResetMs, ensureDailyTasks } from '../_lib/game/dailyTask
 import {
   killCountsStatement, mapKillCounts,
   hardModeTargetsStatement,
+  slayerTaskBlocksStatement,
   idleStateStatement, mapIdleState,
   activityProgressStatement, mapActivityProgress,
 } from '../_lib/game/characterReads.js'
 import { mapHardModeTargets } from '../_lib/game/hardMode.js'
+import { mapSlayerTaskBlocks } from '../_lib/game/slayerTaskBlocks.js'
 
 function requestedCharacterId(request) {
   const url = new URL(request.url)
@@ -72,9 +74,10 @@ export async function onRequestGet({ request, env }) {
   if (!character) return json({ error: 'Character not found' }, 404)
 
   // Round trip 2: the four independent per-character reads, batched.
-  const [killCountsRes, hardModeRes, idleRes, activityRes] = await env.DB.batch([
+  const [killCountsRes, hardModeRes, slayerBlocksRes, idleRes, activityRes] = await env.DB.batch([
     killCountsStatement(env, characterId),
     hardModeTargetsStatement(env, characterId),
+    slayerTaskBlocksStatement(env, characterId),
     idleStateStatement(env, characterId),
     activityProgressStatement(env, characterId),
   ])
@@ -105,6 +108,7 @@ export async function onRequestGet({ request, env }) {
     ...base,
     killCounts: { entries: mapKillCounts(killCountsRes) },
     hardMode: { entries: mapHardModeTargets(hardModeRes) },
+    slayerTaskBlocks: { entries: mapSlayerTaskBlocks(slayerBlocksRes) },
     idle: { idle: mapIdleState(idleRes), serverNow },
     activityProgress: { progress: mapActivityProgress(activityRes) },
     dailyTasks: dailyRows && {

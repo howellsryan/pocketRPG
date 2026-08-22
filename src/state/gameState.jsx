@@ -4,6 +4,7 @@ import { getAllStats, getInventory, getEquipment, getBank, getPlayer, saveAllSta
 import { getLevelFromXP, clampXP } from '../engine/experience.js'
 import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from '../engine/idleEngine.js'
 import { simulateIdleCombatChain } from '../engine/idleSlayerLoop.js'
+import { activeSlayerTaskBlockIds } from '../engine/slayerMasters.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
 import { simulateIdleHunting } from '../engine/hunter.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questIdleCascade.js'
@@ -113,6 +114,10 @@ export function GameProvider({ children }) {
   // hard_mode_targets — the server decides the doubled drop rates, this only
   // decides what the picker renders and which monster the client scales.
   const [hardModeTargets, setHardModeTargetsState] = useState([])
+  // Slayer Task Block List, as [{ monsterId, active }]. A MIRROR of
+  // slayer_task_blocks — the server owns the purchase and the cap, this only
+  // decides what every assignment path renders/refuses.
+  const [slayerTaskBlocks, setSlayerTaskBlocksState] = useState([])
   // What a hard-mode death stashed with the Grim Reaper (src/engine/grimReaper.js),
   // or null when nothing is stashed. One slot — a second hard-mode death
   // overwrites it outright.
@@ -213,7 +218,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedCombatAnimations, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets, savedGrimReaper] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedCombatAnimations, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers, savedTheme, savedHardModeTargets, savedGrimReaper, savedSlayerTaskBlocks] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -222,7 +227,7 @@ export function GameProvider({ children }) {
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
       getSetting('backgroundCombat'), getSetting('combatAnimations'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers'), getSetting('theme'), getSetting('hardModeTargets'),
-      getSetting('grimReaper')
+      getSetting('grimReaper'), getSetting('slayerTaskBlocks')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -334,6 +339,7 @@ export function GameProvider({ children }) {
               completedQuests: savedCompletedQuests || [],
               autoBankExcludedItemIds: autoBankExcludedItemIdsSet,
               isGrindman: p?.is_grindman === true,
+              blockedMonsterIds: activeSlayerTaskBlockIds(savedSlayerTaskBlocks),
             })
           } else if (savedTask.type === 'agility') {
             sim = simulateIdleAgility(savedTask, elapsedMs)
@@ -775,6 +781,7 @@ export function GameProvider({ children }) {
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
     setHardModeTargetsState(Array.isArray(savedHardModeTargets) ? savedHardModeTargets : [])
+    setSlayerTaskBlocksState(Array.isArray(savedSlayerTaskBlocks) ? savedSlayerTaskBlocks : [])
     setGrimReaperState(nextGrimReaper)
     if (nextGrimReaper !== (savedGrimReaper || null)) saveSetting('grimReaper', nextGrimReaper)
     setRaidKillCountsState(savedRaidKillCounts ?? {})
@@ -1290,6 +1297,44 @@ export function GameProvider({ children }) {
       else set.delete(key)
       const next = [...set]
       saveSetting('hardModeTargets', next)
+      return next
+    })
+  }, [])
+
+  // Replaces the Slayer Task Block List mirror wholesale from the server's own
+  // list, same reasoning as syncHardModeTargets: the server owns the purchase
+  // and the cap, so merging a stale local copy in could resurrect a block the
+  // player already removed (and paid to remove — losing the purchase is the
+  // whole point of that action).
+  const syncSlayerTaskBlocks = useCallback((entries) => {
+    const next = Array.isArray(entries) ? entries : []
+    setSlayerTaskBlocksState(next)
+    saveSetting('slayerTaskBlocks', next)
+  }, [])
+
+  // Local echoes of one accepted server write each — the caller has already
+  // had its request acknowledged.
+  const applySlayerTaskBlockPurchase = useCallback((monsterId) => {
+    setSlayerTaskBlocksState((prev) => {
+      if (prev.some(b => b.monsterId === monsterId)) return prev
+      const next = [...prev, { monsterId, active: true }]
+      saveSetting('slayerTaskBlocks', next)
+      return next
+    })
+  }, [])
+
+  const applySlayerTaskBlockActive = useCallback((monsterId, active) => {
+    setSlayerTaskBlocksState((prev) => {
+      const next = prev.map(b => b.monsterId === monsterId ? { ...b, active } : b)
+      saveSetting('slayerTaskBlocks', next)
+      return next
+    })
+  }, [])
+
+  const applySlayerTaskBlockRemoval = useCallback((monsterId) => {
+    setSlayerTaskBlocksState((prev) => {
+      const next = prev.filter(b => b.monsterId !== monsterId)
+      saveSetting('slayerTaskBlocks', next)
       return next
     })
   }, [])
@@ -1991,6 +2036,7 @@ export function GameProvider({ children }) {
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
     hardModeTargets, syncHardModeTargets, applyHardModeTarget,
+    slayerTaskBlocks, syncSlayerTaskBlocks, applySlayerTaskBlockPurchase, applySlayerTaskBlockActive, applySlayerTaskBlockRemoval,
     raidKillCounts, updateRaidKillCounts,
     grimReaper, updateGrimReaperStash,
     syncServerKillCounts,

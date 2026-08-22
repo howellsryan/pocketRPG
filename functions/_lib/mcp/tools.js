@@ -6,6 +6,7 @@ import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInCoopSession } from '../game/coopBoss.js'
 import { loadBossKillCounts } from '../game/bossEntry.js'
+import { activeBlockedMonsterIds } from '../game/slayerTaskBlocks.js'
 import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, skipSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
@@ -600,10 +601,13 @@ const TOOLS = {
     if (!master_id) throw new Error('master_id is required.')
     // Kill counts are never in the save (§14), and the picker fails closed
     // without them — read the authoritative table so a player who has earned a
-    // kill-count-gated boss can actually be assigned it.
+    // kill-count-gated boss can actually be assigned it. The block list is the
+    // same story in reverse: it's a purchase, so the live table is the truth
+    // the picker must refuse from, never a save mirror.
     const id = await resolveCharacterId(ctx.env, ctx.authorization, character_id)
     const bossKillCounts = await loadBossKillCounts(ctx.env, id)
-    return applySaveIntent(ctx, id, (save) => assignSlayerTask(save, master_id, { bossKillCounts }), 'mcp_assign_slayer_task', id)
+    const blockedMonsterIds = await activeBlockedMonsterIds(ctx.env, id)
+    return applySaveIntent(ctx, id, (save) => assignSlayerTask(save, master_id, { bossKillCounts, blockedMonsterIds }), 'mcp_assign_slayer_task', id)
   },
 
   // ── Trading post (Phase B) ─────────────────────────────────────────────────

@@ -1219,6 +1219,17 @@ describe('slayer intents', () => {
     expect(seen.has(gated)).toBe(true)
   })
 
+  it('never assigns a monster on the Slayer Task Block List', () => {
+    const save = maxedSlayer()
+    const blockedMonsterIds = new Set([SLAYER_MASTERS[0].monsterPool[0]])
+    const history = new Map()
+    for (let i = 0; i < 60; i++) {
+      const r = assignSlayerTask(save, 'turael', { rng: Math.random, history, blockedMonsterIds })
+      expect(blockedMonsterIds.has(r.task.monsterId)).toBe(false)
+      delete save.settings.slayerTask
+    }
+  })
+
   it("enforces the master's slayer requirement (nothing written on failure)", () => {
     const save = makeSave() // slayer level 1
     expect(() => assignSlayerTask(save, 'duradel', det())).toThrow(/slayer level/i)
