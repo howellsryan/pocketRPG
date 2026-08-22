@@ -130,6 +130,51 @@
      scale has no reason to carry. The other three schools a spell can arrive
      in already have tokens: gold (--tier-gold), fire (--ink-ember-light) and
      nature (--ink-leaf-light). */
+  /* ── Monster hides (utils/monsterFigures.js HIDE_PALETTES) ──────────────
+     One palette per MATERIAL, three tones each: the body, its darker side
+     (also wings, robes and membranes), and its lighter underside. Fixed in
+     both themes for exactly the reason every --ink- and --tier- token above
+     is: a dragon's hide is the same green on parchment as on iron, because
+     it describes a creature and not a surface.
+
+     This is what makes "all the dragons are one dragon in different colours"
+     true — the geometry is shared and only these change. Adding a palette is
+     three lines here plus one row in HIDE_PALETTES; adding a monster is
+     usually neither, because its name already says what it is made of. */
+  --ink-hide-emerald: #3f8f4e;   --ink-hide-emerald-shade: #27603a;   --ink-hide-emerald-light: #71b06a;
+  --ink-hide-crimson: #b03a2c;   --ink-hide-crimson-shade: #712016;   --ink-hide-crimson-light: #d4714f;
+  --ink-hide-obsidian: #3b3f46;  --ink-hide-obsidian-shade: #23272c;  --ink-hide-obsidian-light: #5d646d;
+  --ink-hide-azure: #3a72b6;     --ink-hide-azure-shade: #234f7d;     --ink-hide-azure-light: #6ba1d6;
+  --ink-hide-verdigris: #4f9268; --ink-hide-verdigris-shade: #2f6244; --ink-hide-verdigris-light: #7fbb92;
+  --ink-hide-bone: #cec2a0;      --ink-hide-bone-shade: #8d8160;      --ink-hide-bone-light: #ece3c8;
+  --ink-hide-ash: #6f6a62;       --ink-hide-ash-shade: #47443f;       --ink-hide-ash-light: #97918a;
+  --ink-hide-ember: #cf5b22;     --ink-hide-ember-shade: #8a3610;     --ink-hide-ember-light: #f0a04a;
+  --ink-hide-frost: #6ea7c8;     --ink-hide-frost-shade: #43708b;     --ink-hide-frost-light: #a9d7e9;
+  --ink-hide-void: #574a82;      --ink-hide-void-shade: #332a52;      --ink-hide-void-light: #8b76bf;
+  --ink-hide-blight: #6e8e39;    --ink-hide-blight-shade: #455f1e;    --ink-hide-blight-light: #9cb95e;
+  --ink-hide-blood: #8d2a33;     --ink-hide-blood-shade: #59151c;     --ink-hide-blood-light: #bf4f54;
+  --ink-hide-stone: #7a7469;     --ink-hide-stone-shade: #4e4940;     --ink-hide-stone-light: #a09a8e;
+  --ink-hide-iron: #8e949b;      --ink-hide-iron-shade: #5c6168;      --ink-hide-iron-light: #b7bdc4;
+  --ink-hide-moss: #5e7949;      --ink-hide-moss-shade: #3b4f2f;      --ink-hide-moss-light: #8aa473;
+  --ink-hide-gold: #c19232;      --ink-hide-gold-shade: #84601c;      --ink-hide-gold-light: #e0ba62;
+  --ink-hide-sand: #c2a56a;      --ink-hide-sand-shade: #8c7341;      --ink-hide-sand-light: #ddc793;
+  --ink-hide-brine: #2f6c77;     --ink-hide-brine-shade: #1c454e;     --ink-hide-brine-light: #56969f;
+  --ink-hide-arcane: #7d5bd6;    --ink-hide-arcane-shade: #4b3389;    --ink-hide-arcane-light: #b79bf0;
+  --ink-hide-bark: #6b533a;      --ink-hide-bark-shade: #453425;      --ink-hide-bark-light: #8f7a58;
+  --ink-hide-flesh: #c08a68;     --ink-hide-flesh-shade: #8c5e43;     --ink-hide-flesh-light: #ddb392;
+
+  /* Creature eye-light. A short shared set rather than one per palette: an
+     eye is the only part of a monster allowed to be bright, and a
+     multi-form boss borrows these directly to show which form it is in
+     (utils/monsterFigures.js PHASE_GLOW) — melee red, ranged green, magic
+     blue, the colours the rest of the game already uses for the styles. */
+  --ink-glow-amber: #ffb648;
+  --ink-glow-red: #ff5a4a;
+  --ink-glow-green: #7ef07a;
+  --ink-glow-blue: #6fd0ff;
+  --ink-glow-violet: #c39bff;
+  --ink-glow-pale: #f2f6ff;
+
   --ink-arcane: #7d5bd6;
   --ink-arcane-light: #b79bf0;
   /* Spirit light — summoning's own colour, and the only thing separating an
@@ -2971,11 +3016,22 @@ html, body, #app {
    falling forward onto the ground rather than spinning about its middle.
    Same origin skilling uses for its own fall (.ink-fig, index.css above). */
 .inkc-fig { transform-box: view-box; transform-origin: 76px 100px; }
-/* The enemy is InkwrightFigure again, full stop — .ink-cloth etc. paint it
-   identically. `enemy` only adds a coloured aura (from the style/category
-   accent the caller already resolves) so two identical silhouettes still
-   read as two different combatants without a second character to draw. */
+/* The aura. It used to be the ONLY thing telling two fights apart, because
+   the enemy was the player's own rig mirrored; now the enemy is drawn as
+   itself (components/MonsterFigure.jsx) and the aura is demoted to what it
+   should always have been — a rim light in the monster's accent, and, for a
+   multi-form boss, the colour of the form it is currently in. Kept tighter
+   on a drawn monster: a 3px bloom around a 40-part creature reads as fog,
+   where around one flat silhouette it read as presence.
+
+   A caller with no monster record still gets the old generic rig, and still
+   gets the old aura with it. */
 .inkc-fig.enemy { filter: drop-shadow(0 0 3px var(--inkc-accent)); }
+.inkc-fig.enemy.is-monster { filter: drop-shadow(0 0 1.6px var(--inkc-accent)); }
+/* A hovering creature still casts a shadow — losing it makes a floating thing
+   read as pasted onto the stage rather than airborne — just a fainter one, on
+   top of the smaller radius monsterShadow already gives it. */
+.inkc-shadow--float { opacity: 0.05; }
 
 /* `.inkc-bowstring` is now an ANIMATION HOOK, not a paint: it selects
    inkcStringDraw below. Colour and width come from `.inkc-w-bowstring` and
@@ -3021,7 +3077,12 @@ html, body, #app {
 .inkc-shot { opacity: 0; transform-box: view-box; }
 .inkc-shot path { fill: none; stroke: var(--text-strong); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
 .inkc-shot--bolt circle { fill: var(--surface-raised); stroke: var(--text-strong); stroke-width: 2.4; }
+.inkc-shot--glob ellipse { fill: var(--surface-raised); stroke: var(--text-strong); stroke-width: 2.2; }
 .inkc-bolt-trail { stroke: none; opacity: 0.35; }
+/* Breath. Two nested tongues rather than one: a single flat shape at this
+   size reads as a paper arrow, and the lighter core is what makes it fire. */
+.inkc-shot--flame .inkc-flame-outer { fill: var(--ink-ember); stroke: var(--text-strong); stroke-width: 2; stroke-linejoin: round; opacity: 0.9; }
+.inkc-shot--flame .inkc-flame-core { fill: var(--ink-ember-light); stroke: none; }
 
 /* Mini HP bar above each head — no numeric readout (see InkwrightCombatStage's
    MiniHpBar), just the same green/yellow/red ramp HPBar.jsx uses. */
@@ -3160,8 +3221,20 @@ html, body, #app {
     96%      { opacity: 1; transform: translate(var(--inkc-shot-dx), var(--inkc-shot-dy)); }
     100%     { opacity: 0; transform: translate(var(--inkc-shot-dx), var(--inkc-shot-dy)); }
   }
+  /* A monster's own projectiles ride the same flight. `--glob` and `--flame`
+     are separate classes rather than a reuse of `--bolt` for the reason the
+     crossbow's bolt already established: the fly keyframe is selected per
+     class, and one generic name over two different animals silently attaches
+     the wrong animation or none. Listed under BOTH styles because a monster's
+     shot kind is chosen by its motion, not by whether the fight resolved the
+     swing as ranged or magic — a dragon breathes fire under `magic`, a
+     serpent spits venom under either. */
   .inkc-fig--ranged.is-swinging .inkc-shot--arrow,
   .inkc-fig--ranged.is-swinging .inkc-shot--crossbow,
+  .inkc-fig--ranged.is-swinging .inkc-shot--glob,
+  .inkc-fig--ranged.is-swinging .inkc-shot--flame,
+  .inkc-fig--magic.is-swinging .inkc-shot--glob,
+  .inkc-fig--magic.is-swinging .inkc-shot--flame,
   .inkc-fig--magic.is-swinging .inkc-shot--bolt { animation: inkcShotFly var(--inkc-dur) linear; }
 
   /* Eating/drinking: raises the hand (holding the item glyph in place of the
@@ -3197,6 +3270,398 @@ html, body, #app {
 /* Reduced motion still needs the collapsed pose — just without the fall. */
 @media (prefers-reduced-motion: reduce) {
   .inkc-fig.enemy.is-dying { transform: translateY(8px) rotate(92deg); }
+}
+
+/* ── Drawn monsters (.inkm-*) ───────────────────────────────────────────────
+   The enemy side of the combat stage. Geometry: utils/monsterShapes.js (22
+   archetype bodies). Which one, in what colour, at what size, moving how:
+   utils/monsterFigures.js. Renderer: components/MonsterFigure.jsx. This block
+   is only the paint and the motion.
+
+   COLOUR COMES IN AS FOUR CUSTOM PROPERTIES set once on the whole figure
+   (--inkm-hide/-shade/-belly/-horn, plus --inkm-eye), not as a fill per part:
+   a 40-part creature is one inline style, and a palette swap is a data change
+   in monsterFigures.js rather than a stylesheet edit. That is the mechanism
+   behind "every dragon is one dragon in a different colour".
+
+   Each role paints TWO ways. A closed shape is filled with an ink outline; an
+   open path is stroked in the same colour (`.is-stroke`) — a spider's leg and
+   its abdomen are the same hide, and authoring two role names for that would
+   be a lie about the material. MonsterFigure reads which from the geometry. */
+.inkm-hide   { fill: var(--inkm-hide); stroke: var(--text-strong); stroke-linejoin: round; stroke-linecap: round; }
+.inkm-belly  { fill: var(--inkm-belly); stroke: var(--text-strong); stroke-linejoin: round; stroke-linecap: round; }
+.inkm-horn   { fill: var(--inkm-horn); stroke: var(--text-strong); stroke-linejoin: round; stroke-linecap: round; }
+.inkm-membrane { fill: var(--inkm-shade); stroke: var(--text-strong); stroke-linejoin: round; stroke-linecap: round; }
+.inkm-cloth  { fill: var(--inkm-shade); stroke: var(--text-strong); stroke-linejoin: round; stroke-linecap: round; }
+.inkm-metal  { fill: var(--ink-hide-iron); stroke: var(--text-strong); stroke-linejoin: round; }
+/* Shade is a shading BAND laid over the body, so it carries no outline of its
+   own — an outlined shade band reads as a second, smaller creature inside the
+   first. */
+.inkm-shade  { fill: var(--inkm-shade); stroke: none; opacity: 0.9; }
+/* A FAR-side limb: the same shade tone, but outlined, because it is still a
+   leg. Filled without an outline it reads as a slab of shadow behind the
+   creature rather than the limb it is drawn as. */
+.inkm-far    { fill: var(--inkm-shade); stroke: var(--text-strong); stroke-linejoin: round; stroke-linecap: round; }
+.inkm-maw    { fill: #17131a; stroke: var(--text-strong); stroke-linejoin: round; stroke-linecap: round; }
+.inkm-eye    { fill: var(--inkm-eye); stroke: none; }
+.inkm-glow   { fill: var(--inkm-eye); stroke: none; }
+.inkm-pupil  { fill: #14101a; stroke: none; }
+.inkm-line   { fill: none; stroke: var(--text-strong); stroke-linecap: round; opacity: 0.3; }
+/* Foliage is the one part of a creature painted from a token instead of its
+   palette: leaves are leaves whatever the bark under them is made of, and a
+   treant whose crown took `--inkm-shade` rendered a brown canopy — a tree in
+   a coat rather than a tree. Same reasoning as the shared bone tone for
+   horns. */
+.inkm-foliage { fill: var(--ink-leaf); stroke: var(--text-strong); stroke-linejoin: round; }
+.inkm-foliagevein { fill: none; stroke: var(--ink-leaf-light); stroke-linecap: round; }
+
+.inkm-hide.is-stroke   { fill: none; stroke: var(--inkm-hide); }
+.inkm-belly.is-stroke  { fill: none; stroke: var(--inkm-belly); }
+.inkm-shade.is-stroke  { fill: none; stroke: var(--inkm-shade); opacity: 1; }
+.inkm-far.is-stroke    { fill: none; stroke: var(--inkm-shade); }
+.inkm-horn.is-stroke   { fill: none; stroke: var(--inkm-horn); }
+.inkm-membrane.is-stroke { fill: none; stroke: var(--inkm-shade); }
+.inkm-cloth.is-stroke  { fill: none; stroke: var(--inkm-shade); }
+.inkm-metal.is-stroke  { fill: none; stroke: var(--ink-hide-iron); }
+.inkm-maw.is-stroke    { fill: none; stroke: #17131a; }
+.inkm-eye.is-stroke,
+.inkm-glow.is-stroke   { fill: none; stroke: var(--inkm-eye); }
+.inkm-pupil.is-stroke  { fill: none; stroke: #14101a; }
+/* The ink pass under a limb-weight stroke — the same two-pass treatment
+   InkwrightFigure's `Limb` gives the player, so the whole stage keeps ONE
+   outline weight whatever it is drawing. */
+.inkm-ink { fill: none; stroke: var(--text-strong); stroke-linecap: round; stroke-linejoin: round; }
+
+/* Pivots. Every animated group carries its joint as an inline
+   transform-origin in the creature's OWN local units (MonsterFigure), so the
+   only thing declared here is which box those units are measured in — the
+   same `view-box` the player's `.inkc-arm` already uses, resolved in the
+   element's own local space and therefore correct inside both the figure's
+   `scale()` and the enemy side's mirror. */
+.inkm-arm, .inkm-head, .inkm-tail, .inkm-wing { transform-box: view-box; }
+/* The idle wrapper scales about the creature's feet — its local origin — so
+   a breath lifts the chest instead of sinking the whole body through the
+   floor. */
+.inkm-idle { transform-box: view-box; transform-origin: 0 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ── Idle ────────────────────────────────────────────────────────────────
+     Nothing on this stage is ever completely still, because a monster that
+     holds a frozen pose between swings reads as a picture of a monster.
+
+     The breath is timed off --inkm-cycle, the creature's OWN attack cadence:
+     a 2-tick monster visibly breathes faster than an 8-tick one. An idle loop
+     has no action to take its speed from, and a constant here would be the
+     one duration on this stage that stops telling the player the truth about
+     what they are fighting (docs/action-animations.md, "the one law"). */
+  @keyframes inkmBreathe {
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    50%      { transform: translateY(-1px) scaleY(1.016); }
+  }
+  .inkm-idle { animation: inkmBreathe var(--inkm-cycle) ease-in-out infinite; }
+  /* A construct does not breathe. Stone and timber get a slow grinding sway
+     instead, so they are still alive on screen without pretending to have
+     lungs. */
+  @keyframes inkmGrind {
+    0%, 100% { transform: rotate(-0.5deg); }
+    50%      { transform: rotate(0.5deg); }
+  }
+  .inkm-idle.is-rigid { animation: inkmGrind calc(var(--inkm-cycle) * 1.6) ease-in-out infinite; }
+  /* Anything held off the floor bobs rather than breathes — the lift itself
+     is applied as a static translate by MonsterFigure, so this is only the
+     drift on top of it. */
+  @keyframes inkmHover {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3.5px); }
+  }
+  .inkm-idle.is-hover { animation: inkmHover var(--inkm-cycle) ease-in-out infinite; }
+
+  /* Wings beat several times per attack cycle — a wingbeat is not an attack,
+     it is what keeps the thing up, so it runs at its own multiple of the
+     cadence rather than at it. */
+  @keyframes inkmWingBeat {
+    0%, 100% { transform: rotate(0deg); }
+    50%      { transform: rotate(-13deg); }
+  }
+  .inkm-idle.is-flier .inkm-wing { animation: inkmWingBeat calc(var(--inkm-cycle) / 3) ease-in-out infinite; }
+
+  @keyframes inkmTailSway {
+    0%, 100% { transform: rotate(-3deg); }
+    50%      { transform: rotate(4deg); }
+  }
+  .inkm-tail { animation: inkmTailSway calc(var(--inkm-cycle) * 1.5) ease-in-out infinite; }
+
+  /* ── Attacks ─────────────────────────────────────────────────────────────
+     One shot per swing token, never a loop — the same cadence the player's
+     own weapon keeps, and for the same reason: the GAP between swings is what
+     a slow monster looks like. Every duration is --inkc-dur (the monster's
+     own swingMs, from utils/actionSprites.js `monsterCombatSprite`), so a
+     4-tick beast strikes visibly faster than an 8-tick one.
+
+     Which keyframe plays is `.inkm-fig--<motion>`, chosen per monster in
+     utils/monsterFigures.js from its archetype, its combat style AND its
+     weight class. That last one is the point of the whole set: a level-6
+     wolf and a level-600 one share a body, and the big one must not swing
+     like the small one. */
+
+  /* Armed swing — the enemy's version of the player's own melee arc. */
+  @keyframes inkmSwing {
+    0%   { transform: rotate(-8deg); }
+    42%  { transform: rotate(-58deg); }
+    62%  { transform: rotate(46deg); }
+    100% { transform: rotate(-8deg); }
+  }
+  /* Claw — faster in, faster out, no wind-up worth the name. */
+  @keyframes inkmClaw {
+    0%   { transform: rotate(0deg); }
+    32%  { transform: rotate(-46deg); }
+    54%  { transform: rotate(40deg); }
+    100% { transform: rotate(0deg); }
+  }
+  /* Slam — the heavy one. It winds up nearly twice as far and hangs at the
+     top before it comes down, which is what mass looks like. */
+  @keyframes inkmSlam {
+    0%   { transform: rotate(0deg); }
+    30%  { transform: rotate(-80deg); }
+    44%  { transform: rotate(-88deg); }
+    62%  { transform: rotate(56deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkmHurl {
+    0%   { transform: rotate(0deg); }
+    40%  { transform: rotate(-62deg); }
+    58%  { transform: rotate(28deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes inkmShoot {
+    0%   { transform: rotate(-4deg); }
+    55%  { transform: rotate(-19deg); }
+    64%  { transform: rotate(-2deg); }
+    100% { transform: rotate(-4deg); }
+  }
+  @keyframes inkmCast {
+    0%   { transform: rotate(-4deg); }
+    58%  { transform: rotate(-24deg); }
+    70%  { transform: rotate(14deg); }
+    100% { transform: rotate(-4deg); }
+  }
+  /* Pinch — a claw closes along its own axis, so this is a thrust with a
+     small rotation, not an arc. Same reasoning as the player's rapier lunge. */
+  @keyframes inkmPinch {
+    0%   { transform: rotate(0deg) translate(0, 0); }
+    38%  { transform: rotate(-12deg) translate(-3px, 0); }
+    60%  { transform: rotate(7deg) translate(12px, 2px); }
+    100% { transform: rotate(0deg) translate(0, 0); }
+  }
+  /* Lash — a tentacle has no elbow, so it overshoots and settles back rather
+     than stopping where the swing ends. */
+  @keyframes inkmLash {
+    0%   { transform: rotate(0deg); }
+    26%  { transform: rotate(-30deg); }
+    52%  { transform: rotate(48deg); }
+    74%  { transform: rotate(-12deg); }
+    100% { transform: rotate(0deg); }
+  }
+  .inkm-fig--swing.is-striking .inkm-arm { animation: inkmSwing var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--claw.is-striking  .inkm-arm { animation: inkmClaw  var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--slam.is-striking  .inkm-arm { animation: inkmSlam  var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--hurl.is-striking  .inkm-arm { animation: inkmHurl  var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--shoot.is-striking .inkm-arm { animation: inkmShoot var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--cast.is-striking  .inkm-arm { animation: inkmCast  var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--pinch.is-striking .inkm-arm { animation: inkmPinch var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--lash.is-striking  .inkm-arm { animation: inkmLash  var(--inkc-dur) var(--fm-ease); }
+
+  /* Head attacks. A bite travels — the head goes FORWARD as well as down, or
+     it reads as a nod. */
+  @keyframes inkmBite {
+    0%   { transform: rotate(0deg) translate(0, 0); }
+    34%  { transform: rotate(-16deg) translate(-3px, -2px); }
+    56%  { transform: rotate(19deg) translate(8px, 3px); }
+    100% { transform: rotate(0deg) translate(0, 0); }
+  }
+  /* Maul — the heavy bite: further back, further through, and it lands with
+     the whole neck behind it. */
+  @keyframes inkmMaul {
+    0%   { transform: rotate(0deg) translate(0, 0); }
+    30%  { transform: rotate(-27deg) translate(-6px, -4px); }
+    44%  { transform: rotate(-30deg) translate(-7px, -4px); }
+    60%  { transform: rotate(26deg) translate(13px, 5px); }
+    100% { transform: rotate(0deg) translate(0, 0); }
+  }
+  /* Spit — rears back, then snaps forward as the glob leaves. */
+  @keyframes inkmSpit {
+    0%   { transform: rotate(0deg) translate(0, 0); }
+    45%  { transform: rotate(-23deg) translate(-4px, -3px); }
+    62%  { transform: rotate(9deg) translate(5px, 1px); }
+    100% { transform: rotate(0deg) translate(0, 0); }
+  }
+  /* Breath — the same rear-back, but the head HOLDS forward through the
+     stream instead of snapping back off it. */
+  @keyframes inkmBreath {
+    0%   { transform: rotate(0deg) translate(0, 0); }
+    38%  { transform: rotate(-21deg) translate(-4px, -4px); }
+    58%  { transform: rotate(7deg) translate(4px, 0); }
+    86%  { transform: rotate(7deg) translate(4px, 0); }
+    100% { transform: rotate(0deg) translate(0, 0); }
+  }
+  /* Peck — small, quick, and over. The whole reason a chicken is in the game
+     is that it is harmless; a chicken with a heavy attack would be a joke the
+     fight does not support. */
+  @keyframes inkmPeck {
+    0%   { transform: rotate(0deg) translate(0, 0); }
+    38%  { transform: rotate(-11deg) translate(-2px, -2px); }
+    54%  { transform: rotate(16deg) translate(6px, 3px); }
+    100% { transform: rotate(0deg) translate(0, 0); }
+  }
+  /* Gore — horns down and driven forward; the body lurch below is most of it. */
+  @keyframes inkmGore {
+    0%   { transform: rotate(0deg) translate(0, 0); }
+    34%  { transform: rotate(-19deg) translate(-4px, -3px); }
+    56%  { transform: rotate(24deg) translate(9px, 4px); }
+    100% { transform: rotate(0deg) translate(0, 0); }
+  }
+  .inkm-fig--bite.is-striking   .inkm-head { animation: inkmBite   var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--maul.is-striking   .inkm-head { animation: inkmMaul   var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--spit.is-striking   .inkm-head { animation: inkmSpit   var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--breath.is-striking .inkm-head { animation: inkmBreath var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--peck.is-striking   .inkm-head { animation: inkmPeck   var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig--gore.is-striking   .inkm-head { animation: inkmGore   var(--inkc-dur) var(--fm-ease); }
+
+  /* Sting — the tail whips over the body, so it needs a bigger arc than a
+     sway and must outrank the idle sway on the same element. Two class
+     selectors ahead of `.inkm-tail`'s one does that by specificity rather
+     than by source order. */
+  @keyframes inkmSting {
+    0%   { transform: rotate(0deg); }
+    32%  { transform: rotate(30deg); }
+    56%  { transform: rotate(-52deg); }
+    100% { transform: rotate(0deg); }
+  }
+  .inkm-fig--sting.is-striking .inkm-tail { animation: inkmSting var(--inkc-dur) var(--fm-ease); }
+
+  /* The lurch. A heavy attack moves the whole animal, not just the limb —
+     this is the difference a player is meant to FEEL between a level-6
+     monster and a level-600 one that shares its body. It rides its own
+     wrapper because the limb keyframes above have already claimed
+     `transform` on the group they animate. */
+  @keyframes inkmLurch {
+    0%   { transform: translate(0, 0); }
+    36%  { transform: translate(-4px, 0); }
+    60%  { transform: translate(8px, 2px); }
+    78%  { transform: translate(2px, 0); }
+    100% { transform: translate(0, 0); }
+  }
+  @keyframes inkmLurchAlt {
+    0%   { transform: translate(0, 0); }
+    36%  { transform: translate(-4px, 0); }
+    60%  { transform: translate(8px, 2px); }
+    78%  { transform: translate(2px, 0); }
+    100% { transform: translate(0, 0); }
+  }
+  .inkm-fig.is-heavy.is-lurch-a { animation: inkmLurch var(--inkc-dur) var(--fm-ease); }
+  .inkm-fig.is-heavy.is-lurch-b { animation: inkmLurchAlt var(--inkc-dur) var(--fm-ease); }
+
+  /* ── Taking a hit ────────────────────────────────────────────────────────
+     Knocked back along its own -X, which is AWAY from the opponent on both
+     sides of the stage — the enemy's whole side is mirrored, so one keyframe
+     serves the player and the monster without a second, flipped copy.
+
+     Fixed duration on purpose, like the eat gesture and the death collapse: a
+     flinch has no cadence of its own to be timed off. It is short enough to
+     finish inside the fastest weapon's cycle, so it can never still be
+     running when the next swing lands. */
+  /* `--inkm-recoil` is the knockback in the element's OWN units. The
+     monster's wrapper lives inside MonsterFigure's `scale(figure.scale)`, so
+     a literal here is divided by that scale before it reaches the screen and
+     a chicken flinched a third as far as the player did — the same
+     compensation the strokes and the weapon already make, and the only
+     motion on this stage that needed it. The player's own wrapper is
+     unscaled and takes the 5px default. */
+  @keyframes inkmRecoil {
+    0%   { transform: translateX(0); filter: brightness(1.75); }
+    30%  { transform: translateX(calc(var(--inkm-recoil, 5px) * -1)); filter: brightness(1.35); }
+    65%  { transform: translateX(calc(var(--inkm-recoil, 5px) * 0.4)); filter: brightness(1); }
+    100% { transform: translateX(0); filter: brightness(1); }
+  }
+  /* Two identical keyframes, alternated per blow (`useAnimationFlip`). These
+     wrappers cannot be keyed: they contain the swing-keyed figure, and a key
+     change remounts the whole subtree — which replayed the attack every time
+     a hit landed, and the recoil every time the attacker swung. Changing
+     `animation-name` restarts the animation and touches nothing else. */
+  @keyframes inkmRecoilAlt {
+    0%   { transform: translateX(0); filter: brightness(1.75); }
+    30%  { transform: translateX(calc(var(--inkm-recoil, 5px) * -1)); filter: brightness(1.35); }
+    65%  { transform: translateX(calc(var(--inkm-recoil, 5px) * 0.4)); filter: brightness(1); }
+    100% { transform: translateX(0); filter: brightness(1); }
+  }
+  .inkm-hit.is-struck-a, .inkc-hit.is-struck-a { animation: inkmRecoil 240ms var(--fm-ease); }
+  .inkm-hit.is-struck-b, .inkc-hit.is-struck-b { animation: inkmRecoilAlt 240ms var(--fm-ease); }
+
+  /* ── Deaths ──────────────────────────────────────────────────────────────
+     One per archetype family, because a thing with no body cannot topple onto
+     a floor and a pile of slabs does not pitch forward. All one-shot and all
+     `forwards`, so the end pose holds until the next fight replaces it.
+
+     These sit on `.inkc-fig` (the whole enemy side) rather than inside
+     MonsterFigure, so the accent aura goes down with the creature. The
+     CONTACT SHADOW cannot ride them — it is drawn outside the mirrored side
+     so that a topple does not swing it up off the floor — so it fades on its
+     own clock instead (`.inkc-shadow--dying` below), over the same 900ms.
+     Every death is more specific than the plain `.inkc-fig.enemy.is-dying`
+     rule, which stays as the fallback for the generic mirrored rig. */
+  @keyframes inkmDeathFall {
+    0%   { transform: translateY(0) rotate(0deg); }
+    30%  { transform: translateY(-3px) rotate(-8deg); }
+    100% { transform: translateY(8px) rotate(74deg); }
+  }
+  @keyframes inkmDeathCrumble {
+    0%   { transform: translateY(0) scaleY(1) scaleX(1); opacity: 1; }
+    45%  { transform: translateY(3px) scaleY(0.78) scaleX(1.06); opacity: 1; }
+    100% { transform: translateY(9px) scaleY(0.16) scaleX(1.3); opacity: 0.55; }
+  }
+  @keyframes inkmDeathDissipate {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-14px) scale(1.14); opacity: 0; }
+  }
+  @keyframes inkmDeathSink {
+    0%   { transform: translateY(0) scaleY(1); opacity: 1; }
+    100% { transform: translateY(11px) scaleY(0.3); opacity: 0.4; }
+  }
+  @keyframes inkmDeathSprawl {
+    0%   { transform: translateY(0) scaleY(1) rotate(0deg); }
+    40%  { transform: translateY(2px) scaleY(0.86) rotate(-5deg); }
+    100% { transform: translateY(7px) scaleY(0.42) rotate(9deg); }
+  }
+  .inkc-fig.enemy.is-dying.is-death--topple     { animation: inkcMonsterDeath 900ms cubic-bezier(0.4, 0, 0.7, 1) forwards; }
+  .inkc-fig.enemy.is-dying.is-death--fall       { animation: inkmDeathFall 900ms cubic-bezier(0.4, 0, 0.7, 1) forwards; }
+  .inkc-fig.enemy.is-dying.is-death--crumble    { animation: inkmDeathCrumble 900ms cubic-bezier(0.4, 0, 0.8, 1) forwards; }
+  .inkc-fig.enemy.is-dying.is-death--dissipate  { animation: inkmDeathDissipate 900ms ease-out forwards; }
+  .inkc-fig.enemy.is-dying.is-death--sink       { animation: inkmDeathSink 900ms ease-in forwards; }
+  .inkc-fig.enemy.is-dying.is-death--sprawl     { animation: inkmDeathSprawl 900ms cubic-bezier(0.4, 0, 0.8, 1) forwards; }
+
+  /* A dying creature stops breathing, stops beating its wings and stops
+     swaying its tail — the collapse is the only motion left. Without this the
+     idle loops keep running underneath the fall and the corpse twitches. */
+  .inkc-fig.is-dying .inkm-idle,
+  .inkc-fig.is-dying .inkm-tail,
+  .inkc-fig.is-dying .inkm-wing { animation: none; }
+
+  /* The shadow goes with it. A dissipating wraith that leaves a contact
+     shadow on the floor has not gone anywhere. */
+  @keyframes inkcShadowFade { to { opacity: 0; } }
+  .inkc-shadow--dying { animation: inkcShadowFade 900ms ease-out forwards; }
+}
+
+/* Reduced motion keeps the END POSE of each death — a monster that dies
+   without ever appearing to has no feedback at all — and leaves everything
+   else posed at rest. */
+@media (prefers-reduced-motion: reduce) {
+  .inkc-shadow--dying { opacity: 0; }
+  .inkc-fig.enemy.is-dying.is-death--fall      { transform: translateY(8px) rotate(74deg); }
+  .inkc-fig.enemy.is-dying.is-death--crumble   { transform: translateY(9px) scaleY(0.16) scaleX(1.3); opacity: 0.55; }
+  .inkc-fig.enemy.is-dying.is-death--dissipate { transform: translateY(-14px) scale(1.14); opacity: 0; }
+  .inkc-fig.enemy.is-dying.is-death--sink      { transform: translateY(11px) scaleY(0.3); opacity: 0.4; }
+  .inkc-fig.enemy.is-dying.is-death--sprawl    { transform: translateY(7px) scaleY(0.42) rotate(9deg); }
 }
 
 /* Armoury grid + cards */

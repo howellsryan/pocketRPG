@@ -510,6 +510,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
             icon: coopStageArt.icon,
             accent: coopStageArt.accent,
             sprite: coopMonsterSprite,
+            monster: coopStageTarget,
             dying: (coopStageTarget?.currentHP ?? 1) <= 0,
           }}
           actorSwing={swings.player}

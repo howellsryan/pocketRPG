@@ -1,6 +1,6 @@
 ---
 name: action-animation
-description: Use when adding or changing an on-screen animation for a player action - a combat swing, a mining strike, a fishing cast, a smithing hammer blow - or when editing src/utils/actionSprites.js, src/utils/inkwright.js, InkwrightCombatStage.jsx, InkwrightStage.jsx, InkwrightFigure.jsx, or the .inkc-* / .ink-* CSS. Covers the two live stages and when to use each, the timing law (an animation's speed IS the action's own cadence), why skilling scales strike COUNT instead of tempo, the event-to-swing contract, and the build/reduced-motion gates. Do not use for the open world's 3D entity clips (world/client, GLB rigs, combat wind-up alignment) or for procedural 3D creature specs - those are procgen-creature and .claude/rules/world-design.md.
+description: Use when adding or changing an on-screen animation for a player action - a combat swing, a mining strike, a fishing cast, a smithing hammer blow - or when editing src/utils/actionSprites.js, src/utils/inkwright.js, src/utils/monsterShapes.js, src/utils/monsterFigures.js, InkwrightCombatStage.jsx, InkwrightStage.jsx, InkwrightFigure.jsx, MonsterFigure.jsx, or the .inkc-* / .ink-* / .inkm-* CSS. Also use when adding or recolouring the drawn MONSTER art on the combat stage - a new creature archetype, palette, attack motion or death. Covers the two live stages and when to use each, the timing law (an animation's speed IS the action's own cadence), why skilling scales strike COUNT instead of tempo, why 119 monsters cost 22 drawings, the event-to-swing contract, and the build/reduced-motion gates. Do not use for the open world's 3D entity clips (world/client, GLB rigs, combat wind-up alignment) or for procedural 3D creature specs - those are procgen-creature and .claude/rules/world-design.md.
 ---
 
 # action-animation: showing the player their action
@@ -13,13 +13,16 @@ checklist.
 | | `InkwrightCombatStage` (`.inkc-*`) | `InkwrightStage` (`.ink-*`) |
 |---|---|---|
 | Shape | two figures facing off, mirrored | a figure working a resource |
-| Sprite | articulated inked figure + weapon | articulated inked figure + tool + environment |
+| Sprite | inked player figure + weapon, vs a DRAWN monster | articulated inked figure + tool + environment |
 | Cadence | one cycle = one swing | one action = several strikes, one yield |
 | Wired | solo combat, co-op/raid | mining, woodcutting, fishing |
 
 Fighting something that fights back → the combat stage. Working something that gives
-way → the skilling one. Both are the SAME character (`InkwrightFigure.jsx`) — a new
-combat style or a new skill costs a motion, not a redraw.
+way → the skilling one. The PLAYER is the same character in both
+(`InkwrightFigure.jsx`) — a new combat style or a new skill costs a motion, not a
+redraw. The ENEMY is not: it is drawn as itself (`MonsterFigure.jsx` over
+`utils/monsterShapes.js`), one body per archetype, told apart within a family by
+palette. See "Adding a monster" below.
 
 **`ActionSpriteStage.jsx` (`.as-*`, a masked-glyph tool-in-a-lane) was combat's first
 presentation, was superseded, and is deleted.** `useActionSwings.js` and the
@@ -160,6 +163,46 @@ is for a genuinely new attack style.
   around the whole enemy group means every local coordinate — shoulder pivot, weapon
   tip, shot flight path — is authored once and reads correctly on both sides.
   Mirroring per-figure means re-deriving that arithmetic twice and it drifting once.
+
+## Adding a monster
+
+**The shape is per ARCHETYPE; the colour is per MONSTER.** 119 monsters share 22 drawn
+bodies, and every dragon in the game is one dragon in a different palette. Adding a
+monster to `monsters.json` usually costs **nothing here** — the name rules give it
+plausible art on the day it ships. Do this only when it needs its own body.
+
+Design record + the full trap list: `docs/action-animations.md`, "Inkwright — the
+monsters". Review page: `public/monster-menagerie.html` (`npm run gen:monster-preview`,
+`--check` runs in `npm run ci`).
+
+1. **First ask whether it needs a new archetype at all.** A palette (or a
+   `PALETTE_OVERRIDE` row in `utils/monsterFigures.js`) is usually the honest answer,
+   and it costs three CSS tokens. A new BODY is warranted only when the silhouette is
+   genuinely not in the set of 22.
+2. **Author it in its own local frame**: origin `(0,0)` at the ground under it, `+X`
+   the way it faces, `-Y` up. Facing +X is not optional — the enemy side is mirrored,
+   so a body authored facing left renders with its back to the player.
+3. **Split it into groups by what MOVES**, not by anatomy: `back`, `tail`, `body`,
+   `arm`, `head`, `wing`, `fore`. A group exists when a motion animates it.
+4. **Give every animatable group a `joints` entry** — the pivot it rotates about, in
+   the same local units. A limb rotates about the end attached to the body; a bounding
+   box only knows the middle.
+5. **Name an attack per style, plus a `heavy` melee upgrade** (or omit `heavy`
+   deliberately — a chicken has no heavier way to peck). Every motion must have its
+   group drawn, or the monster stands still while its damage lands.
+6. **Declare `stature`** (how tall it stands relative to a person at normal weight),
+   never a scale. The render scale is solved from it and clamped to the stage.
+7. **Set `muzzle` and `torso`** from the drawing — the projectile origin and the
+   splat/HP anchor. Guessing either puts the fire behind the jaw or the splat over
+   empty floor.
+8. **Roles, not colours.** A part names a `.inkm-*` paint; nothing in the geometry
+   knows a hex. A new material role needs a `MONSTER_ROLE_STROKE` entry and a CSS rule,
+   and a new palette needs three `--ink-hide-*` tokens in `:root`.
+9. **Render it before you believe it.** `npm run gen:monster-preview` and look at the
+   page. A body that reads fine as coordinates routinely reads as a blob at 90px tall.
+10. **Test in the same change** (`tests/monsterShapes.test.ts` covers the structure
+    automatically; add a classification case to `tests/monsterFigures.test.ts` if you
+    added an override or a name rule).
 
 ## Adding a skill to Inkwright
 

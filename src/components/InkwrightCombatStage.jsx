@@ -3,12 +3,17 @@ import InkwrightFigure, { Limb } from './InkwrightFigure.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
 import { isSmashWeaponType, isLungeWeaponType } from '../utils/actionSprites.js'
 import { weaponShapeFor, weaponMuzzle, partStrokeWidth, TINTED_FILL_ROLES, TINTED_STROKE_ROLES, GRIP_X, GRIP_Y } from '../utils/weaponShapes.js'
+import MonsterFigure from './MonsterFigure.jsx'
+import { monsterFigureFor, monsterMuzzle, monsterTorso, monsterShadow } from '../utils/monsterFigures.js'
+import { useAnimationFlip } from '../hooks/useActionSwings.js'
 
 /**
- * Inkwright's combat presentation: two figures facing each other — the
- * player armed per combat style, the enemy a generic mirror of the same rig
- * for now (CLAUDE.md's action-animation skill covers per-monster art as
- * future work) — instead of ActionSpriteStage's tool-glyph lane.
+ * Inkwright's combat presentation: two figures facing each other — the player
+ * armed per combat style, and the enemy DRAWN AS ITSELF (components/
+ * MonsterFigure.jsx over utils/monsterShapes.js: a dragon, a chicken, a
+ * demon), which closes the one gap docs/action-animations.md left open here.
+ * The enemy used to be the player's own rig mirrored and given a coloured
+ * aura, so every fight in the game looked like the same fight.
  *
  * SAME PROPS AS ActionSpriteStage, on purpose: this is a drop-in swap at
  * both call sites (CombatScreen.jsx, CoopBossScreen.jsx). Nothing about the
@@ -27,12 +32,14 @@ import { weaponShapeFor, weaponMuzzle, partStrokeWidth, TINTED_FILL_ROLES, TINTE
  * which is precisely the thing that law exists to prevent on the OTHER
  * side of this system.
  *
- * Mirroring: the enemy is the exact same geometry as the player, wrapped in
- * `translate(STAGE_W,0) scale(-1,1)` — a full-canvas flip, not a per-figure
- * one — so every local coordinate (shoulder pivot, weapon tip, projectile
- * path) is authored ONCE and read correctly on both sides. transform-origin
- * is evaluated in an element's own local space before its own transform, so
- * `.inkc-arm`'s pivot works unchanged inside the mirrored group.
+ * Mirroring: the enemy side is wrapped in `translate(STAGE_W,0) scale(-1,1)`
+ * — a full-canvas flip, not a per-figure one — so every local coordinate
+ * (shoulder pivot, weapon tip, projectile path, and now every monster's own
+ * body, muzzle and joint pivots) is authored ONCE, facing right, and reads
+ * correctly on both sides. transform-origin is evaluated in an element's own
+ * local space before its own transform, so `.inkc-arm`'s pivot — and every
+ * `.inkm-*` group's pivot inside MonsterFigure's `scale()` — works unchanged
+ * inside the mirrored group.
  *
  * Every duration is the inline `--inkc-dur` custom property, sourced from
  * `swingMs` — a literal in `.inkc-*` CSS is the failure this system exists
@@ -55,10 +62,18 @@ import { weaponShapeFor, weaponMuzzle, partStrokeWidth, TINTED_FILL_ROLES, TINTE
  *                 hand-drawn shapes the actor's own weapon draws as and what
  *                 colour its material is. Both null/undefined for unarmed,
  *                 which falls back to the plain per-motion default. The enemy
- *                 side has no equivalent — it stays the generic mirrored rig
- *                 (CLAUDE.md's "per-monster art" is separate, deferred work).
- *   target      — { accent, sprite?, dying? } — sprite present means it acts back;
- *                 dying plays the collapse animation and holds its end pose
+ *                 resolves its own equivalent from the monster record instead.
+ *   target      — { accent, sprite?, dying?, monster? } — sprite present means
+ *                 it acts back; dying plays the collapse and holds its end
+ *                 pose; `monster` is the monsters.json record (or a live
+ *                 combat copy, or a boss add) the enemy is DRAWN from. Its
+ *                 archetype/palette/size/motion resolve through
+ *                 utils/monsterFigures.js off the FROZEN sprite's motion, so a
+ *                 multi-form boss animates the form it is actually in — the
+ *                 same rule monsterCombatSprite already follows for style and
+ *                 speed. Omitted, the enemy falls back to the old generic
+ *                 mirrored rig, which is what a caller with no monster record
+ *                 (a preview harness) should get rather than nothing.
  *   actorSwing  — swing token (utils/actionSprites.js) or null; a new `id` replays
  *   targetSwing — same, for the target's own strike
  *   actorConsume— consume token (utils/actionSprites.js makeConsumeToken) or null;
@@ -111,11 +126,22 @@ const TORSO_CY = 68
  * member of a kind: a shortbow's string sits at half a longbow's reach and a
  * wand's gem nowhere near a staff's orb, so both would have fired from a
  * point they are not drawn at and landed short of the torso. */
-export function shotOffset(kind, weaponIconType) {
-  if (kind !== 'ranged' && kind !== 'magic') return null
-  const muzzle = weaponMuzzle(weaponIconType, kind)
+export function shotOffset(kind, weaponIconType, muzzleOverride = null, landing = null) {
+  // A monster's shot passes its own muzzle straight in — its "weapon" is its
+  // jaw, so there is no weapon geometry to derive one from — but the flight
+  // arithmetic below is deliberately shared rather than duplicated: two
+  // copies of "where the other side's torso is" is exactly how a projectile
+  // ends up landing somewhere the splat isn't.
+  const muzzle = muzzleOverride || ((kind === 'ranged' || kind === 'magic') ? weaponMuzzle(weaponIconType, kind) : null)
   if (!muzzle) return null
-  return { dx: (STAGE_W - TORSO_CX) - muzzle.x, dy: TORSO_CY - muzzle.y }
+  // Where it lands, in the SHOOTER's own unmirrored space. The default is the
+  // opposite figure's torso at this stage's own constants, which is right for
+  // a monster shooting at the player and was ALSO right for the player until
+  // the enemy stopped being the player's own rig: a chicken's torso sits 30px
+  // lower than a harpy's, so a fixed landing point put the arrow in empty air
+  // above one and under the other, with the splat somewhere else again.
+  const to = landing || { x: STAGE_W - TORSO_CX, y: TORSO_CY }
+  return { dx: to.x - muzzle.x, dy: to.y - muzzle.y }
 }
 
 export default function InkwrightCombatStage({
@@ -126,6 +152,11 @@ export default function InkwrightCombatStage({
   // Hooks run every render, before the early return.
   const frozen = useRef({})
   const resetTag = useRef(resetKey)
+  // Derived here rather than beside its sibling below because it feeds a hook:
+  // a blow that LANDED on the player recoils them, and `hit` already rides the
+  // swing token, so no new event plumbing is needed for it.
+  const playerStruck = targetSwing && targetSwing.hit ? targetSwing : null
+  const playerStruckFlip = useAnimationFlip(playerStruck)
   if (!actor || !target) return null
 
   // A new fight is a hard boundary, not something the swing-id freeze below
@@ -163,64 +194,157 @@ export default function InkwrightCombatStage({
   const actorLunge = a.motion === 'melee' && isLungeWeaponType(a.weaponIconType)
   const actorSwingVariant = actorSmash ? ' is-smash' : actorLunge ? ' is-lunge' : ''
 
+  // Which creature the enemy is, resolved off the FROZEN sprite's motion so a
+  // multi-form boss is drawn mid-swing in the form that swung — the same rule
+  // monsterCombatSprite already applies to style and speed, and the bug
+  // CLAUDE.md 4 records for the open world if it is skipped.
+  const figure = target.monster ? monsterFigureFor(target.monster, t.motion || targetSprite?.motion) : null
+  const enemyTorso = figure ? monsterTorso(figure) : { x: TORSO_CX, y: TORSO_CY }
+  const enemyShadow = figure ? monsterShadow(figure) : null
+
+  // A LANDED blow is a recoil on whoever took it. Derived here rather than
+  // plumbed through a new event: swingsFromCombatEvents already reports `hit`
+  // per side, and the recoil is a property of the swing, not of a separate
+  // occurrence. Keyed by the swing that caused it, on its own wrapper — the
+  // attacker's motion and the victim's recoil are two animations of the same
+  // `transform` property firing on two different triggers, so sharing one
+  // element would make each replay the other (docs/action-animations.md,
+  // "a token stays set after its motion ends").
+  // `playerStruckFlip` (above, with the hooks) restarts the recoil by
+  // alternating its keyframe name, never by a key: `.inkc-hit` WRAPS the
+  // swing-keyed figure, and a keyed wrapper remounts everything inside it —
+  // which replayed the player's own swing every time a monster hit them. Same
+  // rule MonsterFigure follows on the other side.
+  const enemyStruck = actorSwing && actorSwing.hit ? actorSwing : null
+
+  // Where the player's shot lands: the monster's own torso, not a constant.
+  // In the player's unmirrored space the enemy's torso sits at STAGE_W minus
+  // its own local x, exactly as the splat overlay below places it.
+  const enemyLanding = { x: STAGE_W - enemyTorso.x, y: enemyTorso.y }
+
   return (
     <div class="inkc-stage" role="img" aria-label={label}>
       <svg class="inkc-svg" viewBox={`0 0 ${STAGE_W} 128`} aria-hidden="true">
         <path class="ink-ground" d={`M12 108 H${STAGE_W - 12}`} />
         <ellipse class="ink-shadow" cx="76" cy="108" rx="21" ry="3.2" />
-        <ellipse class="ink-shadow" cx={STAGE_W - 76} cy="108" rx="21" ry="3.2" />
+        {/* The enemy's shadow is sized from the creature (monsterShadow); the
+            player's stays fixed because the player is always the same figure
+            at the same size. A caller with no monster record falls back to the
+            player's own ellipse along with the generic rig.
+
+            It is drawn HERE, outside the mirrored side, so a death animation
+            on `.inkc-fig` cannot reach it — which is why it is faded out by
+            its own class instead. Put inside that group it would topple with
+            the body, swinging the shadow up off the floor. */}
+        {enemyShadow ? (
+          <ellipse
+            class={`ink-shadow${enemyShadow.hover ? ' inkc-shadow--float' : ''}${dying ? ' inkc-shadow--dying' : ''}`}
+            cx={STAGE_W - enemyShadow.cx} cy="108" rx={enemyShadow.rx} ry={enemyShadow.ry}
+          />
+        ) : (
+          <ellipse class="ink-shadow" cx={STAGE_W - 76} cy="108" rx="21" ry="3.2" />
+        )}
 
         {/* Actor: native orientation, facing right into the lane. */}
         <g class="inkc-side">
           <MiniHpBar cx={TORSO_CX} hp={actorHp} />
-          <g
-            key={`a${actorSwing ? actorSwing.id : 0}`}
-            class={`inkc-fig${actorSwing ? ` inkc-fig--${a.motion}${actorSwingVariant} is-swinging` : ''}`}
-            style={{ '--inkc-dur': `${a.swingMs}ms` }}
-          >
-            <InkwrightFigure>
-              {/* Keyed independently of the swing wrapper above: an eat/drink
-                  gesture can land on any tick, mid-swing-gap or not, and must
-                  restart its own animation without waiting on or disturbing
-                  the weapon swing's own key. While it plays, the item glyph
-                  replaces the weapon — the arm rotates far enough toward the
-                  head that the tool would otherwise appear to swing at it. */}
-              <g
-                key={`ae${actorConsume ? actorConsume.id : 0}`}
-                class={`inkc-arm${actorConsume ? ' is-eating' : ''}`}
-              >
-                <Limb d="M84 58 L94 62 L100 64" w={11} />
-                {actorConsume ? <CombatConsume /> : (
-                  <CombatTool kind={a.motion} weaponIconType={a.weaponIconType} tint={a.weaponTint} accent={a.accent} />
-                )}
-              </g>
-            </InkwrightFigure>
-            {actorSwing && <CombatShot kind={a.motion} weaponIconType={a.weaponIconType} accent={a.accent} />}
+          {/* The recoil wrapper is OUTSIDE the swing-keyed figure and is never
+              keyed itself — see useAnimationFlip. Inside it, the player's own
+              swing remounted it and replayed the take-a-hit flash every time
+              they attacked. */}
+          <g class={`inkc-hit${playerStruck ? ` is-struck-${playerStruckFlip}` : ''}`}>
+            <g
+              key={`a${actorSwing ? actorSwing.id : 0}`}
+              class={`inkc-fig${actorSwing ? ` inkc-fig--${a.motion}${actorSwingVariant} is-swinging` : ''}`}
+              style={{ '--inkc-dur': `${a.swingMs}ms` }}
+            >
+              <InkwrightFigure>
+                {/* Keyed independently of the swing wrapper above: an eat/drink
+                    gesture can land on any tick, mid-swing-gap or not, and must
+                    restart its own animation without waiting on or disturbing
+                    the weapon swing's own key. While it plays, the item glyph
+                    replaces the weapon — the arm rotates far enough toward the
+                    head that the tool would otherwise appear to swing at it. */}
+                <g
+                  key={`ae${actorConsume ? actorConsume.id : 0}`}
+                  class={`inkc-arm${actorConsume ? ' is-eating' : ''}`}
+                >
+                  <Limb d="M84 58 L94 62 L100 64" w={11} />
+                  {actorConsume ? <CombatConsume /> : (
+                    <CombatTool kind={a.motion} weaponIconType={a.weaponIconType} tint={a.weaponTint} accent={a.accent} />
+                  )}
+                </g>
+              </InkwrightFigure>
+              {/* Lands on the MONSTER's own torso, which moves with the
+                  creature — see shotOffset's `landing`. */}
+              {actorSwing && <CombatShot kind={a.motion} weaponIconType={a.weaponIconType} accent={a.accent} landing={enemyLanding} />}
+            </g>
           </g>
         </g>
 
         {/* Enemy: the SAME figure and the SAME tool geometry, mirrored across
             the whole canvas so every local coordinate above stays correct. */}
         <g class="inkc-side" transform={`translate(${STAGE_W},0) scale(-1,1)`}>
-          <MiniHpBar cx={TORSO_CX} hp={targetHp} />
+          <MiniHpBar cx={enemyTorso.x} hp={targetHp} />
+          {/* `inkc-fig--<motion> is-swinging` stays on for a drawn monster as
+              well as the generic rig: it is what selects the SHOT's own fly
+              keyframe, and a monster has no `.inkc-arm` descendant for the limb
+              keyframes to reach, so it costs nothing there.
+
+              A drawn monster's wrapper is NOT keyed on the swing, though. It
+              contains MonsterFigure, which owns its own animations — the
+              recoil, the idle breath, the wingbeat — and a key change remounts
+              all of them: the monster flinched and flashed every time it
+              ATTACKED, and its breathing restarted on every swing. Only the
+              shot below needs a per-swing restart on this side, so only the
+              shot is keyed. (The generic rig keeps the key: its arm keyframes
+              live on `.inkc-arm` inside this element and have nothing else of
+              their own to key.) */}
           <g
-            key={`t${targetSwing ? targetSwing.id : 0}`}
-            class={`inkc-fig${targetSwinging ? ` inkc-fig--${t.motion} is-swinging enemy` : ' enemy'}${dying ? ' is-dying' : ''}`}
-            style={{ '--inkc-dur': `${targetSwinging ? t.swingMs : (a.swingMs || 600)}ms`, '--inkc-accent': target.accent || 'var(--color-blood-ember)' }}
+            key={figure ? 'monster' : `t${targetSwing ? targetSwing.id : 0}`}
+            class={`inkc-fig enemy${figure ? ' is-monster' : ''}${targetSwinging ? ` inkc-fig--${t.motion} is-swinging` : ''}${dying ? ` is-dying is-death--${figure ? figure.death : 'topple'}` : ''}`}
+            style={{
+              '--inkc-dur': `${targetSwinging ? t.swingMs : (a.swingMs || 600)}ms`,
+              // The idle breath runs on the creature's OWN attack cadence, so
+              // a fast monster visibly breathes fast. An idle loop has no
+              // action to be timed off, and a constant here would be the one
+              // duration on this stage that stops telling the player the
+              // truth about what they are fighting.
+              '--inkm-cycle': `${(targetSprite && targetSprite.cycleMs) || 2400}ms`,
+              '--inkc-accent': (figure && figure.phaseGlow) || target.accent || 'var(--color-blood-ember)',
+            }}
           >
-            <InkwrightFigure>
-              <g class="inkc-arm">
-                <Limb d="M84 58 L94 62 L100 64" w={11} />
-                {/* Always armed while alive, matching the player — `t` already
-                    falls back to the live (not-yet-swung) sprite, so its tool
-                    is known before the first swing token ever arrives. Gating
-                    this on `targetSwinging` made the enemy's weapon flicker in
-                    and out of existence between swings instead of staying
-                    drawn. Dying drops it instead — a corpse doesn't stay armed. */}
-                {t.motion && !dying && <CombatTool kind={t.motion} accent={target.accent} />}
-              </g>
-            </InkwrightFigure>
-            {targetSwinging && <CombatShot kind={t.motion} accent={target.accent} />}
+            {figure ? (
+              <MonsterFigure
+                figure={figure}
+                striking={targetSwinging ? targetSwing : null}
+                struck={enemyStruck}
+                dying={dying}
+                weapon={figure.armed
+                  ? <CombatTool kind={t.motion || 'melee'} weaponIconType={figure.weaponIconType} tint={figure.palette.horn} accent={target.accent} atGrip={false} outerScale={figure.scale} />
+                  : null}
+              />
+            ) : (
+              <InkwrightFigure>
+                <g class="inkc-arm">
+                  <Limb d="M84 58 L94 62 L100 64" w={11} />
+                  {/* Always armed while alive, matching the player — `t` already
+                      falls back to the live (not-yet-swung) sprite, so its tool
+                      is known before the first swing token ever arrives. Gating
+                      this on `targetSwinging` made the enemy's weapon flicker in
+                      and out of existence between swings instead of staying
+                      drawn. Dying drops it instead — a corpse doesn't stay armed. */}
+                  {t.motion && !dying && <CombatTool kind={t.motion} accent={target.accent} />}
+                </g>
+              </InkwrightFigure>
+            )}
+            {/* `shotKind` is null for an attack that connects in reach, and a
+                monster passes its own muzzle in — which `shotOffset` honours
+                for any kind, melee included. Without this gate a biting
+                dragon rendered an invisible magic orb on every swing. */}
+            {targetSwinging && (figure
+              ? (figure.shotKind && <CombatShot key={`ts${targetSwing.id}`} kind={t.motion} weaponIconType={figure.weaponIconType} shotKind={figure.shotKind} muzzle={monsterMuzzle(figure)} accent={target.accent} />)
+              : <CombatShot kind={t.motion} accent={target.accent} />)}
           </g>
         </g>
       </svg>
@@ -229,7 +353,15 @@ export default function InkwrightCombatStage({
           block below the stage — anchored over the same torso point the
           magic bolt above flies to, so the flash and the impact agree. */}
       <div class="inkc-splat inkc-splat--actor" aria-hidden="true"><HitSplatLayer splats={actorSplats} /></div>
-      <div class="inkc-splat inkc-splat--target" aria-hidden="true"><HitSplatLayer splats={targetSplats} /></div>
+      {/* Anchored on the creature's OWN torso, which moves: a crab's mass sits
+          22 units off the floor and a demon's 84, so one fixed offset put the
+          splat over empty ground for half the bestiary. Inline because it is
+          genuinely per-monster, not per-theme. */}
+      <div
+        class="inkc-splat inkc-splat--target"
+        style={{ left: `${((STAGE_W - enemyTorso.x) / STAGE_W) * 100 - 11}%`, top: `${(enemyTorso.y / 128) * 100 - 17}%` }}
+        aria-hidden="true"
+      ><HitSplatLayer splats={targetSplats} /></div>
 
       {/* Mobile-HUD-only corner readout — replaces the Prayer bar block that
           used to sit below the whole stage. Desktop's 3-pane layout keeps its
@@ -332,7 +464,7 @@ function CombatConsume() {
  * returns `var(--tier-dragon)` for some items and deriving a second colour
  * from a CSS variable is not something a component can do.
  */
-function CombatTool({ kind, weaponIconType, tint, accent }) {
+function CombatTool({ kind, weaponIconType, tint, accent, atGrip = true, outerScale = 1 }) {
   const shape = weaponShapeFor(weaponIconType, kind)
   // A scaled copy (shortbow, dagger) rides one transform, and every stroke
   // width is divided back out by that scale: an SVG transform scales stroke
@@ -340,11 +472,22 @@ function CombatTool({ kind, weaponIconType, tint, accent }) {
   // a wisp beside a figure drawn at full weight. One outline weight for the
   // whole figure is the defining constraint of this style (src/index.css).
   const s = shape.scale || 1
-  const placement = `translate(${GRIP_X} ${GRIP_Y}) rotate(${shape.angle})${s === 1 ? '' : ` scale(${s})`}`
+  // `atGrip` is the PLAYER's grip, a stage constant. A monster's grip is its
+  // own archetype's, and MonsterFigure has already translated to it — so the
+  // weapon must not translate again, or every armed monster holds its sword
+  // at the player's shoulder height instead of its own hand.
+  //
+  // `outerScale` is the FIGURE's own scale, which the monster's weapon is
+  // drawn inside. An SVG transform scales stroke, so the weapon has to divide
+  // out that scale as well as its own — the invariant MonsterPart already
+  // keeps for the body, and without it a goblin's sword is outlined at
+  // two-thirds the weight of the goblin holding it.
+  const origin = atGrip ? `translate(${GRIP_X} ${GRIP_Y}) ` : ''
+  const placement = `${origin}rotate(${shape.angle})${s === 1 ? '' : ` scale(${s})`}`
   return (
     <g transform={placement}>
       {shape.parts.map((part, i) => (
-        <WeaponPart key={i} part={part} scale={s} tint={tint} accent={accent} />
+        <WeaponPart key={i} part={part} scale={s * outerScale} tint={tint} accent={accent} />
       ))}
     </g>
   )
@@ -400,12 +543,38 @@ function WeaponPart({ part, scale, tint, accent }) {
  * wand's gem. Fixed coordinates here would have to agree with geometry that
  * now lives in another file, and the two would drift the first time a weapon
  * was re-drawn. */
-function CombatShot({ kind, weaponIconType, accent }) {
-  const offset = shotOffset(kind, weaponIconType)
-  const muzzle = weaponMuzzle(weaponIconType, kind)
+function CombatShot({ kind, weaponIconType, accent, shotKind = null, muzzle: muzzleOverride = null, landing = null }) {
+  const offset = shotOffset(kind, weaponIconType, muzzleOverride, landing)
+  const muzzle = muzzleOverride || weaponMuzzle(weaponIconType, kind)
   if (!offset || !muzzle) return null
   const flight = { '--inkc-shot-dx': `${offset.dx}px`, '--inkc-shot-dy': `${offset.dy}px` }
   const at = `translate(${muzzle.x.toFixed(2)} ${muzzle.y.toFixed(2)})`
+  // A monster names what it throws, because that is what the ANIMATION shows
+  // and it does not follow from the combat style: a dragon's magic is a gout
+  // of fire and a serpent's is a spat glob, but both resolve as `magic`.
+  if (shotKind === 'flame' || shotKind === 'glob') {
+    const flame = shotKind === 'flame'
+    return (
+      <g class={`inkc-shot inkc-shot--${shotKind}`} style={flight}>
+        <g transform={at}>
+          {flame ? (
+            <>
+              {/* A tongue of fire is drawn LONG and tapering back toward the
+                  jaw, so it reads as still leaving the mouth while it flies —
+                  a round bolt of fire reads as a thrown ball instead. */}
+              <path class="inkc-flame-outer" d="M0 0 L-30 -9 L-19 0 L-30 9 Z" style={accent ? { fill: accent } : undefined} />
+              <path class="inkc-flame-core" d="M-2 0 L-19 -4.5 L-12 0 L-19 4.5 Z" />
+            </>
+          ) : (
+            <>
+              <ellipse class="inkc-bolt-trail" cx="-6" cy="0" rx="11" ry="5" style={accent ? { fill: accent } : undefined} />
+              <ellipse cx="0" cy="0" rx="6.5" ry="5" style={accent ? { fill: accent } : undefined} />
+            </>
+          )}
+        </g>
+      </g>
+    )
+  }
   if (kind === 'ranged') {
     // Bolt and arrow differ in length and heft, not in origin handling: a
     // bolt is a stouter dart off a much shorter draw. Own class per kind —

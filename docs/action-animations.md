@@ -168,11 +168,10 @@ any of them requires re-deriving all twelve weapon placements and every swing/sh
 transform-origin in the same change, which is a much bigger, Architect-gated
 undertaking this pass deliberately stayed inside of.
 
-**The enemy has no art of its own, on purpose.** It is the player's own rig, mirrored
-and given a coloured aura from the style/monster accent already resolved elsewhere
-(`getStyleArt`/`getMonsterArt`) — a `filter: drop-shadow` on `.inkc-fig.enemy`, nothing
-more. Real per-monster art is future work the `action-animation` skill flags, not a
-gap to close here; today the aura is the only thing telling two fights apart.
+**The enemy used to have no art of its own** — it was the player's own rig, mirrored
+and given a coloured aura, so every fight in the game looked like the same fight.
+That gap is closed: see "Inkwright — the monsters" below. The aura survives, demoted
+to a rim light (and, on a multi-form boss, the colour of the form it is in).
 
 **The weapon is always drawn, at rest and mid-swing alike** — matching skilling's own
 pickaxe-is-always-in-hand rule. The enemy side learned this the hard way: gating its
@@ -697,3 +696,137 @@ each screen that passes its own `icon` override before assuming it is uniform �
 - **Per-monster art for the enemy.** Today every monster is the same rig with a
   coloured aura. Real per-monster silhouettes are the obvious next step and were
   explicitly deferred, not forgotten — see "Inkwright — the combat figures" above.
+
+
+## Inkwright — the monsters
+
+`src/utils/monsterShapes.js` (pure geometry) + `src/utils/monsterFigures.js` (pure
+classifier) + `src/components/MonsterFigure.jsx` + the `.inkm-*` CSS. Every monster,
+boss and raid boss in the idle game is drawn as itself on the combat stage.
+
+### The economics: 22 bodies, 119 monsters, 21 palettes
+
+**The SHAPE is per archetype; the COLOUR is per monster.** A Green Dragon, a Red
+Dragon and a King Black Dragon are one drawing in three palettes — which is not a
+compromise, it is what they are. `utils/weaponShapes.js` made the identical call for
+151 weapons across 12 shapes, and this file records why the per-item alternative was
+built and reverted; a per-monster drawing set would be that mistake at eight times the
+scale.
+
+The 22 archetypes are drawn from what the bestiary actually contains, not from a
+taxonomy: dragon, serpent, lizardman, beast, bovine, fowl, bird, arachnid, insect,
+crab, kraken, orb, toad, humanoid, skeleton, husk, demon, imp, giant, wraith, golem,
+treant. `public/monster-menagerie.html` (`npm run gen:monster-preview`, `--check` in
+`npm run ci`) renders all of them from the shipped data — a hand-maintained second
+copy of the geometry stops being a review page the first time someone edits one and
+not the other.
+
+### Authored facing +X, placed by one transform
+
+Every body is authored in its OWN local frame: origin `(0,0)` at the ground under the
+creature, `+X` the way it faces, `-Y` up. The stage places it with a single
+`translate(FOOT_X, GROUND_Y) scale(s)`, so nothing in the geometry knows where the
+floor is, how big it renders, or that the whole enemy side is mirrored. Author facing
++X and the mirror turns it toward the player for free — the same trick every weapon
+and every shot on this stage already relies on.
+
+### Groups exist for motion, not for anatomy
+
+A body splits into `back` / `tail` / `body` / `arm` / `head` / `wing` / `fore`, and a
+group exists only when something animates it on its own. That makes one failure mode
+possible and it is the reason `tests/monsterShapes.test.ts` exists: an archetype
+naming a motion whose group it does not draw compiles, renders, and shows a monster
+standing perfectly still while its damage lands on the player. The test asserts every
+motion an archetype can be asked for has a limb to move, and every joint names a group
+that is drawn.
+
+### Size is solved, not authored
+
+An archetype declares how tall it stands relative to a person at normal weight
+(`stature`), never how big its paths happen to be. `monsterFigureFor` solves the scale
+against the drawing's own measured bounds, applies the combat-level weight class, then
+clamps against all four walls of the stage. The clamp is load-bearing rather than a
+safety rail: a colossal dragon wants more height than the frame has, and a creature
+whose head is cropped is least readable in exactly the fight where reading it matters.
+Because the size is solved, a body can be re-drawn at any convenient size without
+anyone re-tuning a magic number to match.
+
+### Weight changes the ATTACK, not only the size
+
+From `huge` (combat level 200) up, a melee attack upgrades to the archetype's heavy
+motion — `claw` becomes `slam`, `bite` becomes `maul` — and the heavy motions carry a
+whole-body lurch on top of the limb. A level-6 wolf and a level-600 one share a body,
+and the big one must not swing like the small one. Two rules fall out and both are
+tested: only MELEE upgrades (a heavier creature does not fire a heavier arrow), and an
+archetype with no heavier way to hit keeps its light motion at every size — a chicken
+with a heavy attack would be the animation lying about the fight.
+
+### Phase is readable off the creature
+
+A multi-form boss's eyes take its current form's colour (melee red, ranged green,
+magic blue — the colours the rest of the game already uses for the styles), and the
+aura follows. It is deliberately the EYES: the one part of every archetype already
+allowed to be bright, so no body needs a second palette. The form itself comes from
+`monsterCombatSprite`, which already resolves it — reading `monster.attackStyle` here
+would reintroduce the bug CLAUDE.md §4 records for the open world.
+
+### Taking a hit, and dying
+
+A landed blow recoils whoever took it, derived in the renderer rather than plumbed
+through a new event: `swingsFromCombatEvents` already reports `hit` per side. Knockback
+is along the figure's own `-X`, which is away from the opponent on BOTH sides, so one
+keyframe serves the player and the monster without a mirrored copy.
+
+Death is per archetype — `topple`, `fall`, `crumble`, `dissipate`, `sink`, `sprawl` —
+because a thing with no body cannot topple onto a floor and a pile of slabs does not
+pitch forward. All six sit on `.inkc-fig` (the whole enemy side) so the shadow and the
+aura go down with the creature, and all six hold their end pose under
+`prefers-reduced-motion: reduce`: a monster that dies without appearing to has no
+feedback at all.
+
+### Idle
+
+Nothing on this stage is ever completely still, because a monster holding a frozen
+pose between swings reads as a picture of a monster. The breath is timed off
+`--inkm-cycle`, the creature's OWN attack cadence, so a 2-tick monster visibly breathes
+faster than an 8-tick one — an idle loop has no action to take its speed from, and a
+constant there would be the one duration on this stage that stops telling the truth.
+Constructs grind instead of breathing; anything held off the floor bobs; wings beat at
+their own multiple of the cadence, because a wingbeat is not an attack.
+
+### Traps, each one paid for
+
+- **Colour is four custom properties on the figure, not a fill per part.** A 40-part
+  creature is one inline style, and a palette swap is a data change rather than a
+  stylesheet edit.
+- **Stroked-vs-filled is read off the geometry, never declared.** Every filled shape
+  is a circle, an ellipse, or a path closing with Z; every open path wants a stroke. A
+  `stroked: true` flag beside the role would be a fact the drawing already states and
+  free to contradict it.
+- **A limb-weight stroke is drawn twice** (a wider ink pass under a narrower colour
+  pass), exactly as `InkwrightFigure`'s `Limb` does for the player. The ink margin is
+  1.6 in total and no more: wider was built and it swamps the limb, turning a creature
+  made of legs into a cream tangle with no colour left in it.
+- **A far-side limb needs its own outlined role** (`far`), not a fill of the shade
+  tone. Un-outlined it reads as a slab of shadow behind the creature rather than the
+  leg it is drawn as.
+- **The static placement transform and any animation must live on different
+  elements.** A static `transform` attribute and a CSS `animation` on one element
+  cannot coexist — the animation silently wins and discards the placement, dropping
+  every monster to the origin at full size the instant it moves. MonsterFigure nests
+  four wrappers for exactly this reason (`.inkm-place` / `.inkm-idle` / `.inkm-hit` /
+  `.inkm-fig`), and the recoil and the attack need separate keys as well as separate
+  elements, or each replays the other.
+- **Substring rules over ids misfire in ways nobody predicts.** "col-OSSU-s" read as
+  bone and "th-REEF-ang" as a sea creature; both shipped once and both are pinned by a
+  test. That is why the ARCHETYPE table is explicit — the name rules are the fallback
+  for content added later, not the mechanism.
+- **A word naming a WEAPON beats a word naming a ROLE.** "Zaryth Bolt Sentinel" is
+  both, and read the other way round it draws a swordsman shooting at a player
+  standing across the lane.
+- **An armed monster's weapon must not be re-translated to the player's grip.**
+  `CombatTool`'s `atGrip` is a stage constant; a monster's grip is its own archetype's,
+  and MonsterFigure has already moved there.
+- **Foliage paints from a token, not the palette.** A treant whose crown took
+  `--inkm-shade` rendered a brown canopy — a tree in a coat rather than a tree. Same
+  reasoning as the shared bone tone for horns.
