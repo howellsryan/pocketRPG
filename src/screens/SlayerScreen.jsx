@@ -14,6 +14,7 @@ import questsData from '../data/quests.json'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
 import { SLAYER_MASTERS, RAID_TASK_META, resolveTaskMonsterIds, resolveSlayerTaskName, pickSlayerMonster, buildSlayerTask, meetsEntrySkillAndQuestGates, activeSlayerTaskBlockIds } from '../engine/slayerMasters.js'
+import { SLAYER_TASK_BLOCK_COST, SLAYER_TASK_BLOCK_MAX } from '../engine/slayerTaskBlocks.js'
 import { unmetKillCountRequirement } from '../engine/combatRequirements.js'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
@@ -150,7 +151,7 @@ function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, bossKillC
 // master on mount — set when the player picked the master from a place on the
 // world map, or just arrived at one after a travel prompt (resumeAutoStart).
 export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot, slayerTasksCompleted, slayerPerks, completedQuests, bossKillCounts, killCountsLoaded, slayerTaskBlocks, requestActivityStart } = useGame()
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot, slayerTasksCompleted, slayerPerks, completedQuests, bossKillCounts, killCountsLoaded, slayerTaskBlocks, applySlayerTaskBlockPurchase, applySlayerTaskBlockActive, requestActivityStart } = useGame()
   // Kill counts are server-owned and land a fetch after the rest of the state;
   // null until then, which makes isEntryEligible fail closed on the bosses gated
   // by them rather than assign a task nothing will start.
@@ -241,6 +242,40 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
     } catch (err) {
       if (err?.status === 402) addToast('Not enough credits to skip.', 'error')
       else addToast(err?.message || 'Failed to skip task.', 'error')
+    }
+  }
+
+  // Blocks the assigned monster from ever being handed out again — it does
+  // NOT skip/cancel the current task, only every future assignment. A
+  // pre-existing but paused (inactive) block is free to re-activate; only a
+  // fresh block costs credits, mirroring SlayerTaskBlockScreen's purchase flow.
+  const handleBlockCurrentTask = async () => {
+    if (!slayerTask) return
+    if (!getToken() || !getCharacterId()) {
+      addToast('Sign in to purchase a Slayer Task Block.', 'error')
+      return
+    }
+    const monsterId = slayerTask.monsterId
+    const existing = (slayerTaskBlocks || []).find(b => b.monsterId === monsterId)
+    try {
+      if (existing) {
+        if (existing.active) { addToast(`${slayerTask.monsterName} is already blocked.`, 'error'); return }
+        await api.setSlayerTaskBlockActive(monsterId, true)
+        applySlayerTaskBlockActive(monsterId, true)
+        addToast(`🚫 ${slayerTask.monsterName} blocked again — it won't be assigned as a task again.`, 'info')
+        return
+      }
+      const res = await api.purchaseSlayerTaskBlock(monsterId)
+      const remaining = Number(res?.credits_remaining)
+      if (Number.isFinite(remaining)) {
+        window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
+      }
+      applySlayerTaskBlockPurchase(monsterId)
+      addToast(`🚫 ${slayerTask.monsterName} blocked — it won't be assigned as a task again.`, 'info')
+    } catch (err) {
+      if (err?.status === 402) addToast('Not enough credits.', 'error')
+      else if (err?.body?.code === 'BLOCK_LIST_FULL') addToast(`Block list is full (max ${SLAYER_TASK_BLOCK_MAX}).`, 'error')
+      else addToast(err?.message || 'Failed to block monster.', 'error')
     }
   }
 
@@ -340,6 +375,9 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
               </button>
               <button onClick={handleSkipWithCredit} class="text-[11px] text-[var(--color-parchment)] opacity-40 underline">
                 Skip (-1 credit)
+              </button>
+              <button onClick={handleBlockCurrentTask} class="text-[11px] text-[var(--color-blood-light)] opacity-70 underline">
+                Block (-{SLAYER_TASK_BLOCK_COST} cr)
               </button>
             </div>
           </div>
