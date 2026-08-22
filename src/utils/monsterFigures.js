@@ -96,6 +96,7 @@ export const HIDE_PALETTES = {
   arcane:    palette('arcane', 'violet'),
   bark:      palette('bark', 'green'),
   flesh:     palette('flesh', 'pale'),
+  dairy:     palette('dairy', 'pale'),
 }
 
 export const PALETTE_NAMES = Object.keys(HIDE_PALETTES)
@@ -162,7 +163,7 @@ const PALETTE_OVERRIDE = {
   nagadoth_supreme: 'emerald', nagadoth_supreme_summon: 'emerald',
   nagadoth_queen: 'void',
   field_chicken: 'bone',
-  pasture_bull: 'flesh',
+  pasture_bull: 'dairy',
   cave_goblin: 'moss',
   lesser_fiend: 'crimson',
   dustpaw_rat: 'ash',

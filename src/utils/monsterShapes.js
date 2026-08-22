@@ -334,7 +334,7 @@ const ARCHETYPES = {
       ],
       tail: [
         ['path', 'M-24 -44 Q-34 -34 -32 -16', 'hide', 3.4, { fill: 'none' }],
-        ['path', 'M-32 -18 Q-36 -12 -30 -6 Q-28 -14 -30 -18 Z', 'horn'],
+        ['path', 'M-32 -18 Q-36 -12 -30 -6 Q-28 -14 -30 -18 Z', 'shade'],
       ],
       body: [
         ['path', 'M-26 -44 Q-26 -52 -6 -52 Q18 -52 24 -44 Q26 -34 20 -26 Q0 -20 -16 -24 Q-26 -30 -26 -44 Z', 'hide'],
@@ -343,6 +343,10 @@ const ARCHETYPES = {
         ['path', 'M-21 -4 L-11 -4 L-11 0 L-21 0 Z', 'horn'],
         ['path', 'M12 -34 L11 -2 L19 -2 L20 -34 Z', 'hide'],
         ['path', 'M10 -4 L20 -4 L20 0 L10 0 Z', 'horn'],
+        // Two black Friesian patches over the white coat — layered last so
+        // they read as markings on top of the hide, not a shaded contour.
+        ['path', 'M-2 -50 Q12 -52 20 -44 Q22 -36 14 -30 Q2 -28 -4 -34 Q-6 -44 -2 -50 Z', 'shade'],
+        ['path', 'M-24 -40 Q-24 -48 -14 -48 Q-8 -46 -8 -38 Q-10 -30 -18 -30 Q-24 -32 -24 -40 Z', 'shade'],
       ],
       head: [
         ['path', 'M20 -50 Q32 -52 38 -44 Q42 -38 36 -34 Q26 -30 20 -36 Q16 -44 20 -50 Z', 'hide'],
