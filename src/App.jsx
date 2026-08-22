@@ -2858,6 +2858,7 @@ function GameApp() {
               grantMinigameTaskRewards(savedTask.gatherTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
             }
+            recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.gatherTask?.id ?? 'any' })
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
           } else {
@@ -2892,6 +2893,7 @@ function GameApp() {
               grantMinigameTaskRewards(savedTask.minigameTask, { inventory: getHoldings().inventory, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
             }
+            recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.minigameTask?.id ?? 'any' })
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
           } else {
