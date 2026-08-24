@@ -1,4 +1,4 @@
-// INVARIANT (CLAUDE.md §4): combo consumables (every potion + food flagged
+// INVARIANT (.claude/rules/gameplay-engine.md): combo consumables (every potion + food flagged
 // combo:true, e.g. Karam) use a SEPARATE combo cooldown — one combo item may be
 // used the same tick as one normal food and never delays the next attack.
 // Normal food obeys the eat delay. Source of truth: src/engine/consumables.js.

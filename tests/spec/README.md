@@ -1,11 +1,12 @@
 # tests/spec — executable invariant specs
 
-Each file here pins a CLAUDE.md §4–§7 gameplay invariant as behavioural tests
-against its source-of-truth engine module. The goal is a curated, greppable,
-documentation-grade index: `grep -r "combo" tests/spec/` should read like a spec.
+Each file here pins a gameplay invariant — from `.claude/rules/gameplay-engine.md`
+or CLAUDE.md §5–§7 — as behavioural tests against its source-of-truth engine
+module. The goal is a curated, greppable, documentation-grade index: `grep -r
+"combo" tests/spec/` should read like a spec.
 
 Conventions:
-- File header states the invariant, its CLAUDE.md section, and the source module.
+- File header states the invariant, where it's documented (CLAUDE.md section or path-scoped rule), and the source module.
 - Test names are full behavioural sentences.
 - Prefer exercising the real engine function over asserting a bare constant.
 

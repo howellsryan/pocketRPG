@@ -59,10 +59,17 @@ Ten compact single-file skills vendored verbatim from [`CloudAI-X/threejs-skills
 
 | Rule | Scope (`paths:`) | Contents |
 |---|---|---|
+| `.claude/rules/gameplay-engine.md` | `src/engine/**`, `src/state/gameState.jsx`, `src/db/saveload.js`, plus the server-side combat/kill-count/slayer/daily-task mirrors | Holdings/banking, quest gates, prayer/combo, boss adds + shared-record combat, world minions, hard mode, Grim Reaper, Slayer, Kingdom of Royals, Construction unlocks, Daily Tasks, journeys/teleports |
+| `.claude/rules/coop-raids.md` | `functions/api/coop/**`, `world/server/CoopBossRoom.ts`, the co-op client/engine files | Co-op boss fights + raid parties: WebSocket push protocol, save-lock/heartbeat rules, kill-settlement idempotency, chat/loot broadcasts |
+| `.claude/rules/server-authority.md` | `functions/api/**`, `functions/_lib/**`, `worker/**`, `src/db/saveload.js` | Production security model: every server-authoritative surface, the admin portal, audit events, item-loss safety net, save-lock mechanics |
+| `.claude/rules/ui-styling.md` | `src/utils/theme.js`, `src/utils/itemIconResolve.js`, `src/index.css`, related icon/theme files | Theme system (light/dark, semantic tokens), single item-icon resolver |
+| `.claude/rules/single-file-build.md` | `build_single.cjs`, `src/3d/**`, 3D asset build/render scripts | Eval-time TDZ traps, code-split/chunk rules, the 3D/GLB asset pipeline |
 | `.claude/rules/pvp.md` | `src/engine/pvp*`, `world/server/pvp*`, `world/shared/pvpArea.ts`, `src/data/pvpBots.json`, `functions/api/leaderboard.js` | The Wilderness: the attack gate, the one swing function, death drops, combat logout, bot system |
 | `.claude/rules/mcp.md` | `functions/api/mcp.js`, `functions/_lib/mcp/**`, OAuth paths, consent screen, MCP tests | MCP architecture, bridge tools vs save-intents, schema/tools/test trio |
 | `.claude/rules/chat.md` | `functions/api/chat.js`, `functions/_lib/chat/**`, `ChatWidget.jsx`, `docs/game-guide.md`, `scripts/gen-chat-knowledge.cjs` | Chatbot model chain, progressive tool exposure, write gating + action fee, spend budgets, knowledge index |
+| `.claude/rules/world-design.md` | `world/zones/**`, `world/scripts/gen-*.mjs`, `world/client/src/editor/**`, terrain/scatter/props/scene files | Zone-authoring quality bar for the open world |
 | `.claude/rules/testing.md` | `tests/**` | Bug-fix-first, test-in-same-diff, move-logic-out-of-JSX, no mirror-list/source-regex tests, the CI gates |
+| `.claude/rules/video.md` | `video/**`, `tests/videoRecipe.test.ts` | The `video/**` clip capture/render pipeline traps |
 
 ## 4) Authoring practices (for new skills/rules)
 

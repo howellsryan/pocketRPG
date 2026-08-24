@@ -137,14 +137,15 @@ Three rules fell out of building it:
 ### Reading style off the current form
 
 `monsterCombatSprite` reads a multi-form boss's **current form**, not its top-level
-`attackStyle`. Reading the top level is the bug CLAUDE.md §4 already records for the
-open world, where it left Zaryth permanently ranged and the melee and magic clips its
-rig ships never played. A form decides style *and* (where it overrides one) speed.
+`attackStyle`. Reading the top level is the bug `.claude/rules/gameplay-engine.md`
+already records for the open world, where it left Zaryth permanently ranged and the
+melee and magic clips its rig ships never played. A form decides style *and* (where
+it overrides one) speed.
 
 ### Co-op
 
 Every member's events arrive on one shared ring tagged with the `characterId` whose
-session produced them (CLAUDE.md §20). `swingsFromCoopEvents` therefore takes the
+session produced them (`.claude/rules/coop-raids.md`). `swingsFromCoopEvents` therefore takes the
 viewer: only **their** swings move the tool, and only a boss swing whose `isTarget`
 names them moves the incoming motion. Without that gate a full room lunges eight
 times a tick.
@@ -768,7 +769,7 @@ magic blue — the colours the rest of the game already uses for the styles), an
 aura follows. It is deliberately the EYES: the one part of every archetype already
 allowed to be bright, so no body needs a second palette. The form itself comes from
 `monsterCombatSprite`, which already resolves it — reading `monster.attackStyle` here
-would reintroduce the bug CLAUDE.md §4 records for the open world.
+would reintroduce the bug `.claude/rules/gameplay-engine.md` records for the open world.
 
 ### Taking a hit, and dying
 

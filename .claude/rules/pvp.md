@@ -9,7 +9,7 @@ paths:
 
 # PvP Rules
 
-Path-scoped rule — auto-loads when working on PvP code. See `CLAUDE.md` §10 for the pointer. The core combat tick model and prayer/combo invariants live in `CLAUDE.md` §4 and §6.
+Path-scoped rule — auto-loads when working on PvP code. See `CLAUDE.md` §10 for the pointer. The core combat tick model lives in `CLAUDE.md` §6; prayer/combo invariants live in `.claude/rules/gameplay-engine.md`.
 
 ## PvP is the Wilderness
 
