@@ -5,7 +5,7 @@ description: Use when adding or editing game content in src/data - items, drops,
 
 # add-content: content authoring checklist
 
-Static content lives in `src/data/*.json` and is **immutable at runtime**. Gameplay invariants live in CLAUDE.md §4–§6; this skill is the authoring workflow.
+Static content lives in `src/data/*.json` and is **immutable at runtime**. Gameplay invariants live in `.claude/rules/gameplay-engine.md` (engine-wide) and CLAUDE.md §5–§6 (XP, tick model); this skill is the authoring workflow.
 
 ## Items & drops
 

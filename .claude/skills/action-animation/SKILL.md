@@ -139,7 +139,7 @@ is for a genuinely new attack style.
 - **Stance is part of the cadence.** combat.js takes a tick off a ranged swing on
   Rapid — the stance players pick *specifically* to be faster.
 - **Read a multi-form boss's CURRENT FORM**, never its top-level `attackStyle` — the
-  bug CLAUDE.md §4 records for the world, which left Zaryth permanently ranged.
+  bug `.claude/rules/gameplay-engine.md` records for the world, which left Zaryth permanently ranged.
 - **Co-op: only the viewer's own swings move the stage.** Every member's events ride
   one shared ring tagged by `characterId` (§20); the boss's incoming motion is gated
   on `isTarget` as well, or a full room lunges eight times a tick.

@@ -15,7 +15,7 @@ EDGE CASES: <player-visible and data-integrity edge cases to cover>
 OUT OF SCOPE: <adjacent issues noticed, flagged not fixed>
 ```
 
-- Gameplay invariants are CLAUDE.md §4–§7; a plan violating one is defective before any code exists.
+- Gameplay invariants are `.claude/rules/gameplay-engine.md` (engine-wide) plus CLAUDE.md §5–§7 (XP, tick model, special attacks); a plan violating one is defective before any code exists.
 - Anything moving value (coins/credits/items/XP grants) must state which side of the §14 boundary each mutation lands on; a **new** boundary crossing → Architect step required.
 - New game content → name the `add-content` checklist in the work item rather than restating it.
 - Player-visible mechanics change → include `docs/game-guide.md` + `npm run gen:knowledge` as a work item.
