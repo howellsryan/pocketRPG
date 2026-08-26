@@ -40,6 +40,10 @@ function normaliseSaveSettings(settings = {}) {
   // hard_mode_targets — a save blob that could carry them is a save blob that
   // could turn them on.
   delete next.hardModeTargets
+  // Slayer Task Blocks are a credit purchase in slayer_task_blocks (§14); a
+  // last-write-wins blob carrying them could resurrect a removed block or drop
+  // a paid-for one.
+  delete next.slayerTaskBlocks
   return next
 }
 
@@ -60,7 +64,7 @@ export function buildSavePayloadFromSnapshot(snapshot) {
 /** Settings that live ONLY in the server's own tables and are deliberately
  * stripped from the save blob, so a payload can never carry them back. They
  * have to survive applySavePayload's wipe or the pull silently deletes them. */
-export const SERVER_OWNED_SETTINGS = ['bossKillCounts', 'raidKillCounts', 'hardModeTargets']
+export const SERVER_OWNED_SETTINGS = ['bossKillCounts', 'raidKillCounts', 'hardModeTargets', 'slayerTaskBlocks']
 
 async function readPreservedSettings() {
   const out = {}

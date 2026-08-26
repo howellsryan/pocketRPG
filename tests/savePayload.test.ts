@@ -130,6 +130,45 @@ describe('save payload snapshot', () => {
     expect(stored.raidKillCounts).toEqual({ key: 'raidKillCounts', value: { vaults: 2 } })
   })
 
+  it('carries the slayer task block list across the wipe, because the payload cannot', async () => {
+    // The block list is a credit purchase living in D1 slayer_task_blocks (§14),
+    // so it never rides the save blob — which made it exactly the trap kill
+    // counts were: every cloud pull wiped the local mirror and nothing put it
+    // back. Boot then ran its offline catch-up against an empty block list
+    // BEFORE fetchSlayerTaskBlocks landed, so auto slayer chain-assigned the
+    // very monsters the player had paid to block.
+    const stored: Record<string, unknown> = {}
+    vi.spyOn(storesModule, 'getSetting').mockImplementation(async (key: string) =>
+      ({ slayerTaskBlocks: [{ monsterId: 'red_dragon', active: true }] } as any)[key])
+    vi.spyOn(dbModule, 'clearAllStores').mockResolvedValue(undefined as any)
+    vi.spyOn(dbModule, 'getDB').mockResolvedValue({
+      put: vi.fn(),
+      transaction: vi.fn(() => ({
+        store: { put: (val: any, key: string) => { stored[key] = val } },
+        done: Promise.resolve(),
+      })),
+    } as any)
+
+    await applySavePayload({ stats: {}, inventory: [], bank: {}, equipment: {}, settings: {} })
+
+    expect(stored.slayerTaskBlocks).toEqual({
+      key: 'slayerTaskBlocks',
+      value: [{ monsterId: 'red_dragon', active: true }],
+    })
+  })
+
+  it('strips the slayer task block list from the save payload', () => {
+    const payload = buildSavePayloadFromSnapshot({
+      player: { username: 'Tester' },
+      stats: {},
+      inventory: [],
+      bank: {},
+      equipment: {},
+      settings: { slayerTaskBlocks: [{ monsterId: 'red_dragon', active: true }] },
+    })
+    expect(payload.settings.slayerTaskBlocks).toBeUndefined()
+  })
+
   it('writes nothing extra when there are no kill counts to carry', async () => {
     const stored: Record<string, unknown> = {}
     vi.spyOn(storesModule, 'getSetting').mockResolvedValue(undefined as any)
