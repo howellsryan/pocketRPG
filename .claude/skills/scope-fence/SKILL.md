@@ -27,6 +27,24 @@ Do not list what you changed — the diff already shows it (CLAUDE.md §17: neve
 - Formatting churn on untouched lines (auto-format, import reordering)? Revert before presenting — it is diff noise.
 - The requested fix reveals the real bug is elsewhere? Stop and say so — do not silently relocate the fence. Re-fence with the user.
 
+## Check the fence held, before committing
+
+Read the diff back against your boundary sentence (`git diff`, `git diff --cached`, or `git diff origin/main...HEAD`). For each signal below, decide **keep** (the task genuinely requires it), **split** (real, but its own change), or **justify** (one line on why it had to ride along):
+
+| Signal | Why it matters here |
+|---|---|
+| **Unrelated paths** | A file outside the fence sentence. An engine fix touching `screens/` needs a reason. |
+| **New dependency** | A decision, not an implementation detail. Almost always split. |
+| **A UI import inside `src/engine/`** | Never a keep — the engine is pure logic, and that boundary is what makes it testable (§3). |
+| **A new `/api/save` check** | Almost never a keep. §14 allows exactly three guards; tighten integrity by moving the reward server-side instead. |
+| **Committed `index.html` or `game-*.js`** | Never a keep — generated and gitignored (§12). |
+| **A comment added to `migrations/*.sql`** | Never a keep — §13 forbids them outright; the file gets pasted into the D1 console by hand. |
+| **Config, CI, or build edits** | `build_single.cjs`, `wrangler.jsonc`, `worker/router.js`. Not a drive-by — and a new `functions/` file needs `npm run gen:routes`, which IS in scope. |
+| **Oversized hunk** | A 400-line diff for a "small fix" means the fence moved while you were not looking. |
+| **Formatting-only files** | Whole diff is reflow or import reordering. Revert it. |
+
+Anything landing in **split** that you already wrote: take it back out. A smaller diff you can defend beats a larger one you have to explain.
+
 ## Anti-patterns this skill kills
 
 - The 40-file diff for a one-line fix.
