@@ -25,6 +25,17 @@ Do NOT persist what the codebase, git history, or docs already record — memory
 - **Write the trigger with the fact.** A future session needs to know WHEN this matters: "when touching the publish pipeline, remember X".
 - **Small and curated beats large and complete.**
 
+## Writing a skill: the description IS the contract
+
+A skill body is worthless if the description never fires, and worse than worthless if the description fires *instead* of the body. `SKILLS.md` §4 covers authoring; these are the rules for the description line specifically:
+
+- **Triggering conditions only.** The situation, the symptom, the file being touched — never a summary of what the skill does. A description that explains the workflow hands a future session a shortcut it will take, and the body becomes documentation it skips.
+- **Always state the non-trigger** (`Do not use for …`). Without it a skill fires on adjacent work and gets ignored out of habit.
+- **Under ~500 characters.** Every description is always-visible input cost, per skill, per session — the same budget §17 governs. A description listing every file it covers has become a table of contents; name the symptom instead.
+- **Third person, concrete symptoms** — the words a future session will actually be thinking, error text included.
+
+Audit test: could a session read only the description and believe it now knows what to do? If yes, it is summarizing the workflow. Cut it back to the trigger.
+
 ## Recall: the verification rule
 
 Remembered facts are point-in-time observations. Before ACTING on one:
