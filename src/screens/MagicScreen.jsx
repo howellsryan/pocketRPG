@@ -12,7 +12,7 @@ import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick } from '../engine/skilling.js'
 import { emptySession } from '../engine/activitySession.js'
 import { countItem, removeItem } from '../engine/inventory.js'
-import { hasRequiredRunes, getRunesToConsume, getEquippedElementalStaff } from '../engine/runes.js'
+import { hasRequiredRunes, getRunesToConsume, getElementalRuneSources } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -331,8 +331,9 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
     )
   }
 
-  const staff = getEquippedElementalStaff(equipment, itemsData)
-  const staffRuneType = staff?.elemental
+  // Which runes are freed by an equipped elemental staff (weapon) and/or tome
+  // (shield) — each source frees its OWN element, so both can show at once.
+  const freeRuneSources = getElementalRuneSources(equipment, itemsData)
 
   const grouped = groupActions(allActions)
 
@@ -380,7 +381,7 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
                   meta={<>
                     <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {grindmanXP(action.xp, isGrindman)} XP · {formatActionDuration(action.ticks)}
                     {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) =>
-                      staffRuneType === id ? `${staff?.name || 'Staff'} (${itemsData[id]?.name || id})` : `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
+                      freeRuneSources[id] ? `${freeRuneSources[id].name} (${itemsData[id]?.name || id})` : `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                     {action.materials && <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                     {availCount !== null && <span class="text-[var(--color-gold)]"> · {availCount.toLocaleString()} actions</span>}
                     {levelOk && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip elemental staff)</span>}
