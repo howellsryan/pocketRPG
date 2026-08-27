@@ -1754,3 +1754,38 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     idleSupplies: supplyReport,
   }
 }
+
+/**
+ * Advance a minigame's countdown across an offline window.
+ *
+ * A minigame is a pure timer — no rolls, no materials — so the whole
+ * simulation is "subtract the elapsed ticks". It is a shared helper because
+ * three separate contexts own a copy of that countdown (boot catch-up in
+ * gameState, the visibility-return handler and the live App tick), and a
+ * fourth copy is what left the cold-boot path with none at all.
+ *
+ * Completion is reported, never applied: granting a minigame's rewards needs
+ * App-level helpers (the server-authoritative completion call, the collection
+ * log, the reward reveal) that the boot loader doesn't have, so callers that
+ * can't grant park the task at 0 ticks and let the first live tick finish it.
+ */
+export function advanceMinigameOffline(task, elapsedMs) {
+  const mg = task?.minigameTask
+  if (!mg) return { completed: false, ticksRemaining: 0, totalTicks: 0, task }
+  const ticksOf = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
+  const totalTicks = ticksOf(task.totalTicks) ?? ticksOf(mg.ticks)
+  const prev = ticksOf(task.ticksRemaining) ?? totalTicks
+  // A task carrying no duration at all (a save referencing a minigame that no
+  // longer exists) is NOT a finished one — reporting it complete would park it
+  // at 0 ticks for the live tick to grant in full, for free.
+  if (prev === null) return { completed: false, ticksRemaining: 0, totalTicks: 0, task }
+  const elapsedTicks = Math.floor(Math.max(0, Number(elapsedMs) || 0) / TICK_MS)
+  const remaining = Math.max(0, prev - elapsedTicks)
+  const total = totalTicks ?? prev
+  return {
+    completed: remaining <= 0,
+    ticksRemaining: remaining,
+    totalTicks: total,
+    task: { ...task, totalTicks: total, ticksRemaining: remaining },
+  }
+}

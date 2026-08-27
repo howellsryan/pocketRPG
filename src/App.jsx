@@ -63,7 +63,7 @@ import { isBackgroundCombatEligible } from './engine/backgroundCombat.js'
 import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
 import { mergeSession, sessionPatchFromResult } from './engine/activitySession.js'
 import { resetActivityProgressSync } from './cloud/activityProgress.js'
-import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
+import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen, advanceMinigameOffline } from './engine/idleEngine.js'
 import { simulateIdleCombatChain } from './engine/idleSlayerLoop.js'
 import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
 import prayersData from './data/prayers.json'
@@ -1128,11 +1128,8 @@ function GameApp() {
               sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
             }
           } else if (savedTask.type === 'minigame' && savedTask.minigameTask) {
-            const elapsedTicks = Math.floor(elapsedMs / 600)
-            const totalTicks = savedTask.totalTicks ?? savedTask.minigameTask.ticks
-            const prevRemaining = savedTask.ticksRemaining ?? totalTicks
-            const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
-            if (newRemaining <= 0) {
+            const adv = advanceMinigameOffline(savedTask, elapsedMs)
+            if (adv.completed) {
               setActiveTask(null)
               activeTaskRef.current = null
               try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
@@ -1150,8 +1147,9 @@ function GameApp() {
               recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.minigameTask?.id ?? 'any' })
               sim = { minigameCompleted: true }
             } else {
-              setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
-              sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
+              setActiveTask(adv.task)
+              activeTaskRef.current = adv.task
+              sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(adv.ticksRemaining / 6000) }
             }
           } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv, { isIronman: getIronmanMode(), autoBankExcludedItemIds: autoBankExcludedItems })
           else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank, { autoBankExcludedItemIds: autoBankExcludedItems })
@@ -2874,11 +2872,8 @@ function GameApp() {
             sim = { minigameTimeReduced: true }
           }
         } else if (savedTask.type === 'minigame' && savedTask.minigameTask) {
-          const TICKS_PER_HOUR = 6000
-          const totalTicks = savedTask.totalTicks ?? savedTask.minigameTask.ticks
-          const prevRemaining = savedTask.ticksRemaining ?? totalTicks
-          const ticksRemaining = Math.max(0, prevRemaining - TICKS_PER_HOUR)
-          if (ticksRemaining <= 0) {
+          const adv = advanceMinigameOffline(savedTask, elapsedMs)
+          if (adv.completed) {
             setActiveTask(null)
             activeTaskRef.current = null
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
@@ -2897,13 +2892,13 @@ function GameApp() {
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
           } else {
-            const updatedTask = { ...savedTask, totalTicks, ticksRemaining }
-            setActiveTask(updatedTask)
+            setActiveTask(adv.task)
+            activeTaskRef.current = adv.task
             idleResultData = {
               elapsedMs,
-              task: updatedTask,
+              task: adv.task,
               minigameTimeReduced: true,
-              hoursRemaining: Math.ceil(ticksRemaining / TICKS_PER_HOUR)
+              hoursRemaining: Math.ceil(adv.ticksRemaining / 6000)
             }
             sim = { minigameTimeReduced: true }
           }

@@ -2,7 +2,7 @@ import { createContext } from 'preact'
 import { useState, useContext, useCallback, useEffect, useRef } from 'preact/hooks'
 import { getAllStats, getInventory, getEquipment, getBank, getPlayer, saveAllStats, saveInventory, saveEquipment, saveBank, savePlayer, getSetting, saveSetting } from '../db/stores.js'
 import { getLevelFromXP, clampXP } from '../engine/experience.js'
-import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from '../engine/idleEngine.js'
+import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen, advanceMinigameOffline } from '../engine/idleEngine.js'
 import { simulateIdleCombatChain } from '../engine/idleSlayerLoop.js'
 import { activeSlayerTaskBlockIds } from '../engine/slayerMasters.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
@@ -347,6 +347,19 @@ export function GameProvider({ children }) {
             sim = simulateIdleThieving(savedTask, elapsedMs)
           } else if (savedTask.type === 'hunter') {
             sim = simulateIdleHunting(savedTask, elapsedMs)
+          } else if (savedTask.type === 'minigame' && savedTask.minigameTask) {
+            // Minigames are a pure countdown, and this cold-boot path can't
+            // grant their rewards (that needs the App's server-authoritative
+            // completion call + collection log + reveal). So advance the timer
+            // and, when the window finished it, park the task at 0 ticks — the
+            // App's first live tick sees `remaining <= 0` and completes it
+            // properly. Same split the journey catch-up below uses.
+            const adv = advanceMinigameOffline(savedTask, elapsedMs)
+            savedTask = adv.task
+            try { localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask)) } catch {}
+            sim = adv.completed
+              ? { minigameCompleted: true }
+              : { minigameTimeReduced: true, hoursRemaining: Math.ceil(adv.ticksRemaining / 6000) }
           } else if (savedTask.type === 'quest') {
             sim = {}
           }
