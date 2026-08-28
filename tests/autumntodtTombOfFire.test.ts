@@ -127,6 +127,20 @@ describe('Tomb of Fire — unlimited fire runes', () => {
     const both = { weapon: { itemId: 'staff_of_fire' }, shield: { itemId: TOME } }
     expect(getRunesToConsume(fireBolt.runeReq, both, itemsData)).toEqual({ air_rune: 2, chaos_rune: 1 })
   })
+
+  it('frees its OWN element alongside a DIFFERENT elemental staff, not instead of it', () => {
+    // Staff of Air (weapon) frees air; Tomb of Fire (shield) frees fire — both
+    // at once, since each supplies a different element. Fire Wave needs all
+    // three: fire, air and blood.
+    const airStaffAndTome = { weapon: { itemId: 'staff_of_air' }, shield: { itemId: TOME } }
+    const fireWave = spellsData.fire_wave // { fire_rune: 7, air_rune: 5, blood_rune: 1 }
+    expect(getRunesToConsume(fireWave.runeReq, airStaffAndTome, itemsData)).toEqual({ blood_rune: 1 })
+
+    const onlyBlood = [{ itemId: 'blood_rune', quantity: 100 }]
+    expect(hasRequiredRunes(fireWave.runeReq, onlyBlood, {}, airStaffAndTome, itemsData)).toBe(true)
+    // Missing the one rune neither source frees is still a hard block.
+    expect(hasRequiredRunes(fireWave.runeReq, [], {}, airStaffAndTome, itemsData)).toBe(false)
+  })
 })
 
 describe('Tomb of Fire — 10% fire spell damage', () => {
