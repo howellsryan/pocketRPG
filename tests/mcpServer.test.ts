@@ -364,9 +364,19 @@ describe('MCP reference data', () => {
 })
 
 describe('MCP dispatch', () => {
-  // Empty env: handlers fail auth/DB and surface as isError results, but a
-  // *known* tool must never throw "Unknown tool" — this guards schema/dispatch drift.
-  const ctx = { env: {}, authorization: null } as any
+  // Most handlers fail auth and surface as isError results. get_leaderboard is
+  // intentionally public, so it reaches D1; give the dispatch smoke test a
+  // minimal read-only DB double rather than generating an expected console error.
+  const dispatchDb = {
+    prepare: () => ({
+      bind: () => ({
+        all: async () => ({ results: [] }),
+        first: async () => null,
+        run: async () => ({ meta: { changes: 0 } }),
+      }),
+    }),
+  }
+  const ctx = { env: { DB: dispatchDb }, authorization: null } as any
 
   it('every advertised tool has a dispatch handler', async () => {
     for (const name of TOOL_NAMES) {
