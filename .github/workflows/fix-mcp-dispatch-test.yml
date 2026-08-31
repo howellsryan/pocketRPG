@@ -1,0 +1,64 @@
+name: Fix MCP dispatch smoke test
+
+on:
+  push:
+    branches:
+      - rh/buff-primeval-boots
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rh/buff-primeval-boots
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Fix dispatch smoke-test environment
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/mcpServer.test.ts')
+          text = path.read_text()
+          old = '''describe('MCP dispatch', () => {
+            // Empty env: handlers fail auth/DB and surface as isError results, but a
+            // *known* tool must never throw "Unknown tool" — this guards schema/dispatch drift.
+            const ctx = { env: {}, authorization: null } as any
+          '''
+          new = '''describe('MCP dispatch', () => {
+            // Most handlers fail auth and surface as isError results. get_leaderboard is
+            // intentionally public, so it reaches D1; give the dispatch smoke test a
+            // minimal read-only DB double rather than generating an expected console error.
+            const dispatchDb = {
+              prepare: () => ({
+                bind: () => ({
+                  all: async () => ({ results: [] }),
+                  first: async () => null,
+                  run: async () => ({ meta: { changes: 0 } }),
+                }),
+              }),
+            }
+            const ctx = { env: { DB: dispatchDb }, authorization: null } as any
+          '''
+          if old not in text:
+              raise SystemExit('Expected MCP dispatch fixture was not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - name: Full repository CI
+        run: npm run ci
+      - name: Commit verified fix and remove one-shot workflow
+        run: |
+          rm .github/workflows/fix-mcp-dispatch-test.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/mcpServer.test.ts .github/workflows/fix-mcp-dispatch-test.yml
+          git commit -m "Fix MCP dispatch smoke test DB fixture"
+          git push origin HEAD:rh/buff-primeval-boots
