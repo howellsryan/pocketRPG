@@ -27,10 +27,21 @@ function today() {
 }
 
 function issueTask(characterId: number, taskId: string, target: number) {
+  const date = today()
   raw.prepare(
     `INSERT INTO character_daily_tasks (character_id, task_date, slot, task_id, tier, target, progress, credited, issued_at)
      VALUES (?, ?, 0, ?, 'Novice', ?, 0, 0, 0)`,
-  ).run(characterId, today(), taskId, target)
+  ).run(characterId, date, taskId, target)
+
+  // The production endpoint fills missing daily-task slots before applying
+  // events. Seed four valid, non-matching tasks so this fixture tests only
+  // the task it explicitly issued and never depends on today's seeded pool.
+  for (let slot = 1; slot < 5; slot++) {
+    raw.prepare(
+      `INSERT INTO character_daily_tasks (character_id, task_date, slot, task_id, tier, target, progress, credited, issued_at)
+       VALUES (?, ?, ?, 'gain_mining_xp', 'Novice', 500, 0, 0, 0)`,
+    ).run(characterId, date, slot)
+  }
 }
 
 function post(characterId: number, body: any) {
