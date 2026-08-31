@@ -16980,23 +16980,24 @@
     "slot": "boots",
     "stackable": false,
     "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": -4,
-      "ranged": -1
+      "stab": 16,
+      "slash": 16,
+      "crush": 16,
+      "magic": 0,
+      "ranged": 0
     },
     "defenceBonus": {
       "stab": 22,
       "slash": 22,
       "crush": 22,
-      "magic": -4,
-      "ranged": -1
+      "magic": 0,
+      "ranged": 8
     },
     "otherBonus": {
-      "meleeStrength": 5,
+      "meleeStrength": 11,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "meleeDamage": 6
     },
     "requirements": {
       "defence": 75,

@@ -78,10 +78,29 @@ describe('Grondar (Bandos) melee tank set', () => {
     }
   })
 
-  it('Grondar Boots leads boots slot on melee strength and accuracy', () => {
-    for (const rival of ['spiked_manacles', 'primeval_boots', 'dragon_boots']) {
-      expect(str('grondar_boots')).toBeGreaterThan(str(rival))
-      expect(acc('grondar_boots')).toBeGreaterThan(acc(rival))
+  it('Primeval Boots are at least 20% stronger than Grondar across every Grondar combat stat', () => {
+    const primeval = (itemsData as any).primeval_boots
+    const grondar = (itemsData as any).grondar_boots
+
+    for (const group of ['attackBonus', 'defenceBonus', 'otherBonus']) {
+      for (const [stat, value] of Object.entries(grondar[group] ?? {})) {
+        const grondarValue = value as number
+        const primevalValue = (primeval[group]?.[stat] ?? 0) as number
+        if (grondarValue > 0) {
+          expect(primevalValue).toBeGreaterThanOrEqual(Math.ceil(grondarValue * 1.2))
+        } else if (grondarValue < 0) {
+          expect(primevalValue).toBeGreaterThan(grondarValue)
+        } else {
+          expect(primevalValue).toBeGreaterThanOrEqual(0)
+        }
+      }
+    }
+  })
+
+  it('Primeval Boots lead the boots slot on melee strength and accuracy', () => {
+    for (const rival of ['spiked_manacles', 'grondar_boots', 'dragon_boots']) {
+      expect(str('primeval_boots')).toBeGreaterThan(str(rival))
+      expect(acc('primeval_boots')).toBeGreaterThan(acc(rival))
     }
   })
 
