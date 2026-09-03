@@ -104,6 +104,38 @@
       "scale": 1,
       "tint": "#b87333"
     },
+    "iron_spear": {
+      "model": "weapons/spear.glb",
+      "bone": "hand_r",
+      "position": [-0.01, 0.025, 0.24],
+      "rotationDeg": [47, 0, -15],
+      "scale": 1,
+      "tint": "#6e747e"
+    },
+    "steel_spear": {
+      "model": "weapons/spear.glb",
+      "bone": "hand_r",
+      "position": [-0.01, 0.025, 0.24],
+      "rotationDeg": [47, 0, -15],
+      "scale": 1,
+      "tint": "#bcc6d2"
+    },
+    "mithril_spear": {
+      "model": "weapons/spear.glb",
+      "bone": "hand_r",
+      "position": [-0.01, 0.025, 0.24],
+      "rotationDeg": [47, 0, -15],
+      "scale": 1,
+      "tint": "#3f57c4"
+    },
+    "adamant_spear": {
+      "model": "weapons/spear.glb",
+      "bone": "hand_r",
+      "position": [-0.01, 0.025, 0.24],
+      "rotationDeg": [47, 0, -15],
+      "scale": 1,
+      "tint": "#3f8a5a"
+    },
     "runeforged_spear": {
       "model": "weapons/spear.glb",
       "bone": "hand_r",

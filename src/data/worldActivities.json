@@ -1688,6 +1688,30 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_spear"
+    },
+    {
+      "kind": "skill",
       "ref": "woodcutting:redwood"
     }
   ],
@@ -2743,6 +2767,30 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_spear"
     },
     {
       "kind": "thieving",
@@ -3817,6 +3865,30 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_spear"
     },
     {
       "kind": "skill",
@@ -5416,6 +5488,30 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_spear"
+    },
+    {
+      "kind": "skill",
       "ref": "woodcutting:willow"
     },
     {
@@ -6469,6 +6565,30 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_spear"
     },
     {
       "kind": "skill",
@@ -8955,6 +9075,30 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_spear"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_spear"
     },
     {
       "kind": "skill",

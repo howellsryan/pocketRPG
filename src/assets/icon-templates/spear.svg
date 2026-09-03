@@ -1,17 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="{{id}}_head" x1="0" y1="0" x2="1" y2="0.4">
-      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    <linearGradient id="{{id}}_head" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.42" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
     </linearGradient>
-    <linearGradient id="{{id}}_shaft" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#7a4a1e"/><stop offset="1" stop-color="#3a2410"/>
+    <linearGradient id="{{id}}_metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.48" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+    <linearGradient id="{{id}}_wood" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8a5425"/><stop offset="0.5" stop-color="#5b3519"/><stop offset="1" stop-color="#2f1c0d"/>
     </linearGradient>
   </defs>
-  <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <rect x="246" y="172" width="20" height="276" rx="9" fill="url(#{{id}}_shaft)"/>
-    <path d="M256 58 C 282 110 288 154 286 186 L226 186 C 224 154 230 110 256 58 Z" fill="url(#{{id}}_head)"/>
-    <path d="M256 86 L256 182" stroke="{{light}}" stroke-width="6" fill="none"/>
-    <rect x="232" y="184" width="48" height="22" rx="7" fill="{{shade}}"/>
-    <circle cx="256" cy="458" r="14" fill="#5a3d14"/>
+  <g transform="rotate(-45 256 256)" stroke="#171311" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="244" y="181" width="24" height="255" rx="10" fill="url(#{{id}}_wood)"/>
+    <path d="M256 34 L292 108 L280 160 L316 132 L290 190 H222 L196 132 L232 160 L220 108 Z" fill="url(#{{id}}_head)"/>
+    <path d="M256 58 L270 116 L262 174 H250 L242 116 Z" fill="{{light}}" fill-opacity=".72" stroke="{{base}}" stroke-width="6"/>
+    <path d="M222 190 H290 L278 214 H234 Z" fill="url(#{{id}}_metal)"/>
+    <path d="M240 202 L256 188 L272 202 L256 216 Z" fill="{{base}}" stroke="{{light}}" stroke-width="5"/>
+    <rect x="235" y="216" width="42" height="20" rx="7" fill="url(#{{id}}_metal)"/>
+    <path d="M246 248 L266 268 M246 272 L266 292 M246 296 L266 316" stroke="#2b160d" stroke-width="12"/>
+    <path d="M246 258 L266 278 M246 282 L266 302" stroke="#8d5830" stroke-width="6"/>
+    <rect x="236" y="320" width="40" height="18" rx="6" fill="url(#{{id}}_metal)"/>
+    <path d="M248 345 L264 361 M248 369 L264 385" stroke="#2b160d" stroke-width="11"/>
+    <rect x="238" y="404" width="36" height="18" rx="6" fill="url(#{{id}}_metal)"/>
+    <path d="M256 432 L273 456 L256 478 L239 456 Z" fill="#46301b"/>
+    <g opacity="{{glintOpacity}}" fill="{{glintColor}}" stroke="none">
+      <path d="M256 20 L262 34 L278 40 L262 46 L256 62 L250 46 L234 40 L250 34 Z"/>
+      <circle cx="283" cy="73" r="7"/>
+      <animate attributeName="opacity" values="{{glintValues}}" dur="1.4s" repeatCount="indefinite"/>
+    </g>
   </g>
 </svg>

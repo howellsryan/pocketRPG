@@ -292,6 +292,18 @@
         }
       },
       {
+        "id": "smith_bronze_spear",
+        "name": "Smith bronze spear",
+        "level": 1,
+        "ticks": 5,
+        "xp": 25,
+        "product": "bronze_spear",
+        "materials": {
+          "bronze_bar": 1,
+          "logs": 3
+        }
+      },
+      {
         "id": "smith_bronze_dagger",
         "name": "Smith bronze dagger",
         "level": 1,
@@ -347,6 +359,18 @@
         }
       },
       {
+        "id": "smith_iron_spear",
+        "name": "Smith iron spear",
+        "level": 15,
+        "ticks": 5,
+        "xp": 50,
+        "product": "iron_spear",
+        "materials": {
+          "iron_bar": 1,
+          "oak_logs": 3
+        }
+      },
+      {
         "id": "smith_iron_axe",
         "name": "Smith iron axe",
         "level": 16,
@@ -389,6 +413,18 @@
         "materials": {
           "iron_ore": 1,
           "coal": 2
+        }
+      },
+      {
+        "id": "smith_steel_spear",
+        "name": "Smith steel spear",
+        "level": 30,
+        "ticks": 5,
+        "xp": 75,
+        "product": "steel_spear",
+        "materials": {
+          "steel_bar": 1,
+          "willow_logs": 3
         }
       },
       {
@@ -448,6 +484,18 @@
         }
       },
       {
+        "id": "smith_mithril_spear",
+        "name": "Smith mithril spear",
+        "level": 50,
+        "ticks": 5,
+        "xp": 100,
+        "product": "mithril_spear",
+        "materials": {
+          "mithril_bar": 1,
+          "maple_logs": 3
+        }
+      },
+      {
         "id": "smith_mithril_axe",
         "name": "Smith mithril axe",
         "level": 51,
@@ -490,6 +538,18 @@
         "materials": {
           "adamantite_ore": 1,
           "coal": 6
+        }
+      },
+      {
+        "id": "smith_adamant_spear",
+        "name": "Smith adamant spear",
+        "level": 70,
+        "ticks": 5,
+        "xp": 125,
+        "product": "adamant_spear",
+        "materials": {
+          "adamant_bar": 1,
+          "yew_logs": 3
         }
       },
       {
@@ -546,7 +606,7 @@
         "product": "runeforged_spear",
         "materials": {
           "runeforged_bar": 1,
-          "magic_logs": 1
+          "magic_logs": 3
         }
       },
       {

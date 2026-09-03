@@ -75,6 +75,9 @@ if (fs.existsSync(TIERS_PATH)) {
     .replace(/\{\{base\}\}/g, pal.base)
     .replace(/\{\{light\}\}/g, pal.light)
     .replace(/\{\{shade\}\}/g, pal.shade)
+    .replace(/\{\{glintOpacity\}\}/g, pal.glintOpacity || '0')
+    .replace(/\{\{glintColor\}\}/g, pal.glintColor || pal.light)
+    .replace(/\{\{glintValues\}\}/g, pal.glintValues || '0;0;0')
 
   // items: id is <tier>_<shape>, shape names the template.
   for (const [shape, tierList] of Object.entries(tiers.items || {})) {
