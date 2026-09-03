@@ -104,6 +104,22 @@
       "scale": 1,
       "tint": "#b87333"
     },
+    "runeforged_spear": {
+      "model": "weapons/spear.glb",
+      "bone": "hand_r",
+      "position": [
+        -0.01,
+        0.025,
+        0.24
+      ],
+      "rotationDeg": [
+        47,
+        0,
+        -15
+      ],
+      "scale": 1,
+      "tint": "#2fd0c0"
+    },
     "krylth_spear": {
       "model": "weapons/spear.glb",
       "bone": "hand_r",

@@ -282,6 +282,42 @@
     "shopValue": 14925,
     "isGeneralStore": false
   },
+  "runeforged_spear": {
+    "id": "runeforged_spear",
+    "weaponClass": "spear",
+    "legacy_item_id": "rune_spear",
+    "name": "Runeforged Spear",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 7,
+      "slash": 45,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 44,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 40
+    },
+    "shopValue": 14925,
+    "isGeneralStore": false
+  },
   "bronze_spear": {
     "id": "bronze_spear",
     "weaponClass": "spear",

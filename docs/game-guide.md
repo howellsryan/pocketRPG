@@ -31,6 +31,8 @@ Your combat level summarises your fighting power for quests and for the Wilderne
 
 You have 11 equipment slots: weapon, ammo, head, body, legs, shield, neck, gloves, boots, cape and ring. Each piece adds attack, strength and defence bonuses that feed directly into the combat formulas. Metal gear progresses through tiers — Bronze, Iron, Steel, Mithril, Adamant, Rune and Dragon — with level requirements to equip. Compare an item's stats before equipping, and remember special gear effects (like dragonfire protection) only work while the item is worn — the same is true of skilling jewellery like the Bracelet of Runecrafting (requires Runecrafting 30), which doubles both the runes you craft and the rune essence you mine, and the Bracelet of Smithing (requires Smithing 30), which doubles the bars and items produced by every Smithing action — but only while worn; sitting in your inventory or bank does nothing.
 
+At Smithing 75, you can forge a Runeforged Spear from 1 Runeforged Bar and 1 Magic Log. It takes the standard 5-tick smithing action, grants 150 Smithing XP, matches the Runeforged Scimitar's combat stats and 4-tick attack speed, and counts as a spear.
+
 Equipment tabs save a full loadout — everything worn plus your inventory — and load it back by re-arranging gear you already own between bank, inventory and equipment. Every character gets three tabs; more can be bought on the Character Unlocks screen for 10 credits each, with no limit on how many you buy.
 
 ## Shardglass gear

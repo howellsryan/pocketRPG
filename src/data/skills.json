@@ -538,6 +538,18 @@
         }
       },
       {
+        "id": "smith_rune_spear",
+        "name": "Smith runeforged spear",
+        "level": 75,
+        "ticks": 5,
+        "xp": 150,
+        "product": "runeforged_spear",
+        "materials": {
+          "runeforged_bar": 1,
+          "magic_logs": 1
+        }
+      },
+      {
         "id": "smith_rune_axe",
         "name": "Smith runeforged axe",
         "level": 76,
