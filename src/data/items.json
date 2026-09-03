@@ -142,6 +142,42 @@
     "shopValue": 74,
     "isGeneralStore": false
   },
+  "iron_spear": {
+    "id": "iron_spear",
+    "weaponClass": "spear",
+    "legacy_item_id": "iron_spear",
+    "name": "Iron Spear",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 2,
+      "slash": 13,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 12,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 74,
+    "isGeneralStore": false
+  },
   "steel_scimitar": {
     "id": "steel_scimitar",
     "legacy_item_id": "steel_scimitar",
@@ -168,6 +204,42 @@
     },
     "otherBonus": {
       "meleeStrength": 14,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 5
+    },
+    "shopValue": 85,
+    "isGeneralStore": false
+  },
+  "steel_spear": {
+    "id": "steel_spear",
+    "weaponClass": "spear",
+    "legacy_item_id": "steel_spear",
+    "name": "Steel Spear",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 3,
+      "slash": 20,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 18,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -212,6 +284,42 @@
     "shopValue": 452,
     "isGeneralStore": false
   },
+  "mithril_spear": {
+    "id": "mithril_spear",
+    "weaponClass": "spear",
+    "legacy_item_id": "mithril_spear",
+    "name": "Mithril Spear",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 5,
+      "slash": 27,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 26,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 20
+    },
+    "shopValue": 452,
+    "isGeneralStore": false
+  },
   "adamant_scimitar": {
     "id": "adamant_scimitar",
     "legacy_item_id": "adamant_scimitar",
@@ -238,6 +346,42 @@
     },
     "otherBonus": {
       "meleeStrength": 28,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 30
+    },
+    "shopValue": 1479,
+    "isGeneralStore": false
+  },
+  "adamant_spear": {
+    "id": "adamant_spear",
+    "weaponClass": "spear",
+    "legacy_item_id": "adamant_spear",
+    "name": "Adamant Spear",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 6,
+      "slash": 38,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 36,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -282,6 +426,42 @@
     "shopValue": 14925,
     "isGeneralStore": false
   },
+  "runeforged_spear": {
+    "id": "runeforged_spear",
+    "weaponClass": "spear",
+    "legacy_item_id": "rune_spear",
+    "name": "Runeforged Spear",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 7,
+      "slash": 59,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 57,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 40
+    },
+    "shopValue": 14925,
+    "isGeneralStore": false
+  },
   "bronze_spear": {
     "id": "bronze_spear",
     "weaponClass": "spear",
@@ -294,7 +474,7 @@
     "attackSpeed": 5,
     "attackStyle": "stab",
     "attackBonus": {
-      "stab": 5,
+      "stab": 7,
       "slash": 5,
       "crush": 5,
       "magic": 0,
@@ -308,7 +488,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 5,
+      "meleeStrength": 7,
       "rangedStrength": 0,
       "magicDamage": 0
     },
