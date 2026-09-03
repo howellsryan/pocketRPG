@@ -21,7 +21,7 @@ cave_goblin, mining.
 - [x] warhammer ×1 (dragon)
 - [x] battleaxe ×1 (dragon)
 - [x] 2h_sword ×1 (runeforged)
-- [x] spear ×1 (bronze)
+- [x] spear ×2 (bronze templated; runeforged file-based bespoke)
 - [x] axe (hatchet) ×8 (bronze..dragon, gold)
 - [x] pickaxe ×8 (bronze..dragon, gold)
 

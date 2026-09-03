@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import itemsData from '../src/data/items.json'
 import skillsData from '../src/data/skills.json'
+import bespokeIconsData from '../src/data/bespokeIcons.json'
+import gameIconsData from '../src/data/gameIcons.json'
 import { getItemIconKey } from '../src/utils/itemIcons.js'
+import { resolveItemIcon } from '../src/utils/itemIconResolve.js'
 import { getWeaponModel } from '../src/utils/equipModels.js'
 
 const items = itemsData as Record<string, any>
 const skills = skillsData as Record<string, any>
+const bespokeIcons = bespokeIconsData as Record<string, any>
+const gameIcons = gameIconsData as Record<string, any>
 
 describe('Runeforged Spear', () => {
   it('matches the Runeforged Scimitar combat stats and speed while remaining a spear', () => {
@@ -42,9 +47,18 @@ describe('Runeforged Spear', () => {
     })
   })
 
-  it('uses the spear icon and existing spear model with Runeforged tint', () => {
+  it('renders the bespoke Runeforged Spear SVG instead of the generic spear glyph', () => {
     expect(getItemIconKey(items.runeforged_spear)).toBe('spear')
+    expect(bespokeIcons.runeforged_spear).toBeTruthy()
 
+    const icon = resolveItemIcon(items.runeforged_spear, { bespoke: bespokeIcons, glyphs: gameIcons })
+    expect(icon.kind).toBe('bespoke')
+    expect(icon.body).toContain('runeforged_spear_head')
+    expect(icon.body).toContain('#2fd0c0')
+    expect(icon.body).toContain('#c6fff8')
+  })
+
+  it('uses the existing spear model with Runeforged tint', () => {
     const bronzeModel = getWeaponModel('bronze_spear')
     const runeModel = getWeaponModel('runeforged_spear')
     expect(runeModel).toBeTruthy()
