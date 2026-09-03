@@ -155,7 +155,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 2,
-      "slash": 10,
+      "slash": 13,
       "crush": -2,
       "magic": 0,
       "ranged": 0
@@ -168,7 +168,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 9,
+      "meleeStrength": 12,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -226,7 +226,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 3,
-      "slash": 15,
+      "slash": 20,
       "crush": -2,
       "magic": 0,
       "ranged": 0
@@ -239,7 +239,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 14,
+      "meleeStrength": 18,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -297,7 +297,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 5,
-      "slash": 21,
+      "slash": 27,
       "crush": -2,
       "magic": 0,
       "ranged": 0
@@ -310,7 +310,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 20,
+      "meleeStrength": 26,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -368,7 +368,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 6,
-      "slash": 29,
+      "slash": 38,
       "crush": -2,
       "magic": 0,
       "ranged": 0
@@ -381,7 +381,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 28,
+      "meleeStrength": 36,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -439,7 +439,7 @@
     "attackStyle": "slash",
     "attackBonus": {
       "stab": 7,
-      "slash": 45,
+      "slash": 59,
       "crush": -2,
       "magic": 0,
       "ranged": 0
@@ -452,7 +452,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 44,
+      "meleeStrength": 57,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -474,7 +474,7 @@
     "attackSpeed": 5,
     "attackStyle": "stab",
     "attackBonus": {
-      "stab": 5,
+      "stab": 7,
       "slash": 5,
       "crush": 5,
       "magic": 0,
@@ -488,7 +488,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 5,
+      "meleeStrength": 7,
       "rangedStrength": 0,
       "magicDamage": 0
     },

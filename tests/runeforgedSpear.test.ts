@@ -25,29 +25,34 @@ const tiers = [
 ]
 
 describe('metal spear family', () => {
-  it('creates Iron through Adamant spears with exact scimitar stat parity', () => {
-    for (const { tier } of tiers.filter((x) => x.tier !== 'bronze')) {
+  it('gives every metal spear a 30% rounded active-accuracy and melee-strength premium', () => {
+    const expected = {
+      bronze: { style: 'stab', accuracy: 7, strength: 7 },
+      iron: { style: 'slash', accuracy: 13, strength: 12 },
+      steel: { style: 'slash', accuracy: 20, strength: 18 },
+      mithril: { style: 'slash', accuracy: 27, strength: 26 },
+      adamant: { style: 'slash', accuracy: 38, strength: 36 },
+      runeforged: { style: 'slash', accuracy: 59, strength: 57 },
+    } as const
+
+    for (const [tier, cfg] of Object.entries(expected)) {
       const spear = items[`${tier}_spear`]
-      const scimitar = items[`${tier}_scimitar`]
       expect(spear, tier).toBeTruthy()
       expect(spear.weaponClass, tier).toBe('spear')
       expect(spear.twoHanded, tier).toBe(true)
-      expect(spear.attackSpeed, tier).toBe(scimitar.attackSpeed)
-      expect(spear.attackStyle, tier).toBe(scimitar.attackStyle)
-      expect(spear.attackBonus, tier).toEqual(scimitar.attackBonus)
-      expect(spear.defenceBonus, tier).toEqual(scimitar.defenceBonus)
-      expect(spear.otherBonus, tier).toEqual(scimitar.otherBonus)
-      expect(spear.requirements, tier).toEqual(scimitar.requirements)
-    }
+      expect(spear.attackStyle, tier).toBe(cfg.style)
+      expect(spear.attackBonus[cfg.style], tier).toBe(cfg.accuracy)
+      expect(spear.otherBonus.meleeStrength, tier).toBe(cfg.strength)
 
-    const rune = items.runeforged_spear
-    const runeScimitar = items.runeforged_scimitar
-    expect(rune.attackSpeed).toBe(runeScimitar.attackSpeed)
-    expect(rune.attackStyle).toBe(runeScimitar.attackStyle)
-    expect(rune.attackBonus).toEqual(runeScimitar.attackBonus)
-    expect(rune.defenceBonus).toEqual(runeScimitar.defenceBonus)
-    expect(rune.otherBonus).toEqual(runeScimitar.otherBonus)
-    expect(rune.requirements).toEqual(runeScimitar.requirements)
+      if (tier !== 'bronze') {
+        const scimitar = items[`${tier}_scimitar`]
+        expect(spear.attackSpeed, tier).toBe(scimitar.attackSpeed)
+        expect(spear.attackBonus[cfg.style], tier).toBe(Math.round(scimitar.attackBonus[cfg.style] * 1.3))
+        expect(spear.otherBonus.meleeStrength, tier).toBe(Math.round(scimitar.otherBonus.meleeStrength * 1.3))
+        expect(spear.defenceBonus, tier).toEqual(scimitar.defenceBonus)
+        expect(spear.requirements, tier).toEqual(scimitar.requirements)
+      }
+    }
   })
 
   it('adds the requested one-bar + three-log Smithing recipes at bar-smelting levels', () => {
