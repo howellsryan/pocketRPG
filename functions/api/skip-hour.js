@@ -1,31 +1,9 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInCoopSession } from '../_lib/game/coopBoss.js'
 import { auditLog } from '../_lib/game/audit.js'
-import monstersData from '../../src/data/monsters.json' assert { type: 'json' }
-import raidsData from '../../src/data/raids.json' assert { type: 'json' }
-import { hardModeSkipCost } from '../../src/engine/hardMode.js'
-import { isHardModeEnabled } from '../_lib/game/hardMode.js'
 
-// Server-authoritative skip cost. A boss instant-kill skip costs the monster's
-// `skipCost`; a full-raid skip costs the raid's `skipCost` (its bosses plus any
-// additional forms); a normal 1-hour skip costs 1. All default to 1 credit.
-//
-// A skip buys the kill's drops without the fight, and hard mode doubles those
-// drop rates — so a hard target's skip costs double, read from the server's own
-// switch (hard_mode_targets), never from the request.
-async function resolveSkipCost(env, characterId, { bossId, raidId } = {}) {
-  if (raidId && typeof raidId === 'string') {
-    const cost = raidsData[raidId]?.skipCost
-    const base = Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
-    return hardModeSkipCost(base, await isHardModeEnabled(env, characterId, 'raids', raidId))
-  }
-  if (bossId && typeof bossId === 'string') {
-    const cost = monstersData[bossId]?.skipCost
-    const base = Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
-    return hardModeSkipCost(base, await isHardModeEnabled(env, characterId, 'monsters', bossId))
-  }
-  return 1
-}
+export const BOSS_RAID_SKIP_MESSAGE = 'Bosses and raids cannot be skipped.'
+export const BOSS_RAID_SKIP_CODE = 'BOSS_RAID_SKIP_DISABLED'
 
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
@@ -42,13 +20,19 @@ export async function onRequestPost({ request, env }) {
     ).bind(characterId, auth.identity.id).first()
     if (!character) return json({ error: 'Character not found' }, 404)
 
-    const cost = await resolveSkipCost(env, characterId, { bossId: body?.bossId, raidId: body?.raidId })
+    // Boss and raid kills must be earned through combat. Keep this rejection at
+    // the server boundary as well as the client flow so a direct API/MCP call
+    // cannot spend credits to unlock the old instant-kill path.
+    if (body?.bossId || body?.raidId) {
+      return json({ error: BOSS_RAID_SKIP_MESSAGE, code: BOSS_RAID_SKIP_CODE }, 409)
+    }
 
     // A co-op boss fight owns this save: the room is mutating the pack tick by
     // tick and replays its snapshot on write-back.
     const coopLock = await assertNotInCoopSession(env, characterId)
     if (coopLock) return coopLock
 
+    const cost = 1
     const debit = await env.DB.prepare(`
       UPDATE characters
       SET credits = credits - ?1,
@@ -66,8 +50,8 @@ export async function onRequestPost({ request, env }) {
       characterId,
       identityId: auth.identity.id,
       cost,
-      bossId: body?.bossId || null,
-      raidId: body?.raidId || null,
+      bossId: null,
+      raidId: null,
       credits_remaining: debit.credits_remaining ?? 0,
     }, { swallow: true })
 
