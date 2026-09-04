@@ -10,19 +10,21 @@ import {
 const items = itemsData as Record<string, any>
 
 describe('spear combat animation', () => {
-  it('uses the rapier lunge/stab animation for every shipped spear-class weapon', () => {
+  it('uses the lunge/stab animation for every shipped spear without reclassifying its visual shape as a rapier', () => {
     const spears = Object.entries(items).filter(([, item]) => item?.slot === 'weapon' && item.weaponClass === 'spear')
     expect(spears.length).toBeGreaterThan(0)
+    expect(isLungeWeaponType('spear')).toBe(true)
+    expect(isSmashWeaponType('spear')).toBe(false)
 
     for (const [id, item] of spears) {
-      const type = weaponIconTypeFor({ ...item, id })
-      expect(type, id).toBe('rapier')
-      expect(isLungeWeaponType(type), id).toBe(true)
-      expect(isSmashWeaponType(type), id).toBe(false)
+      const visualType = weaponIconTypeFor({ ...item, id })
+      expect(visualType, id).not.toBe('rapier')
 
       const sprite = playerCombatSprite({ weapon: { itemId: id } }, items)
-      expect(sprite.weaponIconType, id).toBe('rapier')
-      expect(isLungeWeaponType(sprite.weaponIconType), id).toBe(true)
+      expect(sprite.weaponIconType, id).toBe(visualType)
+      expect(sprite.weaponAnimationType, id).toBe('spear')
+      expect(isLungeWeaponType(sprite.weaponAnimationType), id).toBe(true)
+      expect(isSmashWeaponType(sprite.weaponAnimationType), id).toBe(false)
     }
   })
 })
