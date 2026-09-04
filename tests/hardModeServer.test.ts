@@ -158,27 +158,25 @@ describe('doubled drop rates come from server state, never the request', () => {
   })
 })
 
-describe('skipping a hard fight', () => {
-  it('charges double, because a skip buys the doubled reward roll', async () => {
+describe('hard-mode fights cannot be skipped', () => {
+  it('rejects a hard boss skip instead of charging for an instant kill', async () => {
     const { onRequestPost: skipHour } = await import('../functions/api/skip-hour.js')
     env.DB.prepare('UPDATE characters SET credits = 100 WHERE id = 42').run()
-    const post = (body: any) => skipHour({
+    await setHardModeTarget(env, 42, 'monsters', HARD_BOSS, true)
+
+    const res = await skipHour({
       request: new Request('https://example.com/api/skip-hour', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ bossId: HARD_BOSS }),
       }),
       env,
     } as any)
+    const body = await res.json() as any
 
-    const base = Math.max(1, Math.floor(Number(anyMonsters[HARD_BOSS].skipCost) || 1))
-    const normal = await (await post({ bossId: HARD_BOSS })).json()
-    expect(normal.cost).toBe(base)
-
-    await setHardModeTarget(env, 42, 'monsters', HARD_BOSS, true)
-    const hard = await (await post({ bossId: HARD_BOSS })).json()
-    expect(hard.cost).toBe(base * 2)
-    expect(hard.credits_remaining).toBe(100 - base - base * 2)
+    expect(res.status).toBe(409)
+    expect(body.code).toBe('BOSS_RAID_SKIP_DISABLED')
+    expect(body.error).toBe('Bosses and raids cannot be skipped.')
   })
 
   it('leaves an ordinary hour skip at one credit', async () => {
@@ -247,7 +245,7 @@ describe('a solo kill claims hard-mode rates from D1', () => {
       const normal = await (await completion(completeRaid, raidId, 'raid-1')).json()
       await setHardModeTarget(env, 42, 'raids', raidId, true)
       const hard = await (await completion(completeRaid, raidId, 'raid-2')).json()
-      expect(hard.granted.length).toBeGreaterThan(normal.granted.length)
+      expect(hard.granted.length).toBeGreaterThan(normal.length)
     } finally {
       spy.mockRestore()
     }
