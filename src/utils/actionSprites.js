@@ -181,17 +181,17 @@ export function weaponIconTypeFor(item) {
 // timing/co-op contract above and neither of these weapons changes how a
 // swing is TIMED, only how it LOOKS.
 const SMASH_WEAPON_TYPES = new Set(['godsword', 'maul'])
-export function isSmashWeaponType(weaponIconType) {
-  return SMASH_WEAPON_TYPES.has(weaponIconType)
+export function isSmashWeaponType(weaponType) {
+  return SMASH_WEAPON_TYPES.has(weaponType)
 }
 
-// A rapier lunges/thrusts instead of swinging — a fencer's attack travels
-// along the blade's own axis, not in an arc — so it gets its own `.is-lunge`
-// keyframe variant the same way godsword/maul get `.is-smash`: an ADDITIONAL
-// class, not a fourth motion, since only the LOOK changes.
-const LUNGE_WEAPON_TYPES = new Set(['rapier'])
-export function isLungeWeaponType(weaponIconType) {
-  return LUNGE_WEAPON_TYPES.has(weaponIconType)
+// Rapiers and spears lunge/thrust instead of swinging — their attacks travel
+// straight along the weapon's axis rather than through an arc. `spear` is an
+// animation classification (from weaponClass), not a visual icon type, so a
+// spear can reuse the lunge without being drawn as a rapier.
+const LUNGE_WEAPON_TYPES = new Set(['rapier', 'spear'])
+export function isLungeWeaponType(weaponType) {
+  return LUNGE_WEAPON_TYPES.has(weaponType)
 }
 
 /**
@@ -219,12 +219,15 @@ export function playerCombatSprite(equipment, itemsData, { combatType = null, st
   if (stance === 'rapid' && spriteStyleKey(style) === 'ranged') speed = Math.max(1, speed - 1)
   const cycleMs = actionCycleMs(speed)
   const weaponItem = equip.weapon?.itemId ? items[equip.weapon.itemId] : null
+  const weaponIconType = weaponIconTypeFor(weaponItem)
+  const weaponAnimationType = weaponItem?.weaponClass === 'spear' ? 'spear' : weaponIconType
   return {
     ...actionSpriteFor(style),
     speedTicks: speed,
     cycleMs,
     swingMs: swingDurationMs(cycleMs),
-    weaponIconType: weaponIconTypeFor(weaponItem),
+    weaponIconType,
+    weaponAnimationType,
     weaponTint: weaponItem ? getItemIconTint(weaponItem) : null,
   }
 }

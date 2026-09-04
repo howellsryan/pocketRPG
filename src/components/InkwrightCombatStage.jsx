@@ -47,9 +47,9 @@ import { useAnimationFlip } from '../hooks/useActionSwings.js'
  *
  * Props (identical shape to ActionSpriteStage, plus the additions below):
  *   actor       — { motion: 'melee'|'ranged'|'magic', swingMs, accent,
- *                 weaponIconType, weaponTint } — NOTE this also carries a
- *                 `tool` field (ACTION_SPRITES' old glyph key, e.g.
- *                 'sword'/'bow'/'staff') that this component must NOT read;
+ *                 weaponIconType, weaponAnimationType, weaponTint } — NOTE this
+ *                 also carries a `tool` field (ACTION_SPRITES' old glyph key,
+ *                 e.g. 'sword'/'bow'/'staff') that this component must NOT read;
  *                 `motion` is the one that names both the CSS keyframe
  *                 family and CombatTool's fallback. Reading `.tool` here
  *                 compiles fine and is silently wrong — it renders every
@@ -60,9 +60,11 @@ import { useAnimationFlip } from '../hooks/useActionSwings.js'
  *                 `getItemIconTint` colour, both already resolved onto the
  *                 sprite by `playerCombatSprite` — pick which of CombatTool's
  *                 hand-drawn shapes the actor's own weapon draws as and what
- *                 colour its material is. Both null/undefined for unarmed,
- *                 which falls back to the plain per-motion default. The enemy
- *                 resolves its own equivalent from the monster record instead.
+ *                 colour its material is. `weaponAnimationType` may differ
+ *                 when a weapon shares a motion without sharing a silhouette.
+ *                 All three are null/undefined for unarmed, which falls back
+ *                 to the plain per-motion default. The enemy resolves its own
+ *                 equivalent from the monster record instead.
  *   target      — { accent, sprite?, dying?, monster? } — sprite present means
  *                 it acts back; dying plays the collapse and holds its end
  *                 pose; `monster` is the monsters.json record (or a live
@@ -186,12 +188,12 @@ export default function InkwrightCombatStage({
   // nor stays armed, the same way a dropped weapon doesn't ride a corpse down.
   const targetSwinging = !dying && !!targetSwing && !!targetSprite
 
-  // godsword/maul play a heavier two-handed smash, a rapier a fencer's lunge,
-  // instead of the standard one-handed swing — melee only, since neither
-  // weapon type occurs outside that motion. Mutually exclusive (a weapon has
-  // exactly one WEAPON_ICON_TYPES entry), so at most one of these is ever on.
-  const actorSmash = a.motion === 'melee' && isSmashWeaponType(a.weaponIconType)
-  const actorLunge = a.motion === 'melee' && isLungeWeaponType(a.weaponIconType)
+  // The visual weapon type and animation type are deliberately separate: a
+  // spear can keep its existing drawn silhouette while borrowing the rapier's
+  // straight thrust. Old sprites fall back to weaponIconType for compatibility.
+  const actorAnimationType = a.weaponAnimationType || a.weaponIconType
+  const actorSmash = a.motion === 'melee' && isSmashWeaponType(actorAnimationType)
+  const actorLunge = a.motion === 'melee' && isLungeWeaponType(actorAnimationType)
   const actorSwingVariant = actorSmash ? ' is-smash' : actorLunge ? ' is-lunge' : ''
 
   // Which creature the enemy is, resolved off the FROZEN sprite's motion so a
