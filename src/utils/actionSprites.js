@@ -151,10 +151,10 @@ const NAME_TYPE_RULES = [
 /**
  * Classifies an equipped weapon item into one of `WEAPON_ICON_TYPES`, for
  * InkwrightCombatStage's CombatTool to pick a shape. Pure — reads only `id`,
- * `attackStyle`, `twoHanded` and `ammoType` off the item, so it needs no
- * DOM and no bespoke-icon data. Unmatched items (tools misfiled into the
- * weapon slot, reskins with no on-brand name) fall back by mechanics: magic
- * to staff, ranged to crossbow only when it actually fires bolts (else
+ * `weaponClass`, `attackStyle`, `twoHanded` and `ammoType` off the item, so it
+ * needs no DOM and no bespoke-icon data. Unmatched items (tools misfiled into
+ * the weapon slot, reskins with no on-brand name) fall back by mechanics:
+ * magic to staff, ranged to crossbow only when it actually fires bolts (else
  * longbow), crush to maul/mace by two-handedness, everything else
  * (slash/stab/unset) to godsword/sword by two-handedness — a two-handed reach
  * weapon reads closer to a godsword's big swing than a one-handed sword's.
@@ -165,6 +165,10 @@ const NAME_TYPE_RULES = [
  */
 export function weaponIconTypeFor(item) {
   if (!item) return null
+  // Spear-class weapons are thrusting weapons. Reuse the rapier combat shape
+  // deliberately so they inherit its existing `.is-lunge` stab animation
+  // instead of falling through to the two-handed godsword smash.
+  if (item.weaponClass === 'spear') return 'rapier'
   const id = String(item.id || '')
   for (const [pattern, type] of NAME_TYPE_RULES) {
     if (pattern.test(id)) return type
@@ -188,7 +192,8 @@ export function isSmashWeaponType(weaponIconType) {
 // A rapier lunges/thrusts instead of swinging — a fencer's attack travels
 // along the blade's own axis, not in an arc — so it gets its own `.is-lunge`
 // keyframe variant the same way godsword/maul get `.is-smash`: an ADDITIONAL
-// class, not a fourth motion, since only the LOOK changes.
+// class, not a fourth motion, since only the LOOK changes. Spear-class weapons
+// are classified to this same combat type above so every spear shares the stab.
 const LUNGE_WEAPON_TYPES = new Set(['rapier'])
 export function isLungeWeaponType(weaponIconType) {
   return LUNGE_WEAPON_TYPES.has(weaponIconType)
@@ -254,7 +259,7 @@ export function monsterCombatSprite(monster) {
 // swing, not one per hit, so these are membership tests and never counters.
 //
 // `immuneHit` is in the player's set because combat.js emits it INSTEAD of
-// `playerHit` against an immune form and still resets the attack timer: the
+// `playerHit` against an immune form and still resets the timer: the
 // player swung and it was blocked. Left out, a whole immune phase read as the
 // player standing there doing nothing.
 const PLAYER_SWING_EVENTS = new Set(['playerHit', 'specialHit', 'immuneHit'])
