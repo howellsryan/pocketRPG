@@ -245,7 +245,7 @@ describe('a solo kill claims hard-mode rates from D1', () => {
       const normal = await (await completion(completeRaid, raidId, 'raid-1')).json()
       await setHardModeTarget(env, 42, 'raids', raidId, true)
       const hard = await (await completion(completeRaid, raidId, 'raid-2')).json()
-      expect(hard.granted.length).toBeGreaterThan(normal.length)
+      expect(hard.granted.length).toBeGreaterThan(normal.granted.length)
     } finally {
       spy.mockRestore()
     }
