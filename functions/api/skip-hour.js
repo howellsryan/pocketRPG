@@ -20,17 +20,17 @@ export async function onRequestPost({ request, env }) {
     ).bind(characterId, auth.identity.id).first()
     if (!character) return json({ error: 'Character not found' }, 404)
 
+    // Preserve the established co-op lock response first: while a room owns the
+    // character every skip class stays locked with CHARACTER_IN_COOP_SESSION.
+    const coopLock = await assertNotInCoopSession(env, characterId)
+    if (coopLock) return coopLock
+
     // Boss and raid kills must be earned through combat. Keep this rejection at
     // the server boundary as well as the client flow so a direct API/MCP call
     // cannot spend credits to unlock the old instant-kill path.
     if (body?.bossId || body?.raidId) {
       return json({ error: BOSS_RAID_SKIP_MESSAGE, code: BOSS_RAID_SKIP_CODE }, 409)
     }
-
-    // A co-op boss fight owns this save: the room is mutating the pack tick by
-    // tick and replays its snapshot on write-back.
-    const coopLock = await assertNotInCoopSession(env, characterId)
-    if (coopLock) return coopLock
 
     const cost = 1
     const debit = await env.DB.prepare(`
