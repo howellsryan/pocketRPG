@@ -259,7 +259,7 @@ export function monsterCombatSprite(monster) {
 // swing, not one per hit, so these are membership tests and never counters.
 //
 // `immuneHit` is in the player's set because combat.js emits it INSTEAD of
-// `playerHit` against an immune form and still resets the timer: the
+// `playerHit` against an immune form and still resets the attack timer: the
 // player swung and it was blocked. Left out, a whole immune phase read as the
 // player standing there doing nothing.
 const PLAYER_SWING_EVENTS = new Set(['playerHit', 'specialHit', 'immuneHit'])
