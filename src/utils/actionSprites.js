@@ -151,10 +151,10 @@ const NAME_TYPE_RULES = [
 /**
  * Classifies an equipped weapon item into one of `WEAPON_ICON_TYPES`, for
  * InkwrightCombatStage's CombatTool to pick a shape. Pure — reads only `id`,
- * `weaponClass`, `attackStyle`, `twoHanded` and `ammoType` off the item, so it
- * needs no DOM and no bespoke-icon data. Unmatched items (tools misfiled into
- * the weapon slot, reskins with no on-brand name) fall back by mechanics:
- * magic to staff, ranged to crossbow only when it actually fires bolts (else
+ * `attackStyle`, `twoHanded` and `ammoType` off the item, so it needs no
+ * DOM and no bespoke-icon data. Unmatched items (tools misfiled into the
+ * weapon slot, reskins with no on-brand name) fall back by mechanics: magic
+ * to staff, ranged to crossbow only when it actually fires bolts (else
  * longbow), crush to maul/mace by two-handedness, everything else
  * (slash/stab/unset) to godsword/sword by two-handedness — a two-handed reach
  * weapon reads closer to a godsword's big swing than a one-handed sword's.
@@ -165,10 +165,6 @@ const NAME_TYPE_RULES = [
  */
 export function weaponIconTypeFor(item) {
   if (!item) return null
-  // Spear-class weapons are thrusting weapons. Reuse the rapier combat shape
-  // deliberately so they inherit its existing `.is-lunge` stab animation
-  // instead of falling through to the two-handed godsword smash.
-  if (item.weaponClass === 'spear') return 'rapier'
   const id = String(item.id || '')
   for (const [pattern, type] of NAME_TYPE_RULES) {
     if (pattern.test(id)) return type
@@ -185,18 +181,17 @@ export function weaponIconTypeFor(item) {
 // timing/co-op contract above and neither of these weapons changes how a
 // swing is TIMED, only how it LOOKS.
 const SMASH_WEAPON_TYPES = new Set(['godsword', 'maul'])
-export function isSmashWeaponType(weaponIconType) {
-  return SMASH_WEAPON_TYPES.has(weaponIconType)
+export function isSmashWeaponType(weaponType) {
+  return SMASH_WEAPON_TYPES.has(weaponType)
 }
 
-// A rapier lunges/thrusts instead of swinging — a fencer's attack travels
-// along the blade's own axis, not in an arc — so it gets its own `.is-lunge`
-// keyframe variant the same way godsword/maul get `.is-smash`: an ADDITIONAL
-// class, not a fourth motion, since only the LOOK changes. Spear-class weapons
-// are classified to this same combat type above so every spear shares the stab.
-const LUNGE_WEAPON_TYPES = new Set(['rapier'])
-export function isLungeWeaponType(weaponIconType) {
-  return LUNGE_WEAPON_TYPES.has(weaponIconType)
+// Rapiers and spears lunge/thrust instead of swinging — their attacks travel
+// straight along the weapon's axis rather than through an arc. `spear` is an
+// animation classification (from weaponClass), not a visual icon type, so a
+// spear can reuse the lunge without being drawn as a rapier.
+const LUNGE_WEAPON_TYPES = new Set(['rapier', 'spear'])
+export function isLungeWeaponType(weaponType) {
+  return LUNGE_WEAPON_TYPES.has(weaponType)
 }
 
 /**
@@ -224,12 +219,15 @@ export function playerCombatSprite(equipment, itemsData, { combatType = null, st
   if (stance === 'rapid' && spriteStyleKey(style) === 'ranged') speed = Math.max(1, speed - 1)
   const cycleMs = actionCycleMs(speed)
   const weaponItem = equip.weapon?.itemId ? items[equip.weapon.itemId] : null
+  const weaponIconType = weaponIconTypeFor(weaponItem)
+  const weaponAnimationType = weaponItem?.weaponClass === 'spear' ? 'spear' : weaponIconType
   return {
     ...actionSpriteFor(style),
     speedTicks: speed,
     cycleMs,
     swingMs: swingDurationMs(cycleMs),
-    weaponIconType: weaponIconTypeFor(weaponItem),
+    weaponIconType,
+    weaponAnimationType,
     weaponTint: weaponItem ? getItemIconTint(weaponItem) : null,
   }
 }
