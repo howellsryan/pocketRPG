@@ -118,16 +118,28 @@ describe('a skip cannot be spent from inside a group boss fight', () => {
       expect((await res.json()).code).toBe('CHARACTER_IN_COOP_SESSION')
       expect(raw.prepare('SELECT credits FROM characters WHERE id = 5').get().credits).toBe(50)
     })
-
-    it(`${name} allows it again once the fight is left`, async () => {
-      raw.prepare('UPDATE characters SET credits = 50 WHERE id = 5').run()
-      const { sessionId } = await join(5)
-      await leaveCoopSession(env, { characterId: 5, identityId: 1, sessionId })
-
-      const res = await handler({ request: skipRequest(5), env } as any)
-      expect(res.status).toBe(200)
-    })
   }
+
+  it('/api/skip-hour keeps a boss blocked after the group fight is left', async () => {
+    raw.prepare('UPDATE characters SET credits = 50 WHERE id = 5').run()
+    const { sessionId } = await join(5)
+    await leaveCoopSession(env, { characterId: 5, identityId: 1, sessionId })
+
+    const res = await skipHour({ request: skipRequest(5), env } as any)
+
+    expect(res.status).toBe(409)
+    expect((await res.json()).code).toBe('BOSS_RAID_SKIP_DISABLED')
+    expect(raw.prepare('SELECT credits FROM characters WHERE id = 5').get().credits).toBe(50)
+  })
+
+  it('/api/slayer/skip allows it again once the group fight is left', async () => {
+    raw.prepare('UPDATE characters SET credits = 50 WHERE id = 5').run()
+    const { sessionId } = await join(5)
+    await leaveCoopSession(env, { characterId: 5, identityId: 1, sessionId })
+
+    const res = await slayerSkip({ request: skipRequest(5), env } as any)
+    expect(res.status).toBe(200)
+  })
 })
 
 describe('PUT /api/save co-op session lock', () => {
