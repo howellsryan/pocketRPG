@@ -38,6 +38,7 @@ world/preview-shots/
 # Generated shared workflow dependencies
 /.agents/cache/
 /.agents/skills/
+/.agents/skills-installed.json
 /.agents/install.lock
 /.claude/skills/delivery-loop
 /.claude/skills/memory-hygiene
