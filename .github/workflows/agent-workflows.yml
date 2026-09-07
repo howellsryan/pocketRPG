@@ -1,0 +1,26 @@
+name: Agent workflows
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install exact locked revisions
+        run: python3 tools/agent-skills.py
+      - name: Verify offline and preserve local skills
+        run: |
+          python3 tools/agent-skills.py --check
+          mkdir -p .agents/skills/local-fixture
+          echo 'project-owned' > .agents/skills/local-fixture/README
+          python3 tools/agent-skills.py
+          test "$(cat .agents/skills/local-fixture/README)" = 'project-owned'
+          python3 tools/agent-skills.py --check
