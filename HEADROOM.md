@@ -51,11 +51,10 @@ two consequences:
    infrastructure, not by env vars or files in this repo, so there is nothing local
    for Headroom to sit in front of. Use the wrapper for local development.
 
-   For web/cloud sessions, the savings come instead from **`CLAUDE.md` §16
-   (Token efficiency — MANDATORY)**, which encodes Headroom's behavioral levers
-   (output shaping, effort routing, intake reduction) as standing rules every agent
-   follows. That's guidance rather than a mechanical proxy, but it's the lever that
-   actually reaches a cloud session.
+   Managed ChatGPT/Codex and Claude cloud sessions use their host's transport.
+   Follow `AGENTS.md` §17 for context discipline; repository instructions cannot
+   install a proxy or set API cache controls. Measure cost and quality before
+   adopting compression; neither shorter context nor output proves net savings.
 
 ## Alternative: proxy mode
 
@@ -72,3 +71,4 @@ Do **not** commit `ANTHROPIC_BASE_URL=http://localhost:8787` into shared
 `.claude/settings.json` — it would break any session (including cloud sessions)
 where no local proxy is listening. Keep it in your own untracked
 `.claude/settings.local.json` if you want it persisted.
+

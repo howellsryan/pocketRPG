@@ -33,3 +33,16 @@ world/preview-shots/
 
 # video/render.mjs output (rendered MP4s, never committed)
 /video/out
+
+
+# Generated shared workflow dependencies
+/.agents/cache/
+/.agents/skills/
+/.agents/install.lock
+/.claude/skills/delivery-loop
+/.claude/skills/memory-hygiene
+/.claude/skills/plan-gate
+/.claude/skills/scope-fence
+/.claude/skills/systematic-debugging
+/.claude/skills/verification-before-completion
+/.claude/skills/test-driven-development

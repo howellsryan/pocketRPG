@@ -34,7 +34,9 @@
     "worker:dev": "wrangler dev --env preview",
     "deploy": "npm run build:site && wrangler deploy",
     "deploy:preview": "npm run build:site && wrangler deploy --env preview",
-    "version:preview": "npm run build:site && wrangler versions upload --env preview"
+    "version:preview": "npm run build:site && wrangler versions upload --env preview",
+    "agents:install": "python3 tools/agent-skills.py",
+    "agents:check": "python3 tools/agent-skills.py --check"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",

@@ -1,0 +1,16 @@
+{
+  ".agents/skills/delivery-loop": "../cache/sources/howellsryan/Agent-Template/208d2a407de3a2b4ddbb8cc8d54a1e227dddea65/plugins/engineering-workflow/skills/delivery-loop",
+  ".agents/skills/memory-hygiene": "../cache/sources/howellsryan/Agent-Template/208d2a407de3a2b4ddbb8cc8d54a1e227dddea65/plugins/engineering-workflow/skills/memory-hygiene",
+  ".agents/skills/plan-gate": "../cache/sources/howellsryan/Agent-Template/208d2a407de3a2b4ddbb8cc8d54a1e227dddea65/plugins/engineering-workflow/skills/plan-gate",
+  ".agents/skills/scope-fence": "../cache/sources/howellsryan/Agent-Template/208d2a407de3a2b4ddbb8cc8d54a1e227dddea65/plugins/engineering-workflow/skills/scope-fence",
+  ".agents/skills/systematic-debugging": "../cache/sources/obra/superpowers/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/systematic-debugging",
+  ".agents/skills/test-driven-development": "../cache/sources/obra/superpowers/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/test-driven-development",
+  ".agents/skills/verification-before-completion": "../cache/sources/obra/superpowers/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/verification-before-completion",
+  ".claude/skills/delivery-loop": "../../.agents/cache/sources/howellsryan/Agent-Template/208d2a407de3a2b4ddbb8cc8d54a1e227dddea65/plugins/engineering-workflow/skills/delivery-loop",
+  ".claude/skills/memory-hygiene": "../../.agents/cache/sources/howellsryan/Agent-Template/208d2a407de3a2b4ddbb8cc8d54a1e227dddea65/plugins/engineering-workflow/skills/memory-hygiene",
+  ".claude/skills/plan-gate": "../../.agents/cache/sources/howellsryan/Agent-Template/208d2a407de3a2b4ddbb8cc8d54a1e227dddea65/plugins/engineering-workflow/skills/plan-gate",
+  ".claude/skills/scope-fence": "../../.agents/cache/sources/howellsryan/Agent-Template/208d2a407de3a2b4ddbb8cc8d54a1e227dddea65/plugins/engineering-workflow/skills/scope-fence",
+  ".claude/skills/systematic-debugging": "../../.agents/cache/sources/obra/superpowers/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/systematic-debugging",
+  ".claude/skills/test-driven-development": "../../.agents/cache/sources/obra/superpowers/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/test-driven-development",
+  ".claude/skills/verification-before-completion": "../../.agents/cache/sources/obra/superpowers/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/verification-before-completion"
+}

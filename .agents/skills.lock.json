@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "bootstrap": {
+    "revision": "208d2a407de3a2b4ddbb8cc8d54a1e227dddea65",
+    "sha256": "c414d029c6ee0285125ee8c43bab51155edea9b0ce9a82ea8d051a6d08bec0d2"
+  },
+  "sources": [
+    {
+      "repository": "howellsryan/Agent-Template",
+      "revision": "208d2a407de3a2b4ddbb8cc8d54a1e227dddea65",
+      "skills": {
+        "delivery-loop": "plugins/engineering-workflow/skills/delivery-loop",
+        "memory-hygiene": "plugins/engineering-workflow/skills/memory-hygiene",
+        "plan-gate": "plugins/engineering-workflow/skills/plan-gate",
+        "scope-fence": "plugins/engineering-workflow/skills/scope-fence"
+      }
+    },
+    {
+      "repository": "obra/superpowers",
+      "revision": "b36e0829c6d0140e93cfef2ca599b1b07d4a7797",
+      "skills": {
+        "systematic-debugging": "skills/systematic-debugging",
+        "verification-before-completion": "skills/verification-before-completion",
+        "test-driven-development": "skills/test-driven-development"
+      }
+    }
+  ]
+}

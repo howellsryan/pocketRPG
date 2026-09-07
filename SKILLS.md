@@ -1,51 +1,29 @@
-# SKILLS.md — PocketRPG Agent Configuration Reference
+# PocketRPG instruction inventory
 
-The complete map of how AI-agent context is organised in this repo: what loads when, every skill and rule in the inventory, and the practices behind them. `CLAUDE.md` stays terse because this file carries the detail; read this when adding/changing skills or rules, not on every session.
+AGENTS.md is the canonical root contract; CLAUDE.md is a thin entry point.
+Read this inventory when routing domain work or changing instructions. Host loading
+varies: matching Claude rules may load automatically, but Codex/ChatGPT/GitHub-only
+sessions must read the applicable rules and local skill bodies explicitly.
 
-## 1) Architecture: three tiers of progressive disclosure
+## Shared workflows
 
-Agent context is priced per session. Everything here is organised so a session only pays for what it actually uses:
+The lock owns delivery-loop, memory-hygiene, plan-gate, scope-fence,
+systematic-debugging, verification-before-completion and test-driven-development.
+Install and use them via [docs/agent-workflows.md](docs/agent-workflows.md); edit
+shared sources centrally. Do not restore local forks or edit generated directories.
 
-| Tier | Location | When it loads | Cost model |
-|---|---|---|---|
-| **Always-on** | `CLAUDE.md` | Every session, in full | Paid every session — keep terse, invariants and pointers only |
-| **Path-scoped rules** | `.claude/rules/*.md` | Auto, when a touched file matches the rule's `paths:` globs | Paid only by sessions touching that area |
-| **Skills** | `.claude/skills/*/SKILL.md` | Name + description always visible (~100 tokens total); full body loads only when the task matches the description | Near-free when dormant |
+## Project-owned skills
 
-This mirrors the progressive-disclosure model Anthropic published for [Agent Skills](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills), an open standard since December 2025 ([agentskills.io](https://agentskills.io)) adopted by OpenAI, Google, GitHub, and Cursor. Skills hot-reload — edits to `.claude/skills/` apply without restarting a session.
-
-**Placement rule** (from the `memory-hygiene` skill): applies every session → `CLAUDE.md`. Applies to specific files → path-scoped rule. A workflow/recipe/behavioural discipline → skill. Reference detail → this file or `docs/`.
-
-## 2) Skill inventory
-
-Model-invoked: each skill fires when the task matches its frontmatter description. Source of truth is always the SKILL.md file itself.
-
-### `delivery-loop` — one agent, dedicated steps *(PocketRPG-native)*
-Fires at the start of every implementation task, before the first edit. Triage: **spike** (the ask is a question — the deliverable is an answer and any code written to get it is throwaway; a spike producing code worth keeping is re-triaged, not shipped) vs **checklist** (an existing checklist fully covers it — skip the loop, apply the checklist + §11 gate) vs **stepped** (run the loop: Plan → optional Architect → Engineer / World Designer as needed → Code Review → QA, all inside the one session; each step announced on one line and closed with a ≤5-line handoff note). Code Review (the `code-review` skill run against the diff) sits between the builder steps and QA — it judges the diff itself for correctness/reuse/efficiency, FAILs loop back to Engineer and re-run until it passes, and only then does QA judge the diff against Plan's success criteria. No builder/QA/BA subagents are ever spawned — read-only Explore fan-out searches are the sole sanctioned exception. Step charters live in the skill's `steps.md` (folded from the retired `.claude/agents/` squad roster). Replaced the multi-agent squad workflow 2026-07-16 for token cost. Design record + research: `docs/delivery-workflow.md`.
-
-### `plan-gate` — no edits until the plan exists
-For **novel or multi-system work only**: engine + server + migration together, the §14 integrity boundary (auth, grants, credits, purchases, `/api/save` guards), save format, PvP settlement, the single-file build pipeline. Forces a written plan (GOAL / UNKNOWNS / SUCCESS CRITERIA / STEPS / OUT OF SCOPE) before the first edit, built from evidence (files read first), with executable success criteria and a hard stop-and-replan rule when reality contradicts the plan. Deliberately narrowed from its upstream version, which fired on any multi-edit task — routine PocketRPG work already has checklists, and a five-block plan for "add a drop" is ceremony, not safety.
-
-### `scope-fence` — do what was asked, flag what you found
-Fires on any modification of existing work. The requested change and its genuine requirements are in scope; everything else noticed along the way is flagged ("Noticed, NOT touched: …"), never silently fixed. Gray-zone tests: would X break without the extra edit (in scope); is it "while I'm here" (out); formatting churn on untouched lines (revert). Before committing, the diff is read back against the boundary sentence and each scope signal sorted into keep/split/justify — with the repo's never-keeps called out: a UI import inside `src/engine/`, a fourth `/api/save` guard, a committed `index.html`/`game-*.js`, a comment in a migration. Operationalises CLAUDE.md §13. Trimmed from upstream: no "Changed:" list (the diff shows it), report only emitted when something was flagged.
-
-### `systematic-debugging` — root cause before fix *(adapted from `obra/superpowers`, MIT)*
-Fires on any technical issue needing diagnosis: a failing test, a bundle throwing at eval time, a drifting tick, a co-op/world desync, a save rejected by `/api/save`, a missing drop, an MCP tool returning the wrong shape. Four phases in order — investigate (read the whole error, reproduce, and **instrument the seams before proposing anything**: engine↔UI, client↔server, save↔D1, engine↔session state copy, DO↔member, source↔bundle), compare against working code, form ONE hypothesis, then fix test-first. The keeper is the **three-fix circuit breaker**: three failed fixes each revealing a new problem elsewhere is a wrong architecture, not bad luck — stop, do not attempt a fourth, and raise it with the user. Carries the traps that mislead here: an eval-time throw is a build-order bug not a logic bug (`check:single`), the world's special-energy "reset" is §7 by design, "empty" is `< 1` not `=== 0`, a missing drop is usually a missing item/log slot/authority side, DPS disagreement is `dpsCalculator.js` ↔ `combat.js` drift. "Flake" is not a root cause — re-run once, never skip or quarantine a test; the engine is deterministic by design.
-
-### `verification-before-completion` — evidence before claims *(adapted from `obra/superpowers`, MIT)*
-Fires before any claim that work is done/fixed/passing, and before every commit, PR, or handoff. Identify what would prove it → run it fully, now → read the exit code → then claim it, naming the command. Verifies the fail→pass **transition**, not just the end state — reproducing the failure first is the step that gets skipped and the reason fixes ship having fixed nothing. The repo-specific line it holds: `npm run ci` proves compile + logic suite + eval-time bundle safety and says **nothing** about what the player sees, because `tests/**` is logic-only by design; anything player-visible (screen, number, animation, icon, reward card) needs a look, and `DESIGN.md` §2's two-skin trap means a neighbouring rule reading correctly is not evidence. Bans hedged completion language and second-hand evidence — an Explore agent returns findings, not verification. Requires reporting both halves, verified and not; §17 brevity never licenses dropping the second.
+Their SKILL.md descriptions and bodies own triggering and procedure.
 
 ### `ruthless-editor` — every sentence earns its place
 Fires on public-facing/persistent prose: docs, READMEs, PR bodies, reports. A separate cutting pass after drafting — per-sentence tests (needed to act? repeated? hedging? abstract-where-concrete-possible?), structural cuts (lead with outcome, kill throat-clearing), target ~30% shorter with zero information loss, with explicit guards against over-compression (clarity outranks brevity). Repo-specific payoff: `docs/game-guide.md` compiles into the chat knowledge index, so cutting it reduces per-player-chat token spend in production; PR bodies publish to Discord. Not for code, commit messages, or chat replies (§17 governs those).
 
-### `memory-hygiene` — memory is a claim about the past
-Fires when reading or writing persistent agent memory (`CLAUDE.md`, rules, skills, this file). Write side: persist decisions-with-why, corrections received, non-obvious constraints, user preferences; never what code/git already records; prune when adding; put each fact in the right tier. Recall side: grade staleness (system state ages fast, decisions slowly); fast-aging fact + consequential action → verify against live state first; live state wins disagreements and the memory gets fixed in the same breath. Also holds the authoring contract for a skill *description*: triggering conditions only, never a workflow summary (a description that explains the workflow is a shortcut the session will take instead of the body), always a stated non-trigger, under ~500 characters.
-
 ### `pr-changelog` — the PR is the public changelog *(PocketRPG-native)*
-Fires on every PR title/body write. Encodes CLAUDE.md §20: merged PRs auto-publish verbatim to the players' Discord `#changelog` (first ~3900 chars, HTML comments stripped). Player-facing voice, present tense, area-sectioned bodies leading with player impact, one honest line for chores, and the hard bans — no attribution, no AI/Claude mention, no session/GitHub links, no secrets/hostnames. Ends with a mandatory `ruthless-editor` cutting pass.
+Fires on every PR title/body write. Encodes AGENTS.md §19: merged PRs auto-publish verbatim to the players' Discord `#changelog` (first ~3900 chars, HTML comments stripped). Player-facing voice, present tense, area-sectioned bodies leading with player impact, one honest line for chores, and the hard bans — no attribution, no AI/Claude mention, no session/GitHub links, no secrets/hostnames. Ends with a mandatory `ruthless-editor` cutting pass.
 
 ### `add-content` — content authoring checklist *(PocketRPG-native)*
-Fires when adding/editing game content in `src/data`. Items/drops (referenced items must exist; Title Case; stackable quantity conventions; collection-log slot + regression test for uniques; server-side loot table for high-value grants), the five-step weapon special-attack recipe (moved here from CLAUDE.md §7), monster/boss conventions (boss Slayer XP multiplier, dragonfire, 3D arena auto-enable), and the after-change tail (logic tests, game-guide + `gen:knowledge`, §11 commit gate).
+Fires when adding/editing game content in `src/data`. Items/drops (referenced items must exist; Title Case; stackable quantity conventions; collection-log slot + regression test for uniques; server-side loot table for high-value grants), the five-step weapon special-attack recipe (moved here from AGENTS.md §7), monster/boss conventions (boss Slayer XP multiplier, dragonfire, 3D arena auto-enable), and the after-change tail (logic tests, game-guide + `gen:knowledge`, §11 commit gate).
 
 ### `save-item-grant` — hand-edit an item into a live save *(PocketRPG-native)*
 Fires when asked to add/grant/inject an item into a **specific character's** cloud save (support grants, compensation, bug repro), as opposed to authoring an in-game source (that's `add-content`). Wraps `scripts/grant-save-item.mjs`: reads the `saves` row through wrangler (prod `pocketrpg` / preview `pocketrpg-preview`), gunzips `save_blob` (gzip, not encryption), appends to `save.inventory` only, re-gzips and writes back. The safety rules are the point — always ask the requester for the character id and confirm the item by name **and** id, the `UPDATE` is guarded on the `save_revision` it read, the run aborts under a PvP/co-op/world save lock, a pre-change snapshot goes to gitignored `.save-backups/`, and the result is re-read and verified. Inventory only; credits/XP stay server-authoritative (§14). Logic in `scripts/lib/saveItemGrant.mjs`, covered by `tests/saveItemGrant.test.ts`.
@@ -77,28 +55,11 @@ Ten compact single-file skills vendored verbatim from [`CloudAI-X/threejs-skills
 | `.claude/rules/testing.md` | `tests/**` | Bug-fix-first, test-in-same-diff, move-logic-out-of-JSX, no mirror-list/source-regex tests, the CI gates |
 | `.claude/rules/video.md` | `video/**`, `tests/videoRecipe.test.ts` | The `video/**` clip capture/render pipeline traps |
 
-## 4) Authoring practices (for new skills/rules)
+## Maintenance
 
-- **Only encode what pushes the agent away from its defaults.** A skill restating obvious good practice wastes its trigger and its tokens. Careful planning on complex tasks is a default; a *plan format and stop-rule* is not.
-- **The description is the contract.** It is the only part always in context, so it alone decides when the body loads. State the trigger AND the non-trigger ("Do not use for…"). Over-triggering is the classic failure mode — it taxes every session and dilutes trust in skills generally.
-- **Small and composable beats monolithic** (philosophy borrowed from [mattpocock/skills](https://github.com/mattpocock/skills), the source of several patterns here). One skill per workflow; skills may reference each other (`pr-changelog` → `ruthless-editor`).
-- **Prune the overlap in the same change.** When a skill/rule supersedes CLAUDE.md lines, delete them then (CLAUDE.md §0/§13). Duplicated guidance is paid twice and drifts into contradiction.
-- **Exact examples over abstractions.** Agents pattern-match; the JSON snippet in `add-content` outperforms a paragraph describing the schema.
-- **When a SKILL.md grows unwieldy, split** into referenced files loaded on demand (tier 3 of progressive disclosure).
-
-## 5) Single-agent delivery and token economy
-
-- Delivery is **single-agent**: the `delivery-loop` skill runs roles as steps inside one session sharing one continuous context. Multi-agent squads were retired 2026-07-16 — spawns re-load always-on context cold, re-read files already in context, and multiply spend ~4–15× for sequential build work that never parallelises in practice (research + design record: `docs/delivery-workflow.md`).
-- Step charters live in `.claude/skills/delivery-loop/steps.md`, folded from the retired `.claude/agents/` roster. They stay pointer-heavy — citing CLAUDE.md §s and path-scoped rules instead of duplicating them.
-- Read-only **Explore**-type agents remain the cheap tool for broad fan-out searches — they keep file dumps out of the main context and return only conclusions. That is the only sanctioned subagent use in delivery work; writes stay single-threaded in the session.
-- In-session discipline (output shaping, effort routing, narrow reads) is CLAUDE.md §17 and applies always; local sessions can add Headroom compression (`HEADROOM.md`).
-- The game applies the same economics server-side: the help chatbot exposes tools progressively via `search_tools` instead of declaring its full ~50-tool surface per call (`.claude/rules/chat.md`) — the in-repo precedent for why this structure works.
-
-## 6) Maintenance
-
-- These four upstream-derived skills (`plan-gate`, `scope-fence`, `ruthless-editor`, `memory-hygiene`) were adapted 2026-07-09 — triggers narrowed and reports trimmed to fit §17; they are not verbatim upstream copies. Re-syncing with upstream means re-applying those adaptations.
-- A skill that keeps misfiring → fix its description first, body second.
-- New skill/rule → add it to the inventory here and to the CLAUDE.md §13 list in the same change.
-- Everything here follows `memory-hygiene`: dated where it will age, pruned when added to, verified before being trusted.
-
-Further reading: [Anthropic — Equipping agents for the real world with Agent Skills](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills) · [Agent Skills open standard](https://agentskills.io) · [mattpocock/skills](https://github.com/mattpocock/skills) (user-invoked vs model-invoked split, composability, `writing-great-skills`).
+Keep always-relevant orientation and gates in AGENTS.md; path-specific contracts
+in rules, task recipes in skills and detailed references in docs. Prune superseded
+instructions in the same change. Preserve unique constraints before consolidating.
+Descriptions state trigger and non-trigger, not a shortcut around reading the body.
+Add new skills/rules to this inventory and route them from the relevant root section.
+Read only matching references; no fixed metadata-token or cache-saving guarantee.
