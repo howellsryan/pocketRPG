@@ -32,11 +32,17 @@ const context = await browser.newContext({
   reducedMotion: 'no-preference',
 })
 const page = await context.newPage()
+const cdp = await context.newCDPSession(page)
 const ctx = { url: `${site.url}/index.html`, hook: null, overlay: { scale: 2 } }
 
 const shot = async (name) => {
   const p = path.join(OUT, `${name}.png`)
-  await page.screenshot({ path: p, fullPage: false })
+  const { data } = await cdp.send('Page.captureScreenshot', {
+    format: 'png',
+    fromSurface: true,
+    captureBeyondViewport: false,
+  })
+  fs.writeFileSync(p, Buffer.from(data, 'base64'))
   console.log('shot:', name)
 }
 
@@ -83,7 +89,9 @@ try {
   await setHook(page, 'PLAY FREE → POCKETRPG.CO.UK')
   await shot('08-outro')
 } catch (err) {
-  await page.screenshot({ path: path.join(OUT, 'failure.png'), fullPage: false }).catch(() => {})
+  await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false })
+    .then(({ data }) => fs.writeFileSync(path.join(OUT, 'failure.png'), Buffer.from(data, 'base64')))
+    .catch(() => {})
   throw err
 } finally {
   await context.close().catch(() => {})
