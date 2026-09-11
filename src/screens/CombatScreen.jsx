@@ -673,7 +673,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (initialRaidId && !hasAutoStarted.current && !combat) {
       hasAutoStarted.current = true
       const raid = raidsData[initialRaidId]
-      if (raid) startRaid(raid)
+      if (raid) {
+        if (raid.id === 'sunspire_colosseum') startRaidParty(raid, null, { solo: true })
+        else startRaid(raid)
+      }
     }
   }, [initialRaidId])
 
@@ -1778,7 +1781,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Opens a party (sessionId null) or joins a named lobby. The save is flushed
   // first for the same reason the co-op boss join does it: the server snapshots
   // it on join and owns the pack from that moment.
-  const startRaidParty = async (raid, sessionId = null) => {
+  const startRaidParty = async (raid, sessionId = null, { solo = false } = {}) => {
     if (isDemo) {
       addToast('\u{1F512} Raid parties are available with a free account.', 'warning')
       return
@@ -1797,7 +1800,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         addToast('Could not save before joining — try again.', 'error')
         return
       }
-      const res = await joinRaidWithRecovery(raid.id, sessionId)
+      const res = await joinRaidWithRecovery(raid.id, sessionId, { solo })
       setRaidChoice(null)
       // A raid is rejoined by PARTY, never by opening a fresh one: joining a
       // raid with no session id means "start a new party" (§21), which would
@@ -1821,15 +1824,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   /** Same stale-hold recovery the boss join uses: a player whose last fight
    * ended in a refresh has no way to leave that room by hand. */
-  const joinRaidWithRecovery = async (raidId, sessionId) => {
+  const joinRaidWithRecovery = async (raidId, sessionId, { solo = false } = {}) => {
     try {
-      return await coopApi.joinRaid(raidId, sessionId)
+      return await coopApi.joinRaid(raidId, sessionId, { solo })
     } catch (err) {
       const held = heldCoopSessionRef.current
       if (err?.body?.code !== 'CHARACTER_IN_COOP_SESSION' || !held) throw err
       try { await coopApi.leave(held) } catch { /* the join below reports the real state */ }
       heldCoopSessionRef.current = null
-      return await coopApi.joinRaid(raidId, sessionId)
+      return await coopApi.joinRaid(raidId, sessionId, { solo })
     }
   }
 
@@ -3431,12 +3434,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           <div class="space-y-2 mb-4">
             <button
-              onClick={() => { const r = raidChoice; setRaidChoice(null); startRaid(r) }}
+              onClick={() => {
+                const r = raidChoice
+                setRaidChoice(null)
+                if (r.id === 'sunspire_colosseum') startRaidParty(r, null, { solo: true })
+                else startRaid(r)
+              }}
               class="w-full text-left p-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)]"
             >
               <div class="text-sm font-semibold text-[var(--color-parchment)]">Raid alone</div>
               <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                Every boss, back to back, and the whole reward table is yours.
+                {raidChoice.id === 'sunspire_colosseum'
+                  ? 'A private server-run arena: every hit, wave and reward stays authoritative.'
+                  : 'Every boss, back to back, and the whole reward table is yours.'}
               </div>
             </button>
           </div>
