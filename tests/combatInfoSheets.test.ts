@@ -11,6 +11,19 @@ const raidsData = raids as Record<string, any>
 // The mobile combat info/raid sheets read their gilded "unique" panels straight
 // from the collection log (not inferred from drop rarity). Guard that data so a
 // rename never leaves the sheet showing raw ids.
+function raidEncounterMonsterIds(raid: any) {
+  const ids = new Set<string>(raid?.bosses || [])
+  for (const id of raid?.encounterOnlyMonsters || []) ids.add(id)
+  for (const wave of raid?.waves || []) {
+    if (wave?.primary) ids.add(wave.primary)
+    for (const id of wave?.initialAdds || []) ids.add(id)
+    for (const group of wave?.reinforcements || []) {
+      for (const id of group?.monsterIds || []) ids.add(id)
+    }
+  }
+  return [...ids]
+}
+
 function section(categoryId: string, sectionId: string) {
   const cat = (collectionLog as any).categories.find((c: any) => c.id === categoryId)
   return cat?.sections.find((s: any) => s.id === sectionId)
@@ -43,10 +56,10 @@ describe('combat info sheets — collection-log sourced uniques', () => {
     }
   })
 
-  it('raid bosses all resolve to real monsters (for the chamber timeline)', () => {
+  it('every authored raid encounter monster resolves to real content', () => {
     for (const raid of Object.values(raidsData)) {
-      for (const bossId of (raid as any).bosses) {
-        expect(monstersData[bossId], `${(raid as any).id} boss ${bossId}`).toBeTruthy()
+      for (const monsterId of raidEncounterMonsterIds(raid)) {
+        expect(monstersData[monsterId], `${(raid as any).id} encounter ${monsterId}`).toBeTruthy()
       }
     }
   })
