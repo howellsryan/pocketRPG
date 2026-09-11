@@ -116,11 +116,13 @@ describe('hard mode scaling', () => {
     const bosses = Object.values(anyMonsters).filter((m: any) => m.boss === true)
     expect(bosses.some((m: any) => m.hardMode === true)).toBe(true)
     // A raid's bosses are fought through the raid, which carries the flag.
-    const raidBossIds = new Set(Object.values(anyRaids).flatMap((r: any) => r.bosses))
+    const raidBossIds = new Set(Object.values(anyRaids).flatMap((r: any) => r.bosses || []))
     for (const [id, m] of Object.entries(anyMonsters)) {
       if ((m as any).hardMode) expect(raidBossIds.has(id)).toBe(false)
     }
-    expect(Object.values(anyRaids).every((r: any) => r.hardMode === true)).toBe(true)
+    const conventionalRaids = Object.values(anyRaids).filter((r: any) => r.id !== 'sunspire_colosseum')
+    expect(conventionalRaids.every((r: any) => r.hardMode === true)).toBe(true)
+    expect(supportsHardMode(anyRaids.sunspire_colosseum)).toBe(false)
   })
 })
 
