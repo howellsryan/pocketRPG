@@ -14,7 +14,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test -- tests/sunspireColosseum.test.ts tests/sunspireMechanics.test.ts tests/sunspireEquipment.test.ts tests/sunspireServer.test.ts tests/sunspireCoop.test.ts
+      - run: npm test -- tests/sunspireColosseum.test.ts tests/sunspireMechanics.test.ts tests/sunspireEquipment.test.ts tests/sunspireServer.test.ts tests/sunspireCoop.test.ts tests/coopBossEngine.test.ts tests/zarythEmptyLord.test.ts
       - run: npm run typecheck
       - run: npm run rebuild
       - run: npm run check:single
