@@ -77,6 +77,7 @@ export function telegraphAureliosAttack(state, monster, events = []) {
     attackId,
     label: attack.label,
     responseType: attack.responseType,
+    style: pending.style,
     requiredSlot: pending.requiredSlot,
     prayerSequence: pending.prayerSequence,
     resolveInTicks: 1,
