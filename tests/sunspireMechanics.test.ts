@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { applyCombatReaction, continueRaidCombatState, createCombatState, createRaidCombatState, processCombatTick } from '../src/engine/combat.js'
 import { liveAdds } from '../src/engine/bossAdds.js'
+import { applyAureliosReaction, resolveAureliosAttack, telegraphAureliosAttack } from '../src/engine/aurelios.js'
 
 const DEF = { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 }
 const stats = { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, currentHP: 999 }
@@ -148,38 +149,41 @@ describe('Sunspire reaction windows', () => {
   it('rewards a correct Grapple parry and punishes ignoring it', () => {
     const success: any = createCombatState(champion)
     success.aurelios.pattern = ['grapple']
-    success.monsterAttackTimer = 2
-    let out = processCombatTick(success, { ...stats, currentHP: 999 }, {}, {}, {})
-    const telegraph = out.events.find((e: any) => e.attackId === 'grapple')
-    expect(telegraph?.requiredSlot).toBeTruthy()
-    expect(applyCombatReaction(success, { attackId: 'grapple', type: 'parry', slot: telegraph.requiredSlot }).ok).toBe(true)
-    out = processCombatTick(success, { ...stats, currentHP: 999 }, {}, {}, {})
-    expect(out.events.find((e: any) => e.type === 'combatReaction' && e.attackId === 'grapple')?.success).toBe(true)
+    success.tickCount = 20
+    const telegraphEvents: any[] = []
+    const pending = telegraphAureliosAttack(success, success.monster, telegraphEvents)
+    expect(pending?.requiredSlot).toBeTruthy()
+    expect(applyAureliosReaction(success, { type: 'parry', slot: pending.requiredSlot }).ok).toBe(true)
+    success.tickCount = pending.resolveAtTick
+    const resolvedEvents: any[] = []
+    resolveAureliosAttack(success, success.monster, resolvedEvents)
+    expect(resolvedEvents.find((e: any) => e.type === 'combatReaction' && e.attackId === 'grapple')?.success).toBe(true)
 
     const fail: any = createCombatState(champion)
     fail.aurelios.pattern = ['grapple']
-    fail.monsterAttackTimer = 2
-    processCombatTick(fail, { ...stats, currentHP: 999 }, {}, {}, {})
-    const failed = processCombatTick(fail, { ...stats, currentHP: 999 }, {}, {}, {})
-    expect(failed.events.find((e: any) => e.type === 'combatReaction' && e.attackId === 'grapple')?.success).toBe(false)
+    const failEvents: any[] = []
+    telegraphAureliosAttack(fail, fail.monster, failEvents)
+    const failedEvents: any[] = []
+    resolveAureliosAttack(fail, fail.monster, failedEvents)
+    expect(failedEvents.find((e: any) => e.type === 'combatReaction' && e.attackId === 'grapple')?.success).toBe(false)
   })
 
   it('accepts the exact Triple Parry prayer sequence and rejects the wrong order', () => {
     const ok: any = createCombatState(champion)
     ok.aurelios.pattern = ['triple_parry']
-    ok.monsterAttackTimer = 2
-    processCombatTick(ok, { ...stats, currentHP: 999 }, {}, {}, {})
-    applyCombatReaction(ok, { attackId: 'triple_parry', type: 'prayer_sequence', prayers: ['melee', 'ranged', 'magic'] })
-    const good = processCombatTick(ok, { ...stats, currentHP: 999 }, {}, {}, {})
-    expect(good.events.find((e: any) => e.type === 'combatReaction' && e.attackId === 'triple_parry')?.success).toBe(true)
+    telegraphAureliosAttack(ok, ok.monster, [])
+    applyAureliosReaction(ok, { type: 'prayer_sequence', prayers: ['melee', 'ranged', 'magic'] })
+    const goodEvents: any[] = []
+    resolveAureliosAttack(ok, ok.monster, goodEvents)
+    expect(goodEvents.find((e: any) => e.type === 'combatReaction' && e.attackId === 'triple_parry')?.success).toBe(true)
 
     const bad: any = createCombatState(champion)
     bad.aurelios.pattern = ['triple_parry']
-    bad.monsterAttackTimer = 2
-    processCombatTick(bad, { ...stats, currentHP: 999 }, {}, {}, {})
-    applyCombatReaction(bad, { attackId: 'triple_parry', type: 'prayer_sequence', prayers: ['magic', 'ranged', 'melee'] })
-    const wrong = processCombatTick(bad, { ...stats, currentHP: 999 }, {}, {}, {})
-    expect(wrong.events.find((e: any) => e.type === 'combatReaction' && e.attackId === 'triple_parry')?.success).toBe(false)
+    telegraphAureliosAttack(bad, bad.monster, [])
+    applyAureliosReaction(bad, { type: 'prayer_sequence', prayers: ['magic', 'ranged', 'melee'] })
+    const badEvents: any[] = []
+    resolveAureliosAttack(bad, bad.monster, badEvents)
+    expect(badEvents.find((e: any) => e.type === 'combatReaction' && e.attackId === 'triple_parry')?.success).toBe(false)
   })
 
   it('makes timed Sunspire hazards reactable rather than unavoidable presentation events', () => {
