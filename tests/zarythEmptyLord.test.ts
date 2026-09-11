@@ -63,6 +63,7 @@ describe('Zaryth — monster data', () => {
     const raidMonsterIds = new Set<string>()
     for (const raid of Object.values(raids as Record<string, any>)) {
       for (const id of raid.bosses || []) raidMonsterIds.add(id)
+      for (const id of raid.encounterOnlyMonsters || []) raidMonsterIds.add(id)
       for (const wave of raid.waves || []) {
         if (wave.primary) raidMonsterIds.add(wave.primary)
         for (const id of wave.initialAdds || []) raidMonsterIds.add(id)
