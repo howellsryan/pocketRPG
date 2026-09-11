@@ -26,6 +26,7 @@ import { loadCharacterWithSave, writeSave } from './save.js'
 import { GameApiError } from './errors.js'
 import { callCoopRoom } from './coopRoom.js'
 import { auditLog } from './audit.js'
+import { obtainedSunspireIds } from './sunspireStore.js'
 import {
   COOP_LOCK_PENDING,
   COOP_SESSION_STALE_MS,
@@ -140,6 +141,11 @@ export async function joinCoopRaidParty(env, { characterId, identityId, raidId, 
   const member = createCoopMember({ characterId, username, savePayload: saveObject, itemsData, now })
   member.saveRevision = written.saveRevision
   member.ownerId = identityId
+  if (raidId === 'sunspire_colosseum') {
+    member.sunspireObtainedIds = [...await obtainedSunspireIds(env, characterId)]
+    member.sunspireChest = []
+    member.sunspireStaged = []
+  }
 
   // Claim the character BEFORE putting them in a party, for the same reason the
   // boss join does: the other order leaves a member inside a room they hold no
@@ -154,7 +160,10 @@ export async function joinCoopRaidParty(env, { characterId, identityId, raidId, 
     joinedSessionId = sessionId === null
       // The host's own switch fixes the party's difficulty; a raider joining a
       // lobby adopts what the host set, exactly as a boss room works.
-      ? await openRaidParty(env, { raidId, member, characterId, now, hardMode: await isHardModeEnabled(env, characterId, 'raids', raidId) })
+      ? await openRaidParty(env, {
+        raidId, member, characterId, now,
+        hardMode: raidId === 'sunspire_colosseum' ? false : await isHardModeEnabled(env, characterId, 'raids', raidId),
+      })
       : await joinExistingParty(env, { raidId, member, characterId, sessionId })
   } catch (err) {
     await env.DB.prepare(

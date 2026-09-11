@@ -748,7 +748,10 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
     }))
   if (winners.length === 0) return { settlements: [], granted: [], ownerCharacterId: null }
 
-  await auditLog(env, source.sourceType === 'raids' ? 'coop.raid.complete' : 'coop.boss.kill', {
+  await auditLog(env,
+    kill?.sunspireClaim === true && kill?.sunspireFullClear !== true
+      ? 'coop.sunspire.cashout'
+      : source.sourceType === 'raids' ? 'coop.raid.complete' : 'coop.boss.kill', {
     sessionId: session.id,
     killSeq: Math.max(0, Math.floor(Number(killSeq) || 0)),
     bossId: session.boss_id,
@@ -926,9 +929,13 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
   // Grindman is the opposite: an ACCOUNT type, so it is per winner. A room can
   // hold a mix, and each member's table is rolled against their own row.
   const grindman = characterRow?.is_grindman === 1
-  const rewards = sourceType === 'raids'
-    ? rollRaidRewardsById(sourceId, Math.random, hardMode, grindman)
-    : rollMonsterRewardsById(sourceId, Math.random, onTask, hardMode, grindman)
+  const rewards = kill?.sunspireClaim === true
+    ? (Array.isArray(kill?.sunspireRewardsByCharacter?.[String(characterId)])
+      ? kill.sunspireRewardsByCharacter[String(characterId)].map((r) => ({ ...r }))
+      : [])
+    : sourceType === 'raids'
+      ? rollRaidRewardsById(sourceId, Math.random, hardMode, grindman)
+      : rollMonsterRewardsById(sourceId, Math.random, onTask, hardMode, grindman)
   const withSession = applyMemberToSave(saveObject, member)
   let settled
   let write
@@ -968,13 +975,25 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
     )
   }
 
-  const kcRow = await env.DB.prepare(
-    `INSERT INTO kill_counts (character_id, source_type, source_id, kill_count, updated_at)
-     VALUES (?, ?, ?, 1, ?)
-     ON CONFLICT(character_id, source_type, source_id)
-     DO UPDATE SET kill_count = kill_count + 1, updated_at = excluded.updated_at
-     RETURNING kill_count`,
-  ).bind(characterId, sourceType, sourceId, now).first()
+  let killCount = null
+  if (kill?.sunspireClaim !== true || kill?.sunspireFullClear === true) {
+    const kcRow = await env.DB.prepare(
+      `INSERT INTO kill_counts (character_id, source_type, source_id, kill_count, updated_at)
+       VALUES (?, ?, ?, 1, ?)
+       ON CONFLICT(character_id, source_type, source_id)
+       DO UPDATE SET kill_count = kill_count + 1, updated_at = excluded.updated_at
+       RETURNING kill_count`,
+    ).bind(characterId, sourceType, sourceId, now).first()
+    killCount = Math.max(0, Math.floor(Number(kcRow?.kill_count) || 0))
+  }
+
+  if (kill?.sunspireClaim === true) {
+    if (!Array.isArray(member.sunspireObtainedIds)) member.sunspireObtainedIds = []
+    member.sunspireObtainedIds = [...new Set([
+      ...member.sunspireObtainedIds,
+      ...grantedItemIds,
+    ])]
+  }
 
   await env.DB.prepare(
     'UPDATE coop_kill_settlements SET granted_json = ? WHERE session_id = ? AND kill_seq = ? AND character_id = ?',
@@ -984,6 +1003,6 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
     characterId,
     granted: settled.granted || [],
     collectionLogEntries: logged.map((itemId) => ({ itemId, sourceType, sourceId })),
-    killCount: Math.max(0, Math.floor(Number(kcRow?.kill_count) || 0)),
+    killCount,
   }
 }
