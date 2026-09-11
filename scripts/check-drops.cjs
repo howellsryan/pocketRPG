@@ -100,6 +100,12 @@ function auditRaid(id) {
   const r = raids[id]
   if (!r) { errors.push(`Unknown monster/raid id: ${id}`); return }
 
+  // Modifier-only summons are raid-owned too and must never become standalone
+  // world/economy monsters.
+  for (const monsterId of (r.encounterOnlyMonsters || [])) {
+    if (!monsters[monsterId]) errors.push(`${id}: encounterOnlyMonsters references unknown monster '${monsterId}'`)
+  }
+
   // Wave raids own encounter monsters through waves rather than bosses[].
   // Validate every authored member so an add/reinforcement typo cannot ship.
   for (const [waveIndex, wave] of (r.waves || []).entries()) {
