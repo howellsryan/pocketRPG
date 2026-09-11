@@ -4,6 +4,10 @@ on:
     branches:
       - feature/sunspire-colosseum
 
+concurrency:
+  group: sunspire-final-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   final:
     runs-on: ubuntu-latest
