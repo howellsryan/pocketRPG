@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import raidsData from '../src/data/raids.json'
+import monstersData from '../src/data/monsters.json'
 import { createCombatState, createRaidCombatState, processCombatTick, setCombatTarget } from '../src/engine/combat.js'
 import { activeTarget, liveAdds, prepareAdd } from '../src/engine/bossAdds.js'
 import { raidProgress, raidTotalHitpoints } from '../src/engine/coopRaidEngine.js'
@@ -135,12 +136,13 @@ describe('finite encounter enemies', () => {
   })
 
   it('owns modifier-spawned enemies as raid-only encounter content', () => {
-    expect(raid.encounterOnlyMonsters).toEqual([
+    const sunspire: any = (raidsData as any).sunspire_colosseum
+    expect(sunspire.encounterOnlyMonsters).toEqual([
       'ashen_warband_bulwark',
       'ember_swarm',
       'sunspire_healing_totem',
     ])
-    for (const id of raid.encounterOnlyMonsters) expect(monsters[id], id).toBeDefined()
+    for (const id of sunspire.encounterOnlyMonsters) expect((monstersData as any)[id], id).toBeDefined()
   })
 
 })
