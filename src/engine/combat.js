@@ -405,6 +405,15 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
   if (monster.currentHP > 0) return false
   monster.currentHP = 0
 
+  // Wave raids are finite encounters, not sequential bosses[]. Most hit paths
+  // reach resolveTargetDeath first, but summons/instant kills and future callers
+  // may arrive here directly. Keep this as a defensive authority boundary so a
+  // wave primary can never fall through the legacy raid.bosses progression.
+  if (state.encounter?.finite && Array.isArray(state.raid?.waves)) {
+    if (!state.encounter.primaryDefeated) triggerSunspireCinderfall(state, monster, events)
+    return markEncounterPrimaryDefeated(state, events)
+  }
+
   // Verzik phased boss: advance to next phase instead of dying
   if (monster.verzikPhased && monster.multiForm && monster.forms) {
     const formOrder = monster.formCycleOrder || Object.keys(monster.forms)
@@ -555,7 +564,7 @@ export function applyInstantKill(state) {
   if (!state || !state.monster) return events
   state.monster.currentHP = 0
   const isOnTask = !!(state.slayerTask && doesSlayerTaskMatchMonster(state.slayerTask.monsterId, state.monster.id))
-  checkMonsterDeath(state, state.monster, events, isOnTask)
+  resolveTargetDeath(state, state.monster, events, isOnTask)
   return events
 }
 
@@ -764,7 +773,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
             events.push({ type: 'consumeScroll', itemId: creature.scroll, qty: 1 })
             if (monster.currentHP <= 0) {
               state.monster = monster
-              checkMonsterDeath(state, monster, events, isOnTask)
+              resolveTargetDeath(state, monster, events, isOnTask)
               return { combatState: state, events }
             }
           } else {
