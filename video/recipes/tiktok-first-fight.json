@@ -3,8 +3,8 @@
   "title": "PocketRPG first fight demo",
   "fps": 30,
   "startAt": "landing",
-  "hook": "Start an RPG in 15 seconds",
-  "hookMs": 3200,
+  "hook": "A FREE RPG IN YOUR BROWSER",
+  "hookMs": 3000,
   "outro": "Play free → PocketRPG.co.uk",
   "scenes": [
     {
