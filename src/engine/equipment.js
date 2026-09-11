@@ -149,6 +149,11 @@ export function equipItem(equipment, itemData, itemsData, sourceSlot) {
   if (sourceSlot && sourceSlot.charges && sourceSlot.charges > 0) {
     entry.charges = sourceSlot.charges
   }
+  if (itemData.chargedPassive) {
+    entry.active = sourceSlot?.active !== undefined
+      ? sourceSlot.active !== false
+      : itemData.chargedPassiveDefaultActive !== false
+  }
   // Preserve quantity for ammo
   if (slot === 'ammo' && sourceSlot && sourceSlot.quantity) {
     entry.quantity = sourceSlot.quantity
@@ -184,6 +189,7 @@ export function placeUnequippedItems(unequipped, inventory, itemsData) {
     if (emptyIdx === -1) return { ok: false, inventory }
     const invEntry = { itemId: item.itemId, quantity: item.quantity || 1 }
     if (item.charges && item.charges > 0) invEntry.charges = item.charges
+    if (item.active !== undefined) invEntry.active = item.active !== false
     newInv[emptyIdx] = invEntry
   }
   return { ok: true, inventory: newInv }
@@ -238,6 +244,11 @@ export function getEquipmentBonuses(equipment, itemsData) {
         }
         bonuses.otherBonus[k] = (bonuses.otherBonus[k] || 0) + v
       }
+    }
+    if ((equipment[slot].charges || 0) > 0 && item.chargedBonus) {
+      for (const [k, v] of Object.entries(item.chargedBonus.attackBonus || {})) bonuses.attackBonus[k] = (bonuses.attackBonus[k] || 0) + v
+      for (const [k, v] of Object.entries(item.chargedBonus.defenceBonus || {})) bonuses.defenceBonus[k] = (bonuses.defenceBonus[k] || 0) + v
+      for (const [k, v] of Object.entries(item.chargedBonus.otherBonus || {})) bonuses.otherBonus[k] = (bonuses.otherBonus[k] || 0) + v
     }
   }
 

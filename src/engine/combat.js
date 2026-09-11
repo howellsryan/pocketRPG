@@ -28,6 +28,7 @@ import { monsterMaxHit } from './monsterMaxHit.js'
 import { isWaveRaid, seedEncounterState, advanceEncounterReinforcements, markEncounterPrimaryDefeated, markEncounterAddDefeated } from './raidEncounters.js'
 import { applySunspireModifiersToState, tickSunspireHazards, triggerSunspireCinderfall } from './sunspireModifiers.js'
 import { createAureliosState, updateAureliosPhase, telegraphAureliosAttack, applyAureliosReaction, resolveAureliosAttack } from './aurelios.js'
+import { chargedArmourRecoil } from './chargedPassives.js'
 import { grindmanDropChance } from './grindman.js'
 import { applyNotedDrops } from './notedDrops.js'
 
@@ -649,14 +650,12 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   state.tickCount++
   advanceEncounterReinforcements(state, events)
   tickSunspireHazards(state, events)
-  if (state.aurelios) {
-    updateAureliosPhase(state, state.monster, events)
-    if (state.monsterAttackTimer === 1) telegraphAureliosAttack(state, state.monster, events)
-  }
+  if (state.aurelios) updateAureliosPhase(state, state.monster, events)
 
   // Decrement cooldowns
   if (state.playerAttackTimer > 0) state.playerAttackTimer--
   if (state.monsterAttackTimer > 0) state.monsterAttackTimer--
+  if (state.aurelios && state.monsterAttackTimer === 1) telegraphAureliosAttack(state, state.monster, events)
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
   if (state.comboCooldown > 0) state.comboCooldown--
@@ -960,7 +959,15 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const defRoll = maxDefenceRoll(target.stats.defence, target.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
       maxHit = Math.floor(maxHit * (1 + slayerEquipmentBonus.damagePercent / 100))
-      damage = rollDamage(acc, maxHit)
+      const twinflareCharged = equippedWeapon?.chargedDoubleHit === true && weaponCharges > 0
+      if (equippedWeapon?.chargedDoubleHit === true && !twinflareCharged) maxHit = Math.max(1, Math.floor(maxHit * (Number(equippedWeapon.unchargedDamageMultiplier) || 0.75)))
+      const firstRangedHit = rollDamage(acc, maxHit)
+      if (twinflareCharged) {
+        const secondRangedHit = rollDamage(acc, maxHit)
+        damage = firstRangedHit + secondRangedHit
+        events.push({ type: 'chargedDoubleHit', hits: [firstRangedHit, secondRangedHit] })
+        events.push({ type: 'consumeCharge', qty: 1 })
+      } else damage = firstRangedHit
 
       // ── Karil Set Bonus: 25% chance to fire an extra shot for the same damage roll ──
       if (hasFullKarilSet(equipment, itemsData) && Math.random() < 0.25) {
@@ -1229,7 +1236,16 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const addDamage = resolveEnemySwing(
         add, add.attackStyle, state, boostedPlayerStats, playerStats, bonuses, prayersData, events, { fromAdd: true, addIndex }
       )
-      if (addDamage > 0) addDamageLanded = true
+      if (addDamage > 0) {
+        addDamageLanded = true
+        const recoil = chargedArmourRecoil(equipment, itemsData, add.attackStyle, addDamage)
+        if (recoil) {
+          add.currentHP = Math.max(0, add.currentHP - recoil.damage)
+          events.push({ type: 'armourRecoil', monsterName: add.name, damage: recoil.damage, monsterHP: add.currentHP, itemId: recoil.itemId })
+          events.push({ type: 'consumeArmourCharge', slots: [recoil.slot], qty: recoil.consumeCharges })
+          if (add.currentHP <= 0) resolveTargetDeath(state, add, events, false)
+        }
+      }
     }
     // One charge per TICK the wearer was hit, not one per attacker — the armour
     // burns a charge for taking a hit, and three minions landing together is
@@ -1288,6 +1304,13 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     if (damage > 0) {
       const armourSlots = chargedScaleArmourSlots(equipment, itemsData)
       if (armourSlots.length) events.push({ type: 'consumeArmourCharge', slots: armourSlots, qty: 1 })
+      const recoil = chargedArmourRecoil(equipment, itemsData, effectiveAttackStyle, damage)
+      if (recoil) {
+        monster.currentHP = Math.max(0, monster.currentHP - recoil.damage)
+        events.push({ type: 'armourRecoil', monsterName: monster.name, damage: recoil.damage, monsterHP: monster.currentHP, itemId: recoil.itemId })
+        events.push({ type: 'consumeArmourCharge', slots: [recoil.slot], qty: recoil.consumeCharges })
+        if (monster.currentHP <= 0) resolveTargetDeath(state, monster, events, false)
+      }
     }
 
     state.monsterAttackTimer = monster.attackSpeed || 4
@@ -1801,6 +1824,38 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
       events.push({ type: 'specialHit', hits: [meleeDmg, lightningDmg], totalDamage: actual, specType: 'lightning', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'division': {
+      const styleBonus = getRangedStyleBonus(state.stance)
+      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      let maxHit = specRangedMaxHit(effRng)
+      const atkRoll = specRangedAttackRoll(effRng)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const charged = (weaponEntry.charges || 0) > 0
+      if (!charged) maxHit = Math.max(1, Math.floor(maxHit * (Number(weapon.unchargedDamageMultiplier) || 0.75)))
+      const attempts = charged ? 2 : 1
+      const hits = []
+      let defenceReducedBy = 0
+      const drainPerHit = Math.max(0, Math.floor((Number(monster.stats.magic) || 0) * 0.125))
+      for (let i = 0; i < attempts; i++) {
+        const rolled = resist(rollDamage(acc, maxHit))
+        hits.push(rolled)
+        if (rolled > 0 && drainPerHit > 0) {
+          const drain = Math.min(monster.stats.defence || 0, drainPerHit)
+          monster.stats.defence = Math.max(0, (monster.stats.defence || 0) - drain)
+          defenceReducedBy += drain
+        }
+      }
+      const actual = Math.min(hits.reduce((sum, value) => sum + value, 0), Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits, totalDamage: actual, specType: 'division', defenceReducedBy, monsterHP: monster.currentHP })
+      if (charged) events.push({ type: 'consumeCharge', qty: 1 })
       break
     }
 

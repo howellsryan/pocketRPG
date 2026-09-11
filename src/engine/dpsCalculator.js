@@ -276,7 +276,11 @@ export function estimateDps({
     const defRoll = maxDefenceRoll(target.defenceLevel, target.defenceBonus.ranged || 0)
     accuracy = hitChance(atkRoll, defRoll)
     maxHit = Math.floor(maxHit * (1 + slayer.damagePercent / 100))
+    const chargeEntry = equipment?.weapon
+    const twinflareCharged = weapon?.chargedDoubleHit === true && (chargeEntry?.charges || 0) > 0
+    if (weapon?.chargedDoubleHit === true && !twinflareCharged) maxHit = Math.max(1, Math.floor(maxHit * (Number(weapon.unchargedDamageMultiplier) || 0.75)))
     expected = accuracy * meanRoll(maxHit)
+    if (twinflareCharged) expected *= 2
     // Karil's crossbow: 25% chance of a second shot, rolled independently.
     if (wearsAll(equipment, KARIL_SET)) expected += 0.25 * accuracy * meanRoll(maxHit)
     if (stance === 'rapid') speed = Math.max(1, speed - 1)

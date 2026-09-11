@@ -103,6 +103,7 @@ const sourceFiles = [
   'engine/raidEncounters.js',
   'engine/sunspireModifiers.js',
   'engine/aurelios.js',
+  'engine/chargedPassives.js',
   'engine/monsterClips.js',
   'engine/monsterMaxHit.js',
   'engine/hardMode.js',
