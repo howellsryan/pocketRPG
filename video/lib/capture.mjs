@@ -67,12 +67,21 @@ export function createCapture({ page, cdpSession, fps = 30, out, ffmpegPath, crf
       format: 'jpeg', quality, everyNthFrame: 1, maxWidth: width, maxHeight: height,
     })
 
-    // A first frame is not guaranteed until something paints; force one so the
-    // pump never opens the stream with an empty buffer.
-    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => r()))).catch(() => {})
+    // A first frame is not guaranteed on a static landing page. requestAnimationFrame
+    // alone does not necessarily paint, so briefly add a practically invisible
+    // 1px marker to force Chromium to produce one screencast frame.
+    const paintKickId = '__video_capture_paint_kick'
+    await page.evaluate((id) => new Promise((resolve) => {
+      const marker = document.createElement('div')
+      marker.id = id
+      marker.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;background:rgba(0,0,0,.01);z-index:2147483647;pointer-events:none'
+      document.body.appendChild(marker)
+      requestAnimationFrame(() => requestAnimationFrame(resolve))
+    }), paintKickId).catch(() => {})
     const deadline = Date.now() + 5000
     while (!lastFrame && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50))
     if (!lastFrame) throw new Error('capture: no screencast frame arrived within 5s')
+    await page.evaluate((id) => document.getElementById(id)?.remove(), paintKickId).catch(() => {})
 
     startedAt = Date.now()
     timer = setInterval(pump, frameMs / 2)
