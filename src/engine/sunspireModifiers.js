@@ -110,6 +110,7 @@ export function applySunspireModifiersToState(state, wave, monstersData, modifie
     totemSpawned: false,
     totemHealAt: null,
     cinderfallCount: 0,
+    pending: [],
     definitions: {
       totem: monstersData?.sunspire_healing_totem || null,
       swarm: monstersData?.ember_swarm || null,
@@ -125,6 +126,84 @@ function eligibleHealingTarget(state) {
   return candidates.find(enemy => enemy.currentHP <= Math.floor(enemy.hitpoints * 0.5)) || null
 }
 
+function queueHazard(state, events, { hazardId, label, resolveInTicks, responseType, damage, protectionStyle = null }) {
+  const hz = state?.sunspireHazards
+  if (!hz) return null
+  // One outstanding copy of a named periodic hazard at a time. Cinderfall can
+  // still queue separately from Afterburn/Sunburst, so overlapping pressure is
+  // possible without duplicate timers racing themselves.
+  const existing = (hz.pending || []).find((p) => p.hazardId === hazardId && !p.resolved)
+  if (existing) return existing
+  const pending = {
+    hazardId,
+    label,
+    responseType,
+    baseDamage: Math.max(0, Math.floor(Number(damage) || 0)),
+    protectionStyle,
+    openedAtTick: hz.tick,
+    resolveAtTick: hz.tick + Math.max(1, Math.floor(Number(resolveInTicks) || 1)),
+    reaction: null,
+    resolved: false,
+  }
+  hz.pending.push(pending)
+  events.push({
+    type: 'combatTelegraph',
+    source: 'sunspire',
+    attackId: hazardId,
+    label,
+    resolveInTicks: pending.resolveAtTick - hz.tick,
+    responseType,
+    protectionStyle,
+  })
+  return pending
+}
+
+function resolveHazard(pending, events) {
+  const reaction = pending.reaction
+  let success = false
+  let multiplier = 1
+  if (pending.responseType === 'guard') {
+    success = reaction?.type === 'guard'
+    multiplier = success ? 0.25 : 1
+  } else if (pending.responseType === 'prayer') {
+    success = reaction?.type === 'prayer' && (!pending.protectionStyle || reaction?.style === pending.protectionStyle)
+    multiplier = success ? 0.2 : 1
+  } else if (pending.responseType === 'target') {
+    // Target hazards (healing totems) are answered by actually killing the
+    // target, not by this reaction channel.
+    return
+  }
+  const damage = Math.max(0, Math.floor(pending.baseDamage * multiplier))
+  pending.resolved = true
+  events.push({
+    type: 'sunspireHazard',
+    hazardId: pending.hazardId,
+    baseDamage: pending.baseDamage,
+    damage,
+    success,
+    responseType: pending.responseType,
+    protectionStyle: pending.protectionStyle,
+    unavoidable: false,
+  })
+  events.push({
+    type: 'combatReaction',
+    source: 'sunspire',
+    attackId: pending.hazardId,
+    success,
+  })
+}
+
+export function applySunspireHazardReaction(state, reaction) {
+  const pending = state?.sunspireHazards?.pending
+  if (!Array.isArray(pending) || !reaction) return { ok: false, reason: 'no_pending_hazard' }
+  const target = reaction.attackId
+    ? pending.find((p) => !p.resolved && p.hazardId === reaction.attackId)
+    : [...pending].reverse().find((p) => !p.resolved && p.responseType !== 'target')
+  if (!target) return { ok: false, reason: 'no_pending_hazard' }
+  target.reaction = { ...reaction }
+  return { ok: true }
+}
+
 export function tickSunspireHazards(state, events = []) {
   const rules = state?.sunspireRules
   const hz = state?.sunspireHazards
@@ -132,22 +211,38 @@ export function tickSunspireHazards(state, events = []) {
   hz.tick += 1
 
   if (hz.afterburnNext && hz.tick === hz.afterburnNext - 2) {
-    events.push({ type: 'combatTelegraph', source: 'sunspire', attackId: 'afterburn', label: 'Afterburn', resolveInTicks: 2 })
+    queueHazard(state, events, {
+      hazardId: 'afterburn',
+      label: 'Afterburn',
+      resolveInTicks: 2,
+      responseType: 'guard',
+      damage: 3 + rules.afterburnTier * 3,
+    })
   }
   if (hz.afterburnNext && hz.tick >= hz.afterburnNext) {
-    const damage = 3 + rules.afterburnTier * 3
-    events.push({ type: 'sunspireHazard', hazardId: 'afterburn', damage, unavoidable: false })
     hz.afterburnNext += Math.max(16, 38 - rules.afterburnTier * 6)
   }
 
   if (hz.sunburstNext && hz.tick === hz.sunburstNext - 2) {
-    events.push({ type: 'combatTelegraph', source: 'sunspire', attackId: 'sunburst', label: 'Sunburst', resolveInTicks: 2, responseType: 'prayer' })
+    queueHazard(state, events, {
+      hazardId: 'sunburst',
+      label: 'Sunburst',
+      resolveInTicks: 2,
+      responseType: 'prayer',
+      protectionStyle: 'magic',
+      damage: 4 + rules.sunburstTier * 4,
+    })
   }
   if (hz.sunburstNext && hz.tick >= hz.sunburstNext) {
-    const damage = 4 + rules.sunburstTier * 4
-    events.push({ type: 'sunspireHazard', hazardId: 'sunburst', damage, protectionStyle: 'magic', unavoidable: false })
     hz.sunburstNext += Math.max(20, 55 - rules.sunburstTier * 8)
   }
+
+  for (const pending of hz.pending || []) {
+    if (!pending.resolved && pending.responseType !== 'target' && hz.tick >= pending.resolveAtTick) {
+      resolveHazard(pending, events)
+    }
+  }
+  hz.pending = (hz.pending || []).filter((pending) => !pending.resolved || hz.tick - pending.resolveAtTick < 2)
 
   if (rules.sunTotemTier && !hz.totemSpawned) {
     const target = eligibleHealingTarget(state)
@@ -185,13 +280,11 @@ export function triggerSunspireCinderfall(state, defeated, events = []) {
   if (!tierValue || !defeated || defeated.id === 'sunspire_healing_totem') return
   const damage = 2 + tierValue * 3
   state.sunspireHazards.cinderfallCount += 1
-  events.push({
-    type: 'combatTelegraph',
-    source: 'sunspire',
-    attackId: 'cinderfall',
+  queueHazard(state, events, {
+    hazardId: `cinderfall_${state.sunspireHazards.cinderfallCount}`,
     label: 'Cinderfall',
     resolveInTicks: 1,
     responseType: 'guard',
+    damage,
   })
-  events.push({ type: 'sunspireHazard', hazardId: 'cinderfall', damage, unavoidable: false })
 }

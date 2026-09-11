@@ -26,7 +26,7 @@ import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, rando
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, addPicksAtRandom, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
 import { isWaveRaid, seedEncounterState, advanceEncounterReinforcements, markEncounterPrimaryDefeated, markEncounterAddDefeated } from './raidEncounters.js'
-import { applySunspireModifiersToState, tickSunspireHazards, triggerSunspireCinderfall } from './sunspireModifiers.js'
+import { applySunspireModifiersToState, applySunspireHazardReaction, tickSunspireHazards, triggerSunspireCinderfall } from './sunspireModifiers.js'
 import { createAureliosState, updateAureliosPhase, telegraphAureliosAttack, applyAureliosReaction, resolveAureliosAttack } from './aurelios.js'
 import { chargedArmourRecoil } from './chargedPassives.js'
 import { grindmanDropChance } from './grindman.js'
@@ -223,8 +223,12 @@ export function continueRaidCombatState(combatState, raidData, monstersData, { m
 }
 
 export function applyCombatReaction(combatState, reaction) {
-  if (!combatState?.aurelios) return { ok: false, reason: 'unsupported' }
-  return applyAureliosReaction(combatState, reaction)
+  if (!combatState || !reaction) return { ok: false, reason: 'unsupported' }
+  const pendingAurelios = combatState.aurelios?.pendingAttack
+  if (pendingAurelios && (!reaction.attackId || reaction.attackId === pendingAurelios.attackId)) {
+    return applyAureliosReaction(combatState, reaction)
+  }
+  return applySunspireHazardReaction(combatState, reaction)
 }
 
 /**
