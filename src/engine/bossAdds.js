@@ -192,7 +192,12 @@ export function targetedAdd(state) {
 
 /** The monster the player's next swing lands on. */
 export function activeTarget(state) {
-  return targetedAdd(state) || state?.monster
+  const selected = targetedAdd(state)
+  if (selected) return selected
+  if (state?.encounter?.finite && (state.encounter.primaryDefeated || state?.monster?.currentHP <= 0)) {
+    return liveAdds(state)[0] || state?.monster
+  }
+  return state?.monster
 }
 
 /**

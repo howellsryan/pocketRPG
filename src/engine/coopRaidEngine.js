@@ -16,6 +16,7 @@
 
 import raidsData from '../data/raids.json'
 import { createCombatState } from './combat.js'
+import { isWaveRaid, raidEncounterHitpoints } from './raidEncounters.js'
 
 /**
  * The wait between a raid boss dying and the next one walking in: 8 ticks, the
@@ -40,7 +41,7 @@ export function isCoopRaidId(raidId) {
  * an older row still finds its raid. */
 export function coopRaidData(raidId) {
   const raid = raidsData?.[raidId]
-  return raid && Array.isArray(raid.bosses) && raid.bosses.length > 0 ? raid : null
+  return raid && ((Array.isArray(raid.bosses) && raid.bosses.length > 0) || isWaveRaid(raid)) ? raid : null
 }
 
 export function raidBossOrder(raidId) {
@@ -78,9 +79,11 @@ export function bossFightHitpoints(monster, monstersData) {
  * Computed once when the raid starts and stored on the state, so the HUD can
  * show a member's share of the whole run from the first swing.
  */
-export function raidTotalHitpoints(raidId, monstersData) {
+export function raidTotalHitpoints(raidId, monstersData, raidTable = raidsData) {
+  const raid = raidTable?.[raidId]
+  if (isWaveRaid(raid)) return raidEncounterHitpoints(raid, monstersData)
   let total = 0
-  for (const bossId of raidBossOrder(raidId)) {
+  for (const bossId of (Array.isArray(raid?.bosses) ? raid.bosses : raidBossOrder(raidId))) {
     const monster = monstersData?.[bossId]
     if (!monster) continue
     total += bossFightHitpoints(monster, monstersData)
@@ -96,8 +99,11 @@ export function coopRaidSummary(raidId, monstersData) {
     name: raid.name,
     icon: raid.icon ?? null,
     description: raid.description ?? null,
-    bossCount: raid.bosses.length,
-    bossNames: raid.bosses.map((id) => monstersData?.[id]?.name || id),
+    bossCount: isWaveRaid(raid) ? raid.waves.length : raid.bosses.length,
+    bossNames: isWaveRaid(raid)
+      ? raid.waves.map((wave) => monstersData?.[wave.primary]?.name || wave.primary)
+      : raid.bosses.map((id) => monstersData?.[id]?.name || id),
+    encounterKind: isWaveRaid(raid) ? 'waves' : 'bosses',
   }
 }
 
@@ -158,6 +164,22 @@ export function raidPartyReady(state) {
 export function raidProgress(state, monstersData) {
   const raid = state?.raid
   if (!raid) return null
+  if (Array.isArray(raid.waves) && raid.waves.length > 0) {
+    const index = Math.max(0, Math.min(raid.waves.length - 1, Number(raid.currentWaveIndex) || 0))
+    const next = raid.waves[index + 1] || null
+    return {
+      kind: 'wave',
+      raidId: raid.raidId,
+      name: raid.name,
+      index,
+      position: index + 1,
+      total: raid.waves.length,
+      currentBossId: raid.waves[index]?.primary ?? null,
+      nextBossId: next?.primary ?? null,
+      nextBossName: next?.primary ? (monstersData?.[next.primary]?.name || next.primary) : null,
+      isFinalBoss: index >= raid.waves.length - 1,
+    }
+  }
   const bosses = Array.isArray(raid.bosses) ? raid.bosses : []
   const index = Math.max(0, Math.min(bosses.length - 1, Number(raid.currentBossIndex) || 0))
   const nextId = bosses[index + 1] ?? null

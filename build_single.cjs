@@ -100,6 +100,7 @@ const sourceFiles = [
   'engine/damageReduction.js',
   'engine/bossForms.js',
   'engine/bossAdds.js',
+  'engine/raidEncounters.js',
   'engine/monsterClips.js',
   'engine/monsterMaxHit.js',
   'engine/hardMode.js',

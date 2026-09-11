@@ -25,6 +25,7 @@ import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
 import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, randomFormSwitchThreshold, recordDefenceBonusDrain, applyDefenceBonusDrain, clearDefenceBonusDrain } from './bossForms.js'
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, addPicksAtRandom, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
+import { isWaveRaid, seedEncounterState, advanceEncounterReinforcements, markEncounterPrimaryDefeated, markEncounterAddDefeated } from './raidEncounters.js'
 import { grindmanDropChance } from './grindman.js'
 import { applyNotedDrops } from './notedDrops.js'
 
@@ -155,10 +156,27 @@ function prepareMonster(monster) {
  * Create a combat state for a raid (sequential boss fights).
  */
 export function createRaidCombatState(raidData, monstersData, combatType = 'melee', stance = 'accurate', spell = null, { grindman = false } = {}) {
-  const firstBossId = raidData.bosses[0]
-  const firstBoss = monstersData[firstBossId]
+  if (isWaveRaid(raidData)) {
+    const firstWave = raidData.waves[0]
+    const primary = monstersData?.[firstWave?.primary]
+    if (!primary) return null
+    const state = createCombatState(primary, combatType, stance, spell, monstersData, { grindman })
+    state.raid = {
+      raidId: raidData.id,
+      name: raidData.name,
+      waves: raidData.waves,
+      currentWaveIndex: 0,
+      awaitingDecision: false,
+      monstersData,
+      rewards: raidData.rewards,
+    }
+    return seedEncounterState(state, firstWave, monstersData, 0)
+  }
+
+  const firstBossId = raidData?.bosses?.[0]
+  const firstBoss = monstersData?.[firstBossId]
   if (!firstBoss) return null
-  const state = createCombatState(firstBoss, combatType, stance, spell, null, { grindman })
+  const state = createCombatState(firstBoss, combatType, stance, spell, monstersData, { grindman })
   state.raid = {
     raidId: raidData.id,
     name: raidData.name,
@@ -168,6 +186,33 @@ export function createRaidCombatState(raidData, monstersData, combatType = 'mele
     rewards: raidData.rewards
   }
   return state
+}
+
+export function continueRaidCombatState(combatState, raidData, monstersData, { modifierState = null } = {}) {
+  if (!combatState?.raid || !isWaveRaid(raidData)) return combatState
+  const nextIndex = Math.max(0, Number(combatState.raid.currentWaveIndex) || 0) + 1
+  const wave = raidData.waves[nextIndex]
+  const primary = monstersData?.[wave?.primary]
+  if (!wave || !primary) return null
+  const next = createCombatState(primary, combatState.combatType, combatState.stance, combatState.spell, monstersData, { grindman: combatState.grindman === true })
+  next.xpGained = { ...(combatState.xpGained || {}) }
+  next.activePotions = { ...(combatState.activePotions || {}) }
+  next.activeProtectionPrayer = combatState.activeProtectionPrayer ?? null
+  next.activeCombatPrayer = combatState.activeCombatPrayer ?? null
+  next.maxPrayerPoints = combatState.maxPrayerPoints
+  next.prayerPoints = combatState.prayerPoints
+  next.prayerDrainAccumulator = combatState.prayerDrainAccumulator || 0
+  next.summon = combatState.summon || null
+  next.specialAttackEnergy = 100
+  next.raid = {
+    ...combatState.raid,
+    waves: raidData.waves,
+    currentWaveIndex: nextIndex,
+    awaitingDecision: false,
+    monstersData,
+    modifierState: modifierState || combatState.raid.modifierState || null,
+  }
+  return seedEncounterState(next, wave, monstersData, nextIndex)
 }
 
 /**
@@ -294,16 +339,19 @@ function resolveTargetDeath(state, target, events, isOnTask = false) {
     target.currentHP = 0
     const index = addIndexOf(state, target)
     state.adds = state.adds.filter((add) => add !== target)
-    // The list shifted under the selection: drop back to the boss rather than
-    // silently re-pointing the player at whichever add slid into the slot.
     if (state.addTargetIndex === index) state.addTargetIndex = null
     else if (typeof state.addTargetIndex === 'number' && state.addTargetIndex > index) state.addTargetIndex -= 1
     state.addsDefeated = (state.addsDefeated || 0) + 1
-    // A killed add always restarts the wait, even from a full field — that is
-    // what makes clearing them a treadmill rather than a one-off.
-    state.addSpawnCountdown = rollRespawnDelay(getAddSpec(state.monster))
     events.push({ type: 'addDefeated', monsterName: target.name, bossName: state.monster?.name })
+    if (state.encounter?.finite) {
+      state.addSpawnCountdown = null
+      return markEncounterAddDefeated(state, target, events)
+    }
+    state.addSpawnCountdown = rollRespawnDelay(getAddSpec(state.monster))
     return false
+  }
+  if (state.encounter?.finite && target === state.monster) {
+    return markEncounterPrimaryDefeated(state, events)
   }
   return checkMonsterDeath(state, target, events, isOnTask)
 }
@@ -559,6 +607,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   const state = { ...combatState, slayerTask }
   const events = []
   state.tickCount++
+  advanceEncounterReinforcements(state, events)
 
   // Decrement cooldowns
   if (state.playerAttackTimer > 0) state.playerAttackTimer--
@@ -633,9 +682,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   // awaitCombatCompletion lock on the "Saving…" overlay. checkMonsterDeath
   // handles phase/double-kill/raid semantics, so a regenerating boss simply
   // continues with combat still active.
-  if (monster.currentHP <= 0 && state.active) {
+  if (monster.currentHP <= 0 && state.active && !state.encounter?.primaryDefeated) {
     state.monster = monster
-    checkMonsterDeath(state, monster, events, isOnTask)
+    if (state.encounter?.finite) markEncounterPrimaryDefeated(state, events)
+    else checkMonsterDeath(state, monster, events, isOnTask)
     return { combatState: state, events }
   }
 
@@ -1144,7 +1194,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   }
 
   // ── Monster Attack ──
-  if (state.monsterAttackTimer <= 0) {
+  if (state.monsterAttackTimer <= 0 && monster.currentHP > 0) {
     let damage = 0
 
     // Determine the effective attack style (handle both single style and multiple styles array)
