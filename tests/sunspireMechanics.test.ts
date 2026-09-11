@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { continueRaidCombatState, createCombatState, createRaidCombatState, processCombatTick } from '../src/engine/combat.js'
+import { applyCombatReaction, continueRaidCombatState, createCombatState, createRaidCombatState, processCombatTick } from '../src/engine/combat.js'
 import { liveAdds } from '../src/engine/bossAdds.js'
 
 const DEF = { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 }
@@ -131,5 +131,69 @@ describe('Aurelios scripted champion', () => {
       expect(state.aurelios.phase).toBe(phase)
     }
     expect(state.aurelios.enraged).toBe(true)
+  })
+})
+
+
+describe('Sunspire reaction windows', () => {
+  const champion: any = foe('aurelios_the_unbroken', {
+    name: 'Aurelios the Unbroken',
+    hitpoints: 4500,
+    attackStyle: 'slash',
+    weakness: 'slash',
+    sunspireChampion: true,
+  })
+
+  it('rewards a correct Grapple parry and punishes ignoring it', () => {
+    const success: any = createCombatState(champion)
+    success.aurelios.pattern = ['grapple']
+    success.monsterAttackTimer = 2
+    let out = processCombatTick(success, { ...stats, currentHP: 999 }, {}, {}, {})
+    const telegraph = out.events.find((e: any) => e.attackId === 'grapple')
+    expect(telegraph?.requiredSlot).toBeTruthy()
+    expect(applyCombatReaction(success, { attackId: 'grapple', type: 'parry', slot: telegraph.requiredSlot }).ok).toBe(true)
+    out = processCombatTick(success, { ...stats, currentHP: 999 }, {}, {}, {})
+    expect(out.events.find((e: any) => e.type === 'combatReaction' && e.attackId === 'grapple')?.success).toBe(true)
+
+    const fail: any = createCombatState(champion)
+    fail.aurelios.pattern = ['grapple']
+    fail.monsterAttackTimer = 2
+    processCombatTick(fail, { ...stats, currentHP: 999 }, {}, {}, {})
+    const failed = processCombatTick(fail, { ...stats, currentHP: 999 }, {}, {}, {})
+    expect(failed.events.find((e: any) => e.type === 'combatReaction' && e.attackId === 'grapple')?.success).toBe(false)
+  })
+
+  it('accepts the exact Triple Parry prayer sequence and rejects the wrong order', () => {
+    const ok: any = createCombatState(champion)
+    ok.aurelios.pattern = ['triple_parry']
+    ok.monsterAttackTimer = 2
+    processCombatTick(ok, { ...stats, currentHP: 999 }, {}, {}, {})
+    applyCombatReaction(ok, { attackId: 'triple_parry', type: 'prayer_sequence', prayers: ['melee', 'ranged', 'magic'] })
+    const good = processCombatTick(ok, { ...stats, currentHP: 999 }, {}, {}, {})
+    expect(good.events.find((e: any) => e.type === 'combatReaction' && e.attackId === 'triple_parry')?.success).toBe(true)
+
+    const bad: any = createCombatState(champion)
+    bad.aurelios.pattern = ['triple_parry']
+    bad.monsterAttackTimer = 2
+    processCombatTick(bad, { ...stats, currentHP: 999 }, {}, {}, {})
+    applyCombatReaction(bad, { attackId: 'triple_parry', type: 'prayer_sequence', prayers: ['magic', 'ranged', 'melee'] })
+    const wrong = processCombatTick(bad, { ...stats, currentHP: 999 }, {}, {}, {})
+    expect(wrong.events.find((e: any) => e.type === 'combatReaction' && e.attackId === 'triple_parry')?.success).toBe(false)
+  })
+
+  it('makes timed Sunspire hazards reactable rather than unavoidable presentation events', () => {
+    const state: any = nextWith({ afterburn: 1 })
+    state.sunspireHazards.afterburnNext = 3
+    state.playerAttackTimer = 99
+    state.monsterAttackTimer = 99
+    let out = processCombatTick(state, { ...stats, currentHP: 999 }, {}, {}, {})
+    const telegraph = out.events.find((e: any) => e.type === 'combatTelegraph' && e.attackId === 'afterburn')
+    expect(telegraph?.responseType).toBe('guard')
+    expect(applyCombatReaction(state, { attackId: 'afterburn', type: 'guard' }).ok).toBe(true)
+    processCombatTick(state, { ...stats, currentHP: 999 }, {}, {}, {})
+    out = processCombatTick(state, { ...stats, currentHP: 999 }, {}, {}, {})
+    const hazard = out.events.find((e: any) => e.type === 'sunspireHazard' && e.hazardId === 'afterburn')
+    expect(hazard?.success).toBe(true)
+    expect(hazard?.damage).toBeLessThan(hazard?.baseDamage)
   })
 })
