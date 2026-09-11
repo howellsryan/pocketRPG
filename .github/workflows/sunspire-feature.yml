@@ -24,12 +24,24 @@ jobs:
           node scripts/gear-benchmark.cjs --by-level
           echo "---- Sunspire gear rows ----"
           grep -i -n -E "sunweaver|twinflare|resonant|sunbound" reports/gear-benchmark.md || true
-          node scripts/economy-benchmark.cjs --out=/tmp/economy-benchmark
+          node scripts/economy-benchmark.cjs --out=reports/sunspire-economy-temp
           echo "---- Sunspire economy rows ----"
-          grep -i -n -A4 -B4 "sunspire" /tmp/economy-benchmark.md || true
+          grep -i -n -A4 -B4 "sunspire" reports/sunspire-economy-temp.md || true
+      - name: Generate chat knowledge
+        run: npm run gen:knowledge
+      - name: Capture Sunspire verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sunspire-verification
+          path: |
+            functions/_lib/chat/knowledge.js
+            reports/gear-benchmark.md
+            reports/gear-benchmark.json
+            reports/sunspire-economy-temp.md
+            reports/sunspire-economy-temp.json
       - name: Verify generated chat knowledge
         run: |
-          npm run gen:knowledge
           if ! git diff --exit-code -- functions/_lib/chat/knowledge.js; then
             git diff -- functions/_lib/chat/knowledge.js
             exit 1
