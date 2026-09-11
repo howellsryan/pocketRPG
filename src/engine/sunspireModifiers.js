@@ -1,21 +1,163 @@
 import { prepareAdd, liveAdds } from './bossAdds.js'
 
 export const SUNSPIRE_MODIFIERS = Object.freeze({
-  ember_swarm: { name: 'Ember Swarm', maxTier: 3 },
-  profanation: { name: 'Profanation', maxTier: 3 },
-  deathmark: { name: 'Deathmark', maxTier: 3 },
-  twin_resonance: { name: 'Twin Resonance', maxTier: 1 },
-  withering: { name: 'Withering', maxTier: 3 },
-  chimera_frenzy: { name: 'Chimera Frenzy', maxTier: 3 },
-  veiled_sight: { name: 'Veiled Sight', maxTier: 3 },
-  afterburn: { name: 'Afterburn', maxTier: 3 },
-  horncall: { name: 'Horncall', maxTier: 3 },
-  unyielding: { name: 'Unyielding', maxTier: 3 },
-  sunburst: { name: 'Sunburst', maxTier: 3 },
-  warband_quartet: { name: 'Warband Quartet', maxTier: 1 },
-  sun_totem: { name: 'Sun Totem', maxTier: 1 },
-  cinderfall: { name: 'Cinderfall', maxTier: 3 },
+  ember_swarm: {
+    name: 'Ember Swarm', maxTier: 3,
+    tiers: ['Adds 1 Ember Swarm to every wave.', 'Adds 2 Ember Swarms to every wave.', 'Adds 3 Ember Swarms to every wave.'],
+  },
+  profanation: {
+    name: 'Profanation', maxTier: 3,
+    tiers: [
+      'Damage that gets through your protection also drains Prayer equal to 20% of that damage.',
+      'Damage that gets through your protection also drains Prayer equal to 40% of that damage.',
+      'Damage that gets through your protection also drains Prayer equal to 60% of that damage.',
+    ],
+  },
+  deathmark: {
+    name: 'Deathmark', maxTier: 3,
+    tiers: [
+      'Damaging enemy hits build Doom. The hit that reaches 15 Doom stacks is lethal.',
+      'Damaging enemy hits build Doom. The hit that reaches 10 Doom stacks is lethal.',
+      'Damaging enemy hits build Doom. The hit that reaches 5 Doom stacks is lethal.',
+    ],
+  },
+  twin_resonance: {
+    name: 'Twin Resonance', maxTier: 1,
+    tiers: ['A wave that begins with a Resonance Colossus begins with a second one too.'],
+  },
+  withering: {
+    name: 'Withering', maxTier: 3,
+    tiers: [
+      'Your maximum HP is reduced to 90% of your Hitpoints level for following waves.',
+      'Your maximum HP is reduced to 80% of your Hitpoints level for following waves.',
+      'Your maximum HP is reduced to 60% of your Hitpoints level for following waves.',
+    ],
+  },
+  chimera_frenzy: {
+    name: 'Chimera Frenzy', maxTier: 3,
+    tiers: [
+      'Triune Chimeras attack twice per swing and attack 1 tick faster.',
+      'Triune Chimeras attack three times per swing, attack 2 ticks faster and become venomous.',
+      'Triune Chimeras attack four times per swing, stay 2 ticks faster and remain venomous.',
+    ],
+  },
+  veiled_sight: {
+    name: 'Veiled Sight', maxTier: 3,
+    tiers: [
+      'Your Ranged and Magic accuracy is reduced to 85%.',
+      'Your Ranged and Magic accuracy is reduced to 70%.',
+      'Your Ranged and Magic accuracy is reduced to 55%.',
+    ],
+  },
+  afterburn: {
+    name: 'Afterburn', maxTier: 3,
+    tiers: [
+      'Every 32 ticks, a 2-tick Guard warning threatens 6 damage. Guarding reduces it to 25%.',
+      'Every 26 ticks, a 2-tick Guard warning threatens 9 damage. Guarding reduces it to 25%.',
+      'Every 20 ticks, a 2-tick Guard warning threatens 12 damage. Guarding reduces it to 25%.',
+    ],
+  },
+  horncall: {
+    name: 'Horncall', maxTier: 3,
+    tiers: ['Hornwardens gain +3 max hit.', 'Hornwardens gain +6 max hit.', 'Hornwardens gain +9 max hit.'],
+  },
+  unyielding: {
+    name: 'Unyielding', maxTier: 3,
+    tiers: [
+      'Enemies ignore 33% of your Defence roll and gain +1 max hit.',
+      'Enemies ignore 66% of your Defence roll and gain +3 max hit.',
+      'Enemies ignore all of your Defence roll and gain +6 max hit.',
+    ],
+  },
+  sunburst: {
+    name: 'Sunburst', maxTier: 3,
+    tiers: [
+      'Every 47 ticks, a 2-tick warning threatens 8 Magic damage. Protect from Magic reduces it to 20%.',
+      'Every 39 ticks, a 2-tick warning threatens 12 Magic damage. Protect from Magic reduces it to 20%.',
+      'Every 31 ticks, a 2-tick warning threatens 16 Magic damage. Protect from Magic reduces it to 20%.',
+    ],
+  },
+  warband_quartet: {
+    name: 'Warband Quartet', maxTier: 1,
+    tiers: ['Every wave led by the Ashen Warband Bladesworn gains an Ashen Warband Bulwark.'],
+  },
+  sun_totem: {
+    name: 'Sun Totem', maxTier: 1,
+    tiers: ['When an enemy falls to half health, a 1-HP Sun Totem appears. Kill it within 8 ticks or it heals that enemy for 30% max HP.'],
+  },
+  cinderfall: {
+    name: 'Cinderfall', maxTier: 3,
+    tiers: [
+      'Every enemy death triggers a 1-tick Guard warning for 5 damage. Guarding reduces it to 25%.',
+      'Every enemy death triggers a 1-tick Guard warning for 8 damage. Guarding reduces it to 25%.',
+      'Every enemy death triggers a 1-tick Guard warning for 11 damage. Guarding reduces it to 25%.',
+    ],
+  },
 })
+
+export function sunspireModifierDescription(id, tierNumber = 1) {
+  const def = SUNSPIRE_MODIFIERS[id]
+  if (!def) return ''
+  const clamped = Math.max(1, Math.min(def.maxTier, Math.floor(Number(tierNumber) || 1)))
+  return def.tiers?.[clamped - 1] || ''
+}
+
+function sunspireProtectionStyle(attackStyle) {
+  if (attackStyle === 'magic') return 'magic'
+  if (attackStyle === 'ranged') return 'ranged'
+  return 'melee'
+}
+
+function sunspireEnemyStyle(enemy) {
+  const form = enemy?.multiForm && enemy?.currentForm ? enemy.forms?.[enemy.currentForm] : null
+  return form?.attackStyle || enemy?.attackStyle || 'crush'
+}
+
+function sunspireTicksUntilAttack(timer) {
+  const value = Math.floor(Number(timer))
+  return Number.isFinite(value) ? Math.max(1, value) : Number.MAX_SAFE_INTEGER
+}
+
+/**
+ * Presentation-only prediction for the next protection prayer in a staggered
+ * Sunspire encounter. Mirrors combat.js: primary wins a due tie, then adds
+ * resolve in spawn order. Harmless healing totems are excluded.
+ */
+export function nextSunspirePrayerFlick({ primary = null, primaryAttackTimer = null, adds = [] } = {}) {
+  const candidates = []
+  if (primary?.currentHP > 0 && primary?.maxHit !== 0) {
+    const attackStyle = sunspireEnemyStyle(primary)
+    candidates.push({
+      monsterId: primary.id,
+      monsterName: primary.name || primary.id,
+      attackStyle,
+      style: sunspireProtectionStyle(attackStyle),
+      ticksUntil: sunspireTicksUntilAttack(primaryAttackTimer),
+      fromAdd: false,
+      order: -1,
+    })
+  }
+  for (let index = 0; index < (Array.isArray(adds) ? adds.length : 0); index++) {
+    const add = adds[index]
+    if (!add || add.currentHP <= 0 || add.maxHit === 0) continue
+    const attackStyle = sunspireEnemyStyle(add)
+    candidates.push({
+      monsterId: add.id,
+      monsterName: add.name || add.id,
+      attackStyle,
+      style: sunspireProtectionStyle(attackStyle),
+      ticksUntil: sunspireTicksUntilAttack(add.attackTimer),
+      fromAdd: true,
+      order: index,
+    })
+  }
+  candidates.sort((a, b) =>
+    a.ticksUntil - b.ticksUntil
+    || Number(a.fromAdd) - Number(b.fromAdd)
+    || a.order - b.order
+  )
+  return candidates[0] || null
+}
 
 function tier(state, id) {
   const max = SUNSPIRE_MODIFIERS[id]?.maxTier || 0
