@@ -133,4 +133,14 @@ describe('finite encounter enemies', () => {
     expect(out.combatState.addSpawnCountdown).toBeNull()
     expect(out.combatState.active).toBe(true)
   })
+
+  it('owns modifier-spawned enemies as raid-only encounter content', () => {
+    expect(raid.encounterOnlyMonsters).toEqual([
+      'ashen_warband_bulwark',
+      'ember_swarm',
+      'sunspire_healing_totem',
+    ])
+    for (const id of raid.encounterOnlyMonsters) expect(monsters[id], id).toBeDefined()
+  })
+
 })
