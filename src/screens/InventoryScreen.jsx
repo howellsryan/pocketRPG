@@ -3,7 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import InventoryGrid from '../components/InventoryGrid.jsx'
 import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
-import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
+import WeaponChargePanel, { chargesPerMaterial, getChargeRecipe, isChargeableItem, materialUnitsForCharges } from '../components/WeaponChargePanel.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import SellConfirmModal from '../components/SellConfirmModal.jsx'
@@ -208,16 +208,19 @@ export default function InventoryScreen() {
     if (!selected) return
     const { slotIndex, slot, item } = selected
 
-    // Check if weapon is scale-charged
-    if (!item.scaleCharged) {
+    if (!isChargeableItem(item)) {
       addToast('This weapon cannot be charged', 'error')
       return
     }
 
     const recipe = getChargeRecipe(item)
+    const unit = chargesPerMaterial(item)
     const availableForId = (id) => inventory.reduce((sum, s) => sum + (s && s.itemId === id ? s.quantity : 0), 0)
-    const affordable = recipe.reduce((min, r) => Math.min(min, Math.floor(availableForId(r.itemId) / r.qty)), Infinity)
-    const actualQty = Math.min(qty, affordable)
+    const affordableMaterials = recipe.reduce((min, r) => Math.min(min, Math.floor(availableForId(r.itemId) / r.qty)), Infinity)
+    const capacity = Number.isFinite(Number(item.maxCharges)) ? Math.max(0, item.maxCharges - (slot.charges || 0)) : Infinity
+    const requested = unit > 1 ? Math.ceil(Math.max(0, qty) / unit) * unit : Math.max(0, Math.floor(qty))
+    const actualQty = Math.min(requested, affordableMaterials * unit, capacity)
+    const materialUnits = materialUnitsForCharges(item, actualQty)
     if (actualQty <= 0) {
       const need = recipe.map(r => `${r.qty} ${itemsData[r.itemId]?.name || r.itemId}`).join(' + ')
       addToast(`Need ${need} per charge`, 'error')
@@ -226,7 +229,7 @@ export default function InventoryScreen() {
 
     const newInv = [...inventory]
     for (const r of recipe) {
-      let remaining = actualQty * r.qty
+      let remaining = materialUnits * r.qty
       for (let i = 0; i < newInv.length && remaining > 0; i++) {
         if (i === slotIndex) continue // never consume from the weapon's own slot
         if (newInv[i]?.itemId === r.itemId) {
@@ -241,7 +244,7 @@ export default function InventoryScreen() {
     const newSlot = { ...slot, charges: (slot.charges || 0) + actualQty }
     newInv[slotIndex] = newSlot
 
-    recordItemLosses(chargeRecipeSpend(recipe, actualQty))
+    recordItemLosses(chargeRecipeSpend(recipe, materialUnits))
     updateInventory(newInv)
     setSelected({ ...selected, slot: newSlot })
     addToast(`Charged ${item.name} with ${actualQty} charge${actualQty === 1 ? '' : 's'}`, 'info')
@@ -252,7 +255,7 @@ export default function InventoryScreen() {
     const { slotIndex, slot, item } = selected
 
     // Check if weapon is scale-charged
-    if (!item.scaleCharged) {
+    if (!isChargeableItem(item)) {
       addToast('This weapon cannot be uncharged', 'error')
       return
     }
@@ -307,7 +310,8 @@ export default function InventoryScreen() {
 
     // Recover every recipe ingredient, scaled by the total charges removed.
     const recipe = getChargeRecipe(item)
-    const recovered = recipe.map(r => ({ itemId: r.itemId, qty: r.qty * totalCharges }))
+    const recoverableMaterials = Math.floor(totalCharges / chargesPerMaterial(item))
+    const recovered = recipe.map(r => ({ itemId: r.itemId, qty: r.qty * recoverableMaterials }))
     for (const rec of recovered) {
       const existingIdx = newInv.findIndex(s => s && s.itemId === rec.itemId)
       if (existingIdx !== -1) {
@@ -630,7 +634,7 @@ export default function InventoryScreen() {
       {selected && (
         <SharedItemModal item={selected.item} quantity={selected.slot.quantity} noted={selected.slot.noted} onClose={() => setSelected(null)}>
           <div class="space-y-2">
-              {selected.item.scaleCharged && (
+              {isChargeableItem(selected.item) && (
                 <p class="mt-1">⚡ Charges: <span class="text-[var(--color-emerald)] font-bold">{selected.slot.charges || 0}</span></p>
               )}
             {/* Auto-bank exclusion toggle — excluded items stay in the inventory when a full inventory auto-banks during idle/offline play */}
@@ -684,7 +688,7 @@ export default function InventoryScreen() {
                     Eat ({currentHP}/{getMaxHP()} HP)
                   </button>
                 )}
-                {selected.item.scaleCharged && !selected.slot.noted && (
+                {isChargeableItem(selected.item) && !selected.slot.noted && (
                   <button onClick={() => setShowChargeModal(true)}
                     class="fm-btn fm-btn--verdigris fm-btn--sm">
                     Charge
@@ -720,7 +724,7 @@ export default function InventoryScreen() {
                   Drop
                 </button>
               </div>
-              {selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (
+              {isChargeableItem(selected.item) && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (
                 <button onClick={handleUnchargeWeapon}
                   class="fm-btn fm-btn--ghost fm-btn--sm w-full text-[var(--fm-blood)]">
                   Uncharge ({selected.slot.charges} charge{selected.slot.charges === 1 ? '' : 's'})
@@ -921,6 +925,13 @@ export default function InventoryScreen() {
             itemsData={itemsData}
             onCharge={handleChargeWeapon}
             onUncharge={handleUnchargeWeapon}
+            active={selected.slot.active !== false}
+            onToggleActive={selected.item.chargedPassive ? (value) => {
+              const next = [...inventory]
+              next[selected.slotIndex] = { ...next[selected.slotIndex], active: value }
+              updateInventory(next)
+              setSelected({ ...selected, slot: next[selected.slotIndex] })
+            } : null}
           />
         </Modal>
       )}

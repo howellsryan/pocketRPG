@@ -13,7 +13,7 @@ import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import EquipmentPaperdoll, { EQ_SLOT_NAMES } from '../components/EquipmentPaperdoll.jsx'
 import InventoryGrid from '../components/InventoryGrid.jsx'
-import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
+import WeaponChargePanel, { chargesPerMaterial, getChargeRecipe, isChargeableItem, materialUnitsForCharges } from '../components/WeaponChargePanel.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS, spellRuneDamageLabel } from '../utils/bonusLabels.js'
 import { formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 import { chargeRecipeSpend } from '../engine/chargeRecipes.js'
@@ -193,6 +193,7 @@ export default function EquipmentScreen() {
     // For ammo, restore the original quantity that was stored when equipped
     const invEntry = { itemId: removed.itemId, quantity: removed.quantity || 1 }
     if (removed.charges && removed.charges > 0) invEntry.charges = removed.charges
+    if (removed.active !== undefined) invEntry.active = removed.active !== false
     newEq[selected.slot] = null
     newInv[empty] = invEntry
     updateEquipment(newEq)
@@ -208,11 +209,15 @@ export default function EquipmentScreen() {
     const weaponEntry = equipment[equipSlotName]
     if (!weaponEntry) return
     const item = itemsData[weaponEntry.itemId]
-    if (!item?.scaleCharged) return
+    if (!isChargeableItem(item)) return
 
     const recipe = getChargeRecipe(item)
-    const affordable = recipe.reduce((min, r) => Math.min(min, Math.floor(availableForId(r.itemId) / r.qty)), Infinity)
-    const actualQty = Math.min(qty, affordable)
+    const unit = chargesPerMaterial(item)
+    const affordableMaterials = recipe.reduce((min, r) => Math.min(min, Math.floor(availableForId(r.itemId) / r.qty)), Infinity)
+    const capacity = Number.isFinite(Number(item.maxCharges)) ? Math.max(0, item.maxCharges - (weaponEntry.charges || 0)) : Infinity
+    const requested = unit > 1 ? Math.ceil(Math.max(0, qty) / unit) * unit : Math.max(0, Math.floor(qty))
+    const actualQty = Math.min(requested, affordableMaterials * unit, capacity)
+    const materialUnits = materialUnitsForCharges(item, actualQty)
     if (actualQty <= 0) {
       const need = recipe.map(r => `${r.qty} ${itemsData[r.itemId]?.name || r.itemId}`).join(' + ')
       addToast(`Need ${need} per charge`, 'error')
@@ -221,7 +226,7 @@ export default function EquipmentScreen() {
 
     const newInv = [...inventory]
     for (const r of recipe) {
-      let remaining = actualQty * r.qty
+      let remaining = materialUnits * r.qty
       for (let i = 0; i < newInv.length && remaining > 0; i++) {
         if (newInv[i]?.itemId === r.itemId) {
           const take = Math.min(newInv[i].quantity, remaining)
@@ -236,7 +241,7 @@ export default function EquipmentScreen() {
     const currentCharges = weaponEntry.charges || 0
     newEq[equipSlotName] = { ...weaponEntry, charges: currentCharges + actualQty }
 
-    recordItemLosses(chargeRecipeSpend(recipe, actualQty))
+    recordItemLosses(chargeRecipeSpend(recipe, materialUnits))
     updateInventory(newInv)
     updateEquipment(newEq)
     addToast(`Charged ${item.name} with ${actualQty} charge${actualQty === 1 ? '' : 's'}`, 'info')
@@ -248,7 +253,7 @@ export default function EquipmentScreen() {
     const weaponEntry = equipment[equipSlotName]
     if (!weaponEntry) return
     const item = itemsData[weaponEntry.itemId]
-    if (!item?.scaleCharged) return
+    if (!isChargeableItem(item)) return
 
     const charges = weaponEntry.charges || 0
     if (charges <= 0) return
@@ -299,7 +304,8 @@ export default function EquipmentScreen() {
 
     // Recover every recipe ingredient, scaled by the total charges removed.
     const recipe = getChargeRecipe(item)
-    const recovered = recipe.map(r => ({ itemId: r.itemId, qty: r.qty * totalCharges }))
+    const recoverableMaterials = Math.floor(totalCharges / chargesPerMaterial(item))
+    const recovered = recipe.map(r => ({ itemId: r.itemId, qty: r.qty * recoverableMaterials }))
     for (const rec of recovered) {
       const existingIdx = newInv.findIndex(s => s && s.itemId === rec.itemId)
       if (existingIdx !== -1) {
@@ -498,8 +504,8 @@ export default function EquipmentScreen() {
         <SharedItemModal item={selected.item} onClose={() => setSelected(null)} hideSlot extraInfo={<p>Slot: {EQ_SLOT_NAMES[selected.slot]}</p>}>
           <div class="flex flex-col gap-2">
 
-            {/* Scale charges panel */}
-            {selected.item.scaleCharged && (
+            {/* Shared charged-item panel */}
+            {isChargeableItem(selected.item) && (
               <WeaponChargePanel
                 item={selected.item}
                 currentCharges={equipment[selected.slot]?.charges || 0}
@@ -507,6 +513,12 @@ export default function EquipmentScreen() {
                 itemsData={itemsData}
                 onCharge={handleChargeWeapon}
                 onUncharge={handleUnchargeWeapon}
+                active={equipment[selected.slot]?.active !== false}
+                onToggleActive={selected.item.chargedPassive ? (value) => {
+                  const next = { ...equipment }
+                  next[selected.slot] = { ...next[selected.slot], active: value }
+                  updateEquipment(next)
+                } : null}
               />
             )}
 
