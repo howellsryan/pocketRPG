@@ -36,6 +36,9 @@ export function createCapture({ page, cdpSession, fps = 30, out, ffmpegPath, crf
   let startedAt = 0
   let pausedAt = 0
   let timer = null
+  let sampleTimer = null
+  let sampling = false
+  let captureMode = 'screencast'
   let ffmpeg = null
   let stderr = ''
 
@@ -80,7 +83,21 @@ export function createCapture({ page, cdpSession, fps = 30, out, ffmpegPath, crf
     }), paintKickId).catch(() => {})
     const deadline = Date.now() + 5000
     while (!lastFrame && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50))
-    if (!lastFrame) throw new Error('capture: no screencast frame arrived within 5s')
+    if (!lastFrame) {
+      // Headless Chromium builds can occasionally never emit Page.screencastFrame
+      // even though screenshots work. Fall back to sampling the real page into
+      // the same CFR encoder rather than failing or recording a blank clip.
+      captureMode = 'screenshots'
+      await cdpSession.send('Page.stopScreencast').catch(() => {})
+      lastFrame = await page.screenshot({ type: 'jpeg', quality, scale: 'device' })
+      const sample = async () => {
+        if (sampling) return
+        sampling = true
+        try { lastFrame = await page.screenshot({ type: 'jpeg', quality, scale: 'device' }) } catch { /* page may be navigating */ }
+        finally { sampling = false }
+      }
+      sampleTimer = setInterval(sample, Math.max(frameMs, 50))
+    }
     await page.evaluate((id) => document.getElementById(id)?.remove(), paintKickId).catch(() => {})
 
     startedAt = Date.now()
@@ -104,6 +121,7 @@ export function createCapture({ page, cdpSession, fps = 30, out, ffmpegPath, crf
     pump()
     clearInterval(timer)
     timer = null
+    if (sampleTimer) { clearInterval(sampleTimer); sampleTimer = null }
     pausedAt = Date.now()
   }
 
@@ -112,11 +130,21 @@ export function createCapture({ page, cdpSession, fps = 30, out, ffmpegPath, crf
     if (timer || !pausedAt) return
     startedAt += Date.now() - pausedAt
     pausedAt = 0
+    if (captureMode === 'screenshots' && !sampleTimer) {
+      const sample = async () => {
+        if (sampling) return
+        sampling = true
+        try { lastFrame = await page.screenshot({ type: 'jpeg', quality, scale: 'device' }) } catch { /* page may be navigating */ }
+        finally { sampling = false }
+      }
+      sampleTimer = setInterval(sample, Math.max(frameMs, 50))
+    }
     timer = setInterval(pump, frameMs / 2)
   }
 
   async function stop() {
     if (timer) { pump(); clearInterval(timer); timer = null }
+    if (sampleTimer) { clearInterval(sampleTimer); sampleTimer = null }
     cdpSession.off?.('Page.screencastFrame', onFrame)
     await cdpSession.send('Page.stopScreencast').catch(() => {})
     const wallMs = Date.now() - startedAt
@@ -132,6 +160,7 @@ export function createCapture({ page, cdpSession, fps = 30, out, ffmpegPath, crf
   /** Tear the encoder down without waiting for a clean file (failure paths). */
   function abort() {
     if (timer) { clearInterval(timer); timer = null }
+    if (sampleTimer) { clearInterval(sampleTimer); sampleTimer = null }
     ffmpeg?.kill('SIGKILL')
   }
 
