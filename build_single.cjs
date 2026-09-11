@@ -216,8 +216,6 @@ const sourceFiles = [
   'components/CoopRaidLobby.js',
   'components/CoopLootShare.js',
   'components/CoopChatPanel.js',
-  'components/SunspireDecisionPanel.js',
-  'components/CombatTelegraphCard.js',
   'components/QuickPrayerConfigModal.js',
   'components/SpellSelectGrid.js',
   'components/SkillEmblem.js',
