@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { rollSunspireWaveReward } from '../src/engine/sunspireRewards.js'
+import { resolveRaidCompletionRewards } from '../functions/api/actions/raid/complete.js'
 
 describe('server-room-owned Sunspire rewards', () => {
   it('does not roll uniques before wave four even with a zero RNG', () => {
@@ -46,15 +47,29 @@ describe('server-room-owned Sunspire rewards', () => {
     expect(repeat.find((r: any) => r.itemId === 'sunshards')?.quantity).toBeGreaterThanOrEqual(500)
   })
 
-  it('has no client-authored reward input surface', () => {
-    const rewards = rollSunspireWaveReward({
+  it('ignores client-authored reward-shaped fields completely', () => {
+    const base = {
       wave: 1,
       random: () => 0.5,
-      obtainedIds: new Set(),
+      obtainedIds: new Set<string>(),
       stagedRewards: [],
+    }
+    const clean = rollSunspireWaveReward(base)
+    const hostile = rollSunspireWaveReward({
+      ...base,
       reward: { itemId: 'twinflare_chakrams', quantity: 999 },
     } as any)
-    expect(rewards.some((r: any) => r.itemId === 'twinflare_chakrams')).toBe(false)
-    expect(rewards.every((r: any) => r.quantity < 999)).toBe(true)
+    expect(hostile).toEqual(clean)
+    expect(hostile.some((r: any) => r.itemId === 'twinflare_chakrams')).toBe(false)
+  })
+
+  it('rejects Sunspire through the legacy raid-complete reward resolver', async () => {
+    await expect(resolveRaidCompletionRewards({
+      sourceId: 'sunspire_colosseum',
+      body: { rewards: [{ itemId: 'twinflare_chakrams', quantity: 999 }] },
+      env: {},
+      characterId: 7,
+      isGrindman: false,
+    } as any)).rejects.toMatchObject({ code: 'SERVER_ROOM_REQUIRED', status: 403 })
   })
 })
