@@ -35,6 +35,7 @@ import { getLevelFromXP } from '../engine/experience.js'
 import { boostedMagicLevel } from '../engine/consumables.js'
 import { canAffordSpecialAttack } from '../engine/specialAttackEnergy.js'
 import { bossAddsOf } from '../engine/bossAdds.js'
+import { nextSunspirePrayerFlick } from '../engine/sunspireModifiers.js'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import monstersData from '../data/monsters.json'
@@ -540,6 +541,20 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   // Same add-vs-boss split as the splat streams above: whichever the stage is
   // actually showing is what its mini HP bar and on-body splats must track.
   const coopStageSplats = spriteAdd ? addSplats : bossSplats
+  const prayerCue = state?.raid?.raidId === 'sunspire_colosseum' && addsOnField.length > 0
+    ? nextSunspirePrayerFlick({
+      primary: liveMonster,
+      primaryAttackTimer: combatState?.monsterAttackTimer,
+      adds: bossAddsOf(boss),
+    })
+    : null
+  const cuePrayer = prayerCue
+    ? Object.values(prayersData).find((prayer) => prayer?.bonusType === 'protection' && prayer.style === prayerCue.style)
+    : null
+  const cuePrayerActive = !!cuePrayer && combatState?.activeProtectionPrayer === cuePrayer.id
+  const cueAccent = prayerCue
+    ? getStyleArt(prayerCue.style === 'melee' ? 'crush' : prayerCue.style).color
+    : null
 
   return (
     <div class="forge-shell h-full flex flex-col p-4">
@@ -566,6 +581,25 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           aside={state?.hardMode ? <HardModeTag /> : null}
           onInfo={() => setShowMonsterInfo(true)}
         />
+
+        {prayerCue && cuePrayer && (
+          <div
+            class="mb-2 flex min-h-9 items-center gap-2 rounded-lg border bg-[var(--surface-raised)] px-2.5 py-1.5 text-[10px] text-[var(--color-parchment)]"
+            style={{ borderColor: cueAccent }}
+            aria-live="polite"
+          >
+            <span class="shrink-0 font-bold uppercase tracking-[0.12em] opacity-60">Next flick</span>
+            <span class="text-sm leading-none" aria-hidden="true">{cuePrayer.icon}</span>
+            <strong class="min-w-0 truncate text-[11px]" style={{ color: cueAccent }}>{cuePrayer.name}</strong>
+            <span class="min-w-0 flex-1 truncate opacity-60">· {prayerCue.monsterName}</span>
+            <span class="shrink-0 font-[var(--font-mono)] opacity-75">
+              {prayerCue.ticksUntil <= 1 ? 'NEXT TICK' : `${prayerCue.ticksUntil}t`}
+            </span>
+            {cuePrayerActive && (
+              <span class="shrink-0 rounded-full border border-current px-1.5 py-0.5 font-semibold opacity-80">ACTIVE</span>
+            )}
+          </div>
+        )}
 
         {/* §20: the group fight looks like the solo fight, so the stage sits in
             the same place with the same timing law — read off THIS member's
