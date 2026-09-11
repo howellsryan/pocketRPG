@@ -14,4 +14,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test -- tests/sunspireColosseum.test.ts
+      - run: npm test -- tests/sunspireColosseum.test.ts tests/sunspireMechanics.test.ts
