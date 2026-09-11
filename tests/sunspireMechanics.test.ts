@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { applyCombatReaction, continueRaidCombatState, createCombatState, createRaidCombatState, processCombatTick } from '../src/engine/combat.js'
+import { applyCombatReaction, applyInstantKill, continueRaidCombatState, createCombatState, createRaidCombatState, processCombatTick } from '../src/engine/combat.js'
 import { liveAdds } from '../src/engine/bossAdds.js'
 import { applyAureliosReaction, aureliosAttackDelay, resolveAureliosAttack, telegraphAureliosAttack, updateAureliosPhase } from '../src/engine/aurelios.js'
 
@@ -87,6 +87,22 @@ describe('Sunspire persistent modifiers', () => {
     const state = nextWith({ horncall: 1 })
     expect(state.sunspireRules.horncallTier).toBe(1)
     expect(state.raid.modifierState.horncall).toBe(1)
+  })
+})
+
+describe('Sunspire wave death semantics', () => {
+  it('keeps alternate kill sources inside finite wave semantics', () => {
+    const state: any = createRaidCombatState(raid, monsters)
+    expect(state.encounter.finite).toBe(true)
+
+    const events = applyInstantKill(state)
+
+    expect(state.encounter.primaryDefeated).toBe(true)
+    expect(events.some((event: any) => event.type === 'raidBossDefeated')).toBe(false)
+    expect(events.some((event: any) => event.type === 'raidComplete')).toBe(false)
+    // Wave one still has living adds, so killing its primary alone must not
+    // prematurely finish the encounter.
+    expect(state.active).toBe(true)
   })
 })
 
