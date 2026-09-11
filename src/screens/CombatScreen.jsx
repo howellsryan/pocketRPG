@@ -13,6 +13,8 @@ import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import InventoryGrid from '../components/InventoryGrid.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
+import SunspireDecisionPanel from '../components/SunspireDecisionPanel.jsx'
+import CombatTelegraphCard from '../components/CombatTelegraphCard.jsx'
 import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
@@ -24,7 +26,7 @@ import { COMBAT_CATEGORY_ORDER, COMBAT_RAID_ORDER, orderBy } from '../utils/comb
 import { prayerSkill } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
-import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
+import { createCombatState, createRaidCombatState, continueRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget, applyCombatReaction } from '../engine/combat.js'
 import { hardModeDeathLoss, hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
 import { displayedDropChance, dropRateBoostLabel, monsterDropBoost } from '../engine/dropRateDisplay.js'
 import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
@@ -473,6 +475,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (!value.trim()) setSearchCollapsedSections({})
   }
   const [lootModal, setLootModal] = useState(null)
+  const [sunspireDecision, setSunspireDecision] = useState(null)
+  const [sunspireBusy, setSunspireBusy] = useState(false)
+  const [combatTelegraph, setCombatTelegraph] = useState(null)
   // An ordinary kill whose loot the server is still rolling. It shows no UI —
   // it just holds the fight until the grant lands, which is also what keeps two
   // completeMonster round trips from overlapping.
@@ -503,6 +508,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const { swings, pushSwings } = useActionSwings()
   const { token: actorConsume, pushConsume } = useConsumeToken()
   const combatRef = useRef(null)
+  const sunspireCarryRef = useRef(null)
+  const sunspireActionRef = useRef(false)
   // Bumped exactly at a new-fight boundary (startFight/continueFight/startRaid),
   // never on an ordinary re-render — InkwrightCombatStage clears its frozen
   // swing state when this changes, so the last motion/tool of a monster that
@@ -547,6 +554,29 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => { bankRef.current = bank }, [bank])
   useEffect(() => { statsRef.current = stats }, [stats])
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
+
+  const combatMaxHP = (state = combatRef.current) => {
+    const multiplier = Number(state?.sunspireRules?.maxHpMultiplier)
+    const safeMultiplier = Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1
+    return Math.max(1, Math.floor(getMaxHP() * safeMultiplier))
+  }
+
+  const clampSunspireHP = (state) => {
+    const cap = combatMaxHP(state)
+    if (hpRef.current > cap) {
+      hpRef.current = cap
+      updateHP(cap)
+    }
+    return cap
+  }
+
+  const forfeitSunspireIfNeeded = (state) => {
+    if (state?.raid?.raidId !== 'sunspire_colosseum' || sunspireActionRef.current) return
+    sunspireActionRef.current = true
+    void api.forfeitSunspireRun('sunspire:forfeit:' + Date.now())
+      .catch(() => {})
+      .finally(() => { sunspireActionRef.current = false })
+  }
 
   // A hard-mode death takes everything tradeable carried and worn, for good
   // (hardModeDeathLoss). Applied here rather than in the engine because the pack
@@ -727,6 +757,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       const state = combatRef.current
       if (!state || !state.active) return
 
+      clampSunspireHP(state)
       const playerStats = {
         attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
         strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
@@ -799,7 +830,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             volatile_surge: '🌩️ Volatile Surge',
             disrupt: '🌋 Disrupt',
             empty_bolt: '🕳️ Empty Bolt',
-            empty_lord_cleave: `🕳️ Empty Lord's Cleave (+${ev.healAmount || 0} HP)`
+            empty_lord_cleave: `🕳️ Empty Lord's Cleave (+${ev.healAmount || 0} HP)`,
+            division: ev.defenceReducedBy > 0 ? `☀️ Division (-${ev.defenceReducedBy} Defence)` : '☀️ Division'
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -814,6 +846,36 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             hpRef.current = newHP
           }
         }
+        if (ev.type === 'combatTelegraph') {
+          setCombatTelegraph({ ...ev, answered: false })
+        }
+        if (ev.type === 'combatReaction') {
+          setCombatTelegraph((prev) => prev?.attackId === ev.attackId ? null : prev)
+          if (ev.success) {
+            setLog(prev => [...prev.slice(-20), { text: '✓ ' + (ev.attackId || 'Mechanic') + ' answered.', type: 'heal', time: Date.now() }])
+          }
+        }
+        if (ev.type === 'sunspireHazard') {
+          const newHP = Math.max(0, hpRef.current - Math.max(0, ev.damage || 0))
+          updateHP(newHP)
+          hpRef.current = newHP
+          setCombatTelegraph((prev) => prev?.attackId === ev.hazardId || ev.hazardId?.startsWith(prev?.attackId || '__none__') ? null : prev)
+          setLog(prev => [...prev.slice(-20), {
+            text: (ev.success ? '🛡️ ' : '☀️ ') + ev.hazardId.replace(/_/g, ' ') + (ev.damage > 0 ? ' hits ' + ev.damage : ' avoided'),
+            type: ev.success ? 'heal' : 'miss',
+            time: Date.now()
+          }])
+          if (newHP <= 0) {
+            if (combatRef.current) combatRef.current.active = false
+            forfeitSunspireIfNeeded(state)
+            setCombat(prev => prev ? { ...prev, active: false } : prev)
+            setActiveTask(null)
+            updateHP(getMaxHP())
+            hpRef.current = getMaxHP()
+            setDeathModal({ monsterName: 'the Sunspire', cause: 'overwhelmed', itemsLost: null })
+            if (oneLifeModeRef.current) revertOneLifeAfterDeath()
+          }
+        }
         if (ev.type === 'monsterHit') {
           const newHP = Math.max(0, hpRef.current - ev.damage)
           updateHP(newHP)
@@ -824,6 +886,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             // after HP was reset to full — the player never dies and the boss keeps
             // its damaged HP.
             if (combatRef.current) combatRef.current.active = false
+            forfeitSunspireIfNeeded(state)
             cancelAutoFight()
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
@@ -1049,6 +1112,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             type: 'raid',
             time: Date.now()
           }])
+        }
+        if (ev.type === 'raidWaveCleared' && ev.raidId === 'sunspire_colosseum') {
+          setLog(prev => [...prev.slice(-20), {
+            text: '☀️ Wave ' + ev.wave + '/' + ev.totalWaves + ' cleared — choose whether to continue.',
+            type: 'victory',
+            time: Date.now()
+          }])
+          void handleSunspireWaveClear(combatState, ev)
         }
         if (ev.type === 'raidComplete') {
           const cloudAuthoritativeRaid = Boolean(ev.raidId && getToken() && getCharacterId())
@@ -1917,7 +1988,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
   }
 
-  const startRaid = (raidData) => {
+  const startRaid = async (raidData) => {
     if (isDemo) {
       addToast('🔒 Raids are available with a free account.', 'warning')
       return
@@ -1927,37 +1998,206 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       addToast(req.reason, 'error')
       return
     }
-    // Map-driven gating (Phase 3): must be at a city that offers this raid. Raids are
-    // their own activity kind — gate on the raid, not its first boss (which is raid-only
-    // content and not a standalone monster on the map).
     if (!requestActivityStart({ type: 'raid', raid: raidData })) return
+
     const { combatType: weaponCombatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
     const combatType = needsSpell ? 'melee' : weaponCombatType
     if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
-    // A hard raid scales the TABLE, so every boss in the run — including the
-    // ones the engine looks up as it advances — comes out doubled.
-    const hardRaid = offersHardMode(raidData) && isHardMode('raids', raidData.id)
-    const state = createRaidCombatState(raidData, monstersTableFor(monstersData, hardRaid), combatType, combatStance, spell, { grindman: isGrindman })
+
+    const isSunspire = raidData.id === 'sunspire_colosseum'
+    const hardRaid = !isSunspire && offersHardMode(raidData) && isHardMode('raids', raidData.id)
+    const table = monstersTableFor(monstersData, hardRaid)
+    let state = createRaidCombatState(raidData, table, combatType, combatStance, spell, { grindman: isGrindman })
     if (!state) {
-      addToast('Failed to start raid — missing boss data', 'error')
+      addToast('Failed to start raid — missing encounter data', 'error')
       return
     }
+
+    let serverRun = null
+    if (isSunspire) {
+      setSunspireBusy(true)
+      try {
+        serverRun = (await api.startSunspireRun())?.run || null
+      } catch (err) {
+        addToast(err?.message || 'Could not start Sunspire.', 'error')
+        setSunspireBusy(false)
+        return
+      }
+      setSunspireBusy(false)
+      if (!serverRun) return
+
+      // Reconstruct the server-owned wave/modifier position. Combat HP remains
+      // local like every solo raid, but the wave number, modifiers and chest do
+      // not come from the browser.
+      const targetIndex = Math.max(0, Math.min(11,
+        (serverRun.status === 'decision' ? serverRun.cleared_wave : serverRun.current_wave) - 1))
+      while (state.raid.currentWaveIndex < targetIndex) {
+        state.active = false
+        state.raid.awaitingDecision = true
+        state = continueRaidCombatState(state, raidData, table, { modifierState: serverRun.modifierState || {} })
+        if (!state) break
+      }
+      if (!state) return
+      state.raid.modifierState = { ...(serverRun.modifierState || {}) }
+      if (serverRun.status === 'decision') {
+        state.active = false
+        state.raid.awaitingDecision = true
+        sunspireCarryRef.current = state
+        combatRef.current = state
+        setCombat(state)
+        setSunspireDecision(serverRun)
+        setActiveTask(null)
+        return
+      }
+    }
+
     state.specialAttackEnergy = 100
     const raidPrayerLvl = getLevelFromXP(stats.prayer?.xp || 0)
     state.maxPrayerPoints = raidPrayerLvl
     state.prayerPoints = raidPrayerLvl
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
+    clampSunspireHP(state)
     combatRef.current = state
     fightSeqRef.current += 1
     setCombat(state)
+    setSunspireDecision(null)
+    setCombatTelegraph(null)
     setKillCount(0)
     setFightStartedAt(Date.now())
-    const firstBoss = monstersTableFor(monstersData, hardRaid)[raidData.bosses[0]]
-    setLog([
-      { text: `🩸 ${raidData.name} — Raid started!`, type: 'raid', time: Date.now() },
-      { text: `Boss 1/${raidData.bosses.length}: ${firstBoss?.name || 'Unknown'}`, type: 'info', time: Date.now() }
-    ])
-    setActiveTask({ type: 'combat', monster: firstBoss, stance: combatStance, bankingEnabled: false, spell: spell || null, raid: true, raidId: raidData.id })
+
+    if (Array.isArray(state.raid?.waves)) {
+      setLog([
+        { text: '☀️ ' + raidData.name + ' — Run started!', type: 'raid', time: Date.now() },
+        { text: 'Wave ' + (state.raid.currentWaveIndex + 1) + '/' + state.raid.waves.length + ': ' + (state.monster?.name || 'Unknown'), type: 'info', time: Date.now() }
+      ])
+    } else {
+      const firstBoss = table[raidData.bosses[0]]
+      setLog([
+        { text: '🩸 ' + raidData.name + ' — Raid started!', type: 'raid', time: Date.now() },
+        { text: 'Boss 1/' + raidData.bosses.length + ': ' + (firstBoss?.name || 'Unknown'), type: 'info', time: Date.now() }
+      ])
+    }
+    setActiveTask({ type: 'combat', monster: state.monster, stance: combatStance, bankingEnabled: false, spell: spell || null, raid: true, raidId: raidData.id })
+  }
+
+  const applySunspireGranted = (granted) => {
+    if (!Array.isArray(granted) || granted.length === 0) return
+    const newInv = [...inventoryRef.current]
+    const newBank = { ...(bankRef.current || {}) }
+    for (const reward of granted) {
+      const itemId = reward?.itemId
+      const quantity = Math.floor(Number(reward?.quantity) || 0)
+      if (!itemId || quantity < 1) continue
+      if (reward?.destination === 'bank') {
+        const existing = newBank[itemId]
+        const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
+        newBank[itemId] = { ...(existing && typeof existing === 'object' ? existing : {}), itemId, quantity: existingQty + quantity }
+      } else {
+        addLootEntry(newInv, reward, itemsData)
+      }
+    }
+    inventoryRef.current = newInv
+    bankRef.current = newBank
+    updateInventory(newInv)
+    updateBank(newBank)
+  }
+
+  const handleSunspireWaveClear = async (state, ev) => {
+    if (sunspireActionRef.current) return
+    sunspireActionRef.current = true
+    setSunspireBusy(true)
+    sunspireCarryRef.current = state
+    setActiveTask(null)
+    try {
+      const res = await api.clearSunspireWave('sunspire:wave:' + (ev.wave || state.raid.currentWaveIndex + 1) + ':' + Date.now())
+      setSunspireDecision(res?.run || null)
+      setCombatTelegraph(null)
+    } catch (err) {
+      addToast(err?.message || 'Could not stage Sunspire rewards.', 'error')
+    } finally {
+      sunspireActionRef.current = false
+      setSunspireBusy(false)
+    }
+  }
+
+  const continueSunspire = async (modifierId) => {
+    if (!sunspireDecision || sunspireBusy) return
+    setSunspireBusy(true)
+    try {
+      const res = await api.continueSunspireRun(modifierId, 'sunspire:continue:' + Date.now())
+      const run = res?.run
+      if (!run) return
+      const previous = sunspireCarryRef.current || combatRef.current
+      let next = previous
+        ? continueRaidCombatState(previous, raidsData.sunspire_colosseum, monstersData, { modifierState: run.modifierState || {} })
+        : createRaidCombatState(raidsData.sunspire_colosseum, monstersData, combatStance, combatStance, null, { grindman: isGrindman })
+      if (!next) throw new Error('Could not prepare next Sunspire wave')
+      next.specialAttackEnergy = 100
+      if (next.maxPrayerPoints == null) {
+        next.maxPrayerPoints = getLevelFromXP(statsRef.current.prayer?.xp || 0)
+        next.prayerPoints = next.maxPrayerPoints
+      }
+      clampSunspireHP(next)
+      combatRef.current = next
+      sunspireCarryRef.current = null
+      fightSeqRef.current += 1
+      setCombat(next)
+      setSunspireDecision(null)
+      setCombatTelegraph(null)
+      setActiveTask({ type: 'combat', monster: next.monster, stance: next.stance, bankingEnabled: false, spell: next.spell || null, raid: true, raidId: 'sunspire_colosseum' })
+      setLog(prev => [...prev.slice(-20), { text: '☀️ Wave ' + (next.raid.currentWaveIndex + 1) + '/12 begins.', type: 'raid', time: Date.now() }])
+    } catch (err) {
+      addToast(err?.message || 'Could not continue Sunspire.', 'error')
+    } finally {
+      setSunspireBusy(false)
+    }
+  }
+
+  const claimSunspire = async () => {
+    if (!sunspireDecision || sunspireBusy) return
+    setSunspireBusy(true)
+    try {
+      const res = await api.claimSunspireRun('sunspire:claim:' + Date.now())
+      const granted = Array.isArray(res?.granted) ? res.granted : []
+      applySunspireGranted(granted)
+      applyServerCollectionLogEntries(res?.collectionLogEntries || [])
+      if (res?.killCount?.sourceType === 'raids') {
+        const updated = { ...raidKillCountsRef.current, [res.killCount.sourceId]: res.killCount.killCount }
+        raidKillCountsRef.current = updated
+        updateRaidKillCounts(updated)
+      }
+      setSunspireDecision(null)
+      sunspireCarryRef.current = null
+      setCombat(null)
+      combatRef.current = null
+      setActiveTask(null)
+      if (res?.fullClear) {
+        recordGameEvent?.({ kind: 'raid_complete', raidId: 'sunspire_colosseum' })
+        setLootModal({
+          monster: monstersData.aurelios_the_unbroken,
+          loot: granted.map((reward) => ({ itemId: reward.itemId, quantity: reward.quantity })),
+          slayerXpGained: 0,
+          isBossKill: true,
+          raidId: 'sunspire_colosseum',
+          loading: false,
+        })
+      } else {
+        addToast('☀️ Sunspire chest claimed. You leave the arena safely.', 'levelup')
+      }
+    } catch (err) {
+      addToast(err?.message || 'Sunspire claim failed.', 'error')
+    } finally {
+      setSunspireBusy(false)
+    }
+  }
+
+  const reactToCombatTelegraph = (reaction) => {
+    if (!combatRef.current) return
+    const result = applyCombatReaction(combatRef.current, reaction)
+    if (result?.ok) {
+      setCombat({ ...combatRef.current })
+      setCombatTelegraph((prev) => prev?.attackId === reaction.attackId ? { ...prev, answered: true } : prev)
+    }
   }
 
   const continueFight = (monster) => {
@@ -2163,6 +2403,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const st = combatRef.current
     const raidId = st?.raid?.raidId
     if (!raidId) return Promise.resolve()
+    if (raidId === 'sunspire_colosseum') {
+      addToast('Sunspire cannot be skipped — the chest risk is part of the run.', 'info')
+      return Promise.resolve()
+    }
     return skipEntireRaid({ raidId, monster: st?.monster, isBossKill: true, hardMode: st?.monster?.hardModeActive === true })
   }
   useEffect(() => {
@@ -2172,6 +2416,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }, [])
 
   const stopAndBack = () => {
+    forfeitSunspireIfNeeded(combatRef.current)
+    setSunspireDecision(null)
+    setCombatTelegraph(null)
     cancelAutoFight()
     setCombat(null)
     setLog([])
@@ -2410,6 +2657,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   forceKillHandlerRef.current = () => {
     const state = combatRef.current
     if (!state || !state.active || !state.monster) return false
+    if (state.raid?.raidId === 'sunspire_colosseum') {
+      addToast('Sunspire waves cannot be skipped.', 'info')
+      return false
+    }
     state.monster.currentHP = 0
     state.playerAttackTimer = 0
     state.eatCooldown = 0
@@ -2599,6 +2850,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         onRejoin={rejoinCoopFight}
         onDeath={() => { if (oneLifeModeRef.current) revertOneLifeAfterDeath() }}
       />
+    )
+  }
+
+  if (sunspireDecision) {
+    return (
+      <div class="forge-shell h-full overflow-y-auto p-4">
+        <BackLink onClick={stopAndBack} className="mb-3" />
+        <SunspireDecisionPanel
+          wave={sunspireDecision.cleared_wave}
+          totalWaves={12}
+          staged={sunspireDecision.staged}
+          chest={sunspireDecision.chest}
+          modifierState={sunspireDecision.modifierState}
+          offers={sunspireDecision.offers}
+          finalWave={sunspireDecision.final_wave_cleared}
+          canChoose={true}
+          busy={sunspireBusy}
+          onChoose={continueSunspire}
+          onClaim={claimSunspire}
+        />
+      </div>
     )
   }
 
@@ -3394,7 +3666,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       actorSwing={swings.player}
       actorConsume={actorConsume}
       targetSwing={swings.monster}
-      actorHp={{ current: currentHP, max: getMaxHP() }}
+      actorHp={{ current: currentHP, max: combatMaxHP(combat) }}
       targetHp={{ current: spriteMonster.currentHP, max: spriteMonster.hitpoints }}
       actorSplats={playerSplats}
       targetSplats={stageTargetSplats}
@@ -3414,24 +3686,32 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         {!isDesktopCombatLayout && combat.raid && (
           <div class="flex-1 min-w-0 flex items-center gap-1.5">
             <span class="text-[9px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-50 flex-shrink-0">
-              Boss {combat.raid.currentBossIndex + 1}/{combat.raid.bosses.length}
+              {Array.isArray(combat.raid.waves)
+                ? `Wave ${combat.raid.currentWaveIndex + 1}/${combat.raid.waves.length}`
+                : `Boss ${combat.raid.currentBossIndex + 1}/${combat.raid.bosses.length}`}
             </span>
             <div class="flex-1 flex gap-0.5 min-w-0">
-              {combat.raid.bosses.map((bossId, i) => (
+              {(combat.raid.waves || combat.raid.bosses).map((entry, i) => {
+                const bossId = typeof entry === 'string' ? entry : entry.primary
+                const currentIndex = Array.isArray(combat.raid.waves) ? combat.raid.currentWaveIndex : combat.raid.currentBossIndex
+                return (
                 <div
                   key={bossId}
                   class={`flex-1 h-1 rounded-full ${
-                    i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' :
-                    i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' :
+                    i < currentIndex ? 'bg-[var(--color-hp-green)]' :
+                    i === currentIndex ? 'bg-[var(--color-gold)]' :
                     'bg-[var(--color-void-border)]'
                   }`}
                   title={monstersData[bossId]?.name || bossId}
                 />
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
       </div>
+
+      <CombatTelegraphCard telegraph={combatTelegraph} onReact={reactToCombatTelegraph} />
 
       {/* Pane container — single flex column on mobile, 3-pane grid on desktop.
           DOM order is [stats, inventory, console] so mobile flow stays
@@ -3485,21 +3765,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-[10px] font-semibold text-[var(--color-gold)]">{raidsData[combat.raid.raidId]?.icon} {raidsData[combat.raid.raidId]?.name || 'Raid'}</span>
             <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-60">
-              Boss {combat.raid.currentBossIndex + 1}/{combat.raid.bosses.length}
+              {Array.isArray(combat.raid.waves)
+                ? `Wave ${combat.raid.currentWaveIndex + 1}/${combat.raid.waves.length}`
+                : `Boss ${combat.raid.currentBossIndex + 1}/${combat.raid.bosses.length}`}
             </span>
           </div>
           <div class="flex gap-1">
-            {combat.raid.bosses.map((bossId, i) => (
-              <div
-                key={bossId}
-                class={`flex-1 h-1.5 rounded-full ${
-                  i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' :
-                  i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' :
-                  'bg-[var(--color-void-border)]'
-                }`}
-                title={monstersData[bossId]?.name || bossId}
-              />
-            ))}
+            {(combat.raid.waves || combat.raid.bosses).map((entry, i) => {
+              const bossId = typeof entry === 'string' ? entry : entry.primary
+              const currentIndex = Array.isArray(combat.raid.waves) ? combat.raid.currentWaveIndex : combat.raid.currentBossIndex
+              return (
+                <div
+                  key={(entry.id || bossId) + ':' + i}
+                  class={`flex-1 h-1.5 rounded-full ${
+                    i < currentIndex ? 'bg-[var(--color-hp-green)]' :
+                    i === currentIndex ? 'bg-[var(--color-gold)]' :
+                    'bg-[var(--color-void-border)]'
+                  }`}
+                  title={monstersData[bossId]?.name || bossId}
+                />
+              )
+            })}
           </div>
         </div>
       )}
@@ -3513,7 +3799,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
         {!combatAnimations && (
           <div class="relative">
-            <HPBar current={currentHP} max={getMaxHP()} size="large" />
+            <HPBar current={currentHP} max={combatMaxHP(combat)} size="large" />
             <HitSplatLayer splats={playerSplats} />
           </div>
         )}
