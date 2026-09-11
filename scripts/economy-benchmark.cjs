@@ -419,6 +419,7 @@ function collectRaidBossIds(raidsData) {
 
   for (const raid of Object.values(raidsData || {})) {
     for (const bossId of (raid?.bosses || [])) ids.add(bossId)
+    for (const monsterId of (raid?.encounterOnlyMonsters || [])) ids.add(monsterId)
     for (const wave of (raid?.waves || [])) {
       if (wave?.primary) ids.add(wave.primary)
       for (const monsterId of (wave?.initialAdds || [])) ids.add(monsterId)
