@@ -648,14 +648,14 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   const state = { ...combatState, slayerTask }
   const events = []
   state.tickCount++
-  advanceEncounterReinforcements(state, events)
-  tickSunspireHazards(state, events)
-  if (state.aurelios) updateAureliosPhase(state, state.monster, events)
+  if (!state.encounterPinned) advanceEncounterReinforcements(state, events)
+  if (!state.sunspireHazardsPinned) tickSunspireHazards(state, events)
+  if (state.aurelios && !state.aureliosPinned) updateAureliosPhase(state, state.monster, events)
 
   // Decrement cooldowns
   if (state.playerAttackTimer > 0) state.playerAttackTimer--
   if (state.monsterAttackTimer > 0) state.monsterAttackTimer--
-  if (state.aurelios && state.monsterAttackTimer === 1) telegraphAureliosAttack(state, state.monster, events)
+  if (state.aurelios && !state.aureliosPinned && state.monsterAttackTimer === 1) telegraphAureliosAttack(state, state.monster, events)
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
   if (state.comboCooldown > 0) state.comboCooldown--
