@@ -287,13 +287,6 @@ export const api = {
   resetOneLife: () => request('/api/characters/reset-one-life', { method: 'POST', body: JSON.stringify({}) }),
   requestWorldHandoff: (zone) => request('/api/world-token', { method: 'POST', body: JSON.stringify(zone ? { zone } : {}) }),
 
-  getSunspireRun: () => request('/api/sunspire/run'),
-  startSunspireRun: () => request('/api/sunspire/run', { method: 'POST', body: JSON.stringify({}) }),
-  clearSunspireWave: (actionNonce) => request('/api/sunspire/wave-clear', { method: 'POST', body: JSON.stringify({ actionNonce }) }),
-  continueSunspireRun: (modifierId, actionNonce) => request('/api/sunspire/continue', { method: 'POST', body: JSON.stringify({ modifierId, actionNonce }) }),
-  claimSunspireRun: (actionNonce) => request('/api/sunspire/claim', { method: 'POST', body: JSON.stringify({ actionNonce }) }),
-  forfeitSunspireRun: (actionNonce) => request('/api/sunspire/forfeit', { method: 'POST', body: JSON.stringify({ actionNonce }) }),
-
   completeRaid: (sourceId, payload = {}) => request('/api/actions/raid/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
   completeClue: (sourceId, payload = {}) => request('/api/actions/clue/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
   completeMinigame: (sourceId, payload = {}) => request('/api/actions/minigame/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
