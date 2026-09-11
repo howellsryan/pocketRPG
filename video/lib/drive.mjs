@@ -18,9 +18,14 @@ const CLICK_TIMEOUT = 8000
 /** Boot the app into demo mode with the overlay installed. */
 export async function bootDemo(page, url, overlayOpts = {}) {
   await page.goto(url, { waitUntil: 'networkidle' })
+  await enterDemo(page)
+  await installOverlay(page, overlayOpts)
+}
+
+/** Enter the accountless demo from the public landing page while recording. */
+export async function enterDemo(page) {
   await page.getByText('Play Demo', { exact: true }).first().click({ timeout: 15000 })
   await waitForGame(page)
-  await installOverlay(page, overlayOpts)
 }
 
 /** Wait for the game chunk to finish booting, then clear any welcome modal. */
@@ -93,6 +98,9 @@ export async function runScene(page, scene, ctx) {
       break
     case 'reseed':
       await reseed(page, ctx.url, scene.seed, { caption: scene.caption, hook: ctx.hook, overlay: ctx.overlay })
+      break
+    case 'demo':
+      await enterDemo(page)
       break
     case 'hold':
       break
