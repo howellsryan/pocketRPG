@@ -3,6 +3,7 @@ import itemsData from '../src/data/items.json'
 import { applySpecialAttack, createCombatState, processCombatTick } from '../src/engine/combat.js'
 import { getEquipmentBonuses } from '../src/engine/equipment.js'
 import { chargedArmourRecoil } from '../src/engine/chargedPassives.js'
+import { simulateIdleCombat } from '../src/engine/idleEngine.js'
 
 const items: any = itemsData
 const stats: any = { attack: 99, strength: 99, defence: 99, hitpoints: 99, ranged: 99, magic: 99, currentHP: 99 }
@@ -83,6 +84,41 @@ describe('Twinflare Chakrams', () => {
     expect(out.combatState.monster.stats.defence).toBe(before - perHitDrain * 2)
     expect(out.events.some((event: any) => event.type === 'consumeCharge')).toBe(true)
     vi.restoreAllMocks()
+  })
+
+  it('uses and exhausts the same double-hit charges in idle combat, then continues uncharged', () => {
+    const idleStats: any = Object.fromEntries(
+      ['attack','strength','defence','hitpoints','ranged','magic','prayer'].map((skill) => [skill, { xp: 13_034_431 }]),
+    )
+    const idleTarget: any = {
+      ...target,
+      id: 'idle_target',
+      name: 'Idle Target',
+      hitpoints: 600,
+      combatLevel: 120,
+      boss: false,
+      attackSpeed: 99,
+      stats: { ...target.stats, attack: 1, strength: 1, defence: 180 },
+      drops: [],
+    }
+    const task: any = { monster: idleTarget, stance: 'accurate', bankingEnabled: false }
+    const inventory = new Array(28).fill(null)
+
+    const charged = simulateIdleCombat(
+      task, 10 * 60 * 1000, idleStats,
+      { weapon: { itemId: 'twinflare_chakrams', charges: 8 } } as any,
+      inventory, items,
+    ) as any
+    const uncharged = simulateIdleCombat(
+      task, 10 * 60 * 1000, idleStats,
+      { weapon: { itemId: 'twinflare_chakrams', charges: 0 } } as any,
+      inventory, items,
+    ) as any
+
+    expect(charged.chargesConsumed).toBe(8)
+    expect(charged.resourceLimited).toBe(false)
+    expect(charged.monstersKilled).toBeGreaterThanOrEqual(uncharged.monstersKilled)
+    expect(charged.monstersKilled).toBeGreaterThan(0)
   })
 })
 
