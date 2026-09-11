@@ -54,12 +54,8 @@ export function rollSunspireWaveReward({ wave, random = Math.random, obtainedIds
   const loot = []
   const staged = stagedIds(stagedRewards)
 
-  // Ordinary material value rises with depth. This remains intentionally simple
-  // and PocketRPG-native; uniques below carry the Colosseum-style progression.
-  const shardBase = 18 + depth * 8
-  loot.push({ itemId: 'sunshards', quantity: shardBase + rollQuantity([0, depth * 4], random) })
-  loot.push({ itemId: 'coins', quantity: 5000 + depth * 3500 + rollQuantity([0, depth * 1200], random) })
-
+  // Resolve the unique roll before material quantities so injected RNG has a
+  // stable semantic order: unique chance → unique selection → ordinary amounts.
   const chance = Number(rewardRules?.uniqueChanceByWave?.[String(depth)]) || 0
   if (chance > 0 && random() < chance) {
     const unlocked = []
@@ -77,11 +73,16 @@ export function rollSunspireWaveReward({ wave, random = Math.random, obtainedIds
     if (missingArmour.length > 0) {
       const nonArmour = unlocked.filter(entry => !armourOrder.includes(entry.itemId))
       const nextPiece = unlocked.find(entry => entry.itemId === missingArmour[0])
-      candidates = [...nonArmour, ...(nextPiece ? [nextPiece] : [])]
+      candidates = [...(nextPiece ? [nextPiece] : []), ...nonArmour]
     }
     const unique = weightedUnique(candidates, random)
     if (unique?.itemId) loot.push({ itemId: unique.itemId, quantity: 1 })
   }
+
+  // Ordinary material value rises with depth after the unique decision.
+  const shardBase = 18 + depth * 8
+  loot.push({ itemId: 'sunshards', quantity: shardBase + rollQuantity([0, depth * 4], random) })
+  loot.push({ itemId: 'coins', quantity: 5000 + depth * 3500 + rollQuantity([0, depth * 1200], random) })
 
   if (depth === 12) {
     if (!obtainedIds.has(headlineItem) && !staged.has(headlineItem) && rewardRules.guaranteedFirstClear !== false) {
