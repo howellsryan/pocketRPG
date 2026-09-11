@@ -75,6 +75,11 @@ describe('Sunspire co-op shared wave state', () => {
     state.boss.currentHP = 0
     state.boss.encounter.primaryDefeated = true
     expect(state.boss.adds.length).toBeGreaterThan(0)
+    // Isolate encounter completion from the companions' legitimate incoming
+    // damage: this assertion is about target survival, not survivability.
+    state.members['7'].hp = 9999
+    state.members['7'].maxHP = 9999
+    for (const add of state.boss.adds) add.attackTimer = 99
     const out = tick(state)
     expect(out.stateNext.phase).toBe('active')
     expect(out.stateNext.raid.currentWaveIndex).toBe(0)
