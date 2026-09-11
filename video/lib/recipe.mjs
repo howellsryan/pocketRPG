@@ -23,7 +23,7 @@ export const HOOK_FONT_SIZE = 76
 // puts the floor higher than feels right when reading it on a desktop.
 export const MIN_CAPTION_MS = 1200
 
-const ACTIONS = new Set(['nav', 'click', 'text', 'hold', 'reseed', 'scroll', 'back'])
+const ACTIONS = new Set(['nav', 'click', 'text', 'hold', 'reseed', 'scroll', 'back', 'demo'])
 // Actions addressed by a string target. `nav`/`click` resolve an accessible
 // name; `text` matches visible text, for the parts of the UI that hang onClick
 // on a plain div (the mobile monster rows) where getByRole finds nothing.
