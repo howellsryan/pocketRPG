@@ -75,7 +75,7 @@ function auditStatement(env, auditEvent, now, characterId, requiredRevision) {
  * destruction. A caller that rebuilds a container wholesale has nothing to
  * declare, which is exactly the case the detector exists to catch.
  */
-export async function writeSave(env, characterId, saveObject, expectedRevision, { auditEvent = null, baselineFrom = null, historyReason = null, declaredLosses = null, extraStatements = [] } = {}) {
+export async function writeSave(env, characterId, saveObject, expectedRevision, { auditEvent = null, baselineFrom = null, historyReason = null, declaredLosses = null } = {}) {
   if (!Number.isFinite(expectedRevision) || expectedRevision < 0) {
     throw new GameApiError('SAVE_REVISION_REQUIRED', 'save_revision_required', 400)
   }
@@ -106,12 +106,7 @@ export async function writeSave(env, characterId, saveObject, expectedRevision, 
     : routineSaveHistoryStatement(env, characterId, now)]
   if (itemLoss?.flagged) history.push(flaggedSaveHistoryStatement(env, characterId, now))
 
-  // `extraStatements` lets a server-authoritative grant attach durable
-  // side effects to the SAME D1 transaction as the save update. Every supplied
-  // statement must gate itself on the newly-written save revision/content so a
-  // failed optimistic update cannot commit the side effect independently.
-  const extras = Array.isArray(extraStatements) ? extraStatements.filter(Boolean) : []
-  const statements = [...history, updateStmt, ...extras]
+  const statements = [...history, updateStmt]
   if (auditEvent) statements.push(auditStatement(env, auditEvent, now, characterId, expectedRevision + 1))
   const updateRes = (await env.DB.batch(statements))[history.length]
   if (itemLoss?.flagged && updateRes?.meta?.changes) {
@@ -140,7 +135,6 @@ export async function writeSave(env, characterId, saveObject, expectedRevision, 
       // The batched audit above was preconditioned on the UPDATE that did not
       // apply, so it wrote nothing. This path created the save instead, and it
       // still has to be recorded — awaited, never swallowed.
-      if (extras.length) await env.DB.batch(extras)
       if (auditEvent) await auditStatement(env, auditEvent, now, characterId, 1).run()
     } else {
       throw new GameApiError('SAVE_REVISION_CONFLICT', 'save_revision_conflict', 409)
