@@ -1,4 +1,4 @@
-name: Render ChatGPT TikTok Demo
+name: Capture ChatGPT TikTok Demo Stills
 
 on:
   push:
@@ -35,13 +35,13 @@ jobs:
         run: npm run rebuild
 
       - name: Render TikTok clip
-        run: node video/render-native.mjs video/recipes/tiktok-first-fight.json
+        run: node video/capture-tiktok-stills.mjs
 
-      - name: Upload MP4
+      - name: Upload validated stills
         uses: actions/upload-artifact@v4
         with:
-          name: tiktok-first-fight
-          path: video/out/tiktok-first-fight.mp4
+          name: tiktok-first-fight-stills
+          path: video/out/tiktok-first-fight-stills/*.png
           if-no-files-found: error
           retention-days: 7
 
@@ -49,7 +49,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: tiktok-first-fight-failure
-          path: video/out/tiktok-first-fight-failure.png
+          name: tiktok-first-fight-stills-failure
+          path: video/out/tiktok-first-fight-stills/failure.png
           if-no-files-found: ignore
           retention-days: 7
