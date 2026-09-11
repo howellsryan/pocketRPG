@@ -16,7 +16,7 @@
 // State is persisted as JSON per tick, so members store only the mutable engine
 // fields; the monster itself is rebuilt from `monstersData` on every tick.
 
-import { createCombatState, processCombatTick } from './combat.js'
+import { applyCombatReaction, createCombatState, processCombatTick } from './combat.js'
 import { isWaveRaid, seedEncounterState, encounterHitpoints } from './raidEncounters.js'
 import { applySunspireModifiersToState, offerSunspireModifiers, raiseSunspireModifierTier } from './sunspireModifiers.js'
 import { mergeSunspireRewards, rollSunspireWaveReward } from './sunspireRewards.js'
@@ -1038,6 +1038,9 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
     case 'queue_special':
       member.combat.specialAttackQueued = !member.combat.specialAttackQueued
       return
+    case 'combat_reaction':
+      member.combat.pendingReaction = action.reaction ? { ...action.reaction } : null
+      return
     case 'set_quick_prayers':
       // Loadout, not a combat action — no level gate here. Toggling one ON still
       // goes through the gate in `toggle_prayer` below.
@@ -1315,7 +1318,13 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
     return finishTick(next, events, null)
   }
 
-  reselectTarget(next)
+  const mechanicTargetId = next.boss?.mechanicTargetCharId == null ? null : String(next.boss.mechanicTargetCharId)
+  const mechanicTarget = mechanicTargetId ? next.members[mechanicTargetId] : null
+  if (mechanicTarget?.status === 'alive') next.targetCharId = mechanicTargetId
+  else {
+    if (next.boss) next.boss.mechanicTargetCharId = null
+    reselectTarget(next)
+  }
   const memberIds = Object.keys(next.members).sort((a, b) => Number(a) - Number(b))
   let kill = null
   // One boss, one swing per tick. Killing the target retargets mid-loop, so
@@ -1377,6 +1386,12 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
       engine.adds.forEach((add, i) => {
         add.attackTimer = roomWideAddSwings[i] ? 0 : Math.max(2, add.attackSpeed || 4)
       })
+    }
+
+    const reaction = member.combat.pendingReaction
+    if (reaction) {
+      applyCombatReaction(engine, reaction)
+      member.combat.pendingReaction = null
     }
 
     const hpBefore = engine.monster.currentHP
@@ -1472,6 +1487,9 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
           ? null
           : rollRespawnDelay(getAddSpec(monstersData?.[next.bossId]))
       }
+      if (engineEvents.some((ev) => ev.type === 'combatTelegraph' && ev.source === 'sunspire') && combatState.sunspireHazards) {
+        next.boss.sunspireHazards = structuredClone(combatState.sunspireHazards)
+      }
     }
 
     for (const ev of engineEvents) {
@@ -1497,6 +1515,17 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
       // has to apply it or the same weapon silently stops healing in a group.
       } else if (ev.type === 'specialHit' && ev.healAmount > 0) {
         member.hp = Math.min(member.maxHP, member.hp + ev.healAmount)
+      } else if (ev.type === 'sunspireHazard') {
+        // Sunspire hazards are shared room mechanics but resolve against the
+        // member the room telegraphed them to. Damage is therefore server-owned
+        // and cannot be skipped by a client ignoring the presentation event.
+        member.hp = Math.max(0, member.hp - Math.max(0, Number(ev.damage) || 0))
+      }
+      if (ev.type === 'combatTelegraph' && (ev.source === 'sunspire' || ev.bossId === 'aurelios_the_unbroken')) {
+        next.boss.mechanicTargetCharId = Number(member.characterId)
+      }
+      if ((ev.type === 'combatReaction' || ev.type === 'sunspireHazard') && next.boss.mechanicTargetCharId === Number(member.characterId)) {
+        next.boss.mechanicTargetCharId = null
       }
       if (ev.type === 'monsterDeath') {
         kill = { bossId: next.bossId, monster: ev.monster, xpGained: { ...(ev.xpGained || {}) } }

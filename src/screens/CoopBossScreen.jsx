@@ -12,6 +12,7 @@ import CoopLootShare from '../components/CoopLootShare.jsx'
 import CoopRaidLobby from '../components/CoopRaidLobby.jsx'
 import CoopChatPanel from '../components/CoopChatPanel.jsx'
 import SunspireDecisionPanel from '../components/SunspireDecisionPanel.jsx'
+import CombatTelegraphCard from '../components/CombatTelegraphCard.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import { CombatMonsterInfoSheet } from './CombatMobileSheets.jsx'
@@ -62,6 +63,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const [showQuickPrayerConfig, setShowQuickPrayerConfig] = useState(false)
   const [showMonsterInfo, setShowMonsterInfo] = useState(false)
   const [lootModal, setLootModal] = useState(null)
+  const [combatTelegraph, setCombatTelegraph] = useState(null)
   // Cleared by the poll that reports the raid running, so a double-tap on Start
   // cannot queue two starts (the second is refused server-side either way).
   const [startingRaid, setStartingRaid] = useState(false)
@@ -187,6 +189,15 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     // Run-shaped events: everybody in the party sees these, not just the
     // member they name.
     for (const ev of events) {
+      if (ev.type === 'combatTelegraph' && Number(ev.characterId) === Number(characterId)) {
+        setCombatTelegraph({ ...ev, answered: false })
+      } else if ((ev.type === 'combatReaction' || ev.type === 'sunspireHazard') && Number(ev.characterId) === Number(characterId)) {
+        setCombatTelegraph((prev) => {
+          if (!prev) return prev
+          const same = ev.attackId === prev.attackId || ev.hazardId === prev.attackId || String(ev.hazardId || '').startsWith(String(prev.attackId || '') + '_')
+          return same ? null : prev
+        })
+      }
       if (ev.type === 'raidBossAdvance') addToast?.(`⚔️ ${ev.bossName} — boss ${ev.bossIndex + 1}/${ev.totalBosses}`, 'info')
       else if (ev.type === 'raidWiped') addToast?.('Your party was wiped out. Back to the lobby.', 'error')
       // A group kill feeds the same daily tasks a solo one does. The room has no
@@ -520,6 +531,13 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   return (
     <div class="forge-shell h-full flex flex-col p-4">
       <BackLink onClick={handleLeave} className="mb-3" />
+      <CombatTelegraphCard
+        telegraph={combatTelegraph}
+        onReact={(reaction) => {
+          setCombatTelegraph((prev) => prev ? { ...prev, answered: true } : prev)
+          send({ type: 'combat_reaction', reaction })
+        }}
+      />
 
       <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar">
         <CombatFightHead

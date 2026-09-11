@@ -10,6 +10,7 @@ import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 import prayersData from '../src/data/prayers.json'
 import spellsData from '../src/data/spells.json'
+import { validateCoopAction } from '../functions/_lib/game/coopIntent.js'
 
 const RAID = 'sunspire_colosseum'
 const deps = { itemsData, monstersData, prayersData, spellsData }
@@ -153,4 +154,48 @@ describe('Sunspire co-op shared wave state', () => {
     expect(state.raid.maxHP).toBe(raidTotalHitpoints(RAID, monstersData))
     expect(state.raid.maxHP).toBeGreaterThan(monstersData.aurelios_the_unbroken.hitpoints)
   })
+
+  it('validates bounded combat reactions at the API edge', () => {
+    expect(validateCoopAction({ type: 'combat_reaction', reaction: { attackId: 'afterburn', type: 'guard' } })).toEqual({
+      action: { type: 'combat_reaction', reaction: { attackId: 'afterburn', type: 'guard' } },
+    })
+    expect(validateCoopAction({ type: 'combat_reaction', reaction: { attackId: 'x', type: 'parry', slot: 'inventory' } })).toEqual({
+      error: 'invalid_reaction',
+    })
+  })
+
+  it('applies a reacted Sunspire hazard to the telegraphed member on the server', () => {
+    let state: any = start(party([7]))
+    state.members['7'].hp = 100
+    state.members['7'].maxHP = 100
+    state.members['7'].combat.playerAttackTimer = 99
+    state.members['7'].combat.monsterAttackTimer = 99
+    for (const add of state.boss.adds) add.attackTimer = 99
+    state.boss.sunspireHazards = {
+      tick: 0,
+      afterburnNext: null,
+      sunburstNext: null,
+      totemNext: null,
+      cinderfallEvery: 0,
+      cinderfallCount: 0,
+      pending: [{
+        hazardId: 'afterburn',
+        label: 'Afterburn',
+        responseType: 'guard',
+        baseDamage: 20,
+        protectionStyle: null,
+        openedAtTick: 0,
+        resolveAtTick: 1,
+        reaction: null,
+        resolved: false,
+      }],
+      definitions: {},
+    }
+    const out = tick(state, [intent(7, { type: 'combat_reaction', reaction: { attackId: 'afterburn', type: 'guard' } })])
+    const hazard = out.events.find((e: any) => e.type === 'sunspireHazard' && e.characterId === 7)
+    expect(hazard?.success).toBe(true)
+    expect(hazard?.damage).toBe(5)
+    expect(out.stateNext.members['7'].hp).toBe(95)
+  })
+
 })

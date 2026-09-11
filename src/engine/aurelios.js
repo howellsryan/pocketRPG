@@ -31,6 +31,11 @@ export function createAureliosState() {
   }
 }
 
+export function aureliosAttackDelay(state, monster) {
+  const base = Math.max(1, Math.floor(Number(monster?.attackSpeed) || 4))
+  return state?.aurelios?.enraged ? Math.max(2, base - 1) : base
+}
+
 export function updateAureliosPhase(state, monster, events = []) {
   if (!state?.aurelios || !monster?.hitpoints) return
   const ratio = Math.max(0, monster.currentHP / monster.hitpoints)
@@ -48,7 +53,16 @@ export function updateAureliosPhase(state, monster, events = []) {
       label: state.aurelios.phase === 5 ? 'Final Radiance' : `Radiance ${state.aurelios.phase}`,
     })
   }
-  if (state.aurelios.phase >= 5) state.aurelios.enraged = true
+  if (state.aurelios.phase >= 5 && !state.aurelios.enraged) {
+    state.aurelios.enraged = true
+    events.push({
+      type: 'bossEnrage',
+      bossId: monster.id,
+      label: 'Final Radiance',
+      attackDelay: aureliosAttackDelay(state, monster),
+      damageMultiplier: 1.25,
+    })
+  }
 }
 
 function grappleSlot(index) {
@@ -119,11 +133,13 @@ export function resolveAureliosAttack(state, monster, events = []) {
     blocked = reaction?.type === 'prayer' && reaction?.style === pending.style
     damageMultiplier = blocked ? 0.2 : 1.15
     events.push({ type: 'combatReaction', bossId: monster.id, attackId: pending.attackId, success: blocked })
-  } else if (reaction?.type === 'guard') {
-    blocked = true
-    damageMultiplier = 0.35
-    events.push({ type: 'combatReaction', bossId: monster.id, attackId: pending.attackId, success: true })
+  } else if (pending.responseType === 'guard') {
+    blocked = reaction?.type === 'guard'
+    damageMultiplier = blocked ? 0.35 : 1
+    events.push({ type: 'combatReaction', bossId: monster.id, attackId: pending.attackId, success: blocked })
   }
+
+  if (state.aurelios.enraged && !blocked) damageMultiplier *= 1.25
 
   state.aurelios.patternIndex = (state.aurelios.patternIndex + 1) % state.aurelios.pattern.length
   state.aurelios.pendingAttack = null

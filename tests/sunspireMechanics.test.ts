@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { applyCombatReaction, continueRaidCombatState, createCombatState, createRaidCombatState, processCombatTick } from '../src/engine/combat.js'
 import { liveAdds } from '../src/engine/bossAdds.js'
-import { applyAureliosReaction, resolveAureliosAttack, telegraphAureliosAttack } from '../src/engine/aurelios.js'
+import { applyAureliosReaction, aureliosAttackDelay, resolveAureliosAttack, telegraphAureliosAttack, updateAureliosPhase } from '../src/engine/aurelios.js'
 
 const DEF = { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 }
 const stats = { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, currentHP: 999 }
@@ -184,6 +184,23 @@ describe('Sunspire reaction windows', () => {
     const badEvents: any[] = []
     resolveAureliosAttack(bad, bad.monster, badEvents)
     expect(badEvents.find((e: any) => e.type === 'combatReaction' && e.attackId === 'triple_parry')?.success).toBe(false)
+  })
+
+  it('makes the final 10% Aurelios enrage mechanically faster and harder', () => {
+    const state: any = createCombatState(champion)
+    state.monster.currentHP = Math.floor(state.monster.hitpoints * 0.09)
+    const phaseEvents: any[] = []
+    updateAureliosPhase(state, state.monster, phaseEvents)
+    expect(state.aurelios.enraged).toBe(true)
+    expect(aureliosAttackDelay(state, state.monster)).toBe(Math.max(2, state.monster.attackSpeed - 1))
+    expect(phaseEvents.some((e: any) => e.type === 'bossEnrage')).toBe(true)
+
+    state.aurelios.pattern = ['grapple']
+    telegraphAureliosAttack(state, state.monster, [])
+    const events: any[] = []
+    const resolved = resolveAureliosAttack(state, state.monster, events)
+    expect(resolved.damageMultiplier).toBeGreaterThan(1.35)
+    expect(events.find((e: any) => e.type === 'combatReaction')?.success).toBe(false)
   })
 
   it('makes timed Sunspire hazards reactable rather than unavoidable presentation events', () => {

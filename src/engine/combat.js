@@ -27,7 +27,7 @@ import { getAddSpec, addDefinitionsFor, selectAddDefinition, addPicksAtRandom, m
 import { monsterMaxHit } from './monsterMaxHit.js'
 import { isWaveRaid, seedEncounterState, advanceEncounterReinforcements, markEncounterPrimaryDefeated, markEncounterAddDefeated } from './raidEncounters.js'
 import { applySunspireModifiersToState, applySunspireHazardReaction, tickSunspireHazards, triggerSunspireCinderfall } from './sunspireModifiers.js'
-import { createAureliosState, updateAureliosPhase, telegraphAureliosAttack, applyAureliosReaction, resolveAureliosAttack } from './aurelios.js'
+import { aureliosAttackDelay, createAureliosState, updateAureliosPhase, telegraphAureliosAttack, applyAureliosReaction, resolveAureliosAttack } from './aurelios.js'
 import { chargedArmourRecoil } from './chargedPassives.js'
 import { grindmanDropChance } from './grindman.js'
 import { applyNotedDrops } from './notedDrops.js'
@@ -1317,7 +1317,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
     }
 
-    state.monsterAttackTimer = monster.attackSpeed || 4
+    state.monsterAttackTimer = monster.sunspireChampion && state.aurelios
+      ? aureliosAttackDelay(state, monster)
+      : (monster.attackSpeed || 4)
 
     // ── Add spawn ──
     const canSummon = (state.addDefinitions || state.addDefinition)
