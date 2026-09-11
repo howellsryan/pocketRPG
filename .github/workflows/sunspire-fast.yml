@@ -1,0 +1,36 @@
+name: Sunspire fast regression
+on:
+  push:
+    branches:
+      - feature/sunspire-colosseum
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Affected regression pack
+        run: >
+          npm test --
+          tests/sunspireMechanics.test.ts
+          tests/sunspireColosseum.test.ts
+          tests/sunspireServer.test.ts
+          tests/sunspireCoop.test.ts
+          tests/coopRaidServer.test.ts
+          tests/coopRaidEngine.test.ts
+          tests/coopRaidRoom.test.ts
+          tests/combatInfoSheets.test.ts
+          tests/worldContent.test.ts
+          tests/hardMode.test.ts
+          tests/armoury.test.ts
+          tests/chatQuota.test.ts
+      - name: Verify deterministic world mapping
+        run: |
+          node scripts/seedWorldContent.cjs
+          git diff --exit-code -- src/data/world.json src/data/worldActivities.json
+      - run: npm run typecheck
