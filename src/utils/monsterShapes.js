@@ -697,6 +697,48 @@ const ARCHETYPES = {
 
   // ── Upright ─────────────────────────────────────────────────────────────
 
+  /** Sunspire's armoured arena fighter. Crested helm, plate, skirt and shield
+   * make this read as a gladiator before its style-specific weapon is drawn. */
+  gladiator: {
+    label: 'Gladiator',
+    attacks: { melee: 'swing', ranged: 'shoot', magic: 'cast' },
+    heavy: 'slam', death: 'topple', armed: true,
+    stature: 0.86,
+    grip: [31, -54], muzzle: [36, -57], torso: [0, -52],
+    joints: { arm: [7, -63], head: [2, -72] },
+    parts: {
+      back: [
+        ['ellipse', { cx: -13, cy: -47, rx: 16, ry: 20 }, 'metal'],
+        ['ellipse', { cx: -13, cy: -47, rx: 11, ry: 15 }, 'far'],
+        ['circle', { cx: -13, cy: -47, r: 4 }, 'metal'],
+        ['path', 'M-8 -38 Q-15 -22 -12 -3 L-3 -3 Q-5 -22 1 -39 Z', 'far'],
+      ],
+      body: [
+        ['path', 'M-13 -67 Q0 -75 14 -67 L17 -43 Q8 -34 -4 -35 Q-14 -42 -13 -67 Z', 'metal'],
+        ['path', 'M-10 -61 Q1 -67 12 -61 L12 -46 Q2 -40 -8 -46 Z', 'hide'],
+        ['path', 'M-11 -43 L15 -43 L20 -31 L-16 -31 Z', 'cloth'],
+        ['path', 'M-13 -31 L-4 -31 L-7 -19 L-14 -19 Z M-2 -31 L7 -31 L5 -18 L-5 -18 Z M9 -31 L18 -31 L17 -19 L7 -19 Z', 'metal'],
+        ['path', 'M-7 -19 Q-10 -10 -7 -3 L2 -3 Q0 -11 3 -19 Z', 'hide'],
+        ['path', 'M9 -19 Q14 -10 11 -3 L20 -3 Q21 -12 17 -20 Z', 'hide'],
+        ['path', 'M-9 -7 L2 -7 L2 0 L-10 0 Z M10 -7 L22 -7 L22 0 L9 0 Z', 'metal'],
+      ],
+      arm: [
+        ['path', 'M7 -63 Q20 -61 31 -54', 'hide', 9, { fill: 'none', 'stroke-linecap': 'round' }],
+        ['path', 'M11 -62 Q19 -64 24 -59', 'metal', 5, { fill: 'none', 'stroke-linecap': 'round' }],
+        ['circle', { cx: 31, cy: -54, r: 4 }, 'hide'],
+      ],
+      head: [
+        ['path', 'M-3 -76 Q0 -91 14 -92 Q29 -89 30 -76 L27 -62 L2 -62 Q-4 -68 -3 -76 Z', 'metal'],
+        ['path', 'M1 -79 L28 -79 L27 -73 L2 -73 Z', 'maw'],
+        ['path', 'M6 -76 L6 -66 M13 -76 L13 -65 M20 -76 L20 -66', 'line', 1.8],
+        ['path', 'M2 -91 Q13 -105 28 -96 Q18 -95 11 -88 Z', 'cloth'],
+        ['path', 'M13 -92 L13 -105', 'metal', 2.2, { fill: 'none' }],
+        ['ellipse', { cx: 23, cy: -76, rx: 2.1, ry: 1.6 }, 'eye'],
+        ['circle', { cx: 23, cy: -76, r: 0.8 }, 'pupil'],
+      ],
+    },
+  },
+
   /** The armed enemy: goblins, marauders, cultists, warriors. Deliberately
    * NOT the player's rig — hunched, long-armed, heavy-browed and snouted, so
    * "something is fighting you" reads before the palette even lands. This is
