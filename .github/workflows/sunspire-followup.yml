@@ -24,6 +24,6 @@ jobs:
       - name: Verify bespoke icon generation is deterministic
         run: |
           node scripts/build-game-icons.cjs
-          git diff --exit-code -- src/data/gameIcons.json NOTICE
+          git diff --exit-code -- src/data/gameIcons.json
       - name: Full app CI
         run: npm run ci
