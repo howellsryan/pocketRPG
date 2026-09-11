@@ -1,11 +1,11 @@
-name: Sunspire fast regression
+name: Sunspire independent release gate
 on:
   push:
     branches:
       - feature/sunspire-colosseum
 
 jobs:
-  regression:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,20 +13,27 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - name: Affected regression pack
-        run: >
-          npm test --
-          tests/sunspireMechanics.test.ts
-          tests/sunspireColosseum.test.ts
-          tests/sunspireServer.test.ts
-          tests/sunspireCoop.test.ts
-          tests/coopRaidServer.test.ts
-          tests/coopRaidEngine.test.ts
-          tests/coopRaidRoom.test.ts
-          tests/combatInfoSheets.test.ts
-          tests/worldContent.test.ts
-          tests/hardMode.test.ts
-          tests/armoury.test.ts
-          tests/chatQuota.test.ts
-      - run: npm run typecheck
+      - name: Install app dependencies
+        run: npm ci
+      - name: Full root test suite
+        run: npm test
+      - name: Full app CI
+        run: npm run ci
+      - name: Install world dependencies
+        run: cd world && npm ci
+      - name: Full world checks
+        run: npm run world:check
+      - name: Sunspire content audits
+        run: |
+          npm run check:drops -- sunspire_colosseum
+          node scripts/gear-benchmark.cjs --by-level
+          node scripts/economy-benchmark.cjs --out=reports/sunspire-economy-temp
+          echo "---- Sunspire gear rows ----"
+          grep -i -n -E "sunweaver|twinflare|resonant|sunbound" reports/gear-benchmark.md || true
+          echo "---- Sunspire economy rows ----"
+          grep -i -n -A4 -B4 "sunspire" reports/sunspire-economy-temp.md || true
+      - name: Generated content must be committed
+        run: |
+          npm run gen:knowledge
+          npm run gen:guide
+          git diff --exit-code -- functions/_lib/chat/knowledge.js docs/game-guide.md
