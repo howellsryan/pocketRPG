@@ -1539,7 +1539,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
   } else if (!isSunspireWaveRaidState(next) && next.boss.currentHP <= 0 && !next.boss.killedAt && next.raid) {
     next.boss.killedAt = now
     kill = resolveRaidBossDeath(next, monstersData, events, now)
-  } else if (next.boss.currentHP <= 0 && !next.boss.killedAt) {
+  } else if (!isSunspireWaveRaidState(next) && next.boss.currentHP <= 0 && !next.boss.killedAt) {
     next.boss.killedAt = now
     next.boss.respawnCountdown = coopRespawnTicks(next.bossId)
     const ownerCharId = topDamageCharacterId(next)
