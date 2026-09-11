@@ -29,7 +29,6 @@ import { loadCharacterWithSave, writeSave } from './save.js'
 import { GameApiError } from './errors.js'
 import { callCoopRoom } from './coopRoom.js'
 import { auditLog } from './audit.js'
-import { obtainedSunspireIds } from './sunspireStore.js'
 import {
   COOP_LOCK_PENDING,
   COOP_SESSION_STALE_MS,
@@ -45,6 +44,14 @@ export { COOP_RAID_IDS, isCoopRaidId }
 
 export function coopRaidCatalogue() {
   return COOP_RAID_IDS.map((raidId) => coopRaidSummary(raidId, monstersData)).filter(Boolean)
+}
+
+async function obtainedSunspireIds(env, characterId) {
+  const rows = await env.DB.prepare(
+    `SELECT item_id FROM collection_log
+      WHERE character_id = ? AND source_type = 'raids' AND source_id = 'sunspire_colosseum'`
+  ).bind(characterId).all()
+  return new Set((rows?.results || []).map((row) => row?.item_id).filter(Boolean))
 }
 
 /**
