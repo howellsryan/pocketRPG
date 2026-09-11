@@ -4,6 +4,9 @@ on:
     branches:
       - feature/sunspire-colosseum
 
+permissions:
+  contents: write
+
 concurrency:
   group: sunspire-readability-${{ github.ref }}
   cancel-in-progress: true
@@ -26,5 +29,18 @@ jobs:
           tests/sunspireCoop.test.ts
           tests/sunspireColosseum.test.ts
           tests/monsterFigures.test.ts
+      - name: Regenerate monster preview
+        run: npm run gen:monster-preview
+      - name: Commit generated monster preview
+        run: |
+          if git diff --quiet -- public/monster-menagerie.html; then
+            echo "Monster preview already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/monster-menagerie.html
+          git commit -m "chore: regenerate monster preview [skip ci]"
+          git push origin HEAD:feature/sunspire-colosseum
       - name: Full app CI
         run: npm run ci
