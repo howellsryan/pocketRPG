@@ -104,7 +104,13 @@ let capture
 let finished = false
 try {
   const overlayOpts = { scale: DEVICE_SCALE }
-  await bootDemo(page, `${site.url}/index.html`, overlayOpts)
+  if (recipe.startAt === 'landing') {
+    await page.goto(`${site.url}/index.html`, { waitUntil: 'networkidle' })
+    await page.getByText('Play Demo', { exact: true }).first().waitFor({ state: 'visible', timeout: 30000 })
+    await installOverlay(page, overlayOpts)
+  } else {
+    await bootDemo(page, `${site.url}/index.html`, overlayOpts)
+  }
 
   if (recipe.seed) {
     await applySeed(page, recipe.seed)
