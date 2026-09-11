@@ -350,6 +350,13 @@ function sunspireWaveCleared(state) {
 }
 
 function resetMemberForWave(member, boss) {
+  // Withering already existed in the authoritative rule set but previously had
+  // no consumer. Always derive from the real Hitpoints level so tiers do not
+  // compound against the already-reduced cap.
+  const baseMaxHP = Math.max(1, Math.floor(Number(member?.stats?.hitpoints) || Number(member?.maxHP) || 1))
+  const hpMultiplier = Math.max(0.01, Math.min(1, Number(boss?.sunspireRules?.maxHpMultiplier) || 1))
+  member.maxHP = Math.max(1, Math.floor(baseMaxHP * hpMultiplier))
+  member.hp = Math.min(member.hp, member.maxHP)
   member.combat.playerAttackTimer = 0
   member.combat.monsterAttackTimer = boss.attackSpeed || 4
   member.combat.addTargetIndex = null
@@ -827,7 +834,18 @@ function hydrateCombatState(state, member, monstersData, spellsData) {
     }
   }
   const wanted = member.combat.addTargetIndex
-  engine.addTargetIndex = typeof wanted === 'number' && engine.adds[wanted]?.currentHP > 0 ? wanted : null
+  const wantedAlive = typeof wanted === 'number' && engine.adds[wanted]?.currentHP > 0
+  if (wantedAlive) {
+    engine.addTargetIndex = wanted
+  } else if (engine.encounter?.finite && (engine.encounter.primaryDefeated || engine.monster.currentHP <= 0)) {
+    // The killing beat still renders the primary's death. On the NEXT room
+    // beat, hydration hands the member to the first survivor so their attacks
+    // and the stage both resume on the same living target.
+    const nextLive = engine.adds.findIndex((add) => add?.currentHP > 0)
+    engine.addTargetIndex = nextLive >= 0 ? nextLive : null
+  } else {
+    engine.addTargetIndex = null
+  }
   return engine
 }
 
