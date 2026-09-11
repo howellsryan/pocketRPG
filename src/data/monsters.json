@@ -1092,32 +1092,50 @@
       },
       {
         "itemId": "coins",
-        "quantity": [100, 400],
+        "quantity": [
+          100,
+          400
+        ],
         "chance": 0.6
       },
       {
         "itemId": "fire_rune",
-        "quantity": [25, 60],
+        "quantity": [
+          25,
+          60
+        ],
         "chance": 0.3
       },
       {
         "itemId": "nature_rune",
-        "quantity": [8, 16],
+        "quantity": [
+          8,
+          16
+        ],
         "chance": 0.15
       },
       {
         "itemId": "chaos_rune",
-        "quantity": [4, 10],
+        "quantity": [
+          4,
+          10
+        ],
         "chance": 0.12
       },
       {
         "itemId": "law_rune",
-        "quantity": [3, 5],
+        "quantity": [
+          3,
+          5
+        ],
         "chance": 0.1
       },
       {
         "itemId": "cosmic_rune",
-        "quantity": [2, 4],
+        "quantity": [
+          2,
+          4
+        ],
         "chance": 0.08
       },
       {
@@ -1162,17 +1180,26 @@
       },
       {
         "itemId": "greenthorn_leaf",
-        "quantity": [1, 2],
+        "quantity": [
+          1,
+          2
+        ],
         "chance": 0.04
       },
       {
         "itemId": "duskroot",
-        "quantity": [1, 2],
+        "quantity": [
+          1,
+          2
+        ],
         "chance": 0.03
       },
       {
         "itemId": "rynarr_weed",
-        "quantity": [1, 2],
+        "quantity": [
+          1,
+          2
+        ],
         "chance": 0.025
       },
       {
@@ -5098,8 +5125,14 @@
     "spawnsAdd": {
       "monsterId": "ember_minion",
       "maxActive": 2,
-      "firstSpawnAfterAttacks": [7, 10],
-      "respawnAfterAttacks": [7, 10]
+      "firstSpawnAfterAttacks": [
+        7,
+        10
+      ],
+      "respawnAfterAttacks": [
+        7,
+        10
+      ]
     },
     "drops": [
       {
@@ -8893,19 +8926,50 @@
     "name": "Dustpaw Rat",
     "combatLevel": 4,
     "hitpoints": 6,
-    "stats": { "attack": 2, "strength": 2, "defence": 1, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 2,
+      "strength": 2,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 3,
     "attackStyle": "stab",
     "attackBonus": 2,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": -25, "slash": -25, "crush": -25, "magic": -25, "ranged": -25 },
+    "defenceBonus": {
+      "stab": -25,
+      "slash": -25,
+      "crush": -25,
+      "magic": -25,
+      "ranged": -25
+    },
     "slayerRequirement": 1,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [1, 8], "chance": 0.6 },
-      { "itemId": "raw_chicken", "quantity": 1, "chance": 0.05 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.005 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1,
+          8
+        ],
+        "chance": 0.6
+      },
+      {
+        "itemId": "raw_chicken",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "clue_scroll_medium",
+        "quantity": 1,
+        "chance": 0.005
+      },
       {
         "itemId": "greenthorn_seed",
         "quantity": 1,
@@ -8945,23 +9009,79 @@
     "name": "Bogling Sprite",
     "combatLevel": 12,
     "hitpoints": 14,
-    "stats": { "attack": 1, "strength": 1, "defence": 3, "magic": 8, "ranged": 1 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 3,
+      "magic": 8,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "magic",
     "attackBonus": 8,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": -10, "slash": -10, "crush": -10, "magic": 5, "ranged": -10 },
+    "defenceBonus": {
+      "stab": -10,
+      "slash": -10,
+      "crush": -10,
+      "magic": 5,
+      "ranged": -10
+    },
     "slayerRequirement": 3,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [10, 40], "chance": 0.7 },
-      { "itemId": "mind_rune", "quantity": [5, 15], "chance": 0.35 },
-      { "itemId": "water_rune", "quantity": [3, 12], "chance": 0.3 },
-      { "itemId": "air_rune", "quantity": [5, 15], "chance": 0.3 },
-      { "itemId": "greenthorn_leaf", "quantity": 1, "chance": 0.06 },
-      { "itemId": "iron_dagger", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.01 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          10,
+          40
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "mind_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.35
+      },
+      {
+        "itemId": "water_rune",
+        "quantity": [
+          3,
+          12
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "air_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "greenthorn_leaf",
+        "quantity": 1,
+        "chance": 0.06
+      },
+      {
+        "itemId": "iron_dagger",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_medium",
+        "quantity": 1,
+        "chance": 0.01
+      },
       {
         "itemId": "greenthorn_seed",
         "quantity": 1,
@@ -9001,23 +9121,79 @@
     "name": "Frostbite Imp",
     "combatLevel": 25,
     "hitpoints": 22,
-    "stats": { "attack": 3, "strength": 3, "defence": 5, "magic": 18, "ranged": 1 },
+    "stats": {
+      "attack": 3,
+      "strength": 3,
+      "defence": 5,
+      "magic": 18,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": 18,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 5, "slash": 5, "crush": -10, "magic": 15, "ranged": 5 },
+    "defenceBonus": {
+      "stab": 5,
+      "slash": 5,
+      "crush": -10,
+      "magic": 15,
+      "ranged": 5
+    },
     "slayerRequirement": 8,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [40, 120], "chance": 0.7 },
-      { "itemId": "water_rune", "quantity": [10, 30], "chance": 0.4 },
-      { "itemId": "chaos_rune", "quantity": [3, 8], "chance": 0.15 },
-      { "itemId": "duskroot", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "bronze_full_helm", "quantity": 1, "chance": 0.05 },
-      { "itemId": "bronze_kiteshield", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.01 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          40,
+          120
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "water_rune",
+        "quantity": [
+          10,
+          30
+        ],
+        "chance": 0.4
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          3,
+          8
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "duskroot",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "bronze_full_helm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "bronze_kiteshield",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_medium",
+        "quantity": 1,
+        "chance": 0.01
+      },
       {
         "itemId": "greenthorn_seed",
         "quantity": 1,
@@ -9057,23 +9233,85 @@
     "name": "Marshfen Toad",
     "combatLevel": 30,
     "hitpoints": 35,
-    "stats": { "attack": 18, "strength": 22, "defence": 15, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 18,
+      "strength": 22,
+      "defence": 15,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "crush",
     "attackBonus": 12,
     "strengthBonus": 8,
-    "defenceBonus": { "stab": 15, "slash": 15, "crush": -5, "magic": -10, "ranged": 18 },
+    "defenceBonus": {
+      "stab": 15,
+      "slash": 15,
+      "crush": -5,
+      "magic": -10,
+      "ranged": 18
+    },
     "slayerRequirement": 12,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [20, 80], "chance": 0.65 },
-      { "itemId": "greenthorn_leaf", "quantity": [1, 3], "chance": 0.2 },
-      { "itemId": "duskroot", "quantity": [1, 2], "chance": 0.15 },
-      { "itemId": "rynarr_weed", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "iron_arrow", "quantity": [10, 25], "chance": 0.15 },
-      { "itemId": "nature_rune", "quantity": [1, 3], "chance": 0.1 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.015 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          20,
+          80
+        ],
+        "chance": 0.65
+      },
+      {
+        "itemId": "greenthorn_leaf",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "duskroot",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "iron_arrow",
+        "quantity": [
+          10,
+          25
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "clue_scroll_medium",
+        "quantity": 1,
+        "chance": 0.015
+      },
       {
         "itemId": "greenthorn_seed",
         "quantity": 1,
@@ -9113,23 +9351,79 @@
     "name": "Cinderpaw Cub",
     "combatLevel": 36,
     "hitpoints": 40,
-    "stats": { "attack": 22, "strength": 25, "defence": 18, "magic": 8, "ranged": 1 },
+    "stats": {
+      "attack": 22,
+      "strength": 25,
+      "defence": 18,
+      "magic": 8,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "slash",
     "attackBonus": 16,
     "strengthBonus": 14,
-    "defenceBonus": { "stab": 10, "slash": 10, "crush": 12, "magic": 10, "ranged": 8 },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 12,
+      "magic": 10,
+      "ranged": 8
+    },
     "slayerRequirement": 15,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [50, 150], "chance": 0.7 },
-      { "itemId": "fire_rune", "quantity": [10, 30], "chance": 0.3 },
-      { "itemId": "emberleaf", "quantity": [1, 2], "chance": 0.15 },
-      { "itemId": "sunblossom", "quantity": [1, 2], "chance": 0.12 },
-      { "itemId": "iron_full_helm", "quantity": 1, "chance": 0.05 },
-      { "itemId": "steel_dagger", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.015 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          50,
+          150
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          10,
+          30
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "emberleaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "sunblossom",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "iron_full_helm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "steel_dagger",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_medium",
+        "quantity": 1,
+        "chance": 0.015
+      },
       {
         "itemId": "duskroot_seed",
         "quantity": 1,
@@ -9174,23 +9468,76 @@
     "name": "Glaive Skeleton",
     "combatLevel": 45,
     "hitpoints": 48,
-    "stats": { "attack": 32, "strength": 28, "defence": 28, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 32,
+      "strength": 28,
+      "defence": 28,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "slash",
     "attackBonus": 22,
     "strengthBonus": 18,
-    "defenceBonus": { "stab": 18, "slash": 12, "crush": 28, "magic": -10, "ranged": 20 },
+    "defenceBonus": {
+      "stab": 18,
+      "slash": 12,
+      "crush": 28,
+      "magic": -10,
+      "ranged": 20
+    },
     "slayerRequirement": 20,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [100, 300], "chance": 0.7 },
-      { "itemId": "iron_scimitar", "quantity": 1, "chance": 0.05 },
-      { "itemId": "steel_scimitar", "quantity": 1, "chance": 0.025 },
-      { "itemId": "iron_bar", "quantity": 1, "chance": 0.1 },
-      { "itemId": "mind_rune", "quantity": [10, 25], "chance": 0.2 },
-      { "itemId": "chaos_rune", "quantity": [3, 10], "chance": 0.15 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          100,
+          300
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "iron_scimitar",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "steel_scimitar",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "iron_bar",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "mind_rune",
+        "quantity": [
+          10,
+          25
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          3,
+          10
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "clue_scroll_medium",
+        "quantity": 1,
+        "chance": 0.02
+      },
       {
         "itemId": "duskroot_seed",
         "quantity": 1,
@@ -9235,23 +9582,85 @@
     "name": "Mirebound Husk",
     "combatLevel": 52,
     "hitpoints": 60,
-    "stats": { "attack": 25, "strength": 25, "defence": 35, "magic": 30, "ranged": 1 },
+    "stats": {
+      "attack": 25,
+      "strength": 25,
+      "defence": 35,
+      "magic": 30,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "magic",
     "attackBonus": 26,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 25, "slash": 30, "crush": 18, "magic": 22, "ranged": 22 },
+    "defenceBonus": {
+      "stab": 25,
+      "slash": 30,
+      "crush": 18,
+      "magic": 22,
+      "ranged": 22
+    },
     "slayerRequirement": 22,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [150, 400], "chance": 0.65 },
-      { "itemId": "nature_rune", "quantity": [2, 6], "chance": 0.25 },
-      { "itemId": "chaos_rune", "quantity": [5, 15], "chance": 0.2 },
-      { "itemId": "rynarr_weed", "quantity": [1, 3], "chance": 0.18 },
-      { "itemId": "snapdrake", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "duskroot", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          150,
+          400
+        ],
+        "chance": 0.65
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          2,
+          6
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "duskroot",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "clue_scroll_medium",
+        "quantity": 1,
+        "chance": 0.02
+      },
       {
         "itemId": "duskroot_seed",
         "quantity": 1,
@@ -9296,23 +9705,82 @@
     "name": "Verdant Stalker",
     "combatLevel": 58,
     "hitpoints": 55,
-    "stats": { "attack": 1, "strength": 1, "defence": 30, "magic": 1, "ranged": 42 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 30,
+      "magic": 1,
+      "ranged": 42
+    },
     "attackSpeed": 4,
     "attackStyle": "ranged",
     "attackBonus": 32,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 22, "slash": 24, "crush": 28, "magic": 18, "ranged": 5 },
+    "defenceBonus": {
+      "stab": 22,
+      "slash": 24,
+      "crush": 28,
+      "magic": 18,
+      "ranged": 5
+    },
     "slayerRequirement": 25,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [120, 380], "chance": 0.65 },
-      { "itemId": "iron_arrow", "quantity": [20, 50], "chance": 0.3 },
-      { "itemId": "feather", "quantity": [10, 30], "chance": 0.4 },
-      { "itemId": "greenthorn_leaf", "quantity": [1, 2], "chance": 0.2 },
-      { "itemId": "emberleaf", "quantity": [1, 2], "chance": 0.15 },
-      { "itemId": "shortbow", "quantity": 1, "chance": 0.05 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          120,
+          380
+        ],
+        "chance": 0.65
+      },
+      {
+        "itemId": "iron_arrow",
+        "quantity": [
+          20,
+          50
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "feather",
+        "quantity": [
+          10,
+          30
+        ],
+        "chance": 0.4
+      },
+      {
+        "itemId": "greenthorn_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "emberleaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "shortbow",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "clue_scroll_medium",
+        "quantity": 1,
+        "chance": 0.02
+      },
       {
         "itemId": "duskroot_seed",
         "quantity": 1,
@@ -9357,23 +9825,76 @@
     "name": "Stoneglare Basilisk",
     "combatLevel": 62,
     "hitpoints": 70,
-    "stats": { "attack": 35, "strength": 35, "defence": 45, "magic": 30, "ranged": 1 },
+    "stats": {
+      "attack": 35,
+      "strength": 35,
+      "defence": 45,
+      "magic": 30,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "slash",
     "attackBonus": 30,
     "strengthBonus": 25,
-    "defenceBonus": { "stab": 35, "slash": 35, "crush": 25, "magic": 28, "ranged": 35 },
+    "defenceBonus": {
+      "stab": 35,
+      "slash": 35,
+      "crush": 25,
+      "magic": 28,
+      "ranged": 35
+    },
     "slayerRequirement": 28,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [200, 500], "chance": 0.7 },
-      { "itemId": "nature_rune", "quantity": [3, 8], "chance": 0.2 },
-      { "itemId": "earth_rune", "quantity": [15, 40], "chance": 0.3 },
-      { "itemId": "uncut_sapphire", "quantity": 1, "chance": 0.05 },
-      { "itemId": "uncut_emerald", "quantity": 1, "chance": 0.03 },
-      { "itemId": "mithril_bar", "quantity": 1, "chance": 0.05 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.012 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          200,
+          500
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          3,
+          8
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "earth_rune",
+        "quantity": [
+          15,
+          40
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "uncut_sapphire",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "uncut_emerald",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "mithril_bar",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.012
+      },
       {
         "itemId": "duskroot_seed",
         "quantity": 1,
@@ -9418,24 +9939,90 @@
     "name": "Embertongue Lizard",
     "combatLevel": 68,
     "hitpoints": 75,
-    "stats": { "attack": 25, "strength": 25, "defence": 35, "magic": 50, "ranged": 1 },
+    "stats": {
+      "attack": 25,
+      "strength": 25,
+      "defence": 35,
+      "magic": 50,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": 42,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 30, "slash": 30, "crush": 25, "magic": 35, "ranged": 18 },
+    "defenceBonus": {
+      "stab": 30,
+      "slash": 30,
+      "crush": 25,
+      "magic": 35,
+      "ranged": 18
+    },
     "slayerRequirement": 32,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [300, 700], "chance": 0.7 },
-      { "itemId": "fire_rune", "quantity": [40, 100], "chance": 0.35 },
-      { "itemId": "nature_rune", "quantity": [3, 10], "chance": 0.2 },
-      { "itemId": "emberleaf", "quantity": [1, 3], "chance": 0.18 },
-      { "itemId": "wyrmspice", "quantity": [1, 2], "chance": 0.12 },
-      { "itemId": "sunblossom", "quantity": [1, 2], "chance": 0.12 },
-      { "itemId": "uncut_ruby", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.015 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          300,
+          700
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          40,
+          100
+        ],
+        "chance": 0.35
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          3,
+          10
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "emberleaf",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "wyrmspice",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "sunblossom",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "uncut_ruby",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.015
+      },
       {
         "itemId": "duskroot_seed",
         "quantity": 1,
@@ -9480,23 +10067,82 @@
     "name": "Hollow Reaver",
     "combatLevel": 75,
     "hitpoints": 85,
-    "stats": { "attack": 50, "strength": 55, "defence": 40, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 50,
+      "strength": 55,
+      "defence": 40,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "slash",
     "attackBonus": 45,
     "strengthBonus": 50,
-    "defenceBonus": { "stab": 35, "slash": 25, "crush": 40, "magic": -10, "ranged": 35 },
+    "defenceBonus": {
+      "stab": 35,
+      "slash": 25,
+      "crush": 40,
+      "magic": -10,
+      "ranged": 35
+    },
     "slayerRequirement": 38,
     "skippable": true,
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [300, 800], "chance": 0.7 },
-      { "itemId": "death_rune", "quantity": [3, 10], "chance": 0.18 },
-      { "itemId": "chaos_rune", "quantity": [8, 20], "chance": 0.2 },
-      { "itemId": "rynarr_weed", "quantity": [2, 4], "chance": 0.18 },
-      { "itemId": "snapdrake", "quantity": [1, 3], "chance": 0.12 },
-      { "itemId": "adamant_scimitar", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.018 },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          300,
+          800
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          3,
+          10
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          8,
+          20
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "adamant_scimitar",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.018
+      },
       {
         "itemId": "kingsherb_seed",
         "quantity": 1,
@@ -9551,25 +10197,98 @@
     "name": "Briarheart Treant",
     "combatLevel": 82,
     "hitpoints": 110,
-    "stats": { "attack": 50, "strength": 70, "defence": 65, "magic": 25, "ranged": 1 },
+    "stats": {
+      "attack": 50,
+      "strength": 70,
+      "defence": 65,
+      "magic": 25,
+      "ranged": 1
+    },
     "attackSpeed": 6,
     "attackStyle": "crush",
     "attackBonus": 35,
     "strengthBonus": 55,
-    "defenceBonus": { "stab": 45, "slash": 45, "crush": 35, "magic": 40, "ranged": 50 },
+    "defenceBonus": {
+      "stab": 45,
+      "slash": 45,
+      "crush": 35,
+      "magic": 40,
+      "ranged": 50
+    },
     "slayerRequirement": 42,
     "skippable": true,
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [400, 900], "chance": 0.7 },
-      { "itemId": "oak_logs", "quantity": [5, 15], "chance": 0.4 },
-      { "itemId": "willow_logs", "quantity": [3, 10], "chance": 0.3 },
-      { "itemId": "maple_logs", "quantity": [2, 6], "chance": 0.2 },
-      { "itemId": "yew_logs", "quantity": [1, 3], "chance": 0.1 },
-      { "itemId": "greenthorn_leaf", "quantity": [1, 3], "chance": 0.2 },
-      { "itemId": "rynarr_weed", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "uncut_emerald", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          400,
+          900
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "oak_logs",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.4
+      },
+      {
+        "itemId": "willow_logs",
+        "quantity": [
+          3,
+          10
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "maple_logs",
+        "quantity": [
+          2,
+          6
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "yew_logs",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "greenthorn_leaf",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "uncut_emerald",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.02
+      },
       {
         "itemId": "kingsherb_seed",
         "quantity": 1,
@@ -9624,24 +10343,84 @@
     "name": "Frostmaw Direwolf",
     "combatLevel": 85,
     "hitpoints": 95,
-    "stats": { "attack": 65, "strength": 70, "defence": 45, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 65,
+      "strength": 70,
+      "defence": 45,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 3,
     "attackStyle": "slash",
     "attackBonus": 55,
     "strengthBonus": 50,
-    "defenceBonus": { "stab": 40, "slash": 35, "crush": 38, "magic": 18, "ranged": 40 },
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 35,
+      "crush": 38,
+      "magic": 18,
+      "ranged": 40
+    },
     "slayerRequirement": 45,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [450, 1000], "chance": 0.7 },
-      { "itemId": "cowhide", "quantity": [2, 5], "chance": 0.25 },
-      { "itemId": "raw_beef", "quantity": [3, 8], "chance": 0.2 },
-      { "itemId": "iron_bar", "quantity": [1, 2], "chance": 0.15 },
-      { "itemId": "adamant_bar", "quantity": 1, "chance": 0.08 },
-      { "itemId": "uncut_ruby", "quantity": 1, "chance": 0.04 },
-      { "itemId": "adamant_scimitar", "quantity": 1, "chance": 0.05 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          450,
+          1000
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "cowhide",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "raw_beef",
+        "quantity": [
+          3,
+          8
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "iron_bar",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "adamant_bar",
+        "quantity": 1,
+        "chance": 0.08
+      },
+      {
+        "itemId": "uncut_ruby",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "adamant_scimitar",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.02
+      },
       {
         "itemId": "kingsherb_seed",
         "quantity": 1,
@@ -9696,24 +10475,93 @@
     "name": "Pyreclaw Demon",
     "combatLevel": 88,
     "hitpoints": 100,
-    "stats": { "attack": 60, "strength": 60, "defence": 55, "magic": 65, "ranged": 1 },
+    "stats": {
+      "attack": 60,
+      "strength": 60,
+      "defence": 55,
+      "magic": 65,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": 55,
     "strengthBonus": 30,
-    "defenceBonus": { "stab": 45, "slash": 45, "crush": 40, "magic": 50, "ranged": 35 },
+    "defenceBonus": {
+      "stab": 45,
+      "slash": 45,
+      "crush": 40,
+      "magic": 50,
+      "ranged": 35
+    },
     "slayerRequirement": 50,
     "skippable": true,
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [600, 1500], "chance": 0.75 },
-      { "itemId": "fire_rune", "quantity": [60, 150], "chance": 0.4 },
-      { "itemId": "chaos_rune", "quantity": [10, 25], "chance": 0.25 },
-      { "itemId": "death_rune", "quantity": [5, 15], "chance": 0.2 },
-      { "itemId": "emberleaf", "quantity": [2, 4], "chance": 0.18 },
-      { "itemId": "wyrmspice", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "runeforged_ore", "quantity": [1, 2], "chance": 0.08 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          600,
+          1500
+        ],
+        "chance": 0.75
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          60,
+          150
+        ],
+        "chance": 0.4
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          10,
+          25
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "emberleaf",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "wyrmspice",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "runeforged_ore",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.022
+      },
       {
         "itemId": "kingsherb_seed",
         "quantity": 1,
@@ -9768,25 +10616,98 @@
     "name": "Wraithgale Specter",
     "combatLevel": 92,
     "hitpoints": 95,
-    "stats": { "attack": 30, "strength": 30, "defence": 50, "magic": 78, "ranged": 1 },
+    "stats": {
+      "attack": 30,
+      "strength": 30,
+      "defence": 50,
+      "magic": 78,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "magic",
     "attackBonus": 70,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 40, "slash": 40, "crush": 38, "magic": 55, "ranged": 30 },
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 38,
+      "magic": 55,
+      "ranged": 30
+    },
     "slayerRequirement": 55,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [700, 1800], "chance": 0.7 },
-      { "itemId": "chaos_rune", "quantity": [15, 35], "chance": 0.25 },
-      { "itemId": "death_rune", "quantity": [8, 20], "chance": 0.2 },
-      { "itemId": "blood_rune", "quantity": [5, 15], "chance": 0.15 },
-      { "itemId": "nature_rune", "quantity": [5, 12], "chance": 0.2 },
-      { "itemId": "rynarr_weed", "quantity": [2, 4], "chance": 0.2 },
-      { "itemId": "snapdrake", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "uncut_diamond", "quantity": 1, "chance": 0.03 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          700,
+          1800
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          15,
+          35
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          8,
+          20
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          5,
+          12
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "uncut_diamond",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.022
+      },
       {
         "itemId": "bogtuber_seed",
         "quantity": 1,
@@ -9836,24 +10757,87 @@
     "name": "Bloodmoon Stalker",
     "combatLevel": 93,
     "hitpoints": 90,
-    "stats": { "attack": 1, "strength": 1, "defence": 45, "magic": 1, "ranged": 80 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 45,
+      "magic": 1,
+      "ranged": 80
+    },
     "attackSpeed": 3,
     "attackStyle": "ranged",
     "attackBonus": 72,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 35, "slash": 35, "crush": 42, "magic": 25, "ranged": 25 },
+    "defenceBonus": {
+      "stab": 35,
+      "slash": 35,
+      "crush": 42,
+      "magic": 25,
+      "ranged": 25
+    },
     "slayerRequirement": 58,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [700, 2000], "chance": 0.7 },
-      { "itemId": "runeforged_arrow", "quantity": [20, 60], "chance": 0.3 },
-      { "itemId": "feather", "quantity": [15, 50], "chance": 0.4 },
-      { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "runeforged_ore", "quantity": [1, 3], "chance": 0.1 },
-      { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.025 },
-      { "itemId": "magic_shortbow", "quantity": 1, "chance": 0.05 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          700,
+          2000
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "runeforged_arrow",
+        "quantity": [
+          20,
+          60
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "feather",
+        "quantity": [
+          15,
+          50
+        ],
+        "chance": 0.4
+      },
+      {
+        "itemId": "thornspire",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "runeforged_ore",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "uncut_dragonstone",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "magic_shortbow",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.022
+      },
       {
         "itemId": "bogtuber_seed",
         "quantity": 1,
@@ -9903,24 +10887,87 @@
     "name": "Ironfang Drake",
     "combatLevel": 96,
     "hitpoints": 130,
-    "stats": { "attack": 75, "strength": 80, "defence": 70, "magic": 45, "ranged": 1 },
+    "stats": {
+      "attack": 75,
+      "strength": 80,
+      "defence": 70,
+      "magic": 45,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "slash",
     "attackBonus": 60,
     "strengthBonus": 60,
-    "defenceBonus": { "stab": 50, "slash": 50, "crush": 45, "magic": 40, "ranged": 50 },
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 45,
+      "magic": 40,
+      "ranged": 50
+    },
     "slayerRequirement": 60,
     "skippable": true,
     "drops": [
-      { "itemId": "dragon_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [800, 2200], "chance": 0.75 },
-      { "itemId": "runeforged_arrow", "quantity": [15, 40], "chance": 0.25 },
-      { "itemId": "runeforged_ore", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.035 },
-      { "itemId": "dragon_visage", "quantity": 1, "chance": 0.0002 },
-      { "itemId": "wyrmspice", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.018 },
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          800,
+          2200
+        ],
+        "chance": 0.75
+      },
+      {
+        "itemId": "runeforged_arrow",
+        "quantity": [
+          15,
+          40
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "runeforged_ore",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "uncut_dragonstone",
+        "quantity": 1,
+        "chance": 0.035
+      },
+      {
+        "itemId": "dragon_visage",
+        "quantity": 1,
+        "chance": 0.0002
+      },
+      {
+        "itemId": "wyrmspice",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "thornspire",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "clue_scroll_elite",
+        "quantity": 1,
+        "chance": 0.018
+      },
       {
         "itemId": "bogtuber_seed",
         "quantity": 1,
@@ -9970,24 +11017,87 @@
     "name": "Shadeglass Golem",
     "combatLevel": 97,
     "hitpoints": 140,
-    "stats": { "attack": 60, "strength": 75, "defence": 90, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 60,
+      "strength": 75,
+      "defence": 90,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 6,
     "attackStyle": "crush",
     "attackBonus": 50,
     "strengthBonus": 55,
-    "defenceBonus": { "stab": 75, "slash": 80, "crush": 60, "magic": 100, "ranged": 70 },
+    "defenceBonus": {
+      "stab": 75,
+      "slash": 80,
+      "crush": 60,
+      "magic": 100,
+      "ranged": 70
+    },
     "slayerRequirement": 65,
     "skippable": true,
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [900, 2500], "chance": 0.7 },
-      { "itemId": "molten_glass", "quantity": [1, 3], "chance": 0.3 },
-      { "itemId": "soft_clay", "quantity": [5, 15], "chance": 0.25 },
-      { "itemId": "runeforged_ore", "quantity": [2, 4], "chance": 0.15 },
-      { "itemId": "uncut_diamond", "quantity": 1, "chance": 0.03 },
-      { "itemId": "runeforged_bar", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "runeforged_med_helm", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.018 },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          900,
+          2500
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "molten_glass",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "soft_clay",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "runeforged_ore",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "uncut_diamond",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "runeforged_bar",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "runeforged_med_helm",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_elite",
+        "quantity": 1,
+        "chance": 0.018
+      },
       {
         "itemId": "bogtuber_seed",
         "quantity": 1,
@@ -10037,24 +11147,90 @@
     "name": "Tidereaper Crab",
     "combatLevel": 98,
     "hitpoints": 130,
-    "stats": { "attack": 60, "strength": 70, "defence": 95, "magic": 1, "ranged": 50 },
+    "stats": {
+      "attack": 60,
+      "strength": 70,
+      "defence": 95,
+      "magic": 1,
+      "ranged": 50
+    },
     "attackSpeed": 5,
     "attackStyle": "crush",
     "attackBonus": 55,
     "strengthBonus": 50,
-    "defenceBonus": { "stab": 65, "slash": 65, "crush": 75, "magic": 40, "ranged": 70 },
+    "defenceBonus": {
+      "stab": 65,
+      "slash": 65,
+      "crush": 75,
+      "magic": 40,
+      "ranged": 70
+    },
     "slayerRequirement": 68,
     "skippable": true,
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [900, 2800], "chance": 0.7 },
-      { "itemId": "raw_crab", "quantity": [3, 8], "chance": 0.3 },
-      { "itemId": "raw_eel", "quantity": [2, 6], "chance": 0.25 },
-      { "itemId": "uncut_sapphire", "quantity": [1, 2], "chance": 0.15 },
-      { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.025 },
-      { "itemId": "runeforged_ore", "quantity": [1, 3], "chance": 0.1 },
-      { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.08 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          900,
+          2800
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "raw_crab",
+        "quantity": [
+          3,
+          8
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "raw_eel",
+        "quantity": [
+          2,
+          6
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "uncut_sapphire",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "uncut_dragonstone",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "runeforged_ore",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "thornspire",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "clue_scroll_elite",
+        "quantity": 1,
+        "chance": 0.02
+      },
       {
         "itemId": "bogtuber_seed",
         "quantity": 1,
@@ -10104,25 +11280,98 @@
     "name": "Voidweave Stalker",
     "combatLevel": 99,
     "hitpoints": 120,
-    "stats": { "attack": 40, "strength": 40, "defence": 75, "magic": 92, "ranged": 1 },
+    "stats": {
+      "attack": 40,
+      "strength": 40,
+      "defence": 75,
+      "magic": 92,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": 80,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 55, "slash": 55, "crush": 50, "magic": 65, "ranged": 50 },
+    "defenceBonus": {
+      "stab": 55,
+      "slash": 55,
+      "crush": 50,
+      "magic": 65,
+      "ranged": 50
+    },
     "slayerRequirement": 70,
     "skippable": true,
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [1000, 2500], "chance": 0.75 },
-      { "itemId": "death_rune", "quantity": [15, 40], "chance": 0.3 },
-      { "itemId": "blood_rune", "quantity": [10, 30], "chance": 0.25 },
-      { "itemId": "soul_rune", "quantity": [5, 15], "chance": 0.18 },
-      { "itemId": "chaos_rune", "quantity": [15, 40], "chance": 0.25 },
-      { "itemId": "rynarr_weed", "quantity": [2, 4], "chance": 0.2 },
-      { "itemId": "snapdrake", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "uncut_diamond", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1000,
+          2500
+        ],
+        "chance": 0.75
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          15,
+          40
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          10,
+          30
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          15,
+          40
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "uncut_diamond",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_elite",
+        "quantity": 1,
+        "chance": 0.02
+      },
       {
         "itemId": "bogtuber_seed",
         "quantity": 1,
@@ -10172,25 +11421,92 @@
     "name": "Drakthul Wyrmling",
     "combatLevel": 99,
     "hitpoints": 135,
-    "stats": { "attack": 80, "strength": 80, "defence": 80, "magic": 70, "ranged": 1 },
+    "stats": {
+      "attack": 80,
+      "strength": 80,
+      "defence": 80,
+      "magic": 70,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": 70,
     "strengthBonus": 55,
-    "defenceBonus": { "stab": 65, "slash": 65, "crush": 55, "magic": 60, "ranged": 65 },
+    "defenceBonus": {
+      "stab": 65,
+      "slash": 65,
+      "crush": 55,
+      "magic": 60,
+      "ranged": 65
+    },
     "slayerRequirement": 73,
     "skippable": true,
     "drops": [
-      { "itemId": "dragon_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [1200, 3000], "chance": 0.75 },
-      { "itemId": "fire_rune", "quantity": [50, 150], "chance": 0.35 },
-      { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.04 },
-      { "itemId": "dragon_visage", "quantity": 1, "chance": 0.0002 },
-      { "itemId": "runeforged_ore", "quantity": [2, 4], "chance": 0.15 },
-      { "itemId": "wyrmspice", "quantity": [1, 3], "chance": 0.18 },
-      { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.12 },
-      { "itemId": "runeforged_chainbody", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1200,
+          3000
+        ],
+        "chance": 0.75
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          50,
+          150
+        ],
+        "chance": 0.35
+      },
+      {
+        "itemId": "uncut_dragonstone",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dragon_visage",
+        "quantity": 1,
+        "chance": 0.0002
+      },
+      {
+        "itemId": "runeforged_ore",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "wyrmspice",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "thornspire",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "runeforged_chainbody",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_elite",
+        "quantity": 1,
+        "chance": 0.022
+      },
       {
         "itemId": "bogtuber_seed",
         "quantity": 1,
@@ -10240,25 +11556,98 @@
     "name": "Bonelight Pyromancer",
     "combatLevel": 99,
     "hitpoints": 110,
-    "stats": { "attack": 30, "strength": 30, "defence": 65, "magic": 95, "ranged": 1 },
+    "stats": {
+      "attack": 30,
+      "strength": 30,
+      "defence": 65,
+      "magic": 95,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "magic",
     "attackBonus": 85,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 45, "slash": 45, "crush": 42, "magic": 75, "ranged": 45 },
+    "defenceBonus": {
+      "stab": 45,
+      "slash": 45,
+      "crush": 42,
+      "magic": 75,
+      "ranged": 45
+    },
     "slayerRequirement": 75,
     "skippable": true,
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [1100, 2800], "chance": 0.75 },
-      { "itemId": "fire_rune", "quantity": [60, 180], "chance": 0.4 },
-      { "itemId": "death_rune", "quantity": [10, 30], "chance": 0.25 },
-      { "itemId": "soul_rune", "quantity": [5, 15], "chance": 0.18 },
-      { "itemId": "nature_rune", "quantity": [5, 15], "chance": 0.2 },
-      { "itemId": "rynarr_weed", "quantity": [2, 4], "chance": 0.2 },
-      { "itemId": "snapdrake", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "uncut_diamond", "quantity": 1, "chance": 0.035 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1100,
+          2800
+        ],
+        "chance": 0.75
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          60,
+          180
+        ],
+        "chance": 0.4
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          10,
+          30
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "uncut_diamond",
+        "quantity": 1,
+        "chance": 0.035
+      },
+      {
+        "itemId": "clue_scroll_elite",
+        "quantity": 1,
+        "chance": 0.022
+      },
       {
         "itemId": "bogtuber_seed",
         "quantity": 1,
@@ -10308,24 +11697,87 @@
     "name": "Cinderfang Reaver",
     "combatLevel": 99,
     "hitpoints": 130,
-    "stats": { "attack": 90, "strength": 95, "defence": 60, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 90,
+      "strength": 95,
+      "defence": 60,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 3,
     "attackStyle": "slash",
     "attackBonus": 85,
     "strengthBonus": 75,
-    "defenceBonus": { "stab": 60, "slash": 50, "crush": 55, "magic": 30, "ranged": 55 },
+    "defenceBonus": {
+      "stab": 60,
+      "slash": 50,
+      "crush": 55,
+      "magic": 30,
+      "ranged": 55
+    },
     "slayerRequirement": 77,
     "skippable": true,
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [1300, 3200], "chance": 0.75 },
-      { "itemId": "runeforged_arrow", "quantity": [25, 60], "chance": 0.25 },
-      { "itemId": "runeforged_ore", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "emberleaf", "quantity": [2, 4], "chance": 0.18 },
-      { "itemId": "wyrmspice", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.03 },
-      { "itemId": "runeforged_scimitar", "quantity": 1, "chance": 0.045 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1300,
+          3200
+        ],
+        "chance": 0.75
+      },
+      {
+        "itemId": "runeforged_arrow",
+        "quantity": [
+          25,
+          60
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "runeforged_ore",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "emberleaf",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "wyrmspice",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "uncut_dragonstone",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "runeforged_scimitar",
+        "quantity": 1,
+        "chance": 0.045
+      },
+      {
+        "itemId": "clue_scroll_elite",
+        "quantity": 1,
+        "chance": 0.022
+      },
       {
         "itemId": "bogtuber_seed",
         "quantity": 1,
@@ -10375,25 +11827,92 @@
     "name": "Ashen Marauder",
     "combatLevel": 99,
     "hitpoints": 140,
-    "stats": { "attack": 88, "strength": 95, "defence": 80, "magic": 30, "ranged": 1 },
+    "stats": {
+      "attack": 88,
+      "strength": 95,
+      "defence": 80,
+      "magic": 30,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "crush",
     "attackBonus": 80,
     "strengthBonus": 80,
-    "defenceBonus": { "stab": 65, "slash": 65, "crush": 60, "magic": 35, "ranged": 70 },
+    "defenceBonus": {
+      "stab": 65,
+      "slash": 65,
+      "crush": 60,
+      "magic": 35,
+      "ranged": 70
+    },
     "slayerRequirement": 79,
     "skippable": true,
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [1500, 3500], "chance": 0.8 },
-      { "itemId": "runeforged_ore", "quantity": [2, 4], "chance": 0.18 },
-      { "itemId": "runeforged_bar", "quantity": [1, 2], "chance": 0.12 },
-      { "itemId": "emberleaf", "quantity": [2, 5], "chance": 0.2 },
-      { "itemId": "wyrmspice", "quantity": [2, 4], "chance": 0.15 },
-      { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.035 },
-      { "itemId": "runeforged_2h_sword", "quantity": 1, "chance": 0.04 },
-      { "itemId": "amulet_of_strength", "quantity": 1, "chance": 0.06 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1500,
+          3500
+        ],
+        "chance": 0.8
+      },
+      {
+        "itemId": "runeforged_ore",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "runeforged_bar",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "emberleaf",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "wyrmspice",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "uncut_dragonstone",
+        "quantity": 1,
+        "chance": 0.035
+      },
+      {
+        "itemId": "runeforged_2h_sword",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "amulet_of_strength",
+        "quantity": 1,
+        "chance": 0.06
+      },
+      {
+        "itemId": "clue_scroll_elite",
+        "quantity": 1,
+        "chance": 0.022
+      },
       {
         "itemId": "bogtuber_seed",
         "quantity": 1,
@@ -10446,12 +11965,24 @@
     "combatLevel": 250,
     "hitpoints": 480,
     "slayerRequirement": 80,
-    "stats": { "attack": 180, "strength": 180, "defence": 150, "magic": 150, "ranged": 1 },
+    "stats": {
+      "attack": 180,
+      "strength": 180,
+      "defence": 150,
+      "magic": 150,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "slash",
     "attackBonus": 100,
     "strengthBonus": 80,
-    "defenceBonus": { "stab": 80, "slash": 80, "crush": 80, "magic": 100, "ranged": 80 },
+    "defenceBonus": {
+      "stab": 80,
+      "slash": 80,
+      "crush": 80,
+      "magic": 100,
+      "ranged": 80
+    },
     "multiForm": true,
     "formSwitchMin": 99999,
     "formSwitchMax": 99999,
@@ -10466,7 +11997,13 @@
         "maxHit": 28,
         "attackBonus": 100,
         "strengthBonus": 80,
-        "defenceBonus": { "stab": 80, "slash": 80, "crush": 80, "magic": 100, "ranged": 80 }
+        "defenceBonus": {
+          "stab": 80,
+          "slash": 80,
+          "crush": 80,
+          "magic": 100,
+          "ranged": 80
+        }
       },
       "enraged": {
         "displayName": "Ashen Fury",
@@ -10476,26 +12013,123 @@
         "maxHit": 44,
         "attackBonus": 140,
         "strengthBonus": 120,
-        "defenceBonus": { "stab": 70, "slash": 70, "crush": 70, "magic": 95, "ranged": 70 }
+        "defenceBonus": {
+          "stab": 70,
+          "slash": 70,
+          "crush": 70,
+          "magic": 95,
+          "ranged": 70
+        }
       }
     },
     "drops": [
-      { "itemId": "dragon_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [10000, 40000], "chance": 0.85 },
-      { "itemId": "death_rune", "quantity": [40, 120], "chance": 0.3 },
-      { "itemId": "blood_rune", "quantity": [30, 90], "chance": 0.28 },
-      { "itemId": "soul_rune", "quantity": [20, 60], "chance": 0.22 },
-      { "itemId": "runeforged_ore", "quantity": [3, 8], "chance": 0.2 },
-      { "itemId": "runeforged_bar", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "rynarr_weed", "quantity": [3, 6], "chance": 0.2 },
-      { "itemId": "snapdrake", "quantity": [2, 5], "chance": 0.15 },
-      { "itemId": "thornspire", "quantity": [1, 3], "chance": 0.12 },
-      { "itemId": "sovrathar_ashen_hilt", "quantity": 1, "chance": 0.022222222222222223 },
-      { "itemId": "cinderforged_helm", "quantity": 1, "chance": 0.008 },
-      { "itemId": "sovereigns_cinderplate", "quantity": 1, "chance": 0.006666666666666667 },
-      { "itemId": "sovereigns_cindergreaves", "quantity": 1, "chance": 0.006666666666666667 },
-      { "itemId": "ashen_sovereigns_edge", "quantity": 1, "chance": 0.004 },
-      { "itemId": "clue_scroll_master", "quantity": 1, "chance": 0.03 },
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          10000,
+          40000
+        ],
+        "chance": 0.85
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          40,
+          120
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          30,
+          90
+        ],
+        "chance": 0.28
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          20,
+          60
+        ],
+        "chance": 0.22
+      },
+      {
+        "itemId": "runeforged_ore",
+        "quantity": [
+          3,
+          8
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "runeforged_bar",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          3,
+          6
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "thornspire",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "sovrathar_ashen_hilt",
+        "quantity": 1,
+        "chance": 0.022222222222222223
+      },
+      {
+        "itemId": "cinderforged_helm",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "sovereigns_cinderplate",
+        "quantity": 1,
+        "chance": 0.006666666666666667
+      },
+      {
+        "itemId": "sovereigns_cindergreaves",
+        "quantity": 1,
+        "chance": 0.006666666666666667
+      },
+      {
+        "itemId": "ashen_sovereigns_edge",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "clue_scroll_master",
+        "quantity": 1,
+        "chance": 0.03
+      },
       {
         "itemId": "rynarr_seed",
         "quantity": [
@@ -10545,21 +12179,77 @@
     "hardMode": true,
     "combatLevel": 82,
     "hitpoints": 60,
-    "stats": { "attack": 55, "strength": 58, "defence": 50, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 55,
+      "strength": 58,
+      "defence": 50,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "crush",
     "attackBonus": 45,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 25, "slash": 22, "crush": 20, "magic": -5, "ranged": 20 },
+    "defenceBonus": {
+      "stab": 25,
+      "slash": 22,
+      "crush": 20,
+      "magic": -5,
+      "ranged": 20
+    },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [200, 800], "chance": 0.9 },
-      { "itemId": "chaos_rune", "quantity": [5, 15], "chance": 0.25 },
-      { "itemId": "earth_rune", "quantity": [10, 25], "chance": 0.2 },
-      { "itemId": "rynarr_weed", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "gravehusk_helm", "quantity": 1, "chance": 0.006 },
-      { "itemId": "gravehusk_platebody", "quantity": 1, "chance": 0.004 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.025 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          200,
+          800
+        ],
+        "chance": 0.9
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "earth_rune",
+        "quantity": [
+          10,
+          25
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "gravehusk_helm",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "gravehusk_platebody",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.025
+      }
     ]
   },
   "boneclaw_revenant": {
@@ -10569,21 +12259,77 @@
     "hardMode": true,
     "combatLevel": 98,
     "hitpoints": 75,
-    "stats": { "attack": 65, "strength": 65, "defence": 55, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 65,
+      "strength": 65,
+      "defence": 55,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "stab",
     "attackBonus": 55,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 28, "slash": 25, "crush": 5, "magic": 20, "ranged": 22 },
+    "defenceBonus": {
+      "stab": 28,
+      "slash": 25,
+      "crush": 5,
+      "magic": 20,
+      "ranged": 22
+    },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [400, 1200], "chance": 0.9 },
-      { "itemId": "chaos_rune", "quantity": [8, 20], "chance": 0.22 },
-      { "itemId": "blood_rune", "quantity": [3, 8], "chance": 0.12 },
-      { "itemId": "rynarr_weed", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "boneclaw_rapier", "quantity": 1, "chance": 0.005 },
-      { "itemId": "boneclaw_shield", "quantity": 1, "chance": 0.006 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.025 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          400,
+          1200
+        ],
+        "chance": 0.9
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          8,
+          20
+        ],
+        "chance": 0.22
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          3,
+          8
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "boneclaw_rapier",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "boneclaw_shield",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.025
+      }
     ]
   },
   "shroudwraith_specter": {
@@ -10593,22 +12339,82 @@
     "hardMode": true,
     "combatLevel": 115,
     "hitpoints": 90,
-    "stats": { "attack": 1, "strength": 1, "defence": 75, "magic": 85, "ranged": 1 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 75,
+      "magic": 85,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": 70,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 25, "slash": 22, "crush": 18, "magic": 45, "ranged": -8 },
+    "defenceBonus": {
+      "stab": 25,
+      "slash": 22,
+      "crush": 18,
+      "magic": 45,
+      "ranged": -8
+    },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [500, 1500], "chance": 0.88 },
-      { "itemId": "death_rune", "quantity": [5, 15], "chance": 0.2 },
-      { "itemId": "soul_rune", "quantity": [3, 10], "chance": 0.15 },
-      { "itemId": "snapdrake", "quantity": [1, 2], "chance": 0.08 },
-      { "itemId": "shroud_robes_top", "quantity": 1, "chance": 0.005 },
-      { "itemId": "shroud_staff", "quantity": 1, "chance": 0.005 },
-      { "itemId": "bracelet_of_runecrafting", "quantity": 1, "chance": 0.00390625 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.025 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          500,
+          1500
+        ],
+        "chance": 0.88
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          3,
+          10
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "shroud_robes_top",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "shroud_staff",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "bracelet_of_runecrafting",
+        "quantity": 1,
+        "chance": 0.00390625
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.025
+      }
     ]
   },
   "stonegale_elemental": {
@@ -10618,22 +12424,82 @@
     "hardMode": true,
     "combatLevel": 100,
     "hitpoints": 80,
-    "stats": { "attack": 1, "strength": 1, "defence": 70, "magic": 80, "ranged": 1 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 70,
+      "magic": 80,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "magic",
     "attackBonus": 65,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 18, "slash": 15, "crush": 12, "magic": 35, "ranged": -5 },
+    "defenceBonus": {
+      "stab": 18,
+      "slash": 15,
+      "crush": 12,
+      "magic": 35,
+      "ranged": -5
+    },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [400, 1200], "chance": 0.9 },
-      { "itemId": "air_rune", "quantity": [20, 50], "chance": 0.25 },
-      { "itemId": "earth_rune", "quantity": [15, 35], "chance": 0.2 },
-      { "itemId": "rynarr_weed", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "stonegale_bow", "quantity": 1, "chance": 0.005 },
-      { "itemId": "stonegale_coif", "quantity": 1, "chance": 0.006 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.025 },
-      { "itemId": "bracelet_of_smithing", "quantity": 1, "chance": 0.00390625 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          400,
+          1200
+        ],
+        "chance": 0.9
+      },
+      {
+        "itemId": "air_rune",
+        "quantity": [
+          20,
+          50
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "earth_rune",
+        "quantity": [
+          15,
+          35
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "stonegale_bow",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "stonegale_coif",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "bracelet_of_smithing",
+        "quantity": 1,
+        "chance": 0.00390625
+      }
     ]
   },
   "cindermaw_serpent": {
@@ -10643,21 +12509,77 @@
     "hardMode": true,
     "combatLevel": 120,
     "hitpoints": 100,
-    "stats": { "attack": 80, "strength": 85, "defence": 65, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 80,
+      "strength": 85,
+      "defence": 65,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "crush",
     "attackBonus": 65,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 28, "slash": 25, "crush": 22, "magic": -10, "ranged": 28 },
+    "defenceBonus": {
+      "stab": 28,
+      "slash": 25,
+      "crush": 22,
+      "magic": -10,
+      "ranged": 28
+    },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [600, 1800], "chance": 0.88 },
-      { "itemId": "fire_rune", "quantity": [15, 35], "chance": 0.22 },
-      { "itemId": "chaos_rune", "quantity": [8, 20], "chance": 0.18 },
-      { "itemId": "snapdrake", "quantity": [1, 2], "chance": 0.08 },
-      { "itemId": "cindermaw_maul", "quantity": 1, "chance": 0.004 },
-      { "itemId": "cindermaw_scale_body", "quantity": 1, "chance": 0.005 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          600,
+          1800
+        ],
+        "chance": 0.88
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          15,
+          35
+        ],
+        "chance": 0.22
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          8,
+          20
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "cindermaw_maul",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "cindermaw_scale_body",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.022
+      }
     ]
   },
   "thornhide_colossus": {
@@ -10667,21 +12589,77 @@
     "hardMode": true,
     "combatLevel": 140,
     "hitpoints": 120,
-    "stats": { "attack": 90, "strength": 95, "defence": 75, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 90,
+      "strength": 95,
+      "defence": 75,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "slash",
     "attackBonus": 75,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 35, "slash": 30, "crush": 28, "magic": 5, "ranged": 8 },
+    "defenceBonus": {
+      "stab": 35,
+      "slash": 30,
+      "crush": 28,
+      "magic": 5,
+      "ranged": 8
+    },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [800, 2500], "chance": 0.88 },
-      { "itemId": "nature_rune", "quantity": [10, 25], "chance": 0.2 },
-      { "itemId": "rynarr_weed", "quantity": [1, 3], "chance": 0.12 },
-      { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.08 },
-      { "itemId": "thornhide_platelegs", "quantity": 1, "chance": 0.004 },
-      { "itemId": "thornhide_gauntlets", "quantity": 1, "chance": 0.006 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          800,
+          2500
+        ],
+        "chance": 0.88
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          10,
+          25
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "thornspire",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "thornhide_platelegs",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "thornhide_gauntlets",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.022
+      }
     ]
   },
   "gravethorn_drake": {
@@ -10691,21 +12669,77 @@
     "hardMode": true,
     "combatLevel": 110,
     "hitpoints": 90,
-    "stats": { "attack": 1, "strength": 1, "defence": 60, "magic": 1, "ranged": 80 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 60,
+      "magic": 1,
+      "ranged": 80
+    },
     "attackSpeed": 5,
     "attackStyle": "ranged",
     "attackBonus": 65,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 22, "slash": 18, "crush": 15, "magic": -8, "ranged": 30 },
+    "defenceBonus": {
+      "stab": 22,
+      "slash": 18,
+      "crush": 15,
+      "magic": -8,
+      "ranged": 30
+    },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [500, 1500], "chance": 0.9 },
-      { "itemId": "nature_rune", "quantity": [8, 20], "chance": 0.2 },
-      { "itemId": "earth_rune", "quantity": [15, 35], "chance": 0.2 },
-      { "itemId": "rynarr_weed", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "thornspine_shortbow", "quantity": 1, "chance": 0.004 },
-      { "itemId": "drake_leather_body", "quantity": 1, "chance": 0.005 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.025 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          500,
+          1500
+        ],
+        "chance": 0.9
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          8,
+          20
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "earth_rune",
+        "quantity": [
+          15,
+          35
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "thornspine_shortbow",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "drake_leather_body",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.025
+      }
     ]
   },
   "ironclad_guardian": {
@@ -10715,21 +12749,77 @@
     "hardMode": true,
     "combatLevel": 130,
     "hitpoints": 110,
-    "stats": { "attack": 85, "strength": 80, "defence": 80, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 85,
+      "strength": 80,
+      "defence": 80,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "stab",
     "attackBonus": 70,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 35, "slash": 30, "crush": 8, "magic": 12, "ranged": 30 },
+    "defenceBonus": {
+      "stab": 35,
+      "slash": 30,
+      "crush": 8,
+      "magic": 12,
+      "ranged": 30
+    },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [800, 2500], "chance": 0.88 },
-      { "itemId": "death_rune", "quantity": [5, 15], "chance": 0.18 },
-      { "itemId": "blood_rune", "quantity": [3, 8], "chance": 0.12 },
-      { "itemId": "snapdrake", "quantity": [1, 2], "chance": 0.08 },
-      { "itemId": "ironclad_longsword", "quantity": 1, "chance": 0.004 },
-      { "itemId": "ironclad_helm", "quantity": 1, "chance": 0.005 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          800,
+          2500
+        ],
+        "chance": 0.88
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          3,
+          8
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "ironclad_longsword",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "ironclad_helm",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.022
+      }
     ]
   },
   "emberhowl_warlord": {
@@ -10739,21 +12829,77 @@
     "hardMode": true,
     "combatLevel": 155,
     "hitpoints": 150,
-    "stats": { "attack": 105, "strength": 110, "defence": 85, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 105,
+      "strength": 110,
+      "defence": 85,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "crush",
     "attackBonus": 85,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 40, "slash": 38, "crush": 32, "magic": -5, "ranged": 28 },
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 38,
+      "crush": 32,
+      "magic": -5,
+      "ranged": 28
+    },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [1200, 3500], "chance": 0.88 },
-      { "itemId": "fire_rune", "quantity": [20, 50], "chance": 0.22 },
-      { "itemId": "chaos_rune", "quantity": [10, 25], "chance": 0.18 },
-      { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "emberhowl_axe", "quantity": 1, "chance": 0.004 },
-      { "itemId": "emberhowl_boots", "quantity": 1, "chance": 0.005 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.02 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1200,
+          3500
+        ],
+        "chance": 0.88
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          20,
+          50
+        ],
+        "chance": 0.22
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          10,
+          25
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "thornspire",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "emberhowl_axe",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "emberhowl_boots",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.02
+      }
     ]
   },
   "razorwing_harpy": {
@@ -10763,21 +12909,77 @@
     "hardMode": true,
     "combatLevel": 150,
     "hitpoints": 140,
-    "stats": { "attack": 1, "strength": 1, "defence": 70, "magic": 1, "ranged": 105 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 70,
+      "magic": 1,
+      "ranged": 105
+    },
     "attackSpeed": 4,
     "attackStyle": "ranged",
     "attackBonus": 80,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 8, "slash": 12, "crush": 15, "magic": -5, "ranged": 45 },
+    "defenceBonus": {
+      "stab": 8,
+      "slash": 12,
+      "crush": 15,
+      "magic": -5,
+      "ranged": 45
+    },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1 },
-      { "itemId": "coins", "quantity": [1000, 3000], "chance": 0.88 },
-      { "itemId": "death_rune", "quantity": [8, 20], "chance": 0.2 },
-      { "itemId": "blood_rune", "quantity": [4, 12], "chance": 0.15 },
-      { "itemId": "snapdrake", "quantity": [1, 2], "chance": 0.08 },
-      { "itemId": "razorwing_crossbow", "quantity": 1, "chance": 0.004 },
-      { "itemId": "razorwing_vambraces", "quantity": 1, "chance": 0.005 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.02 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1000,
+          3000
+        ],
+        "chance": 0.88
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          8,
+          20
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          4,
+          12
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "razorwing_crossbow",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "razorwing_vambraces",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.02
+      }
     ]
   },
   "elder_tree_spirit": {
@@ -10785,28 +12987,99 @@
     "name": "Elder Tree Spirit",
     "combatLevel": 70,
     "hitpoints": 200,
-    "stats": { "attack": 1, "strength": 1, "defence": 42, "magic": 70, "ranged": 1 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 42,
+      "magic": 70,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "magic",
     "attackBonus": 0,
     "strengthBonus": 0,
     "noSeedDrops": true,
-    "defenceBonus": { "stab": 8, "slash": 8, "crush": 8, "magic": 30, "ranged": -12 },
+    "defenceBonus": {
+      "stab": 8,
+      "slash": 8,
+      "crush": 8,
+      "magic": 30,
+      "ranged": -12
+    },
     "drops": [
-      { "itemId": "coins", "quantity": [20, 120], "chance": 0.7 },
-      { "itemId": "crushed_bird_s_nest", "quantity": 5, "chance": 0.1 },
-      { "itemId": "oak_sapling", "quantity": 1, "chance": 0.125 },
-      { "itemId": "willow_sapling", "quantity": 1, "chance": 0.0625 },
-      { "itemId": "maple_sapling", "quantity": 1, "chance": 0.03125 },
-      { "itemId": "yew_sapling", "quantity": 1, "chance": 0.015625 },
-      { "itemId": "magic_sapling", "quantity": 1, "chance": 0.0078125 },
-      { "itemId": "bronze_axe", "quantity": 1, "chance": 0.25 },
-      { "itemId": "iron_axe", "quantity": 1, "chance": 0.125 },
-      { "itemId": "steel_axe", "quantity": 1, "chance": 0.083333 },
-      { "itemId": "mithril_axe", "quantity": 1, "chance": 0.0625 },
-      { "itemId": "adamant_axe", "quantity": 1, "chance": 0.03125 },
-      { "itemId": "runeforged_axe", "quantity": 1, "chance": 0.015625 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 }
+      {
+        "itemId": "coins",
+        "quantity": [
+          20,
+          120
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "crushed_bird_s_nest",
+        "quantity": 5,
+        "chance": 0.1
+      },
+      {
+        "itemId": "oak_sapling",
+        "quantity": 1,
+        "chance": 0.125
+      },
+      {
+        "itemId": "willow_sapling",
+        "quantity": 1,
+        "chance": 0.0625
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.03125
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.015625
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0078125
+      },
+      {
+        "itemId": "bronze_axe",
+        "quantity": 1,
+        "chance": 0.25
+      },
+      {
+        "itemId": "iron_axe",
+        "quantity": 1,
+        "chance": 0.125
+      },
+      {
+        "itemId": "steel_axe",
+        "quantity": 1,
+        "chance": 0.083333
+      },
+      {
+        "itemId": "mithril_axe",
+        "quantity": 1,
+        "chance": 0.0625
+      },
+      {
+        "itemId": "adamant_axe",
+        "quantity": 1,
+        "chance": 0.03125
+      },
+      {
+        "itemId": "runeforged_axe",
+        "quantity": 1,
+        "chance": 0.015625
+      },
+      {
+        "itemId": "clue_scroll_medium",
+        "quantity": 1,
+        "chance": 0.02
+      }
     ]
   },
   "elder_rock_golem": {
@@ -10814,32 +13087,131 @@
     "name": "Elder Rock Golem",
     "combatLevel": 70,
     "hitpoints": 200,
-    "stats": { "attack": 60, "strength": 82, "defence": 48, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 60,
+      "strength": 82,
+      "defence": 48,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 5,
     "attackStyle": "crush",
     "attackBonus": 0,
     "strengthBonus": 0,
     "noSeedDrops": true,
-    "defenceBonus": { "stab": 20, "slash": 20, "crush": 20, "magic": -12, "ranged": 18 },
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
+      "magic": -12,
+      "ranged": 18
+    },
     "drops": [
-      { "itemId": "coins", "quantity": [20, 140], "chance": 0.7 },
-      { "itemId": "copper_ore", "quantity": [1, 3], "chance": 0.2 },
-      { "itemId": "tin_ore", "quantity": [1, 3], "chance": 0.2 },
-      { "itemId": "iron_ore", "quantity": [1, 2], "chance": 0.12 },
-      { "itemId": "coal", "quantity": [1, 3], "chance": 0.1 },
-      { "itemId": "mithril_ore", "quantity": 1, "chance": 0.0625 },
-      { "itemId": "adamantite_ore", "quantity": 1, "chance": 0.03125 },
-      { "itemId": "uncut_sapphire", "quantity": 1, "chance": 0.0625 },
-      { "itemId": "uncut_emerald", "quantity": 1, "chance": 0.03125 },
-      { "itemId": "uncut_ruby", "quantity": 1, "chance": 0.015625 },
-      { "itemId": "uncut_diamond", "quantity": 1, "chance": 0.0078125 },
-      { "itemId": "bronze_pickaxe", "quantity": 1, "chance": 0.25 },
-      { "itemId": "iron_pickaxe", "quantity": 1, "chance": 0.125 },
-      { "itemId": "steel_pickaxe", "quantity": 1, "chance": 0.083333 },
-      { "itemId": "mithril_pickaxe", "quantity": 1, "chance": 0.0625 },
-      { "itemId": "adamant_pickaxe", "quantity": 1, "chance": 0.03125 },
-      { "itemId": "runeforged_pickaxe", "quantity": 1, "chance": 0.015625 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 }
+      {
+        "itemId": "coins",
+        "quantity": [
+          20,
+          140
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "copper_ore",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tin_ore",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "iron_ore",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "coal",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "mithril_ore",
+        "quantity": 1,
+        "chance": 0.0625
+      },
+      {
+        "itemId": "adamantite_ore",
+        "quantity": 1,
+        "chance": 0.03125
+      },
+      {
+        "itemId": "uncut_sapphire",
+        "quantity": 1,
+        "chance": 0.0625
+      },
+      {
+        "itemId": "uncut_emerald",
+        "quantity": 1,
+        "chance": 0.03125
+      },
+      {
+        "itemId": "uncut_ruby",
+        "quantity": 1,
+        "chance": 0.015625
+      },
+      {
+        "itemId": "uncut_diamond",
+        "quantity": 1,
+        "chance": 0.0078125
+      },
+      {
+        "itemId": "bronze_pickaxe",
+        "quantity": 1,
+        "chance": 0.25
+      },
+      {
+        "itemId": "iron_pickaxe",
+        "quantity": 1,
+        "chance": 0.125
+      },
+      {
+        "itemId": "steel_pickaxe",
+        "quantity": 1,
+        "chance": 0.083333
+      },
+      {
+        "itemId": "mithril_pickaxe",
+        "quantity": 1,
+        "chance": 0.0625
+      },
+      {
+        "itemId": "adamant_pickaxe",
+        "quantity": 1,
+        "chance": 0.03125
+      },
+      {
+        "itemId": "runeforged_pickaxe",
+        "quantity": 1,
+        "chance": 0.015625
+      },
+      {
+        "itemId": "clue_scroll_medium",
+        "quantity": 1,
+        "chance": 0.02
+      }
     ]
   },
   "duskmare": {
@@ -10977,8 +13349,14 @@
     "weakness": "stab",
     "spawnsAdd": {
       "monsterId": "dread_core",
-      "firstSpawnAfterAttacks": [7, 10],
-      "respawnAfterAttacks": [7, 10]
+      "firstSpawnAfterAttacks": [
+        7,
+        10
+      ],
+      "respawnAfterAttacks": [
+        7,
+        10
+      ]
     },
     "dropRolls": 1,
     "drops": [
@@ -11254,8 +13632,14 @@
         "magic": "zaryth_rune_sentinel"
       },
       "maxActive": 4,
-      "firstSpawnAfterAttacks": [8, 12],
-      "respawnAfterAttacks": [8, 12]
+      "firstSpawnAfterAttacks": [
+        8,
+        12
+      ],
+      "respawnAfterAttacks": [
+        8,
+        12
+      ]
     },
     "dropRolls": 1,
     "drops": [
@@ -11541,6 +13925,403 @@
       "ranged": 60
     },
     "prayerDrainPerHit": 4,
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "ashen_warband_blade": {
+    "id": "ashen_warband_blade",
+    "name": "Ashen Warband Bladesworn",
+    "isAdd": false,
+    "raidBoss": true,
+    "combatLevel": 110,
+    "hitpoints": 220,
+    "stats": {
+      "attack": 190,
+      "strength": 185,
+      "defence": 150,
+      "magic": 80,
+      "ranged": 80
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "maxHit": 22,
+    "attackBonus": 190,
+    "strengthBonus": 185,
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 40,
+      "magic": 40,
+      "ranged": 40
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "ashen_warband_bow": {
+    "id": "ashen_warband_bow",
+    "name": "Ashen Warband Deadeye",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 100,
+    "hitpoints": 190,
+    "stats": {
+      "attack": 80,
+      "strength": 120,
+      "defence": 140,
+      "magic": 80,
+      "ranged": 195
+    },
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "maxHit": 20,
+    "attackBonus": 195,
+    "strengthBonus": 120,
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 40,
+      "magic": 40,
+      "ranged": 40
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "ashen_warband_magus": {
+    "id": "ashen_warband_magus",
+    "name": "Ashen Warband Sunmage",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 100,
+    "hitpoints": 180,
+    "stats": {
+      "attack": 80,
+      "strength": 80,
+      "defence": 135,
+      "magic": 205,
+      "ranged": 80
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "maxHit": 22,
+    "attackBonus": 205,
+    "strengthBonus": 80,
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 40,
+      "magic": 40,
+      "ranged": 40
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "ashen_warband_bulwark": {
+    "id": "ashen_warband_bulwark",
+    "name": "Ashen Warband Bulwark",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 130,
+    "hitpoints": 260,
+    "stats": {
+      "attack": 205,
+      "strength": 205,
+      "defence": 210,
+      "magic": 80,
+      "ranged": 80
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "maxHit": 28,
+    "attackBonus": 205,
+    "strengthBonus": 205,
+    "defenceBonus": {
+      "stab": 90,
+      "slash": 90,
+      "crush": 75,
+      "magic": 65,
+      "ranged": 90
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "embercoil_shaman": {
+    "id": "embercoil_shaman",
+    "name": "Embercoil Shaman",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 150,
+    "hitpoints": 300,
+    "stats": {
+      "attack": 100,
+      "strength": 100,
+      "defence": 170,
+      "magic": 235,
+      "ranged": 100
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "maxHit": 28,
+    "attackBonus": 235,
+    "strengthBonus": 100,
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 40,
+      "magic": 40,
+      "ranged": 40
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "sunclaw_gladiator": {
+    "id": "sunclaw_gladiator",
+    "name": "Sunclaw Gladiator",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 240,
+    "hitpoints": 480,
+    "stats": {
+      "attack": 250,
+      "strength": 245,
+      "defence": 215,
+      "magic": 100,
+      "ranged": 100
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "maxHit": 34,
+    "attackBonus": 250,
+    "strengthBonus": 245,
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 40,
+      "magic": 40,
+      "ranged": 40
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "dawnlance_colossus": {
+    "id": "dawnlance_colossus",
+    "name": "Dawnlance Colossus",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 350,
+    "hitpoints": 700,
+    "stats": {
+      "attack": 120,
+      "strength": 180,
+      "defence": 250,
+      "magic": 120,
+      "ranged": 280
+    },
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "maxHit": 38,
+    "attackBonus": 280,
+    "strengthBonus": 180,
+    "defenceBonus": {
+      "stab": 100,
+      "slash": 85,
+      "crush": 105,
+      "magic": 90,
+      "ranged": 120
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "triune_chimera": {
+    "id": "triune_chimera",
+    "name": "Triune Chimera",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 475,
+    "hitpoints": 950,
+    "stats": {
+      "attack": 270,
+      "strength": 255,
+      "defence": 270,
+      "magic": 285,
+      "ranged": 275
+    },
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "maxHit": 36,
+    "attackBonus": 285,
+    "strengthBonus": 255,
+    "defenceBonus": {
+      "stab": 120,
+      "slash": 105,
+      "crush": 120,
+      "magic": 130,
+      "ranged": 130
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true,
+    "attackStyles": [
+      "slash",
+      "ranged",
+      "magic"
+    ]
+  },
+  "resonance_colossus": {
+    "id": "resonance_colossus",
+    "name": "Resonance Colossus",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 625,
+    "hitpoints": 1250,
+    "stats": {
+      "attack": 290,
+      "strength": 280,
+      "defence": 310,
+      "magic": 320,
+      "ranged": 180
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "maxHit": 46,
+    "attackBonus": 320,
+    "strengthBonus": 280,
+    "defenceBonus": {
+      "stab": 145,
+      "slash": 130,
+      "crush": 150,
+      "magic": 155,
+      "ranged": 165
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "hornwarden": {
+    "id": "hornwarden",
+    "name": "Hornwarden",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 525,
+    "hitpoints": 1050,
+    "stats": {
+      "attack": 315,
+      "strength": 315,
+      "defence": 285,
+      "magic": 120,
+      "ranged": 120
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "maxHit": 48,
+    "attackBonus": 315,
+    "strengthBonus": 315,
+    "defenceBonus": {
+      "stab": 120,
+      "slash": 105,
+      "crush": 140,
+      "magic": 120,
+      "ranged": 145
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "ember_swarm": {
+    "id": "ember_swarm",
+    "name": "Ember Swarm",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 100,
+    "hitpoints": 1,
+    "stats": {
+      "attack": 240,
+      "strength": 1,
+      "defence": 1,
+      "magic": 240,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "maxHit": 3,
+    "attackBonus": 240,
+    "strengthBonus": 1,
+    "defenceBonus": {
+      "stab": -100,
+      "slash": -100,
+      "crush": -100,
+      "magic": -100,
+      "ranged": -100
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "sunspire_healing_totem": {
+    "id": "sunspire_healing_totem",
+    "name": "Sun Totem",
+    "isAdd": true,
+    "raidBoss": true,
+    "combatLevel": 100,
+    "hitpoints": 1,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 99,
+    "attackStyle": "magic",
+    "maxHit": 0,
+    "attackBonus": 1,
+    "strengthBonus": 1,
+    "defenceBonus": {
+      "stab": -200,
+      "slash": -200,
+      "crush": -200,
+      "magic": -200,
+      "ranged": -200
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true
+  },
+  "aurelios_the_unbroken": {
+    "id": "aurelios_the_unbroken",
+    "name": "Aurelios the Unbroken",
+    "boss": true,
+    "raidBoss": true,
+    "sunspireChampion": true,
+    "combatLevel": 1450,
+    "hitpoints": 4500,
+    "stats": {
+      "attack": 430,
+      "strength": 425,
+      "defence": 360,
+      "magic": 400,
+      "ranged": 320
+    },
+    "attackSpeed": 6,
+    "attackStyle": "slash",
+    "maxHit": 68,
+    "attackBonus": 310,
+    "strengthBonus": 260,
+    "weakness": "slash",
+    "defenceBonus": {
+      "stab": 120,
+      "slash": 55,
+      "crush": 145,
+      "magic": 360,
+      "ranged": 390
+    },
     "drops": [],
     "noSeedDrops": true,
     "noCharmDrops": true

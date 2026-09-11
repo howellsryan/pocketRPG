@@ -101,6 +101,8 @@ const sourceFiles = [
   'engine/bossForms.js',
   'engine/bossAdds.js',
   'engine/raidEncounters.js',
+  'engine/sunspireModifiers.js',
+  'engine/aurelios.js',
   'engine/monsterClips.js',
   'engine/monsterMaxHit.js',
   'engine/hardMode.js',

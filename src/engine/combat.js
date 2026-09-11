@@ -26,6 +26,8 @@ import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, rando
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, addPicksAtRandom, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
 import { isWaveRaid, seedEncounterState, advanceEncounterReinforcements, markEncounterPrimaryDefeated, markEncounterAddDefeated } from './raidEncounters.js'
+import { applySunspireModifiersToState, tickSunspireHazards, triggerSunspireCinderfall } from './sunspireModifiers.js'
+import { createAureliosState, updateAureliosPhase, telegraphAureliosAttack, applyAureliosReaction, resolveAureliosAttack } from './aurelios.js'
 import { grindmanDropChance } from './grindman.js'
 import { applyNotedDrops } from './notedDrops.js'
 
@@ -97,7 +99,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     // record, because the record is shared (a raid's boss list, a zone's npc)
     // while the account type belongs to whoever is swinging — the open world
     // rebuilds one of these per player against the same npc.
-    grindman: grindman === true
+    grindman: grindman === true,
+    ...(preparedMonster.sunspireChampion ? { aurelios: createAureliosState() } : {})
   }
 }
 
@@ -170,7 +173,9 @@ export function createRaidCombatState(raidData, monstersData, combatType = 'mele
       monstersData,
       rewards: raidData.rewards,
     }
-    return seedEncounterState(state, firstWave, monstersData, 0)
+    seedEncounterState(state, firstWave, monstersData, 0)
+    return applySunspireModifiersToState(state, firstWave, monstersData, {})
+
   }
 
   const firstBossId = raidData?.bosses?.[0]
@@ -212,7 +217,13 @@ export function continueRaidCombatState(combatState, raidData, monstersData, { m
     monstersData,
     modifierState: modifierState || combatState.raid.modifierState || null,
   }
-  return seedEncounterState(next, wave, monstersData, nextIndex)
+  seedEncounterState(next, wave, monstersData, nextIndex)
+  return applySunspireModifiersToState(next, wave, monstersData, modifierState || combatState.raid.modifierState || {})
+}
+
+export function applyCombatReaction(combatState, reaction) {
+  if (!combatState?.aurelios) return { ok: false, reason: 'unsupported' }
+  return applyAureliosReaction(combatState, reaction)
 }
 
 /**
@@ -272,18 +283,30 @@ function getFormImmunity(monster) {
  * pushes the hit/miss events.
  */
 function resolveEnemySwing(attacker, attackStyle, state, boostedPlayerStats, playerStats, bonuses, prayersData, events, extraEventFields = {}) {
+  let aureliosAttack = null
+  if (attacker?.sunspireChampion && state.aurelios) {
+    aureliosAttack = resolveAureliosAttack(state, attacker, events)
+    attackStyle = aureliosAttack.style || attackStyle
+  }
+  const rules = state.sunspireRules || {}
   const monsterEffAtk = ((attacker.stats.magic || attacker.stats.attack || 1) + 9)
   const monsterAtkRoll = monsterEffAtk * ((attacker.attackBonus || 0) + 64)
   const playerDefLevel = boostedPlayerStats.defence
   const styleBonuses = getMeleeStyleBonuses(state.stance)
   const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8
-  const defRoll = effDef * ((bonuses.defenceBonus[attackStyle] || bonuses.defenceBonus.crush || 0) + 64)
+  let defRoll = effDef * ((bonuses.defenceBonus[attackStyle] || bonuses.defenceBonus.crush || 0) + 64)
+  if (rules.enemyDefencePenetration) defRoll = Math.floor(defRoll * Math.max(0, 1 - rules.enemyDefencePenetration))
   const acc = hitChance(monsterAtkRoll, defRoll)
-  // Per-form maxHit, then the monster's own, then derived from the stat that
-  // matches the attack style — monsterMaxHit.js owns that precedence so the
-  // info surfaces quote the same number this rolls.
-  const monsterMax = monsterMaxHit(attacker, attackStyle)
-  let damage = rollDamage(acc, monsterMax)
+  let monsterMax = monsterMaxHit(attacker, attackStyle) + (rules.enemyMaxHitBonus || 0)
+  if (attacker?.id === 'hornwarden' && rules.horncallTier) monsterMax += rules.horncallTier * 3
+  let damage = aureliosAttack?.blocked ? 0 : rollDamage(acc, monsterMax)
+  if (aureliosAttack?.damageMultiplier != null) damage = Math.floor(damage * aureliosAttack.damageMultiplier)
+  if (attacker?.sunspireMultiHit > 1 && damage > 0) {
+    const hits = [damage]
+    for (let i = 1; i < attacker.sunspireMultiHit; i++) hits.push(rollDamage(acc, monsterMax))
+    damage = hits.reduce((sum, hit) => sum + hit, 0)
+    events.push({ type: 'sunspireMultiHit', monsterName: attacker.name, hits })
+  }
 
   // Apply protection prayer damage reduction if active and matches attack style
   if (state.activeProtectionPrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activeProtectionPrayer]) {
@@ -306,6 +329,21 @@ function resolveEnemySwing(attacker, attackStyle, state, boostedPlayerStats, pla
 
   // A landed hit may also burn prayer points (the Dread Core's whole threat).
   if (damage > 0) {
+    if (rules.prayerDrainDamagePercent > 0 && typeof state.prayerPoints === 'number' && state.prayerPoints > 0) {
+      const drained = Math.min(state.prayerPoints, Math.max(1, Math.floor(damage * rules.prayerDrainDamagePercent)))
+      state.prayerPoints -= drained
+      events.push({ type: 'prayerDrained', amount: drained, prayerPoints: state.prayerPoints, monsterName: attacker.name, source: 'profanation' })
+      if (state.prayerPoints <= 0) {
+        state.prayerPoints = 0
+        state.activeProtectionPrayer = null
+        state.activeCombatPrayer = null
+      }
+    }
+    if (Number.isFinite(rules.doomStackLimit)) {
+      state.sunspireDoomStacks = (state.sunspireDoomStacks || 0) + 1
+      events.push({ type: 'sunspireDoom', stacks: state.sunspireDoomStacks, limit: rules.doomStackLimit })
+      if (state.sunspireDoomStacks >= rules.doomStackLimit) damage = Math.max(damage, Math.max(1, Math.floor(Number(playerStats.currentHP) || 1)))
+    }
     const perHitDrain = Number(attacker.multiForm && attacker.currentForm
       ? attacker.forms?.[attacker.currentForm]?.prayerDrainPerHit
       : attacker.prayerDrainPerHit) || 0
@@ -344,6 +382,7 @@ function resolveTargetDeath(state, target, events, isOnTask = false) {
     state.addsDefeated = (state.addsDefeated || 0) + 1
     events.push({ type: 'addDefeated', monsterName: target.name, bossName: state.monster?.name })
     if (state.encounter?.finite) {
+      triggerSunspireCinderfall(state, target, events)
       state.addSpawnCountdown = null
       return markEncounterAddDefeated(state, target, events)
     }
@@ -351,6 +390,7 @@ function resolveTargetDeath(state, target, events, isOnTask = false) {
     return false
   }
   if (state.encounter?.finite && target === state.monster) {
+    triggerSunspireCinderfall(state, target, events)
     return markEncounterPrimaryDefeated(state, events)
   }
   return checkMonsterDeath(state, target, events, isOnTask)
@@ -608,6 +648,11 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   const events = []
   state.tickCount++
   advanceEncounterReinforcements(state, events)
+  tickSunspireHazards(state, events)
+  if (state.aurelios) {
+    updateAureliosPhase(state, state.monster, events)
+    if (state.monsterAttackTimer === 1) telegraphAureliosAttack(state, state.monster, events)
+  }
 
   // Decrement cooldowns
   if (state.playerAttackTimer > 0) state.playerAttackTimer--
@@ -893,6 +938,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus)
       let maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * voidMult.rangedDamage)
       let atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy * (1 + slayerEquipmentBonus.accuracyPercent / 100))
+      if (state.sunspireRules?.rangedMagicAccuracyMultiplier) atkRoll = Math.floor(atkRoll * state.sunspireRules.rangedMagicAccuracyMultiplier)
 
       // Dragon Hunter Crossbow: +30% accuracy and damage vs dragon-type monsters
       if (equippedWeapon?.dragonHunter && target.isDragon) {
@@ -1014,7 +1060,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
 
       const effMag = effectiveMagic(boostedPlayerStats.magic)
-      const atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy * (1 + slayerEquipmentBonus.accuracyPercent / 100))
+      let atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy * (1 + slayerEquipmentBonus.accuracyPercent / 100))
+      if (state.sunspireRules?.rangedMagicAccuracyMultiplier) atkRoll = Math.floor(atkRoll * state.sunspireRules.rangedMagicAccuracyMultiplier)
       const defRoll = monsterMagicDefenceRoll(target.stats.magic, target.stats.defence, target.defenceBonus.magic || 0)
       const acc = hitChance(atkRoll, defRoll)
       const magicLevel = boostedPlayerStats.magic || 1
