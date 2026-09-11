@@ -235,3 +235,51 @@ describe('Sunspire reaction windows', () => {
     expect(hazard?.damage).toBeLessThan(hazard?.baseDamage)
   })
 })
+
+
+describe('Sunspire hostile attack staggering', () => {
+  const staggerMonsters: any = {
+    stagger_primary: foe('stagger_primary', { attackSpeed: 4, maxHit: 1 }),
+    stagger_ranged: foe('stagger_ranged', { isAdd: true, attackSpeed: 4, attackStyle: 'ranged', maxHit: 1 }),
+    stagger_magic: foe('stagger_magic', { isAdd: true, attackSpeed: 4, attackStyle: 'magic', maxHit: 1 }),
+  }
+  const staggerRaid: any = {
+    id: 'sunspire_colosseum',
+    name: 'Sunspire Colosseum',
+    waves: [
+      { id: 'stagger_wave', primary: 'stagger_primary', initialAdds: ['stagger_ranged', 'stagger_magic'], reinforcements: [] },
+    ],
+    rewards: {},
+  }
+
+  it('resolves at most one hostile swing per game tick and preserves every queued attacker', () => {
+    let state: any = createRaidCombatState(staggerRaid, staggerMonsters)!
+    state.playerAttackTimer = 99
+    state.monsterAttackTimer = 1
+    state.adds.forEach((add: any) => { add.attackTimer = 1 })
+
+    const firstAttackers: string[] = []
+    for (let i = 0; i < 7; i++) {
+      state.playerAttackTimer = 99
+      const out = processCombatTick(state, { ...stats, currentHP: 999 }, {}, {}, {})
+      const swings = out.events.filter((event: any) => event.type === 'monsterHit' || event.type === 'monsterMiss')
+      expect(swings.length).toBeLessThanOrEqual(1)
+      if (swings[0]) firstAttackers.push(swings[0].monsterName)
+      state = out.combatState
+    }
+
+    expect(firstAttackers.slice(0, 3)).toEqual(['stagger_primary', 'stagger_ranged', 'stagger_magic'])
+  })
+
+  it('does not change simultaneous add + boss timing outside Sunspire', () => {
+    const ordinary: any = createCombatState(staggerMonsters.stagger_primary)
+    ordinary.playerAttackTimer = 99
+    ordinary.monsterAttackTimer = 1
+    ordinary.adds = [prepareAdd(staggerMonsters.stagger_ranged, 'ordinary')]
+    ordinary.adds[0].attackTimer = 1
+
+    const out = processCombatTick(ordinary, { ...stats, currentHP: 999 }, {}, {}, {})
+    const swings = out.events.filter((event: any) => event.type === 'monsterHit' || event.type === 'monsterMiss')
+    expect(swings).toHaveLength(2)
+  })
+})

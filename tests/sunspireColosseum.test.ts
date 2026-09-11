@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import raidsData from '../src/data/raids.json'
 import monstersData from '../src/data/monsters.json'
+import gameIconsData from '../src/data/gameIcons.json'
+import { RAID_ART } from '../src/utils/combatArt.js'
 import { createCombatState, createRaidCombatState, processCombatTick, setCombatTarget } from '../src/engine/combat.js'
 import { activeTarget, liveAdds, prepareAdd } from '../src/engine/bossAdds.js'
 import { raidProgress, raidTotalHitpoints } from '../src/engine/coopRaidEngine.js'
@@ -34,6 +36,11 @@ describe('Sunspire Colosseum data contract', () => {
     expect(raid?.name).toBe('Sunspire Colosseum')
     expect(raid?.hardMode).toBe(false)
     expect(raid?.waves).toHaveLength(12)
+  })
+
+  it('uses a PocketRPG-owned gladiator-and-spear emblem for the Colosseum', () => {
+    expect((RAID_ART as any).sunspire_colosseum?.icon).toBe('gladiator_spear')
+    expect((gameIconsData as any).gladiator_spear?.body).toContain('pocketrpg-gladiator-spear')
   })
 
   it('keeps the final wave as Aurelios alone and gates Twinflare Chakrams to wave seven or later', () => {

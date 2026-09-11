@@ -657,6 +657,24 @@ function hasFullVeracSet(equipment, itemsData) {
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
  */
+function isSunspireStaggeredEncounter(state) {
+  return state?.raid?.raidId === 'sunspire_colosseum' && state?.encounter?.finite === true
+}
+
+// Sunspire deliberately guarantees at most one hostile swing per game tick.
+// This makes protection-prayer flicking a learnable execution skill instead of
+// allowing equal-speed enemies to stack unavoidable damage on the same tick.
+// The marker lives in authoritative combat state, so co-op/solo reconnects keep
+// exactly the same queue rather than recomputing phases in the browser.
+function sunspireEnemyAttackSlotOpen(state) {
+  return !isSunspireStaggeredEncounter(state)
+    || Math.floor(Number(state.sunspireLastEnemyAttackTick) || -1) !== Math.floor(Number(state.tickCount) || 0)
+}
+
+function claimSunspireEnemyAttackSlot(state) {
+  if (isSunspireStaggeredEncounter(state)) state.sunspireLastEnemyAttackTick = state.tickCount
+}
+
 export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}, inventory = [], slayerTask = null) {
   const state = { ...combatState, slayerTask }
   const events = []
@@ -1242,6 +1260,19 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       if (!add || add.currentHP <= 0) continue
       add.attackTimer = (add.attackTimer || 0) - 1
       if (add.attackTimer > 0) continue
+
+      // In Sunspire the primary owns a due tick first (important for Aurelios
+      // telegraphs), then waiting adds drain through one-per-tick in spawn order.
+      // Keep a deferred add at zero so it attacks on the next free tick instead
+      // of silently losing a turn or resetting its cadence.
+      const sunspirePrimaryReady = isSunspireStaggeredEncounter(state)
+        && state.monsterAttackTimer <= 0
+        && monster.currentHP > 0
+      if (sunspirePrimaryReady || !sunspireEnemyAttackSlotOpen(state)) {
+        add.attackTimer = 0
+        continue
+      }
+      claimSunspireEnemyAttackSlot(state)
       add.attackTimer = Math.max(1, Math.floor(add.attackSpeed || 4))
       // `addIndex` rides the event because several adds can swing on one tick
       // and a caller may have to gate them separately — the open world checks
@@ -1270,7 +1301,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   }
 
   // ── Monster Attack ──
-  if (state.monsterAttackTimer <= 0 && monster.currentHP > 0) {
+  if (state.monsterAttackTimer <= 0 && monster.currentHP > 0 && sunspireEnemyAttackSlotOpen(state)) {
+    claimSunspireEnemyAttackSlot(state)
     let damage = 0
 
     // Determine the effective attack style (handle both single style and multiple styles array)

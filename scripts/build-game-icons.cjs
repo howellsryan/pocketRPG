@@ -12,6 +12,7 @@ const fs = require('fs')
 const path = require('path')
 
 const manifestPath = path.join(__dirname, '../src/data/gameIconsManifest.json')
+const customPath   = path.join(__dirname, '../src/data/customGameIcons.json')
 const outPath      = path.join(__dirname, '../src/data/gameIcons.json')
 const noticePath   = path.join(__dirname, '../NOTICE')
 const iconSetPath  = path.join(__dirname, '../node_modules/@iconify-json/game-icons/icons.json')
@@ -22,6 +23,7 @@ if (!fs.existsSync(iconSetPath)) {
 }
 
 const manifest  = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
+const customIcons = fs.existsSync(customPath) ? JSON.parse(fs.readFileSync(customPath, 'utf-8')) : {}
 const iconSet   = JSON.parse(fs.readFileSync(iconSetPath, 'utf-8'))
 
 // game-icons.net default viewBox is 512x512
@@ -60,6 +62,19 @@ for (const [ourKey, giName] of Object.entries(manifest)) {
 if (missing.length > 0) {
   console.warn('WARNING: missing glyphs (skipped):')
   missing.forEach(m => console.warn(' ', m))
+}
+
+// PocketRPG-owned bespoke UI glyphs live outside the third-party manifest so
+// regenerating game-icons never erases them and NOTICE remains third-party-only.
+for (const [ourKey, icon] of Object.entries(customIcons)) {
+  if (!icon || typeof icon.body !== 'string' || icon.body.length === 0) {
+    console.warn(`WARNING: invalid custom glyph (skipped): ${ourKey}`)
+    continue
+  }
+  result[ourKey] = {
+    body: icon.body,
+    viewBox: typeof icon.viewBox === 'string' ? icon.viewBox : null,
+  }
 }
 
 fs.writeFileSync(outPath, JSON.stringify(result, null, 2))
