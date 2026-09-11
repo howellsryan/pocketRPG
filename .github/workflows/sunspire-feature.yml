@@ -1,14 +1,11 @@
-name: Sunspire feature verification
+name: Sunspire final verification
 on:
   push:
     branches:
       - feature/sunspire-colosseum
 
-permissions:
-  contents: write
-
 jobs:
-  focused:
+  final:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,45 +13,27 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm test -- tests/sunspireColosseum.test.ts tests/sunspireMechanics.test.ts tests/sunspireEquipment.test.ts tests/sunspireServer.test.ts tests/sunspireCoop.test.ts tests/coopBossEngine.test.ts tests/zarythEmptyLord.test.ts tests/coopRaidServer.test.ts
-      - run: npm run typecheck
-      - run: npm run rebuild
-      - run: npm run check:single
+      - name: Install app dependencies
+        run: npm ci
+      - name: Full root test suite
+        run: npm test
+      - name: Full app CI
+        run: npm run ci
+      - name: Install world dependencies
+        run: cd world && npm ci
+      - name: Full world checks
+        run: npm run world:check
       - name: Sunspire content audits
         run: |
           npm run check:drops -- sunspire_colosseum
           node scripts/gear-benchmark.cjs --by-level
+          node scripts/economy-benchmark.cjs --out=reports/sunspire-economy-temp
           echo "---- Sunspire gear rows ----"
           grep -i -n -E "sunweaver|twinflare|resonant|sunbound" reports/gear-benchmark.md || true
-          node scripts/economy-benchmark.cjs --out=reports/sunspire-economy-temp
           echo "---- Sunspire economy rows ----"
           grep -i -n -A4 -B4 "sunspire" reports/sunspire-economy-temp.md || true
-      - name: Generate chat knowledge
-        run: npm run gen:knowledge
-      - name: Commit generated chat knowledge
+      - name: Generated content must be committed
         run: |
-          if ! git diff --quiet -- functions/_lib/chat/knowledge.js; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add functions/_lib/chat/knowledge.js
-            git commit -m "docs: regenerate chat knowledge"
-            git push
-          fi
-      - name: Capture Sunspire verification artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sunspire-verification
-          path: |
-            functions/_lib/chat/knowledge.js
-            reports/gear-benchmark.md
-            reports/gear-benchmark.json
-            reports/sunspire-economy-temp.md
-            reports/sunspire-economy-temp.csv
-      - name: Verify generated chat knowledge
-        run: |
-          if ! git diff --exit-code -- functions/_lib/chat/knowledge.js; then
-            git diff -- functions/_lib/chat/knowledge.js
-            exit 1
-          fi
+          npm run gen:knowledge
+          npm run gen:guide
+          git diff --exit-code -- functions/_lib/chat/knowledge.js docs/game-guide.md
