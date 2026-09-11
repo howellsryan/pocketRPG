@@ -1536,7 +1536,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
   if (isSunspireWaveRaidState(next) && sunspireWaveCleared(next) && !next.boss.killedAt) {
     next.boss.killedAt = now
     kill = resolveSunspireWaveClear(next, monstersData, events, now)
-  } else if (next.boss.currentHP <= 0 && !next.boss.killedAt && next.raid) {
+  } else if (!isSunspireWaveRaidState(next) && next.boss.currentHP <= 0 && !next.boss.killedAt && next.raid) {
     next.boss.killedAt = now
     kill = resolveRaidBossDeath(next, monstersData, events, now)
   } else if (next.boss.currentHP <= 0 && !next.boss.killedAt) {
