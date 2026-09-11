@@ -11,6 +11,7 @@ import CombatQuickActions from '../components/CombatQuickActions.jsx'
 import CoopLootShare from '../components/CoopLootShare.jsx'
 import CoopRaidLobby from '../components/CoopRaidLobby.jsx'
 import CoopChatPanel from '../components/CoopChatPanel.jsx'
+import SunspireDecisionPanel from '../components/SunspireDecisionPanel.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import { CombatMonsterInfoSheet } from './CombatMobileSheets.jsx'
@@ -108,6 +109,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   // group boss it is built on.
   const raid = raidProgress(state, monstersData)
   const inLobby = state?.phase === 'lobby'
+  const inSunspireDecision = state?.phase === 'decision' && state?.raid?.raidId === 'sunspire_colosseum'
+  const isRaidHost = Number(state?.hostCharacterId) === Number(characterId)
 
 
   const pushSplats = (setter, splats) => {
@@ -413,6 +416,39 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       onClose={handleLeave}
     />
   ) : null
+
+  if (inSunspireDecision) {
+    const wave = (Number(state.raid.currentWaveIndex) || 0) + 1
+    const finalWave = wave >= (state.raid.waves?.length || 12)
+    return (
+      <div class="forge-shell h-full flex flex-col p-4">
+        <BackLink onClick={handleLeave} className="mb-3" />
+        <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar">
+          <SunspireDecisionPanel
+            wave={wave}
+            totalWaves={state.raid.waves?.length || 12}
+            staged={me?.sunspireStaged || []}
+            chest={me?.sunspireChest || []}
+            modifierState={state.raid.modifierState || {}}
+            offers={state.raid.modifierOffers || []}
+            finalWave={finalWave}
+            canChoose={isRaidHost}
+            busy={false}
+            onChoose={(modifierId) => send({ type: 'sunspire_choose_modifier', modifierId })}
+            onClaim={() => send({ type: 'sunspire_claim' })}
+          />
+          {!isRaidHost && (
+            <div class="mt-3 text-center text-[11px] text-[var(--color-parchment)] opacity-60">
+              The party host controls Continue and Claim & Leave. Your chest is rolled independently.
+            </div>
+          )}
+        </div>
+        <CoopChatPanel messages={chatLog} onSend={sendChat} />
+        {lootModalNode}
+        {deathModalNode}
+      </div>
+    )
+  }
 
   if (inLobby && raid) {
     const summary = coopRaidSummary(raid.raidId, monstersData)
