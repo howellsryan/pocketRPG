@@ -39,7 +39,7 @@ jobs:
             reports/gear-benchmark.md
             reports/gear-benchmark.json
             reports/sunspire-economy-temp.md
-            reports/sunspire-economy-temp.json
+            reports/sunspire-economy-temp.csv
       - name: Verify generated chat knowledge
         run: |
           if ! git diff --exit-code -- functions/_lib/chat/knowledge.js; then
