@@ -249,10 +249,10 @@ export function cloneCoopState(state) {
     ...(state.raid ? {
       raid: {
         ...state.raid,
-        bosses: [...(state.raid.bosses || [])],
-        waves: Array.isArray(state.raid.waves) ? structuredClone(state.raid.waves) : undefined,
-        modifierState: { ...(state.raid.modifierState || {}) },
-        modifierOffers: [...(state.raid.modifierOffers || [])],
+        ...(Array.isArray(state.raid.bosses) ? { bosses: [...state.raid.bosses] } : {}),
+        ...(Array.isArray(state.raid.waves) ? { waves: structuredClone(state.raid.waves) } : {}),
+        ...(state.raid.modifierState ? { modifierState: { ...state.raid.modifierState } } : {}),
+        ...(Array.isArray(state.raid.modifierOffers) ? { modifierOffers: [...state.raid.modifierOffers] } : {}),
       },
     } : {}),
     members,
@@ -817,7 +817,15 @@ function hydrateCombatState(state, member, monstersData, spellsData) {
   if (state.boss.aurelios) engine.aurelios = structuredClone(state.boss.aurelios)
   if (state.boss.sunspireRules) engine.sunspireRules = structuredClone(state.boss.sunspireRules)
   if (state.boss.sunspireHazards) engine.sunspireHazards = structuredClone(state.boss.sunspireHazards)
-  if (state.raid?.modifierState) engine.raid = { ...(engine.raid || {}), modifierState: { ...state.raid.modifierState } }
+  if (isSunspireWaveRaidState(state)) {
+    engine.raid = {
+      raidId: state.raid.raidId,
+      name: state.raid.name,
+      waves: structuredClone(state.raid.waves),
+      currentWaveIndex: Math.max(0, Number(state.raid.currentWaveIndex) || 0),
+      modifierState: { ...(state.raid.modifierState || {}) },
+    }
+  }
   const wanted = member.combat.addTargetIndex
   engine.addTargetIndex = typeof wanted === 'number' && engine.adds[wanted]?.currentHP > 0 ? wanted : null
   return engine
