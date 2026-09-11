@@ -250,6 +250,7 @@ function raidFor(monsterId) {
   return Object.values(raidsData).find((r) => {
     if (!RAID_PLACES[r.id]) return false
     if (r.bosses?.includes(monsterId)) return true
+    if (r.encounterOnlyMonsters?.includes(monsterId)) return true
     for (const wave of r.waves || []) {
       if (wave.primary === monsterId || wave.initialAdds?.includes(monsterId)) return true
       if ((wave.reinforcements || []).some((group) => group.monsterIds?.includes(monsterId))) return true
