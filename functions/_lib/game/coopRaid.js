@@ -93,16 +93,14 @@ export async function listOpenRaidParties(env, now = Date.now()) {
   const placeholders = COOP_RAID_IDS.map(() => '?').join(',')
   if (!placeholders) return byRaid
   const rows = await env.DB.prepare(
-    `SELECT id, raid_id, member_count, host_character_id, phase, hard_mode, state_json
+    `SELECT id, raid_id, member_count, host_character_id, phase, hard_mode
        FROM coop_boss_sessions
       WHERE raid_id IN (${placeholders}) AND status = 'active' AND phase = 'lobby' AND last_tick_at >= ?
       ORDER BY member_count DESC, id ASC`,
   ).bind(...COOP_RAID_IDS, now - COOP_SESSION_STALE_MS).all()
-  const visibleRows = (rows.results || []).filter((row) => {
-    const state = parseSessionState(row)
-    return state?.raid?.solo !== true
-  })
-  const parties = visibleRows.map(toOpenParty)
+  // Private solo Sunspire rooms are created directly in phase='active', so the
+  // SQL lobby predicate above excludes them without reading/parsing state_json.
+  const parties = (rows.results || []).map(toOpenParty)
   const roster = await listSessionMembers(env, parties.map((p) => p.sessionId), now)
   for (const party of parties) {
     party.members = roster.get(party.sessionId) || []
