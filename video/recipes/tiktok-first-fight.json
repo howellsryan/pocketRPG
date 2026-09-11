@@ -1,0 +1,43 @@
+{
+  "id": "tiktok-first-fight",
+  "title": "PocketRPG first fight demo",
+  "fps": 30,
+  "startAt": "landing",
+  "hook": "Start an RPG in 15 seconds",
+  "hookMs": 3200,
+  "outro": "Play free → PocketRPG.co.uk",
+  "scenes": [
+    {
+      "action": "hold",
+      "holdMs": 1500,
+      "caption": "PocketRPG runs straight in your browser."
+    },
+    {
+      "action": "demo",
+      "holdMs": 2200,
+      "caption": "Tap Play Demo — no signup or download."
+    },
+    {
+      "action": "nav",
+      "target": "Combat",
+      "holdMs": 1500,
+      "caption": "Jump straight into Combat."
+    },
+    {
+      "action": "text",
+      "target": "Training",
+      "holdMs": 900
+    },
+    {
+      "action": "text",
+      "target": "Field Chicken",
+      "holdMs": 4800,
+      "caption": "Pick a foe and the fight starts instantly."
+    },
+    {
+      "action": "hold",
+      "holdMs": 2600,
+      "caption": "600ms ticks. XP, drops and idle progress."
+    }
+  ]
+}
