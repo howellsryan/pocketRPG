@@ -35,7 +35,7 @@ jobs:
         run: npm run rebuild
 
       - name: Render TikTok clip
-        run: node video/render.mjs video/recipes/tiktok-first-fight.json
+        run: node video/render-native.mjs video/recipes/tiktok-first-fight.json
 
       - name: Upload MP4
         uses: actions/upload-artifact@v4
