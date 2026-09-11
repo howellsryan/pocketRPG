@@ -1292,6 +1292,11 @@
           }
         ]
       }
-    }
+    },
+    "encounterOnlyMonsters": [
+      "ashen_warband_bulwark",
+      "ember_swarm",
+      "sunspire_healing_totem"
+    ]
   }
 }
