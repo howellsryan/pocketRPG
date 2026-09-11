@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { applyCombatReaction, applyInstantKill, continueRaidCombatState, createCombatState, createRaidCombatState, processCombatTick } from '../src/engine/combat.js'
 import { liveAdds, prepareAdd } from '../src/engine/bossAdds.js'
+import { SUNSPIRE_MODIFIERS, nextSunspirePrayerFlick, sunspireModifierDescription } from '../src/engine/sunspireModifiers.js'
 import { applyAureliosReaction, aureliosAttackDelay, resolveAureliosAttack, telegraphAureliosAttack, updateAureliosPhase } from '../src/engine/aurelios.js'
 
 const DEF = { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 }
@@ -45,6 +46,19 @@ function nextWith(modifierState: Record<string, number>) {
 afterEach(() => vi.restoreAllMocks())
 
 describe('Sunspire persistent modifiers', () => {
+  it('has an exact player-facing explanation for every selectable tier', () => {
+    for (const [id, def] of Object.entries(SUNSPIRE_MODIFIERS) as any) {
+      for (let modifierTier = 1; modifierTier <= def.maxTier; modifierTier++) {
+        const copy = sunspireModifierDescription(id, modifierTier)
+        expect(copy, `${id} tier ${modifierTier}`).toBeTruthy()
+        expect(copy.length, `${id} tier ${modifierTier}`).toBeGreaterThan(12)
+      }
+    }
+    expect(sunspireModifierDescription('profanation', 2)).toContain('40%')
+    expect(sunspireModifierDescription('deathmark', 3)).toContain('5 Doom')
+    expect(sunspireModifierDescription('sunburst', 1)).toContain('Protect from Magic')
+  })
+
   it('maps Profanation, Deathmark, Withering, Veiled Sight and Unyielding into deterministic combat rules', () => {
     const state = nextWith({ profanation: 2, deathmark: 2, withering: 2, veiled_sight: 2, unyielding: 2 })
     expect(state.sunspireRules).toMatchObject({
@@ -281,5 +295,43 @@ describe('Sunspire hostile attack staggering', () => {
     const out = processCombatTick(ordinary, { ...stats, currentHP: 999 }, {}, {}, {})
     const swings = out.events.filter((event: any) => event.type === 'monsterHit' || event.type === 'monsterMiss')
     expect(swings).toHaveLength(2)
+  })
+})
+
+
+describe('Sunspire next-prayer cue', () => {
+  const primary: any = foe('primary', { name: 'Primary', attackStyle: 'slash', attackSpeed: 4 })
+  const ranged: any = { ...foe('ranged', { name: 'Ranger', attackStyle: 'ranged', attackSpeed: 4 }), currentHP: 100, attackTimer: 2 }
+  const magic: any = { ...foe('magic', { name: 'Mage', attackStyle: 'magic', attackSpeed: 4 }), currentHP: 100, attackTimer: 1 }
+
+  it('uses authoritative timers and combat ordering for the next prayer', () => {
+    const fastAdd = nextSunspirePrayerFlick({
+      primary: { ...primary, currentHP: 100 },
+      primaryAttackTimer: 2,
+      adds: [ranged, magic],
+    })
+    expect(fastAdd).toMatchObject({ monsterId: 'magic', style: 'magic', ticksUntil: 1 })
+
+    const primaryTie = nextSunspirePrayerFlick({
+      primary: { ...primary, currentHP: 100 },
+      primaryAttackTimer: 1,
+      adds: [{ ...ranged, attackTimer: 1 }, { ...magic, attackTimer: 1 }],
+    })
+    expect(primaryTie).toMatchObject({ monsterId: 'primary', style: 'melee', ticksUntil: 1 })
+
+    const addTie = nextSunspirePrayerFlick({
+      primary: { ...primary, currentHP: 0 },
+      primaryAttackTimer: 1,
+      adds: [{ ...ranged, attackTimer: 1 }, { ...magic, attackTimer: 1 }],
+    })
+    expect(addTie).toMatchObject({ monsterId: 'ranged', style: 'ranged', fromAdd: true })
+  })
+
+  it('never tells the player to pray against a harmless healing totem', () => {
+    const cue = nextSunspirePrayerFlick({
+      primary: { ...primary, currentHP: 0 },
+      adds: [{ ...foe('sunspire_healing_totem', { name: 'Sun Totem', maxHit: 0 }), currentHP: 1, attackTimer: 1 }],
+    })
+    expect(cue).toBeNull()
   })
 })
