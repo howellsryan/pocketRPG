@@ -237,6 +237,34 @@ describe('monster figures', () => {
       expect(new Set(colours.values()).size).toBeGreaterThanOrEqual(4)
     })
 
+    it('authors Sunspire as a varied arena bestiary instead of fallback animation bodies', () => {
+      const expected: Record<string, string> = {
+        ashen_warband_blade: 'gladiator',
+        ashen_warband_bow: 'gladiator',
+        ashen_warband_magus: 'gladiator',
+        ashen_warband_bulwark: 'gladiator',
+        embercoil_shaman: 'lizardman',
+        sunclaw_gladiator: 'gladiator',
+        dawnlance_colossus: 'giant',
+        triune_chimera: 'dragon',
+        resonance_colossus: 'golem',
+        hornwarden: 'demon',
+        ember_swarm: 'imp',
+        sunspire_healing_totem: 'orb',
+        aurelios_the_unbroken: 'gladiator',
+      }
+      const seen = new Set<string>()
+      for (const [id, archetype] of Object.entries(expected)) {
+        const monster: any = (monstersData as any)[id]
+        expect(monster, id).toBeTruthy()
+        const figure = monsterFigureFor(monster, monster.attackStyle)
+        expect(figure.archetype, id).toBe(archetype)
+        expect(figure.archetype, `${id} must never use the chicken body`).not.toBe('fowl')
+        seen.add(figure.archetype)
+      }
+      expect(seen.size).toBeGreaterThanOrEqual(8)
+    })
+
     it('draws the plain creatures as themselves', () => {
       const of = (id: string) => monsterFigureFor(monsters.find(m => m.id === id)!, 'melee')
       expect(of('field_chicken').archetype).toBe('fowl')
