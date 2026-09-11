@@ -99,7 +99,13 @@ describe('coopRaidEngine — raid catalogue', () => {
   it('offers each raid exactly once despite the legacy_id aliases', () => {
     // raids.json keys every raid twice; a party list built from Object.keys
     // would advertise the same run as two different raids.
-    expect(COOP_RAID_IDS).toEqual(['vaults_of_xyren', 'crimson_night_theatre', 'cryptbound_champions', 'tomb_of_arasmus'])
+    expect(COOP_RAID_IDS).toEqual([
+      'vaults_of_xyren',
+      'crimson_night_theatre',
+      'cryptbound_champions',
+      'tomb_of_arasmus',
+      'sunspire_colosseum',
+    ])
     expect(isCoopRaidId('barrows_brothers')).toBe(false)
     expect(isCoopRaidId(RAID)).toBe(true)
   })
