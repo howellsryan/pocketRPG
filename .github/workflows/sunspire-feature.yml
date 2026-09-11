@@ -19,6 +19,24 @@ jobs:
           cache: npm
       - name: Install app dependencies
         run: npm ci
+      - name: Affected regression pack
+        run: >
+          npm test --
+          tests/sunspireColosseum.test.ts
+          tests/sunspireServer.test.ts
+          tests/sunspireCoop.test.ts
+          tests/coopRaidServer.test.ts
+          tests/coopRaidEngine.test.ts
+          tests/coopRaidRoom.test.ts
+          tests/combatInfoSheets.test.ts
+          tests/worldContent.test.ts
+          tests/hardMode.test.ts
+          tests/armoury.test.ts
+          tests/chatQuota.test.ts
+      - name: Verify deterministic world mapping
+        run: |
+          node scripts/seedWorldContent.cjs
+          git diff --exit-code -- src/data/world.json src/data/worldActivities.json
       - name: Full root test suite
         run: npm test
       - name: Full app CI
