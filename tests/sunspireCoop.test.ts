@@ -71,6 +71,21 @@ describe('Sunspire co-op shared wave state', () => {
     expect(new Set(state.boss.adds.map((a: any) => a.instanceId)).size).toBe(state.boss.adds.length)
   })
 
+  it('hands targeting to the first living arena enemy after the Bladesworn dies', () => {
+    const state: any = start(party())
+    state.boss.currentHP = 0
+    state.boss.encounter.primaryDefeated = true
+    state.members['7'].combat.addTargetIndex = null
+    state.members['7'].hp = 9999
+    state.members['7'].maxHP = 9999
+    for (const add of state.boss.adds) add.attackTimer = 99
+
+    const out = tick(state)
+    expect(out.stateNext.phase).toBe('active')
+    expect(out.stateNext.members['7'].combat.addTargetIndex).toBe(0)
+    expect(out.stateNext.boss.adds[0].currentHP).toBeGreaterThan(0)
+  })
+
   it('does not advance when the primary is dead but an encounter enemy survives', () => {
     const state: any = start(party())
     state.boss.currentHP = 0
@@ -98,6 +113,27 @@ describe('Sunspire co-op shared wave state', () => {
     expect(out.stateNext.raid.modifierOffers).toHaveLength(3)
     expect(out.stateNext.members['7'].sunspireChest.length).toBeGreaterThan(0)
     expect(out.stateNext.members['8'].sunspireChest.length).toBeGreaterThan(0)
+  })
+
+  it('applies Withering to the real member HP cap without compounding tiers', () => {
+    let state: any = start(party())
+    state.members['7'].damage = 10_000
+    state = forceWaveClear(state).stateNext
+    state.raid.modifierOffers = ['withering']
+
+    let advanced = tick(state, [intent(7, { type: 'sunspire_choose_modifier', modifierId: 'withering' })]).stateNext
+    expect(advanced.raid.modifierState.withering).toBe(1)
+    expect(advanced.members['7'].maxHP).toBe(Math.floor(advanced.members['7'].stats.hitpoints * 0.9))
+
+    advanced.boss.currentHP = 0
+    advanced.boss.encounter.primaryDefeated = true
+    advanced.boss.adds = []
+    advanced.members['7'].damage = 10_000
+    state = tick(advanced).stateNext
+    state.raid.modifierOffers = ['withering']
+    advanced = tick(state, [intent(7, { type: 'sunspire_choose_modifier', modifierId: 'withering' })]).stateNext
+    expect(advanced.raid.modifierState.withering).toBe(2)
+    expect(advanced.members['7'].maxHP).toBe(Math.floor(advanced.members['7'].stats.hitpoints * 0.8))
   })
 
   it('only the host can choose one of the shared modifier offers and advance everyone', () => {
