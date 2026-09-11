@@ -1,0 +1,55 @@
+name: Render ChatGPT TikTok Demo
+
+on:
+  push:
+    branches:
+      - chatgpt/tiktok-first-fight
+    paths:
+      - 'video/**'
+      - '.github/workflows/render-chatgpt-tiktok.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build game bundle
+        run: npm run rebuild
+
+      - name: Render TikTok clip
+        run: node video/render.mjs video/recipes/tiktok-first-fight.json
+
+      - name: Upload MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: tiktok-first-fight
+          path: video/out/tiktok-first-fight.mp4
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tiktok-first-fight-failure
+          path: video/out/tiktok-first-fight-failure.png
+          if-no-files-found: ignore
+          retention-days: 7
