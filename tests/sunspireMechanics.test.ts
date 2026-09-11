@@ -3,6 +3,7 @@ import { applyCombatReaction, continueRaidCombatState, createCombatState, create
 import { liveAdds } from '../src/engine/bossAdds.js'
 
 const DEF = { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 }
+const stats = { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, currentHP: 999 }
 function foe(id: string, overrides: any = {}) {
   return {
     id, name: id, hitpoints: 1000, combatLevel: 500, attackSpeed: 6, attackStyle: 'crush', maxHit: 30,
