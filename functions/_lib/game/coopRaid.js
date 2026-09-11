@@ -11,12 +11,15 @@
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
+import prayersData from '../../../src/data/prayers.json' assert { type: 'json' }
+import spellsData from '../../../src/data/spells.json' assert { type: 'json' }
 import {
   COOP_MAX_MEMBERS,
   addCoopMember,
   createCoopMember,
   createCoopRaidState,
   memberCount,
+  processCoopTick,
 } from '../../../src/engine/coopBossEngine.js'
 import { COOP_RAID_IDS, coopRaidData, coopRaidSummary, isCoopRaidId } from '../../../src/engine/coopRaidEngine.js'
 import { checkRaidRequirementsPure } from '../../../src/engine/combatRequirements.js'
@@ -83,12 +86,16 @@ export async function listOpenRaidParties(env, now = Date.now()) {
   const placeholders = COOP_RAID_IDS.map(() => '?').join(',')
   if (!placeholders) return byRaid
   const rows = await env.DB.prepare(
-    `SELECT id, raid_id, member_count, host_character_id, phase, hard_mode
+    `SELECT id, raid_id, member_count, host_character_id, phase, hard_mode, state_json
        FROM coop_boss_sessions
       WHERE raid_id IN (${placeholders}) AND status = 'active' AND phase = 'lobby' AND last_tick_at >= ?
       ORDER BY member_count DESC, id ASC`,
   ).bind(...COOP_RAID_IDS, now - COOP_SESSION_STALE_MS).all()
-  const parties = (rows.results || []).map(toOpenParty)
+  const visibleRows = (rows.results || []).filter((row) => {
+    const state = parseSessionState(row)
+    return state?.raid?.solo !== true
+  })
+  const parties = visibleRows.map(toOpenParty)
   const roster = await listSessionMembers(env, parties.map((p) => p.sessionId), now)
   for (const party of parties) {
     party.members = roster.get(party.sessionId) || []
@@ -105,9 +112,12 @@ export async function listOpenRaidParties(env, now = Date.now()) {
  * list promises not to do. That is also why there is no retry loop here — a
  * party that filled up between the render and the tap is an honest refusal.
  */
-export async function joinCoopRaidParty(env, { characterId, identityId, raidId, username, sessionId = null }, now = Date.now()) {
+export async function joinCoopRaidParty(env, { characterId, identityId, raidId, username, sessionId = null, solo = false }, now = Date.now()) {
   if (!isCoopRaidId(raidId) || !coopRaidData(raidId)) {
     throw new GameApiError('INVALID_COOP_RAID', 'That raid cannot be run as a party', 400)
+  }
+  if (solo && (raidId !== 'sunspire_colosseum' || sessionId !== null)) {
+    throw new GameApiError('INVALID_COOP_RAID', 'Private solo rooms are only available for a new Sunspire run', 400)
   }
   const existing = await activeSessionIdFor(env, characterId)
   if (existing) {
@@ -161,7 +171,7 @@ export async function joinCoopRaidParty(env, { characterId, identityId, raidId, 
       // The host's own switch fixes the party's difficulty; a raider joining a
       // lobby adopts what the host set, exactly as a boss room works.
       ? await openRaidParty(env, {
-        raidId, member, characterId, now,
+        raidId, member, characterId, now, solo,
         hardMode: raidId === 'sunspire_colosseum' ? false : await isHardModeEnabled(env, characterId, 'raids', raidId),
       })
       : await joinExistingParty(env, { raidId, member, characterId, sessionId })
@@ -183,23 +193,42 @@ export async function joinCoopRaidParty(env, { characterId, identityId, raidId, 
   ).bind(joinedSessionId, characterId, now, now).run()
 
   await auditLog(env, 'coop.raid.join', {
-    sessionId: joinedSessionId, characterId, raidId, host: sessionId === null,
+    sessionId: joinedSessionId, characterId, raidId, host: sessionId === null, solo,
   }, { swallow: true })
   return { sessionId: joinedSessionId, rejoined: false, saveRevision: written.saveRevision }
 }
 
-async function openRaidParty(env, { raidId, member, characterId, now, hardMode = false }) {
+async function openRaidParty(env, { raidId, member, characterId, now, hardMode = false, solo = false }) {
   const state = createCoopRaidState(raidId, monstersData, { hostCharacterId: characterId, now, hardMode })
   if (!state) throw new GameApiError('INVALID_COOP_RAID', 'That raid cannot be run as a party', 400)
-  const seeded = addCoopMember(state, member)
+  let seeded = addCoopMember(state, member)
+
+  if (solo) {
+    // Solo Sunspire is deliberately the SAME server room as party Sunspire,
+    // only private and one-player. The room therefore owns every hit, wave
+    // clear, modifier, reward roll and write-back; there is no client "I won"
+    // endpoint to spoof.
+    seeded.raid = { ...seeded.raid, solo: true }
+    const mine = seeded.members[String(characterId)]
+    if (mine) mine.ready = true
+    const started = processCoopTick(
+      seeded,
+      [{ tick_number: 1, characterId, characterSeq: 1, action: { type: 'start_raid' } }],
+      { itemsData, monstersData, prayersData, spellsData },
+      now,
+    )
+    seeded = started.stateNext
+    seeded.raid = { ...seeded.raid, solo: true }
+  }
+
   const res = await env.DB.prepare(
     `INSERT INTO coop_boss_sessions
        (boss_id, raid_id, phase, host_character_id, status, member_count, created_at, current_tick,
         state_json, last_tick_at, boss_hp, boss_max_hp, kill_seq, hard_mode)
-     VALUES (?, ?, 'lobby', ?, 'active', 1, ?, 0, ?, ?, ?, ?, 0, ?)`,
+     VALUES (?, ?, ?, ?, 'active', 1, ?, ?, ?, ?, ?, ?, 0, ?)`,
   ).bind(
-    seeded.bossId, raidId, characterId, now, JSON.stringify(seeded), now,
-    seeded.boss.currentHP, seeded.boss.maxHP, hardMode ? 1 : 0,
+    seeded.bossId, raidId, seeded.phase || 'lobby', characterId, now, seeded.tick || 0,
+    JSON.stringify(seeded), now, seeded.boss.currentHP, seeded.boss.maxHP, hardMode ? 1 : 0,
   ).run()
   return res.meta.last_row_id
 }
