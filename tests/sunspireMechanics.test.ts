@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { applyCombatReaction, applyInstantKill, continueRaidCombatState, createCombatState, createRaidCombatState, processCombatTick } from '../src/engine/combat.js'
-import { liveAdds } from '../src/engine/bossAdds.js'
+import { liveAdds, prepareAdd } from '../src/engine/bossAdds.js'
 import { applyAureliosReaction, aureliosAttackDelay, resolveAureliosAttack, telegraphAureliosAttack, updateAureliosPhase } from '../src/engine/aurelios.js'
 
 const DEF = { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 }
