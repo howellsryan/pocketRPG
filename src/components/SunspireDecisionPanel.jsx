@@ -134,7 +134,7 @@ export default function SunspireDecisionPanel({
                 <button type="button" aria-label="Close modifier info" onClick={() => setInfoModifierId(null)} class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[var(--color-parchment)] opacity-60 active:opacity-100">×</button>
               </div>
             </div>
-          )
+          )}
         </div>
       )}
 
