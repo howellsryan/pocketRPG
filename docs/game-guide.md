@@ -133,9 +133,28 @@ Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward
 
 A boss hunts you across its whole lair, further than any other monster will follow, and any minions it has summoned stay on the field with it. The way out of a boss fight is the way you came in.
 
+## Sunspire Colosseum
+
+The Sunspire Colosseum is a twelve-wave endgame raid built around risk. Waves 1–11 throw several enemies at you at once, and some waves bring reinforcements partway through the fight. Every enemy has its own health and attack timer, so target choice, protection prayers, supplies and switching gear matter more than simply racing the primary target.
+
+After each cleared wave you enter a safe decision state. The reward from that wave is added to your **unclaimed Sunspire chest**. You can **Claim & Leave** to bank the entire chest, or continue and put all of it at risk. Dying or abandoning an active wave forfeits the unclaimed chest.
+
+Before continuing, choose one of three offered arena modifiers. Modifiers persist for the rest of the run and can become stronger when chosen again. They can drain Prayer when you take damage, reduce your effective survivability, strengthen enemies, add extra warband fighters or colossi, summon Ember Swarms or healing Sun Totems, or introduce clearly telegraphed timed hazards. Sunspire uses these modifiers as its difficulty system and does not stack ordinary Hard Mode on top.
+
+Wave 12 is **Aurelios the Unbroken**. He strongly rewards melee/slash setups and uses a learnable sequence of spear and shield attacks rather than random unavoidable damage. Watch his combat telegraphs: later phases add pressure at 90%, 75%, 50%, 25% and 10% health. Grapple calls for an equipment-parry response, Triple Parry tests prayer timing, and the final 10% is an enrage.
+
+Sunspire rewards include **Sunshards**, **Resonance Crystals**, the prayer-focused **Sunbound Zealot** armour set, **Twinflare Chakrams** and the **Sunweaver Quiver**. Unique odds improve deeper into the run, and Twinflare Chakrams cannot appear before wave 7. Your first full clear guarantees the Sunweaver Quiver; later clears substitute a large Sunshard reward instead of guaranteeing duplicate quivers.
+
+The Sunweaver Quiver occupies the cape slot and can be charged with Sunshards to improve its ranged bonuses. Twinflare Chakrams are a one-handed ranged weapon: uncharged they use a reduced damage profile, while Sunshard charges make every normal attack roll twice. Their 50% **Division** special also rolls twice while charged, and each successful hit reduces the target's Defence based on its Magic level.
+
+A Resonance Crystal combines with Grondar Boots to create **Resonant Bulwark Boots**. Charged Bulwark Boots can recoil 1 damage when a successful melee-style attack hits you; ranged and magic hits do not trigger the recoil.
+
+Sunspire supports solo runs and raid parties. In a party the wave, reinforcements, active modifiers and Aurelios pattern are shared by the room, the host makes between-wave decisions, and each eligible member has their own server-rolled unclaimed chest.
+
+
 ## Hard Mode
 
-Most bosses and every raid can be switched to Hard Mode from the prompt that opens when you tap them in the combat picker. The switch is per boss (and per raid), stays on until you turn it off, and shows as a **HARD** tag wherever that fight is listed.
+Most bosses and conventional raids can be switched to Hard Mode from the prompt that opens when you tap them in the combat picker. Sunspire Colosseum is the exception: its persistent arena modifiers are its difficulty system, so ordinary Hard Mode is unavailable there. The switch is per boss (and per raid), stays on until you turn it off, and shows as a **HARD** tag wherever that fight is listed.
 
 A hard fight doubles the boss's offence — twice the max hit, twice the accuracy. Its health and its defences are untouched, so it dies to the same hits in the same time it always did; the only thing that changes is how much damage it does to you along the way. In exchange every drop rate on its table doubles — a 1-in-500 unique becomes 1-in-250. Guaranteed drops stay one drop, and a boss you skip with credits costs double the credits.
 

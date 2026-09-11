@@ -53,6 +53,7 @@ export const RAID_ART = {
   "crimson_night_theatre": { icon: "ancient_columns", accent: "#c0453b" },
   "cryptbound_champions": { icon: "stone_tower", accent: "#8b9a8f" },
   "tomb_of_arasmus": { icon: "crowned_skull", accent: "#a855f7" },
+  "sunspire_colosseum": { icon: "spear", accent: "#e2aa32" },
 }
 
 // Monster id -> emblem + accent (accent inherited from its area / raid).
@@ -182,6 +183,19 @@ export const MONSTER_ART = {
   "sebakh_the_devourer": { icon: "tomb_sebakh", accent: "#6f9e5e" },
   "warden_of_arasmus": { icon: "tomb_warden", accent: "#d8b13a" },
   "duskmare": { icon: "spectre", accent: "#5a3d8a" },
+  "ashen_warband_blade": { icon: "gladius", accent: "#d89d2d" },
+  "ashen_warband_bow": { icon: "high_shot", accent: "#d89d2d" },
+  "ashen_warband_magus": { icon: "wizard_staff", accent: "#d89d2d" },
+  "ashen_warband_bulwark": { icon: "shield", accent: "#d89d2d" },
+  "embercoil_shaman": { icon: "snake", accent: "#e06b32" },
+  "sunclaw_gladiator": { icon: "tiger_head", accent: "#e2aa32" },
+  "dawnlance_colossus": { icon: "spear", accent: "#d8b13a" },
+  "triune_chimera": { icon: "hydra", accent: "#df7f32" },
+  "resonance_colossus": { icon: "crystal_ball", accent: "#d6b24a" },
+  "hornwarden": { icon: "horned_skull", accent: "#c88b2b" },
+  "ember_swarm": { icon: "flame", accent: "#ef6b3a" },
+  "sunspire_healing_totem": { icon: "crystal_ball", accent: "#efc75e" },
+  "aurelios_the_unbroken": { icon: "spear", accent: "#f0c45a" },
 }
 
 // Attack style (monsters.json attackStyle) -> chip glyph + colour. The melee
@@ -233,7 +247,15 @@ const { byMonster: MONSTER_PLACES, raidPlace: RAID_PLACES } = buildMonsterLocati
 // standalone world-map spot — they're only reachable by entering the raid, so
 // their "location" is the raid's entry place instead.
 function raidFor(monsterId) {
-  return Object.values(raidsData).find(r => r.bosses?.includes(monsterId) && RAID_PLACES[r.id])
+  return Object.values(raidsData).find((r) => {
+    if (!RAID_PLACES[r.id]) return false
+    if (r.bosses?.includes(monsterId)) return true
+    for (const wave of r.waves || []) {
+      if (wave.primary === monsterId || wave.initialAdds?.includes(monsterId)) return true
+      if ((wave.reinforcements || []).some((group) => group.monsterIds?.includes(monsterId))) return true
+    }
+    return false
+  })
 }
 
 /** Where to find a monster: its own combat spot(s), or its raid's entry town. */
