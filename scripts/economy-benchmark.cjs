@@ -418,8 +418,13 @@ function collectRaidBossIds(raidsData) {
   const ids = new Set()
 
   for (const raid of Object.values(raidsData || {})) {
-    for (const bossId of (raid?.bosses || [])) {
-      ids.add(bossId)
+    for (const bossId of (raid?.bosses || [])) ids.add(bossId)
+    for (const wave of (raid?.waves || [])) {
+      if (wave?.primary) ids.add(wave.primary)
+      for (const monsterId of (wave?.initialAdds || [])) ids.add(monsterId)
+      for (const group of (wave?.reinforcements || [])) {
+        for (const monsterId of (group?.monsterIds || [])) ids.add(monsterId)
+      }
     }
   }
 
@@ -455,12 +460,43 @@ function buildRaidRows(raidsData) {
   const result = []
 
   for (const [raidId, raid] of Object.entries(raidsData || {})) {
+    const completionsPerHour = getRaidCompletionsPerHour(raidId)
+
+    if (raid?.sunspireRewards && Array.isArray(raid?.waves)) {
+      const ev = expectedSunspireCompletionValue(raid)
+      result.push({
+        category: 'Raids',
+        subcategory: raid.name || raidId,
+        id: raidId,
+        name: raid.name || raidId,
+        level: '',
+        ticks: '',
+        actionsPerHour: completionsPerHour,
+        expectedValuePerAction: '',
+        expectedValuePerKill: '',
+        // Sustainable/repeat clear is the headline economy figure. First clear
+        // is called out separately because its guaranteed quiver is one-time.
+        expectedValuePerCompletion: ev.repeatEv,
+        materialCostPerAction: '',
+        netValuePerAction: '',
+        grossCoinsPerHour: ev.repeatEv * completionsPerHour,
+        netCoinsPerHour: ev.repeatEv * completionsPerHour,
+        notes: [
+          `Assumes ${formatNumber(completionsPerHour)} completions/hr`,
+          `12-wave material EV: ${formatNumber(ev.materialEv)}`,
+          `Collection-neutral random unique EV (approx): ${formatNumber(ev.randomUniqueEv)}`,
+          `Repeat wave-12 Sunshard bonus: ${formatNumber(ev.repeatBonusEv)}`,
+          `First-clear EV incl. guaranteed ${itemName(ev.headlineItem)}: ${formatNumber(ev.firstClearEv)}`,
+          'Unique mix is collection-state dependent because Sunbound armour is protected from duplicates until the set is complete.',
+        ].join(' | '),
+      })
+      continue
+    }
+
     const alwaysDrops = raid.rewards?.always || []
     const alwaysEv = expectedDropTableValue(alwaysDrops)
     const uniqueEv = expectedWeightedUniqueValue(raid.rewards?.unique)
     const evPerCompletion = alwaysEv + uniqueEv
-
-    const completionsPerHour = getRaidCompletionsPerHour(raidId)
 
     result.push({
       category: 'Raids',
@@ -487,6 +523,45 @@ function buildRaidRows(raidsData) {
   }
 
   return result
+}
+
+function expectedSunspireCompletionValue(raid) {
+  const rules = raid.sunspireRewards || {}
+  const uniqueItems = raid.rewards?.unique?.items || []
+  const headlineItem = rules.headlineItem || 'sunweaver_quiver'
+  const unlocks = rules.uniqueUnlockWave || {}
+  let materialEv = 0
+  let randomUniqueEv = 0
+
+  for (let wave = 1; wave <= raid.waves.length; wave++) {
+    // Mirrors src/engine/sunspireRewards.js. randInt([0,max]) has mean max/2.
+    const shardQty = 18 + wave * 8 + wave * 2
+    const coinQty = 5000 + wave * 3500 + wave * 600
+    materialEv += shardQty * itemUnitValue('sunshards') + coinQty
+
+    const chance = Number(rules.uniqueChanceByWave?.[String(wave)]) || 0
+    if (!(chance > 0)) continue
+    const eligible = uniqueItems.filter((entry) => {
+      if (!entry?.itemId || entry.itemId === headlineItem || !(Number(entry.weight) > 0)) return false
+      return wave >= Math.max(1, Number(unlocks[entry.itemId]) || 4)
+    })
+    const totalWeight = eligible.reduce((sum, entry) => sum + Number(entry.weight || 0), 0)
+    if (totalWeight <= 0) continue
+    randomUniqueEv += chance * eligible.reduce((sum, entry) => {
+      return sum + (Number(entry.weight || 0) / totalWeight) * itemUnitValue(entry.itemId)
+    }, 0)
+  }
+
+  const repeatBonusEv = 500 * itemUnitValue('sunshards')
+  const firstClearHeadlineEv = rules.guaranteedFirstClear === false ? 0 : itemUnitValue(headlineItem)
+  return {
+    materialEv,
+    randomUniqueEv,
+    repeatBonusEv,
+    repeatEv: materialEv + randomUniqueEv + repeatBonusEv,
+    firstClearEv: materialEv + randomUniqueEv + firstClearHeadlineEv,
+    headlineItem,
+  }
 }
 
 function getRaidCompletionsPerHour(raidId) {

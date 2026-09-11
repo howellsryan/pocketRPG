@@ -109,6 +109,18 @@ function spellChunk() {
 // monsterId → raid name for monsters that only exist inside a raid. Their
 // monsters.json drop tables are never rolled — raid loot comes from the
 // raid's reward chest — so their chunks must not advertise personal drops.
+function raidMonsterIds(raid) {
+  const ids = new Set(raid?.bosses || [])
+  for (const wave of raid?.waves || []) {
+    if (wave?.primary) ids.add(wave.primary)
+    for (const id of wave?.initialAdds || []) ids.add(id)
+    for (const group of wave?.reinforcements || []) {
+      for (const id of group?.monsterIds || []) ids.add(id)
+    }
+  }
+  return [...ids]
+}
+
 function raidBossMap() {
   const raids = readJson('raids.json')
   const seen = new Set()
@@ -117,7 +129,7 @@ function raidBossMap() {
     const id = r.id || key
     if (seen.has(id)) continue
     seen.add(id)
-    for (const bossId of r.bosses || []) if (!map.has(bossId)) map.set(bossId, r.name)
+    for (const monsterId of raidMonsterIds(r)) if (!map.has(monsterId)) map.set(monsterId, r.name)
   }
   return map
 }
@@ -125,7 +137,9 @@ function raidBossMap() {
 function raidChunks() {
   const raids = readJson('raids.json')
   const items = readJson('items.json')
+  const monsters = readJson('monsters.json')
   const itemName = (id) => items[id]?.name || titleCaseId(id)
+  const monsterName = (id) => monsters[id]?.name || titleCaseId(id)
   const seen = new Set()
   return Object.entries(raids)
     .filter(([key, r]) => {
@@ -136,9 +150,39 @@ function raidChunks() {
       return true
     })
     .map(([key, r]) => {
-    const bosses = (r.bosses || []).map(titleCaseId).join(', ')
     const unique = r.rewards?.unique
     const uniques = (unique?.items || []).map((u) => itemName(u.itemId || u)).filter(Boolean)
+
+    if (Array.isArray(r.waves)) {
+      const finalPrimary = r.waves[r.waves.length - 1]?.primary
+      const rules = r.sunspireRewards || {}
+      const chances = Object.entries(rules.uniqueChanceByWave || {})
+        .map(([wave, chance]) => ({ wave: Number(wave), chance: Number(chance) }))
+        .filter((entry) => entry.wave > 0 && entry.chance > 0)
+        .sort((a, b) => a.wave - b.wave)
+      const first = chances[0]
+      const last = chances[chances.length - 1]
+      const chanceText = first && last
+        ? `Unique rolls begin on wave ${first.wave} at about 1 in ${Math.round(1 / first.chance)} and rise to about 1 in ${Math.round(1 / last.chance)} on wave ${last.wave}.`
+        : ''
+      const headline = rules.headlineItem ? itemName(rules.headlineItem) : null
+      const text =
+        `${r.name}: ${r.description || 'A wave-based raid.'} It has ${r.waves.length} arena waves` +
+        (finalPrimary ? `, ending with ${monsterName(finalPrimary)}` : '') + '. ' +
+        `Rewards are staged after each cleared wave: claim the accumulated chest to leave safely, or continue and risk it on the next wave. ` +
+        chanceText + ' ' +
+        (headline && rules.guaranteedFirstClear !== false ? `The first full clear guarantees ${headline}. ` : '') +
+        (uniques.length ? `Sunspire uniques are: ${uniques.join(', ')}. ` : '') +
+        `Ordinary Hard Mode and credit skipping are not used for this raid; its persistent between-wave modifiers are the difficulty system.`
+      return {
+        id: `raid_${r.id || key}`,
+        title: `Raid: ${r.name} — waves and unique rewards`,
+        tags: ['raid', 'raids', 'boss', 'wave', 'uniques', 'drops'],
+        text: text.replace(/\s+/g, ' ').trim(),
+      }
+    }
+
+    const bosses = (r.bosses || []).map(titleCaseId).join(', ')
     const chestChance = unique?.chance ? `about 1 in ${Math.round(1 / unique.chance)}` : 'a'
     const text =
       `${r.name}: ${r.description || 'A multi-boss raid.'} Bosses fought in sequence: ${bosses || 'unknown'}. ` +
@@ -316,13 +360,14 @@ function monsterChunks() {
     const slayer = m.slayerRequirement ? ` Requires Slayer level ${m.slayerRequirement}.` : ''
     const raidName = raidBosses.get(m.id)
     if (raidName) {
+      const role = m.boss ? 'boss' : 'encounter monster'
       const text =
-        `${m.name} is a boss fought only inside the ${raidName} raid, at combat level ${m.combatLevel} with ${m.hitpoints} HP, attacking with ${m.attackStyle || 'melee'}.${slayer}` +
-        ` It has no personal drop table — all raid loot, including uniques, comes from the ${raidName} reward chest when the raid is completed.`
+        `${m.name} is a raid ${role} fought only inside the ${raidName}, at combat level ${m.combatLevel} with ${m.hitpoints} HP, attacking with ${m.attackStyle || 'melee'}.${slayer}` +
+        ` It has no personal drop table — rewards come from the raid's own server-authoritative reward flow.`
       return {
         id: `monster_${m.id}`,
-        title: `Raid boss: ${m.name} (${raidName})`,
-        tags: ['monster', 'boss', 'raid'],
+        title: `Raid ${role}: ${m.name} (${raidName})`,
+        tags: ['monster', ...(m.boss ? ['boss'] : []), 'raid'],
         text,
       }
     }
