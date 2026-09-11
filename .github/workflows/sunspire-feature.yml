@@ -4,6 +4,9 @@ on:
     branches:
       - feature/sunspire-colosseum
 
+permissions:
+  contents: write
+
 jobs:
   focused:
     runs-on: ubuntu-latest
@@ -29,6 +32,15 @@ jobs:
           grep -i -n -A4 -B4 "sunspire" reports/sunspire-economy-temp.md || true
       - name: Generate chat knowledge
         run: npm run gen:knowledge
+      - name: Commit generated chat knowledge
+        run: |
+          if ! git diff --quiet -- functions/_lib/chat/knowledge.js; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add functions/_lib/chat/knowledge.js
+            git commit -m "docs: regenerate chat knowledge"
+            git push
+          fi
       - name: Capture Sunspire verification artifacts
         if: always()
         uses: actions/upload-artifact@v4
