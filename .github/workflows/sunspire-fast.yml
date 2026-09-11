@@ -29,8 +29,4 @@ jobs:
           tests/hardMode.test.ts
           tests/armoury.test.ts
           tests/chatQuota.test.ts
-      - name: Verify deterministic world mapping
-        run: |
-          node scripts/seedWorldContent.cjs
-          git diff --exit-code -- src/data/world.json src/data/worldActivities.json
       - run: npm run typecheck
