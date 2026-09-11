@@ -110,7 +110,7 @@ function spellChunk() {
 // monsters.json drop tables are never rolled — raid loot comes from the
 // raid's reward chest — so their chunks must not advertise personal drops.
 function raidMonsterIds(raid) {
-  const ids = new Set(raid?.bosses || [])
+  const ids = new Set([...(raid?.bosses || []), ...(raid?.encounterOnlyMonsters || [])])
   for (const wave of raid?.waves || []) {
     if (wave?.primary) ids.add(wave.primary)
     for (const id of wave?.initialAdds || []) ids.add(id)
