@@ -248,15 +248,23 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     for (const ev of events) {
       if (ev.type !== 'killSettled') continue
       const raidCleared = events.find((e) => e.type === 'raidComplete')
-      const killedName = raidCleared?.raidName || monstersData?.[nextState?.bossId]?.name || 'The boss'
+      const sunspireCashOut = events.find((e) => e.type === 'sunspireCashOut')
+      const raidSettlement = raidCleared || sunspireCashOut
+      const killedName = raidSettlement?.raidName || monstersData?.[nextState?.bossId]?.name || 'The boss'
       const outcome = coopKillOutcome(ev, characterId)
       if (outcome.kind === 'loot') {
-        // Only a raid completion still earns the full-screen modal (CLAUDE.md
-        // §6) — an ordinary boss kill announces itself as a reward-reveal card,
-        // same as solo, so the group fight carries on instead of stopping dead
-        // on a modal every kill.
-        if (raidCleared) {
-          setLootModal({ monsterName: killedName, loot: outcome.loot, killCount: outcome.killCount })
+        // A full raid clear still earns the full-screen modal. A private solo
+        // Sunspire cash-out does too: the server has already returned the room
+        // to its reusable lobby, but "Claim & Leave" must terminate this private
+        // one-run session rather than strand the player in a one-person lobby.
+        const exitAfterClaim = nextState?.raid?.solo === true && !!raidSettlement
+        if (raidCleared || exitAfterClaim) {
+          setLootModal({
+            monsterName: killedName,
+            loot: outcome.loot,
+            killCount: outcome.killCount,
+            exitAfterClaim,
+          })
         } else {
           emitKillReveal(nextState?.bossId, killedName, outcome.loot)
         }
@@ -373,6 +381,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   // now — an ordinary boss kill announces via emitKillReveal instead (above).
   const lootModalNode = lootModal ? (() => {
     const { hero, heroItem, rest, total } = shapeLootForModal(lootModal.loot, itemsData)
+    const closeLoot = () => {
+      const exit = lootModal.exitAfterClaim === true
+      setLootModal(null)
+      if (exit) handleLeave()
+    }
     return (
       <LootResultModal
         theme={hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
@@ -388,8 +401,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
         loot={rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
         lootTitle="Loot Secured"
         lootTotal={total}
-        primaryAction={{ label: 'Back to Lobby', onClick: () => setLootModal(null) }}
-        onClose={() => setLootModal(null)}
+        primaryAction={{ label: lootModal.exitAfterClaim ? 'Leave Sunspire' : 'Back to Lobby', onClick: closeLoot }}
+        onClose={closeLoot}
       >
         {(lootModal.loot?.length ?? 0) === 0 && (
           <div class="text-center text-[12px] text-[var(--color-parchment)] opacity-70 py-4" style={{ position: 'relative', zIndex: 4 }}>
