@@ -36,7 +36,7 @@ import { getLevelFromXP } from '../engine/experience.js'
 import { boostedMagicLevel } from '../engine/consumables.js'
 import { canAffordSpecialAttack } from '../engine/specialAttackEnergy.js'
 import { bossAddsOf } from '../engine/bossAdds.js'
-import { nextSunspirePrayerFlick } from '../engine/sunspireModifiers.js'
+import { nextProtectionPrayerThreat, prayerSkill, protectionPrayerForAttackStyle } from '../utils/prayerIcons.js'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import monstersData from '../data/monsters.json'
@@ -543,14 +543,17 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   // Same add-vs-boss split as the splat streams above: whichever the stage is
   // actually showing is what its mini HP bar and on-body splats must track.
   const coopStageSplats = spriteAdd ? addSplats : bossSplats
-  const prayerCue = state?.raid?.raidId === 'sunspire_colosseum' && addsOnField.length > 0
-    ? nextSunspirePrayerFlick({
-      primary: liveMonster,
-      primaryAttackTimer: combatState?.monsterAttackTimer,
-      adds: bossAddsOf(boss),
-    })
-    : null
+  const prayerCue = nextProtectionPrayerThreat({
+    primary: liveMonster,
+    primaryAttackTimer: combatState?.monsterAttackTimer,
+    adds: bossAddsOf(boss),
+    staggered: state?.raid?.raidId === 'sunspire_colosseum',
+  })
+  const cuePrayer = prayerCue ? protectionPrayerForAttackStyle(prayerCue.style, prayersData) : null
   const cueStyleArt = prayerCue ? getStyleArt(prayerCue.style) : null
+  const cueThreat = cuePrayer && cueStyleArt
+    ? { skill: prayerSkill(cuePrayer), color: cueStyleArt.color, label: cuePrayer.name }
+    : null
 
   return (
     <div class="forge-shell h-full flex flex-col p-4">
@@ -599,7 +602,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           targetSplats={coopStageSplats}
           showCorners
           actorPrayer={typeof combatState?.maxPrayerPoints === 'number' ? { current: combatState.prayerPoints, max: combatState.maxPrayerPoints } : null}
-          actorThreat={cueStyleArt ? { icon: cueStyleArt.icon, color: cueStyleArt.color, label: `Next: ${cueStyleArt.label}` } : null}
+          actorThreat={cueThreat}
           label={`You versus ${coopStageTarget?.name || bossName}`}
         />}
 
@@ -671,7 +674,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
         {/* Prayer pool reads from the stage's top-left corner
             (showCorners/actorPrayer above) unless the stage is off. */}
         {!combatAnimations && typeof combatState?.maxPrayerPoints === 'number' && (
-          <CombatPrayerBlock current={combatState.prayerPoints} max={combatState.maxPrayerPoints} />
+          <CombatPrayerBlock current={combatState.prayerPoints} max={combatState.maxPrayerPoints} threat={cueThreat} />
         )}
 
         {boss?.respawnCountdown > 0 && (
