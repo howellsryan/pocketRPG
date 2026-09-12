@@ -29,13 +29,24 @@ function enemy(id: string, hp = 100): any {
 }
 
 describe('Sunspire Colosseum data contract', () => {
-  it('authors twelve waves and disables the ordinary raid hard-mode switch', () => {
+  it('authors six endgame waves and disables the ordinary raid hard-mode switch', () => {
     const raid: any = (raidsData as any).sunspire_colosseum
     expect(raid).toBeDefined()
     expect(raid?.id).toBe('sunspire_colosseum')
     expect(raid?.name).toBe('Sunspire Colosseum')
     expect(raid?.hardMode).toBe(false)
-    expect(raid?.waves).toHaveLength(12)
+    expect(raid?.waves).toHaveLength(6)
+    expect(raid?.waves?.map((wave: any) => wave.id)).toEqual([
+      'sunspire_wave_1', 'sunspire_wave_2', 'sunspire_wave_3',
+      'sunspire_wave_4', 'sunspire_wave_5', 'sunspire_wave_6',
+    ])
+    expect(raid?.waves?.[0]?.initialAdds).toEqual([
+      'ashen_warband_bow',
+      'ashen_warband_magus',
+      'dawnlance_colossus',
+      'triune_chimera',
+      'resonance_colossus',
+    ])
   })
 
   it('uses a PocketRPG-owned gladiator-and-spear emblem for the Colosseum', () => {
@@ -43,13 +54,14 @@ describe('Sunspire Colosseum data contract', () => {
     expect((gameIconsData as any).gladiator_spear?.body).toContain('pocketrpg-gladiator-spear')
   })
 
-  it('keeps the final wave as Aurelios alone and gates Twinflare Chakrams to wave seven or later', () => {
+  it('keeps the final wave as Aurelios alone and makes retained endgame uniques eligible from wave one', () => {
     const raid: any = (raidsData as any).sunspire_colosseum
-    const finalWave = raid?.waves?.[11]
+    const finalWave = raid?.waves?.[5]
     expect(finalWave?.primary).toBe('aurelios_the_unbroken')
     expect(finalWave?.initialAdds || []).toEqual([])
     expect(finalWave?.reinforcements || []).toEqual([])
-    expect(raid?.sunspireRewards?.uniqueUnlockWave?.twinflare_chakrams).toBe(7)
+    expect(raid?.sunspireRewards?.uniqueUnlockWave?.twinflare_chakrams).toBe(1)
+    expect(raid?.sunspireRewards?.rewardDepthOffset).toBe(6)
   })
 
   it('encodes the current forty-second reinforcement cadence as 67 game ticks', () => {
@@ -61,12 +73,27 @@ describe('Sunspire Colosseum data contract', () => {
     }
   })
 
-  it('uses the current wave-four-to-twelve unique odds', () => {
+  it('remaps the former wave-seven-to-twelve unique odds onto waves one-to-six', () => {
     const raid: any = (raidsData as any).sunspire_colosseum
     expect(raid?.sunspireRewards?.uniqueChanceByWave).toEqual({
-      '4': 1 / 124, '5': 1 / 110, '6': 1 / 96, '7': 1 / 82, '8': 1 / 68,
-      '9': 1 / 54, '10': 1 / 40, '11': 1 / 26, '12': 1 / 12,
+      '1': 1 / 82,
+      '2': 1 / 68,
+      '3': 1 / 54,
+      '4': 1 / 40,
+      '5': 1 / 26,
+      '6': 1 / 12,
     })
+  })
+
+  it('restores the authored Sunspire monster health after the temporary one-HP test pass', () => {
+    expect((monstersData as any).ashen_warband_blade.hitpoints).toBe(220)
+    expect((monstersData as any).dawnlance_colossus.hitpoints).toBe(700)
+    expect((monstersData as any).triune_chimera.hitpoints).toBe(950)
+    expect((monstersData as any).resonance_colossus.hitpoints).toBe(1250)
+    expect((monstersData as any).hornwarden.hitpoints).toBe(1050)
+    expect((monstersData as any).aurelios_the_unbroken.hitpoints).toBe(4500)
+    expect((monstersData as any).ember_swarm.hitpoints).toBe(1)
+    expect((monstersData as any).sunspire_healing_totem.hitpoints).toBe(1)
   })
 })
 
