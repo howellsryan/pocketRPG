@@ -99,9 +99,9 @@ import SkillIcon from './SkillIcon.jsx'
  *   showCorners — mobile-HUD-only: renders "current/max" text in the stage's
  *                 top-left (actor HP + Prayer) and top-right (target HP)
  *                 corners, replacing the bar block the mobile HUD used to show
- *                 below the stage. Both desktop CombatScreen callers must
- *                 leave this false/omitted — it shares actorHp/targetHp with
- *                 the mini bars above each head rather than taking its own copy.
+ *                 below the stage. Both desktop CombatScreen callers leave
+ *                 this false/omitted — actorThreat can still render by itself
+ *                 there without duplicating HP/Prayer readouts.
  *   actorPrayer — { current, max } for the corner's Prayer line, or null to
  *                 omit it (no prayer pool this fight). Ignored unless showCorners.
  *   actorThreat — optional { skill, color, label } for one tiny protection-
@@ -374,10 +374,10 @@ export default function InkwrightCombatStage({
       {/* Mobile-HUD-only corner readout — replaces the Prayer bar block that
           used to sit below the whole stage. Desktop's 3-pane layout keeps its
           own separate bars and never sets showCorners. */}
-      {showCorners && (
+      {(showCorners || actorThreat) && (
         <div class="inkc-corner inkc-corner--actor" aria-hidden="true">
-          <CornerStat hp={actorHp} />
-          {actorPrayer && <div class="inkc-corner__prayer">{Math.ceil(actorPrayer.current || 0)}/{actorPrayer.max}</div>}
+          {showCorners && <CornerStat hp={actorHp} />}
+          {showCorners && actorPrayer && <div class="inkc-corner__prayer">{Math.ceil(actorPrayer.current || 0)}/{actorPrayer.max}</div>}
           {actorThreat && (
             <div
               title={actorThreat.label || 'Next incoming attack'}
