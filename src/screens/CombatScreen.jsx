@@ -1934,7 +1934,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
   }
 
-  const startRaid = async (raidData) => {e, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
+  const startRaid = async (raidData) => {
+    if (isDemo) {
+      addToast('🔒 Raids are available with a free account.', 'warning')
+      return
+    }
+    const req = checkRaidRequirements(raidData)
+    if (req.locked) {
+      addToast(req.reason, 'error')
+      return
+    }
+    if (!requestActivityStart({ type: 'raid', raid: raidData })) return
+
+    const { combatType: weaponCombatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
     const combatType = needsSpell ? 'melee' : weaponCombatType
     if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
 
@@ -1956,11 +1968,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
+    setTargetsExpanded(true)
 
-    const firstBoss = table[raidData.bosses[0]]
+    const firstId = Array.isArray(raidData.waves) ? raidData.waves[0]?.primary : raidData.bosses?.[0]
+    const firstBoss = firstId ? table[firstId] : null
+    const isWaveRaid = Array.isArray(raidData.waves)
+    const total = isWaveRaid ? raidData.waves.length : (raidData.bosses?.length || 1)
     setLog([
       { text: '🩸 ' + raidData.name + ' — Raid started!', type: 'raid', time: Date.now() },
-      { text: 'Boss 1/' + raidData.bosses.length + ': ' + (firstBoss?.name || 'Unknown'), type: 'info', time: Date.now() }
+      { text: (isWaveRaid ? 'Wave' : 'Boss') + ' 1/' + total + ': ' + (firstBoss?.name || 'Unknown'), type: 'info', time: Date.now() }
     ])
     setActiveTask({ type: 'combat', monster: state.monster, stance: combatStance, bankingEnabled: false, spell: spell || null, raid: true, raidId: raidData.id })
   }
@@ -3181,8 +3197,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               onClick={() => {
                 const r = raidChoice
                 setRaidChoice(null)
-                if (r.id === 'sunspire_colosseum') startRaidParty(r, null, { solo: true })
-                else startRaid(r)
+                startRaid(r)
               }}
               class="w-full text-left p-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)]"
             >
