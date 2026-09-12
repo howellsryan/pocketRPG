@@ -3,28 +3,19 @@ import { rollSunspireWaveReward } from '../src/engine/sunspireRewards.js'
 import { resolveRaidCompletionRewards } from '../functions/api/actions/raid/complete.js'
 
 describe('server-owned Sunspire reward rolls', () => {
-  it('does not roll uniques before wave four even with a zero RNG', () => {
-    const rewards = rollSunspireWaveReward({ wave: 3, random: () => 0, obtainedIds: new Set(), stagedRewards: [] })
-    expect(rewards.some((r: any) => r.itemId === 'resonance_crystal')).toBe(false)
-    expect(rewards.some((r: any) => r.itemId === 'twinflare_chakrams')).toBe(false)
-  })
-
-  it('never grants Twinflare before wave seven and allows it from wave seven', () => {
-    const zero = () => 0
+  it('allows retained endgame uniques from the new wave one', () => {
     const high = (() => {
       const values = [0, 0.999999]
       return () => values.shift() ?? 0.999999
     })()
-    expect(rollSunspireWaveReward({ wave: 6, random: zero, obtainedIds: new Set(), stagedRewards: [] })
-      .some((r: any) => r.itemId === 'twinflare_chakrams')).toBe(false)
-    expect(rollSunspireWaveReward({ wave: 7, random: high, obtainedIds: new Set(), stagedRewards: [] })
+    expect(rollSunspireWaveReward({ wave: 1, random: high, obtainedIds: new Set(), stagedRewards: [] })
       .some((r: any) => r.itemId === 'twinflare_chakrams')).toBe(true)
   })
 
   it('finishes the Zealot set before armour duplicates', () => {
     const obtained = new Set(['sunbound_zealot_helm', 'sunbound_zealot_cuirass'])
     const rewards = rollSunspireWaveReward({
-      wave: 7,
+      wave: 1,
       random: () => 0,
       obtainedIds: obtained,
       stagedRewards: [],
@@ -33,12 +24,12 @@ describe('server-owned Sunspire reward rolls', () => {
     expect(armour?.itemId).toBe('sunbound_zealot_greaves')
   })
 
-  it('guarantees the headline Quiver on first wave-twelve clear and substitutes a repeat reward later', () => {
-    const first = rollSunspireWaveReward({ wave: 12, random: () => 0.99, obtainedIds: new Set(), stagedRewards: [] })
+  it('guarantees the headline Quiver on first wave-six clear and substitutes a repeat reward later', () => {
+    const first = rollSunspireWaveReward({ wave: 6, random: () => 0.99, obtainedIds: new Set(), stagedRewards: [] })
     expect(first.some((r: any) => r.itemId === 'sunweaver_quiver')).toBe(true)
 
     const repeat = rollSunspireWaveReward({
-      wave: 12,
+      wave: 6,
       random: () => 0.99,
       obtainedIds: new Set(['sunweaver_quiver']),
       stagedRewards: [],
@@ -87,7 +78,7 @@ describe('server-owned Sunspire reward rolls', () => {
 
     await expect(resolveRaidCompletionRewards({
       sourceId: 'sunspire_colosseum',
-      body: { wave: 13 },
+      body: { wave: 7 },
       env: {},
       characterId: 7,
       isGrindman: false,
