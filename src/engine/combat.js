@@ -1259,17 +1259,21 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     for (let addIndex = 0; addIndex < adds.length; addIndex++) {
       const add = adds[addIndex]
       if (!add || add.currentHP <= 0) continue
+      // Remember whether this add was already queued before this tick. A queued
+      // add must not be starved by the primary becoming ready again while the
+      // mandatory prayer-reaction tick is passing.
+      const sunspireAddWasWaiting = isSunspireStaggeredEncounter(state)
+        && (add.attackTimer || 0) <= 0
       add.attackTimer = (add.attackTimer || 0) - 1
       if (add.attackTimer > 0) continue
 
-      // In Sunspire the primary owns a due tick first (important for Aurelios
-      // telegraphs), then waiting adds drain through one-per-tick in spawn order.
-      // Keep a deferred add at zero so it attacks on the next free tick instead
-      // of silently losing a turn or resetting its cadence.
+      // The primary owns a NEW due-timer tie (important for Aurelios telegraphs),
+      // but an add that was already waiting at zero keeps its place in the queue.
+      // Spawn order then drains queued adds one at a time on each free attack slot.
       const sunspirePrimaryReady = isSunspireStaggeredEncounter(state)
         && state.monsterAttackTimer <= 0
         && monster.currentHP > 0
-      if (sunspirePrimaryReady || !sunspireEnemyAttackSlotOpen(state)) {
+      if ((sunspirePrimaryReady && !sunspireAddWasWaiting) || !sunspireEnemyAttackSlotOpen(state)) {
         add.attackTimer = 0
         continue
       }
