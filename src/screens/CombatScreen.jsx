@@ -32,6 +32,7 @@ import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
 import { recordItemLossEntries } from '../engine/lossLedger.js'
 import { HardModeConfirm, HardModeTag, HardModeToggle } from '../components/HardMode.jsx'
 import { liveAdds, targetedAdd } from '../engine/bossAdds.js'
+import { isWaveRaid, raidInfoStages, raidUniqueChanceRange } from '../engine/raidEncounters.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable, boostedMagicLevel } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { checkBossRequirementsPure, checkRaidRequirementsPure } from '../engine/combatRequirements.js'
@@ -3090,28 +3091,37 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <div>
               <p class="text-[11px] text-[var(--color-parchment)] opacity-60 mb-3">{selectedRaidInfo.description}</p>
             </div>
-            <div>
-              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Bosses</h4>
-              <div class="space-y-1">
-                {selectedRaidInfo.bosses.map((bossId, i) => {
-                  const boss = monstersData[bossId]
-                  if (!boss) return null
-                  const bossArt = getMonsterArt(boss)
-                  return (
-                    <div key={bossId} class="bg-[var(--color-void)] rounded-lg p-2 flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <SkillEmblem iconKey={bossArt.icon} accent={bossArt.accent} size={22} glow={0} />
-                        <div>
-                          <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{i + 1}. {boss.name}</div>
-                          <div class="text-[9px] text-[var(--color-parchment)] opacity-50">HP {boss.hitpoints} · CB {boss.combatLevel}</div>
+            {(() => {
+              const waveRaid = isWaveRaid(selectedRaidInfo)
+              const stages = raidInfoStages(selectedRaidInfo, monstersData)
+              return (
+                <div>
+                  <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">{waveRaid ? 'Waves' : 'Bosses'}</h4>
+                  <div class="space-y-1">
+                    {stages.map((stage) => {
+                      const boss = stage.primary
+                      if (!boss) return null
+                      const bossArt = getMonsterArt(boss)
+                      const waveDetail = stage.kind === 'wave'
+                        ? ` · ${stage.startingEnemyCount} starting enem${stage.startingEnemyCount === 1 ? 'y' : 'ies'}${stage.reinforcementCount > 0 ? ` · +${stage.reinforcementCount} reinforcement${stage.reinforcementCount === 1 ? '' : 's'}` : ''}`
+                        : ''
+                      return (
+                        <div key={stage.key} class="bg-[var(--color-void)] rounded-lg p-2 flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <SkillEmblem iconKey={bossArt.icon} accent={bossArt.accent} size={22} glow={0} />
+                            <div>
+                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{stage.label}{stage.kind === 'wave' ? ' · ' : '. '}{boss.name}</div>
+                              <div class="text-[9px] text-[var(--color-parchment)] opacity-50">HP {boss.hitpoints} · CB {boss.combatLevel}{waveDetail}</div>
+                            </div>
+                          </div>
+                          <span class="text-[9px] text-[var(--color-parchment)] opacity-40 font-[var(--font-mono)]">CB {boss.combatLevel}</span>
                         </div>
-                      </div>
-                      <span class="text-[9px] text-[var(--color-parchment)] opacity-40 font-[var(--font-mono)]">CB {boss.combatLevel}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
             {selectedRaidInfo.rewards && (() => {
               const raidBoost = raidDropBoost(selectedRaidInfo)
               const raidBoostLabel = dropRateBoostLabel(raidBoost)
@@ -3139,7 +3149,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {selectedRaidInfo.rewards.unique && (
                     <div class="bg-[var(--surface-raised)] border border-[var(--color-gold-dim)] rounded-lg p-2 mt-1">
                       <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-1">
-                        ✨ Unique Drop ({(displayedDropChance(selectedRaidInfo.rewards.unique.chance, raidBoost) * 100).toFixed(1)}% chance)
+                        {(() => {
+                          const range = raidUniqueChanceRange(selectedRaidInfo)
+                          return range
+                            ? `✨ Unique Drop (${formatDropChance(displayedDropChance(range.first.chance, raidBoost))} at Wave ${range.first.wave} → ${formatDropChance(displayedDropChance(range.last.chance, raidBoost))} at Wave ${range.last.wave})`
+                            : `✨ Unique Drop (${(displayedDropChance(selectedRaidInfo.rewards.unique.chance, raidBoost) * 100).toFixed(1)}% chance)`
+                        })()}
                       </div>
                       <div class="space-y-0.5">
                         {selectedRaidInfo.rewards.unique.items.map(u => {

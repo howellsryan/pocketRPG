@@ -3,6 +3,7 @@ import collectionLog from '../src/data/collectionLog.json' assert { type: 'json'
 import items from '../src/data/items.json' assert { type: 'json' }
 import monsters from '../src/data/monsters.json' assert { type: 'json' }
 import raids from '../src/data/raids.json' assert { type: 'json' }
+import { raidInfoStages, raidUniqueChanceRange } from '../src/engine/raidEncounters.js'
 
 const itemsData = items as Record<string, any>
 const monstersData = monsters as Record<string, any>
@@ -94,5 +95,24 @@ describe('black dragon', () => {
     expect(bd.combatLevel).toBe(227)
     expect(bd.hitpoints).toBe(200)
     expect(bd.specialAttack).toBe('dragonfire')
+  })
+})
+
+
+describe('wave raid info model', () => {
+  it('describes Sunspire without requiring a legacy bosses array', () => {
+    const raid: any = raidsData.sunspire_colosseum
+    expect(raid.bosses).toBeUndefined()
+    const stages = raidInfoStages(raid, monstersData)
+    expect(stages).toHaveLength(12)
+    expect(stages[0]).toMatchObject({ kind: 'wave', label: 'Wave 1', primaryId: 'ashen_warband_blade', startingEnemyCount: 4, reinforcementCount: 1 })
+    expect(stages[11]).toMatchObject({ kind: 'wave', label: 'Wave 12', primaryId: 'aurelios_the_unbroken', startingEnemyCount: 1, reinforcementCount: 0 })
+  })
+
+  it('surfaces Sunspire unique odds from the first eligible wave through the final wave', () => {
+    expect(raidUniqueChanceRange(raidsData.sunspire_colosseum)).toEqual({
+      first: { wave: 4, chance: 1 / 124 },
+      last: { wave: 12, chance: 1 / 12 },
+    })
   })
 })

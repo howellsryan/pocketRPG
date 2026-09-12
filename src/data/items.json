@@ -19517,31 +19517,31 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 18
+      "ranged": 26
     },
     "defenceBonus": {
-      "stab": 2,
-      "slash": 2,
-      "crush": 2,
-      "magic": 2,
-      "ranged": 4
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 12,
+      "ranged": 18
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 3,
+      "rangedStrength": 12,
       "magicDamage": 0,
-      "prayer": 2
+      "prayer": 3
     },
     "chargedBonus": {
       "attackBonus": {
-        "ranged": 10
+        "ranged": 8
       },
       "otherBonus": {
-        "rangedStrength": 1
+        "rangedStrength": 5
       }
     },
     "requirements": {
-      "ranged": 75
+      "ranged": 85
     },
     "chargeable": true,
     "chargeItemId": "sunshards",
@@ -19551,7 +19551,7 @@
     "isGeneralStore": false,
     "isBossUnique": true,
     "isRaidUnique": true,
-    "description": "A masterwork cape-slot quiver. Sunshard charges sharpen its ranged accuracy and strength."
+    "description": "A masterwork ranged cape. Charged with Sunshards, it reaches near-pinnacle ranged accuracy and strength without replacing the all-style power of an Infernal Max Cape."
   },
   "twinflare_chakrams": {
     "id": "twinflare_chakrams",
@@ -19567,7 +19567,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 112
+      "ranged": 120
     },
     "defenceBonus": {
       "stab": 0,
@@ -19578,18 +19578,18 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 44,
+      "rangedStrength": 48,
       "magicDamage": 0
     },
     "requirements": {
-      "ranged": 75
+      "ranged": 85
     },
     "chargeable": true,
     "chargeItemId": "sunshards",
     "chargesPerMaterial": 1,
     "maxCharges": 20000,
     "chargedDoubleHit": true,
-    "unchargedDamageMultiplier": 0.75,
+    "unchargedDamageMultiplier": 0.8,
     "specialAttack": {
       "type": "division",
       "energyCost": 50,
@@ -19599,7 +19599,7 @@
     "isGeneralStore": false,
     "isBossUnique": true,
     "isRaidUnique": true,
-    "description": "A one-handed thrown weapon. Sunshard charges split each attack into two independent strikes."
+    "description": "A one-handed endgame thrown weapon. Sunshard charges split each attack into two independent strikes, giving it near-pinnacle ranged output while charged."
   },
   "resonant_bulwark_boots": {
     "id": "resonant_bulwark_boots",
@@ -19608,28 +19608,29 @@
     "slot": "boots",
     "stackable": false,
     "attackBonus": {
-      "stab": 13,
-      "slash": 13,
-      "crush": 13,
+      "stab": 15,
+      "slash": 15,
+      "crush": 15,
       "magic": -1,
       "ranged": -1
     },
     "defenceBonus": {
-      "stab": 6,
-      "slash": 6,
-      "crush": 7,
-      "magic": -1,
-      "ranged": 6
+      "stab": 18,
+      "slash": 18,
+      "crush": 20,
+      "magic": 4,
+      "ranged": 12
     },
     "otherBonus": {
-      "meleeStrength": 9,
+      "meleeStrength": 10,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "meleeDamage": 5,
-      "prayer": 2
+      "meleeDamage": 6,
+      "prayer": 3
     },
     "requirements": {
-      "defence": 65
+      "defence": 75,
+      "strength": 70
     },
     "chargeable": true,
     "chargeItemId": "resonance_crystal",
@@ -19641,7 +19642,7 @@
     "isGeneralStore": false,
     "isBossUnique": true,
     "isRaidUnique": true,
-    "description": "Reinforced Grondar Boots. While enabled and charged, a successful melee hit against the wearer recoils 1 damage."
+    "description": "Resonance-forged Grondar Boots with near-pinnacle melee bonuses. While enabled and charged, a successful melee hit against the wearer recoils 1 damage."
   },
   "sunbound_zealot_helm": {
     "id": "sunbound_zealot_helm",
@@ -19650,33 +19651,35 @@
     "slot": "head",
     "stackable": false,
     "attackBonus": {
-      "stab": 7,
-      "slash": 7,
-      "crush": 7,
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
       "magic": -2,
       "ranged": 2
     },
     "defenceBonus": {
-      "stab": 42,
-      "slash": 44,
-      "crush": 40,
-      "magic": 22,
-      "ranged": 40
+      "stab": 82,
+      "slash": 86,
+      "crush": 84,
+      "magic": 36,
+      "ranged": 82
     },
     "otherBonus": {
-      "meleeStrength": 3,
+      "meleeStrength": 9,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "prayer": 4
+      "prayer": 6,
+      "meleeDamage": 3
     },
     "requirements": {
-      "defence": 70,
-      "prayer": 60
+      "defence": 85,
+      "prayer": 70
     },
     "shopValue": 5500000,
     "isGeneralStore": false,
     "isBossUnique": true,
-    "isRaidUnique": true
+    "isRaidUnique": true,
+    "description": "A radiant Sunbound helm tuned for near-pinnacle melee offence, strong protection and sustained prayer."
   },
   "sunbound_zealot_cuirass": {
     "id": "sunbound_zealot_cuirass",
@@ -19685,33 +19688,35 @@
     "slot": "body",
     "stackable": false,
     "attackBonus": {
-      "stab": 10,
-      "slash": 10,
-      "crush": 10,
+      "stab": 32,
+      "slash": 32,
+      "crush": 32,
       "magic": -5,
       "ranged": 3
     },
     "defenceBonus": {
-      "stab": 88,
-      "slash": 82,
-      "crush": 86,
-      "magic": 35,
-      "ranged": 92
+      "stab": 138,
+      "slash": 134,
+      "crush": 130,
+      "magic": 42,
+      "ranged": 142
     },
     "otherBonus": {
-      "meleeStrength": 5,
+      "meleeStrength": 18,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "prayer": 7
+      "prayer": 10,
+      "meleeDamage": 9
     },
     "requirements": {
-      "defence": 70,
-      "prayer": 60
+      "defence": 85,
+      "prayer": 70
     },
     "shopValue": 8500000,
     "isGeneralStore": false,
     "isBossUnique": true,
-    "isRaidUnique": true
+    "isRaidUnique": true,
+    "description": "The core of the Sunbound Zealot set: near-pinnacle melee power and defence with an exceptional prayer bonus."
   },
   "sunbound_zealot_greaves": {
     "id": "sunbound_zealot_greaves",
@@ -19720,32 +19725,34 @@
     "slot": "legs",
     "stackable": false,
     "attackBonus": {
-      "stab": 8,
-      "slash": 8,
-      "crush": 8,
+      "stab": 24,
+      "slash": 24,
+      "crush": 24,
       "magic": -3,
       "ranged": 2
     },
     "defenceBonus": {
-      "stab": 54,
-      "slash": 50,
-      "crush": 53,
-      "magic": 27,
-      "ranged": 58
+      "stab": 102,
+      "slash": 98,
+      "crush": 100,
+      "magic": 34,
+      "ranged": 106
     },
     "otherBonus": {
-      "meleeStrength": 4,
+      "meleeStrength": 13,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "prayer": 5
+      "prayer": 8,
+      "meleeDamage": 7
     },
     "requirements": {
-      "defence": 70,
-      "prayer": 60
+      "defence": 85,
+      "prayer": 70
     },
     "shopValue": 7000000,
     "isGeneralStore": false,
     "isBossUnique": true,
-    "isRaidUnique": true
+    "isRaidUnique": true,
+    "description": "Sun-forged greaves that sit just below the strongest melee plate while carrying a major prayer bonus."
   }
 }

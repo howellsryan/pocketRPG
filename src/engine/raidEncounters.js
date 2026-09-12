@@ -14,6 +14,44 @@ export function raidWaves(raid) {
   return isWaveRaid(raid) ? raid.waves : []
 }
 
+export function raidInfoStages(raid, monstersData) {
+  if (isWaveRaid(raid)) {
+    return raidWaves(raid).map((wave, index) => {
+      const initialAdds = Array.isArray(wave?.initialAdds) ? wave.initialAdds : []
+      const reinforcementIds = (Array.isArray(wave?.reinforcements) ? wave.reinforcements : [])
+        .flatMap(group => Array.isArray(group?.monsterIds) ? group.monsterIds : [])
+      return {
+        kind: 'wave',
+        key: wave?.id || `wave_${index + 1}`,
+        label: `Wave ${index + 1}`,
+        primaryId: wave?.primary || null,
+        primary: wave?.primary ? monstersData?.[wave.primary] || null : null,
+        startingEnemyCount: (wave?.primary ? 1 : 0) + initialAdds.length,
+        reinforcementCount: reinforcementIds.length,
+      }
+    })
+  }
+  const bosses = Array.isArray(raid?.bosses) ? raid.bosses : []
+  return bosses.map((bossId, index) => ({
+    kind: 'boss',
+    key: `boss_${index + 1}_${bossId}`,
+    label: `${index + 1}`,
+    primaryId: bossId,
+    primary: monstersData?.[bossId] || null,
+    startingEnemyCount: 1,
+    reinforcementCount: 0,
+  }))
+}
+
+export function raidUniqueChanceRange(raid) {
+  const entries = Object.entries(raid?.sunspireRewards?.uniqueChanceByWave || {})
+    .map(([wave, chance]) => ({ wave: Number(wave), chance: Number(chance) }))
+    .filter(entry => Number.isFinite(entry.wave) && entry.wave > 0 && Number.isFinite(entry.chance) && entry.chance > 0)
+    .sort((a, b) => a.wave - b.wave)
+  if (!entries.length) return null
+  return { first: entries[0], last: entries[entries.length - 1] }
+}
+
 export function encounterHitpoints(wave, monstersData) {
   if (!wave || !monstersData) return 0
   const ids = [

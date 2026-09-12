@@ -33,8 +33,44 @@ describe('Sunspire reward equipment data', () => {
     expect(items.resonance_crystal.combineWith).toBe('grondar_boots')
     expect(items.resonance_crystal.combineResult).toBe('resonant_bulwark_boots')
     const basePrayer = items.grondar_boots.otherBonus?.prayer || 0
-    expect(items.resonant_bulwark_boots.otherBonus.prayer).toBe(basePrayer + 2)
+    expect(items.resonant_bulwark_boots.otherBonus.prayer).toBeGreaterThan(basePrayer)
+    expect(items.resonant_bulwark_boots.attackBonus.slash).toBeGreaterThan(items.grondar_boots.attackBonus.slash)
+    expect(items.resonant_bulwark_boots.otherBonus.meleeStrength).toBeGreaterThan(items.grondar_boots.otherBonus.meleeStrength)
     expect(items.resonant_bulwark_boots.maxCharges).toBeGreaterThanOrEqual(6000)
+  })
+
+  it('places Sunspire equipment in PocketRPG’s near-BIS endgame band', () => {
+    const quiver = items.sunweaver_quiver
+    const chargedQuiverAttack = quiver.attackBonus.ranged + quiver.chargedBonus.attackBonus.ranged
+    const chargedQuiverStrength = quiver.otherBonus.rangedStrength + quiver.chargedBonus.otherBonus.rangedStrength
+    expect(chargedQuiverAttack).toBeGreaterThan(items.infernal_max_cape.attackBonus.ranged)
+    expect(chargedQuiverStrength).toBeLessThan(items.infernal_max_cape.otherBonus.rangedStrength)
+    expect(quiver.attackBonus.ranged).toBeGreaterThan(items.ava_s_assembler.attackBonus.ranged)
+
+    const chakrams = items.twinflare_chakrams
+    expect(chakrams.attackBonus.ranged).toBeGreaterThan(items.twisted_longbow.attackBonus.ranged)
+    expect(chakrams.attackBonus.ranged).toBeLessThan(items.zaryth_crossbow.attackBonus.ranged)
+    expect(chakrams.otherBonus.rangedStrength).toBeLessThan(items.zaryth_crossbow.otherBonus.rangedStrength)
+    expect(chakrams.chargedDoubleHit).toBe(true)
+    expect(chakrams.unchargedDamageMultiplier).toBeGreaterThan(0.75)
+
+    const boots = items.resonant_bulwark_boots
+    expect(boots.attackBonus.slash).toBe(items.primeval_boots.attackBonus.slash - 1)
+    expect(boots.otherBonus.meleeStrength).toBe(items.primeval_boots.otherBonus.meleeStrength - 1)
+    expect(boots.otherBonus.prayer).toBeGreaterThan(0)
+
+    for (const [zealotId, lowerId, pinnacleId] of [
+      ['sunbound_zealot_cuirass', 'grondar_chestplate', 'zaryth_platebody'],
+      ['sunbound_zealot_greaves', 'grondar_tassets', 'zaryth_platelegs'],
+    ]) {
+      expect(items[zealotId].attackBonus.slash).toBeGreaterThan(items[lowerId].attackBonus.slash)
+      expect(items[zealotId].attackBonus.slash).toBeLessThan(items[pinnacleId].attackBonus.slash)
+      expect(items[zealotId].otherBonus.meleeStrength).toBeGreaterThan(items[lowerId].otherBonus.meleeStrength)
+      expect(items[zealotId].otherBonus.meleeStrength).toBeLessThan(items[pinnacleId].otherBonus.meleeStrength)
+    }
+    expect(items.sunbound_zealot_helm.attackBonus.slash).toBeLessThan(items.zaryth_helm.attackBonus.slash)
+    expect(items.sunbound_zealot_helm.otherBonus.meleeStrength).toBe(items.zaryth_helm.otherBonus.meleeStrength - 1)
+    expect(items.sunbound_zealot_helm.otherBonus.prayer + items.sunbound_zealot_cuirass.otherBonus.prayer + items.sunbound_zealot_greaves.otherBonus.prayer).toBeGreaterThanOrEqual(24)
   })
 
   it('keeps the quiver in the cape slot and gains its authored bonus only while charged', () => {
