@@ -123,7 +123,12 @@ export function makeCompletionHandler(sourceType, deps = {}) {
       // recoverable, so they trail the authoritative save rather than leading it.
       const write = await (deps.writeSave || writeSave)(env, characterId, saveObject, saveRevision)
       const collectionLogEntries = await persistCollectionLogFromGranted(env, characterId, sourceType, collectionLogSourceId, settled.granted)
-      const killCount = await persistKillCountFromAction(env, characterId, sourceType, sourceId)
+      const countKill = typeof deps.shouldPersistKillCount === 'function'
+        ? deps.shouldPersistKillCount({ sourceType, sourceId, body, saveObject, resolvedRewards, settled })
+        : true
+      const killCount = countKill
+        ? await persistKillCountFromAction(env, characterId, sourceType, sourceId)
+        : null
 
       await auditLog(env, 'action_complete', { sourceType, sourceId, characterId, identityId: auth.identity.id, granted: settled.granted.length }, { swallow: true })
       return json({ ok: true, sourceType, sourceId, ...settled, collectionLogEntries, killCount, save: { save_data: JSON.stringify(saveObject), updatedAt: write.updatedAt, save_revision: write.saveRevision } })
