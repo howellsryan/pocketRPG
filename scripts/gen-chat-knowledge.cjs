@@ -173,7 +173,7 @@ function raidChunks() {
         chanceText + ' ' +
         (headline && rules.guaranteedFirstClear !== false ? `The first full clear guarantees ${headline}. ` : '') +
         (uniques.length ? `Sunspire uniques are: ${uniques.join(', ')}. ` : '') +
-        `Ordinary Hard Mode and credit skipping are not used for this raid; its persistent between-wave modifiers are the difficulty system.`
+        `Ordinary Hard Mode and credit skipping are not used for this raid; between-wave modifiers are currently disabled.`
       return {
         id: `raid_${r.id || key}`,
         title: `Raid: ${r.name} — waves and unique rewards`,
