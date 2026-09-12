@@ -3,6 +3,7 @@ import { applyCombatReaction, applyInstantKill, continueRaidCombatState, createC
 import { liveAdds, prepareAdd } from '../src/engine/bossAdds.js'
 import { SUNSPIRE_MODIFIERS, nextSunspirePrayerFlick, sunspireModifierDescription } from '../src/engine/sunspireModifiers.js'
 import { applyAureliosReaction, aureliosAttackDelay, resolveAureliosAttack, telegraphAureliosAttack, updateAureliosPhase } from '../src/engine/aurelios.js'
+import { rollSunspireRunRewards } from '../src/engine/sunspireRewards.js'
 
 const DEF = { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 }
 const stats = { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, currentHP: 999 }
@@ -333,5 +334,32 @@ describe('Sunspire next-prayer cue', () => {
       adds: [{ ...foe('sunspire_healing_totem', { name: 'Sun Totem', maxHit: 0 }), currentHP: 1, attackTimer: 1 }],
     })
     expect(cue).toBeNull()
+  })
+})
+
+
+describe('solo Sunspire cumulative cash-out rewards', () => {
+  it('rolls every cleared wave into one chest rather than only the cash-out wave', () => {
+    const rewards = rollSunspireRunRewards({ throughWave: 3, random: () => 0.99 })
+    const shards = rewards.find((reward: any) => reward.itemId === 'sunshards')
+    const coins = rewards.find((reward: any) => reward.itemId === 'coins')
+    expect(shards?.quantity).toBeGreaterThan(3 * 18)
+    expect(coins?.quantity).toBeGreaterThan(3 * 5000)
+    expect(rewards.some((reward: any) => reward.itemId === 'sunweaver_quiver')).toBe(false)
+  })
+
+  it('guarantees the first-clear quiver at wave 12 and respects a previously obtained one', () => {
+    const first = rollSunspireRunRewards({ throughWave: 12, random: () => 0.99 })
+    expect(first.some((reward: any) => reward.itemId === 'sunweaver_quiver')).toBe(true)
+
+    const repeat = rollSunspireRunRewards({
+      throughWave: 12,
+      random: () => 0.99,
+      obtainedIds: new Set(['sunweaver_quiver']),
+    })
+    expect(repeat.some((reward: any) => reward.itemId === 'sunweaver_quiver')).toBe(false)
+    expect(repeat.find((reward: any) => reward.itemId === 'sunshards')?.quantity).toBeGreaterThan(
+      first.find((reward: any) => reward.itemId === 'sunshards')?.quantity || 0,
+    )
   })
 })
