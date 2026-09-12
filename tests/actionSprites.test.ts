@@ -24,6 +24,7 @@ import {
   MONSTER_DEATH_ANIM_MS,
   combatStageTarget,
   combatStageDeathTransition,
+  combatStageSwingRoute,
   makeConsumeToken,
 } from '../src/utils/actionSprites.js'
 import gameIcons from '../src/data/gameIcons.json'
@@ -587,5 +588,41 @@ describe('combat stage target handoff', () => {
 
     const ended = { ...manual, active: false, adds: [], addTargetIndex: null }
     expect(combatStageDeathTransition({ ...add }, ended)).toBeNull()
+  })
+})
+
+
+describe('combat stage swing routing after automatic target handoff', () => {
+  it('keeps both player and enemy animations alive when a dead primary auto-targets the first live add', () => {
+    const state: any = {
+      active: true,
+      monster: { id: 'primary', name: 'Primary', hitpoints: 100, currentHP: 0 },
+      encounter: { finite: true, primaryDefeated: true },
+      adds: [{ id: 'add', instanceId: 'add#1', name: 'Add', hitpoints: 50, currentHP: 50 }],
+      addTargetIndex: null,
+    }
+
+    const route = combatStageSwingRoute(state)
+    expect(route).toEqual({ showingAdd: true })
+
+    const swings = swingsFromCombatEvents([
+      { type: 'playerHit', damage: 12, toAdd: true },
+      { type: 'monsterHit', damage: 7, fromAdd: true },
+    ], route)
+    expect(swings.player).not.toBeNull()
+    expect(swings.monster).not.toBeNull()
+  })
+
+  it('keeps boss routing false and manual add routing true', () => {
+    const boss: any = {
+      monster: { id: 'primary', currentHP: 100 },
+      encounter: { finite: true, primaryDefeated: false },
+      adds: [{ id: 'add', instanceId: 'add#1', currentHP: 50 }],
+      addTargetIndex: null,
+    }
+    expect(combatStageSwingRoute(boss)).toEqual({ showingAdd: false })
+
+    boss.addTargetIndex = 0
+    expect(combatStageSwingRoute(boss)).toEqual({ showingAdd: true })
   })
 })
