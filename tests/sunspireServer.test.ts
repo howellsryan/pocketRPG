@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { rollSunspireWaveReward } from '../src/engine/sunspireRewards.js'
 import { resolveRaidCompletionRewards } from '../functions/api/actions/raid/complete.js'
 
-describe('server-room-owned Sunspire rewards', () => {
+describe('server-owned Sunspire reward rolls', () => {
   it('does not roll uniques before wave four even with a zero RNG', () => {
     const rewards = rollSunspireWaveReward({ wave: 3, random: () => 0, obtainedIds: new Set(), stagedRewards: [] })
     expect(rewards.some((r: any) => r.itemId === 'resonance_crystal')).toBe(false)
@@ -63,13 +63,34 @@ describe('server-room-owned Sunspire rewards', () => {
     expect(hostile.some((r: any) => r.itemId === 'twinflare_chakrams')).toBe(false)
   })
 
-  it('rejects Sunspire through the legacy raid-complete reward resolver', async () => {
-    await expect(resolveRaidCompletionRewards({
+  it('settles a valid solo cash-out through the normal raid resolver without trusting client reward fields', async () => {
+    const rewards = await resolveRaidCompletionRewards({
       sourceId: 'sunspire_colosseum',
-      body: { rewards: [{ itemId: 'twinflare_chakrams', quantity: 999 }] },
+      body: { wave: 1, rewards: [{ itemId: 'twinflare_chakrams', quantity: 999 }] },
       env: {},
       characterId: 7,
       isGrindman: false,
-    } as any)).rejects.toMatchObject({ code: 'SERVER_ROOM_REQUIRED', status: 403 })
+    } as any)
+    expect(rewards.some((r: any) => r.itemId === 'sunshards')).toBe(true)
+    expect(rewards.some((r: any) => r.itemId === 'coins')).toBe(true)
+    expect(rewards.some((r: any) => r.itemId === 'twinflare_chakrams')).toBe(false)
+  })
+
+  it('rejects a Sunspire cash-out when no valid cleared-wave depth is supplied', async () => {
+    await expect(resolveRaidCompletionRewards({
+      sourceId: 'sunspire_colosseum',
+      body: {},
+      env: {},
+      characterId: 7,
+      isGrindman: false,
+    } as any)).rejects.toMatchObject({ code: 'INVALID_SUNSPIRE_WAVE', status: 400 })
+
+    await expect(resolveRaidCompletionRewards({
+      sourceId: 'sunspire_colosseum',
+      body: { wave: 13 },
+      env: {},
+      characterId: 7,
+      isGrindman: false,
+    } as any)).rejects.toMatchObject({ code: 'INVALID_SUNSPIRE_WAVE', status: 400 })
   })
 })
