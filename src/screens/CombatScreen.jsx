@@ -63,7 +63,7 @@ import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
-import { swingsFromCombatEvents, playerCombatSprite, monsterCombatSprite } from '../utils/actionSprites.js'
+import { swingsFromCombatEvents, playerCombatSprite, monsterCombatSprite, combatStageTarget, combatStageDeathTransition, MONSTER_DEATH_ANIM_MS } from '../utils/actionSprites.js'
 import { useActionSwings, useConsumeToken } from '../hooks/useActionSwings.js'
 import InkwrightCombatStage from '../components/InkwrightCombatStage.jsx'
 import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
@@ -507,6 +507,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // is left holding a swing that could replay.
   const { swings, pushSwings } = useActionSwings()
   const { token: actorConsume, pushConsume } = useConsumeToken()
+  const [stageDeathTarget, setStageDeathTarget] = useState(null)
+  const stageDeathTimerRef = useRef(null)
+  const clearStageDeathTarget = () => {
+    if (stageDeathTimerRef.current) {
+      clearTimeout(stageDeathTimerRef.current)
+      stageDeathTimerRef.current = null
+    }
+    setStageDeathTarget(null)
+  }
+  const holdStageDeathTarget = (transition) => {
+    if (!transition) return
+    if (stageDeathTimerRef.current) clearTimeout(stageDeathTimerRef.current)
+    setStageDeathTarget(transition)
+    stageDeathTimerRef.current = setTimeout(() => {
+      stageDeathTimerRef.current = null
+      setStageDeathTarget(null)
+    }, MONSTER_DEATH_ANIM_MS)
+  }
+  useEffect(() => () => {
+    if (stageDeathTimerRef.current) clearTimeout(stageDeathTimerRef.current)
+  }, [])
   const combatRef = useRef(null)
   // Bumped exactly at a new-fight boundary (startFight/continueFight/startRaid),
   // never on an ordinary re-render — InkwrightCombatStage clears its frozen
@@ -747,7 +768,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         currentHP: hpRef.current
       }
 
+      const stageTargetBeforeTick = combatStageTarget(state)
+      const stageTargetSnapshot = stageTargetBeforeTick ? { ...stageTargetBeforeTick } : null
       const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current, slayerTaskRef.current)
+
+      const deathTransition = combatStageDeathTransition(stageTargetSnapshot, combatState)
+      if (deathTransition) holdStageDeathTarget(deathTransition)
 
       // Master Rejuvenation: auto-refill spec bar when it hits 0 mid-fight.
       if (combatState.active) {
@@ -1933,6 +1959,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.prayerPoints = prayerLvl
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     fightSeqRef.current += 1
+    clearStageDeathTarget()
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
@@ -1972,6 +1999,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     combatRef.current = state
     fightSeqRef.current += 1
+    clearStageDeathTarget()
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
@@ -2020,6 +2048,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.summon = combatRef.current?.summon || null
     combatRef.current = state
     fightSeqRef.current += 1
+    clearStageDeathTarget()
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
   }
@@ -2215,6 +2244,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const stopAndBack = () => {
     cancelAutoFight()
+    clearStageDeathTarget()
     setCombat(null)
     setLog([])
     setActiveTask(null)
@@ -3458,8 +3488,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // is drawn (a stack of four would push the fight itself off a phone screen),
   // and it follows the enemy the player is actually hitting.
   const addsOnField = liveAdds(combat)
-  const activeAdd = targetedAdd(combat) || addsOnField[0] || null
-  const onBoss = !targetedAdd(combat)
+  const liveCombatTarget = combatStageTarget(combat) || combat.monster
+  const onBoss = liveCombatTarget === combat.monster
+  const activeAdd = onBoss ? (addsOnField[0] || null) : liveCombatTarget
   const switchTarget = (which) => {
     if (!combatRef.current) return
     const next = setCombatTarget(combatRef.current, which)
@@ -3492,11 +3523,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       </button>
       {targetsExpanded && (
         <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
-          <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => switchTarget('boss')}>
-            <span class="cb-slot__name">{combat.monster.name}</span>
-            <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
-            {onBoss && <span class="cb-slot__ring" />}
-          </button>
+          {combat.monster.currentHP > 0 && (
+            <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => switchTarget('boss')}>
+              <span class="cb-slot__name">{combat.monster.name}</span>
+              <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
+              {onBoss && <span class="cb-slot__ring" />}
+            </button>
+          )}
           {combat.adds.map((add, index) => {
             if (!add || add.currentHP <= 0) return null
             const on = add === activeAdd && !onBoss
@@ -3517,7 +3550,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Both sides are rebuilt every render because both can change mid-fight: a
   // weapon swap changes the player's tool AND its speed, and a multi-form boss
   // changes style per form. Timing comes from actionSprites, never from here.
-  const spriteMonster = targetedAdd(combat) || combat.monster
+  const spriteMonster = combatStageTarget(combat, stageDeathTarget) || combat.monster
+  const stageShowingAdd = stageDeathTarget ? stageDeathTarget.wasAdd : spriteMonster !== combat.monster
   const spriteMonsterArt = getMonsterArt(spriteMonster, getMonsterCategoryKey(spriteMonster.id))
   // Stance is part of the cadence: combat.js shortens a ranged swing by a tick
   // on Rapid, so leaving it out animated the speed stance at Accurate's pace.
@@ -3529,7 +3563,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // own HP bar and its own splats (addSplats), so a targeted add must not
   // borrow the boss's monsterSplats or a hit on the add would flash on a
   // figure representing something else entirely.
-  const stageTargetSplats = targetedAdd(combat) ? addSplats : monsterSplats
+  const stageTargetSplats = stageShowingAdd ? addSplats : monsterSplats
   const prayerCue = nextProtectionPrayerThreat({
     primary: combat.monster,
     primaryAttackTimer: combat.monsterAttackTimer,
@@ -3554,7 +3588,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         // its own creature and must be drawn as one, and a multi-form boss
         // carries its current form here.
         monster: spriteMonster,
-        dying: spriteMonster.currentHP <= 0,
+        dying: !!stageDeathTarget || spriteMonster.currentHP <= 0,
       }}
       actorSwing={swings.player}
       actorConsume={actorConsume}
