@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import itemsData from '../data/items.json'
-import { SUNSPIRE_MODIFIERS, sunspireModifierDescription } from '../engine/sunspireModifiers.js'
+import { SUNSPIRE_MODIFIERS, SUNSPIRE_MODIFIERS_ENABLED, sunspireModifierDescription } from '../engine/sunspireModifiers.js'
 import GameIcon from './GameIcon.jsx'
 
 function sunspireRewardRows(rewards) {
@@ -23,7 +23,9 @@ export default function SunspireDecisionPanel({
   deferredRewards = false,
   canChoose = true,
   busy = false,
+  modifiersEnabled = SUNSPIRE_MODIFIERS_ENABLED,
   onChoose,
+  onContinue,
   onClaim,
 }) {
   const [infoModifierId, setInfoModifierId] = useState(null)
@@ -43,8 +45,8 @@ export default function SunspireDecisionPanel({
         </h2>
         <p class="text-[11px] text-[var(--color-parchment)] opacity-60 mt-1">
           {deferredRewards
-            ? 'Your reward depth is secured here. Continue and risk the run, or cash out for a server-rolled chest.'
-            : 'Your chest is safe here. Continue to risk everything, or claim it and leave.'}
+            ? 'Your reward depth is secured here. Continue to the next wave, or cash out for a server-rolled chest.'
+            : 'Your chest is safe here. Continue to the next wave, or claim it and leave.'}
         </p>
       </div>
 
@@ -91,7 +93,7 @@ export default function SunspireDecisionPanel({
         </div>
       )}
 
-      {active.length > 0 && (
+      {modifiersEnabled && active.length > 0 && (
         <div class="mt-3">
           <div class="text-[10px] uppercase tracking-wider text-[var(--color-parchment)] opacity-50 mb-1.5">Active modifiers</div>
           <div class="flex flex-wrap gap-1.5">
@@ -104,7 +106,7 @@ export default function SunspireDecisionPanel({
         </div>
       )}
 
-      {!finalWave && (
+      {!finalWave && modifiersEnabled && (
         <div class="mt-4">
           <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] mb-2">
             {canChoose ? 'Choose one modifier to continue' : 'Waiting for the host to choose'}
@@ -148,6 +150,16 @@ export default function SunspireDecisionPanel({
             </div>
           )}
         </div>
+      )}
+
+      {!finalWave && !modifiersEnabled && (
+        <button
+          disabled={busy || !canChoose}
+          onClick={() => onContinue?.()}
+          class="mt-4 w-full min-h-[48px] rounded-xl border border-[var(--color-gold-dim)] bg-[var(--color-void)] px-4 py-2 font-bold text-[var(--color-parchment)] disabled:opacity-45"
+        >
+          {canChoose ? `Continue to Wave ${wave + 1}` : 'Waiting for host'}
+        </button>
       )}
 
       <button
