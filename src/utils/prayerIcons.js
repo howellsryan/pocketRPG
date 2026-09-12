@@ -33,3 +33,21 @@ export function prayerSkill(prayer) {
 
   return null
 }
+
+
+/**
+ * Resolve the actual protection-prayer definition for an incoming attack style.
+ * The compact combat threat cue uses this instead of inventing its own glyph,
+ * so Protect from Magic/Ranged/Melee always renders from the exact same visual
+ * mapping as the prayer buttons themselves.
+ */
+export function protectionPrayerForAttackStyle(attackStyle, prayersData) {
+  const style = attackStyle === 'magic'
+    ? 'magic'
+    : attackStyle === 'ranged'
+      ? 'ranged'
+      : 'melee'
+  return Object.values(prayersData || {}).find((prayer) =>
+    prayer?.bonusType === 'protection' && prayer?.style === style
+  ) || null
+}
