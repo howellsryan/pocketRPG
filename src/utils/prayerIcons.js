@@ -46,7 +46,10 @@ export function protectionPrayerForAttackStyle(attackStyle, prayersData) {
     ? 'magic'
     : attackStyle === 'ranged'
       ? 'ranged'
-      : 'melee'
+      : ['melee', 'stab', 'slash', 'crush'].includes(attackStyle)
+        ? 'melee'
+        : null
+  if (!style) return null
   return Object.values(prayersData || {}).find((prayer) =>
     prayer?.bonusType === 'protection' && prayer?.style === style
   ) || null
