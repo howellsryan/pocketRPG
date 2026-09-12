@@ -6,6 +6,7 @@ import { weaponShapeFor, weaponMuzzle, partStrokeWidth, TINTED_FILL_ROLES, TINTE
 import MonsterFigure from './MonsterFigure.jsx'
 import { monsterFigureFor, monsterMuzzle, monsterTorso, monsterShadow } from '../utils/monsterFigures.js'
 import { useAnimationFlip } from '../hooks/useActionSwings.js'
+import GameIcon from './GameIcon.jsx'
 
 /**
  * Inkwright's combat presentation: two figures facing each other — the player
@@ -103,6 +104,10 @@ import { useAnimationFlip } from '../hooks/useActionSwings.js'
  *                 the mini bars above each head rather than taking its own copy.
  *   actorPrayer — { current, max } for the corner's Prayer line, or null to
  *                 omit it (no prayer pool this fight). Ignored unless showCorners.
+ *   actorThreat — optional { icon, color, label } for one tiny next-attack style
+ *                 glyph immediately below Prayer. Deliberately no countdown,
+ *                 monster name or badge: the cue should be glanceable, not a
+ *                 second HUD.
  *   label       — accessible description
  */
 const STAGE_W = 260
@@ -149,7 +154,7 @@ export function shotOffset(kind, weaponIconType, muzzleOverride = null, landing 
 export default function InkwrightCombatStage({
   actor, target, actorSwing = null, targetSwing = null, actorConsume = null,
   actorHp = null, targetHp = null, actorSplats = null, targetSplats = null,
-  resetKey = null, showCorners = false, actorPrayer = null, label = 'Combat',
+  resetKey = null, showCorners = false, actorPrayer = null, actorThreat = null, label = 'Combat',
 }) {
   // Hooks run every render, before the early return.
   const frozen = useRef({})
@@ -372,6 +377,14 @@ export default function InkwrightCombatStage({
         <div class="inkc-corner inkc-corner--actor" aria-hidden="true">
           <CornerStat hp={actorHp} />
           {actorPrayer && <div class="inkc-corner__prayer">{Math.ceil(actorPrayer.current || 0)}/{actorPrayer.max}</div>}
+          {actorThreat && (
+            <div
+              title={actorThreat.label || 'Next incoming attack'}
+              style={{ marginTop: 2, lineHeight: 1, color: actorThreat.color || 'currentColor' }}
+            >
+              <GameIcon iconKey={actorThreat.icon} color="currentColor" size={15} />
+            </div>
+          )}
         </div>
       )}
       {showCorners && (
