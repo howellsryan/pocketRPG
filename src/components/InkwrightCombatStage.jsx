@@ -6,7 +6,7 @@ import { weaponShapeFor, weaponMuzzle, partStrokeWidth, TINTED_FILL_ROLES, TINTE
 import MonsterFigure from './MonsterFigure.jsx'
 import { monsterFigureFor, monsterMuzzle, monsterTorso, monsterShadow } from '../utils/monsterFigures.js'
 import { useAnimationFlip } from '../hooks/useActionSwings.js'
-import GameIcon from './GameIcon.jsx'
+import SkillIcon from './SkillIcon.jsx'
 
 /**
  * Inkwright's combat presentation: two figures facing each other — the player
@@ -104,10 +104,11 @@ import GameIcon from './GameIcon.jsx'
  *                 the mini bars above each head rather than taking its own copy.
  *   actorPrayer — { current, max } for the corner's Prayer line, or null to
  *                 omit it (no prayer pool this fight). Ignored unless showCorners.
- *   actorThreat — optional { icon, color, label } for one tiny next-attack style
- *                 glyph immediately below Prayer. Deliberately no countdown,
- *                 monster name or badge: the cue should be glanceable, not a
- *                 second HUD.
+ *   actorThreat — optional { skill, color, label } for one tiny protection-
+ *                 prayer crest immediately below Prayer. The skill comes from
+ *                 the real protection prayer visual mapping. Deliberately no
+ *                 countdown, monster name or badge: the cue should be glanceable,
+ *                 not a second HUD.
  *   label       — accessible description
  */
 const STAGE_W = 260
@@ -382,7 +383,12 @@ export default function InkwrightCombatStage({
               title={actorThreat.label || 'Next incoming attack'}
               style={{ marginTop: 2, lineHeight: 1, color: actorThreat.color || 'currentColor' }}
             >
-              <GameIcon iconKey={actorThreat.icon} color="currentColor" size={15} />
+              <SkillIcon
+                skill={actorThreat.skill}
+                color={actorThreat.color || 'currentColor'}
+                size={15}
+                title={actorThreat.label || 'Next incoming attack'}
+              />
             </div>
           )}
         </div>
