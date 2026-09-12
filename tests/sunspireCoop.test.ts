@@ -65,7 +65,7 @@ describe('Sunspire co-op shared wave state', () => {
     expect(state.phase).toBe('active')
     expect(state.hardMode).toBe(false)
     expect(state.raid.currentWaveIndex).toBe(0)
-    expect(state.raid.waves).toHaveLength(12)
+    expect(state.raid.waves).toHaveLength(6)
     expect(state.boss.encounter?.finite).toBe(true)
     expect(state.boss.adds.length).toBeGreaterThan(1)
     expect(new Set(state.boss.adds.map((a: any) => a.instanceId)).size).toBe(state.boss.adds.length)
