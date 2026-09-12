@@ -1,0 +1,24 @@
+name: Sunspire 1 HP test verification
+on:
+  push:
+    branches:
+      - feature/sunspire-colosseum
+
+concurrency:
+  group: sunspire-1hp-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Sunspire regression suite
+        run: npm test -- tests/sunspireColosseum.test.ts tests/sunspireCoop.test.ts tests/sunspireMechanics.test.ts tests/coopRaidEngine.test.ts
+      - name: Full app CI
+        run: npm run ci
