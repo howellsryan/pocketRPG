@@ -219,6 +219,41 @@ describe('action completion endpoint tamper guards', () => {
     expect(saved.settings?.bossKillCounts).toBeUndefined()
   })
 
+  it('can settle raid rewards without incrementing raid KC when the handler marks it as a cash-out', async () => {
+    const killCountWrites: string[] = []
+    const env = {
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: any[]) => ({
+            first: async () => {
+              if (/kill_counts/.test(sql)) killCountWrites.push(sql)
+              return { kill_count: 1 }
+            },
+          }),
+        }),
+      },
+    }
+    const handler = makeCompletionHandler('raids', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInCoopSession: async () => null,
+      claimActionNonce: async () => {},
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: {} }, saveRevision: 0 }),
+      writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+      resolveRewards: () => [],
+      shouldPersistKillCount: () => false,
+    })
+    const req = new Request('https://example.com/api/actions/raid/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({ sourceId: 'sunspire_colosseum', actionNonce: 'sunspire-cashout', wave: 5 }),
+    })
+    const res = await handler({ request: req, env: env as any })
+    const body = await res.json()
+    expect(res.status).toBe(200)
+    expect(body.killCount).toBeNull()
+    expect(killCountWrites).toHaveLength(0)
+  })
+
   it('does not strand a collection-log slot or kill-count when the save write loses a revision race', async () => {
     // Regression: the granted unique lives in the save blob, but the
     // collection-log slot and kill-count live in their own tables. If those
