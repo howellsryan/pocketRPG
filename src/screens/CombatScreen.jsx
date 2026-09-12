@@ -2052,7 +2052,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     raidId, monster, slayerXpGained = 0, isBossKill = false, hardMode = false,
     completionPayload = {}, recordCompletion = true,
   }) => {
-    setLootModal({ monster, hardMode, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
+    const cashOutWave = raidId === 'sunspire_colosseum' && completionPayload?.wave && !recordCompletion
+      ? Number(completionPayload.wave)
+      : null
+    setLootModal({ monster, hardMode, loot: [], slayerXpGained, isBossKill, raidId, cashOutWave, loading: true })
     try {
       const res = await api.completeRaid(raidId, {
         actionNonce: `raid:${raidId}:${Date.now()}`,
@@ -2100,6 +2103,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         slayerXpGained,
         isBossKill,
         raidId,
+        cashOutWave,
         loading: false
       })
       return true
@@ -4451,17 +4455,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <LootResultModal
             theme={!lootModal.loading && hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
             kind="loot"
-            eyebrow="Raid Complete"
+            eyebrow={lootModal.cashOutWave ? `Cashed Out · Wave ${lootModal.cashOutWave}` : 'Raid Complete'}
             title={raidsData[lootModal.raidId]?.name || 'Raid'}
             heroItem={!lootModal.loading && heroItemData ? heroItemData : null}
             heroName={!lootModal.loading && hero ? (heroItemData?.name || hero.itemId) : null}
             heroQuantity={!lootModal.loading && hero ? hero.quantity : null}
             heroGp={!lootModal.loading && hero ? hero.totalGp : 0}
             heroUnitGp={!lootModal.loading && hero ? hero.unitGp : 0}
-            skipLabel={!lootModal.loading && getToken() && getCharacterId()
+            skipLabel={!lootModal.loading && lootModal.raidId !== 'sunspire_colosseum' && getToken() && getCharacterId()
               ? `Skip raid (${hardModeSkipCost(raidsData[lootModal.raidId]?.skipCost ?? 1, isHardMode('raids', lootModal.raidId))})`
               : null}
-            onSkip={skipAgain}
+            onSkip={lootModal.raidId !== 'sunspire_colosseum' ? skipAgain : undefined}
             loot={!lootModal.loading && rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
             lootTitle="Loot Secured"
             lootTotal={lootTotal}
