@@ -5,12 +5,12 @@ import { GameApiError } from '../../../_lib/game/errors.js'
 import { rollSunspireRunRewards } from '../../../../src/engine/sunspireRewards.js'
 
 const SUNSPIRE_ID = 'sunspire_colosseum'
-const SUNSPIRE_FINAL_WAVE = 12
+const SUNSPIRE_FINAL_WAVE = 6
 
 function sunspireWaveFromBody(body) {
   const wave = Number(body?.wave)
   if (!Number.isInteger(wave) || wave < 1 || wave > SUNSPIRE_FINAL_WAVE) {
-    throw new GameApiError('INVALID_SUNSPIRE_WAVE', 'Sunspire cash-out requires a cleared wave from 1 to 12', 400)
+    throw new GameApiError('INVALID_SUNSPIRE_WAVE', 'Sunspire cash-out requires a cleared wave from 1 to 6', 400)
   }
   return wave
 }
@@ -43,7 +43,7 @@ export async function resolveRaidCompletionRewards({ sourceId, body, env, charac
 export const onRequestPost = makeCompletionHandler('raids', {
   resolveRewards: resolveRaidCompletionRewards,
   // Cashing out is a legitimate reward settlement, not a Colosseum clear.
-  // Only wave 12 increments raid KC; the body cannot opt in separately.
+  // Only wave 6 increments raid KC; the body cannot opt in separately.
   shouldPersistKillCount: ({ sourceId, body }) => (
     sourceId !== SUNSPIRE_ID || sunspireWaveFromBody(body) === SUNSPIRE_FINAL_WAVE
   ),
