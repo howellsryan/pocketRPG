@@ -20,6 +20,7 @@ export default function SunspireDecisionPanel({
   modifierState = {},
   offers = [],
   finalWave = false,
+  deferredRewards = false,
   canChoose = true,
   busy = false,
   onChoose,
@@ -41,43 +42,54 @@ export default function SunspireDecisionPanel({
           Wave {wave} / {totalWaves} cleared
         </h2>
         <p class="text-[11px] text-[var(--color-parchment)] opacity-60 mt-1">
-          Your chest is safe here. Continue to risk everything, or claim it and leave.
+          {deferredRewards
+            ? 'Your reward depth is secured here. Continue and risk the run, or cash out for a server-rolled chest.'
+            : 'Your chest is safe here. Continue to risk everything, or claim it and leave.'}
         </p>
       </div>
 
-      <div class="grid gap-3 md:grid-cols-2">
-        <div class="rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void)] p-3">
-          <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] mb-2">This wave</div>
-          {stagedRows.length ? stagedRows.map((reward) => {
-            const item = itemsData[reward.itemId]
-            return (
-              <div key={reward.itemId} class="flex items-center justify-between gap-2 py-1">
-                <span class="flex items-center gap-2 min-w-0 text-xs text-[var(--color-parchment)]">
-                  <GameIcon item={item} iconKey={item?.iconId} size={18} />
-                  <span class="truncate">{item?.name || reward.itemId}</span>
-                </span>
-                <span class="font-[var(--font-mono)] text-[11px] text-[var(--color-gold)]">×{Number(reward.quantity).toLocaleString()}</span>
-              </div>
-            )
-          }) : <div class="text-xs opacity-50 text-[var(--color-parchment)]">No staged reward.</div>}
+      {deferredRewards ? (
+        <div class="rounded-xl border border-[var(--color-gold-dim)] bg-[var(--surface-raised)] p-3 text-center">
+          <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold)]">Reward chest</div>
+          <div class="mt-1 text-xs text-[var(--color-parchment)] opacity-70">
+            Server roll secured through Wave {wave}. Loot is revealed when you cash out.
+          </div>
         </div>
-
-        <div class="rounded-xl border border-[var(--color-gold-dim)] bg-[var(--surface-raised)] p-3">
-          <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold)] mb-2">Unclaimed chest</div>
-          {chestRows.map((reward) => {
-            const item = itemsData[reward.itemId]
-            return (
-              <div key={reward.itemId} class="flex items-center justify-between gap-2 py-1">
-                <span class="flex items-center gap-2 min-w-0 text-xs text-[var(--color-parchment)]">
-                  <GameIcon item={item} iconKey={item?.iconId} size={18} />
-                  <span class="truncate">{item?.name || reward.itemId}</span>
-                </span>
-                <span class="font-[var(--font-mono)] text-[11px] text-[var(--color-gold)]">×{Number(reward.quantity).toLocaleString()}</span>
-              </div>
-            )
-          })}
+      ) : (
+        <div class="grid gap-3 md:grid-cols-2">
+          <div class="rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void)] p-3">
+            <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] mb-2">This wave</div>
+            {stagedRows.length ? stagedRows.map((reward) => {
+              const item = itemsData[reward.itemId]
+              return (
+                <div key={reward.itemId} class="flex items-center justify-between gap-2 py-1">
+                  <span class="flex items-center gap-2 min-w-0 text-xs text-[var(--color-parchment)]">
+                    <GameIcon item={item} iconKey={item?.iconId} size={18} />
+                    <span class="truncate">{item?.name || reward.itemId}</span>
+                  </span>
+                  <span class="font-[var(--font-mono)] text-[11px] text-[var(--color-gold)]">×{Number(reward.quantity).toLocaleString()}</span>
+                </div>
+              )
+            }) : <div class="text-xs opacity-50 text-[var(--color-parchment)]">No staged reward.</div>}
+          </div>
+  
+          <div class="rounded-xl border border-[var(--color-gold-dim)] bg-[var(--surface-raised)] p-3">
+            <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold)] mb-2">Unclaimed chest</div>
+            {chestRows.map((reward) => {
+              const item = itemsData[reward.itemId]
+              return (
+                <div key={reward.itemId} class="flex items-center justify-between gap-2 py-1">
+                  <span class="flex items-center gap-2 min-w-0 text-xs text-[var(--color-parchment)]">
+                    <GameIcon item={item} iconKey={item?.iconId} size={18} />
+                    <span class="truncate">{item?.name || reward.itemId}</span>
+                  </span>
+                  <span class="font-[var(--font-mono)] text-[11px] text-[var(--color-gold)]">×{Number(reward.quantity).toLocaleString()}</span>
+                </div>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {active.length > 0 && (
         <div class="mt-3">
