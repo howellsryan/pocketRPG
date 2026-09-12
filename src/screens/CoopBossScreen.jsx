@@ -462,6 +462,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
             canChoose={isRaidHost}
             busy={false}
             onChoose={(modifierId) => send({ type: 'sunspire_choose_modifier', modifierId })}
+            onContinue={() => send({ type: 'sunspire_continue' })}
             onClaim={() => send({ type: 'sunspire_claim' })}
           />
           {!isRaidHost && (
