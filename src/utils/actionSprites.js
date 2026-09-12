@@ -1,4 +1,5 @@
 import { getAttackSpeed, getAttackStyle } from '../engine/equipment.js'
+import { activeTarget } from '../engine/bossAdds.js'
 import { getItemIconTint } from './itemIcons.js'
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -30,6 +31,42 @@ import { getItemIconTint } from './itemIcons.js'
  * engine's tick constants are per-module today, and this file must stay
  * import-light so it can be read by any surface. */
 export const ACTION_TICK_MS = 600
+
+
+// Every monster death keyframe in the combat stage uses this 900ms window.
+// CombatScreen holds the defeated target for the same duration before revealing
+// the next live enemy, so the engine may advance without stranding the visual.
+export const MONSTER_DEATH_ANIM_MS = 900
+
+function combatTargetIdentity(target) {
+  return target?.instanceId || target?.id || null
+}
+
+export function combatStageTarget(combatState, deathHold = null) {
+  return deathHold?.monster || activeTarget(combatState) || combatState?.monster || null
+}
+
+export function combatStageDeathTransition(previousTarget, combatState) {
+  if (!previousTarget || previousTarget.currentHP <= 0 || !combatState?.active) return null
+
+  const next = activeTarget(combatState)
+  if (!next || next.currentHP <= 0) return null
+
+  const previousId = combatTargetIdentity(previousTarget)
+  const nextId = combatTargetIdentity(next)
+  if (!previousId || previousId === nextId) return null
+
+  const primary = combatState.monster
+  const previousStillAlive = combatTargetIdentity(primary) === previousId
+    ? primary?.currentHP > 0
+    : (combatState.adds || []).some(add => combatTargetIdentity(add) === previousId && add?.currentHP > 0)
+  if (previousStillAlive) return null
+
+  return {
+    monster: { ...previousTarget, currentHP: 0 },
+    wasAdd: Boolean(previousTarget.instanceId),
+  }
+}
 
 // A one-shot motion must finish inside its own cycle or two swings overlap and
 // the stage reads as noise, and it must stay long enough to be seen at all.
