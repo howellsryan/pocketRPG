@@ -667,16 +667,14 @@ function isSunspireStaggeredEncounter(state) {
 // The marker lives in authoritative combat state, so co-op/solo reconnects keep
 // exactly the same queue rather than recomputing phases in the browser.
 function sunspireEnemyAttackSlotOpen(state) {
-  if (!isSunspireStaggeredEncounter(state)) return true
-  const currentTick = Math.floor(Number(state.tickCount) || 0)
-  const lastAttackTick = Number(state.sunspireLastEnemyAttackTick)
-  // Leave one complete 600ms game tick between hostile swings. A hit on tick 5
-  // therefore blocks tick 6 and the next enemy may swing from tick 7 onward.
-  return !Number.isFinite(lastAttackTick) || currentTick - Math.floor(lastAttackTick) >= 2
+  return !isSunspireStaggeredEncounter(state)
+    || Math.floor(Number(state.sunspireLastEnemyAttackTick) || -1) !== Math.floor(Number(state.tickCount) || 0)
 }
 
 function claimSunspireEnemyAttackSlot(state) {
-  if (isSunspireStaggeredEncounter(state)) state.sunspireLastEnemyAttackTick = state.tickCount
+  // Reserve the following tick as the player's reaction window. The existing
+  // slot check then blocks that tick without any extra per-tick queue state.
+  if (isSunspireStaggeredEncounter(state)) state.sunspireLastEnemyAttackTick = state.tickCount + 1
 }
 
 export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}, inventory = [], slayerTask = null) {
