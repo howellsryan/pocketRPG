@@ -74,7 +74,7 @@ import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import SunspireDecisionPanel from '../components/SunspireDecisionPanel.jsx'
-import { offerSunspireModifiers, raiseSunspireModifierTier } from '../engine/sunspireModifiers.js'
+import { SUNSPIRE_MODIFIERS_ENABLED, offerSunspireModifiers, raiseSunspireModifierTier } from '../engine/sunspireModifiers.js'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
@@ -1077,7 +1077,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const modifierState = combatState.raid.modifierState || {}
           combatState.raid = {
             ...combatState.raid,
-            modifierOffers: ev.finalWave
+            modifierOffers: ev.finalWave || !SUNSPIRE_MODIFIERS_ENABLED
               ? []
               : offerSunspireModifiers(modifierState, raidsData.sunspire_colosseum?.modifierPool),
           }
@@ -3409,9 +3409,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const wave = (Number(combat.raid.currentWaveIndex) || 0) + 1
     const totalWaves = combat.raid.waves?.length || 12
     const finalWave = wave >= totalWaves
-    const chooseModifier = (modifierId) => {
+    const continueSunspire = (modifierId = null) => {
       const raidData = raidsData.sunspire_colosseum
-      const modifierState = raiseSunspireModifierTier(combat.raid.modifierState || {}, modifierId)
+      const modifierState = SUNSPIRE_MODIFIERS_ENABLED && modifierId
+        ? raiseSunspireModifierTier(combat.raid.modifierState || {}, modifierId)
+        : {}
       const next = continueRaidCombatState(combat, raidData, monstersData, { modifierState })
       if (!next) {
         addToast('Could not start the next Sunspire wave.', 'error')
@@ -3425,7 +3427,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       combatRef.current = next
       fightSeqRef.current += 1
       setCombat({ ...next })
-      setTargetsExpanded(true)
+      // Keep the player's Targets collapse preference across waves. A fresh raid
+      // still starts expanded; wave transitions no longer override their choice.
       setActiveTask({
         type: 'combat',
         monster: next.monster,
@@ -3472,7 +3475,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             deferredRewards
             canChoose
             busy={sunspireClaimBusy}
-            onChoose={chooseModifier}
+            onChoose={continueSunspire}
+            onContinue={() => continueSunspire()}
             onClaim={claimSunspire}
           />
         </div>
