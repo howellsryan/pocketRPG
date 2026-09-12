@@ -24,7 +24,7 @@ import { COMBAT_CATEGORY_ORDER, COMBAT_RAID_ORDER, orderBy } from '../utils/comb
 import { prayerSkill } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
-import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
+import { createCombatState, createRaidCombatState, continueRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
 import { hardModeDeathLoss, hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
 import { displayedDropChance, dropRateBoostLabel, monsterDropBoost } from '../engine/dropRateDisplay.js'
 import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
@@ -72,6 +72,8 @@ import { HitSplatLayer } from '../components/HitSplat.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
+import SunspireDecisionPanel from '../components/SunspireDecisionPanel.jsx'
+import { nextSunspirePrayerFlick, offerSunspireModifiers, raiseSunspireModifierTier } from '../engine/sunspireModifiers.js'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
@@ -429,6 +431,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [showEquipmentModal, setShowEquipmentModal] = useState(false)
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [showSummonModal, setShowSummonModal] = useState(false)
+  const [targetsExpanded, setTargetsExpanded] = useState(true)
+  const [sunspireClaimBusy, setSunspireClaimBusy] = useState(false)
   const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
   const [selectedRaidInfo, setSelectedRaidInfo] = useState(null)
   // Section collapse state. Read sites default an unset key to collapsed in the
@@ -643,10 +647,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (initialRaidId && !hasAutoStarted.current && !combat) {
       hasAutoStarted.current = true
       const raid = raidsData[initialRaidId]
-      if (raid) {
-        if (raid.id === 'sunspire_colosseum') startRaidParty(raid, null, { solo: true })
-        else startRaid(raid)
-      }
+      if (raid) startRaid(raid)
     }
   }, [initialRaidId])
 
@@ -1039,6 +1040,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             type: 'formChange',
             time: Date.now()
           }])
+        }
+        if (ev.type === 'raidWaveCleared' && combatState.raid?.raidId === 'sunspire_colosseum') {
+          const modifierState = combatState.raid.modifierState || {}
+          combatState.raid = {
+            ...combatState.raid,
+            modifierOffers: ev.finalWave
+              ? []
+              : offerSunspireModifiers(modifierState, raidsData.sunspire_colosseum?.modifierPool),
+          }
+          combatRef.current = combatState
+          setCombat({ ...combatState })
+          setActiveTask(null)
         }
         if (ev.type === 'raidBossDefeated') {
           setLog(prev => [...prev.slice(-20), {
@@ -1921,25 +1934,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
   }
 
-  const startRaid = async (raidData) => {
-    // Sunspire never runs in the browser. Even "Raid alone" opens a private,
-    // one-player server room so combat, wave clears, modifiers, rewards and KC
-    // share the exact same authority boundary as a party run.
-    if (raidData?.id === 'sunspire_colosseum') {
-      return startRaidParty(raidData, null, { solo: true })
-    }
-    if (isDemo) {
-      addToast('🔒 Raids are available with a free account.', 'warning')
-      return
-    }
-    const req = checkRaidRequirements(raidData)
-    if (req.locked) {
-      addToast(req.reason, 'error')
-      return
-    }
-    if (!requestActivityStart({ type: 'raid', raid: raidData })) return
-
-    const { combatType: weaponCombatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
+  const startRaid = async (raidData) => {e, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
     const combatType = needsSpell ? 'melee' : weaponCombatType
     if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
 
@@ -2031,12 +2026,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // and surface it in the loot modal. Used both when a raid is completed live
   // and when the player skips an entire raid from the loot modal — a skip just
   // re-rolls another complete reward rather than re-simulating every boss.
-  const claimRaidCompletion = async ({ raidId, monster, slayerXpGained = 0, isBossKill = false, hardMode = false }) => {
+  const claimRaidCompletion = async ({
+    raidId, monster, slayerXpGained = 0, isBossKill = false, hardMode = false,
+    completionPayload = {}, recordCompletion = true,
+  }) => {
     setLootModal({ monster, hardMode, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
     try {
       const res = await api.completeRaid(raidId, {
         actionNonce: `raid:${raidId}:${Date.now()}`,
         hardMode,
+        ...completionPayload,
       })
       const granted = Array.isArray(res?.granted) ? res.granted : []
       if (granted.length > 0) {
@@ -2072,7 +2071,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       }
       // NOTE: deliberately NOT applyCloudSave(res.save.save_data) here — see the
       // monster-completion handler above for why.
-      recordGameEvent?.({ kind: 'raid_complete', raidId })
+      if (recordCompletion) recordGameEvent?.({ kind: 'raid_complete', raidId })
       setLootModal({
         monster,
         loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
@@ -2081,9 +2080,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         raidId,
         loading: false
       })
+      return true
     } catch (err) {
       setLootModal(null)
       addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
+      return false
     } finally {
       // Release any boss-skip lock awaiting this completion (no-op otherwise).
       resolveCombatCompletion()
@@ -3188,7 +3189,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <div class="text-sm font-semibold text-[var(--color-parchment)]">Raid alone</div>
               <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
                 {raidChoice.id === 'sunspire_colosseum'
-                  ? 'A private server-run arena: every hit, wave and reward stays authoritative.'
+                  ? 'Run the raid solo using the normal PocketRPG combat engine. Rewards are settled by the server when you cash out.'
                   : 'Every boss, back to back, and the whole reward table is yours.'}
               </div>
             </button>
