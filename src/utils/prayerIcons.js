@@ -51,3 +51,90 @@ export function protectionPrayerForAttackStyle(attackStyle, prayersData) {
     prayer?.bonusType === 'protection' && prayer?.style === style
   ) || null
 }
+
+function normalizeProtectionStyle(attackStyle) {
+  if (attackStyle === 'magic') return 'magic'
+  if (attackStyle === 'ranged') return 'ranged'
+  if (attackStyle === 'melee' || attackStyle === 'stab' || attackStyle === 'slash' || attackStyle === 'crush') return 'melee'
+  return null
+}
+
+function enemyProtectionStyle(enemy) {
+  if (!enemy) return null
+  const form = enemy.multiForm && enemy.currentForm ? enemy.forms?.[enemy.currentForm] : null
+  if (form?.attackStyle) return normalizeProtectionStyle(form.attackStyle)
+
+  // attackStyles means the engine chooses at swing-time. A single protection
+  // group is still predictable; mixed groups are not, so never show a false
+  // flick recommendation before the RNG has happened.
+  if (Array.isArray(enemy.attackStyles) && enemy.attackStyles.length > 0) {
+    const styles = [...new Set(enemy.attackStyles.map(normalizeProtectionStyle).filter(Boolean))]
+    return styles.length === 1 ? styles[0] : null
+  }
+  return normalizeProtectionStyle(enemy.attackStyle)
+}
+
+function ticksUntilEnemyAttack(timer) {
+  const value = Math.floor(Number(timer))
+  return Number.isFinite(value) ? Math.max(1, value) : Number.MAX_SAFE_INTEGER
+}
+
+/**
+ * Presentation-only next incoming protection cue shared by every 2D combat
+ * screen. It reads the same attack timers the fight engine exposes.
+ *
+ * staggered is true for Sunspire, where equal due timers resolve primary then
+ * adds in spawn order. Ordinary boss/add fights may attack simultaneously; if
+ * two equally-next enemies need different prayers we return null rather than
+ * lie with one icon.
+ */
+export function nextProtectionPrayerThreat({
+  primary = null,
+  primaryAttackTimer = null,
+  adds = [],
+  staggered = false,
+} = {}) {
+  const candidates = []
+  const primaryStyle = enemyProtectionStyle(primary)
+  const primaryMaxHit = primary?.multiForm && primary?.currentForm
+    ? (primary.forms?.[primary.currentForm]?.maxHit ?? primary.formMaxHit ?? primary.maxHit)
+    : primary?.maxHit
+  if (primary?.currentHP > 0 && primaryMaxHit !== 0 && primaryStyle) {
+    candidates.push({
+      monsterId: primary.id,
+      monsterName: primary.name || primary.id,
+      style: primaryStyle,
+      ticksUntil: ticksUntilEnemyAttack(primaryAttackTimer),
+      fromAdd: false,
+      order: -1,
+    })
+  }
+
+  for (let index = 0; index < (Array.isArray(adds) ? adds.length : 0); index++) {
+    const add = adds[index]
+    const style = enemyProtectionStyle(add)
+    if (!add || add.currentHP <= 0 || add.maxHit === 0 || !style) continue
+    candidates.push({
+      monsterId: add.id,
+      monsterName: add.name || add.id,
+      style,
+      ticksUntil: ticksUntilEnemyAttack(add.attackTimer),
+      fromAdd: true,
+      order: index,
+    })
+  }
+
+  candidates.sort((a, b) =>
+    a.ticksUntil - b.ticksUntil
+    || Number(a.fromAdd) - Number(b.fromAdd)
+    || a.order - b.order
+  )
+  const first = candidates[0]
+  if (!first) return null
+
+  if (!staggered) {
+    const equallyNext = candidates.filter((candidate) => candidate.ticksUntil === first.ticksUntil)
+    if (new Set(equallyNext.map((candidate) => candidate.style)).size > 1) return null
+  }
+  return first
+}
