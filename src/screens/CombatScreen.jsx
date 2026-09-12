@@ -513,6 +513,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // just died can't bleed a frame into the next monster's first swing.
   const fightSeqRef = useRef(0)
   const hpRef = useRef(currentHP)
+  const getCombatMaxHP = (state = combatRef.current) => {
+    const base = Math.max(1, Number(getMaxHP()) || 1)
+    if (state?.raid?.raidId !== 'sunspire_colosseum') return base
+    const multiplier = Math.max(0.01, Math.min(1, Number(state?.sunspireRules?.maxHpMultiplier) || 1))
+    return Math.max(1, Math.floor(base * multiplier))
+  }
   const hasAutoStarted = useRef(false)
   // Timestamp-throttles the "out of runes" error toast so a spell that splashes
   // every tick for lack of runes raises one toast, not one per 600ms tick.
@@ -813,7 +819,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             time: Date.now()
           }])
           if (SELF_HEALING_SPEC_TYPES.has(ev.specType) && ev.healAmount > 0) {
-            const maxHP = getMaxHP()
+            const maxHP = getCombatMaxHP(combatState)
             const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
             updateHP(newHP)
             hpRef.current = newHP
@@ -1103,7 +1109,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
         if (ev.type === 'sangHeal') {
           // Heal the player from sanguinesti staff passive
-          const maxHP = getMaxHP()
+          const maxHP = getCombatMaxHP(combatState)
           const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
           updateHP(newHP)
           hpRef.current = newHP
@@ -1115,7 +1121,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
         if (ev.type === 'guthanHeal') {
           // Heal the player from Guthan set bonus
-          const maxHP = getMaxHP()
+          const maxHP = getCombatMaxHP(combatState)
           const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
           updateHP(newHP)
           hpRef.current = newHP
@@ -2229,7 +2235,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     inventoryRef.current = newInv
 
     const healing = brew.boost || 10
-    const actor = { hp: hpRef.current, maxHP: getMaxHP(), activePotions: { ...(combatRef.current?.activePotions || {}) } }
+    const actor = { hp: hpRef.current, maxHP: getCombatMaxHP(), activePotions: { ...(combatRef.current?.activePotions || {}) } }
     applyConsumableEffect(actor, brew, brewId, 'drink')
     updateHP(actor.hp)
     hpRef.current = actor.hp
@@ -2290,7 +2296,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
     updateInventory(newInv)
     inventoryRef.current = newInv
-    const actor = { hp: hpRef.current, maxHP: getMaxHP(), activePotions: {} }
+    const actor = { hp: hpRef.current, maxHP: getCombatMaxHP(), activePotions: {} }
     applyConsumableEffect(actor, food, foodId, 'eat')
     updateHP(actor.hp)
     hpRef.current = actor.hp
@@ -2404,7 +2410,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // Apply the drink (buff registration + immediate HP heal + prayer restore)
     // via the shared consumables engine, then carry the result into combat state.
     const actor = {
-      hp: hpRef.current, maxHP: getMaxHP(),
+      hp: hpRef.current, maxHP: getCombatMaxHP(),
       activePotions: { ...(combatRef.current.activePotions || {}) },
       prayerPoints: combatRef.current.prayerPoints,
       maxPrayerPoints: combatRef.current.maxPrayerPoints,
@@ -3349,6 +3355,83 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
+  // A solo Sunspire run uses the ordinary local raid engine. Only the reward
+  // claim crosses the server boundary, exactly like other solo raids.
+  if (combat?.raid?.raidId === 'sunspire_colosseum' && combat.raid.awaitingDecision && !lootModal) {
+    const wave = (Number(combat.raid.currentWaveIndex) || 0) + 1
+    const totalWaves = combat.raid.waves?.length || 12
+    const finalWave = wave >= totalWaves
+    const chooseModifier = (modifierId) => {
+      const raidData = raidsData.sunspire_colosseum
+      const modifierState = raiseSunspireModifierTier(combat.raid.modifierState || {}, modifierId)
+      const next = continueRaidCombatState(combat, raidData, monstersData, { modifierState })
+      if (!next) {
+        addToast('Could not start the next Sunspire wave.', 'error')
+        return
+      }
+      const cappedHP = Math.min(hpRef.current, getCombatMaxHP(next))
+      if (cappedHP !== hpRef.current) {
+        updateHP(cappedHP)
+        hpRef.current = cappedHP
+      }
+      combatRef.current = next
+      fightSeqRef.current += 1
+      setCombat({ ...next })
+      setTargetsExpanded(true)
+      setActiveTask({
+        type: 'combat',
+        monster: next.monster,
+        stance: next.stance || combatStance,
+        bankingEnabled: false,
+        spell: next.spell || null,
+        raid: true,
+        raidId: raidData.id,
+      })
+    }
+    const claimSunspire = async () => {
+      if (sunspireClaimBusy) return
+      setSunspireClaimBusy(true)
+      // Leave decision mode before opening the reward modal so it can render
+      // over the normal combat shell rather than being hidden by this return.
+      const settledState = { ...combat, raid: { ...combat.raid, awaitingDecision: false } }
+      combatRef.current = settledState
+      setCombat(settledState)
+      const ok = await claimRaidCompletion({
+        raidId: 'sunspire_colosseum',
+        monster: combat.monster,
+        isBossKill: finalWave,
+        completionPayload: { wave },
+        recordCompletion: finalWave,
+      })
+      if (!ok) {
+        combatRef.current = combat
+        setCombat({ ...combat })
+      } else {
+        setActiveTask(null)
+      }
+      setSunspireClaimBusy(false)
+    }
+    return (
+      <div class="forge-shell h-full flex flex-col p-4">
+        <BackLink onClick={stopAndBack} className="mb-3" />
+        <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar">
+          <SunspireDecisionPanel
+            wave={wave}
+            totalWaves={totalWaves}
+            modifierState={combat.raid.modifierState || {}}
+            offers={combat.raid.modifierOffers || []}
+            finalWave={finalWave}
+            deferredRewards
+            canChoose
+            busy={sunspireClaimBusy}
+            onChoose={chooseModifier}
+            onClaim={claimSunspire}
+          />
+        </div>
+      </div>
+    )
+  }
+
   // ── Boss adds (e.g. the Dread Core, Zaryth's sentinels) ──
   // Live enemies, not a phase: they attack alongside the boss until killed, so
   // the player needs a way to swing at each and to see the one they are on.
@@ -3377,26 +3460,37 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <HPBar current={Math.max(0, activeAdd.currentHP)} max={activeAdd.hitpoints} size="large" />
         <HitSplatLayer splats={addSplats} />
       </div>
-      {/* Target picker — same brass "on" treatment as the quick-prayer tiles, so
-          the enemy you are hitting reads at a glance mid-fight. */}
-      <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
-        <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => switchTarget('boss')}>
-          <span class="cb-slot__name">{combat.monster.name}</span>
-          <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
-          {onBoss && <span class="cb-slot__ring" />}
-        </button>
-        {combat.adds.map((add, index) => {
-          if (!add || add.currentHP <= 0) return null
-          const on = add === activeAdd && !onBoss
-          return (
-            <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => switchTarget(index)}>
-              <span class="cb-slot__name">{add.name}</span>
-              <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
-              {on && <span class="cb-slot__ring" />}
-            </button>
-          )
-        })}
-      </div>
+      {/* Target choices can collapse independently of the active enemy HP bar,
+          keeping multi-enemy fights compact without hiding what is being hit. */}
+      <button
+        type="button"
+        class="mb-1.5 flex w-full items-center justify-between rounded-lg border border-[var(--color-void-border)] px-2.5 py-1.5 text-left text-[10px] text-[var(--color-parchment)]"
+        onClick={() => setTargetsExpanded((value) => !value)}
+        aria-expanded={targetsExpanded}
+      >
+        <span><span class="opacity-55">Targets</span> · {onBoss ? combat.monster.name : activeAdd?.name}</span>
+        <CollapseChevron expanded={targetsExpanded} size={11} />
+      </button>
+      {targetsExpanded && (
+        <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
+          <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => switchTarget('boss')}>
+            <span class="cb-slot__name">{combat.monster.name}</span>
+            <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
+            {onBoss && <span class="cb-slot__ring" />}
+          </button>
+          {combat.adds.map((add, index) => {
+            if (!add || add.currentHP <= 0) return null
+            const on = add === activeAdd && !onBoss
+            return (
+              <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => switchTarget(index)}>
+                <span class="cb-slot__name">{add.name}</span>
+                <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
+                {on && <span class="cb-slot__ring" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 
@@ -3417,6 +3511,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // borrow the boss's monsterSplats or a hit on the add would flash on a
   // figure representing something else entirely.
   const stageTargetSplats = targetedAdd(combat) ? addSplats : monsterSplats
+  const prayerCue = combat.raid?.raidId === 'sunspire_colosseum' && addsOnField.length > 0
+    ? nextSunspirePrayerFlick({
+      primary: combat.monster,
+      primaryAttackTimer: combat.monsterAttackTimer,
+      adds: combat.adds,
+    })
+    : null
+  const cueStyleArt = prayerCue ? getStyleArt(prayerCue.style) : null
   // Null on the classic screen: every readout the stage absorbed (both HP
   // bars, the prayer pool) is rendered as its own bar below instead.
   const spriteStage = !combatAnimations ? null : (
@@ -3435,13 +3537,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       actorSwing={swings.player}
       actorConsume={actorConsume}
       targetSwing={swings.monster}
-      actorHp={{ current: currentHP, max: getMaxHP() }}
+      actorHp={{ current: currentHP, max: getCombatMaxHP(combat) }}
       targetHp={{ current: spriteMonster.currentHP, max: spriteMonster.hitpoints }}
       actorSplats={playerSplats}
       targetSplats={stageTargetSplats}
       resetKey={fightSeqRef.current}
       showCorners={!isDesktopCombatLayout}
       actorPrayer={typeof combat?.maxPrayerPoints === 'number' ? { current: combat.prayerPoints, max: combat.maxPrayerPoints } : null}
+      actorThreat={cueStyleArt ? { icon: cueStyleArt.icon, color: cueStyleArt.color, label: `Next: ${cueStyleArt.label}` } : null}
       label={`You versus ${spriteMonster.name}`}
     />
   )
@@ -3566,7 +3669,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
         {!combatAnimations && (
           <div class="relative">
-            <HPBar current={currentHP} max={getMaxHP()} size="large" />
+            <HPBar current={currentHP} max={getCombatMaxHP(combat)} size="large" />
             <HitSplatLayer splats={playerSplats} />
           </div>
         )}
@@ -3975,7 +4078,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   <CombatHPBlock
                     label="Your Hitpoints"
                     current={currentHP}
-                    max={getMaxHP()}
+                    max={getCombatMaxHP(combat)}
                     splats={playerSplats}
                     valueColor="#7ce88a"
                     right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
