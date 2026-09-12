@@ -12,6 +12,7 @@ import CoopLootShare from '../components/CoopLootShare.jsx'
 import CoopRaidLobby from '../components/CoopRaidLobby.jsx'
 import CoopChatPanel from '../components/CoopChatPanel.jsx'
 import SunspireDecisionPanel from '../components/SunspireDecisionPanel.jsx'
+import CollapseChevron from '../components/CollapseChevron.jsx'
 import CombatTelegraphCard from '../components/CombatTelegraphCard.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
@@ -63,6 +64,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [showQuickPrayerConfig, setShowQuickPrayerConfig] = useState(false)
   const [showMonsterInfo, setShowMonsterInfo] = useState(false)
+  const [targetsExpanded, setTargetsExpanded] = useState(true)
   const [lootModal, setLootModal] = useState(null)
   const [combatTelegraph, setCombatTelegraph] = useState(null)
   // Cleared by the poll that reports the raid running, so a double-tap on Start
@@ -548,13 +550,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       adds: bossAddsOf(boss),
     })
     : null
-  const cuePrayer = prayerCue
-    ? Object.values(prayersData).find((prayer) => prayer?.bonusType === 'protection' && prayer.style === prayerCue.style)
-    : null
-  const cuePrayerActive = !!cuePrayer && combatState?.activeProtectionPrayer === cuePrayer.id
-  const cueAccent = prayerCue
-    ? getStyleArt(prayerCue.style === 'melee' ? 'crush' : prayerCue.style).color
-    : null
+  const cueStyleArt = prayerCue ? getStyleArt(prayerCue.style) : null
 
   return (
     <div class="forge-shell h-full flex flex-col p-4">
@@ -576,30 +572,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           sub={raid
             ? `Boss ${raid.position}/${raid.total} \u00B7 ${memberCount} ${memberCount === 1 ? 'raider' : 'raiders'}`
             : `${memberCount} ${memberCount === 1 ? 'player' : 'players'} in this fight`}
-          meta={<CoopLootShare member={me} maxHP={coopLootBasisHP(state)} />}
+          meta={raid && memberCount === 1 ? null : <CoopLootShare member={me} maxHP={coopLootBasisHP(state)} />}
           combatLevel={monster?.combatLevel}
           aside={state?.hardMode ? <HardModeTag /> : null}
           onInfo={() => setShowMonsterInfo(true)}
         />
-
-        {prayerCue && cuePrayer && (
-          <div
-            class="mb-2 flex min-h-9 items-center gap-2 rounded-lg border bg-[var(--surface-raised)] px-2.5 py-1.5 text-[10px] text-[var(--color-parchment)]"
-            style={{ borderColor: cueAccent }}
-            aria-live="polite"
-          >
-            <span class="shrink-0 font-bold uppercase tracking-[0.12em] opacity-60">Next flick</span>
-            <span class="text-sm leading-none" aria-hidden="true">{cuePrayer.icon}</span>
-            <strong class="min-w-0 truncate text-[11px]" style={{ color: cueAccent }}>{cuePrayer.name}</strong>
-            <span class="min-w-0 flex-1 truncate opacity-60">· {prayerCue.monsterName}</span>
-            <span class="shrink-0 font-[var(--font-mono)] opacity-75">
-              {prayerCue.ticksUntil <= 1 ? 'NEXT TICK' : `${prayerCue.ticksUntil}t`}
-            </span>
-            {cuePrayerActive && (
-              <span class="shrink-0 rounded-full border border-current px-1.5 py-0.5 font-semibold opacity-80">ACTIVE</span>
-            )}
-          </div>
-        )}
 
         {/* §20: the group fight looks like the solo fight, so the stage sits in
             the same place with the same timing law — read off THIS member's
@@ -622,6 +599,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           targetSplats={coopStageSplats}
           showCorners
           actorPrayer={typeof combatState?.maxPrayerPoints === 'number' ? { current: combatState.prayerPoints, max: combatState.maxPrayerPoints } : null}
+          actorThreat={cueStyleArt ? { icon: cueStyleArt.icon, color: cueStyleArt.color, label: `Next: ${cueStyleArt.label}` } : null}
           label={`You versus ${coopStageTarget?.name || bossName}`}
         />}
 
@@ -658,24 +636,35 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
               <HPBar current={Math.max(0, activeAdd.currentHP)} max={activeAdd.hitpoints} size="large" />
               <HitSplatLayer splats={addSplats} />
             </div>
-            <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
-              <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => send({ type: 'target_add', value: false })}>
-                <span class="cb-slot__name">{bossName}</span>
-                <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
-                {onBoss && <span class="cb-slot__ring" />}
-              </button>
-              {bossAddsOf(boss).map((add, index) => {
-                if (!add || add.currentHP <= 0) return null
-                const on = !onBoss && index === combatState.addTargetIndex
-                return (
-                  <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => send({ type: 'target_add', value: index })}>
-                    <span class="cb-slot__name">{add.name}</span>
-                    <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
-                    {on && <span class="cb-slot__ring" />}
-                  </button>
-                )
-              })}
-            </div>
+            <button
+              type="button"
+              class="mb-1.5 flex w-full items-center justify-between rounded-lg border border-[var(--color-void-border)] px-2.5 py-1.5 text-left text-[10px] text-[var(--color-parchment)]"
+              onClick={() => setTargetsExpanded((value) => !value)}
+              aria-expanded={targetsExpanded}
+            >
+              <span><span class="opacity-55">Targets</span> · {onBoss ? bossName : activeAdd?.name}</span>
+              <CollapseChevron expanded={targetsExpanded} size={11} />
+            </button>
+            {targetsExpanded && (
+              <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
+                <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => send({ type: 'target_add', value: false })}>
+                  <span class="cb-slot__name">{bossName}</span>
+                  <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
+                  {onBoss && <span class="cb-slot__ring" />}
+                </button>
+                {bossAddsOf(boss).map((add, index) => {
+                  if (!add || add.currentHP <= 0) return null
+                  const on = !onBoss && index === combatState.addTargetIndex
+                  return (
+                    <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => send({ type: 'target_add', value: index })}>
+                      <span class="cb-slot__name">{add.name}</span>
+                      <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
+                      {on && <span class="cb-slot__ring" />}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
