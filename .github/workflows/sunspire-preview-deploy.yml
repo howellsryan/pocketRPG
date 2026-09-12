@@ -1,0 +1,36 @@
+name: Sunspire verified preview deploy
+
+on:
+  push:
+    branches:
+      - feature/sunspire-colosseum
+
+concurrency:
+  group: sunspire-verified-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: |
+          npm ci --no-audit --no-fund --ignore-scripts
+          npm rebuild esbuild
+      - name: Build verified preview
+        env:
+          WORKERS_CI_BRANCH: ${{ github.ref_name }}
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm run build:site
+      - name: Deploy preview Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.107.1'
+          command: deploy --env preview
