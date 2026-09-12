@@ -18,7 +18,7 @@
 
 import { applyCombatReaction, createCombatState, processCombatTick } from './combat.js'
 import { isWaveRaid, seedEncounterState, encounterHitpoints } from './raidEncounters.js'
-import { applySunspireModifiersToState, offerSunspireModifiers, raiseSunspireModifierTier } from './sunspireModifiers.js'
+import { SUNSPIRE_MODIFIERS_ENABLED, applySunspireModifiersToState, offerSunspireModifiers, raiseSunspireModifierTier } from './sunspireModifiers.js'
 import { mergeSunspireRewards, rollSunspireWaveReward } from './sunspireRewards.js'
 import { hardModeDeathLoss, monstersTableFor } from './hardMode.js'
 import { grimReaperStashFromDeath } from './grimReaper.js'
@@ -360,6 +360,41 @@ function resetMemberForWave(member, boss) {
   member.combat.playerAttackTimer = 0
   member.combat.monsterAttackTimer = boss.attackSpeed || 4
   member.combat.addTargetIndex = null
+}
+
+function continueSunspireWave(state, monstersData, events, modifierId = null) {
+  const nextIndex = (Number(state.raid.currentWaveIndex) || 0) + 1
+  const raidData = coopRaidData(state.raid.raidId)
+  const modifierState = SUNSPIRE_MODIFIERS_ENABLED && modifierId
+    ? raiseSunspireModifierTier(state.raid.modifierState || {}, modifierId)
+    : {}
+  const fresh = coopWaveBossState(raidData, nextIndex, monstersData, modifierState, Date.now())
+  if (!fresh) return false
+
+  state.phase = 'active'
+  state.bossId = fresh.bossId
+  state.boss = fresh.boss
+  state.raid = {
+    ...state.raid,
+    currentWaveIndex: nextIndex,
+    modifierState,
+    modifierOffers: [],
+  }
+  for (const raider of Object.values(state.members)) {
+    raider.sunspireStaged = []
+    resetMemberForWave(raider, state.boss)
+  }
+  reselectTarget(state)
+  events.push({
+    type: 'raidWaveAdvance',
+    raidId: state.raid.raidId,
+    wave: nextIndex + 1,
+    totalWaves: state.raid.waves.length,
+    ...(modifierId && SUNSPIRE_MODIFIERS_ENABLED
+      ? { modifierId, modifierTier: modifierState[modifierId] }
+      : {}),
+  })
+  return true
 }
 
 /**
@@ -972,6 +1007,24 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
       }
       startCoopRaid(state, monstersData, events)
       return
+    case 'sunspire_continue': {
+      if (!isSunspireWaveRaidState(state) || state.phase !== 'decision') {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'sunspire_not_decision' })
+        return
+      }
+      if (!isCoopHost(state, member.characterId)) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'not_host' })
+        return
+      }
+      if (SUNSPIRE_MODIFIERS_ENABLED) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'modifier_required' })
+        return
+      }
+      if (!continueSunspireWave(state, monstersData, events)) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'sunspire_wave_missing' })
+      }
+      return
+    }
     case 'sunspire_choose_modifier': {
       if (!isSunspireWaveRaidState(state) || state.phase !== 'decision') {
         events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'sunspire_not_decision' })
@@ -981,41 +1034,18 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
         events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'not_host' })
         return
       }
+      if (!SUNSPIRE_MODIFIERS_ENABLED) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'modifiers_disabled' })
+        return
+      }
       const modifierId = action.modifierId
       if (!state.raid.modifierOffers.includes(modifierId)) {
         events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'modifier_not_offered' })
         return
       }
-      const nextIndex = (Number(state.raid.currentWaveIndex) || 0) + 1
-      const raidData = coopRaidData(state.raid.raidId)
-      const modifierState = raiseSunspireModifierTier(state.raid.modifierState || {}, modifierId)
-      const fresh = coopWaveBossState(raidData, nextIndex, monstersData, modifierState, Date.now())
-      if (!fresh) {
+      if (!continueSunspireWave(state, monstersData, events, modifierId)) {
         events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'sunspire_wave_missing' })
-        return
       }
-      state.phase = 'active'
-      state.bossId = fresh.bossId
-      state.boss = fresh.boss
-      state.raid = {
-        ...state.raid,
-        currentWaveIndex: nextIndex,
-        modifierState,
-        modifierOffers: [],
-      }
-      for (const raider of Object.values(state.members)) {
-        raider.sunspireStaged = []
-        resetMemberForWave(raider, state.boss)
-      }
-      reselectTarget(state)
-      events.push({
-        type: 'raidWaveAdvance',
-        raidId: state.raid.raidId,
-        wave: nextIndex + 1,
-        totalWaves: state.raid.waves.length,
-        modifierId,
-        modifierTier: modifierState[modifierId],
-      })
       return
     }
     case 'sunspire_claim':
@@ -1751,7 +1781,7 @@ function resolveSunspireWaveClear(state, monstersData, events, now) {
     member.sunspireChest = mergeSunspireRewards(member.sunspireChest || [], staged)
   }
 
-  raid.modifierOffers = finalWave
+  raid.modifierOffers = finalWave || !SUNSPIRE_MODIFIERS_ENABLED
     ? []
     : offerSunspireModifiers(raid.modifierState || {}, coopRaidData(raid.raidId)?.modifierPool || [], Math.random)
   raid.claimRequestedBy = null
