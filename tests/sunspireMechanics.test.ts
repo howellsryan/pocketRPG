@@ -355,12 +355,12 @@ describe('solo Sunspire cumulative cash-out rewards', () => {
     expect(rewards.some((reward: any) => reward.itemId === 'sunweaver_quiver')).toBe(false)
   })
 
-  it('guarantees the first-clear quiver at wave 12 and respects a previously obtained one', () => {
-    const first = rollSunspireRunRewards({ throughWave: 12, random: () => 0.99 })
+  it('guarantees the first-clear quiver at wave 6 and respects a previously obtained one', () => {
+    const first = rollSunspireRunRewards({ throughWave: 6, random: () => 0.99 })
     expect(first.some((reward: any) => reward.itemId === 'sunweaver_quiver')).toBe(true)
 
     const repeat = rollSunspireRunRewards({
-      throughWave: 12,
+      throughWave: 6,
       random: () => 0.99,
       obtainedIds: new Set(['sunweaver_quiver']),
     })
