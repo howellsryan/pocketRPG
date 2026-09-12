@@ -2000,7 +2000,7 @@ export const KNOWLEDGE_CHUNKS = [
    "uniques",
    "drops"
   ],
-  "text": "Sunspire Colosseum: Twelve escalating arena waves. Bank the chest and leave safely, or keep climbing while persistent arena curses make every wave more dangerous. It has 12 arena waves, ending with Aurelios the Unbroken. Rewards are staged after each cleared wave: claim the accumulated chest to leave safely, or continue and risk it on the next wave. Unique rolls begin on wave 4 at about 1 in 124 and rise to about 1 in 12 on wave 12. The first full clear guarantees Sunweaver Quiver. Sunspire uniques are: Resonance Crystal, Sunbound Zealot Helm, Sunbound Zealot Cuirass, Sunbound Zealot Greaves, Twinflare Chakrams, Sunweaver Quiver. Ordinary Hard Mode and credit skipping are not used for this raid; its persistent between-wave modifiers are the difficulty system."
+  "text": "Sunspire Colosseum: Six escalating arena waves using the Colosseum's former upper-half encounters. Claim the accumulated chest and leave safely, or keep climbing for greater rewards as each wave grows more dangerous. It has 6 arena waves, ending with Aurelios the Unbroken. Rewards are staged after each cleared wave: claim the accumulated chest to leave safely, or continue and risk it on the next wave. Unique rolls begin on wave 1 at about 1 in 82 and rise to about 1 in 12 on wave 6. The first full clear guarantees Sunweaver Quiver. Sunspire uniques are: Resonance Crystal, Sunbound Zealot Helm, Sunbound Zealot Cuirass, Sunbound Zealot Greaves, Twinflare Chakrams, Sunweaver Quiver. Ordinary Hard Mode and credit skipping are not used for this raid; between-wave modifiers are currently disabled."
  },
  {
   "id": "data_minigames",
