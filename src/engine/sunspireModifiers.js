@@ -1,4 +1,5 @@
 import { prepareAdd, liveAdds } from './bossAdds.js'
+import { nextProtectionPrayerThreat } from '../utils/prayerIcons.js'
 
 export const SUNSPIRE_MODIFIERS = Object.freeze({
   ember_swarm: {
@@ -102,61 +103,14 @@ export function sunspireModifierDescription(id, tierNumber = 1) {
   return def.tiers?.[clamped - 1] || ''
 }
 
-function sunspireProtectionStyle(attackStyle) {
-  if (attackStyle === 'magic') return 'magic'
-  if (attackStyle === 'ranged') return 'ranged'
-  return 'melee'
-}
-
-function sunspireEnemyStyle(enemy) {
-  const form = enemy?.multiForm && enemy?.currentForm ? enemy.forms?.[enemy.currentForm] : null
-  return form?.attackStyle || enemy?.attackStyle || 'crush'
-}
-
-function sunspireTicksUntilAttack(timer) {
-  const value = Math.floor(Number(timer))
-  return Number.isFinite(value) ? Math.max(1, value) : Number.MAX_SAFE_INTEGER
-}
-
-/**
- * Presentation-only prediction for the next protection prayer in a staggered
- * Sunspire encounter. Mirrors combat.js: primary wins a due tie, then adds
- * resolve in spawn order. Harmless healing totems are excluded.
- */
+/** Backwards-compatible Sunspire name used by its focused mechanic tests. */
 export function nextSunspirePrayerFlick({ primary = null, primaryAttackTimer = null, adds = [] } = {}) {
-  const candidates = []
-  if (primary?.currentHP > 0 && primary?.maxHit !== 0) {
-    const attackStyle = sunspireEnemyStyle(primary)
-    candidates.push({
-      monsterId: primary.id,
-      monsterName: primary.name || primary.id,
-      attackStyle,
-      style: sunspireProtectionStyle(attackStyle),
-      ticksUntil: sunspireTicksUntilAttack(primaryAttackTimer),
-      fromAdd: false,
-      order: -1,
-    })
-  }
-  for (let index = 0; index < (Array.isArray(adds) ? adds.length : 0); index++) {
-    const add = adds[index]
-    if (!add || add.currentHP <= 0 || add.maxHit === 0) continue
-    const attackStyle = sunspireEnemyStyle(add)
-    candidates.push({
-      monsterId: add.id,
-      monsterName: add.name || add.id,
-      attackStyle,
-      style: sunspireProtectionStyle(attackStyle),
-      ticksUntil: sunspireTicksUntilAttack(add.attackTimer),
-      fromAdd: true,
-      order: index,
-    })
-  }
-  candidates.sort((a, b) =>
-    a.ticksUntil - b.ticksUntil
-    || Number(a.fromAdd) - Number(b.fromAdd)
-    || a.order - b.order
-  )
-  return candidates[0] || null
+  return nextProtectionPrayerThreat({
+    primary,
+    primaryAttackTimer,
+    adds,
+    staggered: true,
+  })
 }
 
 function tier(state, id) {
