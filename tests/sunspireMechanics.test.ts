@@ -267,23 +267,30 @@ describe('Sunspire hostile attack staggering', () => {
     rewards: {},
   }
 
-  it('resolves at most one hostile swing per game tick and preserves every queued attacker', () => {
+  it('leaves one full game tick between hostile swings and preserves every queued attacker', () => {
     let state: any = createRaidCombatState(staggerRaid, staggerMonsters)!
     state.playerAttackTimer = 99
     state.monsterAttackTimer = 1
     state.adds.forEach((add: any) => { add.attackTimer = 1 })
 
     const firstAttackers: string[] = []
-    for (let i = 0; i < 7; i++) {
+    const attackTicks: number[] = []
+    for (let i = 0; i < 9; i++) {
       state.playerAttackTimer = 99
       const out = processCombatTick(state, { ...stats, currentHP: 999 }, {}, {}, {})
       const swings = out.events.filter((event: any) => event.type === 'monsterHit' || event.type === 'monsterMiss')
       expect(swings.length).toBeLessThanOrEqual(1)
-      if (swings[0]) firstAttackers.push(swings[0].monsterName)
+      if (swings[0]) {
+        firstAttackers.push(swings[0].monsterName)
+        attackTicks.push(i)
+      }
       state = out.combatState
     }
 
     expect(firstAttackers.slice(0, 3)).toEqual(['stagger_primary', 'stagger_ranged', 'stagger_magic'])
+    for (let i = 1; i < attackTicks.length; i++) {
+      expect(attackTicks[i] - attackTicks[i - 1]).toBeGreaterThanOrEqual(2)
+    }
   })
 
   it('does not change simultaneous add + boss timing outside Sunspire', () => {
