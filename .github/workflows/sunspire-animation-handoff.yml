@@ -18,4 +18,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test -- tests/actionSprites.test.ts
+      - name: Focused combat animation regressions
+        run: npm test -- tests/actionSprites.test.ts tests/sunspireMechanics.test.ts tests/inkwrightCombatShot.test.ts
+      - name: Full app CI
+        run: npm run ci

@@ -31,7 +31,7 @@ import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
 import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
 import { recordItemLossEntries } from '../engine/lossLedger.js'
 import { HardModeConfirm, HardModeTag, HardModeToggle } from '../components/HardMode.jsx'
-import { liveAdds, targetedAdd } from '../engine/bossAdds.js'
+import { liveAdds } from '../engine/bossAdds.js'
 import { isWaveRaid, raidInfoStages, raidUniqueChanceRange } from '../engine/raidEncounters.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable, boostedMagicLevel } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -63,7 +63,7 @@ import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
-import { swingsFromCombatEvents, playerCombatSprite, monsterCombatSprite, combatStageTarget, combatStageDeathTransition, MONSTER_DEATH_ANIM_MS } from '../utils/actionSprites.js'
+import { swingsFromCombatEvents, playerCombatSprite, monsterCombatSprite, combatStageTarget, combatStageDeathTransition, combatStageSwingRoute, MONSTER_DEATH_ANIM_MS } from '../utils/actionSprites.js'
 import { useActionSwings, useConsumeToken } from '../hooks/useActionSwings.js'
 import InkwrightCombatStage from '../components/InkwrightCombatStage.jsx'
 import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
@@ -793,13 +793,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       // A tick with no swing on a side leaves that side's token alone — the
       // stage keys off the id, so re-setting an unchanged one would replay a
-      // motion the engine never made. `showingAdd` routes each swing to the
-      // enemy it is about, since a boss and its adds share one event stream and
-      // are told apart only by a flag. It is read from `state`, the PRE-tick
-      // target: these events describe the tick that just resolved, and the blow
-      // that kills a targeted add clears `addTargetIndex`, so reading the result
-      // would throw away the killing swing.
-      pushSwings(swingsFromCombatEvents(events, { showingAdd: !!targetedAdd(state) }))
+      // motion the engine never made. Route from the PRE-tick active target:
+      // the events describe that tick, including a killing blow. Crucially this
+      // is activeTarget()-based rather than addTargetIndex-based, because a
+      // finite Sunspire encounter automatically attacks the next live add after
+      // its primary dies even though no manual add selection exists.
+      pushSwings(swingsFromCombatEvents(events, combatStageSwingRoute(state)))
 
       // Filled from what grantXP BANKED below, so the floating drop and the
       // skill can never disagree — the engine's number is pre-account-type.

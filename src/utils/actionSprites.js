@@ -46,6 +46,15 @@ export function combatStageTarget(combatState, deathHold = null) {
   return deathHold?.monster || activeTarget(combatState) || combatState?.monster || null
 }
 
+// The event stream marks player hits with toAdd and enemy hits with fromAdd.
+// Derive the routing bit from the same activeTarget() authority as combat
+// itself, not addTargetIndex: finite encounters can automatically fall through
+// to the next live add after their primary dies without selecting it manually.
+export function combatStageSwingRoute(combatState) {
+  const target = activeTarget(combatState)
+  return { showingAdd: !!target && target !== combatState?.monster }
+}
+
 export function combatStageDeathTransition(previousTarget, combatState) {
   if (!previousTarget || previousTarget.currentHP <= 0 || !combatState?.active) return null
 
