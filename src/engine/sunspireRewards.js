@@ -92,3 +92,30 @@ export function rollSunspireWaveReward({ wave, random = Math.random, obtainedIds
 
   return mergeSunspireRewards(loot)
 }
+
+
+/**
+ * Roll the unclaimed Sunspire chest for a solo cash-out/full clear.
+ *
+ * Each wave is rolled in order and the accumulated chest is fed back into the
+ * next roll so armour progression and the guaranteed headline reward obey the
+ * same no-duplicate-within-run rules as the server-room implementation.
+ */
+export function rollSunspireRunRewards({
+  throughWave,
+  random = Math.random,
+  obtainedIds = new Set(),
+} = {}) {
+  const depth = Math.max(1, Math.min(12, Math.floor(Number(throughWave) || 1)))
+  let chest = []
+  for (let wave = 1; wave <= depth; wave++) {
+    const staged = rollSunspireWaveReward({
+      wave,
+      random,
+      obtainedIds,
+      stagedRewards: chest,
+    })
+    chest = mergeSunspireRewards(chest, staged)
+  }
+  return chest
+}
