@@ -110,47 +110,37 @@ describe('Sunspire co-op shared wave state', () => {
     expect(out.kill).toBeNull()
     expect(out.stateNext.phase).toBe('decision')
     expect(out.stateNext.raid.currentWaveIndex).toBe(0)
-    expect(out.stateNext.raid.modifierOffers).toHaveLength(3)
+    expect(out.stateNext.raid.modifierOffers).toEqual([])
     expect(out.stateNext.members['7'].sunspireChest.length).toBeGreaterThan(0)
     expect(out.stateNext.members['8'].sunspireChest.length).toBeGreaterThan(0)
   })
 
-  it('applies Withering to the real member HP cap without compounding tiers', () => {
+  it('keeps modifier selection disabled while the feature flag is off', () => {
     let state: any = start(party())
     state.members['7'].damage = 10_000
     state = forceWaveClear(state).stateNext
-    state.raid.modifierOffers = ['withering']
 
-    let advanced = tick(state, [intent(7, { type: 'sunspire_choose_modifier', modifierId: 'withering' })]).stateNext
-    expect(advanced.raid.modifierState.withering).toBe(1)
-    expect(advanced.members['7'].maxHP).toBe(Math.floor(advanced.members['7'].stats.hitpoints * 0.9))
-
-    advanced.boss.currentHP = 0
-    advanced.boss.encounter.primaryDefeated = true
-    advanced.boss.adds = []
-    advanced.members['7'].damage = 10_000
-    state = tick(advanced).stateNext
-    state.raid.modifierOffers = ['withering']
-    advanced = tick(state, [intent(7, { type: 'sunspire_choose_modifier', modifierId: 'withering' })]).stateNext
-    expect(advanced.raid.modifierState.withering).toBe(2)
-    expect(advanced.members['7'].maxHP).toBe(Math.floor(advanced.members['7'].stats.hitpoints * 0.8))
+    expect(state.raid.modifierOffers).toEqual([])
+    const refused = tick(state, [intent(7, { type: 'sunspire_choose_modifier', modifierId: 'withering' })])
+    expect(refused.stateNext.phase).toBe('decision')
+    expect(refused.stateNext.raid.modifierState).toEqual({})
+    expect(refused.events.some((e: any) => e.type === 'actionRefused' && e.reason === 'modifiers_disabled')).toBe(true)
   })
 
-  it('only the host can choose one of the shared modifier offers and advance everyone', () => {
+  it('only the host can continue to the next wave while modifiers are disabled', () => {
     let state: any = start(party([7, 8]))
     state.members['7'].damage = 10_000
     state.members['8'].damage = 10_000
     state = forceWaveClear(state).stateNext
-    const chosen = state.raid.modifierOffers[0]
 
-    const refused = tick(state, [intent(8, { type: 'sunspire_choose_modifier', modifierId: chosen })])
+    const refused = tick(state, [intent(8, { type: 'sunspire_continue' })])
     expect(refused.stateNext.phase).toBe('decision')
     expect(refused.events.some((e: any) => e.type === 'actionRefused' && e.reason === 'not_host')).toBe(true)
 
-    const advanced = tick(refused.stateNext, [intent(7, { type: 'sunspire_choose_modifier', modifierId: chosen })])
+    const advanced = tick(refused.stateNext, [intent(7, { type: 'sunspire_continue' })])
     expect(advanced.stateNext.phase).toBe('active')
     expect(advanced.stateNext.raid.currentWaveIndex).toBe(1)
-    expect(advanced.stateNext.raid.modifierState[chosen]).toBe(1)
+    expect(advanced.stateNext.raid.modifierState).toEqual({})
     expect(advanced.stateNext.members['7'].sunspireChest.length).toBeGreaterThan(0)
   })
 
@@ -176,8 +166,7 @@ describe('Sunspire co-op shared wave state', () => {
     state = forceWaveClear(state).stateNext
     expect(state.members['7'].sunspireChest.length).toBeGreaterThan(0)
 
-    const chosen = state.raid.modifierOffers[0]
-    state = tick(state, [intent(7, { type: 'sunspire_choose_modifier', modifierId: chosen })]).stateNext
+    state = tick(state, [intent(7, { type: 'sunspire_continue' })]).stateNext
     state.members['7'].status = 'dead'
     state.members['7'].hp = 0
     const wiped = tick(state).stateNext
@@ -192,6 +181,9 @@ describe('Sunspire co-op shared wave state', () => {
   })
 
   it('validates bounded combat reactions at the API edge', () => {
+    expect(validateCoopAction({ type: 'sunspire_continue' })).toEqual({
+      action: { type: 'sunspire_continue' },
+    })
     expect(validateCoopAction({ type: 'combat_reaction', reaction: { attackId: 'afterburn', type: 'guard' } })).toEqual({
       action: { type: 'combat_reaction', reaction: { attackId: 'afterburn', type: 'guard' } },
     })
