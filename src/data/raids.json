@@ -967,7 +967,7 @@
     "icon": "sunspire_colosseum",
     "hardMode": false,
     "allowSkip": false,
-    "description": "Twelve escalating arena waves. Bank the chest and leave safely, or keep climbing while persistent arena curses make every wave more dangerous.",
+    "description": "Twelve escalating arena waves. Claim the accumulated chest and leave safely, or keep climbing for greater rewards as each wave grows more dangerous.",
     "waves": [
       {
         "id": "sunspire_wave_1",
