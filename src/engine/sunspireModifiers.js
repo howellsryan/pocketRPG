@@ -1,6 +1,11 @@
 import { prepareAdd, liveAdds } from './bossAdds.js'
 import { nextProtectionPrayerThreat } from '../utils/prayerIcons.js'
 
+// Product feature flag: keep the complete modifier system in place while it is
+// temporarily removed from live Sunspire runs. Flip this single value to restore
+// modifier offers/effects after the between-wave UX is ready to return.
+export const SUNSPIRE_MODIFIERS_ENABLED = false
+
 export const SUNSPIRE_MODIFIERS = Object.freeze({
   ember_swarm: {
     name: 'Ember Swarm', maxTier: 3,
