@@ -21,7 +21,7 @@ import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip, WasIs } fr
 import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt, getMonsterAddInfo, getDefenceLevelInfo, getDefenceBonusInfo, DEFENCE_STYLES } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { COMBAT_CATEGORY_ORDER, COMBAT_RAID_ORDER, orderBy } from '../utils/combatOrder.js'
-import { prayerSkill } from '../utils/prayerIcons.js'
+import { nextProtectionPrayerThreat, prayerSkill, protectionPrayerForAttackStyle } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, continueRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
@@ -73,7 +73,7 @@ import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import SunspireDecisionPanel from '../components/SunspireDecisionPanel.jsx'
-import { nextSunspirePrayerFlick, offerSunspireModifiers, raiseSunspireModifierTier } from '../engine/sunspireModifiers.js'
+import { offerSunspireModifiers, raiseSunspireModifierTier } from '../engine/sunspireModifiers.js'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
@@ -3515,14 +3515,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // borrow the boss's monsterSplats or a hit on the add would flash on a
   // figure representing something else entirely.
   const stageTargetSplats = targetedAdd(combat) ? addSplats : monsterSplats
-  const prayerCue = combat.raid?.raidId === 'sunspire_colosseum' && addsOnField.length > 0
-    ? nextSunspirePrayerFlick({
-      primary: combat.monster,
-      primaryAttackTimer: combat.monsterAttackTimer,
-      adds: combat.adds,
-    })
-    : null
+  const prayerCue = nextProtectionPrayerThreat({
+    primary: combat.monster,
+    primaryAttackTimer: combat.monsterAttackTimer,
+    adds: combat.adds,
+    staggered: combat.raid?.raidId === 'sunspire_colosseum',
+  })
+  const cuePrayer = prayerCue ? protectionPrayerForAttackStyle(prayerCue.style, prayersData) : null
   const cueStyleArt = prayerCue ? getStyleArt(prayerCue.style) : null
+  const cueThreat = cuePrayer && cueStyleArt
+    ? { skill: prayerSkill(cuePrayer), color: cueStyleArt.color, label: cuePrayer.name }
+    : null
   // Null on the classic screen: every readout the stage absorbed (both HP
   // bars, the prayer pool) is rendered as its own bar below instead.
   const spriteStage = !combatAnimations ? null : (
@@ -3548,7 +3551,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       resetKey={fightSeqRef.current}
       showCorners={!isDesktopCombatLayout}
       actorPrayer={typeof combat?.maxPrayerPoints === 'number' ? { current: combat.prayerPoints, max: combat.maxPrayerPoints } : null}
-      actorThreat={cueStyleArt ? { icon: cueStyleArt.icon, color: cueStyleArt.color, label: `Next: ${cueStyleArt.label}` } : null}
+      actorThreat={cueThreat}
       label={`You versus ${spriteMonster.name}`}
     />
   )
@@ -4095,7 +4098,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               {/* Prayer pool reads from the stage's top-left corner
                   (showCorners/actorPrayer above) unless the stage is off. */}
               {!combatAnimations && typeof combat?.maxPrayerPoints === 'number' && (
-                <CombatPrayerBlock current={combat.prayerPoints} max={combat.maxPrayerPoints} />
+                <CombatPrayerBlock current={combat.prayerPoints} max={combat.maxPrayerPoints} threat={cueThreat} />
               )}
 
               {/* Slayer task indicator */}
