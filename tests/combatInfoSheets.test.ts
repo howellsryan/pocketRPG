@@ -104,15 +104,15 @@ describe('wave raid info model', () => {
     const raid: any = raidsData.sunspire_colosseum
     expect(raid.bosses).toBeUndefined()
     const stages = raidInfoStages(raid, monstersData)
-    expect(stages).toHaveLength(12)
-    expect(stages[0]).toMatchObject({ kind: 'wave', label: 'Wave 1', primaryId: 'ashen_warband_blade', startingEnemyCount: 4, reinforcementCount: 1 })
-    expect(stages[11]).toMatchObject({ kind: 'wave', label: 'Wave 12', primaryId: 'aurelios_the_unbroken', startingEnemyCount: 1, reinforcementCount: 0 })
+    expect(stages).toHaveLength(6)
+    expect(stages[0]).toMatchObject({ kind: 'wave', label: 'Wave 1', primaryId: 'ashen_warband_blade', startingEnemyCount: 6, reinforcementCount: 1 })
+    expect(stages[5]).toMatchObject({ kind: 'wave', label: 'Wave 6', primaryId: 'aurelios_the_unbroken', startingEnemyCount: 1, reinforcementCount: 0 })
   })
 
   it('surfaces Sunspire unique odds from the first eligible wave through the final wave', () => {
     expect(raidUniqueChanceRange(raidsData.sunspire_colosseum)).toEqual({
-      first: { wave: 4, chance: 1 / 124 },
-      last: { wave: 12, chance: 1 / 12 },
+      first: { wave: 1, chance: 1 / 82 },
+      last: { wave: 6, chance: 1 / 12 },
     })
   })
 })
