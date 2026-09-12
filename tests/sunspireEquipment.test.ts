@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import itemsData from '../src/data/items.json'
+import bespokeIcons from '../src/data/bespokeIcons.json'
+import { resolveItemIcon } from '../src/utils/itemIconResolve.js'
 import { applySpecialAttack, createCombatState, processCombatTick } from '../src/engine/combat.js'
 import { getEquipmentBonuses } from '../src/engine/equipment.js'
 import { chargedArmourRecoil } from '../src/engine/chargedPassives.js'
@@ -81,6 +83,20 @@ describe('Sunspire reward equipment data', () => {
     expect(empty.attackBonus.ranged).toBeGreaterThanOrEqual(18)
     expect(charged.attackBonus.ranged).toBeGreaterThan(empty.attackBonus.ranged)
     expect(charged.otherBonus.rangedStrength).toBeGreaterThan(empty.otherBonus.rangedStrength)
+  })
+})
+
+describe('Sunspire reward icon art', () => {
+  it('uses bespoke PocketRPG artwork for every new reward', () => {
+    for (const id of [
+      'sunshards', 'resonance_crystal', 'sunweaver_quiver', 'twinflare_chakrams',
+      'resonant_bulwark_boots', 'sunbound_zealot_helm',
+      'sunbound_zealot_cuirass', 'sunbound_zealot_greaves',
+    ]) {
+      const resolved = resolveItemIcon(items[id], { bespoke: bespokeIcons as any })
+      expect(resolved.kind, id).toBe('bespoke')
+      expect(resolved.body?.length, id).toBeGreaterThan(100)
+    }
   })
 })
 
