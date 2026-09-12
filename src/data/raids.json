@@ -967,7 +967,7 @@
     "icon": "sunspire_colosseum",
     "hardMode": false,
     "allowSkip": false,
-    "description": "Twelve escalating arena waves. Claim the accumulated chest and leave safely, or keep climbing for greater rewards as each wave grows more dangerous.",
+    "description": "Six escalating arena waves using the Colosseum's former upper-half encounters. Claim the accumulated chest and leave safely, or keep climbing for greater rewards as each wave grows more dangerous.",
     "waves": [
       {
         "id": "sunspire_wave_1",
@@ -975,14 +975,16 @@
         "initialAdds": [
           "ashen_warband_bow",
           "ashen_warband_magus",
-          "embercoil_shaman"
+          "dawnlance_colossus",
+          "triune_chimera",
+          "resonance_colossus"
         ],
         "reinforcements": [
           {
             "id": "sunspire_wave_1_reinforcement",
             "afterTicks": 67,
             "monsterIds": [
-              "sunclaw_gladiator"
+              "hornwarden"
             ]
           }
         ]
@@ -993,15 +995,17 @@
         "initialAdds": [
           "ashen_warband_bow",
           "ashen_warband_magus",
-          "embercoil_shaman",
-          "dawnlance_colossus"
+          "dawnlance_colossus",
+          "dawnlance_colossus",
+          "triune_chimera",
+          "resonance_colossus"
         ],
         "reinforcements": [
           {
             "id": "sunspire_wave_2_reinforcement",
             "afterTicks": 67,
             "monsterIds": [
-              "sunclaw_gladiator"
+              "hornwarden"
             ]
           }
         ]
@@ -1012,16 +1016,16 @@
         "initialAdds": [
           "ashen_warband_bow",
           "ashen_warband_magus",
-          "embercoil_shaman",
           "dawnlance_colossus",
-          "dawnlance_colossus"
+          "triune_chimera",
+          "triune_chimera"
         ],
         "reinforcements": [
           {
             "id": "sunspire_wave_3_reinforcement",
             "afterTicks": 67,
             "monsterIds": [
-              "sunclaw_gladiator"
+              "hornwarden"
             ]
           }
         ]
@@ -1032,7 +1036,9 @@
         "initialAdds": [
           "ashen_warband_bow",
           "ashen_warband_magus",
-          "embercoil_shaman",
+          "dawnlance_colossus",
+          "dawnlance_colossus",
+          "triune_chimera",
           "triune_chimera"
         ],
         "reinforcements": [
@@ -1040,7 +1046,7 @@
             "id": "sunspire_wave_4_reinforcement",
             "afterTicks": 67,
             "monsterIds": [
-              "sunclaw_gladiator",
+              "hornwarden",
               "embercoil_shaman"
             ]
           }
@@ -1052,16 +1058,17 @@
         "initialAdds": [
           "ashen_warband_bow",
           "ashen_warband_magus",
-          "embercoil_shaman",
           "dawnlance_colossus",
-          "triune_chimera"
+          "triune_chimera",
+          "triune_chimera",
+          "resonance_colossus"
         ],
         "reinforcements": [
           {
             "id": "sunspire_wave_5_reinforcement",
             "afterTicks": 67,
             "monsterIds": [
-              "sunclaw_gladiator",
+              "hornwarden",
               "embercoil_shaman"
             ]
           }
@@ -1069,133 +1076,6 @@
       },
       {
         "id": "sunspire_wave_6",
-        "primary": "ashen_warband_blade",
-        "initialAdds": [
-          "ashen_warband_bow",
-          "ashen_warband_magus",
-          "embercoil_shaman",
-          "dawnlance_colossus",
-          "dawnlance_colossus",
-          "triune_chimera"
-        ],
-        "reinforcements": [
-          {
-            "id": "sunspire_wave_6_reinforcement",
-            "afterTicks": 67,
-            "monsterIds": [
-              "sunclaw_gladiator",
-              "embercoil_shaman"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "sunspire_wave_7",
-        "primary": "ashen_warband_blade",
-        "initialAdds": [
-          "ashen_warband_bow",
-          "ashen_warband_magus",
-          "dawnlance_colossus",
-          "triune_chimera",
-          "resonance_colossus"
-        ],
-        "reinforcements": [
-          {
-            "id": "sunspire_wave_7_reinforcement",
-            "afterTicks": 67,
-            "monsterIds": [
-              "hornwarden"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "sunspire_wave_8",
-        "primary": "ashen_warband_blade",
-        "initialAdds": [
-          "ashen_warband_bow",
-          "ashen_warband_magus",
-          "dawnlance_colossus",
-          "dawnlance_colossus",
-          "triune_chimera",
-          "resonance_colossus"
-        ],
-        "reinforcements": [
-          {
-            "id": "sunspire_wave_8_reinforcement",
-            "afterTicks": 67,
-            "monsterIds": [
-              "hornwarden"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "sunspire_wave_9",
-        "primary": "ashen_warband_blade",
-        "initialAdds": [
-          "ashen_warband_bow",
-          "ashen_warband_magus",
-          "dawnlance_colossus",
-          "triune_chimera",
-          "triune_chimera"
-        ],
-        "reinforcements": [
-          {
-            "id": "sunspire_wave_9_reinforcement",
-            "afterTicks": 67,
-            "monsterIds": [
-              "hornwarden"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "sunspire_wave_10",
-        "primary": "ashen_warband_blade",
-        "initialAdds": [
-          "ashen_warband_bow",
-          "ashen_warband_magus",
-          "dawnlance_colossus",
-          "dawnlance_colossus",
-          "triune_chimera",
-          "triune_chimera"
-        ],
-        "reinforcements": [
-          {
-            "id": "sunspire_wave_10_reinforcement",
-            "afterTicks": 67,
-            "monsterIds": [
-              "hornwarden",
-              "embercoil_shaman"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "sunspire_wave_11",
-        "primary": "ashen_warband_blade",
-        "initialAdds": [
-          "ashen_warband_bow",
-          "ashen_warband_magus",
-          "dawnlance_colossus",
-          "triune_chimera",
-          "triune_chimera",
-          "resonance_colossus"
-        ],
-        "reinforcements": [
-          {
-            "id": "sunspire_wave_11_reinforcement",
-            "afterTicks": 67,
-            "monsterIds": [
-              "hornwarden",
-              "embercoil_shaman"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "sunspire_wave_12",
         "primary": "aurelios_the_unbroken",
         "initialAdds": [],
         "reinforcements": []
@@ -1219,22 +1099,19 @@
     ],
     "sunspireRewards": {
       "uniqueChanceByWave": {
-        "4": 0.008064516129032258,
-        "5": 0.00909090909090909,
-        "6": 0.010416666666666666,
-        "7": 0.012195121951219513,
-        "8": 0.014705882352941176,
-        "9": 0.018518518518518517,
-        "10": 0.025,
-        "11": 0.038461538461538464,
-        "12": 0.08333333333333333
+        "1": 0.012195121951219513,
+        "2": 0.014705882352941176,
+        "3": 0.018518518518518517,
+        "4": 0.025,
+        "5": 0.038461538461538464,
+        "6": 0.08333333333333333
       },
       "uniqueUnlockWave": {
-        "resonance_crystal": 4,
-        "sunbound_zealot_helm": 4,
-        "sunbound_zealot_cuirass": 4,
-        "sunbound_zealot_greaves": 4,
-        "twinflare_chakrams": 7
+        "resonance_crystal": 1,
+        "sunbound_zealot_helm": 1,
+        "sunbound_zealot_cuirass": 1,
+        "sunbound_zealot_greaves": 1,
+        "twinflare_chakrams": 1
       },
       "armourOrder": [
         "sunbound_zealot_helm",
@@ -1242,7 +1119,8 @@
         "sunbound_zealot_greaves"
       ],
       "headlineItem": "sunweaver_quiver",
-      "guaranteedFirstClear": true
+      "guaranteedFirstClear": true,
+      "rewardDepthOffset": 6
     },
     "rewards": {
       "always": [
