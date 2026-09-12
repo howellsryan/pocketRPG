@@ -13935,7 +13935,7 @@
     "isAdd": false,
     "raidBoss": true,
     "combatLevel": 110,
-    "hitpoints": 220,
+    "hitpoints": 1,
     "stats": {
       "attack": 190,
       "strength": 185,
@@ -13965,7 +13965,7 @@
     "isAdd": true,
     "raidBoss": true,
     "combatLevel": 100,
-    "hitpoints": 190,
+    "hitpoints": 1,
     "stats": {
       "attack": 80,
       "strength": 120,
@@ -13995,7 +13995,7 @@
     "isAdd": true,
     "raidBoss": true,
     "combatLevel": 100,
-    "hitpoints": 180,
+    "hitpoints": 1,
     "stats": {
       "attack": 80,
       "strength": 80,
@@ -14025,7 +14025,7 @@
     "isAdd": true,
     "raidBoss": true,
     "combatLevel": 130,
-    "hitpoints": 260,
+    "hitpoints": 1,
     "stats": {
       "attack": 205,
       "strength": 205,
@@ -14055,7 +14055,7 @@
     "isAdd": true,
     "raidBoss": true,
     "combatLevel": 150,
-    "hitpoints": 300,
+    "hitpoints": 1,
     "stats": {
       "attack": 100,
       "strength": 100,
@@ -14085,7 +14085,7 @@
     "isAdd": true,
     "raidBoss": true,
     "combatLevel": 240,
-    "hitpoints": 480,
+    "hitpoints": 1,
     "stats": {
       "attack": 250,
       "strength": 245,
@@ -14115,7 +14115,7 @@
     "isAdd": true,
     "raidBoss": true,
     "combatLevel": 350,
-    "hitpoints": 700,
+    "hitpoints": 1,
     "stats": {
       "attack": 120,
       "strength": 180,
@@ -14145,7 +14145,7 @@
     "isAdd": true,
     "raidBoss": true,
     "combatLevel": 475,
-    "hitpoints": 950,
+    "hitpoints": 1,
     "stats": {
       "attack": 270,
       "strength": 255,
@@ -14180,7 +14180,7 @@
     "isAdd": true,
     "raidBoss": true,
     "combatLevel": 625,
-    "hitpoints": 1250,
+    "hitpoints": 1,
     "stats": {
       "attack": 290,
       "strength": 280,
@@ -14210,7 +14210,7 @@
     "isAdd": true,
     "raidBoss": true,
     "combatLevel": 525,
-    "hitpoints": 1050,
+    "hitpoints": 1,
     "stats": {
       "attack": 315,
       "strength": 315,
@@ -14301,7 +14301,7 @@
     "raidBoss": true,
     "sunspireChampion": true,
     "combatLevel": 1450,
-    "hitpoints": 4500,
+    "hitpoints": 1,
     "stats": {
       "attack": 430,
       "strength": 425,
