@@ -5,6 +5,8 @@ const raid = raidsData?.[RAID_ID] || {}
 const rewardRules = raid?.sunspireRewards || {}
 const armourOrder = Array.isArray(rewardRules.armourOrder) ? rewardRules.armourOrder : []
 const headlineItem = rewardRules.headlineItem || 'sunweaver_quiver'
+const maxWave = Math.max(1, Array.isArray(raid?.waves) ? raid.waves.length : 1)
+const rewardDepthOffset = Math.max(0, Math.floor(Number(rewardRules.rewardDepthOffset) || 0))
 
 export function cloneSunspireRewards(rewards) {
   return (Array.isArray(rewards) ? rewards : []).map(r => ({
@@ -51,7 +53,8 @@ function stagedIds(stagedRewards) {
  * No caller-provided reward identity ever enters this function.
  */
 export function rollSunspireWaveReward({ wave, random = Math.random, obtainedIds = new Set(), stagedRewards = [] } = {}) {
-  const depth = Math.max(1, Math.min(12, Math.floor(Number(wave) || 1)))
+  const depth = Math.max(1, Math.min(maxWave, Math.floor(Number(wave) || 1)))
+  const effectiveDepth = depth + rewardDepthOffset
   const loot = []
   const staged = stagedIds(stagedRewards)
 
@@ -62,7 +65,7 @@ export function rollSunspireWaveReward({ wave, random = Math.random, obtainedIds
     for (const entry of raid?.rewards?.unique?.items || []) {
       const itemId = entry?.itemId
       if (!itemId || itemId === headlineItem) continue
-      const unlockWave = Math.max(1, Number(rewardRules?.uniqueUnlockWave?.[itemId]) || 4)
+      const unlockWave = Math.max(1, Number(rewardRules?.uniqueUnlockWave?.[itemId]) || 1)
       if (depth < unlockWave) continue
       unlocked.push({ itemId, weight: Math.max(0, Number(entry.weight) || 0) })
     }
@@ -78,11 +81,13 @@ export function rollSunspireWaveReward({ wave, random = Math.random, obtainedIds
     if (unique?.itemId) loot.push({ itemId: unique.itemId, quantity: 1 })
   }
 
-  const shardBase = 18 + depth * 8
-  loot.push({ itemId: 'sunshards', quantity: shardBase + rollQuantity([0, depth * 4], random) })
-  loot.push({ itemId: 'coins', quantity: 5000 + depth * 3500 + rollQuantity([0, depth * 1200], random) })
+  // The six-wave raid keeps the reward scale of the former waves 7-12 even
+  // though those encounters are now presented to players as waves 1-6.
+  const shardBase = 18 + effectiveDepth * 8
+  loot.push({ itemId: 'sunshards', quantity: shardBase + rollQuantity([0, effectiveDepth * 4], random) })
+  loot.push({ itemId: 'coins', quantity: 5000 + effectiveDepth * 3500 + rollQuantity([0, effectiveDepth * 1200], random) })
 
-  if (depth === 12) {
+  if (depth === maxWave) {
     if (!obtainedIds.has(headlineItem) && !staged.has(headlineItem) && rewardRules.guaranteedFirstClear !== false) {
       loot.push({ itemId: headlineItem, quantity: 1 })
     } else {
@@ -106,7 +111,7 @@ export function rollSunspireRunRewards({
   random = Math.random,
   obtainedIds = new Set(),
 } = {}) {
-  const depth = Math.max(1, Math.min(12, Math.floor(Number(throughWave) || 1)))
+  const depth = Math.max(1, Math.min(maxWave, Math.floor(Number(throughWave) || 1)))
   let chest = []
   for (let wave = 1; wave <= depth; wave++) {
     const staged = rollSunspireWaveReward({
