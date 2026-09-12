@@ -668,13 +668,12 @@ function isSunspireStaggeredEncounter(state) {
 // exactly the same queue rather than recomputing phases in the browser.
 function sunspireEnemyAttackSlotOpen(state) {
   return !isSunspireStaggeredEncounter(state)
-    || Math.floor(Number(state.sunspireLastEnemyAttackTick) || -1) !== Math.floor(Number(state.tickCount) || 0)
+    || Math.floor(Number(state.tickCount) || 0) - Math.floor(Number(state.sunspireLastEnemyAttackTick) || -2) >= 2
 }
 
 function claimSunspireEnemyAttackSlot(state) {
-  // Reserve the following tick as the player's reaction window. The existing
-  // slot check then blocks that tick without any extra per-tick queue state.
-  if (isSunspireStaggeredEncounter(state)) state.sunspireLastEnemyAttackTick = state.tickCount + 1
+  // A claimed tick blocks every other enemy now and the whole following tick.
+  if (isSunspireStaggeredEncounter(state)) state.sunspireLastEnemyAttackTick = state.tickCount
 }
 
 export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}, inventory = [], slayerTask = null) {
