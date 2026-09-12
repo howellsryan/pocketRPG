@@ -23,6 +23,8 @@ export function validateCoopAction(action) {
       // No payload — the room decides whether this member is the host and
       // whether there is a lobby to end.
       return { action: { type: 'start_raid' } }
+    case 'sunspire_continue':
+      return { action: { type: 'sunspire_continue' } }
     case 'sunspire_choose_modifier':
       if (typeof action.modifierId !== 'string' || !action.modifierId) return { error: 'invalid_modifier' }
       return { action: { type: 'sunspire_choose_modifier', modifierId: action.modifierId } }
