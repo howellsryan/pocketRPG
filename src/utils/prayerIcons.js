@@ -77,38 +77,36 @@ function enemyProtectionStyle(enemy) {
   return normalizeProtectionStyle(enemy.attackStyle)
 }
 
-function ticksUntilEnemyAttack(timer, includeReady = false) {
+function ticksUntilEnemyAttack(timer) {
   const value = Math.floor(Number(timer))
-  return Number.isFinite(value) ? Math.max(includeReady ? 0 : 1, value) : Number.MAX_SAFE_INTEGER
+  return Number.isFinite(value) ? Math.max(0, value) : Number.MAX_SAFE_INTEGER
 }
 
 /**
  * Presentation-only next incoming protection cue shared by every 2D combat
  * screen. It reads the same attack timers the fight engine exposes.
  *
- * staggered is true for Sunspire, where an add already waiting at timer zero
- * keeps its queued turn; otherwise equal due timers resolve primary then adds
- * in spawn order. Ordinary boss/add fights may attack simultaneously; if
- * two equally-next enemies need different prayers we return null rather than
- * lie with one icon.
+ * Multi-enemy PvE is serialized everywhere this helper is used: an add already
+ * waiting at timer zero keeps its queued turn, otherwise a newly-due tie resolves
+ * primary then adds in spawn order. An unknown attack style remains a blocking
+ * candidate so the HUD never skips over the actual next attacker.
  */
 export function nextProtectionPrayerThreat({
   primary = null,
   primaryAttackTimer = null,
   adds = [],
-  staggered = false,
 } = {}) {
   const candidates = []
   const primaryStyle = enemyProtectionStyle(primary)
   const primaryMaxHit = primary?.multiForm && primary?.currentForm
     ? (primary.forms?.[primary.currentForm]?.maxHit ?? primary.formMaxHit ?? primary.maxHit)
     : primary?.maxHit
-  if (primary?.currentHP > 0 && primaryMaxHit !== 0 && primaryStyle) {
+  if (primary?.currentHP > 0 && primaryMaxHit !== 0) {
     candidates.push({
       monsterId: primary.id,
       monsterName: primary.name || primary.id,
       style: primaryStyle,
-      ticksUntil: ticksUntilEnemyAttack(primaryAttackTimer, staggered),
+      ticksUntil: ticksUntilEnemyAttack(primaryAttackTimer),
       fromAdd: false,
       order: -1,
     })
@@ -117,21 +115,19 @@ export function nextProtectionPrayerThreat({
   for (let index = 0; index < (Array.isArray(adds) ? adds.length : 0); index++) {
     const add = adds[index]
     const style = enemyProtectionStyle(add)
-    if (!add || add.currentHP <= 0 || add.maxHit === 0 || !style) continue
+    if (!add || add.currentHP <= 0 || add.maxHit === 0) continue
     candidates.push({
       monsterId: add.id,
       monsterName: add.name || add.id,
       style,
-      ticksUntil: ticksUntilEnemyAttack(add.attackTimer, staggered),
+      ticksUntil: ticksUntilEnemyAttack(add.attackTimer),
       fromAdd: true,
       order: index,
     })
   }
 
-  if (staggered) {
-    const queuedAdd = candidates.find((candidate) => candidate.fromAdd && candidate.ticksUntil === 0)
-    if (queuedAdd) return queuedAdd
-  }
+  const queuedAdd = candidates.find((candidate) => candidate.fromAdd && candidate.ticksUntil === 0)
+  if (queuedAdd) return queuedAdd.style ? queuedAdd : null
 
   candidates.sort((a, b) =>
     a.ticksUntil - b.ticksUntil
@@ -139,11 +135,6 @@ export function nextProtectionPrayerThreat({
     || a.order - b.order
   )
   const first = candidates[0]
-  if (!first) return null
-
-  if (!staggered) {
-    const equallyNext = candidates.filter((candidate) => candidate.ticksUntil === first.ticksUntil)
-    if (new Set(equallyNext.map((candidate) => candidate.style)).size > 1) return null
-  }
+  if (!first || !first.style) return null
   return first
 }
