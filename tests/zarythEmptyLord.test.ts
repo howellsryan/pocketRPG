@@ -17,6 +17,7 @@ import {
   isRoomWideAttacker,
   advanceRoomWideAttackTimer,
   advanceAddAttackTimers,
+  advanceStaggeredRoomWideAttacks,
 } from '../src/engine/coopBossEngine.js'
 import {
   getAddSpec,
@@ -553,6 +554,19 @@ describe('room-wide attacks in a co-op session', () => {
     const swings = [1, 2, 3, 4, 5, 6].map(() => advanceAddAttackTimers(boss))
     expect(swings.map((s) => s[0])).toEqual([false, false, true, false, false, true])
     expect(swings.map((s) => s[1])).toEqual([false, true, false, false, true, false])
+  })
+
+  it('serializes a room-wide boss and minion with a full reaction tick between their attacks', () => {
+    const record: any = {
+      currentHP: 100,
+      attackSpeed: 3,
+      attackTimer: 1,
+      adds: [{ instanceId: 'a#0', currentHP: 10, attackSpeed: 3, attackTimer: 0 }],
+    }
+
+    expect(advanceStaggeredRoomWideAttacks(record)).toEqual({ boss: false, adds: [true] })
+    expect(advanceStaggeredRoomWideAttacks(record)).toEqual({ boss: false, adds: [false] })
+    expect(advanceStaggeredRoomWideAttacks(record)).toEqual({ boss: true, adds: [false] })
   })
 
   it('never swings a minion the room does not have, and gives a fresh one a full wind-up', () => {
