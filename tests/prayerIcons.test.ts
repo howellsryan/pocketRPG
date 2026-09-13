@@ -88,6 +88,51 @@ describe('protection prayer threat cue', () => {
     })
   })
 
+  it('still treats timer zero and one as the same next tick outside staggered combat', () => {
+    const threat = nextProtectionPrayerThreat({
+      primary: { id: 'blade', name: 'Bladesworn', currentHP: 10, maxHit: 5, attackStyle: 'slash' },
+      primaryAttackTimer: 0,
+      adds: [
+        { id: 'mage', name: 'Mage', currentHP: 10, maxHit: 5, attackStyle: 'magic', attackTimer: 1 },
+      ],
+    })
+    expect(threat).toBeNull()
+  })
+
+  it('keeps an already queued Sunspire add ahead of a primary that is only just becoming ready', () => {
+    const threat = nextProtectionPrayerThreat({
+      primary: { id: 'blade', name: 'Bladesworn', currentHP: 10, maxHit: 5, attackStyle: 'slash' },
+      primaryAttackTimer: 1,
+      adds: [
+        { id: 'mage', name: 'Sunmage', currentHP: 10, maxHit: 5, attackStyle: 'magic', attackTimer: 0 },
+      ],
+      staggered: true,
+    })
+    expect(threat).toMatchObject({
+      monsterId: 'mage',
+      style: 'magic',
+      ticksUntil: 0,
+      fromAdd: true,
+    })
+  })
+
+  it('keeps a queued Sunspire add ahead when the primary is also waiting at zero', () => {
+    const threat = nextProtectionPrayerThreat({
+      primary: { id: 'blade', name: 'Bladesworn', currentHP: 10, maxHit: 5, attackStyle: 'slash' },
+      primaryAttackTimer: 0,
+      adds: [
+        { id: 'archer', name: 'Deadeye', currentHP: 10, maxHit: 5, attackStyle: 'ranged', attackTimer: 0 },
+      ],
+      staggered: true,
+    })
+    expect(threat).toMatchObject({
+      monsterId: 'archer',
+      style: 'ranged',
+      ticksUntil: 0,
+      fromAdd: true,
+    })
+  })
+
   it('suppresses pre-roll cues for enemies whose attack style is randomly selected at swing time', () => {
     expect(nextProtectionPrayerThreat({
       primary: {

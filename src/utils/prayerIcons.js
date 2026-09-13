@@ -77,17 +77,18 @@ function enemyProtectionStyle(enemy) {
   return normalizeProtectionStyle(enemy.attackStyle)
 }
 
-function ticksUntilEnemyAttack(timer) {
+function ticksUntilEnemyAttack(timer, includeReady = false) {
   const value = Math.floor(Number(timer))
-  return Number.isFinite(value) ? Math.max(1, value) : Number.MAX_SAFE_INTEGER
+  return Number.isFinite(value) ? Math.max(includeReady ? 0 : 1, value) : Number.MAX_SAFE_INTEGER
 }
 
 /**
  * Presentation-only next incoming protection cue shared by every 2D combat
  * screen. It reads the same attack timers the fight engine exposes.
  *
- * staggered is true for Sunspire, where equal due timers resolve primary then
- * adds in spawn order. Ordinary boss/add fights may attack simultaneously; if
+ * staggered is true for Sunspire, where an add already waiting at timer zero
+ * keeps its queued turn; otherwise equal due timers resolve primary then adds
+ * in spawn order. Ordinary boss/add fights may attack simultaneously; if
  * two equally-next enemies need different prayers we return null rather than
  * lie with one icon.
  */
@@ -107,7 +108,7 @@ export function nextProtectionPrayerThreat({
       monsterId: primary.id,
       monsterName: primary.name || primary.id,
       style: primaryStyle,
-      ticksUntil: ticksUntilEnemyAttack(primaryAttackTimer),
+      ticksUntil: ticksUntilEnemyAttack(primaryAttackTimer, staggered),
       fromAdd: false,
       order: -1,
     })
@@ -121,10 +122,15 @@ export function nextProtectionPrayerThreat({
       monsterId: add.id,
       monsterName: add.name || add.id,
       style,
-      ticksUntil: ticksUntilEnemyAttack(add.attackTimer),
+      ticksUntil: ticksUntilEnemyAttack(add.attackTimer, staggered),
       fromAdd: true,
       order: index,
     })
+  }
+
+  if (staggered) {
+    const queuedAdd = candidates.find((candidate) => candidate.fromAdd && candidate.ticksUntil === 0)
+    if (queuedAdd) return queuedAdd
   }
 
   candidates.sort((a, b) =>
