@@ -141,6 +141,22 @@ describe('Dread Core — both enemies attack', () => {
     const reaction = processCombatTick(first.combatState, { ...maxedStats, currentHP: 100000 }, equipment, itemsData)
     expect(reaction.events.some((e: any) => (e.type === 'monsterHit' || e.type === 'monsterMiss') && e.fromAdd)).toBe(false)
   })
+
+  it('leaves the open-world-style session on independent hostile clocks', () => {
+    // The world intentionally creates combat without a monsters table and then
+    // mirrors real NPCs into state.adds. That path must not inherit 2D staggering.
+    let state: any = createCombatState(BOSS_WITH_ADD, 'melee', 'aggressive', null, null)
+    state.adds = [prepareAdd(ADD_DEF, 1)]
+    state.monsterAttackTimer = 1
+    state.adds[0].attackTimer = 0
+    state.playerAttackTimer = 99
+    const equipment: any = { weapon: { itemId: 'test_sword' } }
+
+    const out = processCombatTick(state, { ...maxedStats, currentHP: 100000 }, equipment, itemsData)
+    const hostileSwings = out.events.filter((e: any) => e.type === 'monsterHit' || e.type === 'monsterMiss')
+    expect(state.serializeEnemyAttacks).toBe(false)
+    expect(hostileSwings).toHaveLength(2)
+  })
 })
 
 describe('Dread Core — targeting', () => {

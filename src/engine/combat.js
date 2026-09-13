@@ -69,6 +69,9 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     potionCooldown: 0,
     comboCooldown: 0,  // combo food / potions — own cooldown, usable on the same tick as normal food
     enemyAttackCooldown: 0, // one full reaction tick between hostile swings while several enemies are alive
+    // The open world supplies no monsters table and owns independent NPC clocks.
+    // Every 2D/coop fight supplies one, so only those sessions serialize hostiles.
+    serializeEnemyAttacks: monstersData != null,
     log: [],         // combat log entries
     tickCount: 0,
     xpGained: {},    // accumulated xp per skill
@@ -658,7 +661,8 @@ function hasFullVeracSet(equipment, itemsData) {
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
  */
-function hasMultipleLiveEnemies(state) {
+function hasSerializedMultiEnemyEncounter(state) {
+  if (state?.serializeEnemyAttacks !== true) return false
   const primary = state?.monster?.currentHP > 0 ? 1 : 0
   return primary + liveAdds(state).length > 1
 }
@@ -667,11 +671,11 @@ function hasMultipleLiveEnemies(state) {
 // Claiming it blocks every other enemy now and the whole following tick, giving
 // the player one complete reaction tick to change protection prayer.
 function enemyAttackSlotOpen(state) {
-  return !hasMultipleLiveEnemies(state) || Math.max(0, Math.floor(Number(state.enemyAttackCooldown) || 0)) <= 0
+  return !hasSerializedMultiEnemyEncounter(state) || Math.max(0, Math.floor(Number(state.enemyAttackCooldown) || 0)) <= 0
 }
 
 function claimEnemyAttackSlot(state) {
-  state.enemyAttackCooldown = 2
+  if (state?.serializeEnemyAttacks === true) state.enemyAttackCooldown = 2
 }
 
 export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}, inventory = [], slayerTask = null) {
@@ -1260,7 +1264,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       // Remember whether this add was already queued before this tick. A queued
       // add must not be starved by the primary becoming ready again while the
       // mandatory prayer-reaction tick is passing.
-      const addWasWaiting = hasMultipleLiveEnemies(state)
+      const addWasWaiting = hasSerializedMultiEnemyEncounter(state)
         && (add.attackTimer || 0) <= 0
       add.attackTimer = (add.attackTimer || 0) - 1
       if (add.attackTimer > 0) continue
@@ -1268,7 +1272,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       // The primary owns a NEW due-timer tie, but an add that was already waiting
       // at zero keeps its place in the queue. Spawn order then drains queued adds
       // one at a time on each free attack slot.
-      const primaryReady = hasMultipleLiveEnemies(state)
+      const primaryReady = hasSerializedMultiEnemyEncounter(state)
         && state.monsterAttackTimer <= 0
         && monster.currentHP > 0
       if ((primaryReady && !addWasWaiting) || !enemyAttackSlotOpen(state)) {
@@ -1277,8 +1281,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
       claimEnemyAttackSlot(state)
       add.attackTimer = Math.max(1, Math.floor(add.attackSpeed || 4))
-      // `addIndex` rides the event because several adds can swing on one tick
-      // and a caller may have to gate them separately — the open world checks
+      // `addIndex` rides the event because the open world still permits its
+      // independent NPC clocks to resolve together and gates them separately — it checks
       // each minion's own reach to the player it is mirrored onto.
       const addDamage = resolveEnemySwing(
         add, add.attackStyle, state, boostedPlayerStats, playerStats, bonuses, prayersData, events, { fromAdd: true, addIndex }
