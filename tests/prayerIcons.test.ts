@@ -88,6 +88,23 @@ describe('protection prayer threat cue', () => {
     })
   })
 
+  it('keeps an already queued Sunspire add ahead of a primary that is only just becoming ready', () => {
+    const threat = nextProtectionPrayerThreat({
+      primary: { id: 'blade', name: 'Bladesworn', currentHP: 10, maxHit: 5, attackStyle: 'slash' },
+      primaryAttackTimer: 1,
+      adds: [
+        { id: 'mage', name: 'Sunmage', currentHP: 10, maxHit: 5, attackStyle: 'magic', attackTimer: 0 },
+      ],
+      staggered: true,
+    })
+    expect(threat).toMatchObject({
+      monsterId: 'mage',
+      style: 'magic',
+      ticksUntil: 0,
+      fromAdd: true,
+    })
+  })
+
   it('suppresses pre-roll cues for enemies whose attack style is randomly selected at swing time', () => {
     expect(nextProtectionPrayerThreat({
       primary: {
