@@ -88,6 +88,17 @@ describe('protection prayer threat cue', () => {
     })
   })
 
+  it('still treats timer zero and one as the same next tick outside staggered combat', () => {
+    const threat = nextProtectionPrayerThreat({
+      primary: { id: 'blade', name: 'Bladesworn', currentHP: 10, maxHit: 5, attackStyle: 'slash' },
+      primaryAttackTimer: 0,
+      adds: [
+        { id: 'mage', name: 'Mage', currentHP: 10, maxHit: 5, attackStyle: 'magic', attackTimer: 1 },
+      ],
+    })
+    expect(threat).toBeNull()
+  })
+
   it('keeps an already queued Sunspire add ahead of a primary that is only just becoming ready', () => {
     const threat = nextProtectionPrayerThreat({
       primary: { id: 'blade', name: 'Bladesworn', currentHP: 10, maxHit: 5, attackStyle: 'slash' },
