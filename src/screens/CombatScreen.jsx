@@ -3571,7 +3571,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     primary: combat.monster,
     primaryAttackTimer: combat.monsterAttackTimer,
     adds: combat.adds,
-    staggered: combat.raid?.raidId === 'sunspire_colosseum',
   })
   const cuePrayer = prayerCue ? protectionPrayerForAttackStyle(prayerCue.style, prayersData) : null
   const cueStyleArt = prayerCue ? getStyleArt(prayerCue.style) : null

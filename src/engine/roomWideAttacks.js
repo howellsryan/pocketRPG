@@ -47,3 +47,52 @@ export function advanceAddAttackTimers(boss) {
   const adds = Array.isArray(boss?.adds) ? boss.adds : []
   return adds.map((add) => (add ? advanceRoomWideAttackTimer(add) : false))
 }
+
+/**
+ * Co-op-only serialized scheduler for a room-wide boss and its minions.
+ *
+ * The open world intentionally keeps using advanceRoomWideAttackTimer and
+ * advanceAddAttackTimers independently. Co-op calls this helper once per room
+ * tick so every hostile in the shared room record competes for one attack slot.
+ */
+export function advanceStaggeredRoomWideAttacks(boss) {
+  const adds = Array.isArray(boss?.adds) ? boss.adds : []
+  const result = { boss: false, adds: adds.map(() => false) }
+  const attackers = []
+
+  if (boss?.currentHP > 0) attackers.push({ record: boss, kind: 'boss', index: -1 })
+  for (let index = 0; index < adds.length; index++) {
+    if (adds[index]?.currentHP > 0) attackers.push({ record: adds[index], kind: 'add', index })
+  }
+  if (attackers.length === 0) return result
+
+  const cooldown = Math.max(0, Math.floor(Number(boss.enemyAttackCooldown) || 0))
+  boss.enemyAttackCooldown = cooldown > 0 ? cooldown - 1 : 0
+
+  for (const attacker of attackers) {
+    const speed = Math.max(1, Math.floor(Number(attacker.record.attackSpeed) || 4))
+    const stored = attacker.record.attackTimer
+    const current = stored == null || !Number.isFinite(Number(stored)) ? speed : Number(stored)
+    attacker.wasWaiting = current <= 0
+    attacker.record.attackTimer = current > 0 ? current - 1 : 0
+    attacker.due = attacker.record.attackTimer <= 0
+    attacker.speed = speed
+  }
+
+  const choose = (attacker) => {
+    if (!attacker) return result
+    attacker.record.attackTimer = attacker.speed
+    boss.enemyAttackCooldown = 2
+    if (attacker.kind === 'boss') result.boss = true
+    else result.adds[attacker.index] = true
+    return result
+  }
+
+  if (attackers.length === 1) return attackers[0].due ? choose(attackers[0]) : result
+  if (boss.enemyAttackCooldown > 0) return result
+
+  const queuedAdd = attackers.find((attacker) => attacker.kind === 'add' && attacker.wasWaiting && attacker.due)
+  const dueBoss = attackers.find((attacker) => attacker.kind === 'boss' && attacker.due)
+  const dueAdd = attackers.find((attacker) => attacker.kind === 'add' && attacker.due)
+  return choose(queuedAdd || dueBoss || dueAdd)
+}

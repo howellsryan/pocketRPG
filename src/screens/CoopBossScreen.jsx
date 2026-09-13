@@ -546,9 +546,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const coopStageSplats = spriteAdd ? addSplats : bossSplats
   const prayerCue = nextProtectionPrayerThreat({
     primary: liveMonster,
-    primaryAttackTimer: combatState?.monsterAttackTimer,
+    primaryAttackTimer: Number.isFinite(Number(boss?.attackTimer)) ? boss.attackTimer : combatState?.monsterAttackTimer,
     adds: bossAddsOf(boss),
-    staggered: state?.raid?.raidId === 'sunspire_colosseum',
   })
   const cuePrayer = prayerCue ? protectionPrayerForAttackStyle(prayerCue.style, prayersData) : null
   const cueStyleArt = prayerCue ? getStyleArt(prayerCue.style) : null

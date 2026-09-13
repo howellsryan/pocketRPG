@@ -114,7 +114,6 @@ export function nextSunspirePrayerFlick({ primary = null, primaryAttackTimer = n
     primary,
     primaryAttackTimer,
     adds,
-    staggered: true,
   })
 }
 

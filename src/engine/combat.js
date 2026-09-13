@@ -68,6 +68,7 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     eatCooldown: 0,
     potionCooldown: 0,
     comboCooldown: 0,  // combo food / potions — own cooldown, usable on the same tick as normal food
+    enemyAttackCooldown: 0, // one full reaction tick between hostile swings while several enemies are alive
     log: [],         // combat log entries
     tickCount: 0,
     xpGained: {},    // accumulated xp per skill
