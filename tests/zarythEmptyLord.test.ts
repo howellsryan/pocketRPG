@@ -547,6 +547,36 @@ describe('room-wide attacks in a co-op session', () => {
     expect(damaged.length).toBeLessThanOrEqual(1)
   })
 
+  it('serializes a normal co-op boss and add with a full reaction tick between them', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    let state: any = joined('corporeal_horror', [1])
+    state.boss.adds = [{
+      ...monstersData.dread_core,
+      instanceId: 'dread_core#test',
+      currentHP: monstersData.dread_core.hitpoints,
+      attackTimer: 0,
+    }]
+    state.members['1'].combat.monsterAttackTimer = 1
+    state.members['1'].combat.playerAttackTimer = 99
+
+    const incoming = (events: any[]) => events.filter((e: any) =>
+      e.characterId === 1 && (e.type === 'monsterHit' || e.type === 'monsterMiss')
+    )
+
+    const first = processCoopTick(state, [], deps, Date.now())
+    expect(incoming(first.events)).toHaveLength(1)
+    expect(incoming(first.events)[0].fromAdd).toBe(true)
+    expect(first.stateNext.members['1'].combat.enemyAttackCooldown).toBe(2)
+
+    const reaction = processCoopTick(first.stateNext, [], deps, Date.now())
+    expect(incoming(reaction.events)).toHaveLength(0)
+    expect(reaction.stateNext.members['1'].combat.enemyAttackCooldown).toBe(1)
+
+    const next = processCoopTick(reaction.stateNext, [], deps, Date.now())
+    expect(incoming(next.events)).toHaveLength(1)
+    expect(incoming(next.events)[0].fromAdd).not.toBe(true)
+  })
+
   it('runs each of its minions off the room clock, so one swing each is resolved per tick', () => {
     // Every minion keeps its own countdown, and they need not be in step: the
     // second here is summoned a tick after the first.
