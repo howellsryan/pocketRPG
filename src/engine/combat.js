@@ -657,29 +657,27 @@ function hasFullVeracSet(equipment, itemsData) {
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
  */
-function isSunspireStaggeredEncounter(state) {
-  return state?.raid?.raidId === 'sunspire_colosseum' && state?.encounter?.finite === true
+function hasMultipleLiveEnemies(state) {
+  const primary = state?.monster?.currentHP > 0 ? 1 : 0
+  return primary + liveAdds(state).length > 1
 }
 
-// Sunspire deliberately guarantees at most one hostile swing per game tick.
-// This makes protection-prayer flicking a learnable execution skill instead of
-// allowing equal-speed enemies to stack unavoidable damage on the same tick.
-// The marker lives in authoritative combat state, so co-op/solo reconnects keep
-// exactly the same queue rather than recomputing phases in the browser.
-function sunspireEnemyAttackSlotOpen(state) {
-  return !isSunspireStaggeredEncounter(state)
-    || Math.floor(Number(state.tickCount) || 0) - Math.floor(Number(state.sunspireLastEnemyAttackTick) || -2) >= 2
+// Every non-open-world multi-enemy PvE encounter shares one hostile attack slot.
+// Claiming it blocks every other enemy now and the whole following tick, giving
+// the player one complete reaction tick to change protection prayer.
+function enemyAttackSlotOpen(state) {
+  return !hasMultipleLiveEnemies(state) || Math.max(0, Math.floor(Number(state.enemyAttackCooldown) || 0)) <= 0
 }
 
-function claimSunspireEnemyAttackSlot(state) {
-  // A claimed tick blocks every other enemy now and the whole following tick.
-  if (isSunspireStaggeredEncounter(state)) state.sunspireLastEnemyAttackTick = state.tickCount
+function claimEnemyAttackSlot(state) {
+  state.enemyAttackCooldown = 2
 }
 
 export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}, inventory = [], slayerTask = null) {
   const state = { ...combatState, slayerTask }
   const events = []
   state.tickCount++
+  if (state.enemyAttackCooldown > 0) state.enemyAttackCooldown--
   if (!state.encounterPinned) advanceEncounterReinforcements(state, events)
   if (!state.sunspireHazardsPinned) tickSunspireHazards(state, events)
   if (state.aurelios && !state.aureliosPinned) updateAureliosPhase(state, state.monster, events)
@@ -1249,10 +1247,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   }
 
   // ── Add Attacks ──
-  // Every add fights on its own timer alongside the boss, so one tick can carry
-  // a hit from each of them and from the boss. Several monsterHit events in one
-  // tick apply cumulatively — the screen subtracts each event's damage rather
-  // than reading playerHP.
+  // Every add keeps its own timer, but all live enemies share one hostile attack
+  // slot. A due attacker that cannot use the slot stays queued at zero until its
+  // turn, so equal-speed enemies never stack hits on the same tick.
   if (state.active) {
     let addDamageLanded = false
     const adds = Array.isArray(state.adds) ? state.adds : []
@@ -1262,22 +1259,22 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       // Remember whether this add was already queued before this tick. A queued
       // add must not be starved by the primary becoming ready again while the
       // mandatory prayer-reaction tick is passing.
-      const sunspireAddWasWaiting = isSunspireStaggeredEncounter(state)
+      const addWasWaiting = hasMultipleLiveEnemies(state)
         && (add.attackTimer || 0) <= 0
       add.attackTimer = (add.attackTimer || 0) - 1
       if (add.attackTimer > 0) continue
 
-      // The primary owns a NEW due-timer tie (important for Aurelios telegraphs),
-      // but an add that was already waiting at zero keeps its place in the queue.
-      // Spawn order then drains queued adds one at a time on each free attack slot.
-      const sunspirePrimaryReady = isSunspireStaggeredEncounter(state)
+      // The primary owns a NEW due-timer tie, but an add that was already waiting
+      // at zero keeps its place in the queue. Spawn order then drains queued adds
+      // one at a time on each free attack slot.
+      const primaryReady = hasMultipleLiveEnemies(state)
         && state.monsterAttackTimer <= 0
         && monster.currentHP > 0
-      if ((sunspirePrimaryReady && !sunspireAddWasWaiting) || !sunspireEnemyAttackSlotOpen(state)) {
+      if ((primaryReady && !addWasWaiting) || !enemyAttackSlotOpen(state)) {
         add.attackTimer = 0
         continue
       }
-      claimSunspireEnemyAttackSlot(state)
+      claimEnemyAttackSlot(state)
       add.attackTimer = Math.max(1, Math.floor(add.attackSpeed || 4))
       // `addIndex` rides the event because several adds can swing on one tick
       // and a caller may have to gate them separately — the open world checks
@@ -1306,8 +1303,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   }
 
   // ── Monster Attack ──
-  if (state.monsterAttackTimer <= 0 && monster.currentHP > 0 && sunspireEnemyAttackSlotOpen(state)) {
-    claimSunspireEnemyAttackSlot(state)
+  if (state.monsterAttackTimer <= 0 && monster.currentHP > 0 && enemyAttackSlotOpen(state)) {
+    claimEnemyAttackSlot(state)
     let damage = 0
 
     // Determine the effective attack style (handle both single style and multiple styles array)
