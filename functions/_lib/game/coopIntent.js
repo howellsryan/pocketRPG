@@ -23,6 +23,13 @@ export function validateCoopAction(action) {
       // No payload — the room decides whether this member is the host and
       // whether there is a lobby to end.
       return { action: { type: 'start_raid' } }
+    case 'sunspire_continue':
+      return { action: { type: 'sunspire_continue' } }
+    case 'sunspire_choose_modifier':
+      if (typeof action.modifierId !== 'string' || !action.modifierId) return { error: 'invalid_modifier' }
+      return { action: { type: 'sunspire_choose_modifier', modifierId: action.modifierId } }
+    case 'sunspire_claim':
+      return { action: { type: 'sunspire_claim' } }
     case 'set_ready':
       // Lobby readiness. The room decides whether there is a lobby to be ready
       // in; the edge only fixes the shape.
@@ -35,6 +42,27 @@ export function validateCoopAction(action) {
       return { action: { type: 'change_combat_spell', spellId: action.spellId ?? null } }
     case 'queue_special':
       return { action: { type: 'queue_special' } }
+    case 'combat_reaction': {
+      const reaction = action.reaction
+      if (!reaction || typeof reaction !== 'object') return { error: 'invalid_reaction' }
+      const attackId = typeof reaction.attackId === 'string' && reaction.attackId.length <= 64 ? reaction.attackId : null
+      const type = ['guard', 'prayer', 'parry', 'prayer_sequence'].includes(reaction.type) ? reaction.type : null
+      if (!attackId || !type) return { error: 'invalid_reaction' }
+      const clean = { attackId, type }
+      if (type === 'prayer') {
+        if (!['melee', 'ranged', 'magic'].includes(reaction.style)) return { error: 'invalid_reaction' }
+        clean.style = reaction.style
+      } else if (type === 'parry') {
+        if (!['body', 'weapon', 'cape', 'shield'].includes(reaction.slot)) return { error: 'invalid_reaction' }
+        clean.slot = reaction.slot
+      } else if (type === 'prayer_sequence') {
+        if (!Array.isArray(reaction.prayers) || reaction.prayers.length !== 3 || reaction.prayers.some((p) => !['melee', 'ranged', 'magic'].includes(p))) {
+          return { error: 'invalid_reaction' }
+        }
+        clean.prayers = [...reaction.prayers]
+      }
+      return { action: { type: 'combat_reaction', reaction: clean } }
+    }
     case 'set_quick_prayers': {
       if (!Array.isArray(action.prayerIds)) return { error: 'invalid_prayer' }
       // Deduped and filtered to real prayers, which also bounds the list: the

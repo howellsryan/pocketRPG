@@ -133,9 +133,27 @@ Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward
 
 A boss hunts you across its whole lair, further than any other monster will follow, and any minions it has summoned stay on the field with it. The way out of a boss fight is the way you came in.
 
+## Sunspire Colosseum
+
+The Sunspire Colosseum is a six-wave endgame raid built around risk. Waves 1–5 throw several high-level enemies at you at once, and some waves bring reinforcements partway through the fight. Every enemy has its own health and attack timer, so target choice, protection prayers, supplies and switching gear matter more than simply racing the primary target.
+
+After each cleared wave you enter a safe decision state. The reward from that wave is added to your **unclaimed Sunspire chest**. You can **Claim & Leave** to bank the entire chest, or **Continue** and put all of it at risk. Dying or abandoning an active wave forfeits the unclaimed chest.
+
+The experimental arena modifier system is currently disabled. Sunspire also does not use ordinary Hard Mode or credit skipping.
+
+Wave 6 is **Aurelios the Unbroken**. He strongly rewards melee/slash setups and uses a learnable sequence of spear and shield attacks rather than random unavoidable damage. Watch his combat telegraphs: later phases add pressure at 90%, 75%, 50%, 25% and 10% health. Grapple calls for an equipment-parry response, Triple Parry tests prayer timing, and the final 10% is an enrage.
+
+Sunspire rewards include **Sunshards**, **Resonance Crystals**, the prayer-focused **Sunbound Zealot** armour set, **Twinflare Chakrams** and the **Sunweaver Quiver**. All of these endgame unique families are available from the new Wave 1 because the six-wave version starts at the difficulty tier previously reached later in the Colosseum. Unique odds improve from about **1 in 82 on Wave 1** to about **1 in 12 on Wave 6**. Your first full clear guarantees the Sunweaver Quiver; later clears substitute a large Sunshard reward instead of guaranteeing duplicate quivers.
+
+The Sunweaver Quiver occupies the cape slot and can be charged with Sunshards to improve its ranged bonuses. Twinflare Chakrams are a one-handed ranged weapon: uncharged they use a reduced damage profile, while Sunshard charges make every normal attack roll twice. Their 50% **Division** special also rolls twice while charged, and each successful hit reduces the target's Defence based on its Magic level.
+
+A Resonance Crystal combines with Grondar Boots to create **Resonant Bulwark Boots**. Charged Bulwark Boots can recoil 1 damage when a successful melee-style attack hits you; ranged and magic hits do not trigger the recoil.
+
+Sunspire supports solo runs and raid parties. In a party the wave, reinforcements and Aurelios pattern are shared by the room, the host makes between-wave Continue/Claim decisions, and each eligible member has their own server-rolled unclaimed chest.
+
 ## Hard Mode
 
-Most bosses and every raid can be switched to Hard Mode from the prompt that opens when you tap them in the combat picker. The switch is per boss (and per raid), stays on until you turn it off, and shows as a **HARD** tag wherever that fight is listed.
+Most bosses and conventional raids can be switched to Hard Mode from the prompt that opens when you tap them in the combat picker. Sunspire Colosseum is the exception: ordinary Hard Mode is unavailable there. The switch is per boss (and per raid), stays on until you turn it off, and shows as a **HARD** tag wherever that fight is listed.
 
 A hard fight doubles the boss's offence — twice the max hit, twice the accuracy. Its health and its defences are untouched, so it dies to the same hits in the same time it always did; the only thing that changes is how much damage it does to you along the way. In exchange every drop rate on its table doubles — a 1-in-500 unique becomes 1-in-250. Guaranteed drops stay one drop, and a boss you skip with credits costs double the credits.
 

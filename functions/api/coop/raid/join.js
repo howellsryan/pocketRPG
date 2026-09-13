@@ -34,6 +34,7 @@ export async function onRequestPost({ request, env }) {
     const raidId = typeof body?.raidId === 'string' ? body.raidId : null
     if (!raidId) return json({ error: 'Missing raidId', code: 'INVALID_COOP_RAID' }, 400)
 
+    const solo = body?.solo === true
     const rawSessionId = body?.sessionId
     const requestedSessionId = rawSessionId === undefined || rawSessionId === null
       ? null
@@ -48,6 +49,7 @@ export async function onRequestPost({ request, env }) {
       raidId,
       username: ch.username,
       sessionId: requestedSessionId,
+      solo,
     })
 
     const row = await readSession(env, sessionId)

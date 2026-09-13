@@ -21,6 +21,10 @@ import {
   swingsFromCombatEvents,
   swingsFromCoopEvents,
   EAT_ANIM_MS,
+  MONSTER_DEATH_ANIM_MS,
+  combatStageTarget,
+  combatStageDeathTransition,
+  combatStageSwingRoute,
   makeConsumeToken,
 } from '../src/utils/actionSprites.js'
 import gameIcons from '../src/data/gameIcons.json'
@@ -532,5 +536,93 @@ describe('swingsFromCoopEvents', () => {
     const { player } = swingsFromCoopEvents([{ type: 'immuneHit', immunity: 'magic', characterId: 1 }], 1)
     expect(player).not.toBeNull()
     expect(player?.hit).toBe(false)
+  })
+})
+
+
+describe('combat stage target handoff', () => {
+  const primary = { id: 'primary', name: 'Primary', hitpoints: 100, currentHP: 100 }
+  const add = { id: 'add', instanceId: 'add#1', name: 'Add', hitpoints: 50, currentHP: 50 }
+
+  it('holds the defeated primary for the death animation before showing the next live enemy', () => {
+    const previous = { ...primary }
+    const after: any = {
+      active: true,
+      monster: { ...primary, currentHP: 0 },
+      encounter: { finite: true, primaryDefeated: true },
+      adds: [{ ...add }],
+      addTargetIndex: null,
+    }
+
+    const transition = combatStageDeathTransition(previous, after)
+    expect(MONSTER_DEATH_ANIM_MS).toBe(900)
+    expect(transition).toMatchObject({ monster: { id: 'primary', currentHP: 0 }, wasAdd: false })
+    expect(combatStageTarget(after, transition)?.id).toBe('primary')
+    expect(combatStageTarget(after)?.instanceId).toBe('add#1')
+  })
+
+  it('holds a defeated selected add, then follows the engine to the surviving target', () => {
+    const selected = { ...add }
+    const after: any = {
+      active: true,
+      monster: { ...primary },
+      adds: [],
+      addTargetIndex: null,
+    }
+
+    const transition = combatStageDeathTransition(selected, after)
+    expect(transition).toMatchObject({ monster: { instanceId: 'add#1', currentHP: 0 }, wasAdd: true })
+    expect(combatStageTarget(after, transition)?.instanceId).toBe('add#1')
+    expect(combatStageTarget(after)?.id).toBe('primary')
+  })
+
+  it('does not invent a death transition for a manual target change or an ended fight', () => {
+    const other = { id: 'other', instanceId: 'other#1', currentHP: 40, hitpoints: 40 }
+    const manual: any = {
+      active: true,
+      monster: { ...primary },
+      adds: [{ ...add }, other],
+      addTargetIndex: 1,
+    }
+    expect(combatStageDeathTransition({ ...add }, manual)).toBeNull()
+
+    const ended = { ...manual, active: false, adds: [], addTargetIndex: null }
+    expect(combatStageDeathTransition({ ...add }, ended)).toBeNull()
+  })
+})
+
+
+describe('combat stage swing routing after automatic target handoff', () => {
+  it('keeps both player and enemy animations alive when a dead primary auto-targets the first live add', () => {
+    const state: any = {
+      active: true,
+      monster: { id: 'primary', name: 'Primary', hitpoints: 100, currentHP: 0 },
+      encounter: { finite: true, primaryDefeated: true },
+      adds: [{ id: 'add', instanceId: 'add#1', name: 'Add', hitpoints: 50, currentHP: 50 }],
+      addTargetIndex: null,
+    }
+
+    const route = combatStageSwingRoute(state)
+    expect(route).toEqual({ showingAdd: true })
+
+    const swings = swingsFromCombatEvents([
+      { type: 'playerHit', damage: 12, toAdd: true },
+      { type: 'monsterHit', damage: 7, fromAdd: true },
+    ], route)
+    expect(swings.player).not.toBeNull()
+    expect(swings.monster).not.toBeNull()
+  })
+
+  it('keeps boss routing false and manual add routing true', () => {
+    const boss: any = {
+      monster: { id: 'primary', currentHP: 100 },
+      encounter: { finite: true, primaryDefeated: false },
+      adds: [{ id: 'add', instanceId: 'add#1', currentHP: 50 }],
+      addTargetIndex: null,
+    }
+    expect(combatStageSwingRoute(boss)).toEqual({ showingAdd: false })
+
+    boss.addTargetIndex = 0
+    expect(combatStageSwingRoute(boss)).toEqual({ showingAdd: true })
   })
 })

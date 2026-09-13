@@ -16,7 +16,10 @@
 // State is persisted as JSON per tick, so members store only the mutable engine
 // fields; the monster itself is rebuilt from `monstersData` on every tick.
 
-import { createCombatState, processCombatTick } from './combat.js'
+import { applyCombatReaction, createCombatState, processCombatTick } from './combat.js'
+import { isWaveRaid, seedEncounterState, encounterHitpoints } from './raidEncounters.js'
+import { SUNSPIRE_MODIFIERS_ENABLED, applySunspireModifiersToState, offerSunspireModifiers, raiseSunspireModifierTier } from './sunspireModifiers.js'
+import { mergeSunspireRewards, rollSunspireWaveReward } from './sunspireRewards.js'
 import { hardModeDeathLoss, monstersTableFor } from './hardMode.js'
 import { grimReaperStashFromDeath } from './grimReaper.js'
 import { getLevelFromXP } from './experience.js'
@@ -227,12 +230,31 @@ export function cloneCoopState(state) {
       combat: { ...m.combat, activePotions: { ...(m.combat?.activePotions || {}) } },
       xpGained: { ...(m.xpGained || {}) },
       ...(Array.isArray(m.quickPrayers) ? { quickPrayers: [...m.quickPrayers] } : {}),
+      ...(Array.isArray(m.sunspireChest) ? { sunspireChest: m.sunspireChest.map((r) => ({ ...r })) } : {}),
+      ...(Array.isArray(m.sunspireStaged) ? { sunspireStaged: m.sunspireStaged.map((r) => ({ ...r })) } : {}),
+      ...(Array.isArray(m.sunspireObtainedIds) ? { sunspireObtainedIds: [...m.sunspireObtainedIds] } : {}),
     }
   }
   return {
     ...state,
-    boss: { ...state.boss, adds: bossAddsOf(state.boss).map((add) => ({ ...add })), monster: { ...(state.boss?.monster || {}) } },
-    ...(state.raid ? { raid: { ...state.raid, bosses: [...(state.raid.bosses || [])] } } : {}),
+    boss: {
+      ...state.boss,
+      adds: bossAddsOf(state.boss).map((add) => ({ ...add })),
+      monster: { ...(state.boss?.monster || {}) },
+      ...(state.boss?.encounter ? { encounter: structuredClone(state.boss.encounter) } : {}),
+      ...(state.boss?.aurelios ? { aurelios: structuredClone(state.boss.aurelios) } : {}),
+      ...(state.boss?.sunspireRules ? { sunspireRules: structuredClone(state.boss.sunspireRules) } : {}),
+      ...(state.boss?.sunspireHazards ? { sunspireHazards: structuredClone(state.boss.sunspireHazards) } : {}),
+    },
+    ...(state.raid ? {
+      raid: {
+        ...state.raid,
+        ...(Array.isArray(state.raid.bosses) ? { bosses: [...state.raid.bosses] } : {}),
+        ...(Array.isArray(state.raid.waves) ? { waves: structuredClone(state.raid.waves) } : {}),
+        ...(state.raid.modifierState ? { modifierState: { ...state.raid.modifierState } } : {}),
+        ...(Array.isArray(state.raid.modifierOffers) ? { modifierOffers: [...state.raid.modifierOffers] } : {}),
+      },
+    } : {}),
     members,
     recentEvents: Array.isArray(state.recentEvents) ? [...state.recentEvents] : [],
   }
@@ -278,6 +300,103 @@ export function createCoopBossState(bossId, monstersData, now = Date.now(), { ha
   }
 }
 
+function coopWaveBossState(raid, waveIndex, monstersData, modifierState = {}, now = Date.now()) {
+  const wave = raid?.waves?.[waveIndex]
+  const primary = monstersData?.[wave?.primary]
+  if (!wave || !primary) return null
+  const engine = createCombatState(primary, 'melee', 'accurate', null, monstersData)
+  seedEncounterState(engine, wave, monstersData, waveIndex)
+  applySunspireModifiersToState(engine, wave, monstersData, modifierState)
+  return {
+    tick: 0,
+    bossId: wave.primary,
+    hardMode: false,
+    startedAt: now,
+    boss: {
+      currentHP: engine.monster.currentHP,
+      maxHP: engine.monster.currentHP,
+      attackSpeed: engine.monster.attackSpeed || 4,
+      attackTimer: engine.monster.attackSpeed || 4,
+      monster: pickMutableMonsterFields(engine.monster),
+      adds: (engine.adds || []).map((add) => ({ ...add })),
+      add: null,
+      addSpawnCountdown: null,
+      addsSpawned: engine.addsSpawned || 0,
+      addsDefeated: engine.addsDefeated || 0,
+      encounter: structuredClone(engine.encounter),
+      ...(engine.aurelios ? { aurelios: structuredClone(engine.aurelios) } : {}),
+      ...(engine.sunspireRules ? { sunspireRules: structuredClone(engine.sunspireRules) } : {}),
+      ...(engine.sunspireHazards ? { sunspireHazards: structuredClone(engine.sunspireHazards) } : {}),
+      doubleKillCount: 0,
+      killedAt: null,
+      respawnCountdown: 0,
+    },
+    members: {},
+    targetCharId: null,
+    recentEvents: [],
+    phase: 'active',
+    hostCharacterId: null,
+  }
+}
+
+function isSunspireWaveRaidState(state) {
+  return state?.raid?.raidId === 'sunspire_colosseum' && Array.isArray(state?.raid?.waves)
+}
+
+function sunspireWaveCleared(state) {
+  if (!isSunspireWaveRaidState(state) || !state?.boss?.encounter?.finite) return false
+  return state.boss.encounter.primaryDefeated === true
+    && bossAddsOf(state.boss).every((add) => !(add?.currentHP > 0))
+}
+
+function resetMemberForWave(member, boss) {
+  // Withering already existed in the authoritative rule set but previously had
+  // no consumer. Always derive from the real Hitpoints level so tiers do not
+  // compound against the already-reduced cap.
+  const baseMaxHP = Math.max(1, Math.floor(Number(member?.stats?.hitpoints) || Number(member?.maxHP) || 1))
+  const hpMultiplier = Math.max(0.01, Math.min(1, Number(boss?.sunspireRules?.maxHpMultiplier) || 1))
+  member.maxHP = Math.max(1, Math.floor(baseMaxHP * hpMultiplier))
+  member.hp = Math.min(member.hp, member.maxHP)
+  member.combat.playerAttackTimer = 0
+  member.combat.monsterAttackTimer = boss.attackSpeed || 4
+  member.combat.addTargetIndex = null
+}
+
+function continueSunspireWave(state, monstersData, events, modifierId = null) {
+  const nextIndex = (Number(state.raid.currentWaveIndex) || 0) + 1
+  const raidData = coopRaidData(state.raid.raidId)
+  const modifierState = SUNSPIRE_MODIFIERS_ENABLED && modifierId
+    ? raiseSunspireModifierTier(state.raid.modifierState || {}, modifierId)
+    : {}
+  const fresh = coopWaveBossState(raidData, nextIndex, monstersData, modifierState, Date.now())
+  if (!fresh) return false
+
+  state.phase = 'active'
+  state.bossId = fresh.bossId
+  state.boss = fresh.boss
+  state.raid = {
+    ...state.raid,
+    currentWaveIndex: nextIndex,
+    modifierState,
+    modifierOffers: [],
+  }
+  for (const raider of Object.values(state.members)) {
+    raider.sunspireStaged = []
+    resetMemberForWave(raider, state.boss)
+  }
+  reselectTarget(state)
+  events.push({
+    type: 'raidWaveAdvance',
+    raidId: state.raid.raidId,
+    wave: nextIndex + 1,
+    totalWaves: state.raid.waves.length,
+    ...(modifierId && SUNSPIRE_MODIFIERS_ENABLED
+      ? { modifierId, modifierTier: modifierState[modifierId] }
+      : {}),
+  })
+  return true
+}
+
 /**
  * A raid party, waiting in its lobby.
  *
@@ -290,12 +409,34 @@ export function createCoopBossState(bossId, monstersData, now = Date.now(), { ha
 export function createCoopRaidState(raidId, monstersData, { hostCharacterId = null, now = Date.now(), hardMode = false } = {}) {
   const raid = coopRaidData(raidId)
   if (!raid) return null
+
+  if (isWaveRaid(raid)) {
+    // Sunspire owns its difficulty through modifiers. Ordinary Hard Mode is
+    // deliberately ignored for this raid so health/rewards cannot double-stack.
+    const seed = coopWaveBossState(raid, 0, monstersData, {}, now)
+    if (!seed) return null
+    return {
+      ...seed,
+      hardMode: false,
+      phase: 'lobby',
+      hostCharacterId: hostCharacterId == null ? null : Number(hostCharacterId),
+      raid: {
+        raidId,
+        name: raid.name,
+        waves: structuredClone(raid.waves),
+        currentWaveIndex: 0,
+        modifierState: {},
+        modifierOffers: [],
+        maxHP: raidTotalHitpoints(raidId, monstersData),
+        clearedHP: 0,
+        completions: 0,
+      },
+    }
+  }
+
   const bosses = raidBossOrder(raidId)
   const seed = createCoopBossState(bosses[0], monstersData, now, { hardMode })
   if (!seed) return null
-  // The loot gate measures a member's damage against the WHOLE run, so the
-  // basis has to be the run the party is actually fighting — read off the
-  // normal table it would be halved, and every raider would clear 10% twice over.
   const table = monstersTableFor(monstersData, hardMode)
   return {
     ...seed,
@@ -714,8 +855,32 @@ function hydrateCombatState(state, member, monstersData, spellsData) {
   engine.addSpawnCountdown = state.boss.addSpawnCountdown
   engine.addsSpawned = state.boss.addsSpawned || 0
   engine.addsDefeated = state.boss.addsDefeated
+  if (state.boss.encounter) engine.encounter = structuredClone(state.boss.encounter)
+  if (state.boss.aurelios) engine.aurelios = structuredClone(state.boss.aurelios)
+  if (state.boss.sunspireRules) engine.sunspireRules = structuredClone(state.boss.sunspireRules)
+  if (state.boss.sunspireHazards) engine.sunspireHazards = structuredClone(state.boss.sunspireHazards)
+  if (isSunspireWaveRaidState(state)) {
+    engine.raid = {
+      raidId: state.raid.raidId,
+      name: state.raid.name,
+      waves: structuredClone(state.raid.waves),
+      currentWaveIndex: Math.max(0, Number(state.raid.currentWaveIndex) || 0),
+      modifierState: { ...(state.raid.modifierState || {}) },
+    }
+  }
   const wanted = member.combat.addTargetIndex
-  engine.addTargetIndex = typeof wanted === 'number' && engine.adds[wanted]?.currentHP > 0 ? wanted : null
+  const wantedAlive = typeof wanted === 'number' && engine.adds[wanted]?.currentHP > 0
+  if (wantedAlive) {
+    engine.addTargetIndex = wanted
+  } else if (engine.encounter?.finite && (engine.encounter.primaryDefeated || engine.monster.currentHP <= 0)) {
+    // The killing beat still renders the primary's death. On the NEXT room
+    // beat, hydration hands the member to the first survivor so their attacks
+    // and the stage both resume on the same living target.
+    const nextLive = engine.adds.findIndex((add) => add?.currentHP > 0)
+    engine.addTargetIndex = nextLive >= 0 ? nextLive : null
+  } else {
+    engine.addTargetIndex = null
+  }
   return engine
 }
 
@@ -842,6 +1007,58 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
       }
       startCoopRaid(state, monstersData, events)
       return
+    case 'sunspire_continue': {
+      if (!isSunspireWaveRaidState(state) || state.phase !== 'decision') {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'sunspire_not_decision' })
+        return
+      }
+      if (!isCoopHost(state, member.characterId)) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'not_host' })
+        return
+      }
+      if (SUNSPIRE_MODIFIERS_ENABLED) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'modifier_required' })
+        return
+      }
+      if (!continueSunspireWave(state, monstersData, events)) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'sunspire_wave_missing' })
+      }
+      return
+    }
+    case 'sunspire_choose_modifier': {
+      if (!isSunspireWaveRaidState(state) || state.phase !== 'decision') {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'sunspire_not_decision' })
+        return
+      }
+      if (!isCoopHost(state, member.characterId)) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'not_host' })
+        return
+      }
+      if (!SUNSPIRE_MODIFIERS_ENABLED) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'modifiers_disabled' })
+        return
+      }
+      const modifierId = action.modifierId
+      if (!state.raid.modifierOffers.includes(modifierId)) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'modifier_not_offered' })
+        return
+      }
+      if (!continueSunspireWave(state, monstersData, events, modifierId)) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'sunspire_wave_missing' })
+      }
+      return
+    }
+    case 'sunspire_claim':
+      if (!isSunspireWaveRaidState(state) || state.phase !== 'decision') {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'sunspire_not_decision' })
+        return
+      }
+      if (!isCoopHost(state, member.characterId)) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'not_host' })
+        return
+      }
+      state.raid.claimRequestedBy = Number(member.characterId)
+      return
     case 'set_ready':
       // Lobby-only, and silent outside one: a stale button from a party that has
       // already set off is not worth a refusal toast mid-fight.
@@ -876,6 +1093,9 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
     }
     case 'queue_special':
       member.combat.specialAttackQueued = !member.combat.specialAttackQueued
+      return
+    case 'combat_reaction':
+      member.combat.pendingReaction = action.reaction ? { ...action.reaction } : null
       return
     case 'set_quick_prayers':
       // Loadout, not a combat action — no level gate here. Toggling one ON still
@@ -1099,6 +1319,46 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
     return finishTick(next, events, null)
   }
 
+  if (next.phase === 'decision') {
+    for (const member of Object.values(next.members)) tickIdleCooldowns(member)
+    if (next.raid?.claimRequestedBy != null) {
+      const fullClear = (Number(next.raid.currentWaveIndex) || 0) >= (next.raid.waves?.length || 1) - 1
+      const rewardsByCharacter = {}
+      const lootCharacterIds = []
+      for (const member of Object.values(next.members)) {
+        const chest = Array.isArray(member.sunspireChest) ? member.sunspireChest.map((r) => ({ ...r })) : []
+        if (chest.length > 0) {
+          rewardsByCharacter[String(member.characterId)] = chest
+          lootCharacterIds.push(Number(member.characterId))
+        }
+      }
+      const kill = {
+        sourceType: 'raids',
+        raidId: next.raid.raidId,
+        bossId: next.bossId,
+        completedAt: now,
+        ownerCharacterId: Number(next.raid.claimRequestedBy),
+        lootCharacterIds,
+        killCountCharacterIds: fullClear ? killCountCharacterIds(next) : [],
+        contributors: damageTable(next),
+        sunspireClaim: true,
+        sunspireFullClear: fullClear,
+        sunspireRewardsByCharacter: rewardsByCharacter,
+      }
+      events.push({
+        type: fullClear ? 'raidComplete' : 'sunspireCashOut',
+        raidId: next.raid.raidId,
+        raidName: next.raid.name,
+        wave: (Number(next.raid.currentWaveIndex) || 0) + 1,
+        lootCharacterIds,
+        killCountCharacterIds: kill.killCountCharacterIds,
+      })
+      returnPartyToLobby(next, monstersData, events, fullClear ? 'complete' : 'cashout')
+      return finishTick(next, events, kill)
+    }
+    return finishTick(next, events, null)
+  }
+
   // The respawn wait is prep time, not dead time: intents are applied above
   // before this returns, so the group can eat, drink and swap gear for the next
   // pull. Nothing else about the wait changes — no combat resolves, so the
@@ -1114,7 +1374,13 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
     return finishTick(next, events, null)
   }
 
-  reselectTarget(next)
+  const mechanicTargetId = next.boss?.mechanicTargetCharId == null ? null : String(next.boss.mechanicTargetCharId)
+  const mechanicTarget = mechanicTargetId ? next.members[mechanicTargetId] : null
+  if (mechanicTarget?.status === 'alive') next.targetCharId = mechanicTargetId
+  else {
+    if (next.boss) next.boss.mechanicTargetCharId = null
+    reselectTarget(next)
+  }
   const memberIds = Object.keys(next.members).sort((a, b) => Number(a) - Number(b))
   let kill = null
   // One boss, one swing per tick. Killing the target retargets mid-loop, so
@@ -1149,7 +1415,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
   for (const id of memberIds) {
     const member = next.members[id]
     if (member.status !== 'alive') continue
-    if (next.boss.currentHP <= 0) break
+    if (isSunspireWaveRaidState(next) ? sunspireWaveCleared(next) : next.boss.currentHP <= 0) break
 
     const isTarget = next.targetCharId === id && !bossSwungThisTick
     const engine = hydrateCombatState(next, member, monstersData, spellsData)
@@ -1163,12 +1429,25 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
     else if (!isTarget) engine.monsterAttackTimer = Math.max(2, engine.monster.attackSpeed || 4)
     // The room owns the form; this session only wears it.
     engine.formPinned = formPinned
+    if (isSunspireWaveRaidState(next)) {
+      // Reinforcement/hazard/champion pattern clocks are shared room state.
+      // One session advances them; every other session only projects the result.
+      engine.encounterPinned = !isTarget
+      engine.sunspireHazardsPinned = !isTarget
+      engine.aureliosPinned = !isTarget
+    }
     // Its minions run off the room's clock for the same reason (see
     // advanceAddAttackTimer) — one swing resolved, landing on everybody.
     if (roomWide) {
       engine.adds.forEach((add, i) => {
         add.attackTimer = roomWideAddSwings[i] ? 0 : Math.max(2, add.attackSpeed || 4)
       })
+    }
+
+    const reaction = member.combat.pendingReaction
+    if (reaction) {
+      applyCombatReaction(engine, reaction)
+      member.combat.pendingReaction = null
     }
 
     const hpBefore = engine.monster.currentHP
@@ -1186,13 +1465,22 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
     // Attribution is the boss's HP delta across this member's tick, so every
     // damage source (specials, summons, bolt procs) counts without this having
     // to know each event shape.
-    const dealt = Math.max(0, hpBefore - combatState.monster.currentHP)
+    const bossDealt = Math.max(0, hpBefore - combatState.monster.currentHP)
+    const beforeAddsById = new Map(engine.adds.map((add, i) => [add.instanceId, Math.max(0, Number(addHpBefore[i]) || 0)]))
+    const afterAddsById = new Map((combatState.adds || []).map((add) => [add.instanceId, Math.max(0, Number(add.currentHP) || 0)]))
+    let addDealt = 0
+    for (const [instanceId, beforeHp] of beforeAddsById) {
+      const afterHp = afterAddsById.has(instanceId) ? afterAddsById.get(instanceId) : 0
+      addDealt += Math.max(0, beforeHp - afterHp)
+    }
+    const dealt = bossDealt + addDealt
     if (dealt > 0) {
       member.damage += dealt
       member.damageTick = next.tick
     }
     next.boss.currentHP = Math.max(0, combatState.monster.currentHP)
     Object.assign(next.boss.monster, pickMutableMonsterFields(combatState.monster))
+    if (combatState.encounter?.primaryDefeated && next.boss.encounter) next.boss.encounter.primaryDefeated = true
     // A phase change hands the boss a new bar (Verzik's second form is bigger
     // than her first), and its first death is progress the room owns — the
     // member sessions are rebuilt each tick and would each ask for their own.
@@ -1212,6 +1500,10 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
       next.boss.addSpawnCountdown = combatState.addSpawnCountdown
       next.boss.addsSpawned = combatState.addsSpawned
       next.boss.addsDefeated = combatState.addsDefeated
+      if (combatState.encounter) next.boss.encounter = structuredClone(combatState.encounter)
+      if (combatState.aurelios) next.boss.aurelios = structuredClone(combatState.aurelios)
+      if (combatState.sunspireRules) next.boss.sunspireRules = structuredClone(combatState.sunspireRules)
+      if (combatState.sunspireHazards) next.boss.sunspireHazards = structuredClone(combatState.sunspireHazards)
     } else {
       // A non-target member neither spawns adds nor advances the wait — the
       // target owns both — but everything they did to an add on the field
@@ -1246,7 +1538,14 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
       // one — the countdown is parked at null while the field is at its cap, so
       // without this a boss at its cap never summons again for the rest of the
       // fight.
-      if (killedOne) next.boss.addSpawnCountdown = rollRespawnDelay(getAddSpec(monstersData?.[next.bossId]))
+      if (killedOne) {
+        next.boss.addSpawnCountdown = next.boss.encounter?.finite
+          ? null
+          : rollRespawnDelay(getAddSpec(monstersData?.[next.bossId]))
+      }
+      if (engineEvents.some((ev) => ev.type === 'combatTelegraph' && ev.source === 'sunspire') && combatState.sunspireHazards) {
+        next.boss.sunspireHazards = structuredClone(combatState.sunspireHazards)
+      }
     }
 
     for (const ev of engineEvents) {
@@ -1272,6 +1571,17 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
       // has to apply it or the same weapon silently stops healing in a group.
       } else if (ev.type === 'specialHit' && ev.healAmount > 0) {
         member.hp = Math.min(member.maxHP, member.hp + ev.healAmount)
+      } else if (ev.type === 'sunspireHazard') {
+        // Sunspire hazards are shared room mechanics but resolve against the
+        // member the room telegraphed them to. Damage is therefore server-owned
+        // and cannot be skipped by a client ignoring the presentation event.
+        member.hp = Math.max(0, member.hp - Math.max(0, Number(ev.damage) || 0))
+      }
+      if (ev.type === 'combatTelegraph' && (ev.source === 'sunspire' || ev.bossId === 'aurelios_the_unbroken')) {
+        next.boss.mechanicTargetCharId = Number(member.characterId)
+      }
+      if ((ev.type === 'combatReaction' || ev.type === 'sunspireHazard') && next.boss.mechanicTargetCharId === Number(member.characterId)) {
+        next.boss.mechanicTargetCharId = null
       }
       if (ev.type === 'monsterDeath') {
         kill = { bossId: next.bossId, monster: ev.monster, xpGained: { ...(ev.xpGained || {}) } }
@@ -1308,10 +1618,13 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
     }
   }
 
-  if (next.boss.currentHP <= 0 && !next.boss.killedAt && next.raid) {
+  if (isSunspireWaveRaidState(next) && sunspireWaveCleared(next) && !next.boss.killedAt) {
+    next.boss.killedAt = now
+    kill = resolveSunspireWaveClear(next, monstersData, events, now)
+  } else if (!isSunspireWaveRaidState(next) && next.boss.currentHP <= 0 && !next.boss.killedAt && next.raid) {
     next.boss.killedAt = now
     kill = resolveRaidBossDeath(next, monstersData, events, now)
-  } else if (next.boss.currentHP <= 0 && !next.boss.killedAt) {
+  } else if (!isSunspireWaveRaidState(next) && next.boss.currentHP <= 0 && !next.boss.killedAt) {
     next.boss.killedAt = now
     next.boss.respawnCountdown = coopRespawnTicks(next.bossId)
     const ownerCharId = topDamageCharacterId(next)
@@ -1376,6 +1689,42 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
 
 /** Ends the lobby and puts the first boss on the field. */
 function startCoopRaid(state, monstersData, events) {
+  if (isSunspireWaveRaidState(state)) {
+    const raidData = coopRaidData(state.raid.raidId)
+    const fresh = coopWaveBossState(raidData, 0, monstersData, {}, Date.now())
+    if (!fresh) return
+    state.phase = 'active'
+    state.hardMode = false
+    state.bossId = fresh.bossId
+    state.boss = fresh.boss
+    state.raid = {
+      ...state.raid,
+      currentWaveIndex: 0,
+      modifierState: {},
+      modifierOffers: [],
+      clearedHP: 0,
+      claimRequestedBy: null,
+    }
+    for (const member of Object.values(state.members)) {
+      member.damage = 0
+      member.damageTick = 0
+      member.ready = false
+      member.sunspireChest = []
+      member.sunspireStaged = []
+      resetMemberForWave(member, state.boss)
+    }
+    reselectTarget(state)
+    events.push({
+      type: 'raidStarted',
+      raidId: state.raid.raidId,
+      bossId: state.bossId,
+      bossName: monstersData?.[state.bossId]?.name || state.bossId,
+      wave: 1,
+      totalWaves: state.raid.waves.length,
+    })
+    return
+  }
+
   const bosses = state.raid.bosses || []
   const fresh = createCoopBossState(bosses[0], monstersData, Date.now(), { hardMode: state.hardMode })
   if (!fresh) return
@@ -1387,9 +1736,7 @@ function startCoopRaid(state, monstersData, events) {
     member.damage = 0
     member.damageTick = 0
     member.ready = false
-    member.combat.playerAttackTimer = 0
-    member.combat.monsterAttackTimer = state.boss.attackSpeed || 4
-    member.combat.addTargetIndex = null
+    resetMemberForWave(member, state.boss)
   }
   reselectTarget(state)
   events.push({
@@ -1409,6 +1756,60 @@ function startCoopRaid(state, monstersData, events) {
  * and nothing on the bosses before it). Returning a kill record for an
  * intermediate boss would hand the party a full monster drop table per boss.
  */
+function resolveSunspireWaveClear(state, monstersData, events, now) {
+  const raid = state.raid
+  const index = Math.max(0, Number(raid.currentWaveIndex) || 0)
+  const wave = raid.waves[index]
+  const clearedHP = Math.max(0, Number(raid.clearedHP) || 0) + encounterHitpoints(wave, monstersData)
+  raid.clearedHP = clearedHP
+
+  const finalWave = index >= raid.waves.length - 1
+  for (const member of Object.values(state.members)) {
+    const eligible = earnedKillCredit(member.damage, Math.max(1, clearedHP))
+    if (!eligible) {
+      member.sunspireStaged = []
+      continue
+    }
+    const obtained = new Set(Array.isArray(member.sunspireObtainedIds) ? member.sunspireObtainedIds : [])
+    const staged = rollSunspireWaveReward({
+      wave: index + 1,
+      random: Math.random,
+      obtainedIds: obtained,
+      stagedRewards: member.sunspireChest || [],
+    })
+    member.sunspireStaged = staged
+    member.sunspireChest = mergeSunspireRewards(member.sunspireChest || [], staged)
+  }
+
+  raid.modifierOffers = finalWave || !SUNSPIRE_MODIFIERS_ENABLED
+    ? []
+    : offerSunspireModifiers(raid.modifierState || {}, coopRaidData(raid.raidId)?.modifierPool || [], Math.random)
+  raid.claimRequestedBy = null
+  state.phase = 'decision'
+  state.targetCharId = null
+
+  if (finalWave) {
+    for (const member of Object.values(state.members)) {
+      const credited = creditSlayerKill(member, state.bossId, monstersData, {
+        fromRaidCompletion: true,
+        basisHP: coopLootBasisHP(state),
+      })
+      if (credited) events.push({ type: 'slayerCredit', ...credited })
+    }
+  }
+
+  events.push({
+    type: 'raidWaveCleared',
+    raidId: raid.raidId,
+    wave: index + 1,
+    totalWaves: raid.waves.length,
+    finalWave,
+    modifierOffers: [...raid.modifierOffers],
+    killCountCharacterIds: finalWave ? killCountCharacterIds(state) : [],
+  })
+  return null
+}
+
 function resolveRaidBossDeath(state, monstersData, events, now) {
   const raid = state.raid
   const index = Math.max(0, Number(raid.currentBossIndex) || 0)
@@ -1512,6 +1913,36 @@ function advanceRaidBoss(state, monstersData, events) {
  */
 function returnPartyToLobby(state, monstersData, events, reason) {
   const raid = state.raid
+  if (isSunspireWaveRaidState(state)) {
+    const fresh = coopWaveBossState(coopRaidData(raid.raidId), 0, monstersData, {}, Date.now())
+    state.phase = 'lobby'
+    state.hardMode = false
+    if (fresh) {
+      state.bossId = fresh.bossId
+      state.boss = fresh.boss
+    }
+    state.raid = {
+      ...raid,
+      currentWaveIndex: 0,
+      modifierState: {},
+      modifierOffers: [],
+      clearedHP: 0,
+      claimRequestedBy: null,
+      completions: (Number(raid.completions) || 0) + (reason === 'complete' ? 1 : 0),
+    }
+    state.targetCharId = null
+    for (const member of Object.values(state.members)) {
+      member.damage = 0
+      member.damageTick = 0
+      member.ready = false
+      member.sunspireChest = []
+      member.sunspireStaged = []
+      member.combat.addTargetIndex = null
+    }
+    events.push({ type: 'raidEnded', raidId: raid.raidId, reason })
+    return
+  }
+
   const bosses = raid.bosses || []
   const fresh = createCoopBossState(bosses[0], monstersData, Date.now(), { hardMode: state.hardMode })
   state.phase = 'lobby'

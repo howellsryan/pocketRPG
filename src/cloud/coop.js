@@ -65,9 +65,9 @@ export const coopApi = {
   // sessionId null opens a NEW party with this character as host; a sessionId
   // joins that party's lobby. There is deliberately no "pick one for me" —
   // which party you raid with is the player's call.
-  joinRaid: (raidId, sessionId = null) => coopRequest('/api/coop/raid/join', {
+  joinRaid: (raidId, sessionId = null, { solo = false } = {}) => coopRequest('/api/coop/raid/join', {
     method: 'POST',
-    body: JSON.stringify(sessionId === null ? { raidId } : { raidId, sessionId }),
+    body: JSON.stringify(sessionId === null ? { raidId, ...(solo ? { solo: true } : {}) } : { raidId, sessionId }),
   }),
   readSession: (sessionId) => coopRequest(`/api/coop/session/${sessionId}`),
   // sinceTick is the last tick this client rendered. The room replays

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import monsters from '../src/data/monsters.json'
+import raids from '../src/data/raids.json'
 import items from '../src/data/items.json'
 import skills from '../src/data/skills.json'
 import collectionLog from '../src/data/collectionLog.json'
@@ -58,8 +59,19 @@ afterEach(() => {
 })
 
 describe('Zaryth — monster data', () => {
-  it('is the hardest boss in the game by combat level and hitpoints', () => {
-    const others = Object.values(monstersData).filter((m: any) => m.boss && m.id !== BOSS)
+  it('is the hardest standalone boss by combat level and hitpoints', () => {
+    const raidMonsterIds = new Set<string>()
+    for (const raid of Object.values(raids as Record<string, any>)) {
+      for (const id of raid.bosses || []) raidMonsterIds.add(id)
+      for (const id of raid.encounterOnlyMonsters || []) raidMonsterIds.add(id)
+      for (const wave of raid.waves || []) {
+        if (wave.primary) raidMonsterIds.add(wave.primary)
+        for (const id of wave.initialAdds || []) raidMonsterIds.add(id)
+        for (const group of wave.reinforcements || []) for (const id of group.monsterIds || []) raidMonsterIds.add(id)
+      }
+    }
+    const others = Object.values(monstersData).filter((m: any) =>
+      m.boss && m.id !== BOSS && !raidMonsterIds.has(m.id))
     expect(boss.boss).toBe(true)
     expect(boss.combatLevel).toBeGreaterThan(Math.max(...others.map((m: any) => m.combatLevel || 0)))
     expect(boss.hitpoints).toBeGreaterThan(Math.max(...others.map((m: any) => m.hitpoints || 0)))

@@ -25,6 +25,10 @@ import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
 import { isMultiForm, applyForm, advanceSharedForm, formChangeAttackTimer, randomFormSwitchThreshold, recordDefenceBonusDrain, applyDefenceBonusDrain, clearDefenceBonusDrain } from './bossForms.js'
 import { getAddSpec, addDefinitionsFor, selectAddDefinition, addPicksAtRandom, maxActiveAdds, rollFirstSpawnDelay, rollRespawnDelay, prepareAdd, liveAdds, activeTarget, isAddTarget, addIndexOf } from './bossAdds.js'
 import { monsterMaxHit } from './monsterMaxHit.js'
+import { isWaveRaid, seedEncounterState, advanceEncounterReinforcements, markEncounterPrimaryDefeated, markEncounterAddDefeated } from './raidEncounters.js'
+import { applySunspireModifiersToState, applySunspireHazardReaction, tickSunspireHazards, triggerSunspireCinderfall } from './sunspireModifiers.js'
+import { aureliosAttackDelay, createAureliosState, updateAureliosPhase, telegraphAureliosAttack, applyAureliosReaction, resolveAureliosAttack } from './aurelios.js'
+import { chargedArmourRecoil } from './chargedPassives.js'
 import { grindmanDropChance } from './grindman.js'
 import { applyNotedDrops } from './notedDrops.js'
 
@@ -96,7 +100,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     // record, because the record is shared (a raid's boss list, a zone's npc)
     // while the account type belongs to whoever is swinging — the open world
     // rebuilds one of these per player against the same npc.
-    grindman: grindman === true
+    grindman: grindman === true,
+    ...(preparedMonster.sunspireChampion ? { aurelios: createAureliosState() } : {})
   }
 }
 
@@ -155,10 +160,29 @@ function prepareMonster(monster) {
  * Create a combat state for a raid (sequential boss fights).
  */
 export function createRaidCombatState(raidData, monstersData, combatType = 'melee', stance = 'accurate', spell = null, { grindman = false } = {}) {
-  const firstBossId = raidData.bosses[0]
-  const firstBoss = monstersData[firstBossId]
+  if (isWaveRaid(raidData)) {
+    const firstWave = raidData.waves[0]
+    const primary = monstersData?.[firstWave?.primary]
+    if (!primary) return null
+    const state = createCombatState(primary, combatType, stance, spell, monstersData, { grindman })
+    state.raid = {
+      raidId: raidData.id,
+      name: raidData.name,
+      waves: raidData.waves,
+      currentWaveIndex: 0,
+      awaitingDecision: false,
+      monstersData,
+      rewards: raidData.rewards,
+    }
+    seedEncounterState(state, firstWave, monstersData, 0)
+    return applySunspireModifiersToState(state, firstWave, monstersData, {})
+
+  }
+
+  const firstBossId = raidData?.bosses?.[0]
+  const firstBoss = monstersData?.[firstBossId]
   if (!firstBoss) return null
-  const state = createCombatState(firstBoss, combatType, stance, spell, null, { grindman })
+  const state = createCombatState(firstBoss, combatType, stance, spell, monstersData, { grindman })
   state.raid = {
     raidId: raidData.id,
     name: raidData.name,
@@ -168,6 +192,43 @@ export function createRaidCombatState(raidData, monstersData, combatType = 'mele
     rewards: raidData.rewards
   }
   return state
+}
+
+export function continueRaidCombatState(combatState, raidData, monstersData, { modifierState = null } = {}) {
+  if (!combatState?.raid || !isWaveRaid(raidData)) return combatState
+  const nextIndex = Math.max(0, Number(combatState.raid.currentWaveIndex) || 0) + 1
+  const wave = raidData.waves[nextIndex]
+  const primary = monstersData?.[wave?.primary]
+  if (!wave || !primary) return null
+  const next = createCombatState(primary, combatState.combatType, combatState.stance, combatState.spell, monstersData, { grindman: combatState.grindman === true })
+  next.xpGained = { ...(combatState.xpGained || {}) }
+  next.activePotions = { ...(combatState.activePotions || {}) }
+  next.activeProtectionPrayer = combatState.activeProtectionPrayer ?? null
+  next.activeCombatPrayer = combatState.activeCombatPrayer ?? null
+  next.maxPrayerPoints = combatState.maxPrayerPoints
+  next.prayerPoints = combatState.prayerPoints
+  next.prayerDrainAccumulator = combatState.prayerDrainAccumulator || 0
+  next.summon = combatState.summon || null
+  next.specialAttackEnergy = 100
+  next.raid = {
+    ...combatState.raid,
+    waves: raidData.waves,
+    currentWaveIndex: nextIndex,
+    awaitingDecision: false,
+    monstersData,
+    modifierState: modifierState || combatState.raid.modifierState || null,
+  }
+  seedEncounterState(next, wave, monstersData, nextIndex)
+  return applySunspireModifiersToState(next, wave, monstersData, modifierState || combatState.raid.modifierState || {})
+}
+
+export function applyCombatReaction(combatState, reaction) {
+  if (!combatState || !reaction) return { ok: false, reason: 'unsupported' }
+  const pendingAurelios = combatState.aurelios?.pendingAttack
+  if (pendingAurelios && (!reaction.attackId || reaction.attackId === pendingAurelios.attackId)) {
+    return applyAureliosReaction(combatState, reaction)
+  }
+  return applySunspireHazardReaction(combatState, reaction)
 }
 
 /**
@@ -227,18 +288,30 @@ function getFormImmunity(monster) {
  * pushes the hit/miss events.
  */
 function resolveEnemySwing(attacker, attackStyle, state, boostedPlayerStats, playerStats, bonuses, prayersData, events, extraEventFields = {}) {
+  let aureliosAttack = null
+  if (attacker?.sunspireChampion && state.aurelios) {
+    aureliosAttack = resolveAureliosAttack(state, attacker, events)
+    attackStyle = aureliosAttack.style || attackStyle
+  }
+  const rules = state.sunspireRules || {}
   const monsterEffAtk = ((attacker.stats.magic || attacker.stats.attack || 1) + 9)
   const monsterAtkRoll = monsterEffAtk * ((attacker.attackBonus || 0) + 64)
   const playerDefLevel = boostedPlayerStats.defence
   const styleBonuses = getMeleeStyleBonuses(state.stance)
   const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8
-  const defRoll = effDef * ((bonuses.defenceBonus[attackStyle] || bonuses.defenceBonus.crush || 0) + 64)
+  let defRoll = effDef * ((bonuses.defenceBonus[attackStyle] || bonuses.defenceBonus.crush || 0) + 64)
+  if (rules.enemyDefencePenetration) defRoll = Math.floor(defRoll * Math.max(0, 1 - rules.enemyDefencePenetration))
   const acc = hitChance(monsterAtkRoll, defRoll)
-  // Per-form maxHit, then the monster's own, then derived from the stat that
-  // matches the attack style — monsterMaxHit.js owns that precedence so the
-  // info surfaces quote the same number this rolls.
-  const monsterMax = monsterMaxHit(attacker, attackStyle)
-  let damage = rollDamage(acc, monsterMax)
+  let monsterMax = monsterMaxHit(attacker, attackStyle) + (rules.enemyMaxHitBonus || 0)
+  if (attacker?.id === 'hornwarden' && rules.horncallTier) monsterMax += rules.horncallTier * 3
+  let damage = aureliosAttack?.blocked ? 0 : rollDamage(acc, monsterMax)
+  if (aureliosAttack?.damageMultiplier != null) damage = Math.floor(damage * aureliosAttack.damageMultiplier)
+  if (attacker?.sunspireMultiHit > 1 && damage > 0) {
+    const hits = [damage]
+    for (let i = 1; i < attacker.sunspireMultiHit; i++) hits.push(rollDamage(acc, monsterMax))
+    damage = hits.reduce((sum, hit) => sum + hit, 0)
+    events.push({ type: 'sunspireMultiHit', monsterName: attacker.name, hits })
+  }
 
   // Apply protection prayer damage reduction if active and matches attack style
   if (state.activeProtectionPrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activeProtectionPrayer]) {
@@ -261,6 +334,21 @@ function resolveEnemySwing(attacker, attackStyle, state, boostedPlayerStats, pla
 
   // A landed hit may also burn prayer points (the Dread Core's whole threat).
   if (damage > 0) {
+    if (rules.prayerDrainDamagePercent > 0 && typeof state.prayerPoints === 'number' && state.prayerPoints > 0) {
+      const drained = Math.min(state.prayerPoints, Math.max(1, Math.floor(damage * rules.prayerDrainDamagePercent)))
+      state.prayerPoints -= drained
+      events.push({ type: 'prayerDrained', amount: drained, prayerPoints: state.prayerPoints, monsterName: attacker.name, source: 'profanation' })
+      if (state.prayerPoints <= 0) {
+        state.prayerPoints = 0
+        state.activeProtectionPrayer = null
+        state.activeCombatPrayer = null
+      }
+    }
+    if (Number.isFinite(rules.doomStackLimit)) {
+      state.sunspireDoomStacks = (state.sunspireDoomStacks || 0) + 1
+      events.push({ type: 'sunspireDoom', stacks: state.sunspireDoomStacks, limit: rules.doomStackLimit })
+      if (state.sunspireDoomStacks >= rules.doomStackLimit) damage = Math.max(damage, Math.max(1, Math.floor(Number(playerStats.currentHP) || 1)))
+    }
     const perHitDrain = Number(attacker.multiForm && attacker.currentForm
       ? attacker.forms?.[attacker.currentForm]?.prayerDrainPerHit
       : attacker.prayerDrainPerHit) || 0
@@ -294,16 +382,21 @@ function resolveTargetDeath(state, target, events, isOnTask = false) {
     target.currentHP = 0
     const index = addIndexOf(state, target)
     state.adds = state.adds.filter((add) => add !== target)
-    // The list shifted under the selection: drop back to the boss rather than
-    // silently re-pointing the player at whichever add slid into the slot.
     if (state.addTargetIndex === index) state.addTargetIndex = null
     else if (typeof state.addTargetIndex === 'number' && state.addTargetIndex > index) state.addTargetIndex -= 1
     state.addsDefeated = (state.addsDefeated || 0) + 1
-    // A killed add always restarts the wait, even from a full field — that is
-    // what makes clearing them a treadmill rather than a one-off.
-    state.addSpawnCountdown = rollRespawnDelay(getAddSpec(state.monster))
     events.push({ type: 'addDefeated', monsterName: target.name, bossName: state.monster?.name })
+    if (state.encounter?.finite) {
+      triggerSunspireCinderfall(state, target, events)
+      state.addSpawnCountdown = null
+      return markEncounterAddDefeated(state, target, events)
+    }
+    state.addSpawnCountdown = rollRespawnDelay(getAddSpec(state.monster))
     return false
+  }
+  if (state.encounter?.finite && target === state.monster) {
+    triggerSunspireCinderfall(state, target, events)
+    return markEncounterPrimaryDefeated(state, events)
   }
   return checkMonsterDeath(state, target, events, isOnTask)
 }
@@ -311,6 +404,15 @@ function resolveTargetDeath(state, target, events, isOnTask = false) {
 function checkMonsterDeath(state, monster, events, isOnTask = false) {
   if (monster.currentHP > 0) return false
   monster.currentHP = 0
+
+  // Wave raids are finite encounters, not sequential bosses[]. Most hit paths
+  // reach resolveTargetDeath first, but summons/instant kills and future callers
+  // may arrive here directly. Keep this as a defensive authority boundary so a
+  // wave primary can never fall through the legacy raid.bosses progression.
+  if (state.encounter?.finite && Array.isArray(state.raid?.waves)) {
+    if (!state.encounter.primaryDefeated) triggerSunspireCinderfall(state, monster, events)
+    return markEncounterPrimaryDefeated(state, events)
+  }
 
   // Verzik phased boss: advance to next phase instead of dying
   if (monster.verzikPhased && monster.multiForm && monster.forms) {
@@ -462,7 +564,7 @@ export function applyInstantKill(state) {
   if (!state || !state.monster) return events
   state.monster.currentHP = 0
   const isOnTask = !!(state.slayerTask && doesSlayerTaskMatchMonster(state.slayerTask.monsterId, state.monster.id))
-  checkMonsterDeath(state, state.monster, events, isOnTask)
+  resolveTargetDeath(state, state.monster, events, isOnTask)
   return events
 }
 
@@ -555,14 +657,37 @@ function hasFullVeracSet(equipment, itemsData) {
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
  */
+function isSunspireStaggeredEncounter(state) {
+  return state?.raid?.raidId === 'sunspire_colosseum' && state?.encounter?.finite === true
+}
+
+// Sunspire deliberately guarantees at most one hostile swing per game tick.
+// This makes protection-prayer flicking a learnable execution skill instead of
+// allowing equal-speed enemies to stack unavoidable damage on the same tick.
+// The marker lives in authoritative combat state, so co-op/solo reconnects keep
+// exactly the same queue rather than recomputing phases in the browser.
+function sunspireEnemyAttackSlotOpen(state) {
+  return !isSunspireStaggeredEncounter(state)
+    || Math.floor(Number(state.tickCount) || 0) - Math.floor(Number(state.sunspireLastEnemyAttackTick) || -2) >= 2
+}
+
+function claimSunspireEnemyAttackSlot(state) {
+  // A claimed tick blocks every other enemy now and the whole following tick.
+  if (isSunspireStaggeredEncounter(state)) state.sunspireLastEnemyAttackTick = state.tickCount
+}
+
 export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}, inventory = [], slayerTask = null) {
   const state = { ...combatState, slayerTask }
   const events = []
   state.tickCount++
+  if (!state.encounterPinned) advanceEncounterReinforcements(state, events)
+  if (!state.sunspireHazardsPinned) tickSunspireHazards(state, events)
+  if (state.aurelios && !state.aureliosPinned) updateAureliosPhase(state, state.monster, events)
 
   // Decrement cooldowns
   if (state.playerAttackTimer > 0) state.playerAttackTimer--
   if (state.monsterAttackTimer > 0) state.monsterAttackTimer--
+  if (state.aurelios && !state.aureliosPinned && state.monsterAttackTimer === 1) telegraphAureliosAttack(state, state.monster, events)
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
   if (state.comboCooldown > 0) state.comboCooldown--
@@ -633,9 +758,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   // awaitCombatCompletion lock on the "Saving…" overlay. checkMonsterDeath
   // handles phase/double-kill/raid semantics, so a regenerating boss simply
   // continues with combat still active.
-  if (monster.currentHP <= 0 && state.active) {
+  if (monster.currentHP <= 0 && state.active && !state.encounter?.primaryDefeated) {
     state.monster = monster
-    checkMonsterDeath(state, monster, events, isOnTask)
+    if (state.encounter?.finite) markEncounterPrimaryDefeated(state, events)
+    else checkMonsterDeath(state, monster, events, isOnTask)
     return { combatState: state, events }
   }
 
@@ -666,7 +792,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
             events.push({ type: 'consumeScroll', itemId: creature.scroll, qty: 1 })
             if (monster.currentHP <= 0) {
               state.monster = monster
-              checkMonsterDeath(state, monster, events, isOnTask)
+              resolveTargetDeath(state, monster, events, isOnTask)
               return { combatState: state, events }
             }
           } else {
@@ -843,6 +969,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus)
       let maxHit = Math.floor(wornRangedMaxHit(effRng, bonuses.otherBonus) * voidMult.rangedDamage)
       let atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy * (1 + slayerEquipmentBonus.accuracyPercent / 100))
+      if (state.sunspireRules?.rangedMagicAccuracyMultiplier) atkRoll = Math.floor(atkRoll * state.sunspireRules.rangedMagicAccuracyMultiplier)
 
       // Dragon Hunter Crossbow: +30% accuracy and damage vs dragon-type monsters
       if (equippedWeapon?.dragonHunter && target.isDragon) {
@@ -864,7 +991,15 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const defRoll = maxDefenceRoll(target.stats.defence, target.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
       maxHit = Math.floor(maxHit * (1 + slayerEquipmentBonus.damagePercent / 100))
-      damage = rollDamage(acc, maxHit)
+      const twinflareCharged = equippedWeapon?.chargedDoubleHit === true && weaponCharges > 0
+      if (equippedWeapon?.chargedDoubleHit === true && !twinflareCharged) maxHit = Math.max(1, Math.floor(maxHit * (Number(equippedWeapon.unchargedDamageMultiplier) || 0.75)))
+      const firstRangedHit = rollDamage(acc, maxHit)
+      if (twinflareCharged) {
+        const secondRangedHit = rollDamage(acc, maxHit)
+        damage = firstRangedHit + secondRangedHit
+        events.push({ type: 'chargedDoubleHit', hits: [firstRangedHit, secondRangedHit] })
+        events.push({ type: 'consumeCharge', qty: 1 })
+      } else damage = firstRangedHit
 
       // ── Karil Set Bonus: 25% chance to fire an extra shot for the same damage roll ──
       if (hasFullKarilSet(equipment, itemsData) && Math.random() < 0.25) {
@@ -964,7 +1099,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
 
       const effMag = effectiveMagic(boostedPlayerStats.magic)
-      const atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy * (1 + slayerEquipmentBonus.accuracyPercent / 100))
+      let atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy * (1 + slayerEquipmentBonus.accuracyPercent / 100))
+      if (state.sunspireRules?.rangedMagicAccuracyMultiplier) atkRoll = Math.floor(atkRoll * state.sunspireRules.rangedMagicAccuracyMultiplier)
       const defRoll = monsterMagicDefenceRoll(target.stats.magic, target.stats.defence, target.defenceBonus.magic || 0)
       const acc = hitChance(atkRoll, defRoll)
       const magicLevel = boostedPlayerStats.magic || 1
@@ -1123,8 +1259,25 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     for (let addIndex = 0; addIndex < adds.length; addIndex++) {
       const add = adds[addIndex]
       if (!add || add.currentHP <= 0) continue
+      // Remember whether this add was already queued before this tick. A queued
+      // add must not be starved by the primary becoming ready again while the
+      // mandatory prayer-reaction tick is passing.
+      const sunspireAddWasWaiting = isSunspireStaggeredEncounter(state)
+        && (add.attackTimer || 0) <= 0
       add.attackTimer = (add.attackTimer || 0) - 1
       if (add.attackTimer > 0) continue
+
+      // The primary owns a NEW due-timer tie (important for Aurelios telegraphs),
+      // but an add that was already waiting at zero keeps its place in the queue.
+      // Spawn order then drains queued adds one at a time on each free attack slot.
+      const sunspirePrimaryReady = isSunspireStaggeredEncounter(state)
+        && state.monsterAttackTimer <= 0
+        && monster.currentHP > 0
+      if ((sunspirePrimaryReady && !sunspireAddWasWaiting) || !sunspireEnemyAttackSlotOpen(state)) {
+        add.attackTimer = 0
+        continue
+      }
+      claimSunspireEnemyAttackSlot(state)
       add.attackTimer = Math.max(1, Math.floor(add.attackSpeed || 4))
       // `addIndex` rides the event because several adds can swing on one tick
       // and a caller may have to gate them separately — the open world checks
@@ -1132,7 +1285,16 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const addDamage = resolveEnemySwing(
         add, add.attackStyle, state, boostedPlayerStats, playerStats, bonuses, prayersData, events, { fromAdd: true, addIndex }
       )
-      if (addDamage > 0) addDamageLanded = true
+      if (addDamage > 0) {
+        addDamageLanded = true
+        const recoil = chargedArmourRecoil(equipment, itemsData, add.attackStyle, addDamage)
+        if (recoil) {
+          add.currentHP = Math.max(0, add.currentHP - recoil.damage)
+          events.push({ type: 'armourRecoil', monsterName: add.name, damage: recoil.damage, monsterHP: add.currentHP, itemId: recoil.itemId })
+          events.push({ type: 'consumeArmourCharge', slots: [recoil.slot], qty: recoil.consumeCharges })
+          if (add.currentHP <= 0) resolveTargetDeath(state, add, events, false)
+        }
+      }
     }
     // One charge per TICK the wearer was hit, not one per attacker — the armour
     // burns a charge for taking a hit, and three minions landing together is
@@ -1144,7 +1306,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   }
 
   // ── Monster Attack ──
-  if (state.monsterAttackTimer <= 0) {
+  if (state.monsterAttackTimer <= 0 && monster.currentHP > 0 && sunspireEnemyAttackSlotOpen(state)) {
+    claimSunspireEnemyAttackSlot(state)
     let damage = 0
 
     // Determine the effective attack style (handle both single style and multiple styles array)
@@ -1191,9 +1354,18 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     if (damage > 0) {
       const armourSlots = chargedScaleArmourSlots(equipment, itemsData)
       if (armourSlots.length) events.push({ type: 'consumeArmourCharge', slots: armourSlots, qty: 1 })
+      const recoil = chargedArmourRecoil(equipment, itemsData, effectiveAttackStyle, damage)
+      if (recoil) {
+        monster.currentHP = Math.max(0, monster.currentHP - recoil.damage)
+        events.push({ type: 'armourRecoil', monsterName: monster.name, damage: recoil.damage, monsterHP: monster.currentHP, itemId: recoil.itemId })
+        events.push({ type: 'consumeArmourCharge', slots: [recoil.slot], qty: recoil.consumeCharges })
+        if (monster.currentHP <= 0) resolveTargetDeath(state, monster, events, false)
+      }
     }
 
-    state.monsterAttackTimer = monster.attackSpeed || 4
+    state.monsterAttackTimer = monster.sunspireChampion && state.aurelios
+      ? aureliosAttackDelay(state, monster)
+      : (monster.attackSpeed || 4)
 
     // ── Add spawn ──
     const canSummon = (state.addDefinitions || state.addDefinition)
@@ -1704,6 +1876,38 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
       events.push({ type: 'specialHit', hits: [meleeDmg, lightningDmg], totalDamage: actual, specType: 'lightning', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'division': {
+      const styleBonus = getRangedStyleBonus(state.stance)
+      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      let maxHit = specRangedMaxHit(effRng)
+      const atkRoll = specRangedAttackRoll(effRng)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const charged = (weaponEntry.charges || 0) > 0
+      if (!charged) maxHit = Math.max(1, Math.floor(maxHit * (Number(weapon.unchargedDamageMultiplier) || 0.75)))
+      const attempts = charged ? 2 : 1
+      const hits = []
+      let defenceReducedBy = 0
+      const drainPerHit = Math.max(0, Math.floor((Number(monster.stats.magic) || 0) * 0.125))
+      for (let i = 0; i < attempts; i++) {
+        const rolled = resist(rollDamage(acc, maxHit))
+        hits.push(rolled)
+        if (rolled > 0 && drainPerHit > 0) {
+          const drain = Math.min(monster.stats.defence || 0, drainPerHit)
+          monster.stats.defence = Math.max(0, (monster.stats.defence || 0) - drain)
+          defenceReducedBy += drain
+        }
+      }
+      const actual = Math.min(hits.reduce((sum, value) => sum + value, 0), Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits, totalDamage: actual, specType: 'division', defenceReducedBy, monsterHP: monster.currentHP })
+      if (charged) events.push({ type: 'consumeCharge', qty: 1 })
       break
     }
 

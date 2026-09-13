@@ -108,7 +108,7 @@ const ARCHETYPE_PALETTE = {
   dragon: 'emerald', serpent: 'blight', lizardman: 'verdigris', beast: 'ash',
   bovine: 'flesh', fowl: 'bone', bird: 'ash', arachnid: 'obsidian',
   insect: 'gold', crab: 'crimson', kraken: 'brine', orb: 'arcane',
-  toad: 'blight', humanoid: 'flesh', skeleton: 'bone', husk: 'blight',
+  toad: 'blight', humanoid: 'flesh', gladiator: 'gold', skeleton: 'bone', husk: 'blight',
   demon: 'crimson', imp: 'crimson', giant: 'stone', wraith: 'void',
   golem: 'stone', treant: 'bark',
 }
@@ -193,6 +193,13 @@ const PALETTE_OVERRIDE = {
   // An archer in green, not a person made of wood: "verdant" is what they
   // wear, and the bark rule cannot tell those apart.
   verdant_stalker: 'moss',
+  sunclaw_gladiator: 'gold',
+  dawnlance_colossus: 'gold',
+  triune_chimera: 'arcane',
+  resonance_colossus: 'arcane',
+  hornwarden: 'ember',
+  sunspire_healing_totem: 'gold',
+  aurelios_the_unbroken: 'gold',
 }
 
 // ── Archetypes ────────────────────────────────────────────────────────────
@@ -246,6 +253,18 @@ const MONSTER_ARCHETYPE = {
   commander_zephyra: 'humanoid', emberhowl_warlord: 'humanoid',
   torvek_the_corrupted: 'humanoid', zaryth_blade_sentinel: 'humanoid',
   zaryth_bolt_sentinel: 'humanoid', zaryth_rune_sentinel: 'humanoid',
+
+  // Sunspire is explicit rather than name-guessed: a varied arena bestiary.
+  ashen_warband_blade: 'gladiator', ashen_warband_bow: 'gladiator',
+  ashen_warband_magus: 'gladiator', ashen_warband_bulwark: 'gladiator',
+  sunclaw_gladiator: 'gladiator', aurelios_the_unbroken: 'gladiator',
+  embercoil_shaman: 'lizardman',
+  dawnlance_colossus: 'giant',
+  triune_chimera: 'dragon',
+  resonance_colossus: 'golem',
+  hornwarden: 'demon',
+  ember_swarm: 'imp',
+  sunspire_healing_totem: 'orb',
 
   // The dead.
   glaive_skeleton: 'skeleton', boneclaw_revenant: 'skeleton',

@@ -6,6 +6,7 @@ import { weaponShapeFor, weaponMuzzle, partStrokeWidth, TINTED_FILL_ROLES, TINTE
 import MonsterFigure from './MonsterFigure.jsx'
 import { monsterFigureFor, monsterMuzzle, monsterTorso, monsterShadow } from '../utils/monsterFigures.js'
 import { useAnimationFlip } from '../hooks/useActionSwings.js'
+import SkillIcon from './SkillIcon.jsx'
 
 /**
  * Inkwright's combat presentation: two figures facing each other — the player
@@ -98,11 +99,16 @@ import { useAnimationFlip } from '../hooks/useActionSwings.js'
  *   showCorners — mobile-HUD-only: renders "current/max" text in the stage's
  *                 top-left (actor HP + Prayer) and top-right (target HP)
  *                 corners, replacing the bar block the mobile HUD used to show
- *                 below the stage. Both desktop CombatScreen callers must
- *                 leave this false/omitted — it shares actorHp/targetHp with
- *                 the mini bars above each head rather than taking its own copy.
+ *                 below the stage. Both desktop CombatScreen callers leave
+ *                 this false/omitted — actorThreat can still render by itself
+ *                 there without duplicating HP/Prayer readouts.
  *   actorPrayer — { current, max } for the corner's Prayer line, or null to
  *                 omit it (no prayer pool this fight). Ignored unless showCorners.
+ *   actorThreat — optional { skill, color, label } for one tiny protection-
+ *                 prayer crest immediately below Prayer. The skill comes from
+ *                 the real protection prayer visual mapping. Deliberately no
+ *                 countdown, monster name or badge: the cue should be glanceable,
+ *                 not a second HUD.
  *   label       — accessible description
  */
 const STAGE_W = 260
@@ -149,7 +155,7 @@ export function shotOffset(kind, weaponIconType, muzzleOverride = null, landing 
 export default function InkwrightCombatStage({
   actor, target, actorSwing = null, targetSwing = null, actorConsume = null,
   actorHp = null, targetHp = null, actorSplats = null, targetSplats = null,
-  resetKey = null, showCorners = false, actorPrayer = null, label = 'Combat',
+  resetKey = null, showCorners = false, actorPrayer = null, actorThreat = null, label = 'Combat',
 }) {
   // Hooks run every render, before the early return.
   const frozen = useRef({})
@@ -368,10 +374,23 @@ export default function InkwrightCombatStage({
       {/* Mobile-HUD-only corner readout — replaces the Prayer bar block that
           used to sit below the whole stage. Desktop's 3-pane layout keeps its
           own separate bars and never sets showCorners. */}
-      {showCorners && (
+      {(showCorners || actorThreat) && (
         <div class="inkc-corner inkc-corner--actor" aria-hidden="true">
-          <CornerStat hp={actorHp} />
-          {actorPrayer && <div class="inkc-corner__prayer">{Math.ceil(actorPrayer.current || 0)}/{actorPrayer.max}</div>}
+          {showCorners && <CornerStat hp={actorHp} />}
+          {showCorners && actorPrayer && <div class="inkc-corner__prayer">{Math.ceil(actorPrayer.current || 0)}/{actorPrayer.max}</div>}
+          {actorThreat && (
+            <div
+              title={actorThreat.label || 'Next incoming attack'}
+              style={{ marginTop: 2, lineHeight: 1, color: actorThreat.color || 'currentColor' }}
+            >
+              <SkillIcon
+                skill={actorThreat.skill}
+                color={actorThreat.color || 'currentColor'}
+                size={15}
+                title={actorThreat.label || 'Next incoming attack'}
+              />
+            </div>
+          )}
         </div>
       )}
       {showCorners && (

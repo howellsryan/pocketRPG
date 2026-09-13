@@ -15,7 +15,10 @@ const monsters = require(path.join(ROOT, 'src/data/monsters.json'))
 const raids = require(path.join(ROOT, 'src/data/raids.json'))
 const items = require(path.join(ROOT, 'src/data/items.json'))
 const collectionLog = require(path.join(ROOT, 'src/data/collectionLog.json'))
-const { BOSS_SLAYER_TASK_XP_MULTIPLIER } = require(path.join(ROOT, 'src/engine/slayerRewards.js'))
+// Keep this audit dependency-free CommonJS. Importing the ESM gameplay module
+// here pulls JSON-module imports into Node's CJS loader on Node 22+.
+// This mirrors src/engine/slayerRewards.js and is pinned by gameplay tests.
+const BOSS_SLAYER_TASK_XP_MULTIPLIER = 4
 
 const itemIds = new Set(Object.keys(items))
 
@@ -96,18 +99,83 @@ function auditMonster(id) {
 function auditRaid(id) {
   const r = raids[id]
   if (!r) { errors.push(`Unknown monster/raid id: ${id}`); return }
+
+  // Modifier-only summons are raid-owned too and must never become standalone
+  // world/economy monsters.
+  for (const monsterId of (r.encounterOnlyMonsters || [])) {
+    if (!monsters[monsterId]) errors.push(`${id}: encounterOnlyMonsters references unknown monster '${monsterId}'`)
+  }
+
+  // Wave raids own encounter monsters through waves rather than bosses[].
+  // Validate every authored member so an add/reinforcement typo cannot ship.
+  for (const [waveIndex, wave] of (r.waves || []).entries()) {
+    const ids = [
+      wave?.primary,
+      ...(wave?.initialAdds || []),
+      ...(wave?.reinforcements || []).flatMap((group) => group?.monsterIds || []),
+    ].filter(Boolean)
+    if (!wave?.primary) errors.push(`${id}: wave ${waveIndex + 1} has no primary monster`)
+    for (const monsterId of ids) {
+      if (!monsters[monsterId]) errors.push(`${id}: wave ${waveIndex + 1} references unknown monster '${monsterId}'`)
+    }
+  }
+
   for (const d of r.rewards?.always || []) {
     if (!itemIds.has(d.itemId)) errors.push(`${id}: always-drop references unknown item '${d.itemId}'`)
     const c = Number(d.chance)
     if (!(c > 0 && c <= 1)) errors.push(`${id}: always-drop '${d.itemId}' has chance ${d.chance}`)
   }
+
   const uniq = r.rewards?.unique
+  if (uniq) {
+    for (const it of uniq.items || []) {
+      if (!itemIds.has(it.itemId)) errors.push(`${id}: unique '${it.itemId}' is not a known item`)
+      if (!loggedItems.has(it.itemId)) errors.push(`${id}: unique '${it.itemId}' has no collection-log slot`)
+    }
+  }
+
+  // Sunspire-style wave rewards deliberately set the conventional raid unique
+  // chance to zero because the authoritative run ledger rolls by cleared wave.
+  // Audit that custom contract directly instead of reporting a fake "no uniques".
+  if (r.sunspireRewards && Array.isArray(r.waves)) {
+    const rules = r.sunspireRewards
+    const chances = Object.entries(rules.uniqueChanceByWave || {})
+      .map(([wave, chance]) => ({ wave: Number(wave), chance: Number(chance) }))
+      .sort((a, b) => a.wave - b.wave)
+    for (const entry of chances) {
+      if (!Number.isInteger(entry.wave) || entry.wave < 1 || entry.wave > r.waves.length)
+        errors.push(`${id}: custom unique chance has invalid wave '${entry.wave}'`)
+      if (!(entry.chance > 0 && entry.chance <= 1))
+        errors.push(`${id}: wave ${entry.wave} unique chance must be in (0,1], got ${entry.chance}`)
+    }
+    for (const [itemId, unlockWaveRaw] of Object.entries(rules.uniqueUnlockWave || {})) {
+      const unlockWave = Number(unlockWaveRaw)
+      if (!itemIds.has(itemId)) errors.push(`${id}: custom unique unlock references unknown item '${itemId}'`)
+      if (!loggedItems.has(itemId)) errors.push(`${id}: custom unique '${itemId}' has no collection-log slot`)
+      if (!Number.isInteger(unlockWave) || unlockWave < 1 || unlockWave > r.waves.length)
+        errors.push(`${id}: custom unique '${itemId}' has invalid unlock wave ${unlockWaveRaw}`)
+    }
+    const headline = rules.headlineItem
+    if (headline) {
+      if (!itemIds.has(headline)) errors.push(`${id}: headline reward '${headline}' is not a known item`)
+      if (!loggedItems.has(headline)) errors.push(`${id}: headline reward '${headline}' has no collection-log slot`)
+    }
+    const first = chances[0]
+    const last = chances[chances.length - 1]
+    const range = first && last
+      ? `w${first.wave} 1/${Math.round(1 / first.chance)} → w${last.wave} 1/${Math.round(1 / last.chance)}`
+      : '-'
+    rows.push({
+      id, kind: 'wave raid', cb: '-', hp: '-', evPerKill: '-', gpPerHrEst: '-',
+      combatXpPerHrEst: '-', slayerXpPerHrEst: '-', rarestUnique: range,
+    })
+    return
+  }
+
   if (uniq) {
     const totalWeight = (uniq.items || []).reduce((s, i) => s + (Number(i.weight) || 0), 0)
     let rarest = 1
     for (const it of uniq.items || []) {
-      if (!itemIds.has(it.itemId)) errors.push(`${id}: unique '${it.itemId}' is not a known item`)
-      if (!loggedItems.has(it.itemId)) errors.push(`${id}: unique '${it.itemId}' has no collection-log slot`)
       const eff = totalWeight > 0 ? (Number(uniq.chance) || 0) * (Number(it.weight) || 0) / totalWeight : 0
       if (eff > 0 && eff < rarest) rarest = eff
     }

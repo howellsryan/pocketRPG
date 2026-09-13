@@ -89,9 +89,15 @@ beforeEach(() => {
 describe('raid catalogue', () => {
   it('lists each raid once, with its boss order', () => {
     const catalogue = coopRaidCatalogue()
-    expect(catalogue.map((r) => r.raidId)).toEqual([
-      'vaults_of_xyren', 'crimson_night_theatre', 'cryptbound_champions', 'tomb_of_arasmus',
-    ])
+    const ids = catalogue.map((r) => r.raidId)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids).toEqual(expect.arrayContaining([
+      'vaults_of_xyren',
+      'crimson_night_theatre',
+      'cryptbound_champions',
+      'tomb_of_arasmus',
+      'sunspire_colosseum',
+    ]))
     const barrows = catalogue.find((r) => r.raidId === RAID)!
     expect(barrows.bossCount).toBe(raidBossOrder(RAID).length)
     expect(barrows.bossNames).toHaveLength(raidBossOrder(RAID).length)
@@ -146,6 +152,41 @@ describe('opening a party', () => {
       characterId: 7, identityId: 1, raidId: RAID, username: 'player7',
     })
     expect(saveRevision).toBe(2)
+  })
+})
+
+describe('private solo Sunspire', () => {
+  it('opens solo Sunspire as an already-active private one-player room', async () => {
+    await seedCharacter(7)
+    const { sessionId } = await joinCoopRaidParty(env as never, {
+      characterId: 7,
+      identityId: 1,
+      raidId: 'sunspire_colosseum',
+      username: 'player7',
+      solo: true,
+    })
+
+    const row = await readSession(env as never, sessionId)
+    const state = parseSessionState(row)
+    expect(row.status).toBe('active')
+    expect(row.phase).toBe('active')
+    expect(state.phase).toBe('active')
+    expect(state.raid.raidId).toBe('sunspire_colosseum')
+    expect(state.raid.solo).toBe(true)
+    expect(Object.keys(state.members)).toEqual(['7'])
+    expect(await activeSessionIdFor(env as never, 7)).toBe(sessionId)
+    expect((await listOpenRaidParties(env as never)).get('sunspire_colosseum')).toEqual([])
+  })
+
+  it('refuses private-solo mode for ordinary raids', async () => {
+    await seedCharacter(7)
+    await expect(joinCoopRaidParty(env as never, {
+      characterId: 7,
+      identityId: 1,
+      raidId: RAID,
+      username: 'player7',
+      solo: true,
+    })).rejects.toMatchObject({ code: 'INVALID_COOP_RAID' })
   })
 })
 

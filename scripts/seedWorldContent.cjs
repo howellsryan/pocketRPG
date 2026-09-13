@@ -56,10 +56,19 @@ const RAID_PLACEMENT = {
   crimson_night_theatre: 'varrick',
   cryptbound_champions: 'ardounne',
   tomb_of_arasmus: 'ardounne',
+  sunspire_colosseum: 'varrick',
 }
 const RAID_DEFAULT_CITY = 'varrick'
 const raidBossIds = new Set()
-for (const raid of canonicalRaids) for (const b of raid.bosses || []) raidBossIds.add(b)
+for (const raid of canonicalRaids) {
+  for (const b of raid.bosses || []) raidBossIds.add(b)
+  for (const id of raid.encounterOnlyMonsters || []) raidBossIds.add(id)
+  for (const wave of raid.waves || []) {
+    if (wave.primary) raidBossIds.add(wave.primary)
+    for (const id of wave.initialAdds || []) raidBossIds.add(id)
+    for (const group of wave.reinforcements || []) for (const id of group.monsterIds || []) raidBossIds.add(id)
+  }
+}
 
 // ---- facilities -------------------------------------------------------------------
 // Skills tied to a building. Every action of these skills is available at every place

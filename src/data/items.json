@@ -834,10 +834,28 @@
     "type": "armour",
     "slot": "head",
     "stackable": false,
-    "attackBonus": { "stab": 10, "slash": 10, "crush": 10, "magic": 10, "ranged": 10 },
-    "defenceBonus": { "stab": 10, "slash": 10, "crush": 10, "magic": 10, "ranged": 10 },
-    "otherBonus": { "meleeStrength": 2, "rangedStrength": 2, "magicDamage": 2 },
-    "requirements": { "defence": 1 },
+    "attackBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
+    },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
+    },
+    "otherBonus": {
+      "meleeStrength": 2,
+      "rangedStrength": 2,
+      "magicDamage": 2
+    },
+    "requirements": {
+      "defence": 1
+    },
     "shopValue": 1000,
     "isGeneralStore": true,
     "requiresAccount": "grindman"
@@ -5150,7 +5168,7 @@
     "boltProc": {
       "type": "blood_forfeit",
       "chance": 0.06,
-      "description": "Blood Forfeit \u2014 6%: deals 20% of target's current HP, costs 10% of your HP."
+      "description": "Blood Forfeit — 6%: deals 20% of target's current HP, costs 10% of your HP."
     },
     "shopValue": 500,
     "isGeneralStore": false
@@ -5193,7 +5211,7 @@
     "boltProc": {
       "type": "armour_piercing",
       "chance": 0.1,
-      "description": "Armour Piercing \u2014 10%: +15% damage and ignores all defence."
+      "description": "Armour Piercing — 10%: +15% damage and ignores all defence."
     },
     "shopValue": 700,
     "isGeneralStore": false
@@ -5236,7 +5254,7 @@
     "boltProc": {
       "type": "dragons_breath",
       "chance": 0.06,
-      "description": "Dragon's Breath \u2014 6%: +45% damage. Does not work on dragons or fire-immune targets."
+      "description": "Dragon's Breath — 6%: +45% damage. Does not work on dragons or fire-immune targets."
     },
     "shopValue": 2600,
     "isGeneralStore": false
@@ -5279,7 +5297,7 @@
     "boltProc": {
       "type": "life_leech",
       "chance": 0.11,
-      "description": "Life Leech \u2014 11%: +20% damage, heal 25% of damage dealt."
+      "description": "Life Leech — 11%: +20% damage, heal 25% of damage dealt."
     },
     "shopValue": 9500,
     "isGeneralStore": false
@@ -5322,7 +5340,7 @@
     "boltProc": {
       "type": "blood_forfeit",
       "chance": 0.06,
-      "description": "Blood Forfeit \u2014 6%: deals 20% of target's current HP, costs 10% of your HP."
+      "description": "Blood Forfeit — 6%: deals 20% of target's current HP, costs 10% of your HP."
     },
     "shopValue": 2200,
     "isGeneralStore": false
@@ -5365,7 +5383,7 @@
     "boltProc": {
       "type": "armour_piercing",
       "chance": 0.1,
-      "description": "Armour Piercing \u2014 10%: +15% damage and ignores all defence."
+      "description": "Armour Piercing — 10%: +15% damage and ignores all defence."
     },
     "shopValue": 2400,
     "isGeneralStore": false
@@ -5408,7 +5426,7 @@
     "boltProc": {
       "type": "dragons_breath",
       "chance": 0.06,
-      "description": "Dragon's Breath \u2014 6%: +45% damage. Does not work on dragons or fire-immune targets."
+      "description": "Dragon's Breath — 6%: +45% damage. Does not work on dragons or fire-immune targets."
     },
     "shopValue": 4800,
     "isGeneralStore": false
@@ -5451,7 +5469,7 @@
     "boltProc": {
       "type": "life_leech",
       "chance": 0.11,
-      "description": "Life Leech \u2014 11%: +20% damage, heal 25% of damage dealt."
+      "description": "Life Leech — 11%: +20% damage, heal 25% of damage dealt."
     },
     "shopValue": 11000,
     "isGeneralStore": false
@@ -9568,7 +9586,7 @@
     "specialAttack": {
       "type": "lunge",
       "energyCost": 50,
-      "description": "The Block: Slam your bulwark with unstoppable force \u2014 guaranteed 40\u201364 damage. No accuracy roll. Cannot be blocked."
+      "description": "The Block: Slam your bulwark with unstoppable force — guaranteed 40–64 damage. No accuracy roll. Cannot be blocked."
     },
     "shopValue": 13720296,
     "isGeneralStore": false,
@@ -9711,7 +9729,7 @@
     "specialAttack": {
       "type": "slice_and_dice",
       "energyCost": 50,
-      "description": "Slice and Dice: Four rapid slashes \u2014 each hit is half the previous. Exceptional burst damage."
+      "description": "Slice and Dice: Four rapid slashes — each hit is half the previous. Exceptional burst damage."
     },
     "shopValue": 44438421,
     "isGeneralStore": false,
@@ -19465,5 +19483,276 @@
     "shopValue": 1250000,
     "isGeneralStore": false,
     "description": "A grimoire bound in ember-scorched leather. It never runs out of fire runes and stokes every fire spell that leaves its pages."
+  },
+  "sunshards": {
+    "id": "sunshards",
+    "name": "Sunshards",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 850,
+    "isGeneralStore": false,
+    "description": "Radiant fragments carried from the Sunspire Colosseum. Used to empower Sunspire equipment."
+  },
+  "resonance_crystal": {
+    "id": "resonance_crystal",
+    "name": "Resonance Crystal",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1800000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "isRaidUnique": true,
+    "combineWith": "grondar_boots",
+    "combineResult": "resonant_bulwark_boots",
+    "description": "A crystalline echo from the Sunspire. Combine it with Grondar Boots to create Resonant Bulwark Boots."
+  },
+  "sunweaver_quiver": {
+    "id": "sunweaver_quiver",
+    "name": "Sunweaver Quiver",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 26
+    },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 12,
+      "ranged": 18
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 12,
+      "magicDamage": 0,
+      "prayer": 3
+    },
+    "chargedBonus": {
+      "attackBonus": {
+        "ranged": 8
+      },
+      "otherBonus": {
+        "rangedStrength": 5
+      }
+    },
+    "requirements": {
+      "ranged": 85
+    },
+    "chargeable": true,
+    "chargeItemId": "sunshards",
+    "chargesPerMaterial": 1,
+    "maxCharges": 20000,
+    "shopValue": 22000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "isRaidUnique": true,
+    "description": "A masterwork ranged cape. Charged with Sunshards, it reaches near-pinnacle ranged accuracy and strength without replacing the all-style power of an Infernal Max Cape."
+  },
+  "twinflare_chakrams": {
+    "id": "twinflare_chakrams",
+    "name": "Twinflare Chakrams",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 120
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 48,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 85
+    },
+    "chargeable": true,
+    "chargeItemId": "sunshards",
+    "chargesPerMaterial": 1,
+    "maxCharges": 20000,
+    "chargedDoubleHit": true,
+    "unchargedDamageMultiplier": 0.8,
+    "specialAttack": {
+      "type": "division",
+      "energyCost": 50,
+      "description": "Division: Strikes independently with each chakram while charged. Every successful hit drains Defence by 12.5% of the target's Magic level."
+    },
+    "shopValue": 18000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "isRaidUnique": true,
+    "description": "A one-handed endgame thrown weapon. Sunshard charges split each attack into two independent strikes, giving it near-pinnacle ranged output while charged."
+  },
+  "resonant_bulwark_boots": {
+    "id": "resonant_bulwark_boots",
+    "name": "Resonant Bulwark Boots",
+    "type": "armour",
+    "slot": "boots",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 15,
+      "slash": 15,
+      "crush": 15,
+      "magic": -1,
+      "ranged": -1
+    },
+    "defenceBonus": {
+      "stab": 18,
+      "slash": 18,
+      "crush": 20,
+      "magic": 4,
+      "ranged": 12
+    },
+    "otherBonus": {
+      "meleeStrength": 10,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "meleeDamage": 6,
+      "prayer": 3
+    },
+    "requirements": {
+      "defence": 75,
+      "strength": 70
+    },
+    "chargeable": true,
+    "chargeItemId": "resonance_crystal",
+    "chargesPerMaterial": 6000,
+    "maxCharges": 24000,
+    "chargedPassive": "melee_recoil",
+    "chargedPassiveDefaultActive": true,
+    "shopValue": 4200000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "isRaidUnique": true,
+    "description": "Resonance-forged Grondar Boots with near-pinnacle melee bonuses. While enabled and charged, a successful melee hit against the wearer recoils 1 damage."
+  },
+  "sunbound_zealot_helm": {
+    "id": "sunbound_zealot_helm",
+    "name": "Sunbound Zealot Helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": -2,
+      "ranged": 2
+    },
+    "defenceBonus": {
+      "stab": 82,
+      "slash": 86,
+      "crush": 84,
+      "magic": 36,
+      "ranged": 82
+    },
+    "otherBonus": {
+      "meleeStrength": 9,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 6,
+      "meleeDamage": 2
+    },
+    "requirements": {
+      "defence": 85,
+      "prayer": 70
+    },
+    "shopValue": 5500000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "isRaidUnique": true,
+    "description": "A radiant Sunbound helm tuned for near-pinnacle melee offence, strong protection and sustained prayer."
+  },
+  "sunbound_zealot_cuirass": {
+    "id": "sunbound_zealot_cuirass",
+    "name": "Sunbound Zealot Cuirass",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 32,
+      "slash": 32,
+      "crush": 32,
+      "magic": -5,
+      "ranged": 3
+    },
+    "defenceBonus": {
+      "stab": 138,
+      "slash": 134,
+      "crush": 130,
+      "magic": 42,
+      "ranged": 142
+    },
+    "otherBonus": {
+      "meleeStrength": 18,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 10,
+      "meleeDamage": 9
+    },
+    "requirements": {
+      "defence": 85,
+      "prayer": 70
+    },
+    "shopValue": 8500000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "isRaidUnique": true,
+    "description": "The core of the Sunbound Zealot set: near-pinnacle melee power and defence with an exceptional prayer bonus."
+  },
+  "sunbound_zealot_greaves": {
+    "id": "sunbound_zealot_greaves",
+    "name": "Sunbound Zealot Greaves",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 24,
+      "slash": 24,
+      "crush": 24,
+      "magic": -3,
+      "ranged": 2
+    },
+    "defenceBonus": {
+      "stab": 102,
+      "slash": 98,
+      "crush": 100,
+      "magic": 34,
+      "ranged": 106
+    },
+    "otherBonus": {
+      "meleeStrength": 13,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 8,
+      "meleeDamage": 7
+    },
+    "requirements": {
+      "defence": 85,
+      "prayer": 70
+    },
+    "shopValue": 7000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "isRaidUnique": true,
+    "description": "Sun-forged greaves that sit just below the strongest melee plate while carrying a major prayer bonus."
   }
 }

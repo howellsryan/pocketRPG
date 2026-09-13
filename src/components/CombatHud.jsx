@@ -1,3 +1,4 @@
+import SkillIcon from './SkillIcon.jsx'
 import GameIcon from './GameIcon.jsx'
 import SkillEmblem from './SkillEmblem.jsx'
 import HPBar from './HPBar.jsx'
@@ -62,12 +63,19 @@ export function CombatHPBlock({ label, current, max, splats, valueColor, right }
   )
 }
 
-export function CombatPrayerBlock({ current, max }) {
+export function CombatPrayerBlock({ current, max, threat = null }) {
   return (
     <div class="cb-hpblock">
       <div class="cb-hplabel">
         <span>🙏 Prayer</span>
-        <span class="cb-hplabel__v" style={{ color: '#7ec8ff' }}>{Math.ceil(current || 0)}/{max}</span>
+        <span class="cb-hplabel__right">
+          {threat && (
+            <span title={threat.label || 'Next incoming attack'} style={{ display: 'inline-flex', lineHeight: 1 }}>
+              <SkillIcon skill={threat.skill} color={threat.color} size={14} title={threat.label || 'Next incoming attack'} />
+            </span>
+          )}
+          <span class="cb-hplabel__v" style={{ color: '#7ec8ff' }}>{Math.ceil(current || 0)}/{max}</span>
+        </span>
       </div>
       <div class="h-2 rounded-full bg-[rgba(255,255,255,0.07)] overflow-hidden">
         <div

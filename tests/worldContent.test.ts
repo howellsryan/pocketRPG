@@ -27,10 +27,21 @@ import { COMPLEXITY_ORDER } from '../src/utils/complexityColors.js'
 
 const asArray = (v: any) => (Array.isArray(v) ? v : Object.values(v || {}))
 
-// Raid bosses are raid-only content (placed as kind 'raid', not standalone monsters).
+// Every monster authored inside a raid is raid-only content (placed as kind
+// 'raid', not standalone combat), whether the raid is a boss sequence or waves.
 const raidBossIds = new Set<string>()
-for (const r of asArray(raidsData)) for (const b of (r.bosses || [])) raidBossIds.add(b)
-// First regular (non-raid-boss) monster — a stable subject for the gating tests.
+for (const r of asArray(raidsData)) {
+  for (const b of (r.bosses || [])) raidBossIds.add(b)
+  for (const id of r.encounterOnlyMonsters || []) raidBossIds.add(id)
+  for (const wave of r.waves || []) {
+    if (wave.primary) raidBossIds.add(wave.primary)
+    for (const id of wave.initialAdds || []) raidBossIds.add(id)
+    for (const group of wave.reinforcements || []) {
+      for (const id of group.monsterIds || []) raidBossIds.add(id)
+    }
+  }
+}
+// First regular (non-raid) monster — a stable subject for the gating tests.
 const regularMonster = asArray(monstersData).find((m: any) => !raidBossIds.has(m.id))
 
 describe('activityRef', () => {
@@ -70,8 +81,15 @@ describe('content -> place coverage', () => {
       const places = placesForActivity('raid', r.id)
       expect(places.length, `raid ${r.id}`).toBeGreaterThan(0)
       for (const id of places) expect((worldData.places as any)[id].tier).toBe('city')
-      // its bosses must not leak into the combat layer
-      for (const b of r.bosses || []) expect(placesForActivity('combat', b), `boss ${b}`).toEqual([])
+      // Nothing authored inside the raid may leak into the standalone combat layer.
+      const members = new Set<string>(r.bosses || [])
+      for (const id of r.encounterOnlyMonsters || []) members.add(id)
+      for (const wave of r.waves || []) {
+        if (wave.primary) members.add(wave.primary)
+        for (const id of wave.initialAdds || []) members.add(id)
+        for (const group of wave.reinforcements || []) for (const id of group.monsterIds || []) members.add(id)
+      }
+      for (const id of members) expect(placesForActivity('combat', id), `raid monster ${id}`).toEqual([])
     }
   })
 

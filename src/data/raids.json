@@ -960,5 +960,221 @@
       }
     },
     "legacy_id": "tombs_of_amascut"
+  },
+  "sunspire_colosseum": {
+    "id": "sunspire_colosseum",
+    "name": "Sunspire Colosseum",
+    "icon": "sunspire_colosseum",
+    "hardMode": false,
+    "allowSkip": false,
+    "description": "Six escalating arena waves using the Colosseum's former upper-half encounters. Claim the accumulated chest and leave safely, or keep climbing for greater rewards as each wave grows more dangerous.",
+    "waves": [
+      {
+        "id": "sunspire_wave_1",
+        "primary": "ashen_warband_blade",
+        "initialAdds": [
+          "ashen_warband_bow",
+          "ashen_warband_magus",
+          "dawnlance_colossus",
+          "triune_chimera",
+          "resonance_colossus"
+        ],
+        "reinforcements": [
+          {
+            "id": "sunspire_wave_1_reinforcement",
+            "afterTicks": 67,
+            "monsterIds": [
+              "hornwarden"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sunspire_wave_2",
+        "primary": "ashen_warband_blade",
+        "initialAdds": [
+          "ashen_warband_bow",
+          "ashen_warband_magus",
+          "dawnlance_colossus",
+          "dawnlance_colossus",
+          "triune_chimera",
+          "resonance_colossus"
+        ],
+        "reinforcements": [
+          {
+            "id": "sunspire_wave_2_reinforcement",
+            "afterTicks": 67,
+            "monsterIds": [
+              "hornwarden"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sunspire_wave_3",
+        "primary": "ashen_warband_blade",
+        "initialAdds": [
+          "ashen_warband_bow",
+          "ashen_warband_magus",
+          "dawnlance_colossus",
+          "triune_chimera",
+          "triune_chimera"
+        ],
+        "reinforcements": [
+          {
+            "id": "sunspire_wave_3_reinforcement",
+            "afterTicks": 67,
+            "monsterIds": [
+              "hornwarden"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sunspire_wave_4",
+        "primary": "ashen_warband_blade",
+        "initialAdds": [
+          "ashen_warband_bow",
+          "ashen_warband_magus",
+          "dawnlance_colossus",
+          "dawnlance_colossus",
+          "triune_chimera",
+          "triune_chimera"
+        ],
+        "reinforcements": [
+          {
+            "id": "sunspire_wave_4_reinforcement",
+            "afterTicks": 67,
+            "monsterIds": [
+              "hornwarden",
+              "embercoil_shaman"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sunspire_wave_5",
+        "primary": "ashen_warband_blade",
+        "initialAdds": [
+          "ashen_warband_bow",
+          "ashen_warband_magus",
+          "dawnlance_colossus",
+          "triune_chimera",
+          "triune_chimera",
+          "resonance_colossus"
+        ],
+        "reinforcements": [
+          {
+            "id": "sunspire_wave_5_reinforcement",
+            "afterTicks": 67,
+            "monsterIds": [
+              "hornwarden",
+              "embercoil_shaman"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sunspire_wave_6",
+        "primary": "aurelios_the_unbroken",
+        "initialAdds": [],
+        "reinforcements": []
+      }
+    ],
+    "modifierPool": [
+      "ember_swarm",
+      "profanation",
+      "deathmark",
+      "twin_resonance",
+      "withering",
+      "chimera_frenzy",
+      "veiled_sight",
+      "afterburn",
+      "horncall",
+      "unyielding",
+      "sunburst",
+      "warband_quartet",
+      "sun_totem",
+      "cinderfall"
+    ],
+    "sunspireRewards": {
+      "uniqueChanceByWave": {
+        "1": 0.012195121951219513,
+        "2": 0.014705882352941176,
+        "3": 0.018518518518518517,
+        "4": 0.025,
+        "5": 0.038461538461538464,
+        "6": 0.08333333333333333
+      },
+      "uniqueUnlockWave": {
+        "resonance_crystal": 1,
+        "sunbound_zealot_helm": 1,
+        "sunbound_zealot_cuirass": 1,
+        "sunbound_zealot_greaves": 1,
+        "twinflare_chakrams": 1
+      },
+      "armourOrder": [
+        "sunbound_zealot_helm",
+        "sunbound_zealot_cuirass",
+        "sunbound_zealot_greaves"
+      ],
+      "headlineItem": "sunweaver_quiver",
+      "guaranteedFirstClear": true,
+      "rewardDepthOffset": 6
+    },
+    "rewards": {
+      "always": [
+        {
+          "itemId": "sunshards",
+          "quantity": [
+            40,
+            80
+          ],
+          "chance": 1
+        },
+        {
+          "itemId": "coins",
+          "quantity": [
+            15000,
+            35000
+          ],
+          "chance": 1
+        }
+      ],
+      "unique": {
+        "chance": 0,
+        "items": [
+          {
+            "itemId": "resonance_crystal",
+            "weight": 6
+          },
+          {
+            "itemId": "sunbound_zealot_helm",
+            "weight": 3
+          },
+          {
+            "itemId": "sunbound_zealot_cuirass",
+            "weight": 3
+          },
+          {
+            "itemId": "sunbound_zealot_greaves",
+            "weight": 3
+          },
+          {
+            "itemId": "twinflare_chakrams",
+            "weight": 1
+          },
+          {
+            "itemId": "sunweaver_quiver",
+            "weight": 0
+          }
+        ]
+      }
+    },
+    "encounterOnlyMonsters": [
+      "ashen_warband_bulwark",
+      "ember_swarm",
+      "sunspire_healing_totem"
+    ]
   }
 }

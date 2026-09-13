@@ -1026,12 +1026,23 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
   // byte-for-byte what live computes and cannot drift between styles.
   maxHit = Math.floor(maxHit * (1 + slayerEquipmentBonus.damagePercent / 100))
 
+  // Twinflare's uncharged profile keeps attacking but loses damage, while a
+  // charged attack rolls twice independently. Treat one weapon swing as the
+  // simulator's "hit" unit so timing stays identical to live combat.
+  const twinflareCharged = combatType === 'ranged'
+    && weaponItem?.chargedDoubleHit === true
+    && (Number(weaponEntry?.charges) || 0) > 0
+  if (combatType === 'ranged' && weaponItem?.chargedDoubleHit === true && !twinflareCharged) {
+    maxHit = Math.max(1, Math.floor(maxHit * (Number(weaponItem.unchargedDamageMultiplier) || 0.75)))
+  }
+
   acc = hitChance(atkRoll, defRoll)
   // Monster damage resistance (spear-gated bosses) — mirrors live combat so a
   // resisted boss can't be killed twice as fast by idling it.
   const resistance = monsterDamageMultiplier(monster, weaponItem)
-  const avgDmgPerHit = acc * (maxHit / 2) * resistance
-  return { avgDmgPerHit, weaponSpeed, acc, combatType, resistance }
+  let avgDmgPerHit = acc * (maxHit / 2) * resistance
+  if (twinflareCharged) avgDmgPerHit *= 2
+  return { avgDmgPerHit, weaponSpeed, acc, combatType, resistance, twinflareCharged }
 }
 
 /**
@@ -1293,6 +1304,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // Scale-charged weapons consume one charge per attack. Cap kills to what the
   // currently loaded charges allow — charges cannot be refilled mid-idle.
   const weaponScaleCharged = !!weaponItem?.scaleCharged
+  const weaponDoubleHitChargeable = weaponItem?.chargedDoubleHit === true
   const startingCharges = weaponEntry?.charges || 0
   let chargesRemaining = startingCharges
   // Scale-charged armour (shardglass) burns one charge per worn piece per hit
@@ -1377,17 +1389,57 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
       const layeredWithPrayer = useCombatPrayer
         ? buildBoostedPlayerStats(layeredBoostStats, null, idlePrayers.combatPrayerId, prayersData)
         : layeredBoostStats
+      const prayerMagicDamage = getPrayerMagicDamageBonus(
+        useCombatPrayer ? [idlePrayers.combatPrayerId] : [], prayersData,
+      )
+      const equipmentAtCharges = (charges) => weaponDoubleHitChargeable
+        ? { ...equipment, weapon: { ...equipment.weapon, charges: Math.max(0, Math.floor(Number(charges) || 0)) } }
+        : equipment
+      const chargedEquipment = equipmentAtCharges(chargesRemaining)
       const hitStats = avgHitStats(
-        layeredWithPrayer, equipment, monster, stance, itemsData, task.spell || null, slayerTask,
-        getPrayerMagicDamageBonus(useCombatPrayer ? [idlePrayers.combatPrayerId] : [], prayersData),
+        layeredWithPrayer, chargedEquipment, monster, stance, itemsData, task.spell || null, slayerTask,
+        prayerMagicDamage,
       )
       const incoming = estimateMonsterIncomingPerAttack(monster, equipment, itemsData, layeredWithPrayer, stance)
       if (!Number.isFinite(hitStats.avgDmgPerHit) || hitStats.avgDmgPerHit <= 0) {
-        return { ...hitStats, hitsNeeded: Infinity, ticksPerKill: Infinity, ticksPerCycle: Infinity, incoming }
+        return { ...hitStats, hitsNeeded: Infinity, ticksPerKill: Infinity, ticksPerCycle: Infinity, incoming, weaponChargesUsed: 0 }
       }
-      const hitsNeeded = Math.ceil(monster.hitpoints / hitStats.avgDmgPerHit)
+
+      let hitsNeeded = Math.ceil(monster.hitpoints / hitStats.avgDmgPerHit)
+      let weaponChargesUsed = 0
+
+      if (weaponDoubleHitChargeable && chargesRemaining > 0) {
+        if (hitsNeeded <= chargesRemaining) {
+          // Every swing in this kill gets the live two-roll charged profile.
+          weaponChargesUsed = hitsNeeded
+        } else {
+          // Charges expire during this kill. Use their expected double-hit
+          // damage, then finish the same kill with the weapon's legal
+          // uncharged profile instead of stopping the idle session.
+          const chargedAttacks = Math.max(0, Math.floor(chargesRemaining))
+          const expectedChargedDamage = chargedAttacks * hitStats.avgDmgPerHit
+          const remainingHp = Math.max(0, monster.hitpoints - expectedChargedDamage)
+          const unchargedStats = avgHitStats(
+            layeredWithPrayer, equipmentAtCharges(0), monster, stance, itemsData, task.spell || null, slayerTask,
+            prayerMagicDamage,
+          )
+          if (!Number.isFinite(unchargedStats.avgDmgPerHit) || unchargedStats.avgDmgPerHit <= 0) {
+            return { ...unchargedStats, hitsNeeded: Infinity, ticksPerKill: Infinity, ticksPerCycle: Infinity, incoming, weaponChargesUsed: 0 }
+          }
+          hitsNeeded = chargedAttacks + Math.ceil(remainingHp / unchargedStats.avgDmgPerHit)
+          weaponChargesUsed = chargedAttacks
+        }
+      }
+
       const ticksPerKill = 1 + (hitsNeeded - 1) * hitStats.weaponSpeed
-      return { ...hitStats, hitsNeeded, ticksPerKill, ticksPerCycle: ticksPerKill + RESPAWN_TICKS, incoming }
+      return {
+        ...hitStats,
+        hitsNeeded,
+        ticksPerKill,
+        ticksPerCycle: ticksPerKill + RESPAWN_TICKS,
+        incoming,
+        weaponChargesUsed,
+      }
     })()
 
     if (!Number.isFinite(metrics.ticksPerCycle) || metrics.ticksPerCycle === Infinity) {
@@ -1522,6 +1574,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     if (weaponScaleCharged) {
       chargesRemaining -= killAttacks
       chargesConsumedTotal += killAttacks
+    } else if (weaponDoubleHitChargeable && metrics.weaponChargesUsed > 0) {
+      const used = Math.min(chargesRemaining, metrics.weaponChargesUsed)
+      chargesRemaining -= used
+      chargesConsumedTotal += used
     }
     if (combatType === 'magic' && task.spell) {
       spellCastAttacksTotal += killAttacks
@@ -1664,7 +1720,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     ? { itemId: equipment.ammo.itemId, quantity: Math.min(Math.max(0, Number(equipment?.ammo?.quantity) || 0), ammoConsumedTotal) }
     : null
 
-  const chargesConsumed = weaponScaleCharged
+  const chargesConsumed = (weaponScaleCharged || weaponDoubleHitChargeable)
     ? Math.min(startingCharges, chargesConsumedTotal)
     : 0
 

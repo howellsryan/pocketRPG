@@ -7,6 +7,12 @@
 
 ## Done
 
+### Sunspire Colosseum
+sunshards, resonance_crystal, sunweaver_quiver, twinflare_chakrams,
+resonant_bulwark_boots, sunbound_zealot_helm, sunbound_zealot_cuirass,
+sunbound_zealot_greaves.
+
+
 ### Pilot (file-based)
 twisted_longbow, coins, coal, iron_ore→(now templated), gold_bar→(now templated),
 oak_logs→(now templated), ruby, fire_rune, nature_rune, prayer_potion, shark,

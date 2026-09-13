@@ -11,6 +11,9 @@ import CombatQuickActions from '../components/CombatQuickActions.jsx'
 import CoopLootShare from '../components/CoopLootShare.jsx'
 import CoopRaidLobby from '../components/CoopRaidLobby.jsx'
 import CoopChatPanel from '../components/CoopChatPanel.jsx'
+import SunspireDecisionPanel from '../components/SunspireDecisionPanel.jsx'
+import CollapseChevron from '../components/CollapseChevron.jsx'
+import CombatTelegraphCard from '../components/CombatTelegraphCard.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import { CombatMonsterInfoSheet } from './CombatMobileSheets.jsx'
@@ -33,6 +36,7 @@ import { getLevelFromXP } from '../engine/experience.js'
 import { boostedMagicLevel } from '../engine/consumables.js'
 import { canAffordSpecialAttack } from '../engine/specialAttackEnergy.js'
 import { bossAddsOf } from '../engine/bossAdds.js'
+import { nextProtectionPrayerThreat, prayerSkill, protectionPrayerForAttackStyle } from '../utils/prayerIcons.js'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import monstersData from '../data/monsters.json'
@@ -60,7 +64,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [showQuickPrayerConfig, setShowQuickPrayerConfig] = useState(false)
   const [showMonsterInfo, setShowMonsterInfo] = useState(false)
+  const [targetsExpanded, setTargetsExpanded] = useState(true)
   const [lootModal, setLootModal] = useState(null)
+  const [combatTelegraph, setCombatTelegraph] = useState(null)
   // Cleared by the poll that reports the raid running, so a double-tap on Start
   // cannot queue two starts (the second is refused server-side either way).
   const [startingRaid, setStartingRaid] = useState(false)
@@ -108,6 +114,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   // group boss it is built on.
   const raid = raidProgress(state, monstersData)
   const inLobby = state?.phase === 'lobby'
+  const inSunspireDecision = state?.phase === 'decision' && state?.raid?.raidId === 'sunspire_colosseum'
+  const isRaidHost = Number(state?.hostCharacterId) === Number(characterId)
 
 
   const pushSplats = (setter, splats) => {
@@ -184,6 +192,15 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     // Run-shaped events: everybody in the party sees these, not just the
     // member they name.
     for (const ev of events) {
+      if (ev.type === 'combatTelegraph' && Number(ev.characterId) === Number(characterId)) {
+        setCombatTelegraph({ ...ev, answered: false })
+      } else if ((ev.type === 'combatReaction' || ev.type === 'sunspireHazard') && Number(ev.characterId) === Number(characterId)) {
+        setCombatTelegraph((prev) => {
+          if (!prev) return prev
+          const same = ev.attackId === prev.attackId || ev.hazardId === prev.attackId || String(ev.hazardId || '').startsWith(String(prev.attackId || '') + '_')
+          return same ? null : prev
+        })
+      }
       if (ev.type === 'raidBossAdvance') addToast?.(`⚔️ ${ev.bossName} — boss ${ev.bossIndex + 1}/${ev.totalBosses}`, 'info')
       else if (ev.type === 'raidWiped') addToast?.('Your party was wiped out. Back to the lobby.', 'error')
       // A group kill feeds the same daily tasks a solo one does. The room has no
@@ -234,15 +251,23 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
     for (const ev of events) {
       if (ev.type !== 'killSettled') continue
       const raidCleared = events.find((e) => e.type === 'raidComplete')
-      const killedName = raidCleared?.raidName || monstersData?.[nextState?.bossId]?.name || 'The boss'
+      const sunspireCashOut = events.find((e) => e.type === 'sunspireCashOut')
+      const raidSettlement = raidCleared || sunspireCashOut
+      const killedName = raidSettlement?.raidName || monstersData?.[nextState?.bossId]?.name || 'The boss'
       const outcome = coopKillOutcome(ev, characterId)
       if (outcome.kind === 'loot') {
-        // Only a raid completion still earns the full-screen modal (CLAUDE.md
-        // §6) — an ordinary boss kill announces itself as a reward-reveal card,
-        // same as solo, so the group fight carries on instead of stopping dead
-        // on a modal every kill.
-        if (raidCleared) {
-          setLootModal({ monsterName: killedName, loot: outcome.loot, killCount: outcome.killCount })
+        // A full raid clear still earns the full-screen modal. A private solo
+        // Sunspire cash-out does too: the server has already returned the room
+        // to its reusable lobby, but "Claim & Leave" must terminate this private
+        // one-run session rather than strand the player in a one-person lobby.
+        const exitAfterClaim = nextState?.raid?.solo === true && !!raidSettlement
+        if (raidCleared || exitAfterClaim) {
+          setLootModal({
+            monsterName: killedName,
+            loot: outcome.loot,
+            killCount: outcome.killCount,
+            exitAfterClaim,
+          })
         } else {
           emitKillReveal(nextState?.bossId, killedName, outcome.loot)
         }
@@ -359,6 +384,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   // now — an ordinary boss kill announces via emitKillReveal instead (above).
   const lootModalNode = lootModal ? (() => {
     const { hero, heroItem, rest, total } = shapeLootForModal(lootModal.loot, itemsData)
+    const closeLoot = () => {
+      const exit = lootModal.exitAfterClaim === true
+      setLootModal(null)
+      if (exit) handleLeave()
+    }
     return (
       <LootResultModal
         theme={hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
@@ -374,8 +404,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
         loot={rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
         lootTitle="Loot Secured"
         lootTotal={total}
-        primaryAction={{ label: 'Back to Lobby', onClick: () => setLootModal(null) }}
-        onClose={() => setLootModal(null)}
+        primaryAction={{ label: lootModal.exitAfterClaim ? 'Leave Sunspire' : 'Back to Lobby', onClick: closeLoot }}
+        onClose={closeLoot}
       >
         {(lootModal.loot?.length ?? 0) === 0 && (
           <div class="text-center text-[12px] text-[var(--color-parchment)] opacity-70 py-4" style={{ position: 'relative', zIndex: 4 }}>
@@ -413,6 +443,40 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
       onClose={handleLeave}
     />
   ) : null
+
+  if (inSunspireDecision) {
+    const wave = (Number(state.raid.currentWaveIndex) || 0) + 1
+    const finalWave = wave >= (state.raid.waves?.length || 12)
+    return (
+      <div class="forge-shell h-full flex flex-col p-4">
+        <BackLink onClick={handleLeave} className="mb-3" />
+        <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar">
+          <SunspireDecisionPanel
+            wave={wave}
+            totalWaves={state.raid.waves?.length || 12}
+            staged={me?.sunspireStaged || []}
+            chest={me?.sunspireChest || []}
+            modifierState={state.raid.modifierState || {}}
+            offers={state.raid.modifierOffers || []}
+            finalWave={finalWave}
+            canChoose={isRaidHost}
+            busy={false}
+            onChoose={(modifierId) => send({ type: 'sunspire_choose_modifier', modifierId })}
+            onContinue={() => send({ type: 'sunspire_continue' })}
+            onClaim={() => send({ type: 'sunspire_claim' })}
+          />
+          {!isRaidHost && (
+            <div class="mt-3 text-center text-[11px] text-[var(--color-parchment)] opacity-60">
+              The party host controls Continue and Claim & Leave. Your chest is rolled independently.
+            </div>
+          )}
+        </div>
+        <CoopChatPanel messages={chatLog} onSend={sendChat} />
+        {lootModalNode}
+        {deathModalNode}
+      </div>
+    )
+  }
 
   if (inLobby && raid) {
     const summary = coopRaidSummary(raid.raidId, monstersData)
@@ -480,10 +544,28 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
   // Same add-vs-boss split as the splat streams above: whichever the stage is
   // actually showing is what its mini HP bar and on-body splats must track.
   const coopStageSplats = spriteAdd ? addSplats : bossSplats
+  const prayerCue = nextProtectionPrayerThreat({
+    primary: liveMonster,
+    primaryAttackTimer: combatState?.monsterAttackTimer,
+    adds: bossAddsOf(boss),
+    staggered: state?.raid?.raidId === 'sunspire_colosseum',
+  })
+  const cuePrayer = prayerCue ? protectionPrayerForAttackStyle(prayerCue.style, prayersData) : null
+  const cueStyleArt = prayerCue ? getStyleArt(prayerCue.style) : null
+  const cueThreat = cuePrayer && cueStyleArt
+    ? { skill: prayerSkill(cuePrayer), color: cueStyleArt.color, label: cuePrayer.name }
+    : null
 
   return (
     <div class="forge-shell h-full flex flex-col p-4">
       <BackLink onClick={handleLeave} className="mb-3" />
+      <CombatTelegraphCard
+        telegraph={combatTelegraph}
+        onReact={(reaction) => {
+          setCombatTelegraph((prev) => prev ? { ...prev, answered: true } : prev)
+          send({ type: 'combat_reaction', reaction })
+        }}
+      />
 
       <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar">
         <CombatFightHead
@@ -494,7 +576,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           sub={raid
             ? `Boss ${raid.position}/${raid.total} \u00B7 ${memberCount} ${memberCount === 1 ? 'raider' : 'raiders'}`
             : `${memberCount} ${memberCount === 1 ? 'player' : 'players'} in this fight`}
-          meta={<CoopLootShare member={me} maxHP={coopLootBasisHP(state)} />}
+          meta={raid && memberCount === 1 ? null : <CoopLootShare member={me} maxHP={coopLootBasisHP(state)} />}
           combatLevel={monster?.combatLevel}
           aside={state?.hardMode ? <HardModeTag /> : null}
           onInfo={() => setShowMonsterInfo(true)}
@@ -521,6 +603,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
           targetSplats={coopStageSplats}
           showCorners
           actorPrayer={typeof combatState?.maxPrayerPoints === 'number' ? { current: combatState.prayerPoints, max: combatState.maxPrayerPoints } : null}
+          actorThreat={cueThreat}
           label={`You versus ${coopStageTarget?.name || bossName}`}
         />}
 
@@ -557,31 +640,42 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onRejoi
               <HPBar current={Math.max(0, activeAdd.currentHP)} max={activeAdd.hitpoints} size="large" />
               <HitSplatLayer splats={addSplats} />
             </div>
-            <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
-              <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => send({ type: 'target_add', value: false })}>
-                <span class="cb-slot__name">{bossName}</span>
-                <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
-                {onBoss && <span class="cb-slot__ring" />}
-              </button>
-              {bossAddsOf(boss).map((add, index) => {
-                if (!add || add.currentHP <= 0) return null
-                const on = !onBoss && index === combatState.addTargetIndex
-                return (
-                  <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => send({ type: 'target_add', value: index })}>
-                    <span class="cb-slot__name">{add.name}</span>
-                    <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
-                    {on && <span class="cb-slot__ring" />}
-                  </button>
-                )
-              })}
-            </div>
+            <button
+              type="button"
+              class="mb-1.5 flex w-full items-center justify-between rounded-lg border border-[var(--color-void-border)] px-2.5 py-1.5 text-left text-[10px] text-[var(--color-parchment)]"
+              onClick={() => setTargetsExpanded((value) => !value)}
+              aria-expanded={targetsExpanded}
+            >
+              <span><span class="opacity-55">Targets</span> · {onBoss ? bossName : activeAdd?.name}</span>
+              <CollapseChevron expanded={targetsExpanded} size={11} />
+            </button>
+            {targetsExpanded && (
+              <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
+                <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => send({ type: 'target_add', value: false })}>
+                  <span class="cb-slot__name">{bossName}</span>
+                  <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
+                  {onBoss && <span class="cb-slot__ring" />}
+                </button>
+                {bossAddsOf(boss).map((add, index) => {
+                  if (!add || add.currentHP <= 0) return null
+                  const on = !onBoss && index === combatState.addTargetIndex
+                  return (
+                    <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => send({ type: 'target_add', value: index })}>
+                      <span class="cb-slot__name">{add.name}</span>
+                      <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
+                      {on && <span class="cb-slot__ring" />}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
         {/* Prayer pool reads from the stage's top-left corner
             (showCorners/actorPrayer above) unless the stage is off. */}
         {!combatAnimations && typeof combatState?.maxPrayerPoints === 'number' && (
-          <CombatPrayerBlock current={combatState.prayerPoints} max={combatState.maxPrayerPoints} />
+          <CombatPrayerBlock current={combatState.prayerPoints} max={combatState.maxPrayerPoints} threat={cueThreat} />
         )}
 
         {boss?.respawnCountdown > 0 && (

@@ -148,6 +148,10 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'zaryth_crossbow',
   'zaryth_hilt',
   'zaryth_godsword',
+
+  // Sunspire — the crystal is a direct raid unique; the Bulwark Boots are its
+  // canonical combine result and remain classified with boss-derived uniques.
+  'resonant_bulwark_boots',
 ])
 describe('data contracts', () => {
   it('item ids match keys and equipment slots are valid when present', () => {

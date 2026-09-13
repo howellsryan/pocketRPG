@@ -19,6 +19,7 @@ import {
   getDefenceBonusInfo,
   DEFENCE_STYLES,
 } from '../utils/combatArt.js'
+import { isWaveRaid, raidInfoStages, raidUniqueChanceRange } from '../engine/raidEncounters.js'
 
 /** A stat that a special attack may have drained shows a dim strikethrough
  * "what it was" ahead of the live number — plain text, no colour of its own,
@@ -335,51 +336,47 @@ export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCou
   const alwaysDrops = raid.rewards?.always || []
   const uniqueChance = raid.rewards?.unique?.chance ?? null
   const boostLabel = dropRateBoostLabel(boost)
+  const waveRaid = isWaveRaid(raid)
+  const stages = raidInfoStages(raid, monstersData)
+  const waveUniqueRange = raidUniqueChanceRange(raid)
 
   return (
     <div class="cb-overlay" onClick={onClose}>
       <div class="cb-sheet cb-sheet--raid" onClick={e => e.stopPropagation()}>
         <div class="cb-sheet__grab" />
         <div class="cb-sheet__hero">
-          <div class="cb-sheet__emblem">
-            <SkillEmblem iconKey={art.icon} accent={art.accent} size={56} glow={0} />
-          </div>
+          <div class="cb-sheet__emblem"><SkillEmblem iconKey={art.icon} accent={art.accent} size={56} glow={0} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div class="cb-raid__tag">RAID</div>
             <h2 class="cb-sheet__name">{raid.name}</h2>
-            <div class="cb-sheet__sub">{raid.bosses.length} chambers</div>
+            <div class="cb-sheet__sub">{stages.length} {waveRaid ? 'waves' : 'chambers'}</div>
           </div>
           <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="var(--text-soft)" size={16} /></button>
         </div>
         <div class="cb-sheet__scroll">
           <p class="cb-idledesc" style={{ margin: '0 2px 8px' }}>{raid.description}</p>
-
           <div class="cb-raid__times">
             <div class="cb-raid__time"><span class="cb-raid__tk">Completions</span><span class="cb-raid__tv gold">{kc.toLocaleString()}</span></div>
           </div>
 
-          <div class="cb-sheet__sec">Chambers</div>
+          <div class="cb-sheet__sec">{waveRaid ? 'Waves' : 'Chambers'}</div>
           <div class="cb-rooms">
-            {raid.bosses.map((bossId, i) => {
-              const boss = monstersData[bossId]
+            {stages.map((stage, i) => {
+              const boss = stage.primary
               if (!boss) return null
               const cleared = kc > 0
+              const waveDetail = stage.kind === 'wave'
+                ? ` · ${stage.startingEnemyCount} starting ${stage.startingEnemyCount === 1 ? 'enemy' : 'enemies'}${stage.reinforcementCount > 0 ? ` · +${stage.reinforcementCount} reinforcement${stage.reinforcementCount === 1 ? '' : 's'}` : ''}`
+                : ''
               return (
-                <div key={bossId} class={'cb-room' + (cleared ? ' is-clear' : '')}>
-                  <div class="cb-room__rail">
-                    <span class="cb-room__dot" />
-                    {i < raid.bosses.length - 1 && <span class="cb-room__line" />}
-                  </div>
-                  <div class="cb-room__icon">
-                    <SkillEmblem iconKey={getMonsterArt(boss).icon} accent={art.accent} size={26} glow={0} />
-                  </div>
+                <div key={stage.key} class={'cb-room' + (cleared ? ' is-clear' : '')}>
+                  <div class="cb-room__rail"><span class="cb-room__dot" />{i < stages.length - 1 && <span class="cb-room__line" />}</div>
+                  <div class="cb-room__icon"><SkillEmblem iconKey={getMonsterArt(boss).icon} accent={art.accent} size={26} glow={0} /></div>
                   <div class="cb-room__body">
-                    <div class="cb-room__name">{i + 1}. {boss.name}</div>
-                    <div class="cb-room__boss">HP {boss.hitpoints} · CB {boss.combatLevel}</div>
+                    <div class="cb-room__name">{stage.label}{stage.kind === 'wave' ? ' · ' : '. '}{boss.name}</div>
+                    <div class="cb-room__boss">HP {boss.hitpoints} · CB {boss.combatLevel}{waveDetail}</div>
                   </div>
-                  <div class="cb-room__right">
-                    <MultiStyleChip chip={getMonsterAttackStyles(boss)} />
-                  </div>
+                  <div class="cb-room__right"><MultiStyleChip chip={getMonsterAttackStyles(boss)} /></div>
                 </div>
               )
             })}
@@ -389,16 +386,21 @@ export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCou
             <>
               <div class="cb-sheet__sec">Reward Table</div>
               {boostLabel && <div class="cb-rates__note">{boostLabel}</div>}
-              <div class="cb-drops">
-                {alwaysDrops.map((d, i) => <DropRow key={i} drop={d} boost={boost} itemsData={itemsData} accent={art.accent} />)}
-              </div>
+              <div class="cb-drops">{alwaysDrops.map((d, i) => <DropRow key={i} drop={d} boost={boost} itemsData={itemsData} accent={art.accent} />)}</div>
             </>
           )}
 
           {uniques.length > 0 && (
             <>
               <div class="cb-sheet__sec">Unique Rewards</div>
-              <UniquePanel items={uniques} itemsData={itemsData} sharedChance={uniqueChance} boost={boost} />
+              {waveUniqueRange && (
+                <div class="cb-rates__note">
+                  Unique chance: {formatDropChance(displayedDropChance(waveUniqueRange.first.chance, boost))} at Wave {waveUniqueRange.first.wave}
+                  {' → '}
+                  {formatDropChance(displayedDropChance(waveUniqueRange.last.chance, boost))} at Wave {waveUniqueRange.last.wave}
+                </div>
+              )}
+              <UniquePanel items={uniques} itemsData={itemsData} sharedChance={waveUniqueRange ? null : uniqueChance} boost={boost} />
             </>
           )}
         </div>

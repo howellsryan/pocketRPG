@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { prayerSkill } from '../src/utils/prayerIcons.js'
+import { nextProtectionPrayerThreat, prayerSkill, protectionPrayerForAttackStyle } from '../src/utils/prayerIcons.js'
 import prayersData from '../src/data/prayers.json'
 
 const prayers = prayersData as Record<string, Record<string, unknown>>
@@ -35,5 +35,70 @@ describe('prayerSkill', () => {
     for (const p of Object.values(prayers)) {
       expect(SKILLS.has(prayerSkill(p) as string), (p as { id: string }).id).toBe(true)
     }
+  })
+})
+
+
+describe('protection prayer threat cue', () => {
+  it('uses the same Protect from Magic definition and crest mapping as the prayer UI', () => {
+    const prayer = protectionPrayerForAttackStyle('magic', prayers)
+    expect(prayer).toBe(prayers.protection_from_magic)
+    expect(prayerSkill(prayer)).toBe('magic')
+  })
+
+  it('normalises melee substyles to Protect from Melee', () => {
+    for (const style of ['melee', 'stab', 'slash', 'crush']) {
+      const prayer = protectionPrayerForAttackStyle(style, prayers)
+      expect(prayer).toBe(prayers.protection_from_melee)
+      expect(prayerSkill(prayer)).toBe('defence')
+    }
+  })
+
+  it('shows the next single-enemy attack across ordinary combat', () => {
+    const threat = nextProtectionPrayerThreat({
+      primary: { id: 'mage', name: 'Mage', currentHP: 10, maxHit: 5, attackStyle: 'magic' },
+      primaryAttackTimer: 3,
+    })
+    expect(threat).toMatchObject({ monsterId: 'mage', style: 'magic', ticksUntil: 3, fromAdd: false })
+  })
+
+  it('uses an earlier add timer in multi-enemy combat', () => {
+    const threat = nextProtectionPrayerThreat({
+      primary: { id: 'boss', name: 'Boss', currentHP: 10, maxHit: 5, attackStyle: 'crush' },
+      primaryAttackTimer: 4,
+      adds: [
+        { id: 'archer', name: 'Archer', currentHP: 10, maxHit: 3, attackStyle: 'ranged', attackTimer: 2 },
+      ],
+    })
+    expect(threat).toMatchObject({ monsterId: 'archer', style: 'ranged', ticksUntil: 2, fromAdd: true })
+  })
+
+  it('does not lie when ordinary enemies hit simultaneously with different styles', () => {
+    const args = {
+      primary: { id: 'boss', name: 'Boss', currentHP: 10, maxHit: 5, attackStyle: 'magic' },
+      primaryAttackTimer: 1,
+      adds: [
+        { id: 'archer', name: 'Archer', currentHP: 10, maxHit: 3, attackStyle: 'ranged', attackTimer: 1 },
+      ],
+    }
+    expect(nextProtectionPrayerThreat(args)).toBeNull()
+    expect(nextProtectionPrayerThreat({ ...args, staggered: true })).toMatchObject({
+      monsterId: 'boss',
+      style: 'magic',
+    })
+  })
+
+  it('suppresses pre-roll cues for enemies whose attack style is randomly selected at swing time', () => {
+    expect(nextProtectionPrayerThreat({
+      primary: {
+        id: 'random',
+        name: 'Random',
+        currentHP: 10,
+        maxHit: 5,
+        attackStyle: 'crush',
+        attackStyles: ['melee', 'ranged', 'magic'],
+      },
+      primaryAttackTimer: 1,
+    })).toBeNull()
   })
 })

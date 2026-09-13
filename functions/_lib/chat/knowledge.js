@@ -210,12 +210,20 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward tables: guaranteed loot plus a chance at rare uniques. Bosses are tougher single monsters with their own drop tables and kill counts. Boss and raid uniques are granted by the server when you complete the kill, and every kill is recorded — check the Collection Log and Leaderboard. You can spend credits to skip to a boss kill or pay a raid's skip cost. A boss hunts you across its whole lair, further than any other monster will follow, and any minions it has summoned stay on the field with it. The way out of a boss fight is the way you came in."
  },
  {
+  "id": "guide_sunspire_colosseum",
+  "title": "Sunspire Colosseum",
+  "tags": [
+   "guide"
+  ],
+  "text": "The Sunspire Colosseum is a six-wave endgame raid built around risk. Waves 1–5 throw several high-level enemies at you at once, and some waves bring reinforcements partway through the fight. Every enemy has its own health and attack timer, so target choice, protection prayers, supplies and switching gear matter more than simply racing the primary target. After each cleared wave you enter a safe decision state. The reward from that wave is added to your **unclaimed Sunspire chest**. You can **Claim & Leave** to bank the entire chest, or **Continue** and put all of it at risk. Dying or abandoning an active wave forfeits the unclaimed chest. The experimental arena modifier system is currently disabled. Sunspire also does not use ordinary Hard Mode or credit skipping. Wave 6 is **Aurelios the Unbroken**. He strongly rewards melee/slash setups and uses a learnable sequence of spear and shield attacks rather than random unavoidable damage. Watch his combat telegraphs: later phases add pressure at 90%, 75%, 50%, 25% and 10% health. Grapple calls for an equipment-parry response, Triple Parry tests prayer timing, and the final 10% is an enrage. Sunspire rewards include **Sunshards**, **Resonance Crystals**, the prayer-focused **Sunbound Zealot** armour set, **Twinflare Chakrams** and the **Sunweaver Quiver**. All of these endgame unique families are available from the new Wave 1 because the six-wave version starts at the difficulty tier previously reached later in the Colosseum. Unique odds improve from about **1 in 82 on Wave 1** to about **1 in 12 on Wave 6**. Your first full clear guarantees the Sunweaver Quiver; later clears substitute a large Sunshard reward instead of guaranteeing duplicate quivers. The Sunweaver Quiver occupies the cape slot and can be charged with Sunshards to improve its ranged bonuses. Twinflare Chakrams are a one-handed ranged weapon: uncharged they use a reduced damage profile, while Sunshard charges make every normal attack roll twice. Their 50% **Division** special also rolls twice while charged, and each successful hit reduces the target's Defence based on its Magic level. A Resonance Crystal combines with Grondar Boots to create **Resonant Bulwark Boots**. Charged Bulwark Boots can recoil 1 damage when a successful melee-style attack hits you; ranged and magic hits do not trigger the recoil. Sunspire supports solo runs and raid parties. In a party the wave, reinforcements and Aurelios pattern are shared by the room, the host makes between-wave Continue/Claim decisions, and each eligible member has their own server-rolled unclaimed chest."
+ },
+ {
   "id": "guide_hard_mode",
   "title": "Hard Mode",
   "tags": [
    "guide"
   ],
-  "text": "Most bosses and every raid can be switched to Hard Mode from the prompt that opens when you tap them in the combat picker. The switch is per boss (and per raid), stays on until you turn it off, and shows as a **HARD** tag wherever that fight is listed. A hard fight doubles the boss's offence — twice the max hit, twice the accuracy. Its health and its defences are untouched, so it dies to the same hits in the same time it always did; the only thing that changes is how much damage it does to you along the way. In exchange every drop rate on its table doubles — a 1-in-500 unique becomes 1-in-250. Guaranteed drops stay one drop, and a boss you skip with credits costs double the credits. **If you die in Hard Mode you lose every tradeable item you are carrying and every tradeable item you are wearing, permanently.** Untradeables — Infernal Cape, quest gear, skill capes, anything you could never buy back — stay with you. Your bank is untouched, so the counter-play is to take in less than you can afford to lose. This applies to solo fights, group fights, raid parties and idle catch-up alike: a hard fight left running while you are away costs the same pack. Turning Hard Mode on asks you to confirm it first. Difficulty belongs to the fight, not to you: a group boss room or a raid party is opened at the difficulty the player who opened it chose, everyone in it fights the same boss, and joining a listed group means taking that group's difficulty. Hard Mode applies to solo fights and group fights; open-world boss lairs are always normal."
+  "text": "Most bosses and conventional raids can be switched to Hard Mode from the prompt that opens when you tap them in the combat picker. Sunspire Colosseum is the exception: ordinary Hard Mode is unavailable there. The switch is per boss (and per raid), stays on until you turn it off, and shows as a **HARD** tag wherever that fight is listed. A hard fight doubles the boss's offence — twice the max hit, twice the accuracy. Its health and its defences are untouched, so it dies to the same hits in the same time it always did; the only thing that changes is how much damage it does to you along the way. In exchange every drop rate on its table doubles — a 1-in-500 unique becomes 1-in-250. Guaranteed drops stay one drop, and a boss you skip with credits costs double the credits. **If you die in Hard Mode you lose every tradeable item you are carrying and every tradeable item you are wearing, permanently.** Untradeables — Infernal Cape, quest gear, skill capes, anything you could never buy back — stay with you. Your bank is untouched, so the counter-play is to take in less than you can afford to lose. This applies to solo fights, group fights, raid parties and idle catch-up alike: a hard fight left running while you are away costs the same pack. Turning Hard Mode on asks you to confirm it first. Difficulty belongs to the fight, not to you: a group boss room or a raid party is opened at the difficulty the player who opened it chose, everyone in it fights the same boss, and joining a listed group means taking that group's difficulty. Hard Mode applies to solo fights and group fights; open-world boss lairs are always normal."
  },
  {
   "id": "guide_grim_reaper_buying_back_a_hard_mode_death",
@@ -1982,6 +1990,19 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Tomb of Arasmus: Brave the cursed tomb of the god-king Arasmus. Defeat his four guardians and the Warden to claim the treasures within. Bosses fought in sequence: Khareth The Shadowbound, Gorroth The Mountain Ape, Khepra The Scarab Matron, Sebakh The Devourer, Warden Of Arasmus. Credit skip cost: 10. Completing the raid rolls its reward chest: guaranteed loot (coins, runes, supplies) plus about 1 in 15 chance at one unique. These uniques come from the raid reward chest itself, not from any individual boss inside the raid: Fang Of Osmun, Sunbearer Ring, Ward Of Elidria, Masari Mask, Masari Body, Masari Chaps, Shadow Of Tumaken."
  },
  {
+  "id": "raid_sunspire_colosseum",
+  "title": "Raid: Sunspire Colosseum — waves and unique rewards",
+  "tags": [
+   "raid",
+   "raids",
+   "boss",
+   "wave",
+   "uniques",
+   "drops"
+  ],
+  "text": "Sunspire Colosseum: Six escalating arena waves using the Colosseum's former upper-half encounters. Claim the accumulated chest and leave safely, or keep climbing for greater rewards as each wave grows more dangerous. It has 6 arena waves, ending with Aurelios the Unbroken. Rewards are staged after each cleared wave: claim the accumulated chest to leave safely, or continue and risk it on the next wave. Unique rolls begin on wave 1 at about 1 in 82 and rise to about 1 in 12 on wave 6. The first full clear guarantees Sunweaver Quiver. Sunspire uniques are: Resonance Crystal, Sunbound Zealot Helm, Sunbound Zealot Cuirass, Sunbound Zealot Greaves, Twinflare Chakrams, Sunweaver Quiver. Ordinary Hard Mode and credit skipping are not used for this raid; between-wave modifiers are currently disabled."
+ },
+ {
   "id": "data_minigames",
   "title": "Minigame grinds and their rewards",
   "tags": [
@@ -2302,7 +2323,7 @@ export const KNOWLEDGE_CHUNKS = [
    "weapon",
    "weapons"
   ],
-  "text": "Every weapon with a special attack, its energy cost and effect. Special attacks are triggered manually with the ⚡ Special Attack button, never automatically or offline; special energy runs 0-100, starts each fight at 100, drains on use and refills on a kill. Magic Shortbow (55% energy): Snapshot: Fires two arrows in rapid succession, each dealing up to 75% of your normal max hit.. Nether Demon Whip (50% energy): Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit.. Dragon Dagger (25% energy): Puncture: Strikes twice in rapid succession, each hit capable of dealing up to 115% of your normal max hit.. Dragon Scimitar (55% energy): Sever: A precise strike that completely bypasses the target's defences, rolling against zero defence.. Grondar Godsword (50% energy): Warstrike: A crushing blow that deals damage and permanently weakens the target's defences for the rest of the fight by the amount of damage dealt.. Zephyra Godsword (50% energy): The Judgement: A devastating strike rolled at 125% accuracy and capable of hitting up to 125% of your normal max damage.. Lumira Godsword (50% energy): Healing Blade: Strikes with divine power, restoring your HP by half the damage dealt (minimum 10 HP healed).. Krylth Godsword (50% energy): Ice Cleave: Strikes with chaotic energy, dealing damage and freezing the target for ~20 seconds (33 ticks), preventing it from attacking.. Lumira Sword (100% energy): Lumina Lightning: A two-hit attack — a melee strike followed by a divine lightning bolt dealing 1–16 magic damage (always hits).. Zephyra Crossbow (40% energy): Pebble Shot: Fires a bolt that never misses, dealing up to 125% of your normal ranged max hit.. Krylth Spear (25% energy): Shove: A powerful stab rolled at 175% accuracy that staggers the target, skipping their next 2 attacks.. Venom Blowpipe (50% energy): Toxic Siphon: Guaranteed hit at 150% max hit. Heals you for half the damage dealt.. Shardglass Halberd (30% energy): Shardstorm: three sweeps of the blade in a single attack, each rolling its own damage. Spends one shardglass charge, like every other swing.. Durn's Bulwark (50% energy): The Block: Slam your bulwark with unstoppable force — guaranteed 40–64 damage. No accuracy roll. Cannot be blocked.. Dragon Claws (50% energy): Slice and Dice: Four rapid slashes — each hit is half the previous. Exceptional burst damage.. Ancient Maul (100% energy): Quake: Smashes the target three times in a single attack, each strike rolling its own damage.. Fang Of Osmun (25% energy): Strikes with deadly precision — rolls accuracy twice and avoids low hits, dealing 15%–85% of max.. Zaryth Crossbow (50% energy): Empty Bolt: A bolt that cannot be turned aside. Always hits, for up to 150% of your normal ranged max hit.. Zaryth Godsword (50% energy): Empty Lord's Cleave: A strike at 150% of your normal max hit that restores half the damage dealt as health.. Zul-Kaar's Blade (50% energy): Disrupt: consumes 50% special energy. Deals guaranteed Magic damage (50-150% of max melee hit). Grants 2 Magic XP per damage dealt. Nullified against magic-immune monsters.. Dragon Mace (50% energy): Overpower: A brutal crushing blow dealing 150% of your normal max hit.. Abyssal Tentacle (50% energy): Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit.. Dragon Warhammer (50% energy): Smash for 50% additional damage. On a hit, reduces the target's Defence level by 30% of its current value (rounded down). Stacks with itself.. Gargoyle Maul (100% energy): Quake: Smashes the target three times in a single attack, each strike rolling its own damage.. Nightfang Bow (100% energy): Descent of Darkness: Fires two arrows simultaneously, each hitting up to 150% of your normal max hit.. Boneclaw Rapier (50% energy): Soul Leech: Strikes twice at full power; the second hit heals you for 100% of its damage dealt.. Stonegale Bow (55% energy): Gale Shot: A guaranteed arrow strike at 140% max hit that staggers the target, delaying its next attack by one cycle.. Cindermaw Maul (50% energy): Molten Crush: A searing blow at 125% max hit that shatters the target's armour, reducing its Defence level by 20%.. Thornspine Shortbow (65% energy): Volley: Unleashes three rapid thorn-shots in quick succession, each dealing up to 70% of your max hit.. Zesta Longsword (25% energy): Overpower: A devastating slash dealing up to 150% of your normal max hit.. Umbral Duskmare Staff (55% energy): Soul Drain: a magic blast that restores Prayer points equal to half the damage dealt.. Volatile Duskmare Staff (55% energy): Volatile Surge: a high-accuracy blast whose max hit scales with your Magic level.."
+  "text": "Every weapon with a special attack, its energy cost and effect. Special attacks are triggered manually with the ⚡ Special Attack button, never automatically or offline; special energy runs 0-100, starts each fight at 100, drains on use and refills on a kill. Magic Shortbow (55% energy): Snapshot: Fires two arrows in rapid succession, each dealing up to 75% of your normal max hit.. Nether Demon Whip (50% energy): Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit.. Dragon Dagger (25% energy): Puncture: Strikes twice in rapid succession, each hit capable of dealing up to 115% of your normal max hit.. Dragon Scimitar (55% energy): Sever: A precise strike that completely bypasses the target's defences, rolling against zero defence.. Grondar Godsword (50% energy): Warstrike: A crushing blow that deals damage and permanently weakens the target's defences for the rest of the fight by the amount of damage dealt.. Zephyra Godsword (50% energy): The Judgement: A devastating strike rolled at 125% accuracy and capable of hitting up to 125% of your normal max damage.. Lumira Godsword (50% energy): Healing Blade: Strikes with divine power, restoring your HP by half the damage dealt (minimum 10 HP healed).. Krylth Godsword (50% energy): Ice Cleave: Strikes with chaotic energy, dealing damage and freezing the target for ~20 seconds (33 ticks), preventing it from attacking.. Lumira Sword (100% energy): Lumina Lightning: A two-hit attack — a melee strike followed by a divine lightning bolt dealing 1–16 magic damage (always hits).. Zephyra Crossbow (40% energy): Pebble Shot: Fires a bolt that never misses, dealing up to 125% of your normal ranged max hit.. Krylth Spear (25% energy): Shove: A powerful stab rolled at 175% accuracy that staggers the target, skipping their next 2 attacks.. Venom Blowpipe (50% energy): Toxic Siphon: Guaranteed hit at 150% max hit. Heals you for half the damage dealt.. Shardglass Halberd (30% energy): Shardstorm: three sweeps of the blade in a single attack, each rolling its own damage. Spends one shardglass charge, like every other swing.. Durn's Bulwark (50% energy): The Block: Slam your bulwark with unstoppable force — guaranteed 40–64 damage. No accuracy roll. Cannot be blocked.. Dragon Claws (50% energy): Slice and Dice: Four rapid slashes — each hit is half the previous. Exceptional burst damage.. Ancient Maul (100% energy): Quake: Smashes the target three times in a single attack, each strike rolling its own damage.. Fang Of Osmun (25% energy): Strikes with deadly precision — rolls accuracy twice and avoids low hits, dealing 15%–85% of max.. Zaryth Crossbow (50% energy): Empty Bolt: A bolt that cannot be turned aside. Always hits, for up to 150% of your normal ranged max hit.. Zaryth Godsword (50% energy): Empty Lord's Cleave: A strike at 150% of your normal max hit that restores half the damage dealt as health.. Zul-Kaar's Blade (50% energy): Disrupt: consumes 50% special energy. Deals guaranteed Magic damage (50-150% of max melee hit). Grants 2 Magic XP per damage dealt. Nullified against magic-immune monsters.. Dragon Mace (50% energy): Overpower: A brutal crushing blow dealing 150% of your normal max hit.. Abyssal Tentacle (50% energy): Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit.. Dragon Warhammer (50% energy): Smash for 50% additional damage. On a hit, reduces the target's Defence level by 30% of its current value (rounded down). Stacks with itself.. Gargoyle Maul (100% energy): Quake: Smashes the target three times in a single attack, each strike rolling its own damage.. Nightfang Bow (100% energy): Descent of Darkness: Fires two arrows simultaneously, each hitting up to 150% of your normal max hit.. Boneclaw Rapier (50% energy): Soul Leech: Strikes twice at full power; the second hit heals you for 100% of its damage dealt.. Stonegale Bow (55% energy): Gale Shot: A guaranteed arrow strike at 140% max hit that staggers the target, delaying its next attack by one cycle.. Cindermaw Maul (50% energy): Molten Crush: A searing blow at 125% max hit that shatters the target's armour, reducing its Defence level by 20%.. Thornspine Shortbow (65% energy): Volley: Unleashes three rapid thorn-shots in quick succession, each dealing up to 70% of your max hit.. Zesta Longsword (25% energy): Overpower: A devastating slash dealing up to 150% of your normal max hit.. Umbral Duskmare Staff (55% energy): Soul Drain: a magic blast that restores Prayer points equal to half the damage dealt.. Volatile Duskmare Staff (55% energy): Volatile Surge: a high-accuracy blast whose max hit scales with your Magic level.. Twinflare Chakrams (50% energy): Division: Strikes independently with each chakram while charged. Every successful hit drains Defence by 12.5% of the target's Magic level.."
  },
  {
   "id": "data_bosses",
@@ -2312,7 +2333,7 @@ export const KNOWLEDGE_CHUNKS = [
    "bosses",
    "slayer"
   ],
-  "text": "All bosses with combat level, hitpoints and Slayer level requirement where one applies. Bosses marked as raid bosses are only fought inside their raid and have no personal drop table. Deepmaw Kraken (combat level 291, 255 HP, Slayer 87 required). Warlord Grondar (combat level 624, 255 HP). Commander Zephyra (combat level 596, 255 HP). Krylth the Defiler (combat level 650, 255 HP). Skyrender Kharra (combat level 580, 255 HP). Nagadoth Rex (combat level 303, 150 HP). Nagadoth Prime (combat level 303, 150 HP). Nagadoth Supreme (combat level 303, 150 HP). Nagadoth Queen (combat level 606, 450 HP). King Black Dragon (combat level 276, 150 HP). Venomcoil Matriarch (combat level 725, 500 HP). Ember Tyrant (combat level 702, 250 HP). Ashen Crucible (combat level 1400, 600 HP). Blighted Gauntlet (combat level 894, 1000 HP). The Grand Olm (combat level 1000, 800 HP, fought inside the Vaults of Xyren raid). Hellbound Gorilla (combat level 275, 205 HP, Slayer 70 required). The Matron of Sugadinti (combat level 940, 2625 HP, fought inside the Crimson Night Theatre raid). Pestilent Blight (combat level 870, 1500 HP, fought inside the Crimson Night Theatre raid). Nylocas Vashilias (combat level 800, 1875 HP, fought inside the Crimson Night Theatre raid). Sotethseg (combat level 995, 3000 HP, fought inside the Crimson Night Theatre raid). Xarphus (combat level 960, 2250 HP, fought inside the Crimson Night Theatre raid). Verzik Vitura (combat level 1040, 2000 HP, fought inside the Crimson Night Theatre raid). Tecton (combat level 149, 500 HP, fought inside the Vaults of Xyren raid). Vespara (combat level 202, 400 HP, fought inside the Vaults of Xyren raid). Mudtadile (combat level 170, 450 HP, fought inside the Vaults of Xyren raid). Khareth the Shadowbound (combat level 700, 520 HP, fought inside the Tomb of Arasmus raid). Gorroth, the Mountain-Ape (combat level 650, 600 HP, fought inside the Tomb of Arasmus raid). Khepra, the Scarab Matron (combat level 680, 500 HP, fought inside the Tomb of Arasmus raid). Sebakh the Devourer (combat level 720, 580 HP, fought inside the Tomb of Arasmus raid). Warden of Arasmus (combat level 900, 700 HP, fought inside the Tomb of Arasmus raid). Morvyn the Blighted (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Dravok the Wretched (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Gorath the Infested (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Kaelor the Tainted (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Torvek the Corrupted (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Verin the Defiled (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Threefang Cerberus (combat level 318, 600 HP, Slayer 91 required). Ashen Hydra (combat level 194, 320 HP, Slayer 95 required). Sovrathar, the Ashen Sovereign (combat level 250, 480 HP, Slayer 80 required). Gravehusk Brute (combat level 82, 60 HP). Boneclaw Revenant (combat level 98, 75 HP). Shroudwraith Specter (combat level 115, 90 HP). Stonegale Elemental (combat level 100, 80 HP). Cindermaw Serpent (combat level 120, 100 HP). Thornhide Colossus (combat level 140, 120 HP). Gravethorn Drake (combat level 110, 90 HP). Ironclad Guardian (combat level 130, 110 HP). Emberhowl Warlord (combat level 155, 150 HP). Razorwing Harpy (combat level 150, 140 HP). The Duskmare (combat level 470, 1500 HP). The Corporeal Horror (combat level 785, 2000 HP). Zaryth (combat level 1500, 3500 HP)."
+  "text": "All bosses with combat level, hitpoints and Slayer level requirement where one applies. Bosses marked as raid bosses are only fought inside their raid and have no personal drop table. Deepmaw Kraken (combat level 291, 255 HP, Slayer 87 required). Warlord Grondar (combat level 624, 255 HP). Commander Zephyra (combat level 596, 255 HP). Krylth the Defiler (combat level 650, 255 HP). Skyrender Kharra (combat level 580, 255 HP). Nagadoth Rex (combat level 303, 150 HP). Nagadoth Prime (combat level 303, 150 HP). Nagadoth Supreme (combat level 303, 150 HP). Nagadoth Queen (combat level 606, 450 HP). King Black Dragon (combat level 276, 150 HP). Venomcoil Matriarch (combat level 725, 500 HP). Ember Tyrant (combat level 702, 250 HP). Ashen Crucible (combat level 1400, 600 HP). Blighted Gauntlet (combat level 894, 1000 HP). The Grand Olm (combat level 1000, 800 HP, fought inside the Vaults of Xyren raid). Hellbound Gorilla (combat level 275, 205 HP, Slayer 70 required). The Matron of Sugadinti (combat level 940, 2625 HP, fought inside the Crimson Night Theatre raid). Pestilent Blight (combat level 870, 1500 HP, fought inside the Crimson Night Theatre raid). Nylocas Vashilias (combat level 800, 1875 HP, fought inside the Crimson Night Theatre raid). Sotethseg (combat level 995, 3000 HP, fought inside the Crimson Night Theatre raid). Xarphus (combat level 960, 2250 HP, fought inside the Crimson Night Theatre raid). Verzik Vitura (combat level 1040, 2000 HP, fought inside the Crimson Night Theatre raid). Tecton (combat level 149, 500 HP, fought inside the Vaults of Xyren raid). Vespara (combat level 202, 400 HP, fought inside the Vaults of Xyren raid). Mudtadile (combat level 170, 450 HP, fought inside the Vaults of Xyren raid). Khareth the Shadowbound (combat level 700, 520 HP, fought inside the Tomb of Arasmus raid). Gorroth, the Mountain-Ape (combat level 650, 600 HP, fought inside the Tomb of Arasmus raid). Khepra, the Scarab Matron (combat level 680, 500 HP, fought inside the Tomb of Arasmus raid). Sebakh the Devourer (combat level 720, 580 HP, fought inside the Tomb of Arasmus raid). Warden of Arasmus (combat level 900, 700 HP, fought inside the Tomb of Arasmus raid). Morvyn the Blighted (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Dravok the Wretched (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Gorath the Infested (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Kaelor the Tainted (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Torvek the Corrupted (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Verin the Defiled (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Threefang Cerberus (combat level 318, 600 HP, Slayer 91 required). Ashen Hydra (combat level 194, 320 HP, Slayer 95 required). Sovrathar, the Ashen Sovereign (combat level 250, 480 HP, Slayer 80 required). Gravehusk Brute (combat level 82, 60 HP). Boneclaw Revenant (combat level 98, 75 HP). Shroudwraith Specter (combat level 115, 90 HP). Stonegale Elemental (combat level 100, 80 HP). Cindermaw Serpent (combat level 120, 100 HP). Thornhide Colossus (combat level 140, 120 HP). Gravethorn Drake (combat level 110, 90 HP). Ironclad Guardian (combat level 130, 110 HP). Emberhowl Warlord (combat level 155, 150 HP). Razorwing Harpy (combat level 150, 140 HP). The Duskmare (combat level 470, 1500 HP). The Corporeal Horror (combat level 785, 2000 HP). Zaryth (combat level 1500, 3500 HP). Aurelios the Unbroken (combat level 1450, 4500 HP, fought inside the Sunspire Colosseum raid)."
  },
  {
   "id": "monster_field_chicken",
@@ -2705,7 +2726,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "The Grand Olm is a boss fought only inside the Vaults of Xyren raid, at combat level 1000 with 800 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Vaults of Xyren reward chest when the raid is completed."
+  "text": "The Grand Olm is a raid boss fought only inside the Vaults of Xyren, at combat level 1000 with 800 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_hellbound_gorilla",
@@ -2725,7 +2746,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "The Matron of Sugadinti is a boss fought only inside the Crimson Night Theatre raid, at combat level 940 with 2625 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
+  "text": "The Matron of Sugadinti is a raid boss fought only inside the Crimson Night Theatre, at combat level 940 with 2625 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_pestilent_bloat",
@@ -2735,7 +2756,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Pestilent Blight is a boss fought only inside the Crimson Night Theatre raid, at combat level 870 with 1500 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
+  "text": "Pestilent Blight is a raid boss fought only inside the Crimson Night Theatre, at combat level 870 with 1500 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_nylocas_vasilias",
@@ -2745,7 +2766,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Nylocas Vashilias is a boss fought only inside the Crimson Night Theatre raid, at combat level 800 with 1875 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
+  "text": "Nylocas Vashilias is a raid boss fought only inside the Crimson Night Theatre, at combat level 800 with 1875 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_sotetseg",
@@ -2755,7 +2776,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Sotethseg is a boss fought only inside the Crimson Night Theatre raid, at combat level 995 with 3000 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
+  "text": "Sotethseg is a raid boss fought only inside the Crimson Night Theatre, at combat level 995 with 3000 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_xarpus",
@@ -2765,7 +2786,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Xarphus is a boss fought only inside the Crimson Night Theatre raid, at combat level 960 with 2250 HP, attacking with ranged. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
+  "text": "Xarphus is a raid boss fought only inside the Crimson Night Theatre, at combat level 960 with 2250 HP, attacking with ranged. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_verzik_vitur",
@@ -2775,7 +2796,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Verzik Vitura is a boss fought only inside the Crimson Night Theatre raid, at combat level 1040 with 2000 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
+  "text": "Verzik Vitura is a raid boss fought only inside the Crimson Night Theatre, at combat level 1040 with 2000 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_tekton",
@@ -2785,7 +2806,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Tecton is a boss fought only inside the Vaults of Xyren raid, at combat level 149 with 500 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Vaults of Xyren reward chest when the raid is completed."
+  "text": "Tecton is a raid boss fought only inside the Vaults of Xyren, at combat level 149 with 500 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_vespula",
@@ -2795,7 +2816,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Vespara is a boss fought only inside the Vaults of Xyren raid, at combat level 202 with 400 HP, attacking with ranged. It has no personal drop table — all raid loot, including uniques, comes from the Vaults of Xyren reward chest when the raid is completed."
+  "text": "Vespara is a raid boss fought only inside the Vaults of Xyren, at combat level 202 with 400 HP, attacking with ranged. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_muttadile",
@@ -2805,7 +2826,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Mudtadile is a boss fought only inside the Vaults of Xyren raid, at combat level 170 with 450 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Vaults of Xyren reward chest when the raid is completed."
+  "text": "Mudtadile is a raid boss fought only inside the Vaults of Xyren, at combat level 170 with 450 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_khareth_the_shadowbound",
@@ -2815,7 +2836,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Khareth the Shadowbound is a boss fought only inside the Tomb of Arasmus raid, at combat level 700 with 520 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Tomb of Arasmus reward chest when the raid is completed."
+  "text": "Khareth the Shadowbound is a raid boss fought only inside the Tomb of Arasmus, at combat level 700 with 520 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_gorroth_the_mountain_ape",
@@ -2825,7 +2846,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Gorroth, the Mountain-Ape is a boss fought only inside the Tomb of Arasmus raid, at combat level 650 with 600 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Tomb of Arasmus reward chest when the raid is completed."
+  "text": "Gorroth, the Mountain-Ape is a raid boss fought only inside the Tomb of Arasmus, at combat level 650 with 600 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_khepra_the_scarab_matron",
@@ -2835,7 +2856,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Khepra, the Scarab Matron is a boss fought only inside the Tomb of Arasmus raid, at combat level 680 with 500 HP, attacking with ranged. It has no personal drop table — all raid loot, including uniques, comes from the Tomb of Arasmus reward chest when the raid is completed."
+  "text": "Khepra, the Scarab Matron is a raid boss fought only inside the Tomb of Arasmus, at combat level 680 with 500 HP, attacking with ranged. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_sebakh_the_devourer",
@@ -2845,7 +2866,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Sebakh the Devourer is a boss fought only inside the Tomb of Arasmus raid, at combat level 720 with 580 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Tomb of Arasmus reward chest when the raid is completed."
+  "text": "Sebakh the Devourer is a raid boss fought only inside the Tomb of Arasmus, at combat level 720 with 580 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_warden_of_arasmus",
@@ -2855,7 +2876,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Warden of Arasmus is a boss fought only inside the Tomb of Arasmus raid, at combat level 900 with 700 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Tomb of Arasmus reward chest when the raid is completed."
+  "text": "Warden of Arasmus is a raid boss fought only inside the Tomb of Arasmus, at combat level 900 with 700 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_morvyn_the_blighted",
@@ -2865,7 +2886,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Morvyn the Blighted is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
+  "text": "Morvyn the Blighted is a raid boss fought only inside the Cryptbound Champions, at combat level 115 with 100 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_dravok_the_wretched",
@@ -2875,7 +2896,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Dravok the Wretched is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
+  "text": "Dravok the Wretched is a raid boss fought only inside the Cryptbound Champions, at combat level 115 with 100 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_gorath_the_infested",
@@ -2885,7 +2906,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Gorath the Infested is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with stab. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
+  "text": "Gorath the Infested is a raid boss fought only inside the Cryptbound Champions, at combat level 115 with 100 HP, attacking with stab. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_kaelor_the_tainted",
@@ -2895,7 +2916,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Kaelor the Tainted is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with ranged. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
+  "text": "Kaelor the Tainted is a raid boss fought only inside the Cryptbound Champions, at combat level 115 with 100 HP, attacking with ranged. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_torvek_the_corrupted",
@@ -2905,7 +2926,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Torvek the Corrupted is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
+  "text": "Torvek the Corrupted is a raid boss fought only inside the Cryptbound Champions, at combat level 115 with 100 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_verin_the_defiled",
@@ -2915,7 +2936,7 @@ export const KNOWLEDGE_CHUNKS = [
    "boss",
    "raid"
   ],
-  "text": "Verin the Defiled is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
+  "text": "Verin the Defiled is a raid boss fought only inside the Cryptbound Champions, at combat level 115 with 100 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
  },
  {
   "id": "monster_marshscale_shaman",
@@ -3438,6 +3459,124 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Zaryth Rune Sentinel is a monster at combat level 240 with 150 HP, attacking with magic."
  },
  {
+  "id": "monster_ashen_warband_blade",
+  "title": "Raid encounter monster: Ashen Warband Bladesworn (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Ashen Warband Bladesworn is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 110 with 220 HP, attacking with slash. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_ashen_warband_bow",
+  "title": "Raid encounter monster: Ashen Warband Deadeye (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Ashen Warband Deadeye is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 100 with 190 HP, attacking with ranged. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_ashen_warband_magus",
+  "title": "Raid encounter monster: Ashen Warband Sunmage (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Ashen Warband Sunmage is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 100 with 180 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_ashen_warband_bulwark",
+  "title": "Raid encounter monster: Ashen Warband Bulwark (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Ashen Warband Bulwark is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 130 with 260 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_embercoil_shaman",
+  "title": "Raid encounter monster: Embercoil Shaman (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Embercoil Shaman is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 150 with 300 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_sunclaw_gladiator",
+  "title": "Raid encounter monster: Sunclaw Gladiator (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Sunclaw Gladiator is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 240 with 480 HP, attacking with slash. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_dawnlance_colossus",
+  "title": "Raid encounter monster: Dawnlance Colossus (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Dawnlance Colossus is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 350 with 700 HP, attacking with ranged. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_triune_chimera",
+  "title": "Raid encounter monster: Triune Chimera (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Triune Chimera is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 475 with 950 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_resonance_colossus",
+  "title": "Raid encounter monster: Resonance Colossus (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Resonance Colossus is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 625 with 1250 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_hornwarden",
+  "title": "Raid encounter monster: Hornwarden (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Hornwarden is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 525 with 1050 HP, attacking with crush. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_ember_swarm",
+  "title": "Raid encounter monster: Ember Swarm (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Ember Swarm is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 100 with 1 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_sunspire_healing_totem",
+  "title": "Raid encounter monster: Sun Totem (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "raid"
+  ],
+  "text": "Sun Totem is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 100 with 1 HP, attacking with magic. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
+  "id": "monster_aurelios_the_unbroken",
+  "title": "Raid boss: Aurelios the Unbroken (Sunspire Colosseum)",
+  "tags": [
+   "monster",
+   "boss",
+   "raid"
+  ],
+  "text": "Aurelios the Unbroken is a raid boss fought only inside the Sunspire Colosseum, at combat level 1450 with 4500 HP, attacking with slash. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+ },
+ {
   "id": "clue_medium",
   "title": "Clue scroll tier: medium",
   "tags": [
@@ -3545,7 +3684,7 @@ export const KNOWLEDGE_CHUNKS = [
    "collection",
    "uniques"
   ],
-  "text": "The Raids collection log has 49 slots. Cryptbound Champions: Morvyn S Hood, Morvyn S Robetop, Morvyn S Robeskirt, Morvyn S Staff, Dravok S Helm, Dravok S Platebody, Dravok S Platelegs, Dravok S Greataxe, Gorath S Helm, Gorath S Platebody, Gorath S Chainskirt, Gorath S Warspear, Kaelor S Coif, Kaelor S Leathertop, Kaelor S Leatherskirt, Kaelor S Crossbow, Torvek S Helm, Torvek S Platebody, Torvek S Platelegs, Torvek S Hammers, Verin S Helm, Verin S Brassard, Verin S Plateskirt, Verin S Flail. Vaults of Xyren: Warped Buckler, Dragon Slayer Crossbow, Durn S Bulwark, Kodai Hat, Kodai Robe Top, Kodai Robe Bottom, Dragon Claws, Ancient Maul, Zaryth Vambraces, Ancestral Wand, Twisted Longbow. Tomb of Arasmus: Fang Of Osmun, Sunbearer Ring, Ward Of Elidria, Masari Mask, Masari Body, Masari Chaps, Shadow Of Tumaken. Crimson Night Theatre: Avernal Defender, Ghraxis Rapier, Sanguine Staff, Justicar Faceguard, Justicar Chestguard, Justicar Legguards, Scythe Of Vythar."
+  "text": "The Raids collection log has 55 slots. Cryptbound Champions: Morvyn S Hood, Morvyn S Robetop, Morvyn S Robeskirt, Morvyn S Staff, Dravok S Helm, Dravok S Platebody, Dravok S Platelegs, Dravok S Greataxe, Gorath S Helm, Gorath S Platebody, Gorath S Chainskirt, Gorath S Warspear, Kaelor S Coif, Kaelor S Leathertop, Kaelor S Leatherskirt, Kaelor S Crossbow, Torvek S Helm, Torvek S Platebody, Torvek S Platelegs, Torvek S Hammers, Verin S Helm, Verin S Brassard, Verin S Plateskirt, Verin S Flail. Vaults of Xyren: Warped Buckler, Dragon Slayer Crossbow, Durn S Bulwark, Kodai Hat, Kodai Robe Top, Kodai Robe Bottom, Dragon Claws, Ancient Maul, Zaryth Vambraces, Ancestral Wand, Twisted Longbow. Tomb of Arasmus: Fang Of Osmun, Sunbearer Ring, Ward Of Elidria, Masari Mask, Masari Body, Masari Chaps, Shadow Of Tumaken. Crimson Night Theatre: Avernal Defender, Ghraxis Rapier, Sanguine Staff, Justicar Faceguard, Justicar Chestguard, Justicar Legguards, Scythe Of Vythar. Sunspire Colosseum: Resonance Crystal, Sunbound Zealot Helm, Sunbound Zealot Cuirass, Sunbound Zealot Greaves, Twinflare Chakrams, Sunweaver Quiver."
  },
  {
   "id": "collection_log_minigames",

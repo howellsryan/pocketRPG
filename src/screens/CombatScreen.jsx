@@ -21,17 +21,18 @@ import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip, WasIs } fr
 import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt, getMonsterAddInfo, getDefenceLevelInfo, getDefenceBonusInfo, DEFENCE_STYLES } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { COMBAT_CATEGORY_ORDER, COMBAT_RAID_ORDER, orderBy } from '../utils/combatOrder.js'
-import { prayerSkill } from '../utils/prayerIcons.js'
+import { nextProtectionPrayerThreat, prayerSkill, protectionPrayerForAttackStyle } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
-import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
+import { createCombatState, createRaidCombatState, continueRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
 import { hardModeDeathLoss, hardModeSkipCost, monstersTableFor, scaleMonsterForHardMode, supportsHardMode } from '../engine/hardMode.js'
 import { displayedDropChance, dropRateBoostLabel, monsterDropBoost } from '../engine/dropRateDisplay.js'
 import { grimReaperStashFromDeath } from '../engine/grimReaper.js'
 import { hardModeKey, pushHardModeTarget } from '../cloud/hardMode.js'
 import { recordItemLossEntries } from '../engine/lossLedger.js'
 import { HardModeConfirm, HardModeTag, HardModeToggle } from '../components/HardMode.jsx'
-import { liveAdds, targetedAdd } from '../engine/bossAdds.js'
+import { liveAdds } from '../engine/bossAdds.js'
+import { isWaveRaid, raidInfoStages, raidUniqueChanceRange } from '../engine/raidEncounters.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable, boostedMagicLevel } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { checkBossRequirementsPure, checkRaidRequirementsPure } from '../engine/combatRequirements.js'
@@ -62,7 +63,7 @@ import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
-import { swingsFromCombatEvents, playerCombatSprite, monsterCombatSprite } from '../utils/actionSprites.js'
+import { swingsFromCombatEvents, playerCombatSprite, monsterCombatSprite, combatStageTarget, combatStageDeathTransition, combatStageSwingRoute, MONSTER_DEATH_ANIM_MS } from '../utils/actionSprites.js'
 import { useActionSwings, useConsumeToken } from '../hooks/useActionSwings.js'
 import InkwrightCombatStage from '../components/InkwrightCombatStage.jsx'
 import { dropsFromBankedXp, emitXpDrops } from '../utils/xpDrops.js'
@@ -72,6 +73,8 @@ import { HitSplatLayer } from '../components/HitSplat.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
+import SunspireDecisionPanel from '../components/SunspireDecisionPanel.jsx'
+import { SUNSPIRE_MODIFIERS_ENABLED, offerSunspireModifiers, raiseSunspireModifierTier } from '../engine/sunspireModifiers.js'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
@@ -429,6 +432,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [showEquipmentModal, setShowEquipmentModal] = useState(false)
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [showSummonModal, setShowSummonModal] = useState(false)
+  const [targetsExpanded, setTargetsExpanded] = useState(true)
+  const [sunspireClaimBusy, setSunspireClaimBusy] = useState(false)
   const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
   const [selectedRaidInfo, setSelectedRaidInfo] = useState(null)
   // Section collapse state. Read sites default an unset key to collapsed in the
@@ -502,6 +507,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // is left holding a swing that could replay.
   const { swings, pushSwings } = useActionSwings()
   const { token: actorConsume, pushConsume } = useConsumeToken()
+  const [stageDeathTarget, setStageDeathTarget] = useState(null)
+  const stageDeathTimerRef = useRef(null)
+  const clearStageDeathTarget = () => {
+    if (stageDeathTimerRef.current) {
+      clearTimeout(stageDeathTimerRef.current)
+      stageDeathTimerRef.current = null
+    }
+    setStageDeathTarget(null)
+  }
+  const holdStageDeathTarget = (transition) => {
+    if (!transition) return
+    if (stageDeathTimerRef.current) clearTimeout(stageDeathTimerRef.current)
+    setStageDeathTarget(transition)
+    stageDeathTimerRef.current = setTimeout(() => {
+      stageDeathTimerRef.current = null
+      setStageDeathTarget(null)
+    }, MONSTER_DEATH_ANIM_MS)
+  }
+  useEffect(() => () => {
+    if (stageDeathTimerRef.current) clearTimeout(stageDeathTimerRef.current)
+  }, [])
   const combatRef = useRef(null)
   // Bumped exactly at a new-fight boundary (startFight/continueFight/startRaid),
   // never on an ordinary re-render — InkwrightCombatStage clears its frozen
@@ -509,6 +535,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // just died can't bleed a frame into the next monster's first swing.
   const fightSeqRef = useRef(0)
   const hpRef = useRef(currentHP)
+  const getCombatMaxHP = (state = combatRef.current) => {
+    const base = Math.max(1, Number(getMaxHP()) || 1)
+    if (state?.raid?.raidId !== 'sunspire_colosseum') return base
+    const multiplier = Math.max(0.01, Math.min(1, Number(state?.sunspireRules?.maxHpMultiplier) || 1))
+    return Math.max(1, Math.floor(base * multiplier))
+  }
   const hasAutoStarted = useRef(false)
   // Timestamp-throttles the "out of runes" error toast so a spell that splashes
   // every tick for lack of runes raises one toast, not one per 600ms tick.
@@ -736,7 +768,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         currentHP: hpRef.current
       }
 
+      const stageTargetBeforeTick = combatStageTarget(state)
+      const stageTargetSnapshot = stageTargetBeforeTick ? { ...stageTargetBeforeTick } : null
       const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current, slayerTaskRef.current)
+
+      const deathTransition = combatStageDeathTransition(stageTargetSnapshot, combatState)
+      if (deathTransition) holdStageDeathTarget(deathTransition)
 
       // Master Rejuvenation: auto-refill spec bar when it hits 0 mid-fight.
       if (combatState.active) {
@@ -756,13 +793,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       // A tick with no swing on a side leaves that side's token alone — the
       // stage keys off the id, so re-setting an unchanged one would replay a
-      // motion the engine never made. `showingAdd` routes each swing to the
-      // enemy it is about, since a boss and its adds share one event stream and
-      // are told apart only by a flag. It is read from `state`, the PRE-tick
-      // target: these events describe the tick that just resolved, and the blow
-      // that kills a targeted add clears `addTargetIndex`, so reading the result
-      // would throw away the killing swing.
-      pushSwings(swingsFromCombatEvents(events, { showingAdd: !!targetedAdd(state) }))
+      // motion the engine never made. Route from the PRE-tick active target:
+      // the events describe that tick, including a killing blow. Crucially this
+      // is activeTarget()-based rather than addTargetIndex-based, because a
+      // finite Sunspire encounter automatically attacks the next live add after
+      // its primary dies even though no manual add selection exists.
+      pushSwings(swingsFromCombatEvents(events, combatStageSwingRoute(state)))
 
       // Filled from what grantXP BANKED below, so the floating drop and the
       // skill can never disagree — the engine's number is pre-account-type.
@@ -799,7 +835,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             volatile_surge: '🌩️ Volatile Surge',
             disrupt: '🌋 Disrupt',
             empty_bolt: '🕳️ Empty Bolt',
-            empty_lord_cleave: `🕳️ Empty Lord's Cleave (+${ev.healAmount || 0} HP)`
+            empty_lord_cleave: `🕳️ Empty Lord's Cleave (+${ev.healAmount || 0} HP)`,
+            division: ev.defenceReducedBy > 0 ? `☀️ Division (-${ev.defenceReducedBy} Defence)` : '☀️ Division'
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -808,7 +845,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             time: Date.now()
           }])
           if (SELF_HEALING_SPEC_TYPES.has(ev.specType) && ev.healAmount > 0) {
-            const maxHP = getMaxHP()
+            const maxHP = getCombatMaxHP(combatState)
             const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
             updateHP(newHP)
             hpRef.current = newHP
@@ -1036,6 +1073,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             time: Date.now()
           }])
         }
+        if (ev.type === 'raidWaveCleared' && combatState.raid?.raidId === 'sunspire_colosseum') {
+          const modifierState = combatState.raid.modifierState || {}
+          combatState.raid = {
+            ...combatState.raid,
+            modifierOffers: ev.finalWave || !SUNSPIRE_MODIFIERS_ENABLED
+              ? []
+              : offerSunspireModifiers(modifierState, raidsData.sunspire_colosseum?.modifierPool),
+          }
+          combatRef.current = combatState
+          setCombat({ ...combatState })
+          setActiveTask(null)
+        }
         if (ev.type === 'raidBossDefeated') {
           setLog(prev => [...prev.slice(-20), {
             text: `🩸 ${ev.bossName} defeated! (${ev.bossIndex + 1}/${ev.totalBosses})`,
@@ -1086,7 +1135,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
         if (ev.type === 'sangHeal') {
           // Heal the player from sanguinesti staff passive
-          const maxHP = getMaxHP()
+          const maxHP = getCombatMaxHP(combatState)
           const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
           updateHP(newHP)
           hpRef.current = newHP
@@ -1098,7 +1147,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
         if (ev.type === 'guthanHeal') {
           // Heal the player from Guthan set bonus
-          const maxHP = getMaxHP()
+          const maxHP = getCombatMaxHP(combatState)
           const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
           updateHP(newHP)
           hpRef.current = newHP
@@ -1707,7 +1756,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Opens a party (sessionId null) or joins a named lobby. The save is flushed
   // first for the same reason the co-op boss join does it: the server snapshots
   // it on join and owns the pack from that moment.
-  const startRaidParty = async (raid, sessionId = null) => {
+  const startRaidParty = async (raid, sessionId = null, { solo = false } = {}) => {
     if (isDemo) {
       addToast('\u{1F512} Raid parties are available with a free account.', 'warning')
       return
@@ -1726,7 +1775,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         addToast('Could not save before joining — try again.', 'error')
         return
       }
-      const res = await joinRaidWithRecovery(raid.id, sessionId)
+      const res = await joinRaidWithRecovery(raid.id, sessionId, { solo })
       setRaidChoice(null)
       // A raid is rejoined by PARTY, never by opening a fresh one: joining a
       // raid with no session id means "start a new party" (§21), which would
@@ -1750,15 +1799,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   /** Same stale-hold recovery the boss join uses: a player whose last fight
    * ended in a refresh has no way to leave that room by hand. */
-  const joinRaidWithRecovery = async (raidId, sessionId) => {
+  const joinRaidWithRecovery = async (raidId, sessionId, { solo = false } = {}) => {
     try {
-      return await coopApi.joinRaid(raidId, sessionId)
+      return await coopApi.joinRaid(raidId, sessionId, { solo })
     } catch (err) {
       const held = heldCoopSessionRef.current
       if (err?.body?.code !== 'CHARACTER_IN_COOP_SESSION' || !held) throw err
       try { await coopApi.leave(held) } catch { /* the join below reports the real state */ }
       heldCoopSessionRef.current = null
-      return await coopApi.joinRaid(raidId, sessionId)
+      return await coopApi.joinRaid(raidId, sessionId, { solo })
     }
   }
 
@@ -1909,6 +1958,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.prayerPoints = prayerLvl
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     fightSeqRef.current += 1
+    clearStageDeathTarget()
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
@@ -1917,7 +1967,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
   }
 
-  const startRaid = (raidData) => {
+  const startRaid = async (raidData) => {
     if (isDemo) {
       addToast('🔒 Raids are available with a free account.', 'warning')
       return
@@ -1927,21 +1977,20 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       addToast(req.reason, 'error')
       return
     }
-    // Map-driven gating (Phase 3): must be at a city that offers this raid. Raids are
-    // their own activity kind — gate on the raid, not its first boss (which is raid-only
-    // content and not a standalone monster on the map).
     if (!requestActivityStart({ type: 'raid', raid: raidData })) return
+
     const { combatType: weaponCombatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
     const combatType = needsSpell ? 'melee' : weaponCombatType
     if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
-    // A hard raid scales the TABLE, so every boss in the run — including the
-    // ones the engine looks up as it advances — comes out doubled.
+
     const hardRaid = offersHardMode(raidData) && isHardMode('raids', raidData.id)
-    const state = createRaidCombatState(raidData, monstersTableFor(monstersData, hardRaid), combatType, combatStance, spell, { grindman: isGrindman })
+    const table = monstersTableFor(monstersData, hardRaid)
+    const state = createRaidCombatState(raidData, table, combatType, combatStance, spell, { grindman: isGrindman })
     if (!state) {
-      addToast('Failed to start raid — missing boss data', 'error')
+      addToast('Failed to start raid — missing encounter data', 'error')
       return
     }
+
     state.specialAttackEnergy = 100
     const raidPrayerLvl = getLevelFromXP(stats.prayer?.xp || 0)
     state.maxPrayerPoints = raidPrayerLvl
@@ -1949,15 +1998,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     combatRef.current = state
     fightSeqRef.current += 1
+    clearStageDeathTarget()
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
-    const firstBoss = monstersTableFor(monstersData, hardRaid)[raidData.bosses[0]]
+    setTargetsExpanded(true)
+
+    const firstId = Array.isArray(raidData.waves) ? raidData.waves[0]?.primary : raidData.bosses?.[0]
+    const firstBoss = firstId ? table[firstId] : null
+    const isWaveRaid = Array.isArray(raidData.waves)
+    const total = isWaveRaid ? raidData.waves.length : (raidData.bosses?.length || 1)
     setLog([
-      { text: `🩸 ${raidData.name} — Raid started!`, type: 'raid', time: Date.now() },
-      { text: `Boss 1/${raidData.bosses.length}: ${firstBoss?.name || 'Unknown'}`, type: 'info', time: Date.now() }
+      { text: '🩸 ' + raidData.name + ' — Raid started!', type: 'raid', time: Date.now() },
+      { text: (isWaveRaid ? 'Wave' : 'Boss') + ' 1/' + total + ': ' + (firstBoss?.name || 'Unknown'), type: 'info', time: Date.now() }
     ])
-    setActiveTask({ type: 'combat', monster: firstBoss, stance: combatStance, bankingEnabled: false, spell: spell || null, raid: true, raidId: raidData.id })
+    setActiveTask({ type: 'combat', monster: state.monster, stance: combatStance, bankingEnabled: false, spell: spell || null, raid: true, raidId: raidData.id })
   }
 
   const continueFight = (monster) => {
@@ -1992,6 +2047,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.summon = combatRef.current?.summon || null
     combatRef.current = state
     fightSeqRef.current += 1
+    clearStageDeathTarget()
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
   }
@@ -2021,12 +2077,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // and surface it in the loot modal. Used both when a raid is completed live
   // and when the player skips an entire raid from the loot modal — a skip just
   // re-rolls another complete reward rather than re-simulating every boss.
-  const claimRaidCompletion = async ({ raidId, monster, slayerXpGained = 0, isBossKill = false, hardMode = false }) => {
-    setLootModal({ monster, hardMode, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
+  const claimRaidCompletion = async ({
+    raidId, monster, slayerXpGained = 0, isBossKill = false, hardMode = false,
+    completionPayload = {}, recordCompletion = true,
+  }) => {
+    const cashOutWave = raidId === 'sunspire_colosseum' && completionPayload?.wave && !recordCompletion
+      ? Number(completionPayload.wave)
+      : null
+    setLootModal({ monster, hardMode, loot: [], slayerXpGained, isBossKill, raidId, cashOutWave, loading: true })
     try {
       const res = await api.completeRaid(raidId, {
         actionNonce: `raid:${raidId}:${Date.now()}`,
         hardMode,
+        ...completionPayload,
       })
       const granted = Array.isArray(res?.granted) ? res.granted : []
       if (granted.length > 0) {
@@ -2062,18 +2125,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       }
       // NOTE: deliberately NOT applyCloudSave(res.save.save_data) here — see the
       // monster-completion handler above for why.
-      recordGameEvent?.({ kind: 'raid_complete', raidId })
+      if (recordCompletion) recordGameEvent?.({ kind: 'raid_complete', raidId })
       setLootModal({
         monster,
         loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
         slayerXpGained,
         isBossKill,
         raidId,
+        cashOutWave,
         loading: false
       })
+      return true
     } catch (err) {
       setLootModal(null)
       addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
+      return false
     } finally {
       // Release any boss-skip lock awaiting this completion (no-op otherwise).
       resolveCombatCompletion()
@@ -2163,6 +2229,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const st = combatRef.current
     const raidId = st?.raid?.raidId
     if (!raidId) return Promise.resolve()
+    if (raidId === 'sunspire_colosseum') {
+      addToast('Sunspire cannot be skipped — the chest risk is part of the run.', 'info')
+      return Promise.resolve()
+    }
     return skipEntireRaid({ raidId, monster: st?.monster, isBossKill: true, hardMode: st?.monster?.hardModeActive === true })
   }
   useEffect(() => {
@@ -2173,6 +2243,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const stopAndBack = () => {
     cancelAutoFight()
+    clearStageDeathTarget()
     setCombat(null)
     setLog([])
     setActiveTask(null)
@@ -2198,7 +2269,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     inventoryRef.current = newInv
 
     const healing = brew.boost || 10
-    const actor = { hp: hpRef.current, maxHP: getMaxHP(), activePotions: { ...(combatRef.current?.activePotions || {}) } }
+    const actor = { hp: hpRef.current, maxHP: getCombatMaxHP(), activePotions: { ...(combatRef.current?.activePotions || {}) } }
     applyConsumableEffect(actor, brew, brewId, 'drink')
     updateHP(actor.hp)
     hpRef.current = actor.hp
@@ -2259,7 +2330,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
     updateInventory(newInv)
     inventoryRef.current = newInv
-    const actor = { hp: hpRef.current, maxHP: getMaxHP(), activePotions: {} }
+    const actor = { hp: hpRef.current, maxHP: getCombatMaxHP(), activePotions: {} }
     applyConsumableEffect(actor, food, foodId, 'eat')
     updateHP(actor.hp)
     hpRef.current = actor.hp
@@ -2373,7 +2444,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // Apply the drink (buff registration + immediate HP heal + prayer restore)
     // via the shared consumables engine, then carry the result into combat state.
     const actor = {
-      hp: hpRef.current, maxHP: getMaxHP(),
+      hp: hpRef.current, maxHP: getCombatMaxHP(),
       activePotions: { ...(combatRef.current.activePotions || {}) },
       prayerPoints: combatRef.current.prayerPoints,
       maxPrayerPoints: combatRef.current.maxPrayerPoints,
@@ -2410,6 +2481,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   forceKillHandlerRef.current = () => {
     const state = combatRef.current
     if (!state || !state.active || !state.monster) return false
+    if (state.raid?.raidId === 'sunspire_colosseum') {
+      addToast('Sunspire waves cannot be skipped.', 'info')
+      return false
+    }
     state.monster.currentHP = 0
     state.playerAttackTimer = 0
     state.eatCooldown = 0
@@ -3045,28 +3120,37 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <div>
               <p class="text-[11px] text-[var(--color-parchment)] opacity-60 mb-3">{selectedRaidInfo.description}</p>
             </div>
-            <div>
-              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Bosses</h4>
-              <div class="space-y-1">
-                {selectedRaidInfo.bosses.map((bossId, i) => {
-                  const boss = monstersData[bossId]
-                  if (!boss) return null
-                  const bossArt = getMonsterArt(boss)
-                  return (
-                    <div key={bossId} class="bg-[var(--color-void)] rounded-lg p-2 flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <SkillEmblem iconKey={bossArt.icon} accent={bossArt.accent} size={22} glow={0} />
-                        <div>
-                          <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{i + 1}. {boss.name}</div>
-                          <div class="text-[9px] text-[var(--color-parchment)] opacity-50">HP {boss.hitpoints} · CB {boss.combatLevel}</div>
+            {(() => {
+              const waveRaid = isWaveRaid(selectedRaidInfo)
+              const stages = raidInfoStages(selectedRaidInfo, monstersData)
+              return (
+                <div>
+                  <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">{waveRaid ? 'Waves' : 'Bosses'}</h4>
+                  <div class="space-y-1">
+                    {stages.map((stage) => {
+                      const boss = stage.primary
+                      if (!boss) return null
+                      const bossArt = getMonsterArt(boss)
+                      const waveDetail = stage.kind === 'wave'
+                        ? ` · ${stage.startingEnemyCount} starting enem${stage.startingEnemyCount === 1 ? 'y' : 'ies'}${stage.reinforcementCount > 0 ? ` · +${stage.reinforcementCount} reinforcement${stage.reinforcementCount === 1 ? '' : 's'}` : ''}`
+                        : ''
+                      return (
+                        <div key={stage.key} class="bg-[var(--color-void)] rounded-lg p-2 flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <SkillEmblem iconKey={bossArt.icon} accent={bossArt.accent} size={22} glow={0} />
+                            <div>
+                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{stage.label}{stage.kind === 'wave' ? ' · ' : '. '}{boss.name}</div>
+                              <div class="text-[9px] text-[var(--color-parchment)] opacity-50">HP {boss.hitpoints} · CB {boss.combatLevel}{waveDetail}</div>
+                            </div>
+                          </div>
+                          <span class="text-[9px] text-[var(--color-parchment)] opacity-40 font-[var(--font-mono)]">CB {boss.combatLevel}</span>
                         </div>
-                      </div>
-                      <span class="text-[9px] text-[var(--color-parchment)] opacity-40 font-[var(--font-mono)]">CB {boss.combatLevel}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
             {selectedRaidInfo.rewards && (() => {
               const raidBoost = raidDropBoost(selectedRaidInfo)
               const raidBoostLabel = dropRateBoostLabel(raidBoost)
@@ -3094,7 +3178,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {selectedRaidInfo.rewards.unique && (
                     <div class="bg-[var(--surface-raised)] border border-[var(--color-gold-dim)] rounded-lg p-2 mt-1">
                       <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-1">
-                        ✨ Unique Drop ({(displayedDropChance(selectedRaidInfo.rewards.unique.chance, raidBoost) * 100).toFixed(1)}% chance)
+                        {(() => {
+                          const range = raidUniqueChanceRange(selectedRaidInfo)
+                          return range
+                            ? `✨ Unique Drop (${formatDropChance(displayedDropChance(range.first.chance, raidBoost))} at Wave ${range.first.wave} → ${formatDropChance(displayedDropChance(range.last.chance, raidBoost))} at Wave ${range.last.wave})`
+                            : `✨ Unique Drop (${(displayedDropChance(selectedRaidInfo.rewards.unique.chance, raidBoost) * 100).toFixed(1)}% chance)`
+                        })()}
                       </div>
                       <div class="space-y-0.5">
                         {selectedRaidInfo.rewards.unique.items.map(u => {
@@ -3159,12 +3248,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           <div class="space-y-2 mb-4">
             <button
-              onClick={() => { const r = raidChoice; setRaidChoice(null); startRaid(r) }}
+              onClick={() => {
+                const r = raidChoice
+                setRaidChoice(null)
+                startRaid(r)
+              }}
               class="w-full text-left p-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)]"
             >
               <div class="text-sm font-semibold text-[var(--color-parchment)]">Raid alone</div>
               <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                Every boss, back to back, and the whole reward table is yours.
+                {raidChoice.id === 'sunspire_colosseum'
+                  ? 'Run the raid solo using the normal PocketRPG combat engine. Rewards are settled by the server when you cash out.'
+                  : 'Every boss, back to back, and the whole reward table is yours.'}
               </div>
             </button>
           </div>
@@ -3308,6 +3403,87 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
+  // A solo Sunspire run uses the ordinary local raid engine. Only the reward
+  // claim crosses the server boundary, exactly like other solo raids.
+  if (combat?.raid?.raidId === 'sunspire_colosseum' && combat.raid.awaitingDecision && !lootModal) {
+    const wave = (Number(combat.raid.currentWaveIndex) || 0) + 1
+    const totalWaves = combat.raid.waves?.length || 12
+    const finalWave = wave >= totalWaves
+    const continueSunspire = (modifierId = null) => {
+      const raidData = raidsData.sunspire_colosseum
+      const modifierState = SUNSPIRE_MODIFIERS_ENABLED && modifierId
+        ? raiseSunspireModifierTier(combat.raid.modifierState || {}, modifierId)
+        : {}
+      const next = continueRaidCombatState(combat, raidData, monstersData, { modifierState })
+      if (!next) {
+        addToast('Could not start the next Sunspire wave.', 'error')
+        return
+      }
+      const cappedHP = Math.min(hpRef.current, getCombatMaxHP(next))
+      if (cappedHP !== hpRef.current) {
+        updateHP(cappedHP)
+        hpRef.current = cappedHP
+      }
+      combatRef.current = next
+      fightSeqRef.current += 1
+      setCombat({ ...next })
+      // Keep the player's Targets collapse preference across waves. A fresh raid
+      // still starts expanded; wave transitions no longer override their choice.
+      setActiveTask({
+        type: 'combat',
+        monster: next.monster,
+        stance: next.stance || combatStance,
+        bankingEnabled: false,
+        spell: next.spell || null,
+        raid: true,
+        raidId: raidData.id,
+      })
+    }
+    const claimSunspire = async () => {
+      if (sunspireClaimBusy) return
+      setSunspireClaimBusy(true)
+      // Leave decision mode before opening the reward modal so it can render
+      // over the normal combat shell rather than being hidden by this return.
+      const settledState = { ...combat, raid: { ...combat.raid, awaitingDecision: false } }
+      combatRef.current = settledState
+      setCombat(settledState)
+      const ok = await claimRaidCompletion({
+        raidId: 'sunspire_colosseum',
+        monster: combat.monster,
+        isBossKill: finalWave,
+        completionPayload: { wave },
+        recordCompletion: finalWave,
+      })
+      if (!ok) {
+        combatRef.current = combat
+        setCombat({ ...combat })
+      } else {
+        setActiveTask(null)
+      }
+      setSunspireClaimBusy(false)
+    }
+    return (
+      <div class="forge-shell h-full flex flex-col p-4">
+        <BackLink onClick={stopAndBack} className="mb-3" />
+        <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar">
+          <SunspireDecisionPanel
+            wave={wave}
+            totalWaves={totalWaves}
+            modifierState={combat.raid.modifierState || {}}
+            offers={combat.raid.modifierOffers || []}
+            finalWave={finalWave}
+            deferredRewards
+            canChoose
+            busy={sunspireClaimBusy}
+            onChoose={continueSunspire}
+            onContinue={() => continueSunspire()}
+            onClaim={claimSunspire}
+          />
+        </div>
+      </div>
+    )
+  }
+
   // ── Boss adds (e.g. the Dread Core, Zaryth's sentinels) ──
   // Live enemies, not a phase: they attack alongside the boss until killed, so
   // the player needs a way to swing at each and to see the one they are on.
@@ -3315,8 +3491,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // is drawn (a stack of four would push the fight itself off a phone screen),
   // and it follows the enemy the player is actually hitting.
   const addsOnField = liveAdds(combat)
-  const activeAdd = targetedAdd(combat) || addsOnField[0] || null
-  const onBoss = !targetedAdd(combat)
+  const liveCombatTarget = combatStageTarget(combat) || combat.monster
+  const onBoss = liveCombatTarget === combat.monster
+  const activeAdd = onBoss ? (addsOnField[0] || null) : liveCombatTarget
   const switchTarget = (which) => {
     if (!combatRef.current) return
     const next = setCombatTarget(combatRef.current, which)
@@ -3336,26 +3513,39 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <HPBar current={Math.max(0, activeAdd.currentHP)} max={activeAdd.hitpoints} size="large" />
         <HitSplatLayer splats={addSplats} />
       </div>
-      {/* Target picker — same brass "on" treatment as the quick-prayer tiles, so
-          the enemy you are hitting reads at a glance mid-fight. */}
-      <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
-        <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => switchTarget('boss')}>
-          <span class="cb-slot__name">{combat.monster.name}</span>
-          <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
-          {onBoss && <span class="cb-slot__ring" />}
-        </button>
-        {combat.adds.map((add, index) => {
-          if (!add || add.currentHP <= 0) return null
-          const on = add === activeAdd && !onBoss
-          return (
-            <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => switchTarget(index)}>
-              <span class="cb-slot__name">{add.name}</span>
-              <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
-              {on && <span class="cb-slot__ring" />}
+      {/* Target choices can collapse independently of the active enemy HP bar,
+          keeping multi-enemy fights compact without hiding what is being hit. */}
+      <button
+        type="button"
+        class="mb-1.5 flex w-full items-center justify-between rounded-lg border border-[var(--color-void-border)] px-2.5 py-1.5 text-left text-[10px] text-[var(--color-parchment)]"
+        onClick={() => setTargetsExpanded((value) => !value)}
+        aria-expanded={targetsExpanded}
+      >
+        <span><span class="opacity-55">Targets</span> · {onBoss ? combat.monster.name : activeAdd?.name}</span>
+        <CollapseChevron expanded={targetsExpanded} size={11} />
+      </button>
+      {targetsExpanded && (
+        <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
+          {combat.monster.currentHP > 0 && (
+            <button class={'cb-slot' + (onBoss ? ' is-active' : '')} onClick={() => switchTarget('boss')}>
+              <span class="cb-slot__name">{combat.monster.name}</span>
+              <span class="cb-slot__tag">{onBoss ? 'Attacking' : 'Attack'}</span>
+              {onBoss && <span class="cb-slot__ring" />}
             </button>
-          )
-        })}
-      </div>
+          )}
+          {combat.adds.map((add, index) => {
+            if (!add || add.currentHP <= 0) return null
+            const on = add === activeAdd && !onBoss
+            return (
+              <button key={add.instanceId} class={'cb-slot' + (on ? ' is-active' : '')} onClick={() => switchTarget(index)}>
+                <span class="cb-slot__name">{add.name}</span>
+                <span class="cb-slot__tag">{on ? 'Attacking' : `${Math.max(0, Math.round(add.currentHP))} HP`}</span>
+                {on && <span class="cb-slot__ring" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 
@@ -3363,7 +3553,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Both sides are rebuilt every render because both can change mid-fight: a
   // weapon swap changes the player's tool AND its speed, and a multi-form boss
   // changes style per form. Timing comes from actionSprites, never from here.
-  const spriteMonster = targetedAdd(combat) || combat.monster
+  const spriteMonster = combatStageTarget(combat, stageDeathTarget) || combat.monster
+  const stageShowingAdd = stageDeathTarget ? stageDeathTarget.wasAdd : spriteMonster !== combat.monster
   const spriteMonsterArt = getMonsterArt(spriteMonster, getMonsterCategoryKey(spriteMonster.id))
   // Stance is part of the cadence: combat.js shortens a ranged swing by a tick
   // on Rapid, so leaving it out animated the speed stance at Accurate's pace.
@@ -3375,7 +3566,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // own HP bar and its own splats (addSplats), so a targeted add must not
   // borrow the boss's monsterSplats or a hit on the add would flash on a
   // figure representing something else entirely.
-  const stageTargetSplats = targetedAdd(combat) ? addSplats : monsterSplats
+  const stageTargetSplats = stageShowingAdd ? addSplats : monsterSplats
+  const prayerCue = nextProtectionPrayerThreat({
+    primary: combat.monster,
+    primaryAttackTimer: combat.monsterAttackTimer,
+    adds: combat.adds,
+    staggered: combat.raid?.raidId === 'sunspire_colosseum',
+  })
+  const cuePrayer = prayerCue ? protectionPrayerForAttackStyle(prayerCue.style, prayersData) : null
+  const cueStyleArt = prayerCue ? getStyleArt(prayerCue.style) : null
+  const cueThreat = cuePrayer && cueStyleArt
+    ? { skill: prayerSkill(cuePrayer), color: cueStyleArt.color, label: cuePrayer.name }
+    : null
   // Null on the classic screen: every readout the stage absorbed (both HP
   // bars, the prayer pool) is rendered as its own bar below instead.
   const spriteStage = !combatAnimations ? null : (
@@ -3389,18 +3591,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         // its own creature and must be drawn as one, and a multi-form boss
         // carries its current form here.
         monster: spriteMonster,
-        dying: spriteMonster.currentHP <= 0,
+        dying: !!stageDeathTarget || spriteMonster.currentHP <= 0,
       }}
       actorSwing={swings.player}
       actorConsume={actorConsume}
       targetSwing={swings.monster}
-      actorHp={{ current: currentHP, max: getMaxHP() }}
+      actorHp={{ current: currentHP, max: getCombatMaxHP(combat) }}
       targetHp={{ current: spriteMonster.currentHP, max: spriteMonster.hitpoints }}
       actorSplats={playerSplats}
       targetSplats={stageTargetSplats}
       resetKey={fightSeqRef.current}
       showCorners={!isDesktopCombatLayout}
       actorPrayer={typeof combat?.maxPrayerPoints === 'number' ? { current: combat.prayerPoints, max: combat.maxPrayerPoints } : null}
+      actorThreat={cueThreat}
       label={`You versus ${spriteMonster.name}`}
     />
   )
@@ -3414,20 +3617,26 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         {!isDesktopCombatLayout && combat.raid && (
           <div class="flex-1 min-w-0 flex items-center gap-1.5">
             <span class="text-[9px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-50 flex-shrink-0">
-              Boss {combat.raid.currentBossIndex + 1}/{combat.raid.bosses.length}
+              {Array.isArray(combat.raid.waves)
+                ? `Wave ${combat.raid.currentWaveIndex + 1}/${combat.raid.waves.length}`
+                : `Boss ${combat.raid.currentBossIndex + 1}/${combat.raid.bosses.length}`}
             </span>
             <div class="flex-1 flex gap-0.5 min-w-0">
-              {combat.raid.bosses.map((bossId, i) => (
+              {(combat.raid.waves || combat.raid.bosses).map((entry, i) => {
+                const bossId = typeof entry === 'string' ? entry : entry.primary
+                const currentIndex = Array.isArray(combat.raid.waves) ? combat.raid.currentWaveIndex : combat.raid.currentBossIndex
+                return (
                 <div
                   key={bossId}
                   class={`flex-1 h-1 rounded-full ${
-                    i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' :
-                    i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' :
+                    i < currentIndex ? 'bg-[var(--color-hp-green)]' :
+                    i === currentIndex ? 'bg-[var(--color-gold)]' :
                     'bg-[var(--color-void-border)]'
                   }`}
                   title={monstersData[bossId]?.name || bossId}
                 />
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
@@ -3485,21 +3694,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-[10px] font-semibold text-[var(--color-gold)]">{raidsData[combat.raid.raidId]?.icon} {raidsData[combat.raid.raidId]?.name || 'Raid'}</span>
             <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-60">
-              Boss {combat.raid.currentBossIndex + 1}/{combat.raid.bosses.length}
+              {Array.isArray(combat.raid.waves)
+                ? `Wave ${combat.raid.currentWaveIndex + 1}/${combat.raid.waves.length}`
+                : `Boss ${combat.raid.currentBossIndex + 1}/${combat.raid.bosses.length}`}
             </span>
           </div>
           <div class="flex gap-1">
-            {combat.raid.bosses.map((bossId, i) => (
-              <div
-                key={bossId}
-                class={`flex-1 h-1.5 rounded-full ${
-                  i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' :
-                  i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' :
-                  'bg-[var(--color-void-border)]'
-                }`}
-                title={monstersData[bossId]?.name || bossId}
-              />
-            ))}
+            {(combat.raid.waves || combat.raid.bosses).map((entry, i) => {
+              const bossId = typeof entry === 'string' ? entry : entry.primary
+              const currentIndex = Array.isArray(combat.raid.waves) ? combat.raid.currentWaveIndex : combat.raid.currentBossIndex
+              return (
+                <div
+                  key={(entry.id || bossId) + ':' + i}
+                  class={`flex-1 h-1.5 rounded-full ${
+                    i < currentIndex ? 'bg-[var(--color-hp-green)]' :
+                    i === currentIndex ? 'bg-[var(--color-gold)]' :
+                    'bg-[var(--color-void-border)]'
+                  }`}
+                  title={monstersData[bossId]?.name || bossId}
+                />
+              )
+            })}
           </div>
         </div>
       )}
@@ -3513,7 +3728,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
         {!combatAnimations && (
           <div class="relative">
-            <HPBar current={currentHP} max={getMaxHP()} size="large" />
+            <HPBar current={currentHP} max={getCombatMaxHP(combat)} size="large" />
             <HitSplatLayer splats={playerSplats} />
           </div>
         )}
@@ -3922,7 +4137,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   <CombatHPBlock
                     label="Your Hitpoints"
                     current={currentHP}
-                    max={getMaxHP()}
+                    max={getCombatMaxHP(combat)}
                     splats={playerSplats}
                     valueColor="#7ce88a"
                     right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
@@ -3935,7 +4150,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               {/* Prayer pool reads from the stage's top-left corner
                   (showCorners/actorPrayer above) unless the stage is off. */}
               {!combatAnimations && typeof combat?.maxPrayerPoints === 'number' && (
-                <CombatPrayerBlock current={combat.prayerPoints} max={combat.maxPrayerPoints} />
+                <CombatPrayerBlock current={combat.prayerPoints} max={combat.maxPrayerPoints} threat={cueThreat} />
               )}
 
               {/* Slayer task indicator */}
@@ -4295,17 +4510,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <LootResultModal
             theme={!lootModal.loading && hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
             kind="loot"
-            eyebrow="Raid Complete"
+            eyebrow={lootModal.cashOutWave ? `Cashed Out · Wave ${lootModal.cashOutWave}` : 'Raid Complete'}
             title={raidsData[lootModal.raidId]?.name || 'Raid'}
             heroItem={!lootModal.loading && heroItemData ? heroItemData : null}
             heroName={!lootModal.loading && hero ? (heroItemData?.name || hero.itemId) : null}
             heroQuantity={!lootModal.loading && hero ? hero.quantity : null}
             heroGp={!lootModal.loading && hero ? hero.totalGp : 0}
             heroUnitGp={!lootModal.loading && hero ? hero.unitGp : 0}
-            skipLabel={!lootModal.loading && getToken() && getCharacterId()
+            skipLabel={!lootModal.loading && lootModal.raidId !== 'sunspire_colosseum' && getToken() && getCharacterId()
               ? `Skip raid (${hardModeSkipCost(raidsData[lootModal.raidId]?.skipCost ?? 1, isHardMode('raids', lootModal.raidId))})`
               : null}
-            onSkip={skipAgain}
+            onSkip={lootModal.raidId !== 'sunspire_colosseum' ? skipAgain : undefined}
             loot={!lootModal.loading && rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
             lootTitle="Loot Secured"
             lootTotal={lootTotal}
