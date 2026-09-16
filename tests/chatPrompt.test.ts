@@ -160,9 +160,9 @@ describe('chat DPS routing', () => {
     expect(SYSTEM_PROMPT).toMatch(/Never work out damage, DPS or which gear is better/)
   })
 
-  it('search_tools still finds it for a player who phrases it another way', () => {
+  it('does not waste search_tools slots on analyze_dps now that it is always-on', () => {
     for (const query of ['best gear setup', 'what should I wear', 'damage per second']) {
-      expect(searchToolsByQuery(query).names).toContain('analyze_dps')
+      expect(searchToolsByQuery(query).names).not.toContain('analyze_dps')
     }
   })
 })
