@@ -43,3 +43,10 @@ jobs:
           WORKERS_CI_BRANCH: ${{ github.head_ref }}
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
         run: npm run build:site
+      - name: Deploy preview
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.107.1'
+          command: deploy --env preview
