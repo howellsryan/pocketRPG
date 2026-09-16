@@ -58,12 +58,12 @@ import {
   ALWAYS_ON_TOOL_NAMES,
   SEARCH_TOOL_NAME,
   SEARCH_TOOLS_DEF,
-  searchToolsByQuery,
   buildSystemPrompt,
   chatToolDefs,
   buildMessages,
   retrievalOnlyAnswer,
 } from '../_lib/chat/prompt.js'
+import { routeToolsForChat } from '../_lib/chat/toolRouting.js'
 
 // Preface for the post-confirmation summary call: the action already ran, so the
 // model must report the outcome, not propose it again.
@@ -523,12 +523,12 @@ export async function runAiChat(
     }
     const results = await raceDeadline(
       Promise.all(
-        calls.map((call, i) => {
+        calls.map(async (call, i) => {
           if (call.function.name === SEARCH_TOOL_NAME) {
             const { query } = parseToolArgs(call.function.arguments)
-            const { names, text } = searchToolsByQuery(typeof query === 'string' ? query : '')
+            const { names, text } = await routeToolsForChat(typeof query === 'string' ? query : '', env)
             for (const n of names) activeTools.add(n)
-            return Promise.resolve(text)
+            return text
           }
           if (allowWrites && isWriteTool(call.function.name)) {
             if (writeErrors[i]) return Promise.resolve(`Tool error: ${writeErrors[i]}`)

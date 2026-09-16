@@ -138,7 +138,7 @@ export function searchToolsByQuery(query, limit = SEARCH_RESULT_LIMIT) {
   if (!terms.length) {
     return { names: [], text: "No matching tool for an empty query. Describe the action, e.g. 'sell an item'." }
   }
-  const scored = TOOL_SCHEMAS.map((tool) => {
+  const scored = TOOL_SCHEMAS.filter((tool) => !ALWAYS_ON_TOOL_NAMES.includes(tool.name)).map((tool) => {
     const hay = new Set(tokenize(toolHaystack(tool)).map(stem))
     let score = 0
     for (const t of terms) if (hay.has(t)) score++
