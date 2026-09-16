@@ -90,7 +90,7 @@ describe('Jev chat tool routing', () => {
     const result = await routeToolsWithJev('tell me a joke', {
       apiKey: 'test-key',
       fetchImpl: vi.fn().mockResolvedValue(
-        jevResponse({ choice: '__no_match__', probabilities: { __no_match__: 0.95, get_reference: 0.05 } }),
+        jevResponse({ choice: '__no_match__', probabilities: { __no_match__: 0.95, sell_item: 0.05 } }),
       ),
     })
     expect(result.names).toEqual([])
