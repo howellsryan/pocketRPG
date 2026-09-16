@@ -38,6 +38,10 @@ jobs:
         run: |
           npm ci --no-audit --no-fund --ignore-scripts
           npm rebuild esbuild
+      - name: Full CI
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm run ci
       - name: Build site
         env:
           WORKERS_CI_BRANCH: ${{ github.head_ref }}
