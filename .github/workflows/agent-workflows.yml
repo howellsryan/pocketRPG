@@ -24,33 +24,3 @@ jobs:
           python3 tools/agent-skills.py
           test "$(cat .agents/skills/local-fixture/README)" = 'project-owned'
           python3 tools/agent-skills.py --check
-
-  diagnostic-build:
-    if: github.event_name == 'pull_request' && github.head_ref == 'experiment/jev-chat-tool-routing'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - name: Install
-        run: |
-          npm ci --no-audit --no-fund --ignore-scripts
-          npm rebuild esbuild
-      - name: Full CI
-        env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-        run: npm run ci
-      - name: Build site
-        env:
-          WORKERS_CI_BRANCH: ${{ github.head_ref }}
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-        run: npm run build:site
-      - name: Deploy preview
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: '4.107.1'
-          command: deploy --env preview
