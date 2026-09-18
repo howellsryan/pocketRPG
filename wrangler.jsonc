@@ -12,10 +12,11 @@
   // The newer of the two configs this merges (the API side was 2025-01-01).
   "compatibility_date": "2026-07-01",
   "workers_dev": false,
-  // Keep observability explicit in source so Wrangler deployments preserve
-  // persisted invocation logs instead of inheriting/resetting dashboard state.
+  // Mirrors what is configured on the production Worker in the dashboard. The
+  // top-level `enabled` is the legacy logs-only toggle and is superseded by the
+  // explicit `logs`/`traces` blocks — false here does NOT turn logging off.
   "observability": {
-    "enabled": true,
+    "enabled": false,
     "head_sampling_rate": 1,
     "logs": {
       "enabled": true,
@@ -24,7 +25,7 @@
       "invocation_logs": true
     },
     "traces": {
-      "enabled": false,
+      "enabled": true,
       "head_sampling_rate": 1,
       "persist": true
     }
@@ -120,7 +121,7 @@
       "name": "pocketrpg-app-preview",
       "workers_dev": true,
       "observability": {
-        "enabled": true,
+        "enabled": false,
         "head_sampling_rate": 1,
         "logs": {
           "enabled": true,
@@ -129,7 +130,7 @@
           "invocation_logs": true
         },
         "traces": {
-          "enabled": false,
+          "enabled": true,
           "head_sampling_rate": 1,
           "persist": true
         }
