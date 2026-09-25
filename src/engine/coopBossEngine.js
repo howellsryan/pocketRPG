@@ -28,7 +28,7 @@ import { KILL_CREDIT_DAMAGE_SHARE, earnedKillCredit, killCreditDamageRequired, k
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect, boostedMagicLevel } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet, completedQuestsFromSave } from './questGates.js'
-import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers } from './roomWideAttacks.js'
+import { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers, advanceStaggeredRoomWideAttacks } from './roomWideAttacks.js'
 import { hasMasterRejuvenation, refillSpecialOnEmpty } from './specialRegen.js'
 import { bossAddsOf, getAddSpec, rollRespawnDelay } from './bossAdds.js'
 import { advanceSharedForm, formChangeAttackTimer, isMultiForm, pinFormToSession } from './bossForms.js'
@@ -84,7 +84,7 @@ export const COOP_BOSSES = {
 }
 export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
 // Re-exported: the open world runs the same mechanic off the same module.
-export { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers }
+export { isRoomWideAttacker, advanceRoomWideAttackTimer, advanceAddAttackTimers, advanceStaggeredRoomWideAttacks }
 /**
  * The wait between kills, for every co-op boss: 8 ticks, the HUD's 5 seconds.
  *
@@ -616,6 +616,7 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
       eatCooldown: 0,
       potionCooldown: 0,
       comboCooldown: 0,
+      enemyAttackCooldown: 0,
       specialAttackEnergy: 100,
       specialAttackQueued: false,
       activeProtectionPrayer: null,
@@ -850,6 +851,7 @@ function hydrateCombatState(state, member, monstersData, spellsData) {
   engine.prayerPoints = member.combat.prayerPoints
   engine.maxPrayerPoints = member.combat.maxPrayerPoints
   engine.prayerDrainAccumulator = member.combat.prayerDrainAccumulator
+  engine.enemyAttackCooldown = Math.max(0, Math.floor(Number(member.combat.enemyAttackCooldown) || 0))
   engine.activePotions = { ...(member.combat.activePotions || {}) }
   engine.adds = bossAddsOf(state.boss).map((add) => ({ ...add }))
   engine.addSpawnCountdown = state.boss.addSpawnCountdown
@@ -897,6 +899,7 @@ function dehydrateCombatState(engine, member) {
   member.combat.prayerPoints = engine.prayerPoints
   member.combat.maxPrayerPoints = engine.maxPrayerPoints
   member.combat.prayerDrainAccumulator = engine.prayerDrainAccumulator
+  member.combat.enemyAttackCooldown = Math.max(0, Math.floor(Number(engine.enemyAttackCooldown) || 0))
   member.combat.activePotions = { ...(engine.activePotions || {}) }
   member.combat.addTargetIndex = engine.addTargetIndex ?? null
 }
@@ -1389,8 +1392,9 @@ export function processCoopTick(state, intents, { itemsData, monstersData: monst
   // player it drops.
   let bossSwungThisTick = false
   const roomWide = isRoomWideAttacker(monstersData?.[next.bossId])
-  const roomWideSwing = roomWide && advanceRoomWideAttackTimer(next.boss)
-  const roomWideAddSwings = roomWide ? advanceAddAttackTimers(next.boss) : []
+  const roomWideSchedule = roomWide ? advanceStaggeredRoomWideAttacks(next.boss) : null
+  const roomWideSwing = !!roomWideSchedule?.boss
+  const roomWideAddSwings = roomWideSchedule?.adds || []
   // The room's minion clocks, taken straight after they were advanced. A
   // session's copy of an add is PINNED to 0-or-full and then run down by the
   // engine, so writing the session's copy back over the room's would overwrite

@@ -101,6 +101,62 @@ describe('Dread Core — both enemies attack', () => {
     expect(events.some((e: any) => e.type === 'prayerDrained')).toBe(true)
     expect(after.prayerPoints).toBeLessThan(400)
   })
+
+  it('never lets a boss and its add attack on the same tick, and leaves a full reaction tick between them', () => {
+    let state: any = createCombatState(BOSS_WITH_ADD, 'melee', 'aggressive', null, monstersWithAdd)
+    state.adds = [prepareAdd(ADD_DEF, 1)]
+    state.monsterAttackTimer = 1
+    state.adds[0].attackTimer = 0
+    state.playerAttackTimer = 99
+    const equipment: any = { weapon: { itemId: 'test_sword' } }
+
+    const first = processCombatTick(state, { ...maxedStats, currentHP: 100000 }, equipment, itemsData)
+    const firstSwings = first.events.filter((e: any) => e.type === 'monsterHit' || e.type === 'monsterMiss')
+    expect(firstSwings).toHaveLength(1)
+    expect(firstSwings[0].fromAdd).toBe(true)
+
+    const reaction = processCombatTick(first.combatState, { ...maxedStats, currentHP: 100000 }, equipment, itemsData)
+    expect(reaction.events.filter((e: any) => e.type === 'monsterHit' || e.type === 'monsterMiss')).toHaveLength(0)
+
+    const next = processCombatTick(reaction.combatState, { ...maxedStats, currentHP: 100000 }, equipment, itemsData)
+    const nextSwings = next.events.filter((e: any) => e.type === 'monsterHit' || e.type === 'monsterMiss')
+    expect(nextSwings).toHaveLength(1)
+    expect(nextSwings[0].fromAdd).not.toBe(true)
+  })
+
+  it('drains simultaneously-ready adds one at a time instead of stacking their hits', () => {
+    let state: any = createCombatState(BOSS_WITH_ADD, 'melee', 'aggressive', null, monstersWithAdd)
+    state.monsterAttackTimer = 99
+    state.adds = [prepareAdd(ADD_DEF, 1), prepareAdd({ ...ADD_DEF, id: 'test_add_2', name: 'Test Add 2' }, 2)]
+    state.adds[0].attackTimer = 0
+    state.adds[1].attackTimer = 0
+    state.playerAttackTimer = 99
+    const equipment: any = { weapon: { itemId: 'test_sword' } }
+
+    const first = processCombatTick(state, { ...maxedStats, currentHP: 100000 }, equipment, itemsData)
+    const firstAdds = first.events.filter((e: any) => (e.type === 'monsterHit' || e.type === 'monsterMiss') && e.fromAdd)
+    expect(firstAdds).toHaveLength(1)
+    expect(firstAdds[0].addIndex).toBe(0)
+
+    const reaction = processCombatTick(first.combatState, { ...maxedStats, currentHP: 100000 }, equipment, itemsData)
+    expect(reaction.events.some((e: any) => (e.type === 'monsterHit' || e.type === 'monsterMiss') && e.fromAdd)).toBe(false)
+  })
+
+  it('leaves the open-world-style session on independent hostile clocks', () => {
+    // The world intentionally creates combat without a monsters table and then
+    // mirrors real NPCs into state.adds. That path must not inherit 2D staggering.
+    let state: any = createCombatState(BOSS_WITH_ADD, 'melee', 'aggressive', null, null)
+    state.adds = [prepareAdd(ADD_DEF, 1)]
+    state.monsterAttackTimer = 1
+    state.adds[0].attackTimer = 0
+    state.playerAttackTimer = 99
+    const equipment: any = { weapon: { itemId: 'test_sword' } }
+
+    const out = processCombatTick(state, { ...maxedStats, currentHP: 100000 }, equipment, itemsData)
+    const hostileSwings = out.events.filter((e: any) => e.type === 'monsterHit' || e.type === 'monsterMiss')
+    expect(state.serializeEnemyAttacks).toBe(false)
+    expect(hostileSwings).toHaveLength(2)
+  })
 })
 
 describe('Dread Core — targeting', () => {
