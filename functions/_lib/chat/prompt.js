@@ -4,8 +4,8 @@ import { tokenize, stem } from './retrieval.js'
 // OpenAI model tried first, called via OpenAI's chat completions endpoint
 // with the OPENAI_API_KEY secret (see chatAttempts). Skipped entirely if
 // OPENAI_API_KEY is unset.
-// 'gpt-5.6' alone is an alias for the Sol tier — name the Luna tier in full.
-export const CHAT_OPENAI_MODEL = 'gpt-5.6-luna'
+// Name the Luna tier explicitly rather than relying on a model alias.
+export const CHAT_OPENAI_MODEL = 'gpt-6-luna'
 // '@'-prefixed = Workers AI catalog model (env.AI); anything else = Gemini
 // model id, called via Google's OpenAI-compatible endpoint with the
 // GEMINI_API_KEY secret. Tried when OpenAI is unconfigured or fails/returns
@@ -14,11 +14,10 @@ export const CHAT_MODEL = 'gemini-2.5-flash-lite'
 // Workers AI model tried when both OpenAI and the primary fail or return no
 // answer, before degrading to retrieval-only.
 export const CHAT_FALLBACK_MODEL = '@cf/zai-org/glm-4.7-flash'
-// gpt-5.6-luna is a reasoning model whose tool calls now include real writes
+// gpt-6-luna is a reasoning model whose tool calls now include real writes
 // (spends coins/credits/points) via the confirm flow — pin the effort rather
 // than take the API default, so id lookups and write-argument construction
-// stay deliberate. GPT-5.6 takes none|low|medium|high|xhigh|max ('minimal' was
-// dropped after GPT-5). 'high' buys noticeably better multi-step answers and
+// stay deliberate. 'high' buys noticeably better multi-step answers and
 // Luna is the cheap fast tier, so it fits the time budget; xhigh/max do not
 // across CHAT_MAX_TOOL_ROUNDS rounds. Applied only in openaiChatBinding
 // (chat.js) since other providers don't take this param.
