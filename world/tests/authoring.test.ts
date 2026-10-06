@@ -35,9 +35,9 @@ describe('semantic world compiler', () => {
   })
   it('derives Lumbright membership directly from current idle activities and facilities', () => {
     const c = deriveContract('lumbright', { ...context(), world, activities })
-    const owner = activities.lumbright.filter((a) => a.kind === 'combat').map((a) => 'combat:' + a.ref)
+    const owner = activities.lumbright.filter((a) => a.kind === 'combat').map((a) => 'combat:' + a.ref).sort()
     expect(c.monsters).toEqual(owner)
-    expect(c.facilities).toEqual(world.places.lumbright.facilities.map((f) => 'facility:' + f))
+    expect(c.facilities).toEqual(world.places.lumbright.facilities.map((f) => 'facility:' + f).sort())
   })
   it('rejects missing and unexpected canonical content', () => {
     const s = source(); s.resources.splice(0, 1)
