@@ -272,7 +272,20 @@ for (const r of roadSegments(world.edges, districts)) {
   const z = Math.max(0, r.z)
   const w = Math.min(r.w, W - x)
   const h = Math.min(r.h, H - z)
-  if (w > 0 && h > 0) ground.push({ kind: 'path_dirt', x, z, w, h })
+  if (w > 0 && h > 0) {
+    // Regional roads own their paint inside the semantic Lumbright stamp.
+    // Clip global travel roads instead of overwriting its plaza and bridge.
+    const ix0 = Math.max(x, LB_RECT.x0), iz0 = Math.max(z, LB_RECT.z0)
+    const ix1 = Math.min(x + w, LB_RECT.x1), iz1 = Math.min(z + h, LB_RECT.z1)
+    if (ix0 >= ix1 || iz0 >= iz1) ground.push({ kind: 'path_dirt', x, z, w, h })
+    else {
+      const pieces = [
+        { x, z, w, h: iz0-z }, { x, z: iz1, w, h: z+h-iz1 },
+        { x, z: iz0, w: ix0-x, h: iz1-iz0 }, { x: ix1, z: iz0, w: x+w-ix1, h: iz1-iz0 },
+      ]
+      for (const p of pieces) if (p.w>0 && p.h>0) ground.push({kind:'path_dirt',...p})
+    }
+  }
 }
 
 // ── Collision post-pass: town props block their footprints, then re-open the
@@ -370,5 +383,8 @@ if (errs.length) { console.error('OVERWORLD GEN ERRORS:\n' + errs.join('\n')); p
 
 const walk = zone.collision.join('').split('').filter((c) => c === '.').length
 console.log(`overworld: ${W}x${H}, ${districts.length} districts, ${walk}/${W * H} walkable, ${zone.props.length} props, ${objects.length} objects`)
-fs.writeFileSync(OUT, JSON.stringify(zone, null, 1) + '\n')
-console.log(`wrote ${OUT}`)
+const output = JSON.stringify(zone, null, 1) + '\n'
+if (process.argv.includes('--check')) {
+  if (fs.readFileSync(OUT, 'utf8') !== output) throw new Error('Generated overworld drift; run npm run author:build')
+} else fs.writeFileSync(OUT, output)
+console.log(`verified ${OUT}`)

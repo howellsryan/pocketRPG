@@ -1,8 +1,6 @@
 name: Semantic World Review
 
 on:
-  push:
-    branches: ['world/semantic-lumbright']
   pull_request:
     paths:
       - 'world/**'
@@ -45,7 +43,25 @@ jobs:
           python3 tools/agent-skills.py --check
       - name: Exercise semantic authoring behavior
         run: npm --prefix world test -- tests/authoring.test.ts tests/tick.test.ts
+      - name: Compile the semantic candidate and emit reproducible outputs
+        run: npm --prefix world run author:build -- --emit
+      - name: Install review browser
+        run: npx playwright install --with-deps chromium
       - name: Check the idle game
         run: npm run ci
       - name: Check the world
         run: npm run world:check
+      - name: Render the procedural rat in all combat states
+        run: node scripts/render-proc.mjs dustpaw_rat --out world/preview-shots/creatures
+      - name: Capture desktop, mobile and integrated world views
+        run: npm --prefix world run author:review
+      - name: Preserve review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-lumbright-${{ github.sha }}
+          path: |
+            world/preview-shots/**
+            world/authoring/reports/**
+            world/authoring/assets.generated.json
+          retention-days: 30
