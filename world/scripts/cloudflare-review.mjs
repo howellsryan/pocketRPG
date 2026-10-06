@@ -35,7 +35,8 @@ await new Promise((resolve,reject)=>{
 const shots=path.join(world,'preview-shots')
 const report=read(path.join(world,'authoring/reports/lumbright.json'))
 const evidence=read(path.join(shots,'lumbright/evidence.json'))
-const receipt=read(path.join(world,'authoring/reviews/lumbright.json'))
+const receiptFile=path.join(world,'authoring/reviews/lumbright.json')
+const receipt=fs.existsSync(receiptFile)?read(receiptFile):null
 const files=new Set(fs.readdirSync(shots,{recursive:true}).filter(f=>fs.statSync(path.join(shots,f)).isFile()))
 const manifest={...validateReviewEvidence({report,evidence,receipt,commit,files}),buildId:process.env.WORKERS_CI_BUILD_UUID??null,renderer:evidence.renderer,node:process.version,captureCount:evidence.captures.length}
 const out=path.join(world,'review-site')

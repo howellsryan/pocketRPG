@@ -49,3 +49,5 @@ test('approval must cover every required view even when screenshots are complete
   const f=fixture();f.receipt.views=f.receipt.views.filter(v=>v!=='integrated:bank')
   assert.equal(validateReviewEvidence(f).approval,'pending')
 })
+
+test('a candidate without a receipt still publishes for inspection with approval pending',()=>{const f=fixture();f.receipt=null;assert.equal(validateReviewEvidence(f).approval,'pending')})

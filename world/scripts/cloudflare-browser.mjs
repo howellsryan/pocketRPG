@@ -9,9 +9,11 @@ export function prepareCloudflareBrowser(root) {
   const packages=new Set(['libxi6'])
   for(const directory of [root,path.join(root,'world')]) {
     const require=createRequire(path.join(directory,'package.json'))
-    const core=path.dirname(require.resolve('playwright-core/package.json'))
-    const {deps}=require(path.join(core,'lib/server/registry/nativeDeps.js'))
-    for(const name of deps['ubuntu24.04-x64'].chromium)packages.add(name)
+    const cli=path.join(path.dirname(require.resolve('playwright/package.json')),'cli.js')
+    const dryRun=execFileSync(process.execPath,[cli,'install-deps','--dry-run','chromium'],{cwd:directory,encoding:'utf8'})
+    const match=dryRun.match(/apt-get install -y --no-install-recommends ([a-zA-Z0-9 .+_-]+)/)
+    if(!match)throw new Error('Cannot read Playwright Chromium dependency plan')
+    for(const name of match[1].trim().split(/\s+/))packages.add(name)
   }
   const work=path.join(root,'world/.review-browser')
   const state=path.join(work,'state'),cache=path.join(work,'cache'),debs=path.join(work,'debs'),libs=path.join(work,'libs')
@@ -21,6 +23,9 @@ export function prepareCloudflareBrowser(root) {
   // Download-only resolves missing transitive libraries; nothing is installed on the host.
   run('apt-get',[...options,'--download-only','--assume-yes','--no-install-recommends','install',...packages])
   for(const file of fs.readdirSync(path.join(cache,'archives')).filter(f=>f.endsWith('.deb')))run('dpkg-deb',['-x',path.join(cache,'archives',file),libs])
+  const fontConfig=path.join(work,'fonts.conf')
+  fs.writeFileSync(fontConfig,'<?xml version="1.0"?><fontconfig><include ignore_missing="yes">/etc/fonts/fonts.conf</include><dir>'+path.join(libs,'usr/share/fonts')+'</dir><cachedir>'+path.join(work,'font-cache')+'</cachedir></fontconfig>')
+  process.env.FONTCONFIG_FILE=fontConfig
   process.env.LD_LIBRARY_PATH=[path.join(libs,'usr/lib/x86_64-linux-gnu'),path.join(libs,'lib/x86_64-linux-gnu'),process.env.LD_LIBRARY_PATH].filter(Boolean).join(':')
   run('npx',['playwright','install','chromium'])
   run('npm',['--prefix','world','exec','--','playwright','install','chromium'])
