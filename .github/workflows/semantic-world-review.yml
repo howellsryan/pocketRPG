@@ -1,17 +1,9 @@
 name: Semantic World Review
 
+# Routine execution and evidence publication use Cloudflare Workers Builds.
+# This fallback consumes GitHub Actions minutes only when deliberately dispatched.
 on:
-  pull_request:
-    paths:
-      - 'world/**'
-      - 'src/data/world*.json'
-      - 'src/data/skills.json'
-      - 'src/data/items.json'
-      - 'src/data/monsters.json'
-      - 'src/3d/**'
-      - 'src/data/creatures3d.json'
-      - 'src/engine/gatherTasks.js'
-      - '.github/workflows/semantic-world-review.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -27,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -70,7 +62,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: semantic-lumbright-${{ github.event.pull_request.head.sha }}
+          name: semantic-lumbright-${{ github.sha }}
           path: |
             world/preview-shots/**
             world/authoring/reports/**

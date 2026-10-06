@@ -21,4 +21,4 @@ Scope: authoring sources/compiler, asset metadata, validation/tests, review tool
 
 Out of scope: a new MMO economy, replacing Three/Preact/PartyServer, entire-world generation, expanded idle location content, multiplayer sharding, new equipment-charge semantics, and production deployment.
 
-Skills: delivery-loop, steps, plan-gate, scope-fence, test-driven-development, verification-before-completion; world-design rules govern visual release. This connector-only session uses Actions for terminal checks.
+Skills: delivery-loop, steps, plan-gate, scope-fence, test-driven-development, verification-before-completion; world-design rules govern visual release. Routine review and terminal checks use Cloudflare Workers Builds; GitHub Actions is a deliberately dispatched fallback. See world/authoring/README.md for build commands, evidence publication and the unchanged approval gate.

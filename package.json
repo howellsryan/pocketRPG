@@ -31,13 +31,14 @@
     "ci": "npm run typecheck && npm run build && npm run rebuild && npm run gen:guide && npm run check:single && npm run gen:weapon-preview -- --check && npm run gen:monster-preview -- --check",
     "world:check": "cd world && npm run typecheck && npm test && npm run build",
     "build:world": "npm --prefix world install --no-audit --no-fund && npm --prefix world run build",
-    "build:site": "npm run rebuild && npm run gen:guide && npm run build:world && node scripts/stage-site.mjs",
+    "build:site": "npm run rebuild && npm run gen:guide && npm run build:world && npm --prefix world run author:release && node scripts/stage-site.mjs",
     "worker:dev": "wrangler dev --env preview",
     "deploy": "npm run build:site && wrangler deploy",
     "deploy:preview": "npm run build:site && wrangler deploy --env preview",
     "version:preview": "npm run build:site && wrangler versions upload --env preview",
     "agents:install": "python3 tools/agent-skills.py",
-    "agents:check": "python3 tools/agent-skills.py --check"
+    "agents:check": "python3 tools/agent-skills.py --check",
+    "world:review:cloudflare": "node world/scripts/cloudflare-review.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",

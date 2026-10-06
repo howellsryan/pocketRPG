@@ -2,7 +2,25 @@
 
 Lumbright is the first complete region source. Its resources, creatures and facilities are bindings to the idle game. This pipeline compiles those bindings with paths, reusable building fronts, fields, scenery, collision and ambient life into the existing Three/PartyServer world.
 
-## Run the pipeline
+## Cloudflare review
+
+Routine semantic review runs in **Cloudflare Workers Builds** on the separate `pocketrpg-world-review` service. It has no gameplay API, D1 or Durable Objects. Its static evidence page can have an immutable version URL; the game preview cannot because it hosts Durable Objects.
+
+Build command: `npm run world:review:cloudflare`. Deploy command: `npx wrangler deploy --config wrangler.review.jsonc`. The trigger watches semantic inputs and review infrastructure on `world/*` and `main`. Author world changes on a `world/` branch. Dependency caching is enabled. The first setup is on `world/semantic-lumbright`; these commands become available to other branches when the implementation reaches their base.
+
+The build bootstraps pinned skills, runs the evidence-validator tests, installs the world dependencies, runs `npm run ci` and `npm run world:check`, checks generated-file freshness, and captures the four rat states and all 49 world views. Cloudflare's Ubuntu 24.04 image is not root: Chromium libraries are downloaded with isolated writable apt state/cache and extracted inside the build directory, without installing host packages. Both pinned Playwright browser revisions are retained. The rendering/capture implementation and source fingerprint are unchanged.
+
+The published gallery includes full PNGs, JPEG previews, contact sheets, the capture manifest, source commit/hash, semantic audit, review receipt and generated maps. The build records Cloudflare's commit SHA through the existing capture metadata and suppresses base64 image log chunks. Prior capture directories are cleared. Missing views, wrong viewport sizes, source/commit mismatches and missing rat states fail publication.
+
+An evidence build may publish a candidate with **visual approval pending**. Inspect every full-size required view, criticize it and update the versioned receipt only after review. Capture success does not self-approve. `build:site` runs `author:release` before staging assets, so the game deployment rejects missing or stale visual approval. This receipt only proves the scope stated in it; it cannot certify a production MMORPG.
+
+Open the gallery's exact commit path and confirm its manifest. Keep its immutable Cloudflare version URL in the next review receipt. The service's root shows the latest build; another deployment can replace that root. Preserve selected review images in source control and download complete evidence when long-term retention is required.
+
+`.github/workflows/semantic-world-review.yml` is a manual fallback (`workflow_dispatch`), so semantic edits no longer start the expensive GitHub capture job. Deliberately dispatching the fallback still uses GitHub minutes. Other existing GitHub jobs are separate from this migration.
+
+Cloudflare has its own allowance: Workers Builds currently includes 3,000 monthly minutes on Free or 6,000 on Paid, with Paid overage at $0.005/minute and a 20-minute build timeout. See [Cloudflare limits and pricing](https://developers.cloudflare.com/workers/ci-cd/builds/limits-and-pricing/). This moves review execution off GitHub; it does not make compute unlimited.
+
+## Run the pipeline locally
 
 From the repository root, install both dependency sets. Node 22.18 or newer is required for asset-registry type stripping.
 
@@ -20,7 +38,7 @@ node scripts/render-proc.mjs dustpaw_rat --out world/preview-shots/creatures
 npm --prefix world run author:review
 ```
 
-The root and world packages currently pin different Playwright versions, so both browser revisions are installed. Actions performs the same steps and preserves full PNGs, contact sheets, the audit and the source fingerprint as an artifact.
+The root and world packages currently pin different Playwright versions, so both browser revisions are installed. Cloudflare performs the same checks and publishes the screenshots and audit as a browsable gallery. The manual GitHub fallback preserves an artifact.
 
 Use `author:build -- <region_id>` for another source. The overworld integration currently stamps Lumbright; a second region needs an explicit approved integration location rather than silently overwriting another town.
 

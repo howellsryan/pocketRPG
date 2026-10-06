@@ -1,0 +1,10 @@
+{
+  "name": "pocketrpg-world-review",
+  "compatibility_date": "2026-07-01",
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "world/review-site",
+    "not_found_handling": "none"
+  }
+}
