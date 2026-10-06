@@ -34,11 +34,12 @@
     "build:site": "npm run rebuild && npm run gen:guide && npm run build:world && npm --prefix world run author:release && node scripts/stage-site.mjs",
     "worker:dev": "wrangler dev --env preview",
     "deploy": "npm run build:site && wrangler deploy",
-    "deploy:preview": "npm run build:site && wrangler deploy --env preview",
-    "version:preview": "npm run build:site && wrangler versions upload --env preview",
+    "deploy:preview": "npm run build:site:preview && wrangler deploy --env preview",
+    "version:preview": "npm run build:site:preview && wrangler versions upload --env preview",
     "agents:install": "python3 tools/agent-skills.py",
     "agents:check": "python3 tools/agent-skills.py --check",
-    "world:review:cloudflare": "node world/scripts/cloudflare-review.mjs"
+    "world:review:cloudflare": "node world/scripts/cloudflare-review.mjs",
+    "build:site:preview": "node scripts/build-preview.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",

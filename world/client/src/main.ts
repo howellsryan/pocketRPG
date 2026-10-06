@@ -1,8 +1,8 @@
 import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
-import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, removeOverheadPrayer, updateOverheadPrayer, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showDeathChoiceOverlay, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showPvpCrossingPrompt, setPvpBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
+import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, removeOverheadPrayer, updateOverheadPrayer, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, setHudPanelOpen, showBossFrame, showConnBanner, showContextMenu, showDeathChoiceOverlay, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showPvpCrossingPrompt, setPvpBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry } from './ui'
 import { PVP_LEVEL_BRACKET } from '../../shared/pvpArea'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
-import { openWorldMap, type WorldMapData } from './worldMap'
+import { openWorldMap, createWayfinding, type WorldMapData } from './worldMap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
@@ -20,7 +20,7 @@ import { preventPageZoom } from './preventZoom'
 import { createStatics, type Statics } from './statics'
 import { createProps } from './props'
 import { createAmbient, type AmbientLayer } from './ambient'
-import { createExitMarkers, type ExitLayer } from './exits'
+import { createExitMarkers, createWaymarks, type ExitLayer } from './exits'
 import { createLootLayer, type LootLayer } from './loot'
 import { itemName, loadItemIcons } from './itemIcon'
 import { primaryInvAction } from '../../shared/itemActions'
@@ -89,6 +89,8 @@ function enterWorld(session: WorldSession): void {
   let statics: Statics | null = null
   let lootLayer: LootLayer | null = null
   let exitLayer: ExitLayer | null = null
+  let waymarkPickables: THREE.Object3D[] = []
+  let waymarks: NonNullable<Extract<ServerMessage,{t:'welcome'}>['zone']['waymarks']> = []
   let ambientLayer: AmbientLayer | null = null
   // Chunk-streamed ground (big merged maps only; per-zone maps stay single-mesh
   // and leave this null). Driven each frame to follow the player.
@@ -127,13 +129,12 @@ function enterWorld(session: WorldSession): void {
   /** Pending "did the logout land?" timer — see onLogout. */
   let logoutFallback: ReturnType<typeof setTimeout> | null = null
   const LOGOUT_ANSWER_TIMEOUT_MS = 4000
-  /** Really leave. Reload rather than close(): partysocket auto-reconnects on a
-   * bare close and would re-enter the world; a reload with the session cleared
-   * lands on the login screen with no reconnect loop. */
+  /** Return to the referring idle deployment after a confirmed logout.
+   * Clear the world token so the socket cannot re-enter this session. */
   function leaveWorld(): void {
     if (logoutFallback !== null) { clearTimeout(logoutFallback); logoutFallback = null }
     clearStoredSession()
-    window.location.reload()
+    window.location.assign(pocketRpgUrl())
   }
   let minimap: Minimap | null = null
   let exitMarkers: ExitMarker[] = []
@@ -150,7 +151,7 @@ function enterWorld(session: WorldSession): void {
   let selectedSpell: string | null = null
   // The overworld's place centres, drawn as the Magic tab's Teleport section.
   // Empty on per-zone maps (no landmarks) → the section is dropped.
-  let teleports: TeleportEntry[] = []
+  let wayfinding: ReturnType<typeof createWayfinding> | null = null
   // Zone-static data the big world map bakes/marks once at welcome — none of
   // it changes over the life of a session (a zone change is a full reload).
   let worldMapData: Omit<WorldMapData, 'self'> | null = null
@@ -180,7 +181,7 @@ function enterWorld(session: WorldSession): void {
   /** Repaints the Magic tab spellbook against the live Magic level + selection. */
   function refreshSpellbook(): void {
     renderSpellbook({
-      teleports,
+      teleports: [],
       combat: combatSpellList,
       skill: skillSpellList,
       magicLevel: stats.magic?.level ?? 1,
@@ -536,7 +537,7 @@ function enterWorld(session: WorldSession): void {
     if (message.t === 'welcome') {
       authed = true
       storeZone(message.zone.id)
-      teleports = (message.zone.landmarks ?? []).map((l) => ({ id: l.id, label: l.label }))
+      if (sceneBuilt) wayfinding = createWayfinding(message.zone.landmarks??[], () => { if(self) send(socket,{t:'walk',x:Math.floor(self.mesh.position.x),z:Math.floor(self.mesh.position.z)}) })
       worldMapData = {
         collision: message.zone.collision,
         width: message.zone.w,
@@ -547,6 +548,8 @@ function enterWorld(session: WorldSession): void {
         landmarks: message.zone.landmarks ?? [],
         spawns: message.zone.spawns ?? [],
         exits: message.zone.exits ?? [],
+        onJourney: place => { wayfinding?.guide(place); send(socket,{t:'journey',placeId:place.id}) },
+        onQuickTravel: message.zone.previewTravel ? place => { wayfinding?.guide(null); send(socket,{t:'teleport',placeId:place.id}) } : undefined,
       }
       if (sceneBuilt) {
         resyncFromWelcome(message)
@@ -582,6 +585,8 @@ function enterWorld(session: WorldSession): void {
         }
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
+        waymarks=message.zone.waymarks??[]
+        waymarkPickables=createWaymarks(scene,waymarks)
         void createProps(scene, message.zone.props ?? [])
         ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt, message.zone.collision, message.zone.id)
         const marker = createClickMarker(scene)
@@ -670,9 +675,13 @@ function enterWorld(session: WorldSession): void {
             // and on a timer in case the socket died with the question.
             send(socket, { t: 'logout' })
             if (logoutFallback !== null) clearTimeout(logoutFallback)
-            logoutFallback = setTimeout(leaveWorld, LOGOUT_ANSWER_TIMEOUT_MS)
+            logoutFallback = setTimeout(() => {
+              logoutFallback = null
+              pushMessage('Still waiting for the world to save. You remain here; try Leave world again if the connection has stalled.')
+            }, LOGOUT_ANSWER_TIMEOUT_MS)
           },
         })
+        setHudPanelOpen(false)
         initChatInput((text) => send(socket, { t: 'chat', text }))
         stats = message.you.stats
         playerCombatLevel = combatLevelFromStats(message.you.stats)
@@ -716,17 +725,20 @@ function enterWorld(session: WorldSession): void {
           send(socket, { t: 'walk', x: tile.x, z: tile.z })
         }
         minimap = createMinimap(message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.statics, walkTo)
+        wayfinding = createWayfinding(message.zone.landmarks??[], () => { if(self) send(socket,{t:'walk',x:Math.floor(self.mesh.position.x),z:Math.floor(self.mesh.position.z)}) })
         setupInput(renderer.domElement, camera, ground, {
           onWalk: walkTo,
           onInteract: (interact) => {
             if (interact.kind === 'exit') {
-              // Client-side sugar: walking onto the tile is what transitions.
+              const sign=waymarks.find(s=>s.id===interact.id)
+              if(sign){const place=worldMapData?.landmarks.find(p=>p.id===sign.destination);if(place){wayfinding?.guide(place);send(socket,{t:'journey',placeId:place.id})}return}
+              // Enter only the selected server-authored doorway.
               const tile = exitLayer?.tiles.get(interact.id)
               if (tile) {
                 closeBankUI()
                 closeCraftUI()
                 showClickMarker(marker, tile.x, tile.z)
-                send(socket, { t: 'walk', x: tile.x, z: tile.z })
+                send(socket, { t: 'enter', exitId: interact.id })
               }
               return
             }
@@ -741,6 +753,7 @@ function enterWorld(session: WorldSession): void {
           getPickables: () => [
             ...(statics?.pickables ?? []),
             ...(exitLayer?.pickables ?? []),
+            ...waymarkPickables,
             // Proxies, never the models: raycasting a skinned character costs a
             // full per-triangle bone transform (entities.ts PICK_PROXY).
             ...[...npcs.values()].filter((e) => e.serverAnim !== 'die').map((e) => pickProxyOf(e.mesh)),
@@ -890,6 +903,7 @@ function enterWorld(session: WorldSession): void {
             }
             for (const other of others.values()) dots.push({ ...tile(other.mesh), kind: 'other' })
             minimap.update(tile(self.mesh), dots)
+            wayfinding?.update(tile(self.mesh))
           }
           renderer.render(scene, camera!)
           requestAnimationFrame(frame)

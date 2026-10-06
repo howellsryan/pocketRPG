@@ -32,11 +32,14 @@ export type ZoneExitDef = {
   toZ: number
   /** Destination name for hover text: "Go-to <label>". */
   label: string
-  /** Suppress the pulsing gold exit pad (and with it the click target) for this
+  /** Suppress the pulsing gold exit pad for this
    * exit. For places where the way out is already built into the scene — a door
    * you walk through — and a glowing marker on the floor would only break the
-   * mood. The tile still transitions when stepped on; that is server-side. */
+   * mood. Presented doorways retain their click target. */
   hideMarker?: boolean
+  presentation?: 'cave' | 'gate' | 'door'
+  activation?: 'interact'
+  description?: string
 }
 
 /** Visual dressing only — no collision (that stays in the ASCII grid), no pick
@@ -50,9 +53,8 @@ export type ZonePropDef = {
   scale?: number
 }
 
-/** A named teleport destination inside the zone — the merged overworld's
- * per-place district centre. Travel snaps the player here (same-zone, no reload).
- * `id` is the place id, `label` its display name; the tile must be walkable. */
+/** Named walking destination inside the seamless overworld.
+ * Preview quick travel also uses these validated, walkable centres. */
 export type ZoneLandmarkDef = { id: string; label: string; x: number; z: number }
 
 export type ZonePalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
@@ -118,6 +120,7 @@ export type ZoneDef = {
   /** Named same-zone teleport destinations (the overworld's place centres).
    * Absent => no travel menu for this zone. */
   landmarks?: ZoneLandmarkDef[]
+  waymarks?: Array<{ id: string; x: number; z: number; label: string; destination: string }>
   palette?: ZonePalette
   ambience?: ZoneAmbience
   /** Client-render-only ambient life (wandering critters, chimney smoke).
@@ -196,11 +199,20 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
   for (const exit of zone.exits ?? []) {
     if (seenIds.has(exit.id)) errors.push(`duplicate id '${exit.id}'`)
     seenIds.add(exit.id)
+    if(exit.activation!=null&&exit.activation!=='interact')errors.push('invalid activation for '+exit.id)
+    if(exit.presentation!=null&&!['gate','cave','door'].includes(exit.presentation))errors.push('invalid presentation for '+exit.id)
     if (!isWalkable(zone, exit.x, exit.z)) {
       errors.push(`exit '${exit.id}' at (${exit.x},${exit.z}) is not walkable`)
     }
   }
 
+  for(const sign of zone.waymarks??[]) {
+    if(seenIds.has(sign.id))errors.push('duplicate waymark '+sign.id)
+    seenIds.add(sign.id)
+    if(!isWalkable(zone,sign.x,sign.z))errors.push('waymark '+sign.id+' is not walkable')
+    if(!sign.label||!sign.destination)errors.push('waymark '+sign.id+' requires a named destination')
+    if(zone.landmarks?.length&&!zone.landmarks.some(l=>l.id===sign.destination))errors.push('unknown waymark destination '+sign.destination)
+  }
   for (const lm of zone.landmarks ?? []) {
     if (seenIds.has(lm.id)) errors.push(`duplicate id '${lm.id}'`)
     seenIds.add(lm.id)

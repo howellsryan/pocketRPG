@@ -1,4 +1,27 @@
-# Lumbright visual review
+# Lumbright connected-world visual review
+
+Current evidence: https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/
+Current source fingerprint: 2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e
+
+The connected-world pass preserves Lumbright’s canonical gathering, combat and facility contract. It adds named semantic road signs, five physical instance entrances, safe return approaches, road-preferring city journeys, destination details and idle-game entry. Source controls remain in regional semantics and generators, with checked-in outputs regenerated from them.
+
+Rejected experience passes had HUD panels covering entrance names, missing review fonts/icons, crowded default map markers and dark entrance symbols. The revised client starts with inventory closed, puts phone guidance above the bottom controls, stages real entry styles/Forge artwork and paints the real HUD icons. The map begins with cities and entrances and explicitly labels quick travel as a preview convenience. The Dragon Roost arrival initially put its return name behind the phone vitals; the generator, overworld admission coordinate and review camera were moved together to the clearer four-tile approach. Both desktop and phone experience frames were inspected at native dimensions.
+
+The screenshot comparison manifest records original PNG SHA-256 digests. Byte-identical composition frames reuse their prior native inspection; changed composition frames were personally inspected again. The 22 experience states cover five desktop/portrait entrance pairs, five portrait returns, desktop/portrait journeys and destination maps, and three entry/save-error states. Full captures are linked in the immutable Cloudflare gallery. Existing checked-in JPG contact sheets are historical evidence for the original scene, not current travel UI approval.
+
+Verdict: approved only for the connected-world beta composition and interface legibility. This is not approval of production MMORPG quality or end-to-end gameplay.
+
+### Remaining criticism and release gates
+
+Road signs and entrance names are legible, but the instance entrances still use generic freestanding frames and simple cave recesses. Replace them with site-specific landscaping and art before claiming an immersive finished world. The river and terrain edges are visibly geometric, paved spaces are broad, the building kit is repetitive and ambient villagers still lack names, dialogue and local objectives. The other thirteen districts retain procedural dressing and have not received Lumbright’s semantic composition pass. Do not mass-generate more scenery until a real starter loop is demonstrated.
+
+The location panel currently names the nearest city anchor, not the canonical district that owns a resource. At the Lumbright pasture it can say Near Al-Karid; the entrance name remains Lumbright Cow Pasture. Regional ownership labels need an authored geography contract.
+
+Software Chromium captures prove layout and scene presentation, not phone frame time, live OAuth, multiplayer or durable economy behavior. Run a signed-in two-player gathering/combat/banking loop, phone loading/frame-time measurements, instance entry/return and explicit Leave world/save recovery before widening access. Unexpected disconnect settlement, idle catch-up during a world visit and best-effort kill-count/daily writes remain separate architecture work; explicit-save regression tests do not certify those paths.
+
+The fingerprint covers this change’s modified scene and UI sources but omits some transitive icon/minimap/entry staging dependencies. Expand that dependency list before future edits to those sources rely on an unchanged receipt. Source fingerprint approval is a review guard, not a numerical substitute for criticism.
+
+## Historical Lumbright scene review
 
 The first candidate was rejected despite passing its structural checks. Broad flat paving dominated the town; crop rows were sparse; the pasture was a dirt rectangle; the bank chest sat in the road; and several portrait cameras missed the monsters they were meant to show. The castle roof obscured the ruins view.
 

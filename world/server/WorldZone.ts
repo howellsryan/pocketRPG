@@ -1,7 +1,8 @@
 import { resourceNodeFor } from '../shared/resources'
 import { Server, type Connection as PartyConnection } from 'partyserver'
 import { verifyJWT } from '../../functions/_lib/jwt.js'
-import { findPath, findPathAdjacent } from './pathfind'
+import { findPath, findPathAdjacent, findJourneyPath } from './pathfind'
+import { assignInstanceRoom } from './instances'
 import {
   combatStanceFromSave,
   emptyResult,
@@ -22,7 +23,7 @@ import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { countsAsEngaged, npcsFromZone, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { stepMinions } from './minions'
-import { lairEntryFailure } from './lairEntry'
+import { lairEntryFailure, prepareZoneTransition, prepareWorldDeparture } from './lairEntry'
 import { collisionWithMonsters } from '../shared/monsterSize'
 import { computeAoi, type AoiEntity } from './aoi'
 import { KILL_DROP_OWNER_TICKS, PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, ownLootOnlyMessage, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
@@ -166,6 +167,9 @@ type Player = TickPlayer & {
   stanceDirty: boolean
   /** Debounced post-bank/equip flush tick, for durability. Null = none due. */
   flushAtTick: number | null
+  exitIntent?: string
+  transitioning?: boolean
+  flushInFlight?: Promise<boolean>
   /** Last HP value sent to this client ({e:'hp'} goes out only on change). */
   lastHpSent: number
   /** Absolute tick at/after which the next normal-food eat (resp. combo
@@ -587,6 +591,7 @@ export class WorldZone extends Server<Env> {
     const liveCharId = String(row.id)
     const existing = this.players.get(liveCharId)
     if (existing) {
+      if(existing.transitioning){connection.close(1008,'transition_in_progress');return}
       existing.conn.close(1008, 'duplicate_connection')
       this.releaseAggro(liveCharId)
       existing.path = []
@@ -765,6 +770,12 @@ export class WorldZone extends Server<Env> {
     // this character is an Ironman or a Grindman?" without a D1 query — the
     // floor-loot rule is only as good as these flags.
     console.log('[World][hello]', { charId, zone: this.name, isIronman: player.isIronman, isGrindman: player.isGrindman })
+    // Save/gate/position reads above yield; enforce admission again without an await.
+    if (this.players.has(charId)) { connection.close(1008, 'duplicate_connection'); return }
+    if (isInstancedRoom(this.name) && this.players.size >= MAX_PLAYERS_PER_INSTANCE) {
+      connection.close(1008, 'instance_full')
+      return
+    }
     this.players.set(charId, player)
     void beginWorldSession(this.env, row.id, player.sessionId)
     this.sendWelcome(player)
@@ -790,7 +801,9 @@ export class WorldZone extends Server<Env> {
         w: this.zone.width,
         h: this.zone.height,
         collision: this.zone.collision,
-        ...(this.zone.exits?.length ? { exits: this.zone.exits.map((e) => ({ id: e.id, x: e.x, z: e.z, label: e.label, ...(e.hideMarker ? { hideMarker: true } : {}) })) } : {}),
+        ...(this.zone.exits?.length ? { exits: this.zone.exits.map(({toZone, toX, toZ, ...marker}) => marker) } : {}),
+        ...(this.zone.waymarks?.length ? { waymarks: this.zone.waymarks } : {}),
+        previewTravel: this.env.WORLD_PREVIEW_TRAVEL === 'true',
         ...(this.zone.landmarks?.length ? { landmarks: this.zone.landmarks } : {}),
         ...(this.zone.props?.length ? { props: this.zone.props } : {}),
         ...(this.zone.palette ? { palette: this.zone.palette } : {}),
@@ -847,6 +860,7 @@ export class WorldZone extends Server<Env> {
   }
 
   private handleAuthedMessage(player: Player, message: ClientMessage): void {
+    if (player.transitioning) return
     switch (message.t) {
       case 'walk': {
         const path = findPath(this.playerCollision(player), { x: player.x, z: player.z }, { x: message.x, z: message.z })
@@ -864,6 +878,31 @@ export class WorldZone extends Server<Env> {
         // ranged or magic fighter kept firing at a target they were running
         // away from, which is not a decision anyone made.
         player.pvpPassive = true
+        break
+      }
+      case 'journey': {
+        const path = findJourneyPath({ ...this.zone, collision: this.playerCollision(player) }, player, message.placeId)
+        if (!path) { player.pendingEvents.push({ e: 'msg', text: 'That destination cannot be reached from here.' }); break }
+        this.clearIntents(player, true)
+        if (player.combat) player.combat.passive = true
+        player.pvpPassive = true
+        player.path = path.slice(1)
+        const label = this.zone.landmarks?.find(place => place.id === message.placeId)?.label ?? message.placeId
+        player.pendingEvents.push({ e: 'msg', text: 'Walking to ' + label + '. Tap the ground to change course.' })
+        break
+      }
+      case 'enter': {
+        const exit = this.zone.exits?.find(candidate => candidate.id === message.exitId)
+        if (!exit) break
+        const path = findPath(this.playerCollision(player), player, exit)
+        if (!path || path.at(-1)?.x !== exit.x || path.at(-1)?.z !== exit.z) {
+          player.pendingEvents.push({ e: 'msg', text: 'Move closer to ' + exit.label + ' first.' }); break
+        }
+        this.clearIntents(player, true)
+        if (player.combat) player.combat.passive = true
+        player.pvpPassive = true
+        player.path = path.slice(1)
+        player.exitIntent = exit.id
         break
       }
       case 'cancel':
@@ -977,14 +1016,39 @@ export class WorldZone extends Server<Env> {
    * the `leave` frame and the out-of-band beacon — so that is one check, not
    * three that can drift apart. */
   private async depart(player: Player, reason: 'logout' | 'leave'): Promise<void> {
+    // Unload beacons must not remove a player while admission or logout saves.
+    if (player.transitioning) return
     if (logoutBlocked(player.combatBlockUntilTick, this.tickCount)) {
       this.beginCombatLinger(player)
       player.conn.close(1000, reason)
       return
     }
+    if (reason === 'leave') {
+      await this.removeAndFlush(player)
+      player.conn.close(1000, reason)
+      return
+    }
     const conn = player.conn
-    await this.removeAndFlush(player)
-    if (reason === 'logout') send(conn, { t: 'error', code: 'logged_out', msg: 'You have left the world.' })
+    player.transitioning = true
+    this.clearIntents(player)
+    const error = await prepareWorldDeparture({
+      flush: () => this.flush(player, 'disconnect'),
+      checkpoint: () => this.checkpointPlayer(player),
+      release: () => endWorldSession(this.env, Number(player.charId), player.sessionId),
+      current: () => this.players.get(player.charId) === player && player.conn === conn,
+    })
+    if (error) {
+      player.transitioning = false
+      player.pendingEvents.push({ e: 'logoutRefused', text: error })
+      return
+    }
+    this.releaseAggro(player.charId)
+    this.releasePvp(player)
+    this.players.delete(player.charId)
+    this.dirty.delete(player.charId)
+    this.pendingLeaves.add(player.charId)
+    this.maybeStopTicking()
+    send(conn, { t: 'error', code: 'logged_out', msg: 'You have left the world.' })
     conn.close(1000, reason)
   }
 
@@ -1367,6 +1431,12 @@ export class WorldZone extends Server<Env> {
    * Clears path/interacts and drops combat + aggro so it can't be used to drag a
    * monster across the map. Unknown/blocked ids are ignored. */
   private handleTeleport(player: Player, placeId: string): void {
+    if (this.env.WORLD_PREVIEW_TRAVEL !== 'true') {
+      player.pendingEvents.push({ e: 'msg', text: 'Quick travel is available in the preview world only.' }); return
+    }
+    if (logoutBlocked(player.combatBlockUntilTick, this.tickCount) || isFighting(player, this.tickCount, new Set([...this.ensureNpcs().values()].flatMap(npc => npc.attackerId ? [npc.attackerId] : [])))) {
+      player.pendingEvents.push({ e: 'msg', text: 'Leave combat before using preview quick travel.' }); return
+    }
     const lm = (this.zone.landmarks ?? []).find((l) => l.id === placeId)
     if (!lm) return
     if (this.zone.collision[lm.z]?.[lm.x] !== '.') return
@@ -1412,6 +1482,7 @@ export class WorldZone extends Server<Env> {
   }
 
   private clearIntents(player: Player, keepCombat = false): void {
+    player.exitIntent = undefined
     player.pendingInteract = null
     player.mining = null
     player.crafting = null
@@ -2010,6 +2081,7 @@ export class WorldZone extends Server<Env> {
     for (const id of npcResult.npcRemoved) npcRemoved.add(id)
 
     for (const player of this.players.values()) {
+      if (player.transitioning) continue
       const result = tickPlayer(player, ctx)
       if (result.entChanged) {
         this.dirty.add(player.charId)
@@ -2158,7 +2230,7 @@ export class WorldZone extends Server<Env> {
       for (const player of [...this.players.values()]) {
         if (deaths.includes(player)) continue
         const exit = exits.find((e) => e.x === player.x && e.z === player.z)
-        if (exit) void this.transitionPlayer(player, exit)
+        if (exit && (exit.activation !== 'interact' || player.exitIntent === exit.id)) void this.transitionPlayer(player, exit)
       }
     }
 
@@ -2212,7 +2284,7 @@ export class WorldZone extends Server<Env> {
       for (const player of this.players.values()) if (player.hp < player.maxHp) player.hp += 1
     }
     for (const player of this.players.values()) {
-      if (player.flushAtTick !== null && this.tickCount >= player.flushAtTick) {
+      if (!player.transitioning && player.flushAtTick !== null && this.tickCount >= player.flushAtTick) {
         player.flushAtTick = null
         void this.flush(player, 'timer')
       }
@@ -2220,7 +2292,7 @@ export class WorldZone extends Server<Env> {
     if (this.tickCount % CHECKPOINT_EVERY_TICKS === 0) {
       if (this.dirty.size > 0) void this.flushCheckpoints()
       for (const player of this.players.values()) {
-        void this.flush(player, 'timer')
+        if (!player.transitioning) void this.flush(player, 'timer')
         // Keep the world-session lock fresh (TTL self-heals a dead DO). Skip
         // lingering players — a backgrounded tab shouldn't hold the idle game
         // out; if they never reconnect, linger expiry ends the session anyway.
@@ -2236,18 +2308,44 @@ export class WorldZone extends Server<Env> {
    * (written with the TARGET zone/tile) must both be durable before the client
    * hears `transition` — its next hello reads them from D1. */
   private async transitionPlayer(player: Player, exit: ZoneExitDef): Promise<void> {
+    if (player.transitioning || this.players.get(player.charId) !== player) return
+    const attackers = new Set([...this.ensureNpcs().values()].flatMap(npc => npc.attackerId ? [npc.attackerId] : []))
+    if (logoutBlocked(player.combatBlockUntilTick, this.tickCount) || isFighting(player, this.tickCount, attackers)) {
+      player.exitIntent = undefined
+      player.pendingEvents.push({ e: 'msg', text: 'Leave combat before entering another area.' })
+      return
+    }
+    player.transitioning = true
+    player.path = []
+    const connection = player.conn
+    const result = await prepareZoneTransition({
+      gate: () => lairEntryFailure(this.env, exit.toZone,
+        { stats: player.stats, settings: { completedQuests: [...player.completedQuests] } }, Number(player.charId)),
+      assign: () => assignInstanceRoom(this.env, exit.toZone),
+      flush: () => this.flush(player, 'transition'),
+      current: () => this.players.get(player.charId) === player && player.conn === connection && player.lingerUntilTick == null,
+      persist: async (room) => {
+        await this.env.DB.prepare(
+          `INSERT INTO world_positions (character_id, zone_id, x, z, updated_at) VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(character_id) DO UPDATE SET zone_id = excluded.zone_id, x = excluded.x, z = excluded.z, updated_at = excluded.updated_at`
+        ).bind(Number(player.charId), room, exit.toX, exit.toZ, Date.now()).run()
+      },
+    })
+    player.transitioning = false
+    if (!result.room) {
+      player.exitIntent = undefined
+      player.pendingEvents.push({ e: 'msg', text: result.error ?? 'Could not enter this area.' })
+      this.dirty.add(player.charId)
+      this.ensureTicking()
+      return
+    }
     this.players.delete(player.charId)
     this.dirty.delete(player.charId)
     this.pendingLeaves.add(player.charId)
     this.releaseAggro(player.charId)
     this.maybeStopTicking()
-    await this.flush(player, 'transition')
-    await this.env.DB.prepare(
-      `INSERT INTO world_positions (character_id, zone_id, x, z, updated_at) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(character_id) DO UPDATE SET zone_id = excluded.zone_id, x = excluded.x, z = excluded.z, updated_at = excluded.updated_at`
-    ).bind(Number(player.charId), exit.toZone, exit.toX, exit.toZ, Date.now()).run()
-    send(player.conn, { t: 'transition', zone: exit.toZone, x: exit.toX, z: exit.toZ })
-    player.conn.close(1000, 'transition')
+    send(connection, { t: 'transition', zone: result.room, x: exit.toX, z: exit.toZ })
+    connection.close(1000, 'transition')
   }
 
   /** Runs after the death tick's diff has been broadcast, so the client has
@@ -2494,7 +2592,14 @@ export class WorldZone extends Server<Env> {
    * session that ended without a clean disconnect flush deleted them outright
    * (see sessionItems.ts). Their reclassification to save-backed happens only
    * after the grant is known to have landed. */
-  private async flush(player: Player, reason: GrantPayload['reason']): Promise<void> {
+  private flush(player: Player, reason: GrantPayload['reason']): Promise<boolean> {
+    const previous = player.flushInFlight ?? Promise.resolve(true)
+    const next = previous.catch(() => false).then(() => this.flushNow(player, reason))
+    player.flushInFlight = next
+    return next
+  }
+
+  private async flushNow(player: Player, reason: GrantPayload['reason']): Promise<boolean> {
     const pools = player.pools
     const drained = drainForFlush(pools, reason)
     const payload: GrantPayload = {
@@ -2524,16 +2629,19 @@ export class WorldZone extends Server<Env> {
     // carrying nothing but kills still has to land them.
     if (isEmptyPayload(payload)) {
       this.flushProgress(player, killTally, dailyEvents)
-      return
+      return true
     }
     player.flushSeq += 1
 
-    const ok = await flushGrants(this.env, {
-      charId: Number(player.charId),
-      identityId: player.identityId,
-      sessionId: player.sessionId,
-      flushSeq: player.flushSeq,
-    }, payload)
+    let ok = false
+    try {
+      ok = await flushGrants(this.env, {
+        charId: Number(player.charId), identityId: player.identityId,
+        sessionId: player.sessionId, flushSeq: player.flushSeq,
+      }, payload)
+    } catch (error) {
+      console.error('[World][flush] persistence unavailable', error)
+    }
     if (ok) {
       commitFlush(pools, drained)
       this.flushProgress(player, killTally, dailyEvents)
@@ -2558,6 +2666,7 @@ export class WorldZone extends Server<Env> {
       }
       player.dailyEvents.unshift(...dailyEvents.filter((evt) => evt.kind === 'slayer_task_complete'))
     }
+    return ok
   }
 
   /** Kill counts + daily-task progress for a flush that has already landed.
@@ -2586,7 +2695,7 @@ export class WorldZone extends Server<Env> {
     const now = Date.now()
     const statements = charIds
       .map((id) => this.players.get(id))
-      .filter((p): p is Player => Boolean(p))
+      .filter((p): p is Player => Boolean(p) && !p?.transitioning)
       .map((p) =>
         this.env.DB.prepare(
           `INSERT INTO world_positions (character_id, zone_id, x, z, updated_at) VALUES (?, ?, ?, ?, ?)

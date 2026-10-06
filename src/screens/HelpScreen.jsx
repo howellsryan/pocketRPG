@@ -3,20 +3,13 @@ import GameIcon from '../components/GameIcon.jsx'
 import { DiscordMark, DISCORD_INVITE_URL } from '../components/DiscordButton.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { SETTINGS_NAV_LINKS } from '../components/navTabs.js'
-import { api } from '../cloud/api.js'
-import { openWorld, worldBetaEnabled } from '../utils/helpers.js'
+import WorldEntryButton from '../components/WorldEntryButton.jsx'
+import { worldBetaEnabled } from '../utils/helpers.js'
 import { THEME_OPTIONS } from '../utils/theme.js'
 
 export default function HelpScreen({ onNavigate, onShowIntroTour }) {
   const { showInfoToasts, updateShowInfoToasts, backgroundCombat, updateBackgroundCombat, combatAnimations, updateCombatAnimations, theme, updateTheme } = useGame()
 
-  async function handleEnterWorld() {
-    try {
-      await openWorld(api)
-    } catch (err) {
-      console.error('[PocketRPG][World] failed to get handoff token', err)
-    }
-  }
 
   return (
     <div class="forge-shell h-full flex flex-col">
@@ -145,21 +138,7 @@ export default function HelpScreen({ onNavigate, onShowIntroTour }) {
           </div>
         </Card>
 
-        {worldBetaEnabled() && (
-          <Card className="p-2">
-            <button
-              type="button"
-              onClick={handleEnterWorld}
-              class="flex items-center gap-3 w-full min-h-[48px] px-2 bg-transparent border-0 text-left cursor-pointer active:opacity-70"
-            >
-              <span class="w-11 flex justify-center items-center flex-shrink-0">
-                <GameIcon iconKey="globe" size={40} />
-              </span>
-              <span class="flex-1 text-sm font-semibold text-[var(--color-parchment)]">Enter World (beta)</span>
-              <span class="text-[var(--color-parchment)] opacity-40 text-lg leading-none pr-1">›</span>
-            </button>
-          </Card>
-        )}
+        {worldBetaEnabled() && <WorldEntryButton />}
 
         <Card className="p-2">
           <a

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { validateExitGraph, validateZone, zoneSpawnSummary, type ZoneDef } from '../shared/zone'
 import { groundKindGrid } from '../shared/groundKinds'
+import {ZONES} from '../server/zones'
 import overworldZone from '../zones/overworld.json'
 import * as overworldLayout from '../scripts/overworldLayout.mjs'
 import worldData from '../../src/data/world.json'
@@ -208,10 +209,11 @@ describe('the one overworld', () => {
     expect(ow.aoiRadius).toBeGreaterThan(0)
   })
 
-  it('is the one true zone — no cross-zone exits remain', () => {
+  it('keeps city travel seamless and reserves entrances for instances', () => {
     const ow = overworldZone as unknown as ZoneDef
-    expect(ow.exits ?? []).toEqual([])
-    expect(validateExitGraph({ overworld: ow })).toEqual({ valid: true })
+    const places=new Set(Object.keys(worldData.places))
+    expect((ow.exits??[]).every(exit=>!places.has(exit.toZone)&&exit.activation==='interact')).toBe(true)
+    expect(validateExitGraph(ZONES)).toEqual({ valid: true })
   })
 
   it('re-homes every merged monster into the world (bosses included)', () => {

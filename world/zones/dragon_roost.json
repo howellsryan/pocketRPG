@@ -5,7 +5,7 @@
  "height": 64,
  "spawn": {
   "x": 32,
-  "z": 57
+  "z": 59
  },
  "collision": [
   "################################################################",
@@ -78,7 +78,7 @@
    "id": "chest_1",
    "type": "bank_chest",
    "x": 33,
-   "z": 57
+   "z": 59
   }
  ],
  "npcs": [
@@ -233,10 +233,13 @@
    "x": 32,
    "z": 63,
    "toZone": "overworld",
-   "toX": 272,
-   "toZ": 50,
-   "label": "The Dragonspine",
-   "hideMarker": true
+   "toX": 117,
+   "toZ": 148,
+   "label": "Draynar Dragon Trail",
+   "hideMarker": true,
+   "presentation": "door",
+   "activation": "interact",
+   "description": "Return to the shared overworld road."
   }
  ],
  "props": [

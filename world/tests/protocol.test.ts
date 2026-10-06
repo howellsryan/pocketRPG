@@ -82,3 +82,18 @@ describe('parseClientMessage — follow', () => {
     expect(parseClientMessage({ t: 'follow', targetId: 'x'.repeat(65) })).toBeNull()
   })
 })
+
+describe('named world journeys and entrances', () => {
+  it('accepts a named destination without trusting client coordinates', () => {
+    expect(parseClientMessage({t: 'journey', placeId: 'draynar', x: 0, z: 0})).toEqual({t: 'journey', placeId: 'draynar'})
+  })
+  it('accepts an explicit entrance identity', () => {
+    expect(parseClientMessage({t: 'enter', exitId: 'fiend-pit'})).toEqual({t: 'enter', exitId: 'fiend-pit'})
+  })
+  it('refuses missing, empty or oversized destination identities', () => {
+    for (const id of ['', null, 123, 'a'.repeat(65)]) {
+      expect(parseClientMessage({t: 'journey', placeId: id})).toBeNull()
+      expect(parseClientMessage({t: 'enter', exitId: id})).toBeNull()
+    }
+  })
+})

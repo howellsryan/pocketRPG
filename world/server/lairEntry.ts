@@ -47,3 +47,44 @@ export async function lairEntryFailure(
     return 'Could not verify your progress for this lair'
   }
 }
+
+/** Keep the source session until admission, durable progress and arrival succeed. */
+export async function prepareZoneTransition(steps: {
+  gate: () => Promise<string | null>
+  assign: () => Promise<string>
+  flush: () => Promise<boolean>
+  persist: (room: string) => Promise<void>
+  current: () => boolean
+}): Promise<{ room: string; error?: never } | { error: string; room?: never }> {
+  try {
+    const denied = await steps.gate()
+    if (denied) return { error: denied }
+    const room = await steps.assign()
+    if (!steps.current()) return { error: 'Your world session changed. Please try again.' }
+    if (!await steps.flush()) return { error: 'Could not save your progress. Please try entering again.' }
+    if (!steps.current()) return { error: 'Your world session changed. Please try again.' }
+    await steps.persist(room)
+    return { room }
+  } catch {
+    return { error: 'Could not enter this area. Your progress remains here; please try again.' }
+  }
+}
+
+/** Release the world writer only after its grant save and position are durable. */
+export async function prepareWorldDeparture(steps: {
+  flush: () => Promise<boolean>
+  checkpoint: () => Promise<void>
+  release: () => Promise<void>
+  current: () => boolean
+}): Promise<string|null> {
+  try {
+    if (!await steps.flush()) return 'Could not save your progress. You remain in the world; please try leaving again.'
+    if (!steps.current()) return 'Your world session changed. Please try again.'
+    await steps.checkpoint()
+    if (!steps.current()) return 'Your world session changed. Please try again.'
+    await steps.release()
+    return null
+  } catch {
+    return 'Could not save your progress. You remain in the world; please try leaving again.'
+  }
+}

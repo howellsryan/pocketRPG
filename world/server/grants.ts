@@ -192,23 +192,28 @@ export async function flushGrants(
         saveObject.settings = settings
       }
       await io.writeSave(env, who.charId, saveObject, saveRevision)
-      await io.auditLog(env, 'world_grant', {
-        characterId: who.charId,
-        identityId: who.identityId,
-        idempotencyKey,
-        reason: payload.reason,
-        xpBySkill: payload.xpBySkill,
-        items: payload.items,
-        itemsTo: payload.itemsTo,
-        moveToBank: payload.moveToBank,
-        removeFromInventory: payload.removeFromInventory ?? [],
-        removeFromBank: payload.removeFromBank ?? [],
-        mintedToBank: payload.mintedToBank ?? [],
-        bankToInventory: payload.bankToInventory ?? [],
-        equipmentChanged: payload.equipment !== undefined,
-        combatStanceChanged: payload.combatStance !== undefined,
-        slayerCredit: payload.slayerTask !== undefined ? (payload.slayerCredit ?? null) : null,
-      })
+      // The reward is committed; an audit outage must not requeue or remint it.
+      try {
+        await io.auditLog(env, 'world_grant', {
+          characterId: who.charId,
+          identityId: who.identityId,
+          idempotencyKey,
+          reason: payload.reason,
+          xpBySkill: payload.xpBySkill,
+          items: payload.items,
+          itemsTo: payload.itemsTo,
+          moveToBank: payload.moveToBank,
+          removeFromInventory: payload.removeFromInventory ?? [],
+          removeFromBank: payload.removeFromBank ?? [],
+          mintedToBank: payload.mintedToBank ?? [],
+          bankToInventory: payload.bankToInventory ?? [],
+          equipmentChanged: payload.equipment !== undefined,
+          combatStanceChanged: payload.combatStance !== undefined,
+          slayerCredit: payload.slayerTask !== undefined ? (payload.slayerCredit ?? null) : null,
+        })
+      } catch (error) {
+        console.error('[World][grants] committed grant audit unavailable', idempotencyKey, error)
+      }
       return true
     } catch (err) {
       const code = (err as { code?: string })?.code

@@ -6,7 +6,7 @@
 // that replaces the per-zone W4 authoring pass. Supersedes the M1 prototype.
 //
 // Hybrid model: Lumbright (the starter, `start`) is stamped INLINE and walkable;
-// Varrick (the capital, an authored 96² zone) stays a PORTAL (instanced); the
+// Varrick and the
 // other 12 places are procedurally DRESSED into towns (dressTown) — plaza +
 // street spokes, ring of buildings, ambient life, and interactive facility
 // stations matching each place's world.json `facilities`. Safe towns: no street
@@ -14,6 +14,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {groundKindGrid} from '../shared/groundKinds.ts'
 import { projectPlaces, roadSegments, connectionRoadSegments } from './overworldLayout.mjs'
 
 const worldDir = fileURLToPath(new URL('..', import.meta.url))
@@ -41,6 +42,7 @@ const ground = []
 const critters = []
 const smoke = []
 const exits = []
+const waymarks = []
 
 // ── Collision + building primitives (ported from gen-varrick.mjs) ──────────
 const inBounds = (x, z) => x >= 0 && x < W && z >= 0 && z < H
@@ -107,6 +109,8 @@ for (const pr of lb.props ?? []) props.push({ ...pr, x: pr.x + lbOx, z: pr.z + l
 for (const g of lb.ground ?? []) ground.push({ ...g, x: g.x + lbOx, z: g.z + lbOz })
 for (const c of lb.ambient?.critters ?? []) critters.push({ ...c, x: c.x + lbOx, z: c.z + lbOz })
 for (const s of lb.ambient?.smoke ?? []) smoke.push({ ...s, x: s.x + lbOx, z: s.z + lbOz })
+
+for(const sign of lb.waymarks??[]) waymarks.push({...sign,id:'lb_'+sign.id,x:sign.x+lbOx,z:sign.z+lbOz})
 
 const SPAWN = { x: lbc.x, z: lbc.z }
 
@@ -305,11 +309,8 @@ for (const d of districts) {
   for (let k = -t.r; k <= t.r; k++) { clear(d.x, d.z + k); clear(d.x + k, d.z) } // cardinal lanes
 }
 
-// Travel-menu destinations: one per place, at its (walkable, reachability-checked)
-// district centre. The client's Travel menu teleports the player here. A centre
-// that coincides with an exit tile (Varrick's portal sits on its centre) nudges
-// to the nearest walkable non-exit tile, so travel lands you in the overworld
-// beside the portal instead of warping through it.
+// Named city destinations remain in the shared overworld. Keep centres walkable
+// and separate from instanced entrance tiles.
 const exitTiles = new Set(exits.map((e) => `${e.x},${e.z}`))
 const landmarkTile = (d) => {
   if (!exitTiles.has(`${d.x},${d.z}`)) return { x: d.x, z: d.z }
@@ -322,6 +323,108 @@ const landmarkTile = (d) => {
 }
 const landmarks = districts.map((d) => ({ id: d.id, label: nameById.get(d.id) ?? d.id, ...landmarkTile(d) }))
 
+// Explicit entrances are separate from the seamless city road network.
+// Reject scenery or encounter conflicts instead of carving through a mesh.
+const authoredEntrances=[
+  {
+    "id": "enter_grondar",
+    "x": 251,
+    "z": 80,
+    "toZone": "grondar_lair",
+    "toX": 20,
+    "toZ": 36,
+    "label": "Grondar's Barrow",
+    "presentation": "door",
+    "description": "A boss lair beyond Varrick. Enter deliberately; return to the road outside.",
+    "activation": "interact"
+  },
+  {
+    "id": "enter_pasture",
+    "x": 182,
+    "z": 155,
+    "toZone": "cow_pasture",
+    "toX": 20,
+    "toZ": 35,
+    "label": "Lumbright Cow Pasture",
+    "presentation": "gate",
+    "description": "A separate pasture beyond Lumbright. Cows and bulls roam inside.",
+    "activation": "interact"
+  },
+  {
+    "id": "enter_fiend",
+    "x": 125,
+    "z": 154,
+    "toZone": "fiend_pit",
+    "toX": 20,
+    "toZ": 35,
+    "label": "Draynar Fiend Pit",
+    "presentation": "cave",
+    "description": "A fiend lair outside Draynar. Enter when you are ready for combat.",
+    "activation": "interact"
+  },
+  {
+    "id": "enter_dragons",
+    "x": 117,
+    "z": 145,
+    "toZone": "dragon_roost",
+    "toX": 32,
+    "toZ": 59,
+    "label": "Dragon Roost",
+    "presentation": "cave",
+    "description": "A shared dragon lair near Draynar, housing green, red and black dragons.",
+    "activation": "interact"
+  },
+  {
+    "id": "enter_zaryth",
+    "x": 95,
+    "z": 110,
+    "toZone": "zaryth_throne",
+    "toX": 20,
+    "toZ": 36,
+    "label": "Zaryth's Throne",
+    "presentation": "door",
+    "description": "A gated boss lair outside Faloden. Your progress is checked before entry.",
+    "activation": "interact"
+  }
+]
+const entranceRoadKinds=groundKindGrid(W,H,ground)
+const roadSet=new Set(['path_dirt','path_cobble','plaza'])
+const safeRoadTile=(x,z)=>grid[z]?.[x]==='.'&&!npcs.some(n=>n.wander&&x>=n.wander.x&&z>=n.wander.z&&x<n.wander.x+n.wander.w&&z<n.wander.z+n.wander.h)
+for(const entrance of authoredEntrances) {
+  for(let dz=0;dz<=3;dz++)for(let dx=-1;dx<=1;dx++) {
+    const x=entrance.x+dx,z=entrance.z+dz
+    if(grid[z]?.[x]!=='.')throw new Error('Entrance approach blocked: '+entrance.id+' '+x+','+z)
+    if(npcs.some(n=>n.wander&&x>=n.wander.x&&z>=n.wander.z&&x<n.wander.x+n.wander.w&&z<n.wander.z+n.wander.h))throw new Error('Entrance approach crosses encounter: '+entrance.id)
+  }
+  for(const dx of [-2,2]) {
+    if(grid[entrance.z]?.[entrance.x+dx]!=='.')throw new Error('Entrance post conflicts with scenery: '+entrance.id)
+    block(entrance.x+dx,entrance.z)
+  }
+  if(entrance.presentation==='cave')for(let dx=-1;dx<=1;dx++){
+    const x=entrance.x+dx,z=entrance.z-1
+    if(!safeRoadTile(x,z))throw new Error('Cave backwall conflicts with scenery or encounter: '+entrance.id)
+    block(x,z)
+  }
+  // Connect the entrance to an existing road without overwriting regional paint.
+  const start={x:entrance.x,z:entrance.z+1},queue=[start],parents=new Map([[start.x+','+start.z,null]])
+  let end=null
+  for(let i=0;i<queue.length&&!end;i++){
+    const point=queue[i]
+    if(roadSet.has(entranceRoadKinds[point.z*W+point.x])){end=point;break}
+    for(const [dx,dz] of [[0,-1],[-1,0],[1,0],[0,1]]){
+      const x=point.x+dx,z=point.z+dz,key=x+','+z
+      if(safeRoadTile(x,z)&&!parents.has(key)){parents.set(key,point);queue.push({x,z})}
+    }
+  }
+  if(!end)throw new Error('Entrance has no safe road connection: '+entrance.id)
+  for(let point=end;point;point=parents.get(point.x+','+point.z)){
+    if(point.x>=LB_RECT.x0&&point.x<LB_RECT.x1&&point.z>=LB_RECT.z0&&point.z<LB_RECT.z1)continue
+    ground.push({kind:'path_dirt',x:point.x,z:point.z,w:1,h:1})
+  }
+  ground.push({kind:'path_dirt',x:entrance.x-1,z:entrance.z,w:3,h:4})
+  exits.push(entrance)
+}
+
 const zone = {
   id: 'overworld',
   name: 'Eldermoor Overworld',
@@ -333,6 +436,7 @@ const zone = {
   npcs,
   exits,
   landmarks,
+  waymarks,
   props: [...props, ...townProps],
   ground,
   ambient: { critters, smoke },

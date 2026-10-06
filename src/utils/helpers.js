@@ -156,17 +156,22 @@ export function worldBossLairsEnabled() {
 }
 
 /**
- * Opens the open world in a new tab, optionally asking to land in a specific
+ * Opens the open world in this tab, optionally asking to land in a specific
  * instanced zone (a boss lair). The handoff is single-use and 60s-lived, so it
  * is fetched at click time, never held.
  */
-export async function openWorld(api, zone) {
+export async function openWorld(api, zone, options = {}) {
+  if (options.beforeEnter && !await options.beforeEnter()) {
+    throw new Error('Could not save your character. Finish your active world or co-op session, then try again.')
+  }
   const { handoff } = await api.requestWorldHandoff(zone)
   // From here the world is the save's writer, and this tab's own IndexedDB
   // writes must stop outranking the cloud copy on the next boot — see
   // cloud/worldHandoff.js for why that costs a Wilderness loot pile otherwise.
   markWorldHandoff()
-  window.open(`${worldOrigin()}/#handoff=${handoff}`, '_blank')
+  const destination = `${worldOrigin()}/#handoff=${encodeURIComponent(handoff)}`
+  if (options.sameTab !== false) window.location.assign(destination)
+  else window.open(destination, '_blank')
 }
 
 /**

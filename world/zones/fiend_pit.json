@@ -137,10 +137,13 @@
    "x": 20,
    "z": 39,
    "toZone": "overworld",
-   "toX": 206,
-   "toZ": 134,
-   "label": "The Scorched Reach",
-   "hideMarker": true
+   "toX": 125,
+   "toZ": 157,
+   "label": "Draynar Road",
+   "hideMarker": true,
+   "presentation": "door",
+   "activation": "interact",
+   "description": "Return to the shared overworld road."
   }
  ],
  "props": [

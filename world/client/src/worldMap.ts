@@ -1,8 +1,7 @@
 // Full-screen world map: a button (top-right column, under the minimap) opens
 // a large, zoomable/pannable view of the whole zone with markers for every
 // interactive thing — places, banks, skilling nodes, monster spawns, exits.
-// Info-only (no "Travel here" — travel is walking or Magic-tab teleports
-// only, 2026-07). Pure DOM/canvas, no three.js; mirrors the conventions of
+// Named journeys stay in the shared overworld; instances have explicit entrances. Pure DOM/canvas, no three.js; mirrors the conventions of
 // minimap.ts/bank.ts (module-level style injection, one open/close pair, pure
 // helpers pulled out for testability).
 import type { ExitMarker, GroundPalette, Landmark, NpcSpawn, StaticObject, ZoneGroundRegion } from '../../shared/protocol'
@@ -58,6 +57,8 @@ export type WorldMapData = {
   spawns: NpcSpawn[]
   exits: ExitMarker[]
   self: { x: number; z: number }
+  onJourney?: (place: Landmark) => void
+  onQuickTravel?: (place: Landmark) => void
 }
 
 // STATIC_CATEGORY (statics→category) and CATEGORY_ICON_KEY (category→bespoke
@@ -76,6 +77,7 @@ const FILTER_CHIPS: { label: string; categories: string[] }[] = [
   { label: 'Banks', categories: ['bank'] },
   { label: 'Skilling', categories: ['smithing', 'cooking', 'mining', 'woodcutting', 'fishing', 'gather'] },
   { label: 'Monsters', categories: ['monster'] },
+  { label: 'Entrances', categories: ['exit'] },
 ]
 
 const WORLD_MAP_CSS = `
@@ -101,13 +103,13 @@ const WORLD_MAP_CSS = `
   background: rgba(70, 58, 36, 0.6); border-bottom: 1px solid #4a3d26;
 }
 #worldmap-panel .wm-close {
-  min-width: 44px; min-height: 32px; border: none; border-radius: 6px; cursor: pointer;
+  min-width: 44px; min-height: 44px; border: none; border-radius: 6px; cursor: pointer;
   background: rgba(140, 40, 40, 0.9); color: #fff; font-size: 15px;
 }
 #wm-body { display: flex; flex-direction: column; min-height: 0; }
 #wm-filters { display: flex; gap: 6px; padding: 8px 12px 0; flex-wrap: wrap; }
 .wm-chip {
-  min-height: 36px; padding: 0 12px; border-radius: 18px; cursor: pointer; user-select: none;
+  min-height: 44px; padding: 0 12px; border-radius: 18px; cursor: pointer; user-select: none;
   background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30; color: #d8c9a2; font-size: 12px;
   display: flex; align-items: center; justify-content: center;
 }
@@ -171,12 +173,24 @@ const WORLD_MAP_CSS = `
 }
 `
 
+const NAVIGATION_CSS=`
+.wm-destinations{min-height:44px;max-width:48%;background:#211a12;color:#ecd8b2;border:1px solid #8e6d35;border-radius:4px;padding:6px;font:inherit}
+.wm-info-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.wm-info-actions button{min-height:44px;flex:1}
+.wm-marker{padding:0;border:0;background:none;color:inherit;font-family:inherit}.wm-info-body{white-space:pre-line}#wm-info{box-sizing:border-box;max-height:65vh;overflow:auto}
+#world-wayfinding{position:fixed;left:12px;top:126px;z-index:18;box-sizing:border-box;max-width:300px;background:rgba(30,23,15,.94);border:1px solid #9d7940;color:#ead8b4;box-shadow:0 2px 6px #0008;border-radius:5px;padding:8px 12px;font:14px/1.4 Georgia,serif;pointer-events:none}
+:root[data-hud-orient="portrait"]:not([data-hud-sheet="closed"]) #world-wayfinding{display:none}
+#world-wayfinding strong{display:block;font-size:16px;color:#f2dfa9}
+#world-wayfinding button{pointer-events:auto;min-height:44px;background:#352819;color:#efdbb6;border:1px solid #967240;border-radius:3px;margin-top:8px;width:100%;font:inherit}
+@media(max-width:600px){#world-wayfinding{left:8px;top:112px;max-width:calc(100vw - 68px);font-size:12px;padding:6px 8px}#world-wayfinding strong{font-size:14px}.wm-info-actions button{width:auto}}
+`
+
 let cssReady = false
 function ensureCss(): void {
   if (cssReady) return
   cssReady = true
   const style = document.createElement('style')
-  style.textContent = WORLD_MAP_CSS
+  style.textContent = WORLD_MAP_CSS+NAVIGATION_CSS
   document.head.appendChild(style)
 }
 
@@ -264,7 +278,7 @@ export function zoomAt(
   return next
 }
 
-function showInfoCard(title: string, body: string): void {
+function showInfoCard(title: string, body: string, actions: {label:string;run:()=>void}[] = []): void {
   document.getElementById('wm-info')?.remove()
   const card = document.createElement('div')
   card.id = 'wm-info'
@@ -276,6 +290,16 @@ function showInfoCard(title: string, body: string): void {
   bodyEl.textContent = body
   card.appendChild(titleEl)
   card.appendChild(bodyEl)
+  const controls=document.createElement('div')
+  controls.className='wm-info-actions'
+  for(const action of [...actions,{label:'Close details',run:()=>card.remove()}]) {
+    const button=document.createElement('button')
+    button.className='wm-chip active'
+    button.textContent=action.label
+    button.addEventListener('click',action.run)
+    controls.appendChild(button)
+  }
+  card.appendChild(controls)
   document.body.appendChild(card)
 }
 
@@ -316,12 +340,28 @@ export function openWorldMap(data: WorldMapData): void {
   head.appendChild(close)
   panel.appendChild(head)
 
-  const hiddenCategories = new Set<string>()
+  const destinations=document.createElement('select')
+  destinations.setAttribute('aria-label','Choose a destination')
+  destinations.className='wm-destinations'
+  const placeholder=document.createElement('option')
+  placeholder.textContent='Choose a destination…'; placeholder.value=''
+  destinations.appendChild(placeholder)
+  for(const place of [...data.landmarks].sort((a,b)=>a.label.localeCompare(b.label))) {
+    const option=document.createElement('option')
+    option.value=place.id; option.textContent=worldPlaces[place.id]?.name??place.label
+    destinations.appendChild(option)
+  }
+  destinations.addEventListener('change',()=>{
+    const place=data.landmarks.find(p=>p.id===destinations.value)
+    if(place) showPlace(place)
+  })
+  head.insertBefore(destinations,close)
+  const hiddenCategories = new Set<string>(['bank','smithing','cooking','mining','woodcutting','fishing','gather','monster'])
   const filters = document.createElement('div')
   filters.id = 'wm-filters'
   for (const chip of FILTER_CHIPS) {
-    const btn = document.createElement('div')
-    btn.className = 'wm-chip active'
+    const btn = document.createElement('button')
+    btn.className = 'wm-chip'+(chip.categories.some(category=>hiddenCategories.has(category))?'':' active')
     btn.textContent = chip.label
     btn.addEventListener('click', () => {
       const nowHidden = btn.classList.toggle('active') === false
@@ -372,10 +412,14 @@ export function openWorldMap(data: WorldMapData): void {
   const markers: Marker[] = []
   const staticById = new Map<string, StaticObject>(data.statics.map((s) => [s.id, s]))
 
-  function addMarker(x: number, z: number, category: string, content: string, isSvg: boolean, count: number, onTap: () => void): void {
-    const el = document.createElement('div')
+  function addMarker(x: number, z: number, category: string, content: string, isSvg: boolean, count: number, onTap: () => void, label?:string): void {
+    const el = document.createElement('button')
+    el.type='button'
+    el.setAttribute('aria-label',label??category+' marker at '+x+', '+z)
+    el.title=label??CATEGORY_LABEL[category]??category
     el.className = isSvg ? 'wm-marker wm-svg' : 'wm-marker'
     el.dataset.category = category
+    el.classList.toggle('hidden-category',hiddenCategories.has(category))
     if (isSvg) el.innerHTML = content
     else el.textContent = content
     if (count > 1) {
@@ -384,12 +428,26 @@ export function openWorldMap(data: WorldMapData): void {
       badge.textContent = String(count)
       el.appendChild(badge)
     }
-    el.addEventListener('pointerdown', (e) => {
-      e.stopPropagation()
-      onTap()
-    })
+    el.addEventListener('pointerdown', (e) => e.stopPropagation())
+    el.addEventListener('click',onTap)
     viewport.appendChild(el)
     markers.push({ el, x, z })
+  }
+
+  function showPlace(lm: Landmark): void {
+    const place=worldPlaces[lm.id], facilities=(place?.facilities??[]).map(f=>FACILITY_LABEL[f]??f).join(', ')
+    const guidance=describeDestination(data.self,lm)
+    const body=[place?.lore,facilities ? 'Facilities: '+facilities : '',
+      guidance.arrived ? 'You are here.' : guidance.direction+' · '+guidance.distance+' tiles away. Walking remains in the shared world.'].filter(Boolean).join('\n\n')
+    const actions:{label:string;run:()=>void}[]=[]
+    if(data.onJourney && !guidance.arrived) actions.push({label:'Walk to '+(place?.name??lm.label),run:()=>{data.onJourney!(lm);closeWorldMap()}})
+    if(data.onQuickTravel) actions.push({label:'Preview quick travel',run:()=>{
+      showInfoCard('Preview quick travel','Move to '+(place?.name??lm.label)+' for testing. Available in this preview; leave combat first.',[
+        {label:'Travel to '+(place?.name??lm.label),run:()=>{data.onQuickTravel!(lm);closeWorldMap()}},
+        {label:'Back',run:()=>showPlace(lm)},
+      ])
+    }})
+    showInfoCard(place?.name??lm.label,body||'A place in Eldermoor.',actions)
   }
 
   // Places (landmarks) — one pin per overworld district, sourced from
@@ -398,10 +456,8 @@ export function openWorldMap(data: WorldMapData): void {
     const place = worldPlaces[lm.id]
     const emoji = place?.icon ?? PLACE_EMOJI_FALLBACK
     addMarker(lm.x, lm.z, 'place', emoji, false, 1, () => {
-      const facilities = (place?.facilities ?? []).map((f) => FACILITY_LABEL[f] ?? f).join(', ')
-      const body = [place?.lore, facilities ? `Facilities: ${facilities}` : ''].filter(Boolean).join('\n\n')
-      showInfoCard(place?.name ?? lm.label, body || 'A place in Eldermoor.')
-    })
+      showPlace(lm)
+    },place?.name??lm.label)
   }
 
   // Banks + skilling nodes, clustered so a mining site or forest is one pin.
@@ -434,11 +490,12 @@ export function openWorldMap(data: WorldMapData): void {
     })
   }
 
-  // Exits (present on per-zone maps; the merged overworld has none).
+  // Named entrances and returns use the shared icon set and authored descriptions.
   for (const exit of data.exits) {
-    addMarker(exit.x, exit.z, 'exit', uiIconMarkup('door', 26), true, 1, () => {
-      showInfoCard(exit.label, 'A way out of this zone.')
-    })
+    const markup=uiIconMarkup('door',26,'#ecd8b2')
+    addMarker(exit.x,exit.z,'exit',markup||'↪',!!markup,1,()=>{
+      showInfoCard(exit.label,exit.description??'Approach this entrance in the world and select its doorway.')
+    },exit.label)
   }
 
   const selfEl = document.createElement('div')
@@ -534,4 +591,80 @@ export function openWorldMap(data: WorldMapData): void {
   }
   viewport.addEventListener('pointerup', endPointer)
   viewport.addEventListener('pointercancel', endPointer)
+}
+
+/** Compass bearing and remaining tile distance; the world uses south-positive z. */
+export function describeDestination(from: {x:number;z:number}, to: {x:number;z:number}): {direction:string;distance:number;arrived:boolean} {
+  const dx=to.x-from.x, dz=to.z-from.z, distance=Math.max(Math.abs(dx),Math.abs(dz))
+  if(distance<=2) return {direction:'here',distance,arrived:true}
+  const angle=Math.atan2(dx,-dz), octant=(Math.round(angle/(Math.PI/4))+8)%8
+  return {direction:['north','northeast','east','southeast','south','southwest','west','northwest'][octant],distance,arrived:false}
+}
+
+let disposeWayfindingLayout: (()=>void)|null=null
+
+/** Reposition only when the HUD layout changes; walking does not trigger layout work. */
+function positionWayfinding(panel: HTMLElement): ()=>void {
+  const root=document.documentElement
+  const visibleRect=(id:string):DOMRect|null=>{
+    const el=document.getElementById(id)
+    return el&&getComputedStyle(el).display!=='none'&&el.getBoundingClientRect().width>0 ? el.getBoundingClientRect() : null
+  }
+  const place=():void=>{
+    const portrait=root.dataset.hudOrient==='portrait', rightDock=root.dataset.hudDock!=='left'
+    const vitals=visibleRect('hud-vitals'), eye=visibleRect('hud-eye'), compass=visibleRect('hud-compass'), map=visibleRect('minimap')
+    let inset=portrait?8:12, top=portrait?Math.max(112,(vitals?.bottom??104)+8):Math.max(126,...[vitals,eye,compass].map(r=>(r?.bottom??0)+8))
+    let width=portrait?innerWidth-inset-(map?148:60):innerWidth-2*inset-58
+    if(!portrait) {
+      const dock=visibleRect('hud-body'), rail=visibleRect('hud-rail-l')
+      const boundary=rightDock?(dock?.left??rail?.left??innerWidth):(dock?.right??rail?.right??0)
+      if(map) {
+        const beside=rightDock?map.right+8:innerWidth-map.left+8
+        const room=rightDock?boundary-beside-8:innerWidth-beside-boundary-8
+        if(room>=180){inset=beside;width=room}
+        else {top=Math.max(top,map.bottom+8);width=rightDock?boundary-inset-8:innerWidth-inset-boundary-8}
+      } else width=rightDock?boundary-inset-8:innerWidth-inset-boundary-8
+    }
+    panel.style.left=portrait||rightDock?inset+'px':'auto'
+    panel.style.right=!portrait&&!rightDock?inset+'px':'auto'
+    panel.style.top=portrait?'auto':top+'px'
+    const rail=visibleRect('hud-rail-p')
+    panel.style.bottom=portrait?Math.max(72,innerHeight-(rail?.top??innerHeight-64)+8)+'px':'auto'
+    panel.style.maxWidth=Math.min(300,Math.max(140,width))+'px'
+  }
+  place()
+  const mutation=new MutationObserver(place)
+  mutation.observe(root,{attributes:true,attributeFilter:['data-hud-orient','data-hud-dock','data-hud-hidden','data-minimap','data-hud-sheet','data-hud-scale']})
+  const resize=new ResizeObserver(place)
+  for(const id of ['hud-vitals','hud-eye','hud-compass','minimap','hud-body']){const el=document.getElementById(id);if(el)resize.observe(el)}
+  window.addEventListener('resize',place)
+  return ()=>{mutation.disconnect();resize.disconnect();window.removeEventListener('resize',place)}
+}
+
+/** Location and selected destination remain visible after closing the map. */
+export function createWayfinding(landmarks: Landmark[], cancel:()=>void): {
+  guide:(place:Landmark|null)=>void; update:(self:{x:number;z:number})=>void
+} {
+  ensureCss()
+  disposeWayfindingLayout?.()
+  document.getElementById('world-wayfinding')?.remove()
+  const panel=document.createElement('div'); panel.id='world-wayfinding'; panel.className='hud-hideable'
+  const title=document.createElement('strong'),detail=document.createElement('span'),stop=document.createElement('button')
+  stop.textContent='Stop journey'; stop.hidden=true
+  let destination:Landmark|null=null, last=''
+  stop.addEventListener('click',()=>{destination=null;stop.hidden=true;last='';cancel()})
+  panel.appendChild(title);panel.appendChild(detail);panel.appendChild(stop);document.body.appendChild(panel)
+  disposeWayfindingLayout=positionWayfinding(panel)
+  return {
+    guide:(place)=>{destination=place;stop.hidden=!place;last=''},
+    update:(self)=>{
+      const nearest=[...landmarks].sort((a,b)=>describeDestination(self,a).distance-describeDestination(self,b).distance)[0]
+      const here=nearest ? (describeDestination(self,nearest).arrived?'':'Near ')+nearest.label : 'Exploring Eldermoor'
+      const guidance=destination && describeDestination(self,destination)
+      const heading=destination ? (guidance!.arrived?'Arrived at ':'To ')+destination.label : here
+      const line=destination ? (guidance!.arrived?'Choose another destination on the map.':guidance!.direction+' · '+guidance!.distance+' tiles · '+here) : 'Open the map to choose a destination.'
+      if(last!==heading+'|'+line){title.textContent=heading;detail.textContent=line;last=heading+'|'+line}
+      if(guidance?.arrived){stop.hidden=true;destination=null}
+    },
+  }
 }

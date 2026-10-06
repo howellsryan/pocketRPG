@@ -138,6 +138,14 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "The World Map shows every settlement in Eldermoor, joined by roads. Tap a settlement to open its hub — lore, facilities, travel and teleport options, and a browsable list of what's available there. Walking follows the roads and takes real time; teleporting is instant but needs the destination's Magic level plus runes, and grants Magic XP. Some settlements (starting with Varrick) have their own illustrated town map: when you're there, tapping the settlement opens the town map instead, and you start activities by tapping the markers placed on it — city gates for monsters, the rooftop course for Agility, and so on. The bank marker opens banking plus training for the crafts doable at any banked settlement (Crafting, Fletching, Firemaking, Herblore, Magic, Construction). Prayer, Cooking and Smithing are tied to their own facilities — an altar, a stove, and a furnace & anvil — found only in some settlements; on a town map each facility is its own marker (in Varrick: the Royal Chapel, the Market Stove, the Grand Smithy). Every settlement with a sawmill (Varrick, Faloden, Ardounne, Seerhold) converts all log types to planks — its sawmill marker lists every conversion; the trading post marker opens the Trading Post. For mapped places the hub's activity list is browse-only — visit the town and tap a marker to begin — and backing out of a skilling screen you entered from the town map returns you to that map."
  },
  {
+  "id": "guide_exploring_the_shared_world",
+  "title": "Exploring the shared world",
+  "tags": [
+   "guide"
+  ],
+  "text": "When the open-world beta is enabled, choose Enter the world from the idle map or Help. Your character saves before entering in the same tab. New arrivals begin in Lumbright; returning explorers resume their world position. An active group boss session must finish before you enter. Eldermoor's cities share one overworld. Open its map, choose a named destination and select Walk to begin the complete journey. A direction and remaining distance stay visible after closing the map. Tap the ground to change course, or Stop journey to stop walking. Road signs name nearby destinations and can start a journey. Caves, pastures and boss lairs have named entrances. Choose Enter to go through; simply walking past an entrance keeps you outside. Boss requirements still apply, and you must leave combat before moving between areas. The return doorway leads to a safe road outside. Leave world from the world settings to return to the idle game. Preview quick travel is available from destination details in the test preview only, and cannot be used during combat."
+ },
+ {
   "id": "guide_idle_progress_and_offline_catch_up",
   "title": "Idle progress and offline catch-up",
   "tags": [
@@ -3505,12 +3513,12 @@ export const KNOWLEDGE_CHUNKS = [
  },
  {
   "id": "monster_sunclaw_gladiator",
-  "title": "Raid encounter monster: Sunclaw Gladiator (Sunspire Colosseum)",
+  "title": "Monster: Sunclaw Gladiator — stats and drops",
   "tags": [
    "monster",
-   "raid"
+   "drops"
   ],
-  "text": "Sunclaw Gladiator is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 240 with 480 HP, attacking with slash. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+  "text": "Sunclaw Gladiator is a monster at combat level 240 with 480 HP, attacking with slash."
  },
  {
   "id": "monster_dawnlance_colossus",

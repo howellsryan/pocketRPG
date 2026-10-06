@@ -8,6 +8,8 @@ import { planQuestJourney } from '../engine/journeys.js'
 import TeleportRuneCost from '../components/TeleportRuneCost.jsx'
 import { PlaceIcon, PlaceScene, WorldTerrain } from '../components/PlaceArt.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import WorldEntryButton from '../components/WorldEntryButton.jsx'
+import { worldBetaEnabled } from '../utils/helpers.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import WaxSeal from '../components/WaxSeal.jsx'
 import ActivityPickerModal from '../components/ActivityPickerModal.jsx'
@@ -280,6 +282,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
 
   return (
     <div class="h-full w-full relative overflow-hidden bg-[var(--color-void)]" style={{ touchAction: 'none' }}>
+      {worldBetaEnabled() && !travel && <WorldEntryButton className="wm-explore" />}
       {/* stage */}
       <div
         ref={stageRef}

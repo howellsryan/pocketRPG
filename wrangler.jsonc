@@ -149,7 +149,8 @@
         "APP_BASE_URL": "https://pocketrpg-app-preview.rlh.workers.dev",
         "CHAT_ACTION_FEE_ENABLED": "false",
         "CHAT_JEV_TOOL_ROUTING": "false",
-        "DISABLE_QUEST_REQUIREMENTS": "true"
+        "DISABLE_QUEST_REQUIREMENTS": "true",
+        "WORLD_PREVIEW_TRAVEL": "true"
       },
       "assets": {
         "directory": "dist_site",

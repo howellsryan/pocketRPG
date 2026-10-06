@@ -116,7 +116,7 @@ const npcs = [
 // door is the way back out. No marker — the door prop is the signpost; a
 // glowing pad on a barrow floor is not.
 const exits = [
-  { id: 'exit_wilds', x: 20, z: 39, toZone: 'overworld', toX: 280, toZ: 56, label: 'The Wilds', hideMarker: true },
+  { id: 'exit_wilds', x: 20, z: 39, toZone: 'overworld', toX: 251, toZ: 83, label: 'Varrick Road', hideMarker: true, presentation: 'door', activation: 'interact', description: 'Return to the shared overworld road.' },
 ]
 
 // A bank chest inside the door, within reach of the tile you land (and respawn)

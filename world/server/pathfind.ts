@@ -1,3 +1,4 @@
+import {groundKindGrid,type ZoneGroundRegion} from '../shared/groundKinds'
 export type Tile = { x: number; z: number }
 
 const DIRECTIONS: Tile[] = [
@@ -71,7 +72,7 @@ function heapPop(heap: HeapNode[]): HeapNode {
  * inside the start→destination rectangle instead of the wild equal-length
  * arcs plain BFS produced. Diagonal steps are only legal when both adjacent
  * cardinal tiles are walkable — no corner cutting. */
-function astar(collision: string[], from: Tile, to: Tile): Tile[] | null {
+function astar(collision: string[], from: Tile, to: Tile, stepCost: (x:number,z:number)=>number = () => 1): Tile[] | null {
   if (!inBounds(collision, to.x, to.z) || !isWalkable(collision, to.x, to.z)) return null
   if (from.x === to.x && from.z === to.z) return [from]
 
@@ -106,7 +107,7 @@ function astar(collision: string[], from: Tile, to: Tile): Tile[] | null {
         }
       }
       const key = tileKey(nx, nz)
-      const g = current.g + 1 + (diagonal ? DIAG_EPS : 0)
+      const g = current.g + stepCost(nx,nz) + (diagonal ? DIAG_EPS : 0)
       if (g >= (gScore.get(key) ?? Infinity)) continue
       gScore.set(key, g)
       cameFrom.set(key, { x: current.x, z: current.z })
@@ -150,4 +151,19 @@ export function findPathAdjacent(collision: string[], from: Tile, to: Tile, maxL
   }
   if (!best) return null
   return best.length > maxLen ? best.slice(0, maxLen) : best
+}
+
+/** Named journeys keep their full route; ordinary clicks and combat retain the
+ * existing short path budget. Only server-authored landmarks are destinations. */
+export function findJourneyPath(
+  zone: { collision: string[]; width: number; height: number; landmarks?: Array<{id: string; x: number; z: number}>; ground?: ZoneGroundRegion[] },
+  from: Tile,
+  placeId: string,
+): Tile[] | null {
+  const destination = zone.landmarks?.find(place => place.id === placeId)
+  if (!destination) return null
+  if(!zone.ground?.length)return findPath(zone.collision,from,destination,zone.width*zone.height)
+  const kinds=groundKindGrid(zone.width,zone.height,zone.ground)
+  const roads=new Set(['path_dirt','path_cobble','plaza','floor_plank','floor_stone','floor_tile'])
+  return astar(zone.collision,from,destination,(x,z)=>roads.has(kinds[z*zone.width+x])?1:3)
 }

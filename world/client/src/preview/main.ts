@@ -1,10 +1,17 @@
 import * as THREE from 'three'
+import {h,render} from 'preact'
+import WorldEntryCard from '../../../../src/components/WorldEntryCard.jsx'
+import {initHud,updateHpPill,setRunState,setPrayerState,renderInventory,setHudPanelOpen,paintHudIcons} from '../ui'
+import {createWayfinding,openWorldMap} from '../worldMap'
+import {createMinimap} from '../minimap'
+import {loadItemIcons} from '../itemIcon'
 import type { ZoneDef } from '../../../shared/zone'
 import { createScene, createLights, createRenderer, createCamera, tileToWorld, updateCamera, updateShadowLight, clampZoom } from '../scene'
 import { createTerrain } from '../terrain'
 import { createScatterLayers } from '../scatter'
 import { createStatics } from '../statics'
 import { createProps } from '../props'
+import {createExitMarkers,createWaymarks} from '../exits'
 import { createAmbient } from '../ambient'
 import { createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from '../entities'
 import lumbrightZone from '../../../zones/lumbright.json'
@@ -69,8 +76,41 @@ THREE.DefaultLoadingManager.onError=(url)=>{window.__previewError='Failed asset:
 const follow=params.has('follow') ? pair(params.get('follow'),targetTile) : gameplay ? targetTile : undefined
 const {heightField}=createTerrain(scene,def.collision,def.width,def.height,def.palette,def.terrain,def.ground,
   {chunkCentre:follow ? {...follow,radius:number('radius',4)} : undefined})
+const exits=createExitMarkers(scene,def.exits??[])
+createWaymarks(scene,def.waymarks??[])
+if(params.get('entry')==='1') {
+  const css=document.createElement('link');css.rel='stylesheet';css.href='/world/entry-review.css';document.head.appendChild(css)
+  const surface=document.createElement('div')
+  surface.style.cssText='position:fixed;inset:0;background:#292319;z-index:70;padding:24px;box-sizing:border-box;display:flex;align-items:center;justify-content:center'
+  const card=document.createElement('div');card.style.cssText='width:320px;max-width:100%'
+  surface.appendChild(card);document.body.appendChild(surface)
+  render(h(WorldEntryCard,{enter:()=>{},busy:params.get('busy')==='1',error:params.get('entryError')??''}),card)
+}
+const hudReady=loadItemIcons().then(()=>{
+if(params.get('hud')==='1'||params.has('map')) {
+  document.getElementById('hud')!.style.display='none'
+  initHud()
+  setHudPanelOpen(false)
+  paintHudIcons()
+  updateHpPill(10,10);setRunState(100,false);setPrayerState(1,1,null,null);renderInventory(Array(28).fill(null))
+  const minimap=createMinimap(def.collision,def.width,def.height,def.palette,def.objects,()=>{})
+  minimap.update(targetTile,[])
+  const guidance=createWayfinding(def.landmarks??[],()=>{})
+  const destination=params.has('guide')?def.landmarks?.find(p=>p.id===params.get('guide')):undefined
+  if(destination)guidance.guide(destination)
+  guidance.update(targetTile)
+  if(params.has('map')) {
+    openWorldMap({collision:def.collision,width:def.width,height:def.height,palette:def.palette,ground:def.ground,
+      statics:def.objects,landmarks:def.landmarks??[],spawns:def.npcs,exits:def.exits??[],self:targetTile,
+      onJourney:place=>guidance.guide(place),onQuickTravel:()=>{}})
+    const select=document.querySelector('.wm-destinations') as unknown as HTMLSelectElement|null
+    if(select){select.value=params.get('map')!;select.dispatchEvent(new Event('change'))}
+  }
+}
+})
 const entities: Entity[]=[]
 const ready=[
+  hudReady,
   createProps(scene,def.props??[]),
   createStatics(scene,def.objects),
   Promise.all(def.npcs.filter((npc)=>!gameplay || def.aoiRadius==null || Math.max(Math.abs(npc.x-targetTile.x),Math.abs(npc.z-targetTile.z))<=def.aoiRadius).map(async(npc)=>{
@@ -125,6 +165,7 @@ window.addEventListener('resize',()=>{
 const clock=new THREE.Clock()
 function frame(): void {
   const dt=snapshot?.35:clock.getDelta(),now=snapshot?350:performance.now()
+  exits.update(now)
   ambient.update(dt,snapshot ? 12.35 : undefined)
   for(const entity of entities)updateEntity(entity,now,dt)
   renderer.render(scene,camera)

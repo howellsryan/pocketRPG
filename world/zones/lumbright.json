@@ -304,6 +304,36 @@
   }
  ],
  "exits": [],
+ "waymarks": [
+  {
+   "id": "road_draynar_west",
+   "x": 3,
+   "z": 34,
+   "label": "Draynar",
+   "destination": "draynar"
+  },
+  {
+   "id": "road_draynar_south",
+   "x": 32,
+   "z": 60,
+   "label": "Draynar",
+   "destination": "draynar"
+  },
+  {
+   "id": "road_alkarid",
+   "x": 60,
+   "z": 32,
+   "label": "Alkarid",
+   "destination": "alkarid"
+  },
+  {
+   "id": "road_varrick",
+   "x": 57,
+   "z": 32,
+   "label": "Varrick",
+   "destination": "varrick"
+  }
+ ],
  "props": [
   {
    "model": "market",

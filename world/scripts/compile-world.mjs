@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { GATHER_TASKS } from '../../src/engine/gatherTasks.js'
+import {EXPERIENCE_VIEWS} from '../authoring/experience-views.mjs'
 import { compileRegion } from '../authoring/compiler.mjs'
 import { measureAuthoringAssets } from './authoring-assets.mjs'
 
@@ -26,8 +27,10 @@ const context={
   gatherTasks:GATHER_TASKS,assets,prefabs:prefabs.prefabs,
 }
 const {zone,report}=compileRegion(source,context)
-const sceneFiles=['world/authoring/compiler.mjs','world/client/src/preview/main.ts','world/scripts/review-authoring.mjs','world/client/src/props.ts','world/client/src/statics.ts','world/client/src/entities.ts','world/client/src/terrain.ts','world/client/src/terrainMaterials.ts','world/client/src/chunkedTerrain.ts','world/client/src/assetBase.ts','world/client/src/motion.ts','world/client/src/groundPaint.ts','world/client/src/paintGeometry.ts','world/shared/groundKinds.ts','world/client/src/scene.ts','world/client/src/ambient.ts','world/client/src/scatter.ts','world/client/src/procCreature.ts','world/shared/monsterModels.ts','world/shared/ambientModels.ts','world/shared/propScale.js','world/scripts/gen-overworld.mjs','world/scripts/overworldLayout.mjs','src/data/creatures3d.json','src/3d/blendShell.js','src/3d/rigs.js','src/data/items.json']
-const inputs={source,prefabs,policy,context,scene: Object.fromEntries(sceneFiles.map((p)=>[p,fs.readFileSync(path.join(root,p),'utf8')]))}
+const sceneFiles=['world/scripts/stage-entry-review.mjs','src/index.css','world/client/src/main.ts','src/components/WorldEntryButton.jsx','world/authoring/experience-views.mjs','src/components/WorldEntryCard.jsx','world/client/vite.config.ts','world/client/src/exits.ts','world/client/src/worldMap.ts','world/client/src/ui.ts','world/shared/protocol.ts','world/authoring/compiler.mjs','world/client/src/preview/main.ts','world/scripts/review-authoring.mjs','world/client/src/props.ts','world/client/src/statics.ts','world/client/src/entities.ts','world/client/src/terrain.ts','world/client/src/terrainMaterials.ts','world/client/src/chunkedTerrain.ts','world/client/src/assetBase.ts','world/client/src/motion.ts','world/client/src/groundPaint.ts','world/client/src/paintGeometry.ts','world/shared/groundKinds.ts','world/client/src/scene.ts','world/client/src/ambient.ts','world/client/src/scatter.ts','world/client/src/procCreature.ts','world/shared/monsterModels.ts','world/shared/ambientModels.ts','world/shared/propScale.js','world/scripts/gen-overworld.mjs','world/scripts/overworldLayout.mjs','src/data/creatures3d.json','src/3d/blendShell.js','src/3d/rigs.js','src/data/items.json']
+const entryAssets=Object.fromEntries(['public/forge/iron.webp','public/forge/parchment.webp','package-lock.json'].map(p=>[p,createHash('sha256').update(fs.readFileSync(path.join(root,p))).digest('hex')]))
+const instanceZones=Object.fromEntries(['grondar_lair','cow_pasture','fiend_pit','dragon_roost','zaryth_throne'].map(zoneId=>[zoneId,read(path.join(worldDir,'zones',zoneId+'.json'))]))
+const inputs={source,prefabs,policy,context,entryAssets,instanceZones,scene: Object.fromEntries(sceneFiles.map((p)=>[p,fs.readFileSync(path.join(root,p),'utf8')]))}
 report.sourceHash=createHash('sha256').update(JSON.stringify(inputs)).digest('hex')
 const serial=(v)=>JSON.stringify(v,null,1)+'\n'
 const outputs={
@@ -56,4 +59,5 @@ if(args.includes('--release')) {
   if(receipt.sourceHash!==report.sourceHash || receipt.verdict!=='approved' || !receipt.reviewedBy || !receipt.evidenceUrl)throw new Error('Current-source visual review approval is required')
   const required=report.reviewViews.flatMap((v)=>v.mode==='overview' ? ['desktop:'+v.id] : ['desktop:'+v.id,'mobile:'+v.id,'integrated:'+v.id])
   for(const view of required)if(!receipt.views?.includes(view))throw new Error('Unreviewed view '+view)
+  for(const view of EXPERIENCE_VIEWS)if(!receipt.experienceViews?.includes(view.id))throw new Error('Unreviewed experience '+view.id)
 }

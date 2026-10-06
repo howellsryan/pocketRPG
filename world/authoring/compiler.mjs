@@ -267,6 +267,12 @@ export function compileRegion(input, context) {
     const missingNeighbors=[...neighbors].filter((id)=>!connected.has(id))
     if(missingNeighbors.length)fail('missing canonical road connections: '+missingNeighbors.join(', '))
   }
+  const waymarks=clone(source.waymarks??[])
+  for(const sign of waymarks) {
+    unique(sign.id);tile(sign,'waymark '+sign.id);accessible(sign,'waymark '+sign.id)
+    if(!context.world.places[sign.destination]||!sign.label)fail('invalid waymark destination '+sign.id)
+    if(encounters.some(e=>sign.x>=e.wander.x&&sign.z>=e.wander.z&&sign.x<e.wander.x+e.wander.w&&sign.z<e.wander.z+e.wander.h))fail('waymark overlaps encounter '+sign.id)
+  }
   const missing=[...expected].filter((ref)=>!bound.has(ref)).sort()
   if(missing.length) fail('missing canonical content: '+missing.join(', '))
   const budgets=source.budgets
@@ -293,7 +299,7 @@ export function compileRegion(input, context) {
   if(!overview||!gameplay)fail('overview and close gameplay review views are required')
   const uncovered=[...expected].filter((ref)=>!reviewedContent.has(ref)).sort()
   if(uncovered.length)fail('missing close review coverage: '+uncovered.join(', '))
-  const zone={id:source.id,name:source.name,width,height,spawn,collision:grid.map((r)=>r.join('')),objects,npcs,exits,props,ground,ambient}
+  const zone={id:source.id,name:source.name,width,height,spawn,collision:grid.map((r)=>r.join('')),objects,npcs,exits,waymarks,props,ground,ambient}
   for(const k of ['palette','ambience','terrain'])if(source[k])zone[k]=source[k]
   return {zone,report:{
     schemaVersion:1,region:source.id,place:source.place,seed:source.seed,

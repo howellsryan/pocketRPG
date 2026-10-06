@@ -55,6 +55,8 @@ const sourceFiles = [
   'hooks/useActionSwings.js',
   'hooks/usePanZoomStage.js',
   'hooks/useTravelStatus.js',
+  'components/WorldEntryCard.js',
+  'components/WorldEntryButton.js',
   'engine/experience.js',
   'engine/combatLevel.js',
   'engine/world.js',
@@ -325,6 +327,8 @@ const sourceFiles = [
 // reference a game screen at module-evaluation time (App only does so inside
 // renderScreen, which runs after the chunk has loaded).
 const GAME_CHUNK_FILES = new Set([
+  'components/WorldEntryCard.js',
+  'components/WorldEntryButton.js',
   'components/BackLink.js',
   'components/PlaceArt.js',
   'components/TeleportRuneCost.js',

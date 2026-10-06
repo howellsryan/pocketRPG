@@ -1,58 +1,88 @@
 import * as THREE from 'three'
 import { tileToWorld } from './scene'
-import type { ExitMarker } from '../../shared/protocol'
+import type { ExitMarker, Waymark } from '../../shared/protocol'
 import type { Pickable } from './picking'
 
-// Zone exits render as pulsing gold pads. Clicking one ('exit' pick kind) is
-// handled client-side as a plain walk to the tile — stepping on it is what
-// transitions, server-side.
 export type ExitLayer = {
   pickables: THREE.Object3D[]
   tiles: Map<string, { x: number; z: number }>
   update: (now: number) => void
 }
 
+function nameboard(label: string): THREE.Sprite | null {
+  if(typeof document==='undefined') return null
+  const canvas=document.createElement('canvas')
+  canvas.width=512; canvas.height=160
+  const ctx=canvas.getContext('2d')
+  if(!ctx) return null
+  ctx.fillStyle='#302419';ctx.fillRect(0,0,512,160)
+  ctx.strokeStyle='#b9975d';ctx.lineWidth=10;ctx.strokeRect(5,5,502,150)
+  ctx.fillStyle='#f2e1b7';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 38px Georgia'
+  const words=label.split(' '),lines:string[]=[];let line=''
+  for(const word of words){const next=line?line+' '+word:word;if(ctx.measureText(next).width>460&&line){lines.push(line);line=word}else line=next}
+  lines.push(line)
+  lines.slice(0,2).forEach((text,i)=>ctx.fillText(text,256,lines.length>1?54+i*54:80))
+  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(canvas),depthTest:true}))
+  sprite.scale.set(3.6,1.125,1)
+  return sprite
+}
+
 export function createExitMarkers(scene: THREE.Scene, exits: ExitMarker[]): ExitLayer {
-  const pickables: THREE.Object3D[] = []
-  const tiles = new Map<string, { x: number; z: number }>()
-  const pulsing: THREE.MeshBasicMaterial[] = []
-
-  for (const exit of exits) {
-    // Marker suppressed by the zone: the scene already shows the way out (a
-    // door, an arch), so no pad and no click target — walking onto the tile is
-    // what transitions, and that is the server's business either way.
-    if (exit.hideMarker) continue
-    const wrapper = new THREE.Group()
-    const pad = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.42, 0.42, 0.04, 24),
-      new THREE.MeshBasicMaterial({ color: 0xd9a94a, transparent: true, opacity: 0.55 })
-    )
-    pad.position.y = 0.02
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.44, 0.55, 24).rotateX(-Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color: 0xf3d27e, transparent: true, opacity: 0.8 })
-    )
-    ring.position.y = 0.03
-    wrapper.add(pad, ring)
-    wrapper.position.copy(tileToWorld(exit.x, exit.z))
-    wrapper.userData.pick = {
-      kind: 'exit', id: exit.id, name: exit.label,
-      actions: [{ label: 'Go-to', action: 'go' }],
-      examine: 'The path leads onward.',
-    } satisfies Pickable
-    scene.add(wrapper)
-    pickables.push(wrapper)
-    tiles.set(exit.id, { x: exit.x, z: exit.z })
-    pulsing.push(pad.material as THREE.MeshBasicMaterial, ring.material as THREE.MeshBasicMaterial)
-  }
-
-  function update(now: number): void {
-    const pulse = 0.65 + 0.35 * Math.sin(now / 400)
-    for (let i = 0; i < pulsing.length; i += 2) {
-      pulsing[i].opacity = 0.35 + 0.3 * pulse
-      pulsing[i + 1].opacity = 0.5 + 0.4 * pulse
+  const pickables:THREE.Object3D[]=[],tiles=new Map<string,{x:number;z:number}>()
+  const pulsing:THREE.MeshBasicMaterial[]=[]
+  for(const exit of exits) {
+    if(exit.hideMarker&&!exit.presentation) continue
+    const wrapper=new THREE.Group()
+    if(exit.presentation&&!exit.hideMarker) {
+      const material=new THREE.MeshStandardMaterial({color:exit.presentation==='gate'?0x765534:0x777367,roughness:1})
+      // Side posts occupy the blocked tiles x±2. The three-tile opening is clear.
+      for(const x of [-2,2]) {
+        const post=new THREE.Mesh(new THREE.BoxGeometry(.7,2.7,.65),material)
+        post.position.set(x,1.35,0);post.castShadow=true;post.receiveShadow=true;wrapper.add(post)
+      }
+      if(exit.presentation==='cave') {
+        const recess=new THREE.Mesh(new THREE.PlaneGeometry(3,2.45),new THREE.MeshStandardMaterial({color:0x211e19,roughness:1,side:THREE.DoubleSide}))
+        recess.position.set(0,1.22,-.65);wrapper.add(recess)
+      }
+      const lintel=new THREE.Mesh(new THREE.BoxGeometry(4.7,.45,.7),material)
+      lintel.position.y=2.8;lintel.castShadow=true;wrapper.add(lintel)
+      if(exit.presentation==='cave') {
+        const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15,0),material)
+        crown.scale.set(2.05,.5,.7);crown.position.set(0,3.15,0);crown.castShadow=true;wrapper.add(crown)
+      }
+    } else if(!exit.presentation) {
+      const pad=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.04,24),new THREE.MeshBasicMaterial({color:0xd9a94a,transparent:true,opacity:.55}))
+      const ring=new THREE.Mesh(new THREE.RingGeometry(.44,.55,24).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xf3d27e,transparent:true,opacity:.8}))
+      pad.position.y=.02;ring.position.y=.03;wrapper.add(pad,ring)
+      pulsing.push(pad.material as THREE.MeshBasicMaterial,ring.material as THREE.MeshBasicMaterial)
     }
+    if(exit.presentation) {
+      const proxy=new THREE.Mesh(new THREE.BoxGeometry(3,2.7,.65),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}))
+      proxy.position.y=1.35;wrapper.add(proxy)
+      const board=nameboard(exit.label)
+      if(board){board.position.set(0,exit.hideMarker?2.7:3.8,0);wrapper.add(board)}
+    }
+    wrapper.position.copy(tileToWorld(exit.x,exit.z))
+    wrapper.userData.pick={kind:'exit',id:exit.id,name:exit.label,actions:[{label:'Enter',action:'go'}],
+      examine:exit.description??'Enter this area through the doorway.'} satisfies Pickable
+    scene.add(wrapper);pickables.push(wrapper);tiles.set(exit.id,{x:exit.x,z:exit.z})
   }
+  return {pickables,tiles,update:(now)=>{
+    const pulse=.65+.35*Math.sin(now/400)
+    for(let i=0;i<pulsing.length;i+=2){pulsing[i].opacity=.35+.3*pulse;pulsing[i+1].opacity=.5+.4*pulse}
+  }}
+}
 
-  return { pickables, tiles, update }
+/** Destination identities come from semantic authoring, never free-form client coordinates. */
+export function createWaymarks(scene:THREE.Scene, waymarks:Waymark[]):THREE.Object3D[] {
+  return waymarks.map(sign=>{
+    const wrapper=new THREE.Group()
+    const post=new THREE.Mesh(new THREE.BoxGeometry(.12,1.7,.12),new THREE.MeshStandardMaterial({color:0x705030,roughness:1}))
+    post.position.set(-.7,.85,0);post.castShadow=true
+    const board=nameboard(sign.label);if(board){board.scale.set(2.6,.81,1);board.position.set(-.7,1.9,0);wrapper.add(board)}
+    wrapper.add(post);wrapper.position.copy(tileToWorld(sign.x,sign.z))
+    wrapper.userData.pick={kind:'exit',id:sign.id,name:sign.label,actions:[{label:'Walk to',action:'go'}],
+      examine:'Follow the road toward '+sign.label+'.'} satisfies Pickable
+    scene.add(wrapper);return wrapper
+  })
 }

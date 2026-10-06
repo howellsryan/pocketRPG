@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "region": "lumbright",
-  "sourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-  "sourceCommit": "26ad347b2b332c6f67f043145a5d2ffbc6a88c5c",
+  "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+  "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
   "verdict": "approved",
-  "scope": "Composition and content legibility in the existing world beta; production MMORPG release remains unapproved.",
-  "reviewedBy": "Codex primary agent; personally inspected all 49 full-size scene captures and four rat states",
+  "scope": "Lumbright composition and connected-world beta interface legibility; production MMORPG release remains unapproved.",
+  "reviewedBy": "Codex primary agent; native-dimension review with exact PNG reuse documented in lumbright-capture-comparison.json",
   "reviewedAt": "2026-10-06",
-  "evidenceUrl": "https://github.com/howellsryan/pocketRPG/actions/runs/37458602909/artifacts/11411341323",
-  "evidenceDigest": "sha256:028cdf66c18895cb6fd8bdafa211e0ae8588f9649f2b8f7c1a6af77a8a62ee0b",
+  "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/",
+  "evidenceDigest": "sha256:2b3be4a8232ebc82dadbdcd581bde865dbec5a028d7d6d18718efb4a57f70425",
   "views": [
     "desktop:overview",
     "desktop:arrival",
@@ -68,17 +68,47 @@
       "idle"
     ]
   },
-  "archivedPreviews": [
+  "archivedPreviews": [],
+  "remainingGates": [
+    "Real phone frame-time and loading measurements with live HUD",
+    "Two-player gathering/combat and banking loop",
+    "Disconnect, background/resume, session recovery and save/return to idle",
+    "Organic terrain and river edges, asset variety, named NPCs and local objectives before claiming production MMORPG quality",
+    "Site-specific entrances, semantic authoring and local objectives for the other thirteen districts",
+    "Single progression clock and transactional idempotent kill/daily settlement",
+    "Unexpected disconnect persistence and regional actor/simulation budgets",
+    "Complete transitive icon/minimap/entry staging fingerprint inputs"
+  ],
+  "experienceViews": [
+    "desktop:enter_grondar",
+    "mobile:enter_grondar",
+    "desktop:enter_pasture",
+    "mobile:enter_pasture",
+    "desktop:enter_fiend",
+    "mobile:enter_fiend",
+    "desktop:enter_dragons",
+    "mobile:enter_dragons",
+    "desktop:enter_zaryth",
+    "mobile:enter_zaryth",
+    "mobile:return_grondar_lair",
+    "mobile:return_cow_pasture",
+    "mobile:return_fiend_pit",
+    "mobile:return_dragon_roost",
+    "mobile:return_zaryth_throne",
+    "desktop:journey_guidance",
+    "desktop:destination_map",
+    "mobile:journey_guidance",
+    "mobile:destination_map",
+    "mobile:entry_ready",
+    "mobile:entry_saving",
+    "mobile:entry_error"
+  ],
+  "historicalPreviews": [
     "lumbright-overview.jpg",
     "lumbright-desktop.jpg",
     "lumbright-portrait.jpg",
     "lumbright-integrated.jpg",
     "lumbright-rat-states.jpg"
   ],
-  "remainingGates": [
-    "Real phone frame-time and loading measurements with live HUD",
-    "Two-player gathering/combat and banking loop",
-    "Disconnect, background/resume, session recovery and save/return to idle",
-    "Organic terrain and river edges, asset variety, named NPCs and local objectives before claiming production MMORPG quality"
-  ]
+  "comparisonManifest": "lumbright-capture-comparison.json"
 }

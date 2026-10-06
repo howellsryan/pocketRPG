@@ -1,0 +1,890 @@
+{
+  "schemaVersion": 1,
+  "region": "lumbright",
+  "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+  "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+  "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/",
+  "reviewedBy": "Codex primary agent",
+  "nativePresentation": "Native-dimension WebP presentation of the original PNG; original PNG SHA-256 recorded below.",
+  "views": [
+    {
+      "id": "desktop:overview",
+      "file": "desktop-overview.png",
+      "sha": "45454a092b41b61d42c2e9ccfbf357d6cc6655c8b0debc37fd8ab6dbc240d1ac",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "desktop:arrival",
+      "file": "desktop-arrival.png",
+      "sha": "82d5175fad0cb3af47606d3c90d33b09b5f7f4b20b9ab1d4abeff7a245de8f69",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "mobile:arrival",
+      "file": "mobile-arrival.png",
+      "sha": "038dad54dd1d3e7eda7c83d2018e76852551c61cf36321ef237a591729d4991c",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "integrated:arrival",
+      "file": "integrated-arrival.png",
+      "sha": "4c4e933af731fb8955a412d1cdcbd0aa4236088013652c1f417afaa21ef14b59",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:market",
+      "file": "desktop-market.png",
+      "sha": "7cb6f2d1734fe933ce163fb617e4f803190297328fba2673dbe0796ae8a45604",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "mobile:market",
+      "file": "mobile-market.png",
+      "sha": "be971e42d6d442711af454c3bc67d9476c1e41d6d4dab8e9b5d7e5953668c026",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "integrated:market",
+      "file": "integrated-market.png",
+      "sha": "72f99aefd1e8aeeb0c3bc8193ef0f36bf8281bbb880f973f80dc5a7a9024f2bd",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:kitchen",
+      "file": "desktop-kitchen.png",
+      "sha": "89c6acfed2ba97c1cb0a2a58bf7be41af3c5371d0ee18cc8986f22d268eb27d9",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "mobile:kitchen",
+      "file": "mobile-kitchen.png",
+      "sha": "9a9679cb97ca8f8027924d46f893a8b6ef45ada5074fdc0cd56c16c50ad7579c",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "integrated:kitchen",
+      "file": "integrated-kitchen.png",
+      "sha": "e9f362299e008c70f18b6b7156da54458350da03623766fd9945f1da51aa90c6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:fields",
+      "file": "desktop-fields.png",
+      "sha": "6e5c516ab15cd6521b320bcd3cb36549a636b382f80dc5f5bd5d70f1cff3ee74",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "mobile:fields",
+      "file": "mobile-fields.png",
+      "sha": "2c69d43e1c974b34a4b192750fe9ca2b27d8677e7f7271e0eb86f78d22c6a76d",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "integrated:fields",
+      "file": "integrated-fields.png",
+      "sha": "67f13996f5e81384f4e7a2650cc0fb0454d949b499dfe2cca187eaa1b3737ca8",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "desktop:river",
+      "file": "desktop-river.png",
+      "sha": "42c3aa521144f0e15c77c6fcbd445efaab25330c1d83b0fa63fb825d8df0f869",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:river",
+      "file": "mobile-river.png",
+      "sha": "d953c5dbe3a430d8b8a2ffd2186bc673a8b10c5624193221bd8cb1e811460db9",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "integrated:river",
+      "file": "integrated-river.png",
+      "sha": "5c92427bf4e8d186bd8077f93011e4c55f2205a3afe2c96af381d84e42479409",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:quarry",
+      "file": "desktop-quarry.png",
+      "sha": "54898f7c0718038269b2a335f64754ffd1c40e54e01cf69b6a21aac5910e91c0",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "mobile:quarry",
+      "file": "mobile-quarry.png",
+      "sha": "b9ec6daec6905eaf0805687b1c226defd5a2c20d475fcec3884536b1a574c94c",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "integrated:quarry",
+      "file": "integrated-quarry.png",
+      "sha": "e6edda49a359bf751e2f941c866d9330db8fba2c99f7ff9aa310c97a990e65ef",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:ruins",
+      "file": "desktop-ruins.png",
+      "sha": "b1676afd727836ff1b538381548175d2aa92088f2c572259ac06243eec60c143",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "mobile:ruins",
+      "file": "mobile-ruins.png",
+      "sha": "1cb782e2aa89658e94df0bb40fa3fa952a87e3db8a0d30aa0fbf7f8b0c04866a",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "integrated:ruins",
+      "file": "integrated-ruins.png",
+      "sha": "2cfa3d7c5cb81e7e164d65529c469814f676d81579867f1269fbcd8f0ccd7242",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:hollow",
+      "file": "desktop-hollow.png",
+      "sha": "05f22e9b05808c13a817be253f4e8ab10365cb337881a2faceb41046948331c9",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "mobile:hollow",
+      "file": "mobile-hollow.png",
+      "sha": "acce6b3d5e6cae750300431e66a2df0fc7a42ac97c0e6df58dde2b2ff2ec4bb6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "integrated:hollow",
+      "file": "integrated-hollow.png",
+      "sha": "5fc68ca217f5305779d13bf571c34ee7c26c2145e1421e23d57497796c1c627f",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:shore",
+      "file": "desktop-shore.png",
+      "sha": "741d9f4d796ff75a0700dfc469dc99556476f2b21bf5e0153829b1aede67e547",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "mobile:shore",
+      "file": "mobile-shore.png",
+      "sha": "5a03ee1b5a46c9696f13349a1701221e4af7e13261925dc8b204f4ef06faf4a4",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "integrated:shore",
+      "file": "integrated-shore.png",
+      "sha": "3aaaf14239b6b3d29104eb6c1a52e38243fdbe6920112b05900160ab8cbc66fe",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:granary",
+      "file": "desktop-granary.png",
+      "sha": "97b10f0e6d033530e1b5d535338e1a01ba35a04d2aa47568202c0fd6a5b77c50",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:granary",
+      "file": "mobile-granary.png",
+      "sha": "2ee8edbfd11e25ec3e7e4017f5aa45144d2bd414c213a49eab43e76b7e3c45bd",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "integrated:granary",
+      "file": "integrated-granary.png",
+      "sha": "ff76e134291810164854e4d956c8ce8795e71b4132389e2aad479cd96e30ba5f",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "desktop:goblins",
+      "file": "desktop-goblins.png",
+      "sha": "fb4e715c70073fc44f3bcf8140e736ccf4b703945d64823e03031640e64ff9c5",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "mobile:goblins",
+      "file": "mobile-goblins.png",
+      "sha": "3b366b681fc0134abf2d29571e660c314c7216bb1e101a6a7108bf36f334d065",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "integrated:goblins",
+      "file": "integrated-goblins.png",
+      "sha": "8b1f83cad095386dbddb61d9c377eedd1498e5b01024df0693dff240146b5f4a",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:west_gate",
+      "file": "desktop-west_gate.png",
+      "sha": "e3ac697c33d981aa4df33df1a418214a5d5ad85f0755bba5550e9a6395fb36e1",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "mobile:west_gate",
+      "file": "mobile-west_gate.png",
+      "sha": "073e089f8c7a52f7160e1c44df5d43083c0fc1e9259a991542f4d9bc24f32bf3",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "integrated:west_gate",
+      "file": "integrated-west_gate.png",
+      "sha": "705ebe779275aa408475446b098a260264faf953a5faf11a406b862e7daef476",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:south_gate",
+      "file": "desktop-south_gate.png",
+      "sha": "bccedcc697186e1e00da6be30c082c6cfeda834151e1e905db21b6276c8cf3a7",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "mobile:south_gate",
+      "file": "mobile-south_gate.png",
+      "sha": "6bbc2ce3d2aa57fa1f6f7b4fc2430cb67b31194161de29fa66c00c3183ef4492",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "integrated:south_gate",
+      "file": "integrated-south_gate.png",
+      "sha": "9d1b126283c7c8a81363b47aa20a9eccb68f17c1835e8f7d4be42e0607974229",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "desktop:bridge",
+      "file": "desktop-bridge.png",
+      "sha": "e4a5bc1335450f172e5b8ba6bc601d06a7829861cad3e88645bc609afd54a420",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "mobile:bridge",
+      "file": "mobile-bridge.png",
+      "sha": "9c4a381574c7bf62fda4f26271d8fadaef99a29962e9abd78c6c262d52ba3b14",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "integrated:bridge",
+      "file": "integrated-bridge.png",
+      "sha": "67b78249e3926ab82d115d7d7ae29249684e7d1799aaf3e38be65bc5b74bf00e",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:bulls",
+      "file": "desktop-bulls.png",
+      "sha": "9ea5ad50bfacef783e58f3b4140376a19ddd1e4f5f162488debd2037d7fd4f87",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "mobile:bulls",
+      "file": "mobile-bulls.png",
+      "sha": "23356d2c7875efee798292f43c3132f1bf6c7b5451fbdada828fa5917297beed",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "integrated:bulls",
+      "file": "integrated-bulls.png",
+      "sha": "f2f60431f5cdf873593c997ab61c00d4f3499c2bac9e5615afa97d87556501a0",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:chickens",
+      "file": "desktop-chickens.png",
+      "sha": "7d0b90d3fe2e99e19c9b6f392f5ffdf6543e0c0cfded69069a0bf4e1df492002",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "mobile:chickens",
+      "file": "mobile-chickens.png",
+      "sha": "4a53eaa97ce6bf4ee219b33ee91358c2595785ab831ace47fe326977c604279d",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
+      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+    },
+    {
+      "id": "integrated:chickens",
+      "file": "integrated-chickens.png",
+      "sha": "6410fb3ccd61fa60a26baf487130c905cfb5192b3f6079ea6e3f72fc16fb6e3d",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "desktop:enter_grondar",
+      "file": "desktop-enter_grondar.png",
+      "sha": "bc460449906db3950a1b3c684b10104670ed8f00f72402e460bbef207dd411be",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:enter_grondar",
+      "file": "mobile-enter_grondar.png",
+      "sha": "438ffc26bbc190ce937b91d60c4a35b6380de5640dc6067fe713ec0d778717df",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "desktop:enter_pasture",
+      "file": "desktop-enter_pasture.png",
+      "sha": "5c4fc0652f900f8df233887a0216552ff74d7a670dfff4364fc5357e367d5a1a",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:enter_pasture",
+      "file": "mobile-enter_pasture.png",
+      "sha": "ebcaea7f76625e579f61b9061c07a9b84d5ed66e2e496b34ad5ef9d661272020",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "desktop:enter_fiend",
+      "file": "desktop-enter_fiend.png",
+      "sha": "eb7f275eb0b150d3888d5c1c99d2c1dda872711845badc44b790c27bf17cdfe7",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:enter_fiend",
+      "file": "mobile-enter_fiend.png",
+      "sha": "a55ad5aeafc9e5a05b8979d66795f5f7921475c75cc50da62bda8ccff6968c90",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "desktop:enter_dragons",
+      "file": "desktop-enter_dragons.png",
+      "sha": "88a5f5d13bfe52f30ca7d3771b21a0212a7fceaaaddfe94451a864179ad33226",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:enter_dragons",
+      "file": "mobile-enter_dragons.png",
+      "sha": "c40f4abeee5fb9d3fd4010e27379cebd5954e6aaeedbcf944b657f69deee8f37",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "desktop:enter_zaryth",
+      "file": "desktop-enter_zaryth.png",
+      "sha": "90e5836e3c5da4481bd9e6a849c3c43503a5e95a48330f34024efadf64193952",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:enter_zaryth",
+      "file": "mobile-enter_zaryth.png",
+      "sha": "135429031e684f5c6c5c7392d4348e35c96eb81727e62b46b24d4c24997df4c4",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:return_grondar_lair",
+      "file": "mobile-return_grondar_lair.png",
+      "sha": "b5456d2f779464c480dcfef5319b38aa359dda503a66dab9cd08cba2e6e21272",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:return_cow_pasture",
+      "file": "mobile-return_cow_pasture.png",
+      "sha": "ec6c65c286fe353fc439c8cb466728de81dcb077224fda2549ace6c6c190e233",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:return_fiend_pit",
+      "file": "mobile-return_fiend_pit.png",
+      "sha": "5672e3a97189fefedcaba7c900f25d1e5187fc95671ada99f00b74096e4e5601",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:return_dragon_roost",
+      "file": "mobile-return_dragon_roost.png",
+      "sha": "16964a9af6a91c98e30d3752e020d129a3c6ebc466576d19da8de60cbd92e077",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:return_zaryth_throne",
+      "file": "mobile-return_zaryth_throne.png",
+      "sha": "adf6d569d1e9f9ec9208e184d62a8abec918f0b1a0d6c53c9f8ad5a600afa103",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "desktop:journey_guidance",
+      "file": "desktop-journey_guidance.png",
+      "sha": "c7ab2c01ad1965df5a87e0c525ec78b5ed144177e647a8661a35dd77ce380d62",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "desktop:destination_map",
+      "file": "desktop-destination_map.png",
+      "sha": "4ec93ff9d14e05c31518da293eb2c16d5168ba644fbf3fbd73c47069b46cfba1",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:journey_guidance",
+      "file": "mobile-journey_guidance.png",
+      "sha": "5c3a693e97fe830407b03312b88b44a7596c3b3b5dc9695398e380f9ab85fa0a",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:destination_map",
+      "file": "mobile-destination_map.png",
+      "sha": "b68223f14178d487cc54b19bd7ec834678a229d008e7bb071e95effa4b21353c",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:entry_ready",
+      "file": "mobile-entry_ready.png",
+      "sha": "eb01ac5f5e5693a98897bff89e170de81d6e35dce91eee0e2f6e85b2187ee56c",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "native-current"
+    },
+    {
+      "id": "mobile:entry_saving",
+      "file": "mobile-entry_saving.png",
+      "sha": "5df40a5c58f29f962004bb8d57e75a64137fbf33015128bc4b74912590406799",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    },
+    {
+      "id": "mobile:entry_error",
+      "file": "mobile-entry_error.png",
+      "sha": "6bd835e099528c31c08155f2f36f886f8750f0112f6e776ee5cb552c7839e91a",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "prior-native-byte-identical",
+      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
+      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+    }
+  ],
+  "creatures": [
+    {
+      "state": "attack",
+      "sha": "ee3cc076bb09cdba1dec65afbfa854f8fa68c167d104fa01ce58c7f91a54372b",
+      "review": "native-current"
+    },
+    {
+      "state": "death",
+      "sha": "4ffb4f24efbdcc8d1458e33be713c6485a56824863de0e334bf3a71ba255ff92",
+      "review": "native-current"
+    },
+    {
+      "state": "hit",
+      "sha": "97bab85e63fc3846f0c3a47e31a28bd12975083c26141c9e940d108a1975ed78",
+      "review": "native-current"
+    },
+    {
+      "state": "idle",
+      "sha": "08bdb37544c645ab23d47cecc2a9600e4c26c7f656bd4aedacba8bed3654f1dc",
+      "review": "native-current"
+    }
+  ],
+  "generatedFiles": [
+    {
+      "file": "lumbright.json",
+      "path": "world/zones/lumbright.json",
+      "length": 69573,
+      "sha": "40af49cc0bd1a8edb4a7c538dbcbb7c39f49252b010db5f693c5e5c72da514d6"
+    },
+    {
+      "file": "overworld.json",
+      "path": "world/zones/overworld.json",
+      "length": 225954,
+      "sha": "038e5c8f6a5d154ae1974ac83c63f6858b858724bd5b91a8f4ead1b1ac667746"
+    },
+    {
+      "file": "grondar_lair.json",
+      "path": "world/zones/grondar_lair.json",
+      "length": 20486,
+      "sha": "a6c917c4e4fa7b0547bcbb3e879391c612d7b8a2f07f9341e898191a4bbb64de"
+    },
+    {
+      "file": "cow_pasture.json",
+      "path": "world/zones/cow_pasture.json",
+      "length": 25583,
+      "sha": "9521f16e8a87d73123809ed280ab52e4047299b072398870bad28b48b5fd7ea9"
+    },
+    {
+      "file": "fiend_pit.json",
+      "path": "world/zones/fiend_pit.json",
+      "length": 18107,
+      "sha": "917f3bf2d47b63b6cc90c39a3de1ab166d74abe5df9dbc1c4bfb9aed7accd8fe"
+    },
+    {
+      "file": "dragon_roost.json",
+      "path": "world/zones/dragon_roost.json",
+      "length": 43204,
+      "sha": "321616070abfcf51cc63f2bd4914e256ea15759284aac19819994dd3074e0e4d"
+    },
+    {
+      "file": "zaryth_throne.json",
+      "path": "world/zones/zaryth_throne.json",
+      "length": 20778,
+      "sha": "fb2840933baa187aa71053ebec448ba1c4f0e47368bf37ea4aaa7dca0feb744f"
+    },
+    {
+      "file": "assets.generated.json",
+      "path": "world/authoring/assets.generated.json",
+      "length": 24075,
+      "sha": "40092365ebe07e11c1173656e77eef31ca0762ca624a1ce4864aa56f101336c3"
+    },
+    {
+      "file": "report.json",
+      "path": "world/authoring/reports/lumbright.json",
+      "length": 55974,
+      "sha": "101a2120de5e78c7e5b1ea4ece2742fc3201061ccd2644b835f3000b30ce52c2",
+      "serialization": "This gallery formats report JSON with two spaces; the repository uses the compiler-defined one-space serialization of the same data."
+    },
+    {
+      "file": "knowledge.js",
+      "path": "functions/_lib/chat/knowledge.js",
+      "length": 253697,
+      "sha": "121bedc16f6d9e98b42e37675144963dd4a62f04a4a4317672ed9042266e5c5e"
+    }
+  ]
+}

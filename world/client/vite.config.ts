@@ -5,6 +5,7 @@ const root = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   root,
+  esbuild: {jsx: 'automatic', jsxImportSource: 'preact'},
   // The world ships from the same Worker as the game, staged into
   // dist_site/world/ (scripts/stage-site.mjs). Every emitted reference has to
   // carry the prefix, because one Worker has one assets directory and the

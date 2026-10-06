@@ -9,4 +9,5 @@ export interface Env {
   /** Preview-only: "true" bypasses every quest requirement. Never set on the
    * production environment — see src/engine/questGates.js. */
   DISABLE_QUEST_REQUIREMENTS?: string
+  WORLD_PREVIEW_TRAVEL?: string
 }
