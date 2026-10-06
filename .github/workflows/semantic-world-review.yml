@@ -44,7 +44,7 @@ jobs:
           python3 tools/agent-skills.py
           python3 tools/agent-skills.py --check
       - name: Exercise semantic authoring behavior
-        run: npm --prefix world test -- tests/authoring.test.ts
+        run: npm --prefix world test -- tests/authoring.test.ts tests/tick.test.ts
       - name: Check the idle game
         run: npm run ci
       - name: Check the world
