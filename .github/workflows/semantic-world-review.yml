@@ -26,6 +26,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -60,11 +62,15 @@ jobs:
         run: node scripts/render-proc.mjs dustpaw_rat --out world/preview-shots/creatures
       - name: Capture desktop, mobile and integrated world views
         run: npm --prefix world run author:review
+      - name: Verify checked-in outputs and current visual approval
+        run: |
+          git diff --exit-code -- world/zones/lumbright.json world/zones/overworld.json world/authoring/assets.generated.json world/authoring/reports/lumbright.json
+          npm --prefix world run author:release
       - name: Preserve review evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: semantic-lumbright-${{ github.sha }}
+          name: semantic-lumbright-${{ github.event.pull_request.head.sha }}
           path: |
             world/preview-shots/**
             world/authoring/reports/**

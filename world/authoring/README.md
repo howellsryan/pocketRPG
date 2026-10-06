@@ -38,13 +38,13 @@ Generated `zones/lumbright.json`, `zones/overworld.json`, `assets.generated.json
 
 The contract explicitly lists deferred spatial activities and portable idle actions. New, unclassified activity families fail until an adapter policy is chosen. Gathering/combat/facility parity is scoped explicitly; it does not certify every idle activity as playable outdoors.
 
-The audit includes canonical membership, footprint boxes, named points, review cameras, counts and explicit budgets. `visualApproval: pending` is intentional: numerical validity cannot certify composition.
+The audit includes canonical membership, footprint boxes, named points, canonical road connections, review cameras, counts and explicit budgets. `visualApproval: pending` is intentional: numerical validity cannot certify composition.
 
 ## Agent authoring order
 
 1. Read the canonical contract and the location's lore. Write a short design intent and a newcomer loop. Do not add resources because another game puts them in its starter town.
 2. Place a visible dominant landmark and named hubs/approaches. Reserve safe routes and open interaction approaches before building lots. Width-three roads and width-one optional trails are supported; diagonal connections need orthogonal waypoints.
-3. Place complete prefabs. `turns` rotates all local layers in quarter turns and namespaces instance identities. Per-model `rot`/scale control the actual mesh. Native fronts are verified in renders, not guessed from bounding boxes.
+3. Declare boundary gateway connections to every canonical travel neighbor. The compiler requires reserved, walkable roads at the gateway and boundary. Overworld integration protects the region's paint and validates a continuous road to each destination. Place complete prefabs. `turns` rotates all local layers in quarter turns and namespaces instance identities. Per-model `rot`/scale control the actual mesh. Native fronts are verified in renders, not guessed from bounding boxes.
 4. Bind resources with `skill:<skill>:<action>`, `gather:<task>` or `facility:<facility>`. Bind encounters with `combat:<monster>`. Multiplicity is authored; identity and membership come from owning data.
 5. Dress purposeful pockets: ordered crop rows, work yards, framed paths, shore detail and clustered woodland. Use seeded groves for edges and ground cover, never a uniform map-wide prop lottery.
 6. Add ambient villagers in entirely walkable rectangles. The current cheap ambient walker interpolates straight lines; a rectangle with an obstacle is rejected to prevent villagers crossing walls.
@@ -66,7 +66,7 @@ The server resolves new `fishing_spot` and `gather_site` objects, validates adja
 
 `author:review` captures every authored close view at desktop 1280×800, portrait 390×844, and the translated overworld location, plus an overview. Every bound resource, monster and facility must have explicit close-view coverage; an overview-only camera set fails compilation. It waits for all props, statics, scatter, ambient, creature and hero loads, uses the real gameplay camera/shadows, and fails on missing assets or browser errors. The command checks generated-file freshness and builds the current client before capture. Snapshots settle animations at a fixed ambient time and render one frame; the interactive preview retains its animation loop. Integrated gameplay views use the server's settled AOI rule. The preview deliberately has no server simulation or gameplay HUD.
 
-Look at composition, recognizable silhouettes, entrances/fronts, collision against visible shapes, floats/intersections, road continuity, repeated blocks, lighting, occlusion at portrait width, and whether every pocket communicates its purpose. Review the rat's idle/attack/hit/death renders and its world size. Record specific criticism and corrections; do not approve a contact sheet by its existence.
+Look at composition, recognizable silhouettes, entrances/fronts, collision against visible shapes, floats/intersections, road continuity, repeated blocks, lighting, occlusion at portrait width, and whether every pocket communicates its purpose. Check that each regional entrance meets a continuous painted, walkable route to its canonical neighboring destination. Review the rat's idle/attack/hit/death renders and its world size. Record specific criticism and corrections; do not approve a contact sheet by its existence.
 
 Approval is a versioned `reviews/lumbright.json` receipt with `sourceHash`, `verdict: approved`, `reviewedBy`, `evidenceUrl`, and the desktop overview plus all `desktop:<id>`/`mobile:<id>`/`integrated:<id>` close-view identities. Run `author:release` to reject missing/stale review evidence. Changing canonical data, assets, composition, renderer or capture code invalidates the fingerprint. A report does not self-approve.
 
@@ -79,3 +79,5 @@ The visual map builder understands the new object types and preserves their iden
 ## Next expansion
 
 Prove the starter loop in a live beta session, including save/return to idle. Then author one connected neighboring region with the same contract/gates. Add dedicated quest/dialogue/route-sign adapters and reusable district templates before increasing map area. Add real mobile and multiplayer performance gates before scaling population. No framework replacement is required for this authoring pipeline.
+
+See the [Lumbright review](reviews/lumbright.md) for rejected candidates, inspected evidence and approval limits. The [MMORPG delivery order](../../docs/mmorpg-next-steps.md) covers live proof, progression ownership and simulation scaling.
