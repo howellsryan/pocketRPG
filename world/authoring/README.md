@@ -6,7 +6,7 @@ Lumbright is the first complete region source. Its resources, creatures and faci
 
 Routine semantic review runs in **Cloudflare Workers Builds** on the separate `pocketrpg-world-review` service. It has no gameplay API, D1 or Durable Objects. Its static evidence page can have an immutable version URL; the game preview cannot because it hosts Durable Objects.
 
-Build command: `npm run world:review:cloudflare`. Deploy command: `npx wrangler deploy --config wrangler.review.jsonc`. The trigger watches semantic inputs and review infrastructure on `world/*` and `main`. Author world changes on a `world/` branch. Dependency caching is enabled. The first setup is on `world/semantic-lumbright`; these commands become available to other branches when the implementation reaches their base.
+Build command: `npm run world:review:cloudflare`. The main trigger publishes with `npx wrangler deploy --config wrangler.review.jsonc`; the non-main trigger uploads separate review versions with `npx wrangler versions upload --config wrangler.review.jsonc`. Cloudflare requires separate main/preview triggers rather than an arbitrary list of production branches. Both watch semantic inputs and review infrastructure, with documentation-only changes excluded and dependency caching enabled. Author world changes on a `world/` branch. These commands become available to other branches when the implementation reaches their base.
 
 The build bootstraps pinned skills, runs the evidence-validator tests, installs the world dependencies, runs `npm run ci` and `npm run world:check`, checks generated-file freshness, and captures the four rat states and all 49 world views. Cloudflare's Ubuntu 24.04 image is not root: Chromium libraries are downloaded with isolated writable apt state/cache and extracted inside the build directory, without installing host packages. Both pinned Playwright browser revisions are retained. The rendering/capture implementation and source fingerprint are unchanged.
 
@@ -14,7 +14,7 @@ The published gallery includes full PNGs, JPEG previews, contact sheets, the cap
 
 An evidence build may publish a candidate with **visual approval pending**. Inspect every full-size required view, criticize it and update the versioned receipt only after review. Capture success does not self-approve. `build:site` runs `author:release` before staging assets, so the game deployment rejects missing or stale visual approval. This receipt only proves the scope stated in it; it cannot certify a production MMORPG.
 
-Open the gallery's exact commit path and confirm its manifest. Keep its immutable Cloudflare version URL in the next review receipt. The service's root shows the latest build; another deployment can replace that root. Preserve selected review images in source control and download complete evidence when long-term retention is required.
+Open the gallery's exact commit path and confirm its manifest. Keep its immutable Cloudflare version URL in the next review receipt. The service's root shows the latest deployed gallery. A branch upload has its own version URL and does not replace that root; another main deployment can replace it. Preserve selected review images in source control and download complete evidence when long-term retention is required.
 
 `.github/workflows/semantic-world-review.yml` is a manual fallback (`workflow_dispatch`), so semantic edits no longer start the expensive GitHub capture job. Deliberately dispatching the fallback still uses GitHub minutes. Other existing GitHub jobs are separate from this migration.
 
