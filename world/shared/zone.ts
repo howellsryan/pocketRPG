@@ -1,11 +1,16 @@
+import { resourceNodeFor } from './resources'
 import { isGroundKind, type ZoneGroundRegion } from './groundKinds'
 
 export type ZoneObjectDef = {
   id: string
-  type: 'rock' | 'bank_chest' | 'tree' | 'furnace' | 'anvil' | 'range'
+  type: 'rock' | 'bank_chest' | 'tree' | 'fishing_spot' | 'gather_site' | 'furnace' | 'anvil' | 'range'
   rock?: string
   /** Woodcutting action id ('normal', 'oak', …) for type 'tree'. */
   tree?: string
+  /** Canonical Fishing action for a shoreline resource. */
+  fishing?: string
+  /** Canonical repeatable, input-free fieldwork task. */
+  gather?: string
   x: number
   z: number
 }
@@ -177,6 +182,9 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
     }
     if (obj.type === 'tree' && !obj.tree) errors.push(`tree '${obj.id}' is missing its action id`)
     if (obj.type === 'rock' && !obj.rock) errors.push(`rock '${obj.id}' is missing its action id`)
+    if ((obj.type === 'fishing_spot' || obj.type === 'gather_site') && !resourceNodeFor(obj)) {
+      errors.push(`resource '${obj.id}' has a missing or unsupported canonical action`)
+    }
   }
   for (const npc of zone.npcs) {
     if (seenIds.has(npc.id)) errors.push(`duplicate id '${npc.id}'`)

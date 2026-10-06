@@ -12,6 +12,7 @@ import { CATEGORY_ICON_KEY, STATIC_CATEGORY } from '../../shared/mapCategories'
 import { uiIconMarkup } from './itemIcon'
 import worldData from '../../../src/data/world.json'
 import monstersData from '../../../src/data/monsters.json'
+import { resourceAction, resourceNodeFor } from '../../shared/resources'
 import skillsData from '../../../src/data/skills.json'
 import { MONSTER_ART } from '../../../src/utils/combatArt.js'
 import { registerEscapeHandler } from './ui'
@@ -66,14 +67,14 @@ export type WorldMapData = {
 const PLACE_EMOJI_FALLBACK = '📍'
 const MONSTER_ICON_FALLBACK = '👹'
 const CATEGORY_LABEL: Record<string, string> = {
-  bank: 'Bank', smithing: 'Smithing', cooking: 'Cooking', mining: 'Mining', woodcutting: 'Woodcutting',
+  bank: 'Bank', smithing: 'Smithing', cooking: 'Cooking', mining: 'Mining', woodcutting: 'Woodcutting', fishing: 'Fishing', gather: 'Fieldwork',
   place: 'Place', monster: 'Monster', exit: 'Exit',
 }
 // Filter chips group the four skilling categories under one "Skilling" toggle.
 const FILTER_CHIPS: { label: string; categories: string[] }[] = [
   { label: 'Places', categories: ['place'] },
   { label: 'Banks', categories: ['bank'] },
-  { label: 'Skilling', categories: ['smithing', 'cooking', 'mining', 'woodcutting'] },
+  { label: 'Skilling', categories: ['smithing', 'cooking', 'mining', 'woodcutting', 'fishing', 'gather'] },
   { label: 'Monsters', categories: ['monster'] },
 ]
 
@@ -207,6 +208,11 @@ function describeSkillNode(staticObj: StaticObject | undefined, category: string
   if (category === 'woodcutting' && staticObj?.tree) {
     const action = woodcuttingActions[staticObj.tree]
     return action ? `${action.name} (Woodcutting Lv ${action.level})` : 'A choppable tree.'
+  }
+  if ((category === 'fishing' || category === 'gather') && staticObj) {
+    const node = resourceNodeFor(staticObj)
+    const action = node && resourceAction(node)
+    if (action) return action.description ?? `${action.name} (Fishing Lv ${action.level})`
   }
   if (category === 'smithing') return 'Smelt bars at the furnace, smith gear at the anvil.'
   if (category === 'cooking') return 'Cook raw food at the range.'

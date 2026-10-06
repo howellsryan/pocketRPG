@@ -35,6 +35,14 @@ export function placeEntry(def: ZoneDef, entry: CatalogEntry, x: number, z: numb
     def.objects.push({ id: genId(def, 'tree'), type: 'tree', tree: entry.tree, x, z })
     return { group: 'objects', index: def.objects.length - 1 }
   }
+  if (entry.kind === 'fishing_spot') {
+    def.objects.push({ id: genId(def, 'fishing'), type: 'fishing_spot', fishing: entry.fishing, x, z })
+    return { group: 'objects', index: def.objects.length - 1 }
+  }
+  if (entry.kind === 'gather_site') {
+    def.objects.push({ id: genId(def, 'gather'), type: 'gather_site', gather: entry.gather, x, z })
+    return { group: 'objects', index: def.objects.length - 1 }
+  }
   if (entry.kind === 'object') {
     const prefix = entry.objectType === 'bank_chest' ? 'chest' : entry.objectType
     def.objects.push({ id: genId(def, prefix), type: entry.objectType, x, z })

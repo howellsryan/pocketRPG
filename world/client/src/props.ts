@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { tileToWorld } from './scene'
 import type { PropPlacement } from '../../shared/protocol'
+import { PROP_BASE_SCALE } from '../../shared/propScale.js'
 import { modelUrl } from './assetBase'
 
 // Scenery dressing from the zone JSON `props` list: pure visuals — no pick
@@ -10,37 +11,7 @@ import { modelUrl } from './assetBase'
 
 // Kenney nature-kit models are authored ~1 unit tall; base scales size each
 // model against the 1-unit tile grid, multiplied by the placement's own scale.
-const BASE_SCALE: Record<string, number> = {
-  pine_a: 1.7,
-  pine_b: 1.6,
-  bush: 1.4,
-  mushrooms: 1.1,
-  flowers: 1.1,
-  boulder: 1.3,
-  // Varrick capital landmarks (native model bounds → tile-grid units).
-  castle: 3.0,
-  fountain: 1.5,
-  stall: 1.8,
-  banner: 2.0,
-  altar: 1.6,
-  crypt: 2.2,
-  column: 2.0,
-  dungeon_stairs: 0.9,
-  dungeon_door: 0.8,
-  // Pasture and pit dressing (native model bounds → tile-grid units).
-  fence: 1.0,
-  fence_gate: 1.0,
-  wheat: 1.4,
-  hay_bale: 1.6,
-  hay_stack: 1.8,
-  torch: 1.6,
-  stone_spire: 1.9,
-  stone_spire_ember: 1.9,
-  stone_slab: 1.4,
-  skull: 0.32,
-  bones: 1.2,
-  obelisk: 2.6,
-}
+export { PROP_BASE_SCALE } from '../../shared/propScale.js'
 export async function createProps(scene: THREE.Scene, props: PropPlacement[]): Promise<void> {
   if (props.length === 0) return
   const urls = [...new Set(props.map((p) => p.model))]
@@ -61,7 +32,10 @@ export async function createProps(scene: THREE.Scene, props: PropPlacement[]): P
     const obj = template.scene.clone(true)
     obj.position.copy(tileToWorld(p.x, p.z))
     if (p.rot) obj.rotation.y = p.rot
-    obj.scale.setScalar((BASE_SCALE[p.model] ?? 1) * (p.scale ?? 1))
+    obj.scale.setScalar(((PROP_BASE_SCALE as Record<string, number>)[p.model] ?? 1) * (p.scale ?? 1))
+    obj.traverse((child) => {
+      if (child instanceof THREE.Mesh) { child.castShadow = true; child.receiveShadow = true }
+    })
     group.add(obj)
   }
   scene.add(group)

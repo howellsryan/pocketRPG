@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "description": "Curated shipped scenery from build-props.mjs. Keep asymmetrical native bounds; measure the actual GLB. Scenery is visual unless collision is generated from its bounds.",
+  "props": {
+    "castle": {
+      "role": "building",
+      "blocking": true
+    },
+    "house": {
+      "role": "building",
+      "blocking": true
+    },
+    "market": {
+      "role": "building",
+      "blocking": true
+    },
+    "mill": {
+      "role": "building",
+      "blocking": true
+    },
+    "well": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "stall": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "lantern": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "cart": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "banner": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "fence": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "fence_gate": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "wheat": {
+      "role": "groundcover",
+      "blocking": false
+    },
+    "hay_bale": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "hay_stack": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "stone_slab": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "stone_spire": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "boulder": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "pine_a": {
+      "role": "canopy",
+      "blocking": true
+    },
+    "pine_b": {
+      "role": "canopy",
+      "blocking": true
+    },
+    "bush": {
+      "role": "groundcover",
+      "blocking": false
+    },
+    "flowers": {
+      "role": "groundcover",
+      "blocking": false
+    },
+    "obelisk": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "altar": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "crypt": {
+      "role": "building",
+      "blocking": true
+    },
+    "column": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "watchtower": {
+      "role": "building",
+      "blocking": true
+    },
+    "torch": {
+      "role": "dressing",
+      "blocking": true
+    }
+  }
+}

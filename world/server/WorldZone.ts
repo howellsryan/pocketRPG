@@ -1,3 +1,4 @@
+import { resourceNodeFor } from '../shared/resources'
 import { Server, type Connection as PartyConnection } from 'partyserver'
 import { verifyJWT } from '../../functions/_lib/jwt.js'
 import { findPath, findPathAdjacent } from './pathfind'
@@ -371,11 +372,10 @@ export class WorldZone extends Server<Env> {
     if (!this.rocks) {
       this.rocks = new Map(
         this.zone.objects
-          .filter((o) => (o.type === 'rock' && o.rock) || (o.type === 'tree' && o.tree))
+          .filter((o) => Boolean(resourceNodeFor(o)))
           .map((o) => [o.id, {
             id: o.id,
-            rock: o.type === 'tree' ? o.tree! : o.rock!,
-            skill: o.type === 'tree' ? 'woodcutting' as const : 'mining' as const,
+            ...resourceNodeFor(o)!,
             x: o.x,
             z: o.z,
             depletedUntilTick: 0,
@@ -1448,7 +1448,7 @@ export class WorldZone extends Server<Env> {
     let target: { x: number; z: number } | null = null
     let intent: Player['pendingInteract'] = null
 
-    if (message.kind === 'rock' && (message.action === 'mine' || message.action === 'chop')) {
+    if (message.kind === 'rock' && (message.action === 'mine' || message.action === 'chop' || message.action === 'fish' || message.action === 'gather')) {
       // startInteract re-validates the verb against the node's skill.
       const rock = this.ensureRocks().get(message.id)
       if (!rock) return

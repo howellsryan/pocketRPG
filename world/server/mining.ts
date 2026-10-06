@@ -6,7 +6,7 @@ import type { InvSlot } from '../shared/protocol'
 
 export type MiningAction = { id: string; name: string; level: number; ticks: number; xp: number; product: string }
 
-type SkillsData = { mining: { actions: MiningAction[] }; woodcutting: { actions: MiningAction[] } }
+type SkillsData = { mining: { actions: MiningAction[] }; woodcutting: { actions: MiningAction[] }; fishing: { actions: MiningAction[] } }
 type ItemsData = Record<string, { stackable?: boolean } | undefined>
 
 export const MINING_ACTIONS: Record<string, MiningAction> = Object.fromEntries(
@@ -17,7 +17,11 @@ export const WOODCUTTING_ACTIONS: Record<string, MiningAction> = Object.fromEntr
   (skillsData as unknown as SkillsData).woodcutting.actions.map((a) => [a.id, a])
 )
 
-export type GatherSkill = 'mining' | 'woodcutting'
+export const FISHING_ACTIONS: Record<string, MiningAction> = Object.fromEntries(
+  (skillsData as unknown as SkillsData).fishing.actions.map((a) => [a.id, a])
+)
+
+export type GatherSkill = 'mining' | 'woodcutting' | 'fishing'
 
 /** Per-skill gather config: real skills.json actions, the interact verb the
  * wire uses, and the level-gate message. Trees are a mining reskin — one state
@@ -27,6 +31,11 @@ export const GATHER_SKILLS: Record<GatherSkill, { actions: Record<string, Mining
     actions: MINING_ACTIONS,
     verb: 'mine',
     levelMsg: (level) => `You need Mining level ${level} to mine this rock.`,
+  },
+  fishing: {
+    actions: FISHING_ACTIONS,
+    verb: 'fish',
+    levelMsg: (level) => `You need Fishing level ${level} to fish here.`,
   },
   woodcutting: {
     actions: WOODCUTTING_ACTIONS,

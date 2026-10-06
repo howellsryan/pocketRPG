@@ -1,3 +1,4 @@
+import { AMBIENT_MODELS } from '../../shared/ambientModels'
 import * as THREE from 'three'
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
@@ -24,19 +25,7 @@ import { modelUrl } from './assetBase'
 // unreliable for skinned meshes — same reason as monsterModels.ts). `target`
 // is render height in tiles: field critters read smaller and cuter than their
 // combat cousins; villagers are human-scale.
-const CRITTERS: Record<string, { url: string; target: number; b: { minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number } }> = {
-  chicken: { url: '/models/chicken.glb', target: 0.55, b: { minX: -1.17, maxX: 1.17, minY: -0.01, maxY: 2.34, minZ: -0.8, maxZ: 1.3 } },
-  frog: { url: '/models/frog.glb', target: 0.4, b: { minX: -2.32, maxX: 2.32, minY: -0.01, maxY: 2.68, minZ: -0.58, maxZ: 0.97 } },
-  // Target 1.6 matches HERO_SCALE's rendered height in entities.ts (Quaternius
-  // Ranger outfit, ~1.9 units tall raw × 0.85 ≈ 1.615) — villagers read at the
-  // same human scale as the player instead of an arbitrarily different one.
-  // Bounds are the actual posed (idle, not bind/T-pose) box from a headless
-  // three.js render of the built GLB — Box3.setFromObject in the browser
-  // evaluates skinning correctly; gltf-transform's getBounds does not.
-  villager_a: { url: '/models/villager_a.glb', target: 1.6, b: { minX: -0.36, maxX: 0.395, minY: -0.004, maxY: 1.796, minZ: -0.323, maxZ: 0.388 } },
-  villager_b: { url: '/models/villager_b.glb', target: 1.6, b: { minX: -0.366, maxX: 0.399, minY: -0.004, maxY: 1.774, minZ: -0.335, maxZ: 0.392 } },
-  villager_c: { url: '/models/villager_c.glb', target: 1.6, b: { minX: -0.36, maxX: 0.395, minY: -0.004, maxY: 1.796, minZ: -0.323, maxZ: 0.388 } },
-}
+const CRITTERS = AMBIENT_MODELS
 
 // A rect fully walled in (author error, or a rect drawn over a building) must
 // not spin forever hunting for a walkable point — after this many misses the
@@ -182,7 +171,7 @@ export function walkerFramesAt(collision: string[], walkers: Walker[], elapsedSe
   })
 }
 
-export type AmbientLayer = { update: (dt: number) => void; dispose: () => void }
+export type AmbientLayer = { ready: Promise<void>; update: (dt: number) => void; dispose: () => void }
 
 /** Builds the ambient layer: kicks off critter/villager model loads (instances
  * appear as each GLB resolves) and adds the smoke emitters. Returns an
@@ -215,10 +204,11 @@ export function createAmbient(
     }
   })
 
-  specs.forEach((spec, specIndex) => void spawnCritters(scene, spec, walkerIndexBase[specIndex], instances))
+  const ready = Promise.all(specs.map((spec, specIndex) => spawnCritters(scene, spec, walkerIndexBase[specIndex], instances))).then(() => undefined)
 
   let bob = 0
   return {
+    ready,
     update: (dt: number) => {
       if (instances.length > 0) {
         const elapsedSeconds = Date.now() / 1000

@@ -4,7 +4,10 @@
 import type { Tile } from './pathfind'
 import { reachAgainst } from '../shared/monsterSize'
 import type { CombatStance, EntityDiff, GearDescriptor, InvSlot, StationType, ZoneEvent } from '../shared/protocol'
-import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type GatherSkill, type MiningAction } from './mining'
+import { resourceAction, type ResourceAction, type ResourceSkill } from '../shared/resources'
+import { getEffectiveToolActionTicks } from '../../src/engine/skilling.js'
+import itemsData from '../../src/data/items.json'
+import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type MiningAction } from './mining'
 import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
@@ -30,7 +33,7 @@ export type SessionStats = Record<string, { xp: number; level: number }>
 /** A gather node (ore rock or tree). `rock` holds the skill's action id —
  * 'tin'/'copper' for mining, 'normal'/'oak' for woodcutting. Missing skill
  * means 'mining' (pre-Phase-6 fixtures). */
-export type RockState = { id: string; rock: string; skill?: GatherSkill; x: number; z: number; depletedUntilTick: number }
+export type RockState = { id: string; rock: string; skill?: ResourceSkill; x: number; z: number; depletedUntilTick: number }
 
 export type PendingInteract = { kind: 'rock' | 'object' | 'npc'; id: string; action: string }
 
@@ -438,15 +441,14 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
   if (intent.kind === 'rock') {
     const rock = ctx.rocks.get(intent.id)
     if (!rock || !adjacent(player, rock)) return
-    const skill = rock.skill ?? 'mining'
-    const gather = GATHER_SKILLS[skill]
-    if (intent.action !== gather.verb) return
     const action = actionFor(rock, ctx)
-    if (!action) return
-    const level = ensureSkill(player.stats, skill).level
-    if (level < action.level) {
-      result.events.push({ e: 'msg', text: gather.levelMsg(action.level) })
-      return
+    if (!action || intent.action !== action.verb) return
+    if (action.xpSkill) {
+      const level = ensureSkill(player.stats, action.xpSkill).level
+      if (level < action.level) {
+        result.events.push({ e: 'msg', text: GATHER_SKILLS[action.xpSkill].levelMsg(action.level) })
+        return
+      }
     }
     if (inventoryIsFull(player.inventory, action.product)) {
       result.events.push({ e: 'msg', text: 'Your pack is full.' })
@@ -457,10 +459,12 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
 }
 
 /** ctx.actions (test override) only ever substitutes the mining table. */
-function actionFor(rock: RockState, ctx: TickContext): MiningAction | undefined {
-  const skill = rock.skill ?? 'mining'
-  const table = skill === 'mining' && ctx.actions ? ctx.actions : GATHER_SKILLS[skill].actions
-  return table[rock.rock]
+function actionFor(rock: RockState, ctx: TickContext): ResourceAction | undefined {
+  if ((rock.skill ?? 'mining') === 'mining' && ctx.actions) {
+    const action = ctx.actions[rock.rock]
+    return action ? { ...action, quantity: 1, xpSkill: 'mining', verb: 'mine', depletionTicks: ROCK_DEPLETED_TICKS } : undefined
+  }
+  return resourceAction(rock)
 }
 
 function tickMining(player: TickPlayer, ctx: TickContext, result: TickResult): void {
@@ -479,22 +483,27 @@ function tickMining(player: TickPlayer, ctx: TickContext, result: TickResult): v
     mining.progress = 0
     return
   }
-  player.anim = 'mine'
+  player.anim = action.verb === 'fish' || action.verb === 'gather' ? 'idle' : 'mine'
   mining.progress += 1
-  if (mining.progress < action.ticks) return
+  const duration = action.xpSkill === 'fishing'
+    ? getEffectiveToolActionTicks('fishing', action.ticks, player.equipment, itemsData, player.stats, player.inventory)
+    : action.ticks
+  if (mining.progress < duration) return
   mining.progress = 0
 
-  if (!addToInventory(player.inventory, action.product, 1)) {
+  if (!addToInventory(player.inventory, action.product, action.quantity)) {
     result.events.push({ e: 'msg', text: 'Your pack is full.' })
     player.mining = null
     player.anim = 'idle'
     return
   }
-  player.minted[action.product] = (player.minted[action.product] ?? 0) + 1
-  result.events.push(...grantSessionXp(player, rock.skill ?? 'mining', action.xp))
+  player.minted[action.product] = (player.minted[action.product] ?? 0) + action.quantity
+  if (action.xpSkill && action.xp > 0) result.events.push(...grantSessionXp(player, action.xpSkill, action.xp))
   result.events.push({ e: 'inv', inventory: player.inventory })
-  rock.depletedUntilTick = ctx.tick + ROCK_DEPLETED_TICKS
-  result.rockChanges.push({ id: rock.id, depleted: true })
+  if (action.depletionTicks > 0) {
+    rock.depletedUntilTick = ctx.tick + action.depletionTicks
+    result.rockChanges.push({ id: rock.id, depleted: true })
+  }
 }
 
 function stopCrafting(player: TickPlayer): void {

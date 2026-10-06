@@ -8,12 +8,12 @@
  * furnace and anvil are one "Smithing" pin, matching how players think about
  * a smithing site, not the two separate station objects underneath. */
 export const STATIC_CATEGORY: Record<string, string> = {
-  bank_chest: 'bank', furnace: 'smithing', anvil: 'smithing', range: 'cooking', rock: 'mining', tree: 'woodcutting',
+  bank_chest: 'bank', furnace: 'smithing', anvil: 'smithing', range: 'cooking', rock: 'mining', tree: 'woodcutting', fishing_spot: 'fishing', gather_site: 'gather',
 }
 
 // The game's own art (bespokeIcons.json via uiIconMarkup) for every static
 // category. Places and monsters use their own per-entry art (world.json's
 // emoji, combatArt.js's MONSTER_ART) and aren't part of this table.
 export const CATEGORY_ICON_KEY: Record<string, string> = {
-  bank: 'coins', smithing: 'anvil', cooking: 'cooking_pot', mining: 'mining', woodcutting: 'wood_axe', exit: 'door',
+  bank: 'coins', smithing: 'anvil', cooking: 'cooking_pot', mining: 'mining', woodcutting: 'wood_axe', exit: 'door', fishing: 'fishing_pole', gather: 'thread',
 }

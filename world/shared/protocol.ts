@@ -156,9 +156,11 @@ export type EntityDiff = {
 
 export type StaticObject = {
   id: string
-  type: 'rock' | 'bank_chest' | 'tree' | StationType
+  type: 'rock' | 'bank_chest' | 'tree' | 'fishing_spot' | 'gather_site' | StationType
   rock?: string
   tree?: string
+  fishing?: string
+  gather?: string
   x: number
   z: number
 }

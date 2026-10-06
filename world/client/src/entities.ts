@@ -82,7 +82,7 @@ export type ProcAnimator = { kind: 'proc'; proc: ProcCreature; triggered: 'attac
 export type Animator = GltfAnimator | ProcAnimator
 
 /** Boss/monster procedural render height in tiles (blend-shell path only). */
-const PROC_TARGET_HEIGHT: Record<string, number> = { warlord_grondar: 2.8 }
+const PROC_TARGET_HEIGHT: Record<string, number> = { warlord_grondar: 2.8, dustpaw_rat: 0.45, stoneback_crab: 0.7 }
 
 type Waypoint = { x: number; z: number }
 

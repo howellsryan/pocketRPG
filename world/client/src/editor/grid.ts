@@ -151,6 +151,8 @@ export class GridView {
     for (const o of this.def.objects) {
       if (o.type === 'rock') out.push({ x: o.x, z: o.z, glyph: '⛏', color: '#c9d3dd' })
       else if (o.type === 'tree') out.push({ x: o.x, z: o.z, glyph: '🌲', color: '#8fd694' })
+      else if (o.type === 'fishing_spot') out.push({ x: o.x, z: o.z, glyph: '🎣', color: '#8dcad7' })
+      else if (o.type === 'gather_site') out.push({ x: o.x, z: o.z, glyph: '🧵', color: '#d7c498' })
       else if (o.type === 'bank_chest') out.push({ x: o.x, z: o.z, glyph: '🏦', color: '#e6c56b' })
       else if (o.type === 'furnace') out.push({ x: o.x, z: o.z, glyph: '🔥', color: '#ff9a5a' })
       else if (o.type === 'anvil') out.push({ x: o.x, z: o.z, glyph: '🔨', color: '#c9d3dd' })

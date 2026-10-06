@@ -3,11 +3,12 @@ import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { tileToWorld } from './scene'
 import type { StaticObject } from '../../shared/protocol'
 import type { Pickable } from './picking'
+import { resourceAction, resourceNodeFor } from '../../shared/resources'
 import { modelUrl } from './assetBase'
 
 // Kenney nature-kit boulder tinted per ore; KayKit dungeon chest (both CC0,
 // copied from assets/open-world by hand — see the build guide's asset section).
-const ROCK_TINTS: Record<string, number> = { tin: 0x9aa5ad, copper: 0xb87333 }
+const ROCK_TINTS: Record<string, number> = { tin: 0x9aa5ad, copper: 0xb87333, clay: 0xa76d47, rune_essence: 0xb3a0cf }
 const DEFAULT_ROCK_TINT = 0x8a8a8a
 const ROCK_SCALE = 1.5
 const ROCK_DEPLETED_SCALE = 0.85
@@ -17,6 +18,8 @@ const CHEST_SCALE = 0.55
 const ROCK_INFO: Record<string, { name: string; examine: string }> = {
   tin: { name: 'Tin Rock', examine: 'A rock streaked with dull grey tin ore.' },
   copper: { name: 'Copper Rock', examine: 'A rock veined with ruddy copper ore.' },
+  clay: { name: 'Clay Deposit', examine: 'Soft clay exposed beside the outcrop.' },
+  rune_essence: { name: 'Rune Essence Deposit', examine: 'Pale stone threaded with dormant rune essence.' },
 }
 const DEFAULT_ROCK_INFO = { name: 'Rock', examine: 'A rugged, ore-bearing rock.' }
 
@@ -153,6 +156,35 @@ function treeFallback(): THREE.Object3D {
   return group
 }
 
+/** Shoreline tackle: the bobber reaches toward water to the east of its
+ * walkable interaction tile. This is a fishing site, not a bank chest. */
+function fishingSite(): THREE.Object3D {
+  const group = new THREE.Group()
+  const wood = new THREE.MeshStandardMaterial({ color: 0x785337, roughness: 1 })
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.04, 1.5, 6), wood)
+  pole.position.set(0.28, 0.7, 0); pole.rotation.z = -0.45
+  const line = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.62,1.35,0), new THREE.Vector3(1.3,0.8,0), new THREE.Vector3(1.45,0.1,0),
+  ]), 12, 0.012, 4, false), new THREE.MeshStandardMaterial({ color: 0xc7b894 }))
+  const bobber = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 6), new THREE.MeshStandardMaterial({ color: 0xb66348 }))
+  bobber.position.set(1.45,0.12,0)
+  const ripple = new THREE.Mesh(new THREE.TorusGeometry(0.23,0.016,4,18), new THREE.MeshStandardMaterial({color:0xb5d4d0}))
+  ripple.rotation.x = Math.PI/2; ripple.position.set(1.45,0.07,0)
+  group.add(pole,line,bobber,ripple)
+  return group
+}
+function fieldworkCache(): THREE.Object3D {
+  const group = new THREE.Group()
+  const box = new THREE.Mesh(new THREE.BoxGeometry(0.65,0.38,0.5), new THREE.MeshStandardMaterial({color:0x876442,roughness:1}))
+  box.position.y = 0.19
+  const spool = new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,0.25,12), new THREE.MeshStandardMaterial({color:0xd4c29c,roughness:1}))
+  spool.rotation.z = Math.PI/2; spool.position.set(0,0.49,0)
+  const cord = new THREE.Mesh(new THREE.TorusGeometry(0.18,0.035,5,14), new THREE.MeshStandardMaterial({color:0xb39b75}))
+  cord.rotation.x = Math.PI/2; cord.position.set(0.14,0.42,0.05)
+  group.add(box,spool,cord)
+  return group
+}
+
 export async function createStatics(scene: THREE.Scene, statics: StaticObject[]): Promise<Statics> {
   const treeModels = [...new Set(statics.filter((s) => s.type === 'tree').map((s) => (TREE_INFO[s.tree ?? ''] ?? DEFAULT_TREE_INFO).model))]
   const needStump = treeModels.length > 0
@@ -213,10 +245,22 @@ export async function createStatics(scene: THREE.Scene, statics: StaticObject[])
       }
       wrapper.scale.setScalar(ROCK_SCALE)
       rocks.set(s.id, { obj: wrapper, materials })
-      const info = ROCK_INFO[s.rock ?? ''] ?? DEFAULT_ROCK_INFO
+      const node = resourceNodeFor(s)
+      const action = node && resourceAction(node)
+      const info = ROCK_INFO[s.rock ?? ''] ?? (action ? {name: action.name, examine: `A deposit for ${action.name.toLowerCase()}.`} : DEFAULT_ROCK_INFO)
       wrapper.userData.pick = {
         kind: 'rock', id: s.id, name: info.name,
         actions: [{ label: 'Mine', action: 'mine' }], examine: info.examine,
+      } satisfies Pickable
+    } else if (s.type === 'fishing_spot' || s.type === 'gather_site') {
+      const node = resourceNodeFor(s)
+      const action = node && resourceAction(node)
+      wrapper.add(s.type === 'fishing_spot' ? fishingSite() : fieldworkCache())
+      wrapper.userData.pick = {
+        kind: 'rock', id: s.id,
+        name: s.type === 'fishing_spot' ? (action?.name ?? 'Fishing Spot') : 'Fieldwork Cache',
+        actions: [{ label: s.type === 'fishing_spot' ? 'Fish' : 'Gather', action: s.type === 'fishing_spot' ? 'fish' : 'gather' }],
+        examine: action?.description ?? 'A shoreline spot where shrimps gather.',
       } satisfies Pickable
     } else if (STATION_INFO[s.type]) {
       const info = STATION_INFO[s.type]
