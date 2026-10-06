@@ -71,3 +71,31 @@ describe('roadSegments', () => {
     expect(rects).toEqual([])
   })
 })
+
+describe('semantic gateway roads', () => {
+  it('connects every boundary to its destination on painted tiles without cutting back into the region', () => {
+    const bounds={x0:146,z0:88,x1:210,z1:152}
+    const connections=[
+      {point:'west',to:'draynar',x:147,z:122,outward:{x:-1,z:0}},
+      {point:'south',to:'draynar',x:178,z:150,outward:{x:0,z:1}},
+      {point:'east',to:'alkarid',x:208,z:120,outward:{x:1,z:0}},
+      {point:'east',to:'varrick',x:208,z:120,outward:{x:1,z:0}},
+    ]
+    const {districts}=projectPlaces(places)
+    for(const c of connections) {
+      const rects=layout.connectionRoadSegments([c],districts,bounds)
+      const outside=new Set<string>()
+      for(const r of rects)for(let z=r.z;z<r.z+r.h;z++)for(let x=r.x;x<r.x+r.w;x++)
+        if(x<bounds.x0||x>=bounds.x1||z<bounds.z0||z>=bounds.z1)outside.add(x+','+z)
+      const start=c.outward.x<0?{x:bounds.x0-1,z:c.z}:c.outward.x>0?{x:bounds.x1,z:c.z}:{x:c.x,z:bounds.z1}
+      const seen=new Set([start.x+','+start.z]),queue=[start]
+      expect(outside.has(start.x+','+start.z)).toBe(true)
+      for(let i=0;i<queue.length;i++)for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const p={x:queue[i].x+dx,z:queue[i].z+dz},k=p.x+','+p.z
+        if(outside.has(k)&&!seen.has(k)){seen.add(k);queue.push(p)}
+      }
+      const target=districts.find((d)=>d.id===c.to)!
+      expect(seen.has(target.x+','+target.z),c.point+'→'+c.to).toBe(true)
+    }
+  })
+})

@@ -179,83 +179,23 @@
       "z": 62,
       "label": "Chicken yard",
       "role": "encounter"
+    },
+    {
+      "id": "farm_junction",
+      "x": 32,
+      "z": 37,
+      "role": "junction",
+      "label": "Farm road"
     }
   ],
   "routes": [
     {
-      "id": "square_spine",
-      "from": "plaza",
-      "to": "castle",
-      "via": [],
-      "width": 3,
-      "kind": "path_cobble"
-    },
-    {
-      "id": "arrival_link",
-      "from": "arrival",
-      "to": "plaza",
-      "via": [],
-      "width": 3,
-      "kind": "path_cobble"
-    },
-    {
-      "id": "west_road",
-      "from": "plaza",
-      "to": "west",
-      "via": [],
-      "width": 3,
-      "kind": "path_cobble"
-    },
-    {
-      "id": "east_bridge",
-      "from": "plaza",
-      "to": "bridge",
-      "via": [
-        {
-          "x": 48,
-          "z": 34
-        },
-        {
-          "x": 48,
-          "z": 32
-        }
-      ],
-      "width": 3,
-      "kind": "path_cobble"
-    },
-    {
       "id": "farm_road",
-      "from": "plaza",
+      "from": "farm_junction",
       "to": "south",
       "via": [],
       "width": 3,
       "kind": "path_dirt"
-    },
-    {
-      "id": "bank_approach",
-      "from": "plaza",
-      "to": "bank:counter",
-      "via": [
-        {
-          "x": 21,
-          "z": 34
-        }
-      ],
-      "width": 1,
-      "kind": "path_cobble"
-    },
-    {
-      "id": "kitchen_approach",
-      "from": "plaza",
-      "to": "kitchen:hearth",
-      "via": [
-        {
-          "x": 32,
-          "z": 44
-        }
-      ],
-      "width": 3,
-      "kind": "path_cobble"
     },
     {
       "id": "quarry_trail",
@@ -408,13 +348,6 @@
       "kind": "path_dirt"
     },
     {
-      "id": "bridge_deck",
-      "from": "bridge",
-      "to": "east",
-      "width": 3,
-      "kind": "floor_plank"
-    },
-    {
       "id": "granary_yard_trail",
       "from": "granary_lane",
       "to": "granary_yard",
@@ -466,6 +399,80 @@
       ],
       "width": 1,
       "kind": "path_dirt"
+    },
+    {
+      "id": "square_spine",
+      "from": "plaza",
+      "to": "castle",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "arrival_link",
+      "from": "arrival",
+      "to": "plaza",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "west_road",
+      "from": "plaza",
+      "to": "west",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "east_bridge",
+      "from": "plaza",
+      "to": "bridge",
+      "via": [
+        {
+          "x": 48,
+          "z": 34
+        },
+        {
+          "x": 48,
+          "z": 32
+        }
+      ],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "bank_approach",
+      "from": "plaza",
+      "to": "bank:counter",
+      "via": [
+        {
+          "x": 21,
+          "z": 34
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "kitchen_approach",
+      "from": "plaza",
+      "to": "kitchen:hearth",
+      "via": [
+        {
+          "x": 32,
+          "z": 44
+        }
+      ],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "bridge_deck",
+      "from": "bridge",
+      "to": "east",
+      "width": 3,
+      "kind": "floor_plank"
     }
   ],
   "surfaces": [
@@ -1680,6 +1687,24 @@
       "covers": [
         "combat:field_chicken"
       ]
+    }
+  ],
+  "connections": [
+    {
+      "point": "west",
+      "to": "draynar"
+    },
+    {
+      "point": "south",
+      "to": "draynar"
+    },
+    {
+      "point": "east",
+      "to": "alkarid"
+    },
+    {
+      "point": "east",
+      "to": "varrick"
     }
   ]
 }

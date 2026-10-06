@@ -14,7 +14,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { projectPlaces, roadSegments } from './overworldLayout.mjs'
+import { projectPlaces, roadSegments, connectionRoadSegments } from './overworldLayout.mjs'
 
 const worldDir = fileURLToPath(new URL('..', import.meta.url))
 const repoRoot = path.join(worldDir, '..')
@@ -88,6 +88,8 @@ const lbc = districtById.get('lumbright')
 const lbOx = lbc.x - lb.spawn.x
 const lbOz = lbc.z - lb.spawn.z
 const LB_RECT = { x0: lbOx, z0: lbOz, x1: lbOx + lb.width, z1: lbOz + lb.height }
+const lbReport = JSON.parse(fs.readFileSync(path.join(worldDir, 'authoring/reports/lumbright.json'), 'utf8'))
+const lbConnections = lbReport.connections.map((c) => ({...c, x:c.x+lbOx, z:c.z+lbOz}))
 for (let lz = 0; lz < lb.height; lz++) {
   for (let lx = 0; lx < lb.width; lx++) {
     const gx = lbOx + lx
@@ -267,7 +269,11 @@ for (const o of wildObjects) objects.push(o)
 for (const n of wildMonsters) npcs.push(n)
 
 // ── Wilderness roads along every travel edge ──
-for (const r of roadSegments(world.edges, districts)) {
+const travelRoads = [
+  ...roadSegments(world.edges.filter(([a,b]) => a !== 'lumbright' && b !== 'lumbright'), districts),
+  ...connectionRoadSegments(lbConnections, districts, LB_RECT),
+]
+for (const r of travelRoads) {
   const x = Math.max(0, r.x)
   const z = Math.max(0, r.z)
   const w = Math.min(r.w, W - x)
@@ -379,6 +385,27 @@ while (stack.length) {
 }
 for (const d of districts) if (!reach[d.z][d.x]) errs.push(`district ${d.id} (${d.x},${d.z}) unreachable from spawn`)
 for (const o of [...objects, ...npcs, ...exits, ...landmarks]) if (!reach[o.z][o.x]) errs.push(`${o.id} (${o.x},${o.z}) unreachable from spawn`)
+// A walkable grass detour is not a connected road. Require each semantic gate
+// to meet its actual destination through contiguous painted, walkable tiles.
+const roadKinds = new Set(['path_dirt','path_cobble','plaza','floor_plank','floor_stone','floor_tile'])
+const roadTiles = new Set()
+for (const r of ground) if (roadKinds.has(r.kind)) {
+  for(let z=r.z;z<r.z+r.h;z++)for(let x=r.x;x<r.x+r.w;x++)if(walkable(x,z))roadTiles.add(x+','+z)
+}
+for(const c of lbConnections) {
+  const boundary={x:c.x+c.outward.x,z:c.z+c.outward.z}
+  const outside={x:boundary.x+c.outward.x,z:boundary.z+c.outward.z}
+  for(const p of [c,boundary,outside])if(!roadTiles.has(p.x+','+p.z))errs.push('Disconnected road boundary '+c.point+' to '+c.to)
+  const target=districtById.get(c.to),seenRoad=new Set([c.x+','+c.z]),roadQueue=[[c.x,c.z]]
+  for(let i=0;i<roadQueue.length;i++) {
+    const [x,z]=roadQueue[i]
+    for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nx=x+dx,nz=z+dz,k=nx+','+nz
+      if(roadTiles.has(k)&&!seenRoad.has(k)){seenRoad.add(k);roadQueue.push([nx,nz])}
+    }
+  }
+  if(!seenRoad.has(target.x+','+target.z))errs.push('No continuous walkable road from '+c.point+' to '+c.to)
+}
 if (errs.length) { console.error('OVERWORLD GEN ERRORS:\n' + errs.join('\n')); process.exit(1) }
 
 const walk = zone.collision.join('').split('').filter((c) => c === '.').length

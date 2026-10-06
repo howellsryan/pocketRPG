@@ -62,6 +62,19 @@ describe('semantic world compiler', () => {
     const unknown = source(); unknown.reviewViews[1].mode = 'pretty'
     expect(() => compileRegion(unknown, context())).toThrow(/invalid review mode/)
   })
+  it('requires every canonical travel neighbor to have a reserved, walkable boundary gateway', () => {
+    const c=context(); Object.assign(c.world,{edges:[['test','neighbor',1]]})
+    const s={...source(),connections:[{point:'west',to:'neighbor'}]}
+    s.points.push({id:'west',x:1,z:10,role:'gateway'} as never)
+    s.routes.push({id:'west_road',from:'arrival',to:'west',width:3,kind:'path_cobble'})
+    expect(compileRegion(s,c).report.connections[0]).toMatchObject({to:'neighbor',outward:{x:-1,z:0}})
+    s.connections=[]
+    expect(()=>compileRegion(s,c)).toThrow(/missing canonical road connections/)
+    s.connections=[{point:'arrival',to:'neighbor'}]
+    expect(()=>compileRegion(s,c)).toThrow(/reserved gateway/)
+    s.connections=[{point:'west',to:'invented'}]
+    expect(()=>compileRegion(s,c)).toThrow(/invalid.*road connection/)
+  })
   it('preserves authored region exits as well as prefab exits', () => {
     const s = { ...source(), exits: [{ id: 'cave', x: 12, z: 12, toZone: 'test_cave', toX: 4, toZ: 4, label: 'Cave' }] }
     expect(compileRegion(s, context()).zone.exits).toEqual(s.exits)

@@ -245,6 +245,28 @@ export function compileRegion(input, context) {
     if(open.length!==c.w*c.h)fail('ambient group '+c.model+' contains blocked or unreachable tiles; straight-line wander must stay clear')
   }
   for(const s of ambient.smoke) {if(!inBounds(s.x,s.z)||!finite(s.y??0))fail('invalid smoke position')}
+  const connections=[]
+  if(source.connections) {
+    if(!Array.isArray(source.connections)||!context.world.edges)fail('road connections require canonical travel edges')
+    const neighbors=new Set(context.world.edges.flatMap(([a,b])=>a===source.place?[b]:b===source.place?[a]:[]))
+    const connected=new Set(),pairs=new Set()
+    for(const c of source.connections) {
+      const p=getPoint(c.point),pair=c.point+':'+c.to
+      if(!neighbors.has(c.to)||pairs.has(pair))fail('invalid or duplicate road connection '+pair)
+      const normals=[]
+      if(p.x===1)normals.push({x:-1,z:0})
+      if(p.x===width-2)normals.push({x:1,z:0})
+      if(p.z===1)normals.push({x:0,z:-1})
+      if(p.z===height-2)normals.push({x:0,z:1})
+      if(p.role!=='gateway'||normals.length!==1||!routeTiles.has(key(p.x,p.z)))fail('connection '+pair+' requires a reserved gateway one tile inside an edge')
+      const outward=normals[0],boundary={x:p.x+outward.x,z:p.z+outward.z}
+      accessible(boundary,'connection boundary '+pair)
+      if(!routeTiles.has(key(boundary.x,boundary.z)))fail('connection '+pair+' has no road at the boundary')
+      connections.push({...c,x:p.x,z:p.z,outward});pairs.add(pair);connected.add(c.to)
+    }
+    const missingNeighbors=[...neighbors].filter((id)=>!connected.has(id))
+    if(missingNeighbors.length)fail('missing canonical road connections: '+missingNeighbors.join(', '))
+  }
   const missing=[...expected].filter((ref)=>!bound.has(ref)).sort()
   if(missing.length) fail('missing canonical content: '+missing.join(', '))
   const budgets=source.budgets
@@ -275,7 +297,7 @@ export function compileRegion(input, context) {
   for(const k of ['palette','ambience','terrain'])if(source[k])zone[k]=source[k]
   return {zone,report:{
     schemaVersion:1,region:source.id,place:source.place,seed:source.seed,
-    parity:{scope:'gathering, combat identities and facilities',missing:[],unexpected:[]},contract,points,footprints,
+    parity:{scope:'gathering, combat identities and facilities',missing:[],unexpected:[]},contract,points,footprints,connections,
     reviewViews:source.reviewViews.map((v)=>({...v,x:pointMap.get(v.target).x,z:pointMap.get(v.target).z})),
     counts:{props:props.length,npcs:npcs.length,objects:objects.length,ambient:ambient.critters.reduce((n,c)=>n+c.count,0),reachableTiles:reach.size},
     budgets,visualApproval:'pending'
