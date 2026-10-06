@@ -58,7 +58,7 @@ function clamp(v: number, lo: number, hi: number): number {
 export function stampPrefab(def: ZoneDef, prefab: Prefab, x: number, z: number): void {
   for (const o of prefab.objects) {
     const prefix = o.type === 'tree' ? 'tree' : o.type === 'rock' ? 'rock' : 'chest'
-    def.objects.push({ id: genId(def, prefix), type: o.type, rock: o.rock, tree: o.tree, x: clamp(x + o.dx, 0, def.width - 1), z: clamp(z + o.dz, 0, def.height - 1) })
+    def.objects.push({ id: genId(def, prefix), type: o.type, rock: o.rock, tree: o.tree, fishing: o.fishing, gather: o.gather, x: clamp(x + o.dx, 0, def.width - 1), z: clamp(z + o.dz, 0, def.height - 1) })
   }
   for (const n of prefab.npcs) {
     const nx = clamp(x + n.dx, 0, def.width - 1)
