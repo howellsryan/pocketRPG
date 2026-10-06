@@ -5,9 +5,7 @@ import type { Tile } from './pathfind'
 import { reachAgainst } from '../shared/monsterSize'
 import type { CombatStance, EntityDiff, GearDescriptor, InvSlot, StationType, ZoneEvent } from '../shared/protocol'
 import { resourceAction, type ResourceAction, type ResourceSkill } from '../shared/resources'
-import { getEffectiveToolActionTicks } from '../../src/engine/skilling.js'
-import itemsData from '../../src/data/items.json'
-import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type MiningAction } from './mining'
+import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, fishingActionTicks, type MiningAction } from './mining'
 import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
@@ -486,7 +484,7 @@ function tickMining(player: TickPlayer, ctx: TickContext, result: TickResult): v
   player.anim = action.verb === 'fish' || action.verb === 'gather' ? 'idle' : 'mine'
   mining.progress += 1
   const duration = action.xpSkill === 'fishing'
-    ? getEffectiveToolActionTicks('fishing', action.ticks, player.equipment, itemsData, player.stats, player.inventory)
+    ? fishingActionTicks(action.ticks, player.equipment, player.stats, player.inventory)
     : action.ticks
   if (mining.progress < duration) return
   mining.progress = 0

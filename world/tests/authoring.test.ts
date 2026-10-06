@@ -78,6 +78,12 @@ describe('semantic world compiler', () => {
     expect(zone.ambient.critters[0]).toMatchObject({ x: 17, z: 15, w: 2, h: 2 })
     expect(zone.ground.some((g: any) => g.kind === 'floor_stone')).toBe(true)
   })
+  it('blocks thin rotated fences using their asymmetric mesh bounds', () => {
+    const c=context()
+    Object.assign(c.assets.props,{fence:{min:[-.5,-.05,-.5],max:[.5,.3,-.43],baseScale:1}})
+    const s=source(); s.dressing.push({model:'fence',x:15,z:14,rot:Math.PI/2} as never)
+    expect(compileRegion(s,c).zone.collision[14][15]).toBe('#')
+  })
   it('is deterministic, does not mutate sources, and enforces scenery budgets', () => {
     const s = source(), before = JSON.stringify(s)
     s.groves.push({ id: 'edge', x: 12, z: 12, w: 7, h: 7, count: 6, models: ['house'], scaleRange: [0.2,0.3] } as never)

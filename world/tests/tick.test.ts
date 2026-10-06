@@ -386,7 +386,7 @@ describe('Lumbright fishing and fieldwork', () => {
     run(p,n,5); expect(p.minted.bowstring).toBeUndefined()
     const result=run(p,n,7)
     expect(p.minted.bowstring).toBe(2)
-    expect(p.inventory.filter((s)=>s?.itemId==='bowstring')).toHaveLength(2)
+    expect(p.inventory.filter((s)=>s?.itemId==='bowstring')).toEqual([{itemId:'bowstring',quantity:2}])
     expect(result.events.some((e)=>e.e==='xp')).toBe(false)
     expect(p.stats.gather).toBeUndefined()
     expect(n.depletedUntilTick).toBe(0)
@@ -404,6 +404,17 @@ describe('Lumbright fishing and fieldwork', () => {
     expect(net.minted.raw_shrimps).toBe(1)
     expect(result.events).toContainEqual({e:'xp',skill:'fishing',amount:10})
     expect(result.changes).toEqual([])
+  })
+  it('keeps charged-tool timing disabled until charge consumption is supported', () => {
+    const p=playerFor('fish', {
+      stats:{fishing:{xp:1000000,level:73}},
+      equipment:{weapon:{itemId:'shardglass_harpoon',charges:1}},
+      inventory:[{itemId:'fishing_net',quantity:1},...new Array(27).fill(null)],
+    })
+    run(p,node('fishing','shrimps'),2)
+    expect(p.minted.raw_shrimps).toBeUndefined()
+    run(p,node('fishing','shrimps'),2)
+    expect(p.minted.raw_shrimps).toBe(1)
   })
   it('refuses forged verbs, unsupported conversions, distance and a full inventory', () => {
     const wrong=playerFor('mine'); run(wrong,node('fishing','shrimps'),12); expect(wrong.minted).toEqual({})

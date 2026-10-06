@@ -50,9 +50,9 @@ try {
       const url=origin+'/world/preview.html?'+params
       await page.goto(url)
       await page.waitForFunction(()=>window.__previewReady||window.__previewError,null,{timeout:60000})
+      await page.waitForTimeout(300)
       const state=await page.evaluate(()=>({ready:window.__previewReady,error:window.__previewError,stats:window.__previewStats}))
       if(!state.ready||state.error)throw new Error('Scene setup failed: '+state.error)
-      await page.waitForTimeout(300)
       if(errors.length)throw new Error('Render errors in '+variant+':'+view.id+': '+errors.join('; '))
       const name=variant+'-'+view.id+'.png'
       await page.screenshot({path:path.join(out,name)})

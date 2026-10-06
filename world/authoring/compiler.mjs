@@ -65,7 +65,7 @@ export function compileRegion(input, context) {
   const ambient = clone(source.ambient ?? {critters:[],smoke:[]})
   ambient.critters ??= []; ambient.smoke ??= []
   const resources = clone(source.resources ?? []), encounters = clone(source.encounters ?? [])
-  const blocked = []
+  const blocked = [], surfaceTiles = new Set()
   const addGround = (r) => { rect(r,'ground'); if (!GROUNDS.has(r.kind)) fail('unknown ground kind ' + r.kind); ground.push({kind:r.kind,x:r.x,z:r.z,w:r.w,h:r.h}) }
   for (const s of source.surfaces ?? []) { addGround(s); if (s.blocked) blocked.push(s) }
   // Expand complete prefab layers before reserving routes. Semantic refs remain
@@ -117,7 +117,7 @@ export function compileRegion(input, context) {
     rect(r,'blocked')
     for(let z=r.z;z<r.z+r.h;z++) for(let x=r.x;x<r.x+r.w;x++) {
       if(routeTiles.has(key(x,z))) fail('blocked surface overlaps route '+routeTiles.get(key(x,z)))
-      grid[z][x]='#'
+      grid[z][x]='#'; surfaceTiles.add(key(x,z))
     }
   }
   const occupied = new Set()
@@ -173,16 +173,16 @@ export function compileRegion(input, context) {
       .map(([x,z])=>[p.x+.5+(x*c+z*s)*scale,p.z+.5+(-x*s+z*c)*scale])
     const xs=corners.map((v)=>v[0]),zs=corners.map((v)=>v[1])
     const box={model:p.model,x0:Math.min(...xs),z0:Math.min(...zs),x1:Math.max(...xs),z1:Math.max(...zs)}
-    // Occupy tiles whose centres are within the bounds, with a small safety
-    // margin; touching adjacent decorative meshes is also rejected.
-    const x0=Math.ceil(box.x0-.5-.08),z0=Math.ceil(box.z0-.5-.08),x1=Math.floor(box.x1-.5+.08),z1=Math.floor(box.z1-.5+.08)
+    // Occupy every tile touched by the actual mesh. Centre-only tests miss
+    // thin edge-anchored fences and let players walk straight through them.
+    const x0=Math.floor(box.x0+1e-6),z0=Math.floor(box.z0+1e-6),x1=Math.ceil(box.x1-1e-6)-1,z1=Math.ceil(box.z1-1e-6)-1
     let reason=''
     if(box.x0<0 || box.z0<0 || box.x1>width || box.z1>height) reason='out of bounds'
     if(footprints.some((b)=>box.x0<b.x1-.03 && box.x1>b.x0+.03 && box.z0<b.z1-.03 && box.z1>b.z0+.03)) reason='mesh overlap'
     for(let z=z0;z<=z1;z++) for(let x=x0;x<=x1;x++) {
       if(routeTiles.has(key(x,z))) reason='overlap with route '+routeTiles.get(key(x,z))
       if(occupied.has(key(x,z))) reason='overlap with resource'
-      if(grid[z]?.[x]==='#') reason='overlap with blocked surface'
+      if(surfaceTiles.has(key(x,z))) reason='overlap with blocked surface'
     }
     if(reason) { if(optional) return false; fail('prop '+p.model+' '+reason+' at '+p.x+','+p.z) }
     footprints.push(box); props.push(p)
@@ -230,6 +230,7 @@ export function compileRegion(input, context) {
     if(!integer(c.count)||c.count<1||c.count>24) fail('ambient count must be in 1..24')
     const open=[];for(let z=c.z;z<c.z+c.h;z++)for(let x=c.x;x<c.x+c.w;x++)if(walk(x,z)&&reach.has(key(x,z)))open.push([x,z])
     if(open.length<c.count*3)fail('ambient group '+c.model+' lacks usable wander space')
+    if(open.length!==c.w*c.h)fail('ambient group '+c.model+' contains blocked or unreachable tiles; straight-line wander must stay clear')
   }
   for(const s of ambient.smoke) {if(!inBounds(s.x,s.z)||!finite(s.y??0))fail('invalid smoke position')}
   const missing=[...expected].filter((ref)=>!bound.has(ref)).sort()

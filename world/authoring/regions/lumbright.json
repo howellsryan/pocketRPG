@@ -476,7 +476,7 @@
     {
       "id": "home_e",
       "prefab": "cottage",
-      "x": 39,
+      "x": 40,
       "z": 22,
       "turns": 3
     },
@@ -485,6 +485,13 @@
       "prefab": "granary",
       "x": 15,
       "z": 53,
+      "turns": 0
+    },
+    {
+      "id": "field",
+      "prefab": "wheat_plot",
+      "x": 20,
+      "z": 49,
       "turns": 0
     }
   ],
@@ -536,18 +543,6 @@
       "ref": "skill:fishing:shrimps",
       "x": 54,
       "z": 37
-    },
-    {
-      "id": "bowstring_1",
-      "ref": "gather:gather_bowstring",
-      "x": 27,
-      "z": 52
-    },
-    {
-      "id": "bowstring_2",
-      "ref": "gather:gather_bowstring",
-      "x": 27,
-      "z": 57
     }
   ],
   "encounters": [
@@ -705,8 +700,8 @@
     },
     {
       "model": "banner",
-      "x": 36,
-      "z": 25,
+      "x": 35,
+      "z": 24,
       "scale": 1.1
     },
     {
@@ -818,6 +813,146 @@
       "x": 56,
       "z": 55,
       "scale": 1.1
+    },
+    {
+      "model": "fence",
+      "x": 39,
+      "z": 47
+    },
+    {
+      "model": "fence",
+      "x": 39,
+      "z": 54
+    },
+    {
+      "model": "fence",
+      "x": 40,
+      "z": 47
+    },
+    {
+      "model": "fence",
+      "x": 40,
+      "z": 54
+    },
+    {
+      "model": "fence",
+      "x": 41,
+      "z": 47
+    },
+    {
+      "model": "fence",
+      "x": 41,
+      "z": 54
+    },
+    {
+      "model": "fence",
+      "x": 42,
+      "z": 47
+    },
+    {
+      "model": "fence",
+      "x": 42,
+      "z": 54
+    },
+    {
+      "model": "fence",
+      "x": 43,
+      "z": 47
+    },
+    {
+      "model": "fence",
+      "x": 43,
+      "z": 54
+    },
+    {
+      "model": "fence",
+      "x": 44,
+      "z": 47
+    },
+    {
+      "model": "fence",
+      "x": 44,
+      "z": 54
+    },
+    {
+      "model": "fence",
+      "x": 45,
+      "z": 47
+    },
+    {
+      "model": "fence",
+      "x": 45,
+      "z": 54
+    },
+    {
+      "model": "fence",
+      "x": 46,
+      "z": 47
+    },
+    {
+      "model": "fence",
+      "x": 46,
+      "z": 54
+    },
+    {
+      "model": "fence",
+      "x": 38,
+      "z": 48,
+      "rot": 1.5707963267948966
+    },
+    {
+      "model": "fence",
+      "x": 47,
+      "z": 48,
+      "rot": 1.5707963267948966
+    },
+    {
+      "model": "fence",
+      "x": 38,
+      "z": 49,
+      "rot": 1.5707963267948966
+    },
+    {
+      "model": "fence",
+      "x": 47,
+      "z": 49,
+      "rot": 1.5707963267948966
+    },
+    {
+      "model": "fence",
+      "x": 38,
+      "z": 50,
+      "rot": 1.5707963267948966
+    },
+    {
+      "model": "fence",
+      "x": 47,
+      "z": 50,
+      "rot": 1.5707963267948966
+    },
+    {
+      "model": "fence",
+      "x": 38,
+      "z": 51,
+      "rot": 1.5707963267948966
+    },
+    {
+      "model": "fence",
+      "x": 47,
+      "z": 51,
+      "rot": 1.5707963267948966
+    },
+    {
+      "model": "fence",
+      "x": 47,
+      "z": 52,
+      "rot": 1.5707963267948966
+    },
+    {
+      "model": "fence",
+      "x": 47,
+      "z": 53,
+      "rot": 1.5707963267948966
     }
   ],
   "groves": [
@@ -904,21 +1039,6 @@
       ]
     },
     {
-      "id": "farm_crops",
-      "x": 21,
-      "z": 49,
-      "w": 5,
-      "h": 9,
-      "count": 23,
-      "models": [
-        "wheat"
-      ],
-      "scaleRange": [
-        0.8,
-        1
-      ]
-    },
-    {
       "id": "east_bank_flora",
       "x": 51,
       "z": 39,
@@ -980,9 +1100,9 @@
       {
         "model": "villager_b",
         "x": 34,
-        "z": 31,
-        "w": 6,
-        "h": 5,
+        "z": 32,
+        "w": 5,
+        "h": 4,
         "count": 2
       },
       {

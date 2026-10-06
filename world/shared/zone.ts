@@ -182,7 +182,7 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
     }
     if (obj.type === 'tree' && !obj.tree) errors.push(`tree '${obj.id}' is missing its action id`)
     if (obj.type === 'rock' && !obj.rock) errors.push(`rock '${obj.id}' is missing its action id`)
-    if ((obj.type === 'fishing_spot' || obj.type === 'gather_site') && !resourceNodeFor(obj)) {
+    if ((obj.type === 'rock' || obj.type === 'tree' || obj.type === 'fishing_spot' || obj.type === 'gather_site') && !resourceNodeFor(obj)) {
       errors.push(`resource '${obj.id}' has a missing or unsupported canonical action`)
     }
   }

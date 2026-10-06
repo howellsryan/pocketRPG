@@ -1,4 +1,4 @@
-import { SIMPLE_GATHER_TASKS } from './resources'
+import { SIMPLE_GATHER_TASKS, resourceAction } from './resources'
 import creaturesData from '../../src/data/creatures3d.json'
 import skillsData from '../../src/data/skills.json'
 import monstersData from '../../src/data/monsters.json'
@@ -30,12 +30,15 @@ const monsters = monstersData as unknown as Record<string, Monster>
 export function gatherCatalog(): CatalogGroup {
   const entries: CatalogEntry[] = []
   for (const action of skills.mining?.actions ?? []) {
+    if (!resourceAction({skill:'mining',rock:action.id})) continue
     entries.push({ kind: 'rock', label: action.name ?? action.id, icon: '⛏️', rock: action.id, level: action.level ?? 1 })
   }
   for (const action of skills.woodcutting?.actions ?? []) {
+    if (!resourceAction({skill:'woodcutting',rock:action.id})) continue
     entries.push({ kind: 'tree', label: action.name ?? action.id, icon: '🌲', tree: action.id, level: action.level ?? 1 })
   }
   for (const action of skills.fishing?.actions ?? []) {
+    if (!resourceAction({skill:'fishing',rock:action.id})) continue
     entries.push({ kind: 'fishing_spot', label: action.name ?? action.id, icon: '🎣', fishing: action.id, level: action.level ?? 1 })
   }
   for (const task of SIMPLE_GATHER_TASKS) entries.push({ kind: 'gather_site', label: task.name, icon: '🧵', gather: task.id, level: 1 })

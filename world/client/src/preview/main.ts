@@ -53,7 +53,7 @@ const pair = (raw: string | null, fallback: { x: number; z: number }): { x: numb
   return { x: values[0], z: values[1] }
 }
 const targetTile = pair(params.get('target'), gameplay ? def.spawn : { x: def.width/2, z: def.height/2 })
-const sel = document.getElementById('zoneSel') as HTMLSelectElement
+const sel = document.getElementById('zoneSel') as unknown as HTMLSelectElement
 for (const [id, zone] of Object.entries(ZONES)) {
   const option = document.createElement('option')
   option.value=id; option.textContent=zone.name; option.selected=id===zoneId; sel.appendChild(option)
@@ -67,7 +67,7 @@ const {sun}=createLights(scene,def.ambience)
 THREE.DefaultLoadingManager.onError=(url)=>{window.__previewError='Failed asset: '+url}
 const follow=params.has('follow') ? pair(params.get('follow'),targetTile) : gameplay ? targetTile : undefined
 const {heightField}=createTerrain(scene,def.collision,def.width,def.height,def.palette,def.terrain,def.ground,
-  {chunkCentre:follow ? {...follow,radius:number('radius',1)} : undefined})
+  {chunkCentre:follow ? {...follow,radius:number('radius',4)} : undefined})
 const entities: Entity[]=[]
 const ready=[
   createProps(scene,def.props??[]),

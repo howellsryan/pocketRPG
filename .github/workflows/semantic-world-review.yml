@@ -46,7 +46,9 @@ jobs:
       - name: Compile the semantic candidate and emit reproducible outputs
         run: npm --prefix world run author:build -- --emit
       - name: Install review browser
-        run: npx playwright install --with-deps chromium
+        run: |
+          npx playwright install --with-deps chromium
+          npm --prefix world exec -- playwright install chromium
       - name: Check the idle game
         run: npm run ci
       - name: Check the world

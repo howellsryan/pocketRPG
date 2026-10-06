@@ -1,5 +1,6 @@
 // Mining data + session-inventory helpers. Pure module — no I/O, no DO state —
 // so the tick state machine and its tests share one source of truth.
+import { getEffectiveToolActionTicks } from '../../src/engine/skilling.js'
 import skillsData from '../../src/data/skills.json'
 import itemsData from '../../src/data/items.json'
 import type { InvSlot } from '../shared/protocol'
@@ -7,7 +8,7 @@ import type { InvSlot } from '../shared/protocol'
 export type MiningAction = { id: string; name: string; level: number; ticks: number; xp: number; product: string }
 
 type SkillsData = { mining: { actions: MiningAction[] }; woodcutting: { actions: MiningAction[] }; fishing: { actions: MiningAction[] } }
-type ItemsData = Record<string, { stackable?: boolean } | undefined>
+type ItemsData = Record<string, { stackable?: boolean; scaleCharged?: boolean } | undefined>
 
 export const MINING_ACTIONS: Record<string, MiningAction> = Object.fromEntries(
   (skillsData as unknown as SkillsData).mining.actions.map((a) => [a.id, a])
@@ -144,4 +145,16 @@ export function inventoryToItems(inventory: InvSlot[]): { itemId: string; quanti
     byId.set(slot.itemId, (byId.get(slot.itemId) ?? 0) + slot.quantity)
   }
   return [...byId.entries()].map(([itemId, quantity]) => ({ itemId, quantity }))
+}
+
+/** Charged tools require charge settlement before world timing can use them.
+ * Ordinary held/equipped tool selection remains the shared idle formula. */
+export function fishingActionTicks(baseTicks: number, equipment: Record<string, unknown>, stats: Record<string, { xp: number; level: number }>, inventory: InvSlot[]): number {
+  const items = itemsData as unknown as ItemsData
+  const eligible = (slot: unknown): boolean => {
+    const id = (slot as { itemId?: string } | null)?.itemId
+    return !id || !items[id]?.scaleCharged
+  }
+  const gear = Object.fromEntries(Object.entries(equipment).filter(([,slot]) => eligible(slot)))
+  return getEffectiveToolActionTicks('fishing',baseTicks,gear,itemsData,stats,inventory.filter(eligible))
 }
