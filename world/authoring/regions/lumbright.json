@@ -56,7 +56,7 @@
     },
     {
       "id": "quarry",
-      "x": 15,
+      "x": 10,
       "z": 43,
       "role": "resource",
       "label": "Copper and clay outcrop"
@@ -123,6 +123,62 @@
       "z": 53,
       "role": "encounter",
       "label": "Bull paddock"
+    },
+    {
+      "id": "bridge",
+      "x": 55,
+      "z": 32,
+      "label": "River bridge landing",
+      "role": "gateway"
+    },
+    {
+      "id": "granary_yard",
+      "x": 11,
+      "z": 51,
+      "label": "Granary yard",
+      "role": "encounter"
+    },
+    {
+      "id": "goblin_camp",
+      "x": 12,
+      "z": 16,
+      "label": "Goblin camp",
+      "role": "encounter"
+    },
+    {
+      "id": "wet_hollow",
+      "x": 53,
+      "z": 15,
+      "label": "Wet hollow",
+      "role": "encounter"
+    },
+    {
+      "id": "crab_approach",
+      "x": 51,
+      "z": 49,
+      "label": "Crab shore",
+      "role": "encounter"
+    },
+    {
+      "id": "ruins_court",
+      "x": 34,
+      "z": 8,
+      "label": "Arcane court",
+      "role": "encounter"
+    },
+    {
+      "id": "river_approach",
+      "x": 54,
+      "z": 28,
+      "label": "Shrimp-bank approach",
+      "role": "resource"
+    },
+    {
+      "id": "chicken_yard",
+      "x": 27,
+      "z": 62,
+      "label": "Chicken yard",
+      "role": "encounter"
     }
   ],
   "routes": [
@@ -153,7 +209,7 @@
     {
       "id": "east_bridge",
       "from": "plaza",
-      "to": "east",
+      "to": "bridge",
       "via": [
         {
           "x": 48,
@@ -179,8 +235,13 @@
       "id": "bank_approach",
       "from": "plaza",
       "to": "bank:counter",
-      "via": [],
-      "width": 3,
+      "via": [
+        {
+          "x": 21,
+          "z": 34
+        }
+      ],
+      "width": 1,
       "kind": "path_cobble"
     },
     {
@@ -345,6 +406,66 @@
       ],
       "width": 1,
       "kind": "path_dirt"
+    },
+    {
+      "id": "bridge_deck",
+      "from": "bridge",
+      "to": "east",
+      "width": 3,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "granary_yard_trail",
+      "from": "granary_lane",
+      "to": "granary_yard",
+      "via": [
+        {
+          "x": 11,
+          "z": 49
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "goblin_camp_trail",
+      "from": "goblin_branch",
+      "to": "goblin_camp",
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "hollow_approach",
+      "from": "hollow",
+      "to": "wet_hollow",
+      "via": [
+        {
+          "x": 53,
+          "z": 16
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "crab_approach_trail",
+      "from": "shore",
+      "to": "crab_approach",
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "ruin_court_trail",
+      "from": "ruins",
+      "to": "ruins_court",
+      "via": [
+        {
+          "x": 34,
+          "z": 11
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
     }
   ],
   "surfaces": [
@@ -423,13 +544,6 @@
       "h": 11
     },
     {
-      "kind": "farm",
-      "x": 38,
-      "z": 47,
-      "w": 10,
-      "h": 11
-    },
-    {
       "kind": "floor_stone",
       "x": 26,
       "z": 3,
@@ -455,8 +569,8 @@
     {
       "id": "bank",
       "prefab": "bank_front",
-      "x": 22,
-      "z": 30,
+      "x": 21,
+      "z": 28,
       "turns": 0
     },
     {
@@ -470,7 +584,7 @@
       "id": "home_w",
       "prefab": "cottage",
       "x": 23,
-      "z": 23,
+      "z": 21,
       "turns": 0
     },
     {
@@ -953,6 +1067,213 @@
       "x": 47,
       "z": 53,
       "rot": 1.5707963267948966
+    },
+    {
+      "model": "fence",
+      "x": 56,
+      "z": 30
+    },
+    {
+      "model": "fence",
+      "x": 56,
+      "z": 34
+    },
+    {
+      "model": "fence",
+      "x": 57,
+      "z": 30
+    },
+    {
+      "model": "fence",
+      "x": 57,
+      "z": 34
+    },
+    {
+      "model": "fence",
+      "x": 58,
+      "z": 30
+    },
+    {
+      "model": "fence",
+      "x": 58,
+      "z": 34
+    },
+    {
+      "model": "fence",
+      "x": 59,
+      "z": 30
+    },
+    {
+      "model": "fence",
+      "x": 59,
+      "z": 34
+    },
+    {
+      "model": "fence",
+      "x": 60,
+      "z": 30
+    },
+    {
+      "model": "fence",
+      "x": 60,
+      "z": 34
+    },
+    {
+      "model": "fence",
+      "x": 61,
+      "z": 30
+    },
+    {
+      "model": "fence",
+      "x": 61,
+      "z": 34
+    },
+    {
+      "model": "watchtower",
+      "x": 4,
+      "z": 30,
+      "scale": 1.3
+    },
+    {
+      "model": "column",
+      "x": 4,
+      "z": 37,
+      "scale": 1.1
+    },
+    {
+      "model": "banner",
+      "x": 2,
+      "z": 38
+    },
+    {
+      "model": "column",
+      "x": 29,
+      "z": 60,
+      "scale": 1.1
+    },
+    {
+      "model": "column",
+      "x": 35,
+      "z": 60,
+      "scale": 1.1
+    },
+    {
+      "model": "lantern",
+      "x": 29,
+      "z": 61,
+      "scale": 0.9
+    },
+    {
+      "model": "banner",
+      "x": 35,
+      "z": 61
+    },
+    {
+      "model": "column",
+      "x": 55,
+      "z": 29
+    },
+    {
+      "model": "column",
+      "x": 55,
+      "z": 35
+    },
+    {
+      "model": "lantern",
+      "x": 62,
+      "z": 30,
+      "scale": 0.9
+    },
+    {
+      "model": "lantern",
+      "x": 62,
+      "z": 34,
+      "scale": 0.9
+    },
+    {
+      "model": "stall",
+      "x": 39,
+      "z": 29,
+      "scale": 1.8
+    },
+    {
+      "model": "cart",
+      "x": 41,
+      "z": 29,
+      "scale": 1.3,
+      "rot": 1.5707963267948966
+    },
+    {
+      "model": "hay_bale",
+      "x": 41,
+      "z": 31,
+      "scale": 1.1
+    },
+    {
+      "model": "bush",
+      "x": 25,
+      "z": 29,
+      "scale": 1.7
+    },
+    {
+      "model": "bush",
+      "x": 44,
+      "z": 31,
+      "scale": 1.8
+    },
+    {
+      "model": "bush",
+      "x": 25,
+      "z": 37,
+      "scale": 1.5
+    },
+    {
+      "model": "flowers",
+      "x": 39,
+      "z": 31,
+      "scale": 2
+    },
+    {
+      "model": "flowers",
+      "x": 27,
+      "z": 28,
+      "scale": 2
+    },
+    {
+      "model": "boulder",
+      "x": 54,
+      "z": 25,
+      "scale": 0.8
+    },
+    {
+      "model": "boulder",
+      "x": 56,
+      "z": 39,
+      "scale": 0.8
+    },
+    {
+      "model": "cart",
+      "x": 52,
+      "z": 29,
+      "scale": 1.2
+    },
+    {
+      "model": "bush",
+      "x": 52,
+      "z": 24,
+      "scale": 1.8
+    },
+    {
+      "model": "bush",
+      "x": 52,
+      "z": 39,
+      "scale": 1.8
+    },
+    {
+      "model": "flowers",
+      "x": 51,
+      "z": 30,
+      "scale": 2
     }
   ],
   "groves": [
@@ -1085,6 +1406,56 @@
         1,
         1.6
       ]
+    },
+    {
+      "id": "hollow_canopy",
+      "x": 46,
+      "z": 6,
+      "w": 10,
+      "h": 16,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b",
+        "mushrooms"
+      ],
+      "scaleRange": [
+        1,
+        1.6
+      ]
+    },
+    {
+      "id": "castle_garden_south",
+      "x": 26,
+      "z": 23,
+      "w": 17,
+      "h": 14,
+      "count": 12,
+      "models": [
+        "bush",
+        "flowers"
+      ],
+      "scaleRange": [
+        1.3,
+        2
+      ]
+    },
+    {
+      "id": "west_green",
+      "x": 11,
+      "z": 24,
+      "w": 9,
+      "h": 14,
+      "count": 10,
+      "models": [
+        "pine_b",
+        "bush",
+        "flowers"
+      ],
+      "scaleRange": [
+        1.1,
+        1.6
+      ]
     }
   ],
   "ambient": {
@@ -1146,10 +1517,10 @@
     "sunIntensity": 1.4
   },
   "budgets": {
-    "props": 220,
+    "props": 320,
     "npcs": 16,
     "ambient": 12,
-    "maxPropsPer8x8": 30
+    "maxPropsPer8x8": 45
   },
   "reviewViews": [
     {
@@ -1169,59 +1540,146 @@
     },
     {
       "id": "market",
-      "target": "bank:counter",
+      "target": "bank:approach",
       "mode": "gameplay",
       "yaw": 0,
-      "zoom": 1.2
+      "zoom": 1.2,
+      "covers": [
+        "facility:bank"
+      ]
     },
     {
       "id": "kitchen",
-      "target": "kitchen:hearth",
+      "target": "kitchen:approach",
       "mode": "gameplay",
       "yaw": 0,
-      "zoom": 1.2
+      "zoom": 1.2,
+      "covers": [
+        "facility:stove"
+      ]
     },
     {
       "id": "fields",
-      "target": "fields",
+      "target": "field:field_edge",
       "mode": "gameplay",
       "yaw": 0.45,
-      "zoom": 1.3
+      "zoom": 1.1,
+      "covers": [
+        "gather:gather_bowstring"
+      ]
     },
     {
       "id": "river",
-      "target": "fishing",
+      "target": "river_approach",
       "mode": "gameplay",
       "yaw": -0.7,
-      "zoom": 1.3
+      "zoom": 1.3,
+      "covers": [
+        "skill:fishing:shrimps"
+      ]
     },
     {
       "id": "quarry",
       "target": "quarry",
       "mode": "gameplay",
       "yaw": 0.8,
-      "zoom": 1.2
+      "zoom": 1.2,
+      "covers": [
+        "skill:mining:clay",
+        "skill:mining:copper"
+      ]
     },
     {
       "id": "ruins",
-      "target": "ruins",
+      "target": "ruins_court",
       "mode": "gameplay",
-      "yaw": 0,
-      "zoom": 1.2
+      "yaw": 1.5707963267948966,
+      "zoom": 1.4,
+      "covers": [
+        "skill:mining:rune_essence",
+        "combat:arcane_adept"
+      ]
     },
     {
       "id": "hollow",
-      "target": "hollow",
+      "target": "wet_hollow",
       "mode": "gameplay",
       "yaw": 0.2,
-      "zoom": 1.3
+      "zoom": 1.3,
+      "covers": [
+        "combat:bogling_sprite"
+      ]
     },
     {
       "id": "shore",
-      "target": "shore",
+      "target": "crab_approach",
       "mode": "gameplay",
       "yaw": 0.2,
+      "zoom": 1.3,
+      "covers": [
+        "combat:stoneback_crab"
+      ]
+    },
+    {
+      "id": "granary",
+      "target": "granary_yard",
+      "mode": "gameplay",
+      "yaw": 0.3,
+      "zoom": 1.2,
+      "covers": [
+        "combat:dustpaw_rat"
+      ]
+    },
+    {
+      "id": "goblins",
+      "target": "goblin_camp",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.3,
+      "covers": [
+        "combat:cave_goblin"
+      ]
+    },
+    {
+      "id": "west_gate",
+      "target": "west",
+      "mode": "gameplay",
+      "yaw": 1.5707963267948966,
       "zoom": 1.3
+    },
+    {
+      "id": "south_gate",
+      "target": "south",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.3
+    },
+    {
+      "id": "bridge",
+      "target": "bridge",
+      "mode": "gameplay",
+      "yaw": -0.7,
+      "zoom": 1.4
+    },
+    {
+      "id": "bulls",
+      "target": "paddock",
+      "mode": "gameplay",
+      "yaw": -0.7,
+      "zoom": 1.3,
+      "covers": [
+        "combat:pasture_bull"
+      ]
+    },
+    {
+      "id": "chickens",
+      "target": "chicken_yard",
+      "mode": "gameplay",
+      "yaw": 0.7,
+      "zoom": 1.3,
+      "covers": [
+        "combat:field_chicken"
+      ]
     }
   ]
 }

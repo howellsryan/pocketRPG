@@ -36,6 +36,8 @@ Use `author:build -- <region_id>` for another source. The overworld integration 
 
 Generated `zones/lumbright.json`, `zones/overworld.json`, `assets.generated.json` and `reports/lumbright.json` are committed for normal runtime/build use. Edit the semantic sources and regenerate. `author:check` catches stale outputs. The legacy `gen-lumbright.mjs` now delegates to this pipeline and cannot restore the obsolete map.
 
+The contract explicitly lists deferred spatial activities and portable idle actions. New, unclassified activity families fail until an adapter policy is chosen. Gathering/combat/facility parity is scoped explicitly; it does not certify every idle activity as playable outdoors.
+
 The audit includes canonical membership, footprint boxes, named points, review cameras, counts and explicit budgets. `visualApproval: pending` is intentional: numerical validity cannot certify composition.
 
 ## Agent authoring order
@@ -62,13 +64,13 @@ The server resolves new `fishing_spot` and `gather_site` objects, validates adja
 
 ## Visual release gate
 
-`author:review` captures every authored close view at desktop 1280×800, portrait 390×844, and the translated overworld location, plus an overview. It waits for all props, statics, scatter, ambient, creature and hero loads, uses the real gameplay camera/shadows, and fails on missing assets or browser errors. The preview deliberately has no server simulation or gameplay HUD.
+`author:review` captures every authored close view at desktop 1280×800, portrait 390×844, and the translated overworld location, plus an overview. Every bound resource, monster and facility must have explicit close-view coverage; an overview-only camera set fails compilation. It waits for all props, statics, scatter, ambient, creature and hero loads, uses the real gameplay camera/shadows, and fails on missing assets or browser errors. The command checks generated-file freshness and builds the current client before capture. Snapshots settle animations at a fixed ambient time and render one frame; the interactive preview retains its animation loop. Integrated gameplay views use the server's settled AOI rule. The preview deliberately has no server simulation or gameplay HUD.
 
 Look at composition, recognizable silhouettes, entrances/fronts, collision against visible shapes, floats/intersections, road continuity, repeated blocks, lighting, occlusion at portrait width, and whether every pocket communicates its purpose. Review the rat's idle/attack/hit/death renders and its world size. Record specific criticism and corrections; do not approve a contact sheet by its existence.
 
-Approval is a versioned `reviews/lumbright.json` receipt with `sourceHash`, `verdict: approved`, `reviewedBy`, `evidenceUrl`, and all `desktop:<id>`/`mobile:<id>`/`integrated:<id>` close-view identities. Run `author:release` to reject missing/stale review evidence. Changing canonical data, assets, composition, renderer or capture code invalidates the fingerprint. A report does not self-approve.
+Approval is a versioned `reviews/lumbright.json` receipt with `sourceHash`, `verdict: approved`, `reviewedBy`, `evidenceUrl`, and the desktop overview plus all `desktop:<id>`/`mobile:<id>`/`integrated:<id>` close-view identities. Run `author:release` to reject missing/stale review evidence. Changing canonical data, assets, composition, renderer or capture code invalidates the fingerprint. A report does not self-approve.
 
-Rendered counters and source budgets guide scene complexity. SwiftShader is a software renderer; these screenshots cannot prove a phone frame rate, multiplayer load, accessibility of the live HUD, or a full MMO's production readiness. Playtest the actual world on a phone and with other players before promoting it beyond the existing beta.
+Painted terrain uses exact sparse tiles with the base surface's corner heights, diagonals and smooth normals. Complete scenery and scatter meshes are instanced in spatial batches. Rendered counters and source budgets guide scene complexity. SwiftShader is a software renderer; these screenshots cannot prove a phone frame rate, multiplayer load, accessibility of the live HUD, or a full MMO's production readiness. Playtest the actual world on a phone and with other players before promoting it beyond the existing beta.
 
 ## Editor coexistence
 

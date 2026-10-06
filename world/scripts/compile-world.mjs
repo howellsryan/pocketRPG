@@ -26,7 +26,7 @@ const context={
   gatherTasks:GATHER_TASKS,assets,prefabs:prefabs.prefabs,
 }
 const {zone,report}=compileRegion(source,context)
-const sceneFiles=['world/authoring/compiler.mjs','world/client/src/preview/main.ts','world/scripts/review-authoring.mjs','world/client/src/props.ts','world/client/src/statics.ts','world/client/src/entities.ts','world/client/src/terrain.ts','world/client/src/groundPaint.ts','world/client/src/scene.ts','world/client/src/ambient.ts','world/client/src/scatter.ts','world/client/src/procCreature.ts','world/shared/monsterModels.ts','world/shared/ambientModels.ts','world/shared/propScale.js','world/scripts/gen-overworld.mjs','src/data/creatures3d.json','src/3d/blendShell.js','src/3d/rigs.js']
+const sceneFiles=['world/authoring/compiler.mjs','world/client/src/preview/main.ts','world/scripts/review-authoring.mjs','world/client/src/props.ts','world/client/src/statics.ts','world/client/src/entities.ts','world/client/src/terrain.ts','world/client/src/terrainMaterials.ts','world/client/src/chunkedTerrain.ts','world/client/src/assetBase.ts','world/client/src/motion.ts','world/client/src/groundPaint.ts','world/client/src/paintGeometry.ts','world/shared/groundKinds.ts','world/client/src/scene.ts','world/client/src/ambient.ts','world/client/src/scatter.ts','world/client/src/procCreature.ts','world/shared/monsterModels.ts','world/shared/ambientModels.ts','world/shared/propScale.js','world/scripts/gen-overworld.mjs','src/data/creatures3d.json','src/3d/blendShell.js','src/3d/rigs.js','src/data/items.json']
 const inputs={source,prefabs,policy,context,scene: Object.fromEntries(sceneFiles.map((p)=>[p,fs.readFileSync(path.join(root,p),'utf8')]))}
 report.sourceHash=createHash('sha256').update(JSON.stringify(inputs)).digest('hex')
 const serial=(v)=>JSON.stringify(v,null,1)+'\n'
@@ -54,6 +54,6 @@ if(args.includes('--emit')) {
 if(args.includes('--release')) {
   const receipt=read(path.join(worldDir,'authoring/reviews',id+'.json'))
   if(receipt.sourceHash!==report.sourceHash || receipt.verdict!=='approved' || !receipt.reviewedBy || !receipt.evidenceUrl)throw new Error('Current-source visual review approval is required')
-  const required=report.reviewViews.filter((v)=>v.mode==='gameplay').flatMap((v)=>['desktop:'+v.id,'mobile:'+v.id,'integrated:'+v.id])
+  const required=report.reviewViews.flatMap((v)=>v.mode==='overview' ? ['desktop:'+v.id] : ['desktop:'+v.id,'mobile:'+v.id,'integrated:'+v.id])
   for(const view of required)if(!receipt.views?.includes(view))throw new Error('Unreviewed view '+view)
 }

@@ -73,7 +73,7 @@ const entities: Entity[]=[]
 const ready=[
   createProps(scene,def.props??[]),
   createStatics(scene,def.objects),
-  Promise.all(def.npcs.map(async(npc)=>{
+  Promise.all(def.npcs.filter((npc)=>!gameplay || def.aoiRadius==null || Math.max(Math.abs(npc.x-targetTile.x),Math.abs(npc.z-targetTile.z))<=def.aoiRadius).map(async(npc)=>{
     const {mesh,animator}=await createMonsterMesh(npc.monsterId)
     const entity=createEntity(npc.id,npc.x,npc.z,mesh,animator)
     entities.push(entity); scene.add(mesh)
@@ -125,7 +125,7 @@ window.addEventListener('resize',()=>{
 const clock=new THREE.Clock()
 function frame(): void {
   const dt=snapshot?.35:clock.getDelta(),now=snapshot?350:performance.now()
-  ambient.update(dt)
+  ambient.update(dt,snapshot ? 12.35 : undefined)
   for(const entity of entities)updateEntity(entity,now,dt)
   renderer.render(scene,camera)
   window.__previewStats={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,

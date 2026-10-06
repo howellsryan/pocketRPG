@@ -35,5 +35,16 @@ export async function measureAuthoringAssets(policy) {
     if (spec.parts?.length || Object.values(spec.forms ?? {}).some((f) => f.parts?.length)) monsters.add(id)
   }
   const ambient = Object.entries(AMBIENT_MODELS).filter(([,spec])=>fs.existsSync(path.join(worldDir,'client/public',spec.url))).map(([id])=>id)
-  return { schemaVersion: 1, props, monsters: [...monsters].sort(), ambient: ambient.sort() }
+  // A shipped mesh revision invalidates review, including hero/static meshes.
+  const files = {}
+  const visit = (dir) => {
+    for (const entry of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))) {
+      const file=path.join(dir,entry.name)
+      if(entry.isDirectory())visit(file)
+      else if(/\.(glb|gltf|png|jpe?g|webp)$/i.test(entry.name))
+        files[path.relative(worldDir,file).split(path.sep).join('/')]=createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+    }
+  }
+  visit(path.join(worldDir,'client/public/models'))
+  return { schemaVersion: 1, files, props, monsters: [...monsters].sort(), ambient: ambient.sort() }
 }

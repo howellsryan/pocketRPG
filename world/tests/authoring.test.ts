@@ -22,7 +22,7 @@ const source = () => ({
   encounters: [{ id: 'rats', ref: 'combat:rat', wander: { x: 2, z: 2, w: 3, h: 3 }, spawns: [{ x: 3, z: 3 }] }],
   ambient: { critters: [], smoke: [] },
   budgets: { props: 100, npcs: 10, ambient: 10, maxPropsPer8x8: 30 },
-  reviewViews: [{ id: 'arrival', target: 'arrival', mode: 'gameplay' }]
+  reviewViews: [{ id: 'overview', target: 'arrival', mode: 'overview' }, { id: 'arrival', target: 'arrival', mode: 'gameplay', covers: ['skill:mining:clay','gather:cache','facility:bank','combat:rat'] }]
 })
 
 describe('semantic world compiler', () => {
@@ -31,7 +31,7 @@ describe('semantic world compiler', () => {
     expect(zone.objects.find((o: any) => o.id === 'clay')).toMatchObject({ type: 'rock', rock: 'clay' })
     expect(zone.objects.find((o: any) => o.id === 'cache')).toMatchObject({ type: 'gather_site', gather: 'cache' })
     expect(zone.npcs[0]).toMatchObject({ monsterId: 'rat' })
-    expect(report.parity).toEqual({ missing: [], unexpected: [] })
+    expect(report.parity).toMatchObject({ missing: [], unexpected: [] })
   })
   it('derives Lumbright membership directly from current idle activities and facilities', () => {
     const c = deriveContract('lumbright', { ...context(), world, activities })
@@ -44,6 +44,27 @@ describe('semantic world compiler', () => {
     expect(() => compileRegion(s, context())).toThrow(/missing.*skill:mining:clay/i)
     const extra = source(); extra.resources.push({ id: 'tin', ref: 'skill:mining:tin', x: 8, z: 8 })
     expect(() => compileRegion(extra, context())).toThrow(/unexpected|unsupported/)
+  })
+  it('surfaces deferred systems and rejects unclassified canonical additions', () => {
+    const c = context()
+    c.activities.test.push({ kind: 'quest', ref: 'welcome' }, { kind: 'skill', ref: 'crafting:thread' })
+    expect(deriveContract('test', c)).toMatchObject({ deferred: ['quest:welcome'], portable: ['skill:crafting:thread'] })
+    c.activities.test.push({ kind: 'skill', ref: 'new_spatial_skill:ore' })
+    expect(() => deriveContract('test', c)).toThrow(/unclassified canonical skill/)
+  })
+  it('requires close review coverage for every binding and unambiguous camera identities', () => {
+    const missing = source(); missing.reviewViews[1].covers = ['facility:bank']
+    expect(() => compileRegion(missing, context())).toThrow(/missing close review coverage.*combat:rat/)
+    const overviewOnly = source(); overviewOnly.reviewViews.splice(1)
+    expect(() => compileRegion(overviewOnly, context())).toThrow(/overview and close/)
+    const duplicate = source(); duplicate.reviewViews[1].id = 'overview'
+    expect(() => compileRegion(duplicate, context())).toThrow(/duplicate review view/)
+    const unknown = source(); unknown.reviewViews[1].mode = 'pretty'
+    expect(() => compileRegion(unknown, context())).toThrow(/invalid review mode/)
+  })
+  it('preserves authored region exits as well as prefab exits', () => {
+    const s = { ...source(), exits: [{ id: 'cave', x: 12, z: 12, toZone: 'test_cave', toX: 4, toZ: 4, label: 'Cave' }] }
+    expect(compileRegion(s, context()).zone.exits).toEqual(s.exits)
   })
   it('reserves roads before buildings and refuses to cut collision through a mesh', () => {
     const s = source(); s.dressing.push({ model: 'house', x: 10, z: 7 } as never)

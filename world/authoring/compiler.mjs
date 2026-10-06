@@ -2,6 +2,8 @@
 // CLI and tests supply canonical data and measured owned-asset bounds.
 const DIRECTIONS = [[1,0],[-1,0],[0,1],[0,-1]]
 const SPATIAL_SKILLS = new Set(['mining', 'woodcutting', 'fishing'])
+const PORTABLE_SKILLS = new Set(['construction','cooking','crafting','firemaking','fletching','herblore','magic','prayer','smithing','runecrafting'])
+const DEFERRED_SYSTEMS = new Set(['agility','farming','hunter','quest','thieving','slayer','dungeoneering'])
 const FACILITIES = { bank: ['bank_chest'], stove: ['range'], furnace_anvil: ['furnace','anvil'] }
 const GROUNDS = new Set(['path_dirt','path_cobble','plaza','sand','farm','floor_plank','floor_stone','floor_tile','ash','water','lava'])
 const clone = (v) => JSON.parse(JSON.stringify(v))
@@ -14,16 +16,26 @@ export function deriveContract(place, context) {
   const location = context.world.places[place]
   const activities = context.activities[place]
   if (!location || !activities) fail('unknown canonical place ' + place)
-  const resources = [], monsters = []
+  const resources = [], monsters = [], deferred = [], portable = []
   for (const a of activities) {
     if (a.kind === 'combat') monsters.push('combat:' + a.ref)
-    if (a.kind === 'gather') resources.push('gather:' + a.ref)
-    if (a.kind === 'skill' && SPATIAL_SKILLS.has(a.ref.split(':')[0])) resources.push('skill:' + a.ref)
+    else if (a.kind === 'gather') resources.push('gather:' + a.ref)
+    else if (a.kind === 'skill') {
+      const skill=a.ref.split(':')[0]
+      if(SPATIAL_SKILLS.has(skill))resources.push('skill:' + a.ref)
+      else if(PORTABLE_SKILLS.has(skill))portable.push('skill:' + a.ref)
+      else if(DEFERRED_SYSTEMS.has(skill))deferred.push('skill:' + a.ref)
+      else fail('unclassified canonical skill '+a.ref+' requires an explicit spatial or portable policy')
+    } else if(a.kind==='bank') {
+      if(!(location.facilities??[]).includes('bank'))fail('canonical bank activity has no bank facility')
+    } else if(DEFERRED_SYSTEMS.has(a.kind))deferred.push(a.kind+':'+a.ref)
+    else fail('unclassified canonical activity '+a.kind+':'+a.ref+' requires an explicit adapter policy')
   }
   return {
     resources: [...new Set(resources)].sort(),
     monsters: [...new Set(monsters)].sort(),
-    facilities: (location.facilities ?? []).map((f) => 'facility:' + f).sort()
+    facilities: (location.facilities ?? []).map((f) => 'facility:' + f).sort(),
+    deferred: [...new Set(deferred)].sort(), portable: [...new Set(portable)].sort()
   }
 }
 
@@ -61,7 +73,7 @@ export function compileRegion(input, context) {
   const routeTiles = new Map()
   const ids = new Set()
   const unique = (id) => { if (!id || ids.has(id)) fail('missing or duplicate id ' + id); ids.add(id) }
-  const props = [], objects = [], npcs = [], exits = [], ground = [], points = clone(source.points ?? [])
+  const props = [], objects = [], npcs = [], exits = clone(source.exits ?? []), ground = [], points = clone(source.points ?? [])
   const ambient = clone(source.ambient ?? {critters:[],smoke:[]})
   ambient.critters ??= []; ambient.smoke ??= []
   const resources = clone(source.resources ?? []), encounters = clone(source.encounters ?? [])
@@ -242,12 +254,28 @@ export function compileRegion(input, context) {
   for(const p of props){const k=key(Math.floor(p.x/8),Math.floor(p.z/8));cells.set(k,(cells.get(k)??0)+1)}
   if([...cells.values()].some((n)=>n>budgets.maxPropsPer8x8))fail('local scenery density budget exceeded')
   if(!source.reviewViews?.length)fail('reviewViews are required; structural checks do not certify visuals')
-  for(const view of source.reviewViews) {if(!view.id||!pointMap.has(view.target))fail('invalid review view '+view.id)}
+  const viewIds=new Set(), reviewedContent=new Set()
+  let overview=false, gameplay=false
+  for(const view of source.reviewViews) {
+    if(!/^[a-z][a-z0-9_]*$/.test(view.id) || viewIds.has(view.id) || !pointMap.has(view.target))fail('invalid or duplicate review view '+view.id)
+    viewIds.add(view.id)
+    if(!['overview','gameplay'].includes(view.mode))fail('invalid review mode '+view.id)
+    for(const k of ['yaw','pitch','zoom','distance'])if(view[k]!=null&&!finite(view[k]))fail('invalid review camera '+view.id)
+    overview ||= view.mode==='overview'; gameplay ||= view.mode==='gameplay'
+    for(const ref of view.covers??[]) {
+      if(!expected.has(ref))fail('unknown reviewed content '+ref)
+      if(view.mode!=='gameplay')fail('content requires a close gameplay review '+ref)
+      reviewedContent.add(ref)
+    }
+  }
+  if(!overview||!gameplay)fail('overview and close gameplay review views are required')
+  const uncovered=[...expected].filter((ref)=>!reviewedContent.has(ref)).sort()
+  if(uncovered.length)fail('missing close review coverage: '+uncovered.join(', '))
   const zone={id:source.id,name:source.name,width,height,spawn,collision:grid.map((r)=>r.join('')),objects,npcs,exits,props,ground,ambient}
   for(const k of ['palette','ambience','terrain'])if(source[k])zone[k]=source[k]
   return {zone,report:{
     schemaVersion:1,region:source.id,place:source.place,seed:source.seed,
-    parity:{missing:[],unexpected:[]},contract,points,footprints,
+    parity:{scope:'gathering, combat identities and facilities',missing:[],unexpected:[]},contract,points,footprints,
     reviewViews:source.reviewViews.map((v)=>({...v,x:pointMap.get(v.target).x,z:pointMap.get(v.target).z})),
     counts:{props:props.length,npcs:npcs.length,objects:objects.length,ambient:ambient.critters.reduce((n,c)=>n+c.count,0),reachableTiles:reach.size},
     budgets,visualApproval:'pending'

@@ -170,15 +170,16 @@ export async function openPreview3D(def: ZoneDef): Promise<void> {
       reviewBtn.removeEventListener('click', onReviewClick)
       walkBtn.classList.remove('active')
       strip.innerHTML = ''
-      renderer.dispose()
       renderer.domElement.remove()
       scene.traverse((obj) => {
+        if (obj instanceof THREE.InstancedMesh) obj.dispose()
         const mesh = obj as THREE.Mesh
         if (mesh.geometry) mesh.geometry.dispose()
         const mat = mesh.material as THREE.Material | THREE.Material[] | undefined
         if (Array.isArray(mat)) mat.forEach((m) => m.dispose())
         else mat?.dispose()
       })
+      renderer.dispose()
       modal.style.display = 'none'
     },
   }

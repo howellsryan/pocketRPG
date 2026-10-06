@@ -4,13 +4,16 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { spawn } from 'node:child_process'
+import { spawn, execFileSync } from 'node:child_process'
 import { chromium } from 'playwright'
 import sharp from 'sharp'
 
 const worldDir=fileURLToPath(new URL('..',import.meta.url))
 const id=process.argv[2]??'lumbright'
 if(!/^[a-z][a-z0-9_]*$/.test(id))throw new Error('Invalid region id')
+// Standalone reviews must not label stale dist with a fresh source hash.
+execFileSync(process.execPath,[path.join(worldDir,'scripts/compile-world.mjs'),id,'--check'],{cwd:worldDir,stdio:'inherit'})
+execFileSync(process.platform==='win32'?'npm.cmd':'npm',['run','build'],{cwd:worldDir,stdio:'inherit'})
 const report=JSON.parse(fs.readFileSync(path.join(worldDir,'authoring/reports',id+'.json'),'utf8'))
 const zone=JSON.parse(fs.readFileSync(path.join(worldDir,'zones',id+'.json'),'utf8'))
 const overworld=JSON.parse(fs.readFileSync(path.join(worldDir,'zones/overworld.json'),'utf8'))
@@ -67,6 +70,7 @@ try {
       const page=await browser.newPage({viewport,deviceScaleFactor:1})
       const errors=[]
       page.on('pageerror',(error)=>errors.push(error.message))
+      page.on('console',(message)=>{if(message.type()==='error')errors.push(message.text())})
       page.on('response',(response)=>{if(response.status()>=400)errors.push(response.status()+' '+response.url())})
       page.on('requestfailed',(request)=>errors.push('Failed '+request.url()))
       const params=new URLSearchParams({

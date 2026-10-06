@@ -4,10 +4,11 @@ import { tileToWorld } from './scene'
 import type { PropPlacement } from '../../shared/protocol'
 import { PROP_BASE_SCALE } from '../../shared/propScale.js'
 import { modelUrl } from './assetBase'
+import { collectMeshParts } from './scatter'
 
 // Scenery dressing from the zone JSON `props` list: pure visuals — no pick
 // data, no collision (that lives in the ASCII grid under them). Each distinct
-// model loads once; instances are clones. A failed load just skips the model.
+// model loads once; complete mesh parts are instanced in spatial batches. A failed load just skips the model.
 
 // Kenney nature-kit models are authored ~1 unit tall; base scales size each
 // model against the 1-unit tile grid, multiplied by the placement's own scale.
@@ -26,17 +27,29 @@ export async function createProps(scene: THREE.Scene, props: PropPlacement[]): P
     })
   )
   const group = new THREE.Group()
-  for (const p of props) {
-    const template = templates.get(p.model)
-    if (!template) continue
-    const obj = template.scene.clone(true)
-    obj.position.copy(tileToWorld(p.x, p.z))
-    if (p.rot) obj.rotation.y = p.rot
-    obj.scale.setScalar(((PROP_BASE_SCALE as Record<string, number>)[p.model] ?? 1) * (p.scale ?? 1))
-    obj.traverse((child) => {
-      if (child instanceof THREE.Mesh) { child.castShadow = true; child.receiveShadow = true }
-    })
-    group.add(obj)
+  for(const [model,template] of templates){
+    if(!template)continue
+    const parts=collectMeshParts(template.scene)
+    if(model==='wheat')for(const part of parts){
+      const tint=(material:THREE.Material)=>{const clone=material.clone() as THREE.MeshStandardMaterial;clone.color?.set(0xd6b35e);return clone}
+      part.material=Array.isArray(part.material)?part.material.map(tint):tint(part.material)
+    }
+    const batches=new Map<string,THREE.Matrix4[]>()
+    for(const p of props.filter((p)=>p.model===model)){
+      const key=Math.floor(p.x/32)+','+Math.floor(p.z/32),batch=batches.get(key)??[]
+      const scale=((PROP_BASE_SCALE as Record<string,number>)[model]??1)*(p.scale??1)
+      batch.push(new THREE.Matrix4().compose(tileToWorld(p.x,p.z),
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),p.rot??0),
+        new THREE.Vector3(scale,scale,scale)))
+      batches.set(key,batch)
+    }
+    for(const batch of batches.values())for(const part of parts){
+      const mesh=new THREE.InstancedMesh(part.geometry,part.material,batch.length)
+      batch.forEach((matrix,i)=>mesh.setMatrixAt(i,matrix))
+      mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere()
+      mesh.castShadow=true;mesh.receiveShadow=true
+      group.add(mesh)
+    }
   }
   scene.add(group)
 }

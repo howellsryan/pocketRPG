@@ -171,7 +171,7 @@ export function walkerFramesAt(collision: string[], walkers: Walker[], elapsedSe
   })
 }
 
-export type AmbientLayer = { ready: Promise<void>; update: (dt: number) => void; dispose: () => void }
+export type AmbientLayer = { ready: Promise<void>; update: (dt: number, elapsedSeconds?: number) => void; dispose: () => void }
 
 /** Builds the ambient layer: kicks off critter/villager model loads (instances
  * appear as each GLB resolves) and adds the smoke emitters. Returns an
@@ -209,9 +209,8 @@ export function createAmbient(
   let bob = 0
   return {
     ready,
-    update: (dt: number) => {
+    update: (dt: number, elapsedSeconds = Date.now() / 1000) => {
       if (instances.length > 0) {
-        const elapsedSeconds = Date.now() / 1000
         const frames = walkerFramesAt(collision, walkers, elapsedSeconds)
         bob += dt * 8
         const bobOffset = Math.abs(Math.sin(bob)) * 0.06
