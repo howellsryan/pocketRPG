@@ -36,11 +36,12 @@ export const CHAT_NEURON_BUDGET_MILLI = 6_500_000
 // allocation, per-message capacity is worth more than day-wide headroom.
 export const CHAT_MESSAGE_RESERVE_MILLI = 3_500_000
 
-// Daily token pool for the OpenAI primary against the ~2.5M/day complimentary
-// data-sharing allotment. Metered locally because OpenAI doesn't hard-stop at
-// the free allotment — overage bills at normal rates. Budget + one in-flight
-// reserve stays under 2.5M. Rows live in chat_neuron_usage under an 'openai:'-
-// prefixed day_key; the reserve/settle statements are unit-agnostic.
+// Daily token pool for GPT-5.6 Terra: eligible data-sharing traffic shares a
+// 2.5M/day allowance at usage tiers 1–2 (10M at tiers 3–5). This local budget
+// uses the lower allowance; budget + one in-flight reserve stays under 2.5M.
+// Free usage requires enrolment and sharing enabled for this API project;
+// other eligible traffic shares the allowance, and overage bills normally.
+// Rows use an 'openai:'-prefixed day_key; reserve/settle is unit-agnostic.
 // The OpenAI reserve is much larger than the others because its worst case
 // funds CHAT_OPENAI_MAX_OUTPUT_TOKENS of reasoning on every call, not just the
 // shared visible-answer cap.

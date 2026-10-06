@@ -406,7 +406,7 @@ describe('chatAttempts / geminiChatBinding', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
     const binding = openaiChatBinding({ OPENAI_API_KEY: 'test-key' } as any)
-    const res = await binding.run('gpt-6-luna', {
+    const res = await binding.run('gpt-5.6-terra', {
       messages: baseMessages(),
       max_tokens: 5000,
       temperature: 0.6,
@@ -417,7 +417,7 @@ describe('chatAttempts / geminiChatBinding', () => {
     expect(url).toBe('https://api.openai.com/v1/responses')
     expect(init.headers.Authorization).toBe('Bearer test-key')
     const body = JSON.parse(init.body)
-    expect(body.model).toBe('gpt-6-luna')
+    expect(body.model).toBe('gpt-5.6-terra')
     // Not the payload's 5000-token answer cap: max_output_tokens also funds
     // this model's reasoning, and starving it returns an empty answer.
     expect(body.max_output_tokens).toBe(CHAT_OPENAI_MAX_OUTPUT_TOKENS)
@@ -438,7 +438,7 @@ describe('chatAttempts / geminiChatBinding', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
     const binding = openaiChatBinding({ OPENAI_API_KEY: 'test-key' } as any)
-    const res = await binding.run('gpt-6-luna', { messages: baseMessages(), tools: [SEARCH_TOOLS_DEF] })
+    const res = await binding.run('gpt-5.6-terra', { messages: baseMessages(), tools: [SEARCH_TOOLS_DEF] })
     const body = JSON.parse(fetchMock.mock.calls[0][1].body)
     expect(body.tools).toEqual([
       { type: 'function', name: SEARCH_TOOLS_DEF.function.name, description: SEARCH_TOOLS_DEF.function.description, parameters: SEARCH_TOOLS_DEF.function.parameters },
