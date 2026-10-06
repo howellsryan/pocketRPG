@@ -1,0 +1,49 @@
+name: Semantic World Review
+
+on:
+  push:
+    branches: ['world/semantic-lumbright']
+  pull_request:
+    paths:
+      - 'world/**'
+      - 'src/data/world*.json'
+      - 'src/data/skills.json'
+      - 'src/data/creatures3d.json'
+      - 'src/engine/gatherTasks.js'
+      - '.github/workflows/semantic-world-review.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: semantic-world-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            world/package-lock.json
+      - name: Install root and world dependencies
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm rebuild esbuild
+          npm --prefix world ci --no-audit --no-fund
+      - name: Bootstrap pinned agent skills
+        run: |
+          python3 tools/agent-skills.py
+          python3 tools/agent-skills.py --check
+      - name: Check the idle game
+        run: npm run ci
+      - name: Check the world
+        run: npm run world:check
