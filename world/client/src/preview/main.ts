@@ -41,6 +41,7 @@ const zoneId = params.get('zone') ?? 'overworld'
 if (!ZONES[zoneId]) throw new Error('Unknown preview zone: ' + zoneId)
 const def = ZONES[zoneId]
 const gameplay = params.get('mode') === 'gameplay'
+const snapshot = params.get('snapshot') === '1'
 const number = (name: string, fallback: number): number => {
   const value = params.has(name) ? Number(params.get(name)) : fallback
   if (!Number.isFinite(value)) throw new Error('Invalid preview parameter: ' + name)
@@ -123,18 +124,23 @@ window.addEventListener('resize',()=>{
 })
 const clock=new THREE.Clock()
 function frame(): void {
-  const dt=clock.getDelta(),now=performance.now()
+  const dt=snapshot?.35:clock.getDelta(),now=snapshot?350:performance.now()
   ambient.update(dt)
   for(const entity of entities)updateEntity(entity,now,dt)
   renderer.render(scene,camera)
   window.__previewStats={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
     geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures}
-  requestAnimationFrame(frame)
+  if (!snapshot) requestAnimationFrame(frame)
 }
-frame()
+if (!snapshot) frame()
 void Promise.all(ready).then(()=>{
   if(window.__previewError)throw new Error(window.__previewError)
-  renderer.render(scene,camera)
+  if (snapshot) {
+    // Render the settled gameplay scene once. A perpetual WebGL loop can
+    // starve screenshot readback under CI's software renderer.
+    frame()
+    renderer.getContext().finish()
+  } else renderer.render(scene,camera)
   window.__previewReady=true
 }).catch((error: unknown)=>{
   window.__previewError=String(error)
