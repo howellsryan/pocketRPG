@@ -109,6 +109,10 @@
     "torch": {
       "role": "dressing",
       "blocking": true
+    },
+    "mushrooms": {
+      "role": "groundcover",
+      "blocking": false
     }
   }
 }
