@@ -89,6 +89,7 @@ try {
       const name=variant+'-'+view.id+'.png'
       await page.screenshot({path:path.join(out,name),timeout:60000})
       captures.push({id:variant+':'+view.id,file:name,viewport,stats:state.stats,url:url.replace(origin,'')})
+      await emit(variant+'-'+view.id,await sharp(path.join(out,name)).jpeg({quality:85}).toBuffer())
       await page.close()
     }
   }
