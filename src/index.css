@@ -41,6 +41,7 @@
   --color-void-light: #1a1a1a;
   --color-void-lighter: #252525;
   --color-void-border: #333;
+  --gf-shell-edge: #241811;
   --color-xp-bar: #3cb043;
   --color-hp-green: #27ae60;
   --color-hp-yellow: #f39c12;
@@ -773,6 +774,24 @@ html, body, #app {
   touch-action: manipulation;
 }
 
+/* Current iOS Home Screen apps can reserve a system-composited strip outside
+   the document viewport. That region cannot be filled by app content, but it
+   takes the root page paint. Match it to the mobile frame so the status-bar
+   and home-indicator edges stay visually continuous instead of exposing a
+   black/system-coloured band. */
+@media (max-width: 767px) {
+  html.pwa-standalone,
+  html.pwa-standalone body {
+    background-color: var(--gf-shell-edge);
+  }
+}
+@media (max-width: 767px) and (display-mode: standalone) {
+  html,
+  body {
+    background-color: var(--gf-shell-edge);
+  }
+}
+
 /* Scrollbars are hidden everywhere — content still scrolls, but the bar itself
    never renders (a thin bar reads as an artefact on this mobile-first UI). The
    universal !important overrides every per-element scrollbar rule below
@@ -849,7 +868,7 @@ html, body, #app {
         rgba(255, 236, 190, 0.03) 9px 12px, transparent 12px 26px),
       repeating-linear-gradient(0deg,
         rgba(0, 0, 0, 0.08) 0 2px, transparent 2px 7px),
-      linear-gradient(180deg, #3a2a1c, #2c1f14 42%, #241811);
+      linear-gradient(180deg, #3a2a1c, #2c1f14 42%, var(--gf-shell-edge));
   }
   /* Gold pinstripe inlay running just inside the frame edge. */
   .gf-shell::after {
@@ -951,7 +970,7 @@ html, body, #app {
    scrolls above the home indicator instead of going behind it. Targeting
    overflow-y-auto keeps the outer layout at full 100vh (no shrinkage), which
    lets screens fill the extra space that was previously hidden by the browser
-   toolbar. The JS-injected style handles iOS; the media query covers Android. */
+   toolbar. The early pwa-standalone class handles iOS; the media query covers other standalone browsers. */
 .pwa-standalone .overflow-y-auto { padding-bottom: env(safe-area-inset-bottom); }
 @media (display-mode: standalone) {
   .overflow-y-auto { padding-bottom: env(safe-area-inset-bottom); }
