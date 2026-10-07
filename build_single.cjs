@@ -878,6 +878,7 @@ const html = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if(navigator.standalone)document.documentElement.classList.add('pwa-standalone')</script>
 <meta name="theme-color" content="#e6d8b6">
 <title>PocketRPG — Browser Idle RPG with 25 Skills, Bosses &amp; Raids</title>
 <meta name="description" content="PocketRPG — a tick-based idle fantasy RPG set in the world of Eldermoor. Train 25 skills, fight bosses, and complete quests — progress continues whether the app is open or not. Free to play in your browser, no download.">
@@ -929,7 +930,6 @@ ${css}
 <script>(function(){try{var p=localStorage.getItem('pocketrpg_theme');if(p!=='light'&&p!=='dark'&&p!=='system')p='light';var t=p==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='dark'?'#14110d':'#e6d8b6')}catch(e){document.documentElement.setAttribute('data-theme','light')}})()</script>
 </head>
 <body>
-<script>if(navigator.standalone){document.documentElement.classList.add('pwa-standalone');var s=document.createElement('style');s.textContent='.pwa-standalone .overflow-y-auto{padding-bottom:env(safe-area-inset-bottom)}';document.head.appendChild(s)}</script>
 <script>['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()},{passive:false})});</script>
 <div id="app-splash"><div class="app-splash__brand">PocketRPG</div><div class="app-splash__sub">Loading your adventure…</div></div>
 <main id="app">${landingPrerenderHTML}</main>

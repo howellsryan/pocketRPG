@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script>if(navigator.standalone)document.documentElement.classList.add('pwa-standalone')</script>
   <title>PocketRPG</title>
   <meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 25 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
 </head>
 <body>
-  <script>if(navigator.standalone){document.documentElement.classList.add('pwa-standalone');var s=document.createElement('style');s.textContent='.pwa-standalone .overflow-y-auto{padding-bottom:env(safe-area-inset-bottom)}';document.head.appendChild(s)}</script>
   <script>['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()},{passive:false})});</script>
   <main id="app"></main>
   <script type="module" src="./main.jsx"></script>
