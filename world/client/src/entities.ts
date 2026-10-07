@@ -953,13 +953,15 @@ function startNextSegment(entity: Entity, now: number): void {
  * so a fleeing/kiting combatant still faces its travel direction. */
 export function updateEntity(entity: Entity, now: number, deltaSeconds: number, targetPos?: THREE.Vector3 | null): void {
   if (!entity.moving) startNextSegment(entity, now)
-  if (entity.moving) {
-    const t = Math.min(1, (now - entity.segmentStart) / entity.segmentDuration)
+  while (entity.moving) {
+    const t = Math.min(1, Math.max(0, (now - entity.segmentStart) / entity.segmentDuration))
     entity.mesh.position.lerpVectors(entity.fromPos, entity.toPos, t)
-    if (t >= 1) {
-      entity.moving = false
-      startNextSegment(entity, now)
-    }
+    if (t < 1) break
+    // Queued steps continue from their deadline, even if this frame arrived
+    // late. Starting at "now" accumulated a frame of delay on every tile.
+    const boundary = entity.segmentStart + entity.segmentDuration
+    entity.moving = false
+    startNextSegment(entity, boundary)
   }
 
   if (!entity.moving && targetPos && entity.serverAnim !== 'die') {

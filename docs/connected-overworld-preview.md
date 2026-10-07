@@ -45,3 +45,27 @@ The approval fingerprint covers this change’s scene, entry, guidance and map s
 ## Preview map override rollback
 
 Before changing the preview Cow Pasture exit, the complete revision-10 `def_json` was archived as Git blob `614b4ef023870efbc7eaad33011b843a83efa3ef` in this repository. Retrieve it through the Git blob API to restore the authored map. The preview-only update is conditional on revision 10 and the old return coordinates; if the lease no longer matches, inspect the editor changes before applying anything. A rollback must likewise check the current revision and preserve intervening editor work.
+
+## Mobile performance pass
+
+The client caches deterministic ambient waypoints per 4.5-second leg and loads each villager model once per scene. Villagers outside the camera and nearby shadow area stop advancing their animation mixers; chimney smoke receives conservative bounds and pauses outside the view. Nearby shadow casters remain active. Hidden skeletons still incur scene traversal, so this is not complete regional activation.
+
+Phones start at a maximum 1.25 drawing pixels per screen pixel, without multisample antialiasing, with a 512-pixel shadow map. Sustained slow frames can reduce drawing resolution to one pixel per screen pixel. Resolution stays at that level until a reload; isolated hitches and background gaps do not count. This is a frame-cadence heuristic: browser power-saving caps can also trigger it. HUD text keeps its normal CSS resolution.
+
+Queued movement carries elapsed time across segment boundaries instead of discarding it after a slow frame. Server movement and combat keep their existing 600ms tick.
+
+For diagnosis, enter normally, then add `?perf=1` to the world URL. Browser `window.__worldPerformance` reports mean FPS/frame time, 95th-percentile and worst frame intervals, draw calls, triangles, resolution, shadow size, ping round-trip time and queued steps. It contains no session token or character data.
+
+Device acceptance still needs a signed-in route through Lumbright, across the x=192 terrain-chunk boundary, with combat, pinch zoom, instance travel and background/resume. Check frame percentiles, loading pauses, battery and temperature on a midrange Android and iPhone. Further work should target measured chunk-construction hitches, touch hover raycasts, dormant scene attachment, initial server snapshot interest filtering and crowded HUD overlays.
+
+### Measured rendering workload
+
+Cloudflare Chromium used the same 390 × 844 mobile viewport, device scale factor 3, gameplay camera at zoom 1.3/yaw 0 and snapshot state before and after the pass. The framebuffer changed from 780 × 1688 to 487 × 1055: about 61% fewer drawing pixels. Shadow-map dimensions changed from 1024 to 512. The HUD keeps its CSS resolution.
+
+| Overworld tile | Draw calls before → after | Resident geometries before → after | Submitted triangles in both |
+| --- | --- | --- | --- |
+| 178,120, Lumbright arrival | 324 → 291 | 140 → 107 | 530,750 |
+| 182,145, southern approach | 203 → 170 | 108 → 75 | 283,222 |
+| 192,120, chunk boundary | 266 → 234 | 134 → 102 | 366,539 |
+
+These are scene workload measurements, not handset frame rates or moving chunk-construction measurements. The first candidate was rejected because disabling villager mesh culling increased submitted triangles; the final client keeps separate camera and shadow culling. Native captures and their original PNG digests are recorded in the current Lumbright review.

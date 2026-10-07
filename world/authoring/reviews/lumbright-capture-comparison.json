@@ -1,826 +1,1746 @@
 {
   "schemaVersion": 1,
   "region": "lumbright",
-  "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
-  "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
-  "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/",
+  "sourceHash": "bb384c3d76d4a2eb6ca4b2248912b362dddc0a3a636877319267c08966b8fbc9",
+  "sourceCommit": "f18ff43ed5971fdf964cd7f5d7233d8796c2d258",
+  "evidenceUrl": "https://19a54627-pocketrpg-world-review.rlh.workers.dev/f18ff43ed5971fdf964cd7f5d7233d8796c2d258/",
   "reviewedBy": "Codex primary agent",
-  "nativePresentation": "Native-dimension WebP presentation of the original PNG; original PNG SHA-256 recorded below.",
+  "nativePresentation": "Native-dimension WebP presentation at quality 0.82; identity and byte-exact reuse use the original PNG SHA-256, never a contact sheet or WebP digest.",
+  "reviewCounts": {
+    "currentNative": 23,
+    "previousNativeExactPng": 27,
+    "intermediateNativeExactPng": 21
+  },
   "views": [
     {
       "id": "desktop:overview",
       "file": "desktop-overview.png",
-      "sha": "45454a092b41b61d42c2e9ccfbf357d6cc6655c8b0debc37fd8ab6dbc240d1ac",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 458,
+        "triangles": 640717,
+        "geometries": 159,
+        "textures": 138,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=overview&snapshot=1&target=32%2C32&yaw=0&zoom=1.3&pitch=0.92&distance=78",
+      "sha": "d59b4d8dff8990819f1cac0bb783a22fc9c1c6de7ac9322ea144697d06319a69",
+      "length": 464300,
       "review": "native-current"
     },
     {
       "id": "desktop:arrival",
       "file": "desktop-arrival.png",
-      "sha": "82d5175fad0cb3af47606d3c90d33b09b5f7f4b20b9ab1d4abeff7a245de8f69",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 353,
+        "triangles": 556916,
+        "geometries": 111,
+        "textures": 119,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=32%2C32&yaw=0&zoom=1.5&pitch=0.8",
+      "sha": "82d5175fad0cb3af47606d3c90d33b09b5f7f4b20b9ab1d4abeff7a245de8f69",
+      "length": 566533,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:arrival",
       "file": "mobile-arrival.png",
-      "sha": "038dad54dd1d3e7eda7c83d2018e76852551c61cf36321ef237a591729d4991c",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 288,
+        "triangles": 481432,
+        "geometries": 104,
+        "textures": 115,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=32%2C32&yaw=0&zoom=1.5&pitch=0.8",
+      "sha": "4a400e3f9f115db9360ec2ca45ca39859c74a0864c58ba518b927791d0e3075d",
+      "length": 152237,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:arrival",
       "file": "integrated-arrival.png",
-      "sha": "4c4e933af731fb8955a412d1cdcbd0aa4236088013652c1f417afaa21ef14b59",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "stats": {
+        "calls": 348,
+        "triangles": 581522,
+        "geometries": 121,
+        "textures": 128,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=178%2C120&yaw=0&zoom=1.5&pitch=0.8",
+      "sha": "84467d514211f33d409f49006df12c28abbb3fa7f9cfc56020d20e611953d2b1",
+      "length": 591507,
+      "review": "native-current"
     },
     {
       "id": "desktop:market",
       "file": "desktop-market.png",
-      "sha": "7cb6f2d1734fe933ce163fb617e4f803190297328fba2673dbe0796ae8a45604",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 317,
+        "triangles": 537867,
+        "geometries": 115,
+        "textures": 124,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=21%2C33&yaw=0&zoom=1.2&pitch=0.8",
+      "sha": "7cb6f2d1734fe933ce163fb617e4f803190297328fba2673dbe0796ae8a45604",
+      "length": 445786,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:market",
       "file": "mobile-market.png",
-      "sha": "be971e42d6d442711af454c3bc67d9476c1e41d6d4dab8e9b5d7e5953668c026",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 271,
+        "triangles": 448440,
+        "geometries": 115,
+        "textures": 122,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=21%2C33&yaw=0&zoom=1.2&pitch=0.8",
+      "sha": "88829989c03fba3021aabab32cb7004f6270ab800121dad99dada1af93fc1447",
+      "length": 119743,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:market",
       "file": "integrated-market.png",
-      "sha": "72f99aefd1e8aeeb0c3bc8193ef0f36bf8281bbb880f973f80dc5a7a9024f2bd",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 311,
+        "triangles": 537719,
+        "geometries": 120,
+        "textures": 123,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=167%2C121&yaw=0&zoom=1.2&pitch=0.8",
+      "sha": "72f99aefd1e8aeeb0c3bc8193ef0f36bf8281bbb880f973f80dc5a7a9024f2bd",
+      "length": 455276,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:kitchen",
       "file": "desktop-kitchen.png",
-      "sha": "89c6acfed2ba97c1cb0a2a58bf7be41af3c5371d0ee18cc8986f22d268eb27d9",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "stats": {
+        "calls": 257,
+        "triangles": 448216,
+        "geometries": 96,
+        "textures": 98,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=24%2C45&yaw=0&zoom=1.2&pitch=0.8",
+      "sha": "bd530a34ec3ac4d43cc93d12d3e8b371ffd948ff9225e89124d28c558f4cb8c0",
+      "length": 418356,
+      "review": "native-current"
     },
     {
       "id": "mobile:kitchen",
       "file": "mobile-kitchen.png",
-      "sha": "9a9679cb97ca8f8027924d46f893a8b6ef45ada5074fdc0cd56c16c50ad7579c",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 230,
+        "triangles": 406062,
+        "geometries": 92,
+        "textures": 96,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=24%2C45&yaw=0&zoom=1.2&pitch=0.8",
+      "sha": "26cf4ec87b6accc49785bd1cbd7dca3eb569fda18299c8c2cbce73e3fd7dddba",
+      "length": 169280,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:kitchen",
       "file": "integrated-kitchen.png",
-      "sha": "e9f362299e008c70f18b6b7156da54458350da03623766fd9945f1da51aa90c6",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 264,
+        "triangles": 431072,
+        "geometries": 102,
+        "textures": 100,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=170%2C133&yaw=0&zoom=1.2&pitch=0.8",
+      "sha": "e9f362299e008c70f18b6b7156da54458350da03623766fd9945f1da51aa90c6",
+      "length": 432803,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:fields",
       "file": "desktop-fields.png",
-      "sha": "6e5c516ab15cd6521b320bcd3cb36549a636b382f80dc5f5bd5d70f1cff3ee74",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 220,
+        "triangles": 355502,
+        "geometries": 88,
+        "textures": 75,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=29%2C52&yaw=0.45&zoom=1.1&pitch=0.8",
+      "sha": "6e5c516ab15cd6521b320bcd3cb36549a636b382f80dc5f5bd5d70f1cff3ee74",
+      "length": 666819,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:fields",
       "file": "mobile-fields.png",
-      "sha": "2c69d43e1c974b34a4b192750fe9ca2b27d8677e7f7271e0eb86f78d22c6a76d",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 201,
+        "triangles": 349382,
+        "geometries": 85,
+        "textures": 73,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=29%2C52&yaw=0.45&zoom=1.1&pitch=0.8",
+      "sha": "3cc8bc82f77b888816efda70c464de1206603398b120b68c6217396d878533e3",
+      "length": 170878,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:fields",
       "file": "integrated-fields.png",
-      "sha": "67f13996f5e81384f4e7a2650cc0fb0454d949b499dfe2cca187eaa1b3737ca8",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 236,
+        "triangles": 381088,
+        "geometries": 88,
+        "textures": 80,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=175%2C140&yaw=0.45&zoom=1.1&pitch=0.8",
+      "sha": "8a3d7a53280930de0ba9fdd16408f314801159c2edf96ebae3710a467272bc07",
+      "length": 671877,
       "review": "native-current"
     },
     {
       "id": "desktop:river",
       "file": "desktop-river.png",
-      "sha": "42c3aa521144f0e15c77c6fcbd445efaab25330c1d83b0fa63fb825d8df0f869",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 193,
+        "triangles": 237718,
+        "geometries": 86,
+        "textures": 57,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=54%2C28&yaw=-0.7&zoom=1.3&pitch=0.8",
+      "sha": "ce202e08301646feb438d3affc827609acd1383f672360528ec204b62ddc9b91",
+      "length": 533557,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "mobile:river",
       "file": "mobile-river.png",
-      "sha": "d953c5dbe3a430d8b8a2ffd2186bc673a8b10c5624193221bd8cb1e811460db9",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 179,
+        "triangles": 235770,
+        "geometries": 80,
+        "textures": 57,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=54%2C28&yaw=-0.7&zoom=1.3&pitch=0.8",
+      "sha": "77607edef1cbd230126128870a584ea515d6d9e13fa2dd33ff4bccb5e77ad430",
+      "length": 219293,
       "review": "native-current"
     },
     {
       "id": "integrated:river",
       "file": "integrated-river.png",
-      "sha": "5c92427bf4e8d186bd8077f93011e4c55f2205a3afe2c96af381d84e42479409",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 197,
+        "triangles": 198294,
+        "geometries": 93,
+        "textures": 55,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=200%2C116&yaw=-0.7&zoom=1.3&pitch=0.8",
+      "sha": "5c92427bf4e8d186bd8077f93011e4c55f2205a3afe2c96af381d84e42479409",
+      "length": 609611,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:quarry",
       "file": "desktop-quarry.png",
-      "sha": "54898f7c0718038269b2a335f64754ffd1c40e54e01cf69b6a21aac5910e91c0",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 199,
+        "triangles": 299651,
+        "geometries": 81,
+        "textures": 71,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=10%2C43&yaw=0.8&zoom=1.2&pitch=0.8",
+      "sha": "54898f7c0718038269b2a335f64754ffd1c40e54e01cf69b6a21aac5910e91c0",
+      "length": 452106,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:quarry",
       "file": "mobile-quarry.png",
-      "sha": "b9ec6daec6905eaf0805687b1c226defd5a2c20d475fcec3884536b1a574c94c",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 190,
+        "triangles": 295119,
+        "geometries": 81,
+        "textures": 71,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=10%2C43&yaw=0.8&zoom=1.2&pitch=0.8",
+      "sha": "bcda7e3a42032f2a83123a4a348bfc8a01f5ead4d2e563f1a0ae4a00bda3033b",
+      "length": 172823,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:quarry",
       "file": "integrated-quarry.png",
-      "sha": "e6edda49a359bf751e2f941c866d9330db8fba2c99f7ff9aa310c97a990e65ef",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 240,
+        "triangles": 282813,
+        "geometries": 85,
+        "textures": 80,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=156%2C131&yaw=0.8&zoom=1.2&pitch=0.8",
+      "sha": "e6edda49a359bf751e2f941c866d9330db8fba2c99f7ff9aa310c97a990e65ef",
+      "length": 492488,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:ruins",
       "file": "desktop-ruins.png",
-      "sha": "b1676afd727836ff1b538381548175d2aa92088f2c572259ac06243eec60c143",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 184,
+        "triangles": 234672,
+        "geometries": 69,
+        "textures": 52,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=34%2C8&yaw=1.5707963267948966&zoom=1.4&pitch=0.8",
+      "sha": "b1676afd727836ff1b538381548175d2aa92088f2c572259ac06243eec60c143",
+      "length": 258338,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:ruins",
       "file": "mobile-ruins.png",
-      "sha": "1cb782e2aa89658e94df0bb40fa3fa952a87e3db8a0d30aa0fbf7f8b0c04866a",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "stats": {
+        "calls": 175,
+        "triangles": 231517,
+        "geometries": 68,
+        "textures": 51,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=34%2C8&yaw=1.5707963267948966&zoom=1.4&pitch=0.8",
+      "sha": "7511f4685f5e9b67485eaee666576240399c1926796582a49a224a2942971b7b",
+      "length": 128145,
+      "review": "native-current"
     },
     {
       "id": "integrated:ruins",
       "file": "integrated-ruins.png",
-      "sha": "2cfa3d7c5cb81e7e164d65529c469814f676d81579867f1269fbcd8f0ccd7242",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 197,
+        "triangles": 214244,
+        "geometries": 79,
+        "textures": 64,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=180%2C96&yaw=1.5707963267948966&zoom=1.4&pitch=0.8",
+      "sha": "2cfa3d7c5cb81e7e164d65529c469814f676d81579867f1269fbcd8f0ccd7242",
+      "length": 344559,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:hollow",
       "file": "desktop-hollow.png",
-      "sha": "05f22e9b05808c13a817be253f4e8ab10365cb337881a2faceb41046948331c9",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 160,
+        "triangles": 217121,
+        "geometries": 71,
+        "textures": 51,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=53%2C15&yaw=0.2&zoom=1.3&pitch=0.8",
+      "sha": "05f22e9b05808c13a817be253f4e8ab10365cb337881a2faceb41046948331c9",
+      "length": 252058,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:hollow",
       "file": "mobile-hollow.png",
-      "sha": "acce6b3d5e6cae750300431e66a2df0fc7a42ac97c0e6df58dde2b2ff2ec4bb6",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 152,
+        "triangles": 215981,
+        "geometries": 67,
+        "textures": 49,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=53%2C15&yaw=0.2&zoom=1.3&pitch=0.8",
+      "sha": "9d7d36053e748df7518ac19299f5e57387505db738f73947b38d2aaa9d08bbc6",
+      "length": 90353,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:hollow",
       "file": "integrated-hollow.png",
-      "sha": "5fc68ca217f5305779d13bf571c34ee7c26c2145e1421e23d57497796c1c627f",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 151,
+        "triangles": 168765,
+        "geometries": 70,
+        "textures": 39,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=199%2C103&yaw=0.2&zoom=1.3&pitch=0.8",
+      "sha": "5fc68ca217f5305779d13bf571c34ee7c26c2145e1421e23d57497796c1c627f",
+      "length": 307729,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:shore",
       "file": "desktop-shore.png",
-      "sha": "741d9f4d796ff75a0700dfc469dc99556476f2b21bf5e0153829b1aede67e547",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 178,
+        "triangles": 242832,
+        "geometries": 72,
+        "textures": 52,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=51%2C49&yaw=0.2&zoom=1.3&pitch=0.8",
+      "sha": "741d9f4d796ff75a0700dfc469dc99556476f2b21bf5e0153829b1aede67e547",
+      "length": 336451,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:shore",
       "file": "mobile-shore.png",
-      "sha": "5a03ee1b5a46c9696f13349a1701221e4af7e13261925dc8b204f4ef06faf4a4",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 158,
+        "triangles": 231526,
+        "geometries": 66,
+        "textures": 51,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=51%2C49&yaw=0.2&zoom=1.3&pitch=0.8",
+      "sha": "1ca52da1ed5bb5f256cc90be35da4bc14c71b05e863922bd50f19c68746562b0",
+      "length": 120961,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:shore",
       "file": "integrated-shore.png",
-      "sha": "3aaaf14239b6b3d29104eb6c1a52e38243fdbe6920112b05900160ab8cbc66fe",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 199,
+        "triangles": 255804,
+        "geometries": 69,
+        "textures": 50,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=197%2C137&yaw=0.2&zoom=1.3&pitch=0.8",
+      "sha": "3aaaf14239b6b3d29104eb6c1a52e38243fdbe6920112b05900160ab8cbc66fe",
+      "length": 366306,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:granary",
       "file": "desktop-granary.png",
-      "sha": "97b10f0e6d033530e1b5d535338e1a01ba35a04d2aa47568202c0fd6a5b77c50",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 187,
+        "triangles": 304798,
+        "geometries": 78,
+        "textures": 67,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=11%2C51&yaw=0.3&zoom=1.2&pitch=0.8",
+      "sha": "b370a4f82373583dbb6639c9a2aec5976572037d1474a904a0c02ef5c09ccfbe",
+      "length": 365497,
       "review": "native-current"
     },
     {
       "id": "mobile:granary",
       "file": "mobile-granary.png",
-      "sha": "2ee8edbfd11e25ec3e7e4017f5aa45144d2bd414c213a49eab43e76b7e3c45bd",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 175,
+        "triangles": 283506,
+        "geometries": 76,
+        "textures": 64,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=11%2C51&yaw=0.3&zoom=1.2&pitch=0.8",
+      "sha": "9287b37352061d3e8bd223f97d32d8d3efb3374affe9c46cb381ea90124e4fa9",
+      "length": 141108,
       "review": "native-current"
     },
     {
       "id": "integrated:granary",
       "file": "integrated-granary.png",
-      "sha": "ff76e134291810164854e4d956c8ce8795e71b4132389e2aad479cd96e30ba5f",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 243,
+        "triangles": 322438,
+        "geometries": 88,
+        "textures": 84,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=157%2C139&yaw=0.3&zoom=1.2&pitch=0.8",
+      "sha": "01fed181c303fa0620a292dde1dbb6a6ead9206fc5fe6985b5d8e46196ac3e20",
+      "length": 399054,
       "review": "native-current"
     },
     {
       "id": "desktop:goblins",
       "file": "desktop-goblins.png",
-      "sha": "fb4e715c70073fc44f3bcf8140e736ccf4b703945d64823e03031640e64ff9c5",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "stats": {
+        "calls": 149,
+        "triangles": 221305,
+        "geometries": 61,
+        "textures": 50,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=12%2C16&yaw=0&zoom=1.3&pitch=0.8",
+      "sha": "96968119097e8e6c41fe48b29598ec28d8f564a9746aaa3bc3a2b36d23a7fd46",
+      "length": 236068,
+      "review": "native-current"
     },
     {
       "id": "mobile:goblins",
       "file": "mobile-goblins.png",
-      "sha": "3b366b681fc0134abf2d29571e660c314c7216bb1e101a6a7108bf36f334d065",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "stats": {
+        "calls": 146,
+        "triangles": 220823,
+        "geometries": 59,
+        "textures": 47,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=12%2C16&yaw=0&zoom=1.3&pitch=0.8",
+      "sha": "8d6dc126e8ab3e4c0ba430d0413ab125411f5b86dcd4eb87f63efcae18e0cc82",
+      "length": 84531,
+      "review": "native-current"
     },
     {
       "id": "integrated:goblins",
       "file": "integrated-goblins.png",
-      "sha": "8b1f83cad095386dbddb61d9c377eedd1498e5b01024df0693dff240146b5f4a",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 160,
+        "triangles": 191243,
+        "geometries": 55,
+        "textures": 42,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=158%2C104&yaw=0&zoom=1.3&pitch=0.8",
+      "sha": "8b1f83cad095386dbddb61d9c377eedd1498e5b01024df0693dff240146b5f4a",
+      "length": 252090,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:west_gate",
       "file": "desktop-west_gate.png",
-      "sha": "e3ac697c33d981aa4df33df1a418214a5d5ad85f0755bba5550e9a6395fb36e1",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "stats": {
+        "calls": 157,
+        "triangles": 222120,
+        "geometries": 69,
+        "textures": 50,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=1%2C34&yaw=1.5707963267948966&zoom=1.3&pitch=0.8",
+      "sha": "669c322b7cb0581a810c82de54cd3da7e3d5d5b8d1bf3f163fe6f74fac5e7fef",
+      "length": 154928,
+      "review": "native-current"
     },
     {
       "id": "mobile:west_gate",
       "file": "mobile-west_gate.png",
-      "sha": "073e089f8c7a52f7160e1c44df5d43083c0fc1e9259a991542f4d9bc24f32bf3",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 148,
+        "triangles": 218655,
+        "geometries": 64,
+        "textures": 49,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=1%2C34&yaw=1.5707963267948966&zoom=1.3&pitch=0.8",
+      "sha": "7935fdbd9b00716195867c38766b9b5c93da8a995487a8652e7ec6f3add7c702",
+      "length": 55116,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:west_gate",
       "file": "integrated-west_gate.png",
-      "sha": "705ebe779275aa408475446b098a260264faf953a5faf11a406b862e7daef476",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 168,
+        "triangles": 192520,
+        "geometries": 71,
+        "textures": 49,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=147%2C122&yaw=1.5707963267948966&zoom=1.3&pitch=0.8",
+      "sha": "705ebe779275aa408475446b098a260264faf953a5faf11a406b862e7daef476",
+      "length": 216864,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:south_gate",
       "file": "desktop-south_gate.png",
-      "sha": "bccedcc697186e1e00da6be30c082c6cfeda834151e1e905db21b6276c8cf3a7",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "stats": {
+        "calls": 189,
+        "triangles": 282184,
+        "geometries": 86,
+        "textures": 63,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=32%2C62&yaw=0&zoom=1.3&pitch=0.8",
+      "sha": "4968675c19a0ea6cc4504c6fe0478a122ec08e1909b8bd7e5e64e9f4b70072b6",
+      "length": 318200,
+      "review": "native-current"
     },
     {
       "id": "mobile:south_gate",
       "file": "mobile-south_gate.png",
-      "sha": "6bbc2ce3d2aa57fa1f6f7b4fc2430cb67b31194161de29fa66c00c3183ef4492",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 161,
+        "triangles": 274362,
+        "geometries": 77,
+        "textures": 61,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=32%2C62&yaw=0&zoom=1.3&pitch=0.8",
+      "sha": "85e469a2cb9e2124241f32e8c4d2105d11ed05816145f1a3765277874d771312",
+      "length": 72470,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:south_gate",
       "file": "integrated-south_gate.png",
-      "sha": "9d1b126283c7c8a81363b47aa20a9eccb68f17c1835e8f7d4be42e0607974229",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 219,
+        "triangles": 321976,
+        "geometries": 85,
+        "textures": 71,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=178%2C150&yaw=0&zoom=1.3&pitch=0.8",
+      "sha": "5046789106877f6a56e8511c0724061e64661df41237f83b87bf5aeabddfe643",
+      "length": 395946,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "desktop:bridge",
       "file": "desktop-bridge.png",
-      "sha": "e4a5bc1335450f172e5b8ba6bc601d06a7829861cad3e88645bc609afd54a420",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 192,
+        "triangles": 242790,
+        "geometries": 87,
+        "textures": 62,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=55%2C32&yaw=-0.7&zoom=1.4&pitch=0.8",
+      "sha": "e4a5bc1335450f172e5b8ba6bc601d06a7829861cad3e88645bc609afd54a420",
+      "length": 532576,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:bridge",
       "file": "mobile-bridge.png",
-      "sha": "9c4a381574c7bf62fda4f26271d8fadaef99a29962e9abd78c6c262d52ba3b14",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 183,
+        "triangles": 239488,
+        "geometries": 85,
+        "textures": 63,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=55%2C32&yaw=-0.7&zoom=1.4&pitch=0.8",
+      "sha": "db7a8845e825779d39ca959a89494c8ba25e506cab8bc759236b1e9a78fb6001",
+      "length": 217561,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:bridge",
       "file": "integrated-bridge.png",
-      "sha": "67b78249e3926ab82d115d7d7ae29249684e7d1799aaf3e38be65bc5b74bf00e",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 186,
+        "triangles": 192628,
+        "geometries": 88,
+        "textures": 56,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=201%2C120&yaw=-0.7&zoom=1.4&pitch=0.8",
+      "sha": "67b78249e3926ab82d115d7d7ae29249684e7d1799aaf3e38be65bc5b74bf00e",
+      "length": 625692,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:bulls",
       "file": "desktop-bulls.png",
-      "sha": "9ea5ad50bfacef783e58f3b4140376a19ddd1e4f5f162488debd2037d7fd4f87",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 199,
+        "triangles": 287890,
+        "geometries": 86,
+        "textures": 63,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=37%2C53&yaw=-0.7&zoom=1.3&pitch=0.8",
+      "sha": "9ea5ad50bfacef783e58f3b4140376a19ddd1e4f5f162488debd2037d7fd4f87",
+      "length": 511581,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:bulls",
       "file": "mobile-bulls.png",
-      "sha": "23356d2c7875efee798292f43c3132f1bf6c7b5451fbdada828fa5917297beed",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "stats": {
+        "calls": 171,
+        "triangles": 258426,
+        "geometries": 83,
+        "textures": 62,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=37%2C53&yaw=-0.7&zoom=1.3&pitch=0.8",
+      "sha": "ce247e431a792b346936de9c06567c71cb96b6523ee5bfbad7ef4516090f73de",
+      "length": 128860,
+      "review": "native-current"
     },
     {
       "id": "integrated:bulls",
       "file": "integrated-bulls.png",
-      "sha": "f2f60431f5cdf873593c997ab61c00d4f3499c2bac9e5615afa97d87556501a0",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 238,
+        "triangles": 360510,
+        "geometries": 93,
+        "textures": 83,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=183%2C141&yaw=-0.7&zoom=1.3&pitch=0.8",
+      "sha": "f2f60431f5cdf873593c997ab61c00d4f3499c2bac9e5615afa97d87556501a0",
+      "length": 515113,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:chickens",
       "file": "desktop-chickens.png",
-      "sha": "7d0b90d3fe2e99e19c9b6f392f5ffdf6543e0c0cfded69069a0bf4e1df492002",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "stats": {
+        "calls": 175,
+        "triangles": 290960,
+        "geometries": 84,
+        "textures": 65,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=27%2C62&yaw=0.7&zoom=1.3&pitch=0.8",
+      "sha": "0a70a91c4bcf27cf1848c5c9e4854a2aba8c80c388b87dddfe72add75c9dd2af",
+      "length": 412335,
+      "review": "native-current"
     },
     {
       "id": "mobile:chickens",
       "file": "mobile-chickens.png",
-      "sha": "4a53eaa97ce6bf4ee219b33ee91358c2595785ab831ace47fe326977c604279d",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 162,
+        "triangles": 277350,
+        "geometries": 79,
+        "textures": 62,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=27%2C62&yaw=0.7&zoom=1.3&pitch=0.8",
+      "sha": "e9fe3df322d681c60e92e9393cd7352afa41d054fae0917da51a11e032e47777",
+      "length": 165085,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "22a89e87a91f9ef941882f4e5d1872373b7967062a63cf9d12d438d5198a62e3",
-      "priorEvidenceUrl": "https://8412f75b-pocketrpg-world-review.rlh.workers.dev/c169eecf5705c8f51d2957fda6ce46762ebb9f66/"
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "integrated:chickens",
       "file": "integrated-chickens.png",
-      "sha": "6410fb3ccd61fa60a26baf487130c905cfb5192b3f6079ea6e3f72fc16fb6e3d",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 201,
+        "triangles": 314148,
+        "geometries": 80,
+        "textures": 63,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=173%2C150&yaw=0.7&zoom=1.3&pitch=0.8",
+      "sha": "6410fb3ccd61fa60a26baf487130c905cfb5192b3f6079ea6e3f72fc16fb6e3d",
+      "length": 573607,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:enter_grondar",
       "file": "desktop-enter_grondar.png",
-      "sha": "bc460449906db3950a1b3c684b10104670ed8f00f72402e460bbef207dd411be",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 95,
+        "triangles": 116758,
+        "geometries": 45,
+        "textures": 16,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=251%2C83&yaw=0&zoom=1.3&hud=1",
+      "sha": "bc460449906db3950a1b3c684b10104670ed8f00f72402e460bbef207dd411be",
+      "length": 138530,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:enter_grondar",
       "file": "mobile-enter_grondar.png",
-      "sha": "438ffc26bbc190ce937b91d60c4a35b6380de5640dc6067fe713ec0d778717df",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 73,
+        "triangles": 103396,
+        "geometries": 42,
+        "textures": 15,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=251%2C83&yaw=0&zoom=1.3&hud=1",
+      "sha": "b4aa990efa7ee20daffa0346936d48c223c00fd0d98ccaa3927e3321f2d9d2bf",
+      "length": 60626,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "desktop:enter_pasture",
       "file": "desktop-enter_pasture.png",
-      "sha": "5c4fc0652f900f8df233887a0216552ff74d7a670dfff4364fc5357e367d5a1a",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 167,
+        "triangles": 258686,
+        "geometries": 61,
+        "textures": 48,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=182%2C158&yaw=0&zoom=1.3&hud=1",
+      "sha": "5c4fc0652f900f8df233887a0216552ff74d7a670dfff4364fc5357e367d5a1a",
+      "length": 196019,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:enter_pasture",
       "file": "mobile-enter_pasture.png",
-      "sha": "ebcaea7f76625e579f61b9061c07a9b84d5ed66e2e496b34ad5ef9d661272020",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 139,
+        "triangles": 224276,
+        "geometries": 55,
+        "textures": 47,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=182%2C158&yaw=0&zoom=1.3&hud=1",
+      "sha": "c89bb02f89816bf66903ac5a5b96d6fbf794886ccc1dbce19d93691de3cec0c5",
+      "length": 75889,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "desktop:enter_fiend",
       "file": "desktop-enter_fiend.png",
-      "sha": "eb7f275eb0b150d3888d5c1c99d2c1dda872711845badc44b790c27bf17cdfe7",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 76,
+        "triangles": 140794,
+        "geometries": 48,
+        "textures": 20,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=125%2C157&yaw=0&zoom=1.3&hud=1",
+      "sha": "87af9c232cfa91c22ba3292412bd0588352960f9d91cd4da31ab55b55b37462a",
+      "length": 165570,
       "review": "native-current"
     },
     {
       "id": "mobile:enter_fiend",
       "file": "mobile-enter_fiend.png",
-      "sha": "a55ad5aeafc9e5a05b8979d66795f5f7921475c75cc50da62bda8ccff6968c90",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 58,
+        "triangles": 130782,
+        "geometries": 34,
+        "textures": 20,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=125%2C157&yaw=0&zoom=1.3&hud=1",
+      "sha": "d7da867498b0d7309814d047e856bcd69c03cccc6b4409846d3dfb50acddedad",
+      "length": 65276,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "desktop:enter_dragons",
       "file": "desktop-enter_dragons.png",
-      "sha": "88a5f5d13bfe52f30ca7d3771b21a0212a7fceaaaddfe94451a864179ad33226",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 69,
+        "triangles": 111024,
+        "geometries": 40,
+        "textures": 16,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=117%2C148&yaw=0&zoom=1.3&hud=1",
+      "sha": "88a5f5d13bfe52f30ca7d3771b21a0212a7fceaaaddfe94451a864179ad33226",
+      "length": 138490,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:enter_dragons",
       "file": "mobile-enter_dragons.png",
-      "sha": "c40f4abeee5fb9d3fd4010e27379cebd5954e6aaeedbcf944b657f69deee8f37",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 52,
+        "triangles": 102816,
+        "geometries": 35,
+        "textures": 15,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=117%2C148&yaw=0&zoom=1.3&hud=1",
+      "sha": "0cd9e5029b2b0aa9b601059bf604402395ec18f8add58d84c78b96aa3ce944ff",
+      "length": 57631,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "desktop:enter_zaryth",
       "file": "desktop-enter_zaryth.png",
-      "sha": "90e5836e3c5da4481bd9e6a849c3c43503a5e95a48330f34024efadf64193952",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 103,
+        "triangles": 114492,
+        "geometries": 50,
+        "textures": 23,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=95%2C113&yaw=0&zoom=1.3&hud=1",
+      "sha": "90e5836e3c5da4481bd9e6a849c3c43503a5e95a48330f34024efadf64193952",
+      "length": 207792,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:enter_zaryth",
       "file": "mobile-enter_zaryth.png",
-      "sha": "135429031e684f5c6c5c7392d4348e35c96eb81727e62b46b24d4c24997df4c4",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 87,
+        "triangles": 100832,
+        "geometries": 48,
+        "textures": 22,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=95%2C113&yaw=0&zoom=1.3&hud=1",
+      "sha": "48713e64d66885f1ad51d9bceac7ff189afa78d936dd4da7005ef0384b446a10",
+      "length": 66384,
       "review": "native-current"
     },
     {
       "id": "mobile:return_grondar_lair",
       "file": "mobile-return_grondar_lair.png",
-      "sha": "b5456d2f779464c480dcfef5319b38aa359dda503a66dab9cd08cba2e6e21272",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 54,
+        "triangles": 134182,
+        "geometries": 25,
+        "textures": 24,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=grondar_lair&mode=gameplay&snapshot=1&target=20%2C36&yaw=3.141592653589793&zoom=1.3&hud=1",
+      "sha": "50a7d4932a55cf8208ad8b54d40415a4641e996b5a83e66fc384c76b2c1740b1",
+      "length": 80001,
       "review": "native-current"
     },
     {
       "id": "mobile:return_cow_pasture",
       "file": "mobile-return_cow_pasture.png",
-      "sha": "ec6c65c286fe353fc439c8cb466728de81dcb077224fda2549ace6c6c190e233",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 136,
+        "triangles": 113638,
+        "geometries": 35,
+        "textures": 40,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=cow_pasture&mode=gameplay&snapshot=1&target=20%2C35&yaw=3.141592653589793&zoom=1.3&hud=1",
+      "sha": "b4b6e1efb1947377df9a18da6d34697e007d80fd7c323c158513bcce3586c529",
+      "length": 82769,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "mobile:return_fiend_pit",
       "file": "mobile-return_fiend_pit.png",
-      "sha": "5672e3a97189fefedcaba7c900f25d1e5187fc95671ada99f00b74096e4e5601",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 113,
+        "triangles": 170390,
+        "geometries": 27,
+        "textures": 50,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=fiend_pit&mode=gameplay&snapshot=1&target=20%2C35&yaw=3.141592653589793&zoom=1.3&hud=1",
+      "sha": "9ac3f310f42a38b459be91175b9fe043d1852cdd13cffe61b4db64812f54e22b",
+      "length": 78103,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "mobile:return_dragon_roost",
       "file": "mobile-return_dragon_roost.png",
-      "sha": "16964a9af6a91c98e30d3752e020d129a3c6ebc466576d19da8de60cbd92e077",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 165,
+        "triangles": 213610,
+        "geometries": 30,
+        "textures": 78,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=dragon_roost&mode=gameplay&snapshot=1&target=32%2C59&yaw=3.141592653589793&zoom=1.3&hud=1",
+      "sha": "a351a126caba90a4fafbff1b499c22a82c8fa6c29c7104de6613e7b748902777",
+      "length": 99671,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "mobile:return_zaryth_throne",
       "file": "mobile-return_zaryth_throne.png",
-      "sha": "adf6d569d1e9f9ec9208e184d62a8abec918f0b1a0d6c53c9f8ad5a600afa103",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 51,
+        "triangles": 131417,
+        "geometries": 23,
+        "textures": 25,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=zaryth_throne&mode=gameplay&snapshot=1&target=20%2C36&yaw=3.141592653589793&zoom=1.3&hud=1",
+      "sha": "e4ee358784d140b2fd6a4807f120ab4637cbc6d900115f62c814d5e36c230b28",
+      "length": 81218,
       "review": "native-current"
     },
     {
       "id": "desktop:journey_guidance",
       "file": "desktop-journey_guidance.png",
-      "sha": "c7ab2c01ad1965df5a87e0c525ec78b5ed144177e647a8661a35dd77ce380d62",
       "viewport": {
         "width": 1280,
         "height": 800
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 342,
+        "triangles": 576584,
+        "geometries": 120,
+        "textures": 128,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=178%2C120&yaw=0&zoom=1.3&hud=1&guide=draynar",
+      "sha": "c7ab2c01ad1965df5a87e0c525ec78b5ed144177e647a8661a35dd77ce380d62",
+      "length": 560289,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "desktop:destination_map",
       "file": "desktop-destination_map.png",
-      "sha": "4ec93ff9d14e05c31518da293eb2c16d5168ba644fbf3fbd73c47069b46cfba1",
       "viewport": {
         "width": 1280,
         "height": 800
       },
+      "stats": {
+        "calls": 342,
+        "triangles": 576584,
+        "geometries": 120,
+        "textures": 129,
+        "pixelRatio": 1,
+        "shadowSize": 1024
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=178%2C120&yaw=0&zoom=1.3&map=draynar",
+      "sha": "f2eff1dbd8be4d9f1465621bad460d66b97872b93cc0a62e15a36b664f2e83ec",
+      "length": 177948,
       "review": "native-current"
     },
     {
       "id": "mobile:journey_guidance",
       "file": "mobile-journey_guidance.png",
-      "sha": "5c3a693e97fe830407b03312b88b44a7596c3b3b5dc9695398e380f9ab85fa0a",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "native-current"
+      "stats": {
+        "calls": 291,
+        "triangles": 530750,
+        "geometries": 107,
+        "textures": 124,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=178%2C120&yaw=0&zoom=1.3&hud=1&guide=draynar",
+      "sha": "98a5e8d89957ec769d104569569a8f6c670361df7de432466f242c4571f79704",
+      "length": 163016,
+      "review": "prior-native-byte-identical",
+      "priorReview": {
+        "sourceHash": "832f95b37de96e4f6bdda19c019ab0de130aedab94e24e29c20aa31e874acf72",
+        "sourceCommit": "428c36d75c970edf89b73506d96ac1c7f5b8f777",
+        "evidenceUrl": "https://0420ab4c-pocketrpg-world-review.rlh.workers.dev/428c36d75c970edf89b73506d96ac1c7f5b8f777/",
+        "note": "Primary agent personally inspected this exact PNG at native dimensions. The intermediate runtime was rejected for excess offscreen triangle submission; its composition inspection is reused only for this byte-identical frame."
+      }
     },
     {
       "id": "mobile:destination_map",
       "file": "mobile-destination_map.png",
-      "sha": "b68223f14178d487cc54b19bd7ec834678a229d008e7bb071e95effa4b21353c",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 291,
+        "triangles": 530750,
+        "geometries": 107,
+        "textures": 124,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=overworld&mode=gameplay&snapshot=1&target=178%2C120&yaw=0&zoom=1.3&map=draynar",
+      "sha": "039e8587dfc5e0c892fb00c7b1acead53a00d031a35f491ab3aa005daacbfcc9",
+      "length": 102483,
       "review": "native-current"
     },
     {
       "id": "mobile:entry_ready",
       "file": "mobile-entry_ready.png",
-      "sha": "eb01ac5f5e5693a98897bff89e170de81d6e35dce91eee0e2f6e85b2187ee56c",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 267,
+        "triangles": 440416,
+        "geometries": 103,
+        "textures": 113,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=32%2C32&yaw=0&zoom=1.3&entry=1",
+      "sha": "51fbf04da9330a44bf3344ba0c0975b3346042d80986139a529af23d0f450884",
+      "length": 41074,
       "review": "native-current"
     },
     {
       "id": "mobile:entry_saving",
       "file": "mobile-entry_saving.png",
-      "sha": "5df40a5c58f29f962004bb8d57e75a64137fbf33015128bc4b74912590406799",
       "viewport": {
         "width": 390,
         "height": 844
       },
+      "stats": {
+        "calls": 267,
+        "triangles": 440416,
+        "geometries": 103,
+        "textures": 113,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=32%2C32&yaw=0&zoom=1.3&entry=1&busy=1",
+      "sha": "5df40a5c58f29f962004bb8d57e75a64137fbf33015128bc4b74912590406799",
+      "length": 36091,
       "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "priorReview": {
+        "sourceHash": "2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e",
+        "sourceCommit": "a18f51c19fb8098d7245590fa07f794fb88702cc",
+        "evidenceUrl": "https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/"
+      }
     },
     {
       "id": "mobile:entry_error",
       "file": "mobile-entry_error.png",
-      "sha": "6bd835e099528c31c08155f2f36f886f8750f0112f6e776ee5cb552c7839e91a",
       "viewport": {
         "width": 390,
         "height": 844
       },
-      "review": "prior-native-byte-identical",
-      "priorSourceHash": "bc55885867098326d1addcae764d44197fb9d9329c122009b0ee136601505f45",
-      "priorEvidenceUrl": "https://ed005081-pocketrpg-world-review.rlh.workers.dev/304d95221502b95a7d1d6c7b1fa9a2bf71b45c3f/"
+      "stats": {
+        "calls": 267,
+        "triangles": 440416,
+        "geometries": 103,
+        "textures": 113,
+        "pixelRatio": 1,
+        "shadowSize": 512
+      },
+      "url": "/world/preview.html?zone=lumbright&mode=gameplay&snapshot=1&target=32%2C32&yaw=0&zoom=1.3&entry=1&entryError=Could+not+save+your+progress.+Please+try+again.",
+      "sha": "a02125317e7dbd9a90a3aba1e9cc1ad201fe5b203d714479e5bdb00370f85356",
+      "length": 47437,
+      "review": "native-current"
     }
   ],
   "creatures": [
     {
+      "creature": "dustpaw_rat",
       "state": "attack",
-      "sha": "ee3cc076bb09cdba1dec65afbfa854f8fa68c167d104fa01ce58c7f91a54372b",
+      "file": "creatures/dustpaw_rat-attack.png",
+      "sha": "9c22a79386b7d48af922ab5ad817f7ddeec587187f93f1c9d8ba0b26b14edce0",
+      "length": 85270,
+      "viewport": {
+        "width": 720,
+        "height": 560
+      },
       "review": "native-current"
     },
     {
+      "creature": "dustpaw_rat",
       "state": "death",
-      "sha": "4ffb4f24efbdcc8d1458e33be713c6485a56824863de0e334bf3a71ba255ff92",
+      "file": "creatures/dustpaw_rat-death.png",
+      "sha": "dcc7488df990adb457a3b9ceb66a75c4d61b9f8e098eed85fabf5fe136b171cc",
+      "length": 83411,
+      "viewport": {
+        "width": 720,
+        "height": 560
+      },
       "review": "native-current"
     },
     {
+      "creature": "dustpaw_rat",
       "state": "hit",
-      "sha": "97bab85e63fc3846f0c3a47e31a28bd12975083c26141c9e940d108a1975ed78",
+      "file": "creatures/dustpaw_rat-hit.png",
+      "sha": "d2d34d48b3fcc537e96b96fa7d40a2d2ba9d8eb6c64774bbfa5d855a16b8306d",
+      "length": 85491,
+      "viewport": {
+        "width": 720,
+        "height": 560
+      },
       "review": "native-current"
     },
     {
+      "creature": "dustpaw_rat",
       "state": "idle",
-      "sha": "08bdb37544c645ab23d47cecc2a9600e4c26c7f656bd4aedacba8bed3654f1dc",
+      "file": "creatures/dustpaw_rat-idle.png",
+      "sha": "e7ab83c670e10db9f498d93d929517cbca606dc25b2d52251e9088ff78c3a2e2",
+      "length": 86250,
+      "viewport": {
+        "width": 720,
+        "height": 560
+      },
       "review": "native-current"
     }
   ],
@@ -876,15 +1796,133 @@
     {
       "file": "report.json",
       "path": "world/authoring/reports/lumbright.json",
-      "length": 55974,
-      "sha": "101a2120de5e78c7e5b1ea4ece2742fc3201061ccd2644b835f3000b30ce52c2",
-      "serialization": "This gallery formats report JSON with two spaces; the repository uses the compiler-defined one-space serialization of the same data."
+      "length": 49107,
+      "sha": "59598041d8317cacd73bef074f71511dee246488ad2cd5d253d8e8551927f815",
+      "serialization": "Exact compiler-defined one-space JSON bytes, copied without reformatting."
     },
     {
       "file": "knowledge.js",
       "path": "functions/_lib/chat/knowledge.js",
-      "length": 253697,
+      "length": 254647,
       "sha": "121bedc16f6d9e98b42e37675144963dd4a62f04a4a4317672ed9042266e5c5e"
     }
-  ]
+  ],
+  "mobileWorkload": {
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "deviceScaleFactor": 3,
+      "hasTouch": true,
+      "isMobile": true
+    },
+    "camera": {
+      "zoom": 1.3,
+      "yaw": 0
+    },
+    "beforeSourceCommit": "739e1a503bd0c2f5409e2dec8934441b75aa093a",
+    "afterSourceCommit": "f18ff43ed5971fdf964cd7f5d7233d8796c2d258",
+    "afterSourceHash": "bb384c3d76d4a2eb6ca4b2248912b362dddc0a3a636877319267c08966b8fbc9",
+    "renderer": "Cloudflare Chromium software; not a handset benchmark",
+    "points": [
+      {
+        "point": "178,120",
+        "before": {
+          "ready": true,
+          "stats": {
+            "calls": 324,
+            "triangles": 530750,
+            "geometries": 140,
+            "textures": 125
+          },
+          "canvas": {
+            "w": 780,
+            "h": 1688
+          },
+          "dpr": 3
+        },
+        "after": {
+          "ready": true,
+          "stats": {
+            "calls": 291,
+            "triangles": 530750,
+            "geometries": 107,
+            "textures": 124,
+            "pixelRatio": 1.25,
+            "shadowSize": 512
+          },
+          "canvas": {
+            "w": 487,
+            "h": 1055
+          },
+          "dpr": 3
+        }
+      },
+      {
+        "point": "182,145",
+        "before": {
+          "ready": true,
+          "stats": {
+            "calls": 203,
+            "triangles": 283222,
+            "geometries": 108,
+            "textures": 65
+          },
+          "canvas": {
+            "w": 780,
+            "h": 1688
+          },
+          "dpr": 3
+        },
+        "after": {
+          "ready": true,
+          "stats": {
+            "calls": 170,
+            "triangles": 283222,
+            "geometries": 75,
+            "textures": 64,
+            "pixelRatio": 1.25,
+            "shadowSize": 512
+          },
+          "canvas": {
+            "w": 487,
+            "h": 1055
+          },
+          "dpr": 3
+        }
+      },
+      {
+        "point": "192,120",
+        "before": {
+          "ready": true,
+          "stats": {
+            "calls": 266,
+            "triangles": 366539,
+            "geometries": 134,
+            "textures": 98
+          },
+          "canvas": {
+            "w": 780,
+            "h": 1688
+          },
+          "dpr": 3
+        },
+        "after": {
+          "ready": true,
+          "stats": {
+            "calls": 234,
+            "triangles": 366539,
+            "geometries": 102,
+            "textures": 97,
+            "pixelRatio": 1.25,
+            "shadowSize": 512
+          },
+          "canvas": {
+            "w": 487,
+            "h": 1055
+          },
+          "dpr": 3
+        }
+      }
+    ]
+  }
 }

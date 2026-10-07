@@ -8,6 +8,7 @@ import {loadItemIcons} from '../itemIcon'
 import type { ZoneDef } from '../../../shared/zone'
 import { createScene, createLights, createRenderer, createCamera, tileToWorld, updateCamera, updateShadowLight, clampZoom } from '../scene'
 import { createTerrain } from '../terrain'
+import { createGraphicsBudget } from '../graphics'
 import { createScatterLayers } from '../scatter'
 import { createStatics } from '../statics'
 import { createProps } from '../props'
@@ -40,7 +41,7 @@ declare global {
   interface Window {
     __previewReady?: boolean
     __previewError?: string
-    __previewStats?: { calls: number; triangles: number; geometries: number; textures: number }
+    __previewStats?: { calls: number; triangles: number; geometries: number; textures: number; pixelRatio: number; shadowSize: number }
   }
 }
 const params = new URLSearchParams(location.search)
@@ -71,7 +72,8 @@ document.getElementById('meta')!.textContent = gameplay ? 'Gameplay camera · sc
 const host=document.getElementById('host')!
 const scene=createScene(def.ambience)
 if (!gameplay && scene.fog instanceof THREE.Fog) scene.fog.far=Math.max(scene.fog.far,Math.max(def.width,def.height)*3)
-const {sun}=createLights(scene,def.ambience)
+const graphics=createGraphicsBudget(window.devicePixelRatio,window.matchMedia?.('(pointer: coarse)').matches??false)
+const {sun}=createLights(scene,def.ambience,graphics.current)
 THREE.DefaultLoadingManager.onError=(url)=>{window.__previewError='Failed asset: '+url}
 const follow=params.has('follow') ? pair(params.get('follow'),targetTile) : gameplay ? targetTile : undefined
 const {heightField}=createTerrain(scene,def.collision,def.width,def.height,def.palette,def.terrain,def.ground,
@@ -166,11 +168,11 @@ const clock=new THREE.Clock()
 function frame(): void {
   const dt=snapshot?.35:clock.getDelta(),now=snapshot?350:performance.now()
   exits.update(now)
-  ambient.update(dt,snapshot ? 12.35 : undefined)
+  ambient.update(dt,snapshot ? 12.35 : undefined,gameplay ? {camera,centre:target} : undefined)
   for(const entity of entities)updateEntity(entity,now,dt)
   renderer.render(scene,camera)
   window.__previewStats={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
-    geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures}
+    geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),shadowSize:sun.shadow.mapSize.x}
   if (!snapshot) requestAnimationFrame(frame)
 }
 if (!snapshot) frame()

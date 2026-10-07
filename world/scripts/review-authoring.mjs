@@ -67,7 +67,7 @@ try {
   const experience=[]
   for(const view of EXPERIENCE_VIEWS) {
     const viewport=view.viewport==='mobile'?{width:390,height:844}:{width:1280,height:800}
-    const page=await browser.newPage({viewport,deviceScaleFactor:1}),errors=[]
+    const page=await browser.newPage({viewport,deviceScaleFactor:1,hasTouch:view.viewport==='mobile',isMobile:view.viewport==='mobile'}),errors=[]
     page.on('pageerror',error=>errors.push(error.message))
     page.on('console',message=>{if(message.type()==='error')errors.push(message.text())})
     page.on('response',response=>{if(response.status()>=400)errors.push(response.status()+' '+response.url())})
@@ -121,7 +121,7 @@ try {
     for(const variant of variants) {
       const mobile=variant==='mobile',integrated=variant==='integrated'
       const viewport=mobile?{width:390,height:844}:{width:1280,height:800}
-      const page=await browser.newPage({viewport,deviceScaleFactor:1})
+      const page=await browser.newPage({viewport,deviceScaleFactor:1,hasTouch:mobile,isMobile:mobile})
       const errors=[]
       page.on('pageerror',(error)=>errors.push(error.message))
       page.on('console',(message)=>{if(message.type()==='error')errors.push(message.text())})

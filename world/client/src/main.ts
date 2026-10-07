@@ -12,6 +12,7 @@ import { sendLeaveBeacon } from './leaveBeacon'
 import { createCamera, createLights, createRenderer, createScene, FOG_FAR, tileToWorld, updateCamera, updateShadowLight } from './scene'
 import { attachCameraControls } from './cameraControls'
 import { createTerrain } from './terrain'
+import { createGraphicsBudget } from './graphics'
 import { chunkFollowRadius, chunkKey, CHUNK_TILES, type ChunkedTerrain } from './chunkedTerrain'
 import { createScatterLayers } from './scatter'
 import { applyEntityDiff, applyGear, createEntity, createHeroMesh, createMonsterMesh, pickProxyOf, updateEntity, type Entity } from './entities'
@@ -80,7 +81,16 @@ function buildPlayerPickable(diff: EntityDiff): Pickable {
   }
 }
 
+declare global {
+  interface Window {
+    __worldPerformance?: { fps: number; frameMs: number; p95FrameMs: number; worstFrameMs: number; drawCalls: number; triangles: number; pixelRatio: number; shadowSize: number; rttMs: number | null; pendingMoves: number }
+  }
+}
+
 function enterWorld(session: WorldSession): void {
+  const diagnostics = new URLSearchParams(window.location.search).get('perf') === '1'
+  let pingSent: { n: number; at: number } | null = null
+  let rttMs: number | null = null
   // The room this socket is bound to, kept so the exit beacon can name it — it
   // travels without a socket, so the server can't infer the room from the caller.
   const room = getStoredZone()
@@ -218,8 +228,9 @@ function enterWorld(session: WorldSession): void {
   let authed = false
   let lastServerMsg = performance.now()
 
+  const screenVector = new THREE.Vector3()
   function toScreen(pos: THREE.Vector3, yOffset: number): { x: number; y: number } {
-    const v = pos.clone()
+    const v = screenVector.copy(pos)
     v.y += yOffset
     if (camera) v.project(camera)
     return { x: (v.x * 0.5 + 0.5) * window.innerWidth, y: (-v.y * 0.5 + 0.5) * window.innerHeight }
@@ -417,7 +428,11 @@ function enterWorld(session: WorldSession): void {
   // otherwise taps get buffered into a dead socket and burst seconds later.
   let pingN = 0
   setInterval(() => {
-    if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'ping', n: ++pingN })
+    if (authed && socket.readyState === WebSocket.OPEN) {
+      const n = ++pingN
+      if (diagnostics) pingSent = { n, at: performance.now() }
+      send(socket, { t: 'ping', n })
+    }
     if (document.visibilityState === 'visible' && performance.now() - lastServerMsg > 20000) {
       lastServerMsg = performance.now()
       socket.reconnect()
@@ -534,6 +549,10 @@ function enterWorld(session: WorldSession): void {
 
   onMessage(socket, (message: ServerMessage) => {
     lastServerMsg = performance.now()
+    if (message.t === 'pong') {
+      if (pingSent?.n === message.n) { rttMs = performance.now() - pingSent.at; pingSent = null }
+      return
+    }
     if (message.t === 'welcome') {
       authed = true
       storeZone(message.zone.id)
@@ -559,7 +578,8 @@ function enterWorld(session: WorldSession): void {
       void (async () => {
         hideOverlay()
         const scene = createScene(message.zone.ambience)
-        sun = createLights(scene, message.zone.ambience).sun
+        const graphics = createGraphicsBudget(window.devicePixelRatio, window.matchMedia?.('(pointer: coarse)').matches ?? false)
+        sun = createLights(scene, message.zone.ambience, graphics.current).sun
         // Build terrain first: registers the zone height sampler so every
         // tileToWorld call rides the surface, and returns the ground mesh that
         // picking raycasts. Flat when the zone has no `terrain` block.
@@ -806,10 +826,30 @@ function enterWorld(session: WorldSession): void {
         }
 
         let lastFrameTime = performance.now()
+        let warmupUntil = lastFrameTime + 5000
+        let diagnosticFrames = 0, diagnosticElapsed = 0
+        const diagnosticTimes: number[] = []
         let lastMinimap = 0
+        const ambientView = { camera, centre: new THREE.Vector3() }
+        document.addEventListener('visibilitychange', () => {
+          lastFrameTime = performance.now()
+          warmupUntil = lastFrameTime + 2000
+          graphics.reset()
+          diagnosticFrames = 0; diagnosticElapsed = 0; diagnosticTimes.length = 0
+        })
         function frame(now: number): void {
-          const deltaSeconds = (now - lastFrameTime) / 1000
+          const frameMs = now - lastFrameTime
           lastFrameTime = now
+          if (document.hidden) { requestAnimationFrame(frame); return }
+          const deltaSeconds = Math.max(0, frameMs) / 1000
+          if (now > warmupUntil && graphics.observe(frameMs)) {
+            renderer.setPixelRatio(graphics.current.pixelRatio)
+            if (sun && sun.shadow.mapSize.x !== graphics.current.shadowSize) {
+              sun.shadow.map?.dispose()
+              sun.shadow.map = null
+              sun.shadow.mapSize.set(graphics.current.shadowSize, graphics.current.shadowSize)
+            }
+          }
           if (self && camera && cam) {
             cam.update(deltaSeconds)
             updateEntity(self, now, deltaSeconds, targetPosOf(self))
@@ -890,7 +930,8 @@ function enterWorld(session: WorldSession): void {
           }
           lootLayer?.update(deltaSeconds)
           exitLayer?.update(now)
-          ambientLayer?.update(deltaSeconds)
+          if (self) ambientView.centre.copy(self.mesh.position)
+          ambientLayer?.update(deltaSeconds, undefined, ambientView)
           updateClickMarker(marker, now)
           if (minimap && self && now - lastMinimap > 150) {
             lastMinimap = now
@@ -906,6 +947,22 @@ function enterWorld(session: WorldSession): void {
             wayfinding?.update(tile(self.mesh))
           }
           renderer.render(scene, camera!)
+          if (diagnostics && Number.isFinite(frameMs) && frameMs > 0) {
+            diagnosticFrames++; diagnosticElapsed += frameMs; diagnosticTimes.push(frameMs)
+            if (diagnosticElapsed >= 1000) {
+              diagnosticTimes.sort((a, b) => a - b)
+              window.__worldPerformance = {
+                fps: Math.round(diagnosticFrames * 1000 / diagnosticElapsed),
+                frameMs: Math.round(diagnosticElapsed / diagnosticFrames),
+                p95FrameMs: Math.round(diagnosticTimes[Math.floor((diagnosticTimes.length - 1) * .95)]),
+                worstFrameMs: Math.round(diagnosticTimes[diagnosticTimes.length - 1]),
+                drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
+                pixelRatio: renderer.getPixelRatio(), shadowSize: sun?.shadow.mapSize.x ?? 0,
+                rttMs: rttMs == null ? null : Math.round(rttMs), pendingMoves: self?.queue.length ?? 0,
+              }
+              diagnosticFrames = 0; diagnosticElapsed = 0; diagnosticTimes.length = 0
+            }
+          }
           requestAnimationFrame(frame)
         }
         requestAnimationFrame(frame)

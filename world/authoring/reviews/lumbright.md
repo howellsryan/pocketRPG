@@ -1,7 +1,11 @@
-# Lumbright connected-world visual review
+# Lumbright connected-world and mobile visual review
 
-Current evidence: https://8f96b93b-pocketrpg-world-review.rlh.workers.dev/a18f51c19fb8098d7245590fa07f794fb88702cc/
-Current source fingerprint: 2e40f2097d62f2a08e80a7cf7ca943c830eaceb509993702fba637913f5cf40e
+Current evidence: https://19a54627-pocketrpg-world-review.rlh.workers.dev/f18ff43ed5971fdf964cd7f5d7233d8796c2d258/
+Current source fingerprint: bb384c3d76d4a2eb6ca4b2248912b362dddc0a3a636877319267c08966b8fbc9
+
+The mobile performance pass was reviewed on the current source. The primary agent inspected 23 changed world/interface views and all four rat states at native dimensions; 27 views exactly match the previously approved PNGs and 21 match personally inspected PNGs from the intermediate mobile candidate. Original PNG hashes and provenance are recorded in the comparison manifest. The intermediate runtime was rejected because disabling villager mesh culling increased offscreen triangle submission; the final client preserves camera and shadow culling.
+
+A controlled software-renderer comparison at three Lumbright points reduced draw calls by 10–16% and resident geometries by 24–31%, while submitted triangles matched the previous scene. At a 390 × 844 viewport and device scale factor 3, the drawing buffer changed from 780 × 1688 to 487 × 1055, about 61% fewer pixels; shadows changed from 1024 to 512. Signs, characters and HUD text remain readable in the inspected frames. This establishes lower rendering workload and beta presentation only. Actual handset frame time, walking across chunk construction boundaries and live gameplay remain release gates.
 
 The connected-world pass preserves Lumbright’s canonical gathering, combat and facility contract. It adds named semantic road signs, five physical instance entrances, safe return approaches, road-preferring city journeys, destination details and idle-game entry. Source controls remain in regional semantics and generators, with checked-in outputs regenerated from them.
 
@@ -9,7 +13,7 @@ Rejected experience passes had HUD panels covering entrance names, missing revie
 
 The screenshot comparison manifest records original PNG SHA-256 digests. Byte-identical composition frames reuse their prior native inspection; changed composition frames were personally inspected again. The 22 experience states cover five desktop/portrait entrance pairs, five portrait returns, desktop/portrait journeys and destination maps, and three entry/save-error states. Full captures are linked in the immutable Cloudflare gallery. Existing checked-in JPG contact sheets are historical evidence for the original scene, not current travel UI approval.
 
-Verdict: approved only for the connected-world beta composition and interface legibility. This is not approval of production MMORPG quality or end-to-end gameplay.
+Verdict: approved only for the connected-world beta composition, interface legibility and mobile graphics presentation. This is not approval of production MMORPG quality or end-to-end gameplay.
 
 ### Remaining criticism and release gates
 
