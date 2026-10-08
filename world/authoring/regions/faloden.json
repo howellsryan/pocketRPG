@@ -1,0 +1,1089 @@
+{
+  "schemaVersion": 1,
+  "id": "faloden",
+  "name": "Faloden",
+  "place": "faloden",
+  "seed": 5237,
+  "width": 48,
+  "height": 36,
+  "spawn": {
+    "x": 24,
+    "z": 18
+  },
+  "intent": "A compact walled knight citadel, with a formal court, a busy western forge and two separate fishing landings beyond the eastern wall.",
+  "points": [
+    {
+      "id": "arrival",
+      "x": 24,
+      "z": 18,
+      "label": "Faloden arrival",
+      "role": "arrival"
+    },
+    {
+      "id": "court",
+      "x": 24,
+      "z": 18,
+      "label": "White Order court",
+      "role": "hub"
+    },
+    {
+      "id": "landmark",
+      "x": 24,
+      "z": 13,
+      "label": "White Order court",
+      "role": "landmark"
+    },
+    {
+      "id": "shrine",
+      "x": 30,
+      "z": 8,
+      "label": "Chapel forecourt",
+      "role": "discovery"
+    },
+    {
+      "id": "east",
+      "x": 46,
+      "z": 18,
+      "label": "Barlock road",
+      "role": "gateway"
+    },
+    {
+      "id": "south",
+      "x": 24,
+      "z": 34,
+      "label": "Port Sarin road",
+      "role": "gateway"
+    },
+    {
+      "id": "north",
+      "x": 3,
+      "z": 1,
+      "label": "Seerhold road",
+      "role": "gateway"
+    },
+    {
+      "id": "west",
+      "x": 1,
+      "z": 18,
+      "label": "Ardounne road",
+      "role": "gateway"
+    },
+    {
+      "id": "mining_approach",
+      "x": 4,
+      "z": 32,
+      "label": "Working outcrop",
+      "role": "resource"
+    },
+    {
+      "id": "fishing_approach",
+      "x": 41,
+      "z": 21,
+      "label": "Fishing landing",
+      "role": "resource"
+    },
+    {
+      "id": "gather_approach",
+      "x": 38,
+      "z": 25,
+      "label": "Fieldwork patch",
+      "role": "resource"
+    },
+    {
+      "id": "enter_zaryth_approach",
+      "x": 35,
+      "z": 34,
+      "label": "Zaryth's Throne",
+      "role": "instance"
+    },
+    {
+      "id": "enter_zaryth_door",
+      "x": 35,
+      "z": 32,
+      "role": "instance",
+      "label": "Zaryth's Throne entrance"
+    }
+  ],
+  "routes": [
+    {
+      "id": "arrival_lane",
+      "from": "arrival",
+      "to": "court",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "ceremonial_approach",
+      "from": "court",
+      "to": "landmark",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "east_road",
+      "from": "court",
+      "to": "east",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "south_road",
+      "from": "court",
+      "to": "south",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "north_road",
+      "from": "court",
+      "to": "north",
+      "via": [
+        {
+          "x": 3,
+          "z": 18
+        }
+      ],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "west_road",
+      "from": "court",
+      "to": "west",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_0",
+      "from": "court",
+      "to": "shrine",
+      "via": [
+        {
+          "x": 25,
+          "z": 18
+        },
+        {
+          "x": 25,
+          "z": 12
+        },
+        {
+          "x": 29,
+          "z": 12
+        },
+        {
+          "x": 29,
+          "z": 9
+        },
+        {
+          "x": 30,
+          "z": 9
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_1",
+      "from": "court",
+      "to": "mining_approach",
+      "via": [
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 27
+        },
+        {
+          "x": 11,
+          "z": 27
+        },
+        {
+          "x": 11,
+          "z": 29
+        },
+        {
+          "x": 5,
+          "z": 29
+        },
+        {
+          "x": 5,
+          "z": 32
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_2",
+      "from": "court",
+      "to": "fishing_approach",
+      "via": [
+        {
+          "x": 41,
+          "z": 18
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_3",
+      "from": "court",
+      "to": "gather_approach",
+      "via": [
+        {
+          "x": 37,
+          "z": 18
+        },
+        {
+          "x": 37,
+          "z": 25
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_4",
+      "from": "court",
+      "to": "enter_zaryth_approach",
+      "via": [
+        {
+          "x": 25,
+          "z": 18
+        },
+        {
+          "x": 25,
+          "z": 27
+        },
+        {
+          "x": 35,
+          "z": 27
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_5",
+      "from": "court",
+      "to": "enter_zaryth_door",
+      "via": [
+        {
+          "x": 25,
+          "z": 18
+        },
+        {
+          "x": 25,
+          "z": 27
+        },
+        {
+          "x": 35,
+          "z": 27
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_6",
+      "from": "court",
+      "to": "bank:approach",
+      "via": [
+        {
+          "x": 16,
+          "z": 18
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_7",
+      "from": "court",
+      "to": "kitchen:approach",
+      "via": [
+        {
+          "x": 32,
+          "z": 18
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_8",
+      "from": "court",
+      "to": "forge:approach",
+      "via": [
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 27
+        }
+      ],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_9",
+      "from": "court",
+      "to": "timber:approach",
+      "via": [
+        {
+          "x": 25,
+          "z": 18
+        },
+        {
+          "x": 25,
+          "z": 27
+        }
+      ],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_10",
+      "from": "court",
+      "to": "western_barracks:door",
+      "via": [
+        {
+          "x": 4,
+          "z": 18
+        },
+        {
+          "x": 4,
+          "z": 8
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_11",
+      "from": "court",
+      "to": "eastern_barracks:door",
+      "via": [
+        {
+          "x": 36,
+          "z": 18
+        },
+        {
+          "x": 36,
+          "z": 8
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_12",
+      "from": "court",
+      "to": "armourers_house:door",
+      "via": [
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 27
+        },
+        {
+          "x": 11,
+          "z": 27
+        },
+        {
+          "x": 11,
+          "z": 29
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_13",
+      "from": "court",
+      "to": "southern_barracks:door",
+      "via": [
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 34
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    }
+  ],
+  "surfaces": [
+    {
+      "kind": "plaza",
+      "x": 19,
+      "z": 15,
+      "w": 11,
+      "h": 7
+    },
+    {
+      "kind": "path_dirt",
+      "x": 34,
+      "z": 32,
+      "w": 3,
+      "h": 4
+    },
+    {
+      "kind": "floor_stone",
+      "x": 33,
+      "z": 32,
+      "w": 1,
+      "h": 1,
+      "blocked": true
+    },
+    {
+      "kind": "floor_stone",
+      "x": 37,
+      "z": 32,
+      "w": 1,
+      "h": 1,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 0,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 45,
+      "z": 3,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 43,
+      "z": 6,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 9,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 43,
+      "z": 12,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 15,
+      "w": 4,
+      "h": 2,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 17,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "kind": "floor_plank",
+      "x": 43,
+      "z": 17,
+      "w": 5,
+      "h": 3
+    },
+    {
+      "kind": "water",
+      "x": 45,
+      "z": 20,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 43,
+      "z": 23,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 26,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 43,
+      "z": 29,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 32,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 45,
+      "z": 35,
+      "w": 3,
+      "h": 1,
+      "blocked": true
+    }
+  ],
+  "lots": [
+    {
+      "id": "bank",
+      "prefab": "bank_front",
+      "x": 16,
+      "z": 12
+    },
+    {
+      "id": "kitchen",
+      "prefab": "kitchen",
+      "x": 32,
+      "z": 12
+    },
+    {
+      "id": "forge",
+      "prefab": "forge_front",
+      "x": 16,
+      "z": 24
+    },
+    {
+      "id": "timber",
+      "prefab": "sawmill_front",
+      "x": 32,
+      "z": 24
+    },
+    {
+      "id": "western_barracks",
+      "prefab": "cottage",
+      "x": 8,
+      "z": 5
+    },
+    {
+      "id": "eastern_barracks",
+      "prefab": "cottage",
+      "x": 39,
+      "z": 5
+    },
+    {
+      "id": "armourers_house",
+      "prefab": "cottage",
+      "x": 8,
+      "z": 26
+    },
+    {
+      "id": "southern_barracks",
+      "prefab": "cottage",
+      "x": 16,
+      "z": 31
+    }
+  ],
+  "resources": [
+    {
+      "id": "forge_stations",
+      "ref": "facility:furnace_anvil",
+      "components": {
+        "furnace": {
+          "x": 15,
+          "z": 25
+        },
+        "anvil": {
+          "x": 17,
+          "z": 25
+        }
+      }
+    },
+    {
+      "id": "mining_0",
+      "ref": "skill:mining:runite",
+      "x": 4,
+      "z": 31
+    },
+    {
+      "id": "fishing_0",
+      "ref": "skill:fishing:anglerfish",
+      "x": 42,
+      "z": 22
+    },
+    {
+      "id": "fishing_1",
+      "ref": "skill:fishing:manta_ray",
+      "x": 42,
+      "z": 25
+    },
+    {
+      "id": "gather_0",
+      "ref": "gather:pick_limpwurt_root",
+      "x": 38,
+      "z": 24
+    }
+  ],
+  "encounters": [],
+  "access": [
+    {
+      "ref": "combat:zaryth_the_empty_lord",
+      "zone": "zaryth_throne",
+      "point": "enter_zaryth_approach",
+      "exit": "enter_zaryth"
+    }
+  ],
+  "exits": [
+    {
+      "id": "enter_zaryth",
+      "x": 35,
+      "z": 32,
+      "toZone": "zaryth_throne",
+      "toX": 20,
+      "toZ": 36,
+      "label": "Zaryth's Throne",
+      "presentation": "door",
+      "description": "A gated boss lair outside Faloden. Your progress is checked before entry.",
+      "activation": "interact"
+    }
+  ],
+  "dressing": [
+    {
+      "model": "castle",
+      "x": 24,
+      "z": 8,
+      "scale": 1.12
+    },
+    {
+      "model": "altar",
+      "x": 30,
+      "z": 6,
+      "scale": 1.2
+    },
+    {
+      "model": "well",
+      "x": 8,
+      "z": 14,
+      "scale": 1.35
+    },
+    {
+      "model": "banner",
+      "x": 11,
+      "z": 22,
+      "scale": 1.2
+    },
+    {
+      "model": "town_wall",
+      "x": 16,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "town_wall",
+      "x": 18,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "town_wall",
+      "x": 20,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "town_wall",
+      "x": 22,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "town_wall",
+      "x": 24,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "town_wall",
+      "x": 26,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "town_wall",
+      "x": 28,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "town_wall",
+      "x": 30,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "town_wall",
+      "x": 32,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "town_tower",
+      "x": 14,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "town_tower",
+      "x": 34,
+      "z": 2,
+      "scale": 2
+    },
+    {
+      "model": "well",
+      "x": 21,
+      "z": 15,
+      "scale": 1.2
+    },
+    {
+      "model": "banner",
+      "x": 27,
+      "z": 15,
+      "scale": 0.85
+    }
+  ],
+  "groves": [
+    {
+      "id": "north_canopy",
+      "x": 5,
+      "z": 1,
+      "w": 37,
+      "h": 8,
+      "count": 8,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "west_canopy",
+      "x": 1,
+      "z": 6,
+      "w": 9,
+      "h": 28,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "south_canopy",
+      "x": 7,
+      "z": 26,
+      "w": 34,
+      "h": 9,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.3
+      ]
+    },
+    {
+      "id": "garden_undergrowth",
+      "x": 1,
+      "z": 1,
+      "w": 46,
+      "h": 34,
+      "count": 22,
+      "models": [
+        "bush",
+        "flowers"
+      ],
+      "scaleRange": [
+        1.4,
+        2.5
+      ]
+    }
+  ],
+  "deferredBindings": [
+    {
+      "ref": "facility:sawmill",
+      "reason": "facility_adapter"
+    },
+    {
+      "ref": "facility:altar",
+      "reason": "facility_adapter"
+    },
+    {
+      "ref": "gather:convert_log_to_plank",
+      "reason": "processing_adapter"
+    },
+    {
+      "ref": "gather:convert_mahogany_log_to_plank",
+      "reason": "processing_adapter"
+    },
+    {
+      "ref": "gather:convert_oak_log_to_plank",
+      "reason": "processing_adapter"
+    },
+    {
+      "ref": "gather:convert_teak_log_to_plank",
+      "reason": "processing_adapter"
+    },
+    {
+      "ref": "combat:adamant_dragon",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:commander_zephyra",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:rune_dragon",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:skyrender_kharra",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:threefang_cerberus",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:vicious_black_dragon",
+      "reason": "missing_model"
+    }
+  ],
+  "ambient": {
+    "critters": [
+      {
+        "model": "villager_b",
+        "x": 21,
+        "z": 17,
+        "w": 6,
+        "h": 3,
+        "count": 4
+      }
+    ],
+    "smoke": []
+  },
+  "connections": [
+    {
+      "point": "east",
+      "to": "barlock"
+    },
+    {
+      "point": "east",
+      "to": "draynar"
+    },
+    {
+      "point": "south",
+      "to": "portsarin"
+    },
+    {
+      "point": "north",
+      "to": "seerhold"
+    },
+    {
+      "point": "west",
+      "to": "ardounne"
+    }
+  ],
+  "waymarks": [
+    {
+      "id": "road_barlock",
+      "label": "Barlock",
+      "destination": "barlock",
+      "x": 44,
+      "z": 18
+    },
+    {
+      "id": "road_draynar",
+      "label": "Draynar",
+      "destination": "draynar",
+      "x": 41,
+      "z": 18
+    },
+    {
+      "id": "road_portsarin",
+      "label": "Port Sarin",
+      "destination": "portsarin",
+      "x": 24,
+      "z": 32
+    },
+    {
+      "id": "road_seerhold",
+      "label": "Seerhold",
+      "destination": "seerhold",
+      "x": 3,
+      "z": 3
+    },
+    {
+      "id": "road_ardounne",
+      "label": "Ardounne",
+      "destination": "ardounne",
+      "x": 3,
+      "z": 18
+    }
+  ],
+  "terrain": {
+    "relief": 0.15,
+    "procedural": {
+      "seed": 5237,
+      "frequency": 0.03
+    },
+    "material": "meadow",
+    "scatter": []
+  },
+  "budgets": {
+    "props": 150,
+    "npcs": 8,
+    "ambient": 4,
+    "maxPropsPer8x8": 18
+  },
+  "reviewViews": [
+    {
+      "id": "overview",
+      "target": "court",
+      "mode": "overview",
+      "distance": 60,
+      "pitch": 0.95,
+      "yaw": 0
+    },
+    {
+      "id": "arrival",
+      "target": "arrival",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25
+    },
+    {
+      "id": "bank",
+      "target": "bank:approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "facility:bank"
+      ]
+    },
+    {
+      "id": "hearth",
+      "target": "kitchen:approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "facility:stove"
+      ]
+    },
+    {
+      "id": "forge",
+      "target": "forge:approach",
+      "mode": "gameplay",
+      "yaw": 0.45,
+      "zoom": 1.25,
+      "covers": [
+        "facility:furnace_anvil"
+      ]
+    },
+    {
+      "id": "mining",
+      "target": "mining_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:mining:runite"
+      ]
+    },
+    {
+      "id": "fishing",
+      "target": "fishing_approach",
+      "mode": "gameplay",
+      "yaw": -0.7,
+      "zoom": 1.25,
+      "covers": [
+        "skill:fishing:anglerfish",
+        "skill:fishing:manta_ray"
+      ]
+    },
+    {
+      "id": "gather",
+      "target": "gather_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "gather:pick_limpwurt_root"
+      ]
+    },
+    {
+      "id": "enter_zaryth",
+      "target": "enter_zaryth_approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "combat:zaryth_the_empty_lord"
+      ]
+    },
+    {
+      "id": "district",
+      "target": "western_barracks:door",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.1
+    }
+  ]
+}

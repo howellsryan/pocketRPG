@@ -54,7 +54,7 @@ const monsterNames = monstersDataJson as MonsterNames
 import { beginWorldSession, refreshWorldSession, endWorldSession, expireWorldSessionAfter } from '../../functions/_lib/game/worldSessions.js'
 import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
-import { zoneSpawnSummary, type ZoneDef, type ZoneExitDef } from '../shared/zone'
+import { resolveEntryPosition, zoneSpawnSummary, type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { baseRoomZone, instanceDeathEjectTarget, isInstancedRoom, MAX_PLAYERS_PER_INSTANCE } from '../shared/instances'
 import { ZONES } from './zones'
 import { endOneLifeRun, flipOneLifeOff } from './oneLife'
@@ -683,9 +683,7 @@ export class WorldZone extends Server<Env> {
     const posRow = await this.env.DB.prepare(
       'SELECT x, z FROM world_positions WHERE character_id = ? AND zone_id = ?'
     ).bind(row.id, this.name).first<{ x: number; z: number }>()
-    const spawn = this.zone.spawn
-    const x = posRow?.x ?? spawn.x
-    const z = posRow?.z ?? spawn.z
+    const {x,z} = resolveEntryPosition(this.zone, posRow)
 
     connection.setState({ charId })
     const pools = emptyPools(seeded.saveBacked)

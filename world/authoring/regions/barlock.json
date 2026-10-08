@@ -1,0 +1,641 @@
+{
+  "schemaVersion": 1,
+  "id": "barlock",
+  "name": "Barlock",
+  "place": "barlock",
+  "seed": 5922,
+  "width": 32,
+  "height": 24,
+  "spawn": {
+    "x": 16,
+    "z": 20
+  },
+  "intent": "A muddy hill-clan village built around a broad communal hall. The forge faces a U-shaped court, with sand gathering and tin workings at its edges.",
+  "points": [
+    {
+      "id": "arrival",
+      "x": 16,
+      "z": 20,
+      "label": "Barlock arrival",
+      "role": "arrival"
+    },
+    {
+      "id": "court",
+      "x": 16,
+      "z": 13,
+      "label": "Clan hall court",
+      "role": "hub"
+    },
+    {
+      "id": "landmark",
+      "x": 16,
+      "z": 8,
+      "label": "Clan hall court",
+      "role": "landmark"
+    },
+    {
+      "id": "east",
+      "x": 30,
+      "z": 13,
+      "label": "Varrick road",
+      "role": "gateway"
+    },
+    {
+      "id": "north",
+      "x": 3,
+      "z": 1,
+      "label": "Edgevale road",
+      "role": "gateway"
+    },
+    {
+      "id": "west",
+      "x": 1,
+      "z": 13,
+      "label": "Faloden road",
+      "role": "gateway"
+    },
+    {
+      "id": "mining_approach",
+      "x": 4,
+      "z": 20,
+      "label": "Working outcrop",
+      "role": "resource"
+    },
+    {
+      "id": "woodcutting_approach",
+      "x": 23,
+      "z": 18,
+      "label": "Timber grove",
+      "role": "resource"
+    },
+    {
+      "id": "gather_approach",
+      "x": 22,
+      "z": 20,
+      "label": "Fieldwork patch",
+      "role": "resource"
+    },
+    {
+      "id": "encounter_0",
+      "x": 8,
+      "z": 8,
+      "label": "Broodfang Spider approach",
+      "role": "encounter"
+    },
+    {
+      "id": "encounter_1",
+      "x": 23,
+      "z": 8,
+      "label": "Frostbite Imp approach",
+      "role": "encounter"
+    }
+  ],
+  "routes": [
+    {
+      "id": "arrival_lane",
+      "from": "arrival",
+      "to": "court",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "ceremonial_approach",
+      "from": "court",
+      "to": "landmark",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "east_road",
+      "from": "court",
+      "to": "east",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "north_road",
+      "from": "court",
+      "to": "north",
+      "via": [
+        {
+          "x": 3,
+          "z": 13
+        }
+      ],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "west_road",
+      "from": "court",
+      "to": "west",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_0",
+      "from": "court",
+      "to": "mining_approach",
+      "via": [
+        {
+          "x": 5,
+          "z": 13
+        },
+        {
+          "x": 5,
+          "z": 20
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_1",
+      "from": "court",
+      "to": "woodcutting_approach",
+      "via": [
+        {
+          "x": 21,
+          "z": 13
+        },
+        {
+          "x": 21,
+          "z": 16
+        },
+        {
+          "x": 22,
+          "z": 16
+        },
+        {
+          "x": 22,
+          "z": 18
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_2",
+      "from": "court",
+      "to": "gather_approach",
+      "via": [
+        {
+          "x": 21,
+          "z": 13
+        },
+        {
+          "x": 21,
+          "z": 16
+        },
+        {
+          "x": 22,
+          "z": 16
+        },
+        {
+          "x": 22,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 20
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_3",
+      "from": "court",
+      "to": "encounter_0",
+      "via": [
+        {
+          "x": 9,
+          "z": 13
+        },
+        {
+          "x": 9,
+          "z": 8
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_4",
+      "from": "court",
+      "to": "encounter_1",
+      "via": [
+        {
+          "x": 23,
+          "z": 13
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_5",
+      "from": "court",
+      "to": "forge:approach",
+      "via": [
+        {
+          "x": 15,
+          "z": 13
+        },
+        {
+          "x": 15,
+          "z": 21
+        },
+        {
+          "x": 13,
+          "z": 21
+        },
+        {
+          "x": 13,
+          "z": 22
+        }
+      ],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_6",
+      "from": "court",
+      "to": "clan_cottage:door",
+      "via": [
+        {
+          "x": 21,
+          "z": 13
+        },
+        {
+          "x": 21,
+          "z": 16
+        },
+        {
+          "x": 22,
+          "z": 16
+        },
+        {
+          "x": 22,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 22
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    }
+  ],
+  "surfaces": [
+    {
+      "kind": "path_dirt",
+      "x": 13,
+      "z": 11,
+      "w": 7,
+      "h": 5
+    }
+  ],
+  "lots": [
+    {
+      "id": "forge",
+      "prefab": "forge_front",
+      "x": 8,
+      "z": 19
+    },
+    {
+      "id": "clan_cottage",
+      "prefab": "cottage",
+      "x": 27,
+      "z": 19
+    }
+  ],
+  "resources": [
+    {
+      "id": "forge_stations",
+      "ref": "facility:furnace_anvil",
+      "components": {
+        "furnace": {
+          "x": 7,
+          "z": 20
+        },
+        "anvil": {
+          "x": 9,
+          "z": 20
+        }
+      }
+    },
+    {
+      "id": "mining_0",
+      "ref": "skill:mining:tin",
+      "x": 4,
+      "z": 19
+    },
+    {
+      "id": "woodcutting_0",
+      "ref": "skill:woodcutting:normal",
+      "x": 23,
+      "z": 17
+    },
+    {
+      "id": "gather_0",
+      "ref": "gather:collect_sand",
+      "x": 22,
+      "z": 19
+    }
+  ],
+  "encounters": [
+    {
+      "id": "wild_broodfang_spider",
+      "ref": "combat:broodfang_spider",
+      "wander": {
+        "x": 6,
+        "z": 3,
+        "w": 4,
+        "h": 4
+      },
+      "spawns": [
+        {
+          "x": 7,
+          "z": 4
+        }
+      ]
+    },
+    {
+      "id": "wild_frostbite_imp",
+      "ref": "combat:frostbite_imp",
+      "wander": {
+        "x": 21,
+        "z": 3,
+        "w": 4,
+        "h": 4
+      },
+      "spawns": [
+        {
+          "x": 22,
+          "z": 4
+        }
+      ]
+    }
+  ],
+  "access": [],
+  "exits": [],
+  "dressing": [
+    {
+      "model": "house",
+      "x": 16,
+      "z": 3,
+      "scale": 4
+    },
+    {
+      "model": "cart",
+      "x": 26,
+      "z": 10,
+      "scale": 1.1
+    },
+    {
+      "model": "well",
+      "x": 7,
+      "z": 10,
+      "scale": 1.15
+    },
+    {
+      "model": "boulder",
+      "x": 29,
+      "z": 3,
+      "scale": 1.3
+    },
+    {
+      "model": "hay_stack",
+      "x": 28,
+      "z": 16,
+      "scale": 1.2
+    },
+    {
+      "model": "cart",
+      "x": 13,
+      "z": 17,
+      "scale": 1.1
+    },
+    {
+      "model": "lantern",
+      "x": 19,
+      "z": 17,
+      "scale": 0.8
+    }
+  ],
+  "groves": [
+    {
+      "id": "clan_copse",
+      "x": 1,
+      "z": 1,
+      "w": 30,
+      "h": 22,
+      "count": 12,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.4,
+        1.9
+      ]
+    },
+    {
+      "id": "garden_undergrowth",
+      "x": 1,
+      "z": 1,
+      "w": 30,
+      "h": 22,
+      "count": 12,
+      "models": [
+        "bush",
+        "flowers"
+      ],
+      "scaleRange": [
+        1.4,
+        2.5
+      ]
+    }
+  ],
+  "deferredBindings": [
+    {
+      "ref": "combat:duneback_crab",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:highland_giant",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:umbral_adept",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:wailing_banshee",
+      "reason": "missing_model"
+    }
+  ],
+  "ambient": {
+    "critters": [
+      {
+        "model": "villager_a",
+        "x": 13,
+        "z": 12,
+        "w": 6,
+        "h": 3,
+        "count": 2
+      }
+    ],
+    "smoke": []
+  },
+  "connections": [
+    {
+      "point": "east",
+      "to": "varrick"
+    },
+    {
+      "point": "north",
+      "to": "edgevale"
+    },
+    {
+      "point": "west",
+      "to": "faloden"
+    }
+  ],
+  "waymarks": [
+    {
+      "id": "road_varrick",
+      "label": "Varrick",
+      "destination": "varrick",
+      "x": 28,
+      "z": 13
+    },
+    {
+      "id": "road_edgevale",
+      "label": "Edgevale",
+      "destination": "edgevale",
+      "x": 3,
+      "z": 3
+    },
+    {
+      "id": "road_faloden",
+      "label": "Faloden",
+      "destination": "faloden",
+      "x": 3,
+      "z": 13
+    }
+  ],
+  "terrain": {
+    "relief": 0.15,
+    "procedural": {
+      "seed": 5922,
+      "frequency": 0.03
+    },
+    "material": "meadow",
+    "scatter": []
+  },
+  "budgets": {
+    "props": 100,
+    "npcs": 8,
+    "ambient": 4,
+    "maxPropsPer8x8": 18
+  },
+  "reviewViews": [
+    {
+      "id": "overview",
+      "target": "court",
+      "mode": "overview",
+      "distance": 40,
+      "pitch": 0.95,
+      "yaw": 0
+    },
+    {
+      "id": "arrival",
+      "target": "arrival",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25
+    },
+    {
+      "id": "forge",
+      "target": "forge:approach",
+      "mode": "gameplay",
+      "yaw": 0.45,
+      "zoom": 1.25,
+      "covers": [
+        "facility:furnace_anvil"
+      ]
+    },
+    {
+      "id": "mining",
+      "target": "mining_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:mining:tin"
+      ]
+    },
+    {
+      "id": "woodcutting",
+      "target": "woodcutting_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:woodcutting:normal"
+      ]
+    },
+    {
+      "id": "gather",
+      "target": "gather_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "gather:collect_sand"
+      ]
+    },
+    {
+      "id": "encounter_0",
+      "target": "encounter_0",
+      "mode": "gameplay",
+      "yaw": 0.3,
+      "zoom": 1.3,
+      "covers": [
+        "combat:broodfang_spider"
+      ]
+    },
+    {
+      "id": "encounter_1",
+      "target": "encounter_1",
+      "mode": "gameplay",
+      "yaw": 0.3,
+      "zoom": 1.3,
+      "covers": [
+        "combat:frostbite_imp"
+      ]
+    },
+    {
+      "id": "district",
+      "target": "clan_cottage:door",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.1
+    }
+  ]
+}

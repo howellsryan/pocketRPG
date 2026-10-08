@@ -1,24 +1,26 @@
-# Semantic world authoring — Lumbright delivery plan
+# Semantic world authoring — connected-world delivery plan
 
-Goal: let agents author legible, inhabited regions from owned assets and canonical idle content. Prove the workflow with Lumbright inside the existing overworld.
+Goal: author all fourteen canonical towns and cities as distinct, inhabited districts within one walkable overworld, using owned assets and idle-game identities. Lumbright remains the starter example.
 
-Success requires deterministic generation, canonical resource/monster/facility parity, no missing creature fallback, connected paths and interaction approaches, collision matching measured asset bounds, bounded scenery, passing game/world checks, and personally inspected desktop/mobile renders. A green structural report does not certify visual quality.
-
-Unknowns to resolve:
-- Measure shipped model bounds and inspect building fronts in renders.
-- Exercise new fishing/bowstring gathering through the authoritative server.
-- Render both the isolated district and its integrated overworld placement.
-- Measure real-device performance separately; software browser screenshots cannot establish mobile frame rates.
+Success requires deterministic compilation, protected integration bounds, canonical bindings with truthful deferrals, connected roads and usable approaches, collision matching measured assets, bounded scenery and personally inspected desktop, portrait and integrated renders. Structural checks do not certify visual quality.
 
 Order:
-1. Derive the spatial content contract from worldActivities/world/skills/gatherTasks.
-2. Build a deterministic semantic compiler with full prefab expansion and behavioral failure tests.
-3. Add missing runtime gathering adapters and truthful creature visuals.
-4. Author Lumbright, generate the integrated map and reproducible review views.
-5. Inspect renders, fix issues, then run full checks and publish the review evidence.
+1. Derive each canonical contract and read the location’s lore.
+2. Reserve placements and regional gateways before authoring landmarks, streets, homes and working spaces.
+3. Bind supported resources, creatures and facilities. Record adapter/model deferrals without substituting another identity.
+4. Preserve outside content in the wilderness source and generate one overworld. Validate bounds, road connections, interaction/wander separation and physical instance access.
+5. Run game/world checks and exact generated-file/fingerprint checks.
+6. Capture selected Cloudflare batches, inspect every required native-size view, record criticism and revise rejected sources.
+7. Approve current-source beta receipts, run the complete release gate and publish the Workers preview for live testing.
 
-Scope: authoring sources/compiler, asset metadata, validation/tests, review tooling, minimal existing-world integration and Lumbright.
+Routine capture uses Cloudflare Workers Builds and consumes no GitHub capture minutes. Every build checks all fourteen sources and captures a selected batch. The default is the first three placement entries; select another through WORLD_REVIEW_REGIONS or --regions=a,b,c. The manual GitHub fallback remains an explicit choice.
 
-Out of scope: a new MMO economy, replacing Three/Preact/PartyServer, entire-world generation, expanded idle location content, multiplayer sharding, new equipment-charge semantics, and production deployment.
+An active instance access binding requires real registered content, an accessible overworld entrance and a walkable matching destination. Preserve authoritative admission requirements. Deferred bindings remain in the audit and are not represented as implemented activities.
 
-Skills: delivery-loop, steps, plan-gate, scope-fence, test-driven-development, verification-before-completion; world-design rules govern visual release. Routine review and terminal checks use Cloudflare Workers Builds; GitHub Actions is a deliberately dispatched fallback. See world/authoring/README.md for build commands, evidence publication and the unchanged approval gate.
+Scope: regional sources, placements, wilderness, canonical classification, resource presentation, asset metadata, compilation, integration, validation, review tooling, safe saved-position fallback and preview delivery.
+
+Out of scope: replacing Three/Preact/PartyServer, changing idle content, a new MMO economy, multiplayer sharding, equipment-charge semantics and production deployment.
+
+Approval covers inspected beta composition and interface scope. Real-phone movement/frame times, two-player activity, background/reconnect and save/return to idle remain separate acceptance outcomes. Idle wander separation does not certify combat safety; pursuit can leave those rectangles. Protected town areas and deliberate hunting buffers need live validation.
+
+Skills: delivery-loop, steps, plan-gate, scope-fence, test-driven-development and verification-before-completion. World-design rules govern visual release. See world/authoring/README.md for commands, evidence publication and receipts.

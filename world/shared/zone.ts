@@ -321,3 +321,13 @@ export function validateExitGraph(zones: Record<string, ZoneDef>): ZoneValidatio
   }
   return errors.length === 0 ? { valid: true } : { valid: false, errors }
 }
+
+/** A scenery update may invalidate a checkpoint. Keep valid server positions;
+ * otherwise use the validated authored spawn, never a random isolated tile. */
+export function resolveEntryPosition(zone: ZoneDef, saved: unknown): {x:number;z:number} {
+  if(saved && typeof saved==='object') {
+    const {x,z}=saved as {x?:unknown;z?:unknown}
+    if(typeof x==='number' && typeof z==='number' && Number.isInteger(x) && Number.isInteger(z) && zone.collision[z]?.[x]==='.')return {x,z}
+  }
+  return {...zone.spawn}
+}

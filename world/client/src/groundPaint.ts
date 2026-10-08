@@ -56,6 +56,7 @@ export function createGroundPaint(
   const texture = buildKindTexture(width, height, grid)
   if (!texture) return null
   const codes=Object.fromEntries(GROUND_KINDS.map((kind,i)=>[kind.id,i+1]))
+  const matches=(ids:string[])=>ids.map(id=>'abs(vPaintKind-'+codes[id]+'.0)<.1').join(' || ')
   const data=paintGeometryData(width,height,grid,codes,corners)
   const geometry=new THREE.BufferGeometry()
   geometry.setAttribute('position',new THREE.Float32BufferAttribute(data.positions,3))
@@ -83,18 +84,18 @@ varying vec2 vPaintXY;
 float paintHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}`)
       .replace('#include <map_fragment>',`#include <map_fragment>
 float shade=.95+.10*paintHash(floor(vPaintXY*14.0));
-if(abs(vPaintKind-2.0)<.1 || abs(vPaintKind-3.0)<.1 || abs(vPaintKind-7.0)<.1 || abs(vPaintKind-8.0)<.1){
+if(${matches(['path_cobble','plaza','floor_stone','floor_tile'])}){
   vec2 cell=vec2(vPaintXY.x*2.4+mod(floor(vPaintXY.y*2.8),2.0)*.5,vPaintXY.y*2.8);
   vec2 f=fract(cell);
   float edge=min(min(f.x,1.0-f.x),min(f.y,1.0-f.y));
   shade*=mix(.69,.92+.13*paintHash(floor(cell)),smoothstep(.025,.07,edge));
-}else if(abs(vPaintKind-5.0)<.1){
+}else if(${matches(['farm'])}){
   shade*=.85+.15*smoothstep(.10,.45,abs(fract(vPaintXY.x*3.0)-.5));
-}else if(abs(vPaintKind-6.0)<.1){
+}else if(${matches(['floor_plank'])}){
   float gap=min(fract(vPaintXY.y*4.0),1.0-fract(vPaintXY.y*4.0));
   shade*=mix(.58,1.05,smoothstep(.025,.09,gap));
   shade*=.92+.08*paintHash(floor(vec2(vPaintXY.x*.7,vPaintXY.y*4.0)));
-}else if(abs(vPaintKind-1.0)<.1 || abs(vPaintKind-4.0)<.1){
+}else if(${matches(['path_dirt','sand','marsh'])}){
   shade*=.94+.10*paintHash(floor(vPaintXY*2.5));
 }
 diffuseColor.rgb*=shade;`)

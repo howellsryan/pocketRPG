@@ -2,10 +2,10 @@
 // CLI and tests supply canonical data and measured owned-asset bounds.
 const DIRECTIONS = [[1,0],[-1,0],[0,1],[0,-1]]
 const SPATIAL_SKILLS = new Set(['mining', 'woodcutting', 'fishing'])
-const PORTABLE_SKILLS = new Set(['construction','cooking','crafting','firemaking','fletching','herblore','magic','prayer','smithing','runecrafting'])
-const DEFERRED_SYSTEMS = new Set(['agility','farming','hunter','quest','thieving','slayer','dungeoneering'])
+const PORTABLE_SKILLS = new Set(['construction','cooking','crafting','firemaking','fletching','herblore','magic','prayer','smithing','runecrafting','runecraft'])
+const DEFERRED_SYSTEMS = new Set(['agility','farming','hunter','quest','thieving','slayer','dungeoneering','raid','minigame'])
 const FACILITIES = { bank: ['bank_chest'], stove: ['range'], furnace_anvil: ['furnace','anvil'] }
-const GROUNDS = new Set(['path_dirt','path_cobble','plaza','sand','farm','floor_plank','floor_stone','floor_tile','ash','water','lava'])
+const GROUNDS = new Set(['path_dirt','path_cobble','plaza','sand','farm','marsh','floor_plank','floor_stone','floor_tile','ash','water','lava'])
 const clone = (v) => JSON.parse(JSON.stringify(v))
 const fail = (message) => { throw new Error('Authoring: ' + message) }
 const integer = (v) => Number.isInteger(v)
@@ -69,6 +69,25 @@ export function compileRegion(input, context) {
   const expected = new Set([...contract.resources,...contract.monsters,...contract.facilities])
   const bound = new Set()
   const bind = (ref) => { if (!expected.has(ref)) fail('unexpected content ' + ref); bound.add(ref) }
+  const deferredBindings=clone(source.deferredBindings??[]),deferredRefs=new Set()
+  for(const entry of deferredBindings) {
+    if(!expected.has(entry.ref))fail('unexpected content '+entry.ref)
+    if(deferredRefs.has(entry.ref))fail('duplicate deferred binding '+entry.ref)
+    const [kind,id,actionId]=entry.ref.split(':')
+    const task=kind==='gather'?context.gatherTasks.find(t=>t.id===id):null
+    const action=kind==='skill'?context.skills[id]?.actions?.find(a=>a.id===actionId):null
+    const monster=kind==='combat'?context.monsters[id]:null
+    const reasons={
+      missing_model: Boolean(monster&&!context.assets.monsters.includes(id)),
+      processing_adapter: Boolean(task?.product&&(task.materials||task.gpCost||task.requiresItem||task.oneShot||task.isClue)),
+      probabilistic_resource: Boolean(action&&!action.product&&action.dropTable),
+      facility_adapter: kind==='facility'&&['sawmill','altar'].includes(id),
+      instance_required: Boolean(monster?.boss&&context.assets.monsters.includes(id)&&!Object.values(context.instanceZones??{}).some(z=>z.npcs?.some(n=>n.monsterId===id))),
+    }
+    if(!reasons[entry.reason])fail('invalid deferral for supported binding '+entry.ref)
+    deferredRefs.add(entry.ref);bind(entry.ref)
+  }
+  const bindActive=(ref)=>{if(deferredRefs.has(ref))fail('deferred content cannot also be bound '+ref);bind(ref)}
   const grid = Array.from({length:height},()=>Array(width).fill('.'))
   const routeTiles = new Map()
   const ids = new Set()
@@ -135,13 +154,21 @@ export function compileRegion(input, context) {
   const occupied = new Set()
   const addObject = (o) => { tile(o,'resource '+o.id); unique(o.id); if(occupied.has(key(o.x,o.z))) fail('overlapping resource '+o.id); occupied.add(key(o.x,o.z)); objects.push(o) }
   for(const r of resources) {
-    bind(r.ref)
+    bindActive(r.ref)
     const parts=r.ref.split(':')
     if(parts[0]==='facility') {
       const types=FACILITIES[parts[1]]
       if(!types) fail('unsupported facility '+r.ref)
-      if(types.length!==1) fail('multi-station facility requires explicit component positions: '+r.ref)
-      addObject({id:r.id,type:types[0],x:r.x,z:r.z})
+      if(types.length===1)addObject({id:r.id,type:types[0],x:r.x,z:r.z})
+      else {
+        unique(r.id)
+        if(!r.components||Object.keys(r.components).length!==types.length)fail('facility requires explicit component positions: '+r.ref)
+        for(const type of types){
+          const component=r.components[type]
+          if(!component)fail('missing facility component '+type)
+          addObject({id:r.id+':'+type,type,x:component.x,z:component.z})
+        }
+      }
     } else if(parts[0]==='skill') {
       const [skill,actionId]=parts.slice(1)
       const action=context.skills[skill]?.actions?.find((a)=>a.id===actionId)
@@ -156,10 +183,11 @@ export function compileRegion(input, context) {
     } else fail('unsupported spatial ref '+r.ref)
   }
   for(const e of encounters) {
-    bind(e.ref)
+    bindActive(e.ref)
     if(!e.ref.startsWith('combat:')) fail('encounter requires a combat ref')
     const monsterId=e.ref.slice(7)
     if(!context.monsters[monsterId]) fail('unknown monster '+monsterId)
+    if(context.monsters[monsterId].boss)fail('boss '+monsterId+' requires a lair or instance access binding')
     if(!context.assets.monsters.includes(monsterId)) fail(monsterId+' has no supported visual (fallback forbidden)')
     rect(e.wander,'wander '+e.id); unique(e.id)
     for(let z=e.wander.z;z<e.wander.z+e.wander.h;z++) for(let x=e.wander.x;x<e.wander.x+e.wander.w;x++) {
@@ -172,6 +200,17 @@ export function compileRegion(input, context) {
       const id=e.id+':'+i; unique(id)
       npcs.push({id,monsterId,x:p.x,z:p.z,wander:clone(e.wander)})
     }
+  }
+  const access=clone(source.access??[])
+  for(const entry of access){
+    if(!entry.ref?.startsWith('combat:'))fail('instance access requires a combat identity')
+    const target=context.instanceZones?.[entry.zone]
+    if(!target?.npcs?.some(n=>n.monsterId===entry.ref.slice(7)))fail('instance lair identity does not match '+entry.ref)
+    const approach=getPoint(entry.point),entrance=exits.find(e=>e.id===entry.exit&&e.toZone===entry.zone)
+    if(!entrance)fail('instance access requires a physical entrance '+entry.ref)
+    if(Math.abs(approach.x-entrance.x)+Math.abs(approach.z-entrance.z)>3)fail('instance access approach too far from entrance '+entry.ref)
+    if(!integer(entrance.toX)||!integer(entrance.toZ)||target.collision?.[entrance.toZ]?.[entrance.toX]!=='.')fail('instance access destination blocked '+entry.ref)
+    bindActive(entry.ref)
   }
   // Collision uses the full asymmetric, rotated bounds of the shipped asset.
   // Do not punch holes through mesh footprints to make paths pass.
@@ -246,6 +285,7 @@ export function compileRegion(input, context) {
   }
   for(const s of ambient.smoke) {if(!inBounds(s.x,s.z)||!finite(s.y??0))fail('invalid smoke position')}
   const connections=[]
+  if(context.world.edges&&!Array.isArray(source.connections))fail('canonical road connections are required')
   if(source.connections) {
     if(!Array.isArray(source.connections)||!context.world.edges)fail('road connections require canonical travel edges')
     const neighbors=new Set(context.world.edges.flatMap(([a,b])=>a===source.place?[b]:b===source.place?[a]:[]))
@@ -297,13 +337,13 @@ export function compileRegion(input, context) {
     }
   }
   if(!overview||!gameplay)fail('overview and close gameplay review views are required')
-  const uncovered=[...expected].filter((ref)=>!reviewedContent.has(ref)).sort()
+  const uncovered=[...expected].filter((ref)=>!deferredRefs.has(ref)&&!reviewedContent.has(ref)).sort()
   if(uncovered.length)fail('missing close review coverage: '+uncovered.join(', '))
   const zone={id:source.id,name:source.name,width,height,spawn,collision:grid.map((r)=>r.join('')),objects,npcs,exits,waymarks,props,ground,ambient}
   for(const k of ['palette','ambience','terrain'])if(source[k])zone[k]=source[k]
   return {zone,report:{
     schemaVersion:1,region:source.id,place:source.place,seed:source.seed,
-    parity:{scope:'gathering, combat identities and facilities',missing:[],unexpected:[]},contract,points,footprints,connections,
+    parity:{scope:'canonical gathering, combat and facility accounting; explicit deferred bindings are not playable in this regional contract',complete:deferredBindings.length===0,missing:[],unexpected:[]},contract,deferredBindings,access,points,footprints,connections,
     reviewViews:source.reviewViews.map((v)=>({...v,x:pointMap.get(v.target).x,z:pointMap.get(v.target).z})),
     counts:{props:props.length,npcs:npcs.length,objects:objects.length,ambient:ambient.critters.reduce((n,c)=>n+c.count,0),reachableTiles:reach.size},
     budgets,visualApproval:'pending'

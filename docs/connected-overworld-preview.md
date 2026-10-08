@@ -6,7 +6,7 @@ All fourteen cities remain districts of one continuous Eldermoor overworld. Walk
 
 Open the Worker preview, sign in and select your character. Open Map → Enter the world, or Help → Enter the world. Entry saves first and stays in the same tab. New arrivals start in Lumbright; returning characters resume their world position. Finish an active co-op session before entering.
 
-In the world, open the compass map, choose a named city and select Walk to. Journeys prefer painted roads and retain their entire path rather than stopping after 64 tiles. The location and destination panel shows a compass bearing and tile distance. Tap the ground to change course; Stop journey cancels walking. Lumbright's semantic road signs start journeys to Draynar, Alkarid and Varrick.
+In the world, open the compass map, choose a named city and select Walk to. Journeys prefer painted roads and retain their entire path rather than stopping after 64 tiles. The location and destination panel shows a compass bearing and tile distance. Tap the ground to change course; Stop journey cancels walking. Semantic road signs name neighboring towns and start journeys along the connected world.
 
 Destination details contain clearly labelled Preview quick travel. It is a testing convenience enabled only by the preview Worker binding; the server refuses it in production and during combat. It is no longer presented as a free Magic spell.
 
@@ -18,7 +18,7 @@ Return doorways lead outside, away from entrance tiles and monster wander rectan
 
 The entrances are near Lumbright (Cow Pasture), Varrick (Grondar), Draynar (Fiend Pit and Dragon Roost) and Faloden (Zaryth). The existing Dragon Roost remains one shared room containing green, red and black dragons. Its Draynar entrance does not establish canonical geographical parity for the red/black dragon regions; splitting those habitats is a follow-up.
 
-Lumbright has a semantic content contract and reviewed scenery. The other thirteen city districts still use the existing procedural dressing. This preview does not certify their final MMORPG art quality, live multiplayer capacity, phone frame rate, or full idle/world activity and equipment-perk parity.
+All fourteen towns now use semantic content contracts, connected gateways and authored homes, streets and working yards. Supported resources, creatures and services follow canonical idle identities. The thirteen expanded regions explicitly defer 102 activities whose assets or gameplay adapters are missing. This beta does not certify production MMORPG art quality, live multiplayer capacity, phone frame rate, or full idle/world activity and equipment-perk parity.
 
 The architecture keeps Preact/Three.js and Cloudflare Workers/Durable Objects. Larger populations still need measured mobile budgets, spatial actor activation and regional simulation partitioning before release beyond beta. The connected geography and travel flow are the first playable slice.
 
@@ -26,9 +26,9 @@ The architecture keeps Preact/Three.js and Cloudflare Workers/Durable Objects. L
 
 Edit regional semantic sources and generators, then regenerate maps. Entrance approaches reject scenery and encounter conflicts; road connections avoid monster wander. Cross-zone tests cover every registered return.
 
-Cloudflare captures the original 49 Lumbright views plus 22 experience views using real scene layers and components. Experience renders are auth-free and do not establish that OAuth or live multiplayer was exercised. Current-source approval must list both sets of views. Normal CI retains generated-file drift checks; candidate regeneration is confined to unreferenced review candidates.
+Cloudflare captures 329 regional desktop, portrait and integrated world views, 22 Lumbright experience views, four rat states and five goblin states using real scene layers and components. Experience renders are auth-free and do not establish that OAuth or live multiplayer was exercised. Each town requires a current-source receipt with complete regional coverage; Lumbright additionally requires experience coverage and creature review. Normal CI retains generated-file drift checks; candidate regeneration is confined to unreferenced review candidates.
 
-D1 editor overrides take precedence over bundled maps. The preview Cow Pasture override needs only its return exit metadata updated to the new safe Lumbright road; retain its edited scenery. Production overrides and maps are outside this preview deployment.
+D1 editor overrides take precedence over bundled maps. The earlier preview Cow Pasture return-exit adjustment is complete; its edited scenery was preserved. This town expansion makes no gameplay database writes. Production overrides and maps are outside this preview deployment.
 
 ## Progression boundary before wider release
 
@@ -40,7 +40,7 @@ The world starts with inventory panels closed so the scene and entrance signs st
 
 ## Review coverage follow-up
 
-The approval fingerprint covers this change’s scene, entry, guidance and map sources, but is not a complete transitive renderer dependency graph. Add itemIcon/minimap/mapCategories, idle icon data and resolvers, GameIcon and the entry CSS staging build script to fingerprint inputs before relying on the receipt for future edits to those dependencies. The native screenshot comparison manifest records exactly which frames were inspected or reused as byte-identical evidence.
+The approval fingerprint includes regional sources, measured assets, instance definitions, scene and entry sources, map categories, item/minimap icon sources, idle icon datasets and resolvers, GameIcon, entry styling/staging and procedural creature modules. Treat future renderer dependencies as fingerprint inputs when they are introduced; this explicit list is not an automatically resolved dependency graph. The town capture comparison manifest records which native frames were personally inspected or reused with identical PNG digests.
 
 ## Preview map override rollback
 

@@ -20,53 +20,60 @@ run('python3',['tools/agent-skills.py'])
 run('python3',['tools/agent-skills.py','--check'])
 run(process.execPath,['--test','world/authoring/review-evidence.test.mjs'])
 run('npm',['--prefix','world','ci','--no-audit','--no-fund'])
+
+run('npm',['--prefix','world','run','author:build'])
 run('npm',['run','ci'])
+stageEntryReview(root,world)
 run('npm',['run','world:check'])
 run('npm',['--prefix','world','run','author:check'])
-stageEntryReview(root,world)
 prepareCloudflareBrowser(root)
+const placements=read(path.join(world,'authoring/placements.json')).regions
+const ids=(process.env.WORLD_REVIEW_REGIONS??process.argv.find(a=>a.startsWith('--regions='))?.slice(10)??Object.keys(placements).slice(0,3).join(',')).split(',')
+if(ids.some(id=>!placements[id])||new Set(ids).size!==ids.length)throw Error('Invalid capture region selection')
 fs.rmSync(path.join(world,'preview-shots'),{recursive:true,force:true})
-run(process.execPath,['scripts/render-proc.mjs','dustpaw_rat','--out','world/preview-shots/creatures'])
-// Keep image binaries in static evidence instead of megabytes of base64 build logs.
-await new Promise((resolve,reject)=>{
-  const child=spawn(process.execPath,['world/scripts/review-authoring.mjs','lumbright'],{cwd:root,stdio:['ignore','pipe','inherit']})
-  const lines=createInterface({input:child.stdout})
-  lines.on('line',line=>{if(!line.startsWith('AUTHORING_IMAGE '))console.log(line)})
-  child.on('error',reject)
-  child.on('close',code=>code===0?resolve():reject(new Error('World capture failed: '+code)))
+if(ids.includes('lumbright'))run(process.execPath,['scripts/render-proc.mjs','dustpaw_rat','cave_goblin','--out','world/preview-shots/creatures'])
+for(const id of ids)await new Promise((resolve,reject)=>{
+ const child=spawn(process.execPath,['world/scripts/review-authoring.mjs',id,'--prepared'],{cwd:root,stdio:['ignore','pipe','inherit']})
+ const lines=createInterface({input:child.stdout})
+ lines.on('line',line=>{if(!line.startsWith('AUTHORING_IMAGE '))console.log(line)})
+ child.on('error',reject);child.on('close',code=>code===0?resolve():reject(Error('World capture failed '+id+': '+code)))
 })
 const shots=path.join(world,'preview-shots')
-const report=read(path.join(world,'authoring/reports/lumbright.json'))
-const experience=read(path.join(shots,'lumbright/experience.json'))
-const evidence=read(path.join(shots,'lumbright/evidence.json'))
-const receiptFile=path.join(world,'authoring/reviews/lumbright.json')
-const receipt=fs.existsSync(receiptFile)?read(receiptFile):null
 const files=new Set(fs.readdirSync(shots,{recursive:true}).filter(f=>fs.statSync(path.join(shots,f)).isFile()))
-const experienceIds=new Set(experience.captures.map(c=>c.id))
-if(experience.sourceHash!==report.sourceHash||experience.commit!==commit||experienceIds.size!==EXPERIENCE_VIEWS.length||!EXPERIENCE_VIEWS.every(v=>experienceIds.has(v.id)))throw new Error('Incomplete or stale experience capture coverage')
-for(const capture of experience.captures) {
- const mobile=capture.id.startsWith('mobile:')
- if(capture.viewport.width!==(mobile?390:1280)||capture.viewport.height!==(mobile?844:800)||!files.has('lumbright/'+capture.file))throw new Error('Invalid experience capture '+capture.id)
+const manifests=[],receipts={},reports={}
+for(const id of ids){
+ const report=read(path.join(world,'authoring/reports/'+id+'.json')),evidence=read(path.join(shots,id,'evidence.json'))
+ const receiptFile=path.join(world,'authoring/reviews/'+id+'.json'),receipt=fs.existsSync(receiptFile)?read(receiptFile):null
+ const manifest={...validateReviewEvidence({report,evidence,receipt,commit,files}),buildId:process.env.WORKERS_CI_BUILD_UUID??null,renderer:evidence.renderer,node:process.version,captureCount:evidence.captures.length}
+ if(id==='lumbright'){
+  const experience=read(path.join(shots,id,'experience.json')),seen=new Set(experience.captures.map(c=>c.id))
+  if(experience.sourceHash!==report.sourceHash||experience.commit!==commit||seen.size!==EXPERIENCE_VIEWS.length||!EXPERIENCE_VIEWS.every(v=>seen.has(v.id)))throw Error('Incomplete or stale experience coverage')
+  for(const c of experience.captures){const mobile=c.id.startsWith('mobile:');if(c.viewport.width!==(mobile?390:1280)||c.viewport.height!==(mobile?844:800)||!files.has(id+'/'+c.file))throw Error('Invalid experience '+c.id)}
+  manifest.experienceCaptureCount=seen.size;manifest.experienceViews=[...seen]
+  if(manifest.approval==='approved'&&!EXPERIENCE_VIEWS.every(v=>receipt.experienceViews?.includes(v.id)))manifest.approval='pending'
+ }
+ manifests.push(manifest);receipts[id]=receipt;reports[id]=report
 }
-const manifest={...validateReviewEvidence({report,evidence,receipt,commit,files}),buildId:process.env.WORKERS_CI_BUILD_UUID??null,renderer:evidence.renderer,node:process.version,captureCount:evidence.captures.length,experienceCaptureCount:experience.captures.length,experienceViews:[...experienceIds]}
-if(manifest.approval==='approved'&&!EXPERIENCE_VIEWS.every(v=>receipt.experienceViews?.includes(v.id))){manifest.approval='pending';manifest.scope='Awaiting current-source experience review approval'}
-const out=path.join(world,'review-site')
-fs.rmSync(out,{recursive:true,force:true})
-const destination=path.join(out,commit)
-fs.mkdirSync(destination,{recursive:true})
+const out=path.join(world,'review-site'),destination=path.join(out,commit)
+fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(destination,{recursive:true})
 fs.cpSync(shots,destination,{recursive:true})
-for(const [file,value] of Object.entries({'manifest.json':manifest,'receipt.json':receipt}))fs.writeFileSync(path.join(destination,file),JSON.stringify(value,null,2)+'\n')
-// Preserve the compiler's exact generated serialization for downstream freshness checks.
-fs.copyFileSync(path.join(world,'authoring/reports/lumbright.json'),path.join(destination,'report.json'))
-for(const relative of ['zones/lumbright.json','zones/overworld.json','zones/grondar_lair.json','zones/cow_pasture.json','zones/fiend_pit.json','zones/dragon_roost.json','zones/zaryth_throne.json','authoring/assets.generated.json'])fs.copyFileSync(path.join(world,relative),path.join(destination,path.basename(relative)))
-fs.copyFileSync(path.join(root,'functions/_lib/chat/knowledge.js'),path.join(destination,'knowledge.js'))
+fs.writeFileSync(path.join(destination,'manifest.json'),JSON.stringify({schemaVersion:1,commit,regions:manifests},null,2)+'\n')
+for(const id of ids){
+ fs.copyFileSync(path.join(world,'authoring/reports/'+id+'.json'),path.join(destination,id,'report.json'))
+ fs.writeFileSync(path.join(destination,id,'receipt.json'),JSON.stringify(receipts[id],null,2)+'\n')
+}
+for(const relative of ['zones/overworld.json','authoring/assets.generated.json',...Object.keys(placements).map(id=>'zones/'+id+'.json'),...Object.keys(placements).map(id=>'authoring/reports/'+id+'.json')]){
+ const target=path.join(destination,'generated',relative);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(world,relative),target)
+}
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
-const cards=evidence.captures.map(c=>'<article><h3>'+escape(c.id)+'</h3><a href="lumbright/'+escape(c.file)+'"><img loading="lazy" src="lumbright/'+escape(c.file.replace('.png','.jpg'))+'" alt="'+escape(c.id)+'"></a><p>'+c.viewport.width+' × '+c.viewport.height+' · <a href="lumbright/'+escape(c.file)+'">Full PNG</a></p></article>').join('')
-const experienceCards=experience.captures.map(c=>'<article><h3>'+escape(c.id)+'</h3><a href="lumbright/'+escape(c.file)+'"><img loading="lazy" src="lumbright/'+escape(c.file.replace('.png','.jpg'))+'" alt="'+escape(c.id)+'"></a><p>'+c.viewport.width+' × '+c.viewport.height+' · Auth-free component and scene review</p></article>').join('')
-const rat=['idle','attack','hit','death'].map(state=>'<article><h3>Rat '+state+'</h3><a href="creatures/dustpaw_rat-'+state+'.png"><img loading="lazy" src="creatures/dustpaw_rat-'+state+'.png" alt="Rat '+state+'"></a></article>').join('')
-const html='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Lumbright world review</title><style>body{margin:0;background:#191c1b;color:#e9e3d6;font:16px/1.55 system-ui}main{max-width:1500px;padding:24px;margin:auto}a{color:#d5bf83}h1,h2,h3{line-height:1.2}code{overflow-wrap:anywhere}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}article{background:#252b27;padding:14px;border-radius:8px}img{display:block;width:100%;height:240px;object-fit:contain;background:#171a17}h3{font-size:16px}header{border-bottom:1px solid #485148;padding-bottom:20px;margin-bottom:24px}.status{font-weight:bold;color:#e8c46f}</style><main><header><h1>Lumbright world review</h1><p class="status">Visual approval: '+escape(manifest.approval)+'</p><p>'+escape(manifest.scope)+'</p><p>Source commit: <code>'+commit+'</code><br>Source fingerprint: <code>'+report.sourceHash+'</code></p><p>'+manifest.captureCount+' world views plus four rat combat states. Software rendering; phone performance and live gameplay remain separate checks.</p><p><a href="manifest.json">Manifest</a> · <a href="lumbright/evidence.json">Capture evidence</a> · <a href="report.json">Semantic audit</a> · <a href="receipt.json">Review receipt</a> · <a href="lumbright.json">Lumbright map</a> · <a href="overworld.json">Integrated map</a></p><p><a href="lumbright/desktop.jpg">Desktop contact sheet</a> · <a href="lumbright/mobile.jpg">Portrait contact sheet</a> · <a href="lumbright/integrated.jpg">Integrated contact sheet</a> · <a href="lumbright/rat.jpg">Rat contact sheet</a></p></header><h2>World composition</h2><div class="grid">'+cards+'</div><h2>Travel and entry experience</h2><p>'+escape(experience.scope)+'</p><div class="grid">'+experienceCards+'</div><h2>Rat states</h2><div class="grid">'+rat+'</div></main></html>'
+const cards=[]
+for(const id of ids){
+ const evidence=read(path.join(shots,id,'evidence.json'))
+ const experience=id==='lumbright'?read(path.join(shots,id,'experience.json')).captures:[]
+ cards.push('<section><h2>'+escape(id)+'</h2><p>Visual approval: '+escape(manifests.find(m=>m.region===id).approval)+' · <a href="'+id+'/report.json">Semantic contract and gaps</a></p><div class="grid">'+[...evidence.captures,...experience].map(c=>'<article><h3>'+escape(c.id)+'</h3><a href="'+id+'/'+escape(c.file)+'"><img loading="lazy" src="'+id+'/'+escape(c.file.replace('.png','.jpg'))+'" alt="'+escape(c.id)+'"></a><p>'+c.viewport.width+' × '+c.viewport.height+' · <a href="'+id+'/'+escape(c.file)+'">Native PNG</a></p></article>').join('')+'</div></section>')
+}
+for(const creature of ids.includes('lumbright')?['dustpaw_rat','cave_goblin']:[])cards.push('<section><h2>'+escape(creature)+' states</h2><div class="grid">'+(creature==='cave_goblin'?['idle','attack','hit','death','walk']:['idle','attack','hit','death']).map(s=>'<article><h3>'+s+'</h3><a href="creatures/'+creature+'-'+s+'.png"><img src="creatures/'+creature+'-'+s+'.png"></a></article>').join('')+'</div></section>')
+const html='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Eldermoor semantic review</title><style>body{margin:0;background:#191c1b;color:#e9e3d6;font:16px/1.55 system-ui}main{max-width:1500px;padding:24px;margin:auto}a{color:#d5bf83}code{overflow-wrap:anywhere}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}article{background:#252b27;padding:14px;border-radius:8px}img{display:block;width:100%;height:240px;object-fit:contain;background:#171a17}h3{font-size:16px}</style><main><h1>Eldermoor semantic world review</h1><p>Source commit <code>'+commit+'</code>. Auth-free software scene review; device performance and live multiplayer need separate checks.</p><p><a href="manifest.json">Coverage manifest</a></p>'+cards.join('')+'</main></html>'
 fs.writeFileSync(path.join(destination,'index.html'),html)
-fs.writeFileSync(path.join(out,'index.html'),'<!doctype html><html lang="en"><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>PocketRPG world review</title><h1>PocketRPG world review</h1><p><a href="./'+commit+'/">Open the latest Lumbright review</a></p><p>Commit '+commit+' · Visual approval '+manifest.approval+'</p></html>')
-fs.writeFileSync(path.join(out,'robots.txt'),'User-agent: *\nDisallow: /\n')
-fs.writeFileSync(path.join(out,'_headers'),'/*\n  X-Robots-Tag: noindex, nofollow\n  Cache-Control: no-store\n')
-console.log('CLOUDFLARE_WORLD_REVIEW '+JSON.stringify(manifest))
+fs.writeFileSync(path.join(out,'index.html'),'<!doctype html><meta charset="utf-8"><title>Eldermoor review</title><a href="./'+commit+'/">Open semantic world review</a>')
+console.log('CLOUDFLARE_WORLD_REVIEW '+JSON.stringify({commit,regions:manifests.map(m=>({region:m.region,sourceHash:m.sourceHash,captures:m.captureCount,approval:m.approval}))}))

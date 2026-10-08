@@ -556,7 +556,7 @@ function enterWorld(session: WorldSession): void {
     if (message.t === 'welcome') {
       authed = true
       storeZone(message.zone.id)
-      if (sceneBuilt) wayfinding = createWayfinding(message.zone.landmarks??[], () => { if(self) send(socket,{t:'walk',x:Math.floor(self.mesh.position.x),z:Math.floor(self.mesh.position.z)}) })
+      if (sceneBuilt) wayfinding = createWayfinding(message.zone.landmarks??[], () => { if(self) send(socket,{t:'walk',x:Math.floor(self.mesh.position.x),z:Math.floor(self.mesh.position.z)}) }, message.zone.exits??[])
       worldMapData = {
         collision: message.zone.collision,
         width: message.zone.w,
@@ -745,7 +745,7 @@ function enterWorld(session: WorldSession): void {
           send(socket, { t: 'walk', x: tile.x, z: tile.z })
         }
         minimap = createMinimap(message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.statics, walkTo)
-        wayfinding = createWayfinding(message.zone.landmarks??[], () => { if(self) send(socket,{t:'walk',x:Math.floor(self.mesh.position.x),z:Math.floor(self.mesh.position.z)}) })
+        wayfinding = createWayfinding(message.zone.landmarks??[], () => { if(self) send(socket,{t:'walk',x:Math.floor(self.mesh.position.x),z:Math.floor(self.mesh.position.z)}) }, message.zone.exits??[])
         setupInput(renderer.domElement, camera, ground, {
           onWalk: walkTo,
           onInteract: (interact) => {

@@ -8,7 +8,6 @@ import { findPath } from '../server/pathfind'
 import { npcsFromZone } from '../server/npc'
 import { ZONES } from '../server/zones'
 import { MONSTER_MODELS } from '../shared/monsterModels'
-import monstersData from '../../src/data/monsters.json'
 
 const OPEN = Array.from({ length: 12 }, () => '.'.repeat(12))
 
@@ -71,16 +70,21 @@ describe('collisionWithMonsters', () => {
 })
 
 describe('dragon render size', () => {
-  // The footprint is what stops a player standing inside a dragon, but the
-  // dragon also has to LOOK like the thing you can't walk under: every one of
-  // them outsizes every ordinary monster in the world (bosses excepted).
-  it('makes every dragon taller than every ordinary monster', () => {
-    const monsters = monstersData as Record<string, { boss?: boolean } | undefined>
-    const dragons = ['green_dragon', 'red_dragon', 'black_dragon'].map((id) => MONSTER_MODELS[id].targetHeight)
-    const ordinary = Object.entries(MONSTER_MODELS)
-      .filter(([id]) => footprintRadius(id) === 0 && !monsters[id]?.boss)
-      .map(([, m]) => m.targetHeight)
-    expect(Math.min(...dragons)).toBeGreaterThan(Math.max(...ordinary))
+  it('fits wide flying meshes around their combat footprint and mobile view', () => {
+    const ids = ['green_dragon', 'red_dragon', 'black_dragon']
+    const widths = ids.map((id) => {
+      const model = MONSTER_MODELS[id]
+      const scale = model.targetHeight / (model.bounds.maxY - model.bounds.minY)
+      const width = (model.bounds.maxX - model.bounds.minX) * scale
+      const depth = (model.bounds.maxZ - model.bounds.minZ) * scale
+      expect(footprintRadius(id)).toBe(1)
+      expect(width).toBeGreaterThanOrEqual(3)
+      expect(width).toBeLessThanOrEqual(5)
+      expect(Math.hypot(width, depth) / 2).toBeLessThanOrEqual(2.65)
+      return width
+    })
+    expect(widths[0]).toBeLessThan(widths[1])
+    expect(widths[1]).toBeLessThan(widths[2])
   })
 })
 

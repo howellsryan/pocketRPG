@@ -1,0 +1,664 @@
+{
+  "schemaVersion": 1,
+  "id": "camlann",
+  "name": "Camlann",
+  "place": "camlann",
+  "seed": 6607,
+  "width": 40,
+  "height": 34,
+  "spawn": {
+    "x": 20,
+    "z": 17
+  },
+  "intent": "A northern knight seat with a banner-lined approach, a compact keep and working forge. Maple and magic groves lead into the hills.",
+  "points": [
+    {
+      "id": "arrival",
+      "x": 20,
+      "z": 17,
+      "label": "Camlann arrival",
+      "role": "arrival"
+    },
+    {
+      "id": "court",
+      "x": 20,
+      "z": 17,
+      "label": "Knights forecourt",
+      "role": "hub"
+    },
+    {
+      "id": "landmark",
+      "x": 20,
+      "z": 12,
+      "label": "Knights forecourt",
+      "role": "landmark"
+    },
+    {
+      "id": "shrine",
+      "x": 26,
+      "z": 7,
+      "label": "Chapel forecourt",
+      "role": "discovery"
+    },
+    {
+      "id": "south",
+      "x": 20,
+      "z": 32,
+      "label": "Seerhold road",
+      "role": "gateway"
+    },
+    {
+      "id": "woodcutting_approach",
+      "x": 31,
+      "z": 28,
+      "label": "Timber grove",
+      "role": "resource"
+    },
+    {
+      "id": "gather_approach",
+      "x": 30,
+      "z": 24,
+      "label": "Fieldwork patch",
+      "role": "resource"
+    }
+  ],
+  "routes": [
+    {
+      "id": "arrival_lane",
+      "from": "arrival",
+      "to": "court",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "ceremonial_approach",
+      "from": "court",
+      "to": "landmark",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "south_road",
+      "from": "court",
+      "to": "south",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_0",
+      "from": "court",
+      "to": "shrine",
+      "via": [
+        {
+          "x": 25,
+          "z": 17
+        },
+        {
+          "x": 25,
+          "z": 14
+        },
+        {
+          "x": 26,
+          "z": 14
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_1",
+      "from": "court",
+      "to": "woodcutting_approach",
+      "via": [
+        {
+          "x": 21,
+          "z": 17
+        },
+        {
+          "x": 21,
+          "z": 28
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_2",
+      "from": "court",
+      "to": "gather_approach",
+      "via": [
+        {
+          "x": 21,
+          "z": 17
+        },
+        {
+          "x": 21,
+          "z": 28
+        },
+        {
+          "x": 30,
+          "z": 28
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_3",
+      "from": "court",
+      "to": "bank:approach",
+      "via": [
+        {
+          "x": 15,
+          "z": 17
+        },
+        {
+          "x": 15,
+          "z": 16
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_4",
+      "from": "court",
+      "to": "forge:approach",
+      "via": [
+        {
+          "x": 19,
+          "z": 17
+        },
+        {
+          "x": 19,
+          "z": 26
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_5",
+      "from": "court",
+      "to": "squires_house:door",
+      "via": [
+        {
+          "x": 15,
+          "z": 17
+        },
+        {
+          "x": 15,
+          "z": 16
+        },
+        {
+          "x": 9,
+          "z": 16
+        },
+        {
+          "x": 9,
+          "z": 7
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_6",
+      "from": "court",
+      "to": "knights_lodge:door",
+      "via": [
+        {
+          "x": 25,
+          "z": 17
+        },
+        {
+          "x": 25,
+          "z": 14
+        },
+        {
+          "x": 26,
+          "z": 14
+        },
+        {
+          "x": 26,
+          "z": 8
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_7",
+      "from": "court",
+      "to": "grove_keepers_home:door",
+      "via": [
+        {
+          "x": 21,
+          "z": 17
+        },
+        {
+          "x": 21,
+          "z": 28
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_8",
+      "from": "court",
+      "to": "smiths_house:door",
+      "via": [
+        {
+          "x": 19,
+          "z": 17
+        },
+        {
+          "x": 19,
+          "z": 26
+        },
+        {
+          "x": 12,
+          "z": 26
+        },
+        {
+          "x": 12,
+          "z": 31
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    }
+  ],
+  "surfaces": [
+    {
+      "kind": "plaza",
+      "x": 15,
+      "z": 14,
+      "w": 11,
+      "h": 7
+    }
+  ],
+  "lots": [
+    {
+      "id": "bank",
+      "prefab": "bank_front",
+      "x": 12,
+      "z": 11
+    },
+    {
+      "id": "forge",
+      "prefab": "forge_front",
+      "x": 12,
+      "z": 23
+    },
+    {
+      "id": "squires_house",
+      "prefab": "cottage",
+      "x": 8,
+      "z": 4
+    },
+    {
+      "id": "knights_lodge",
+      "prefab": "cottage",
+      "x": 30,
+      "z": 5
+    },
+    {
+      "id": "grove_keepers_home",
+      "prefab": "cottage",
+      "x": 27,
+      "z": 25
+    },
+    {
+      "id": "smiths_house",
+      "prefab": "cottage",
+      "x": 9,
+      "z": 28
+    }
+  ],
+  "resources": [
+    {
+      "id": "forge_stations",
+      "ref": "facility:furnace_anvil",
+      "components": {
+        "furnace": {
+          "x": 11,
+          "z": 24
+        },
+        "anvil": {
+          "x": 13,
+          "z": 24
+        }
+      }
+    },
+    {
+      "id": "woodcutting_0",
+      "ref": "skill:woodcutting:magic",
+      "x": 31,
+      "z": 27
+    },
+    {
+      "id": "woodcutting_1",
+      "ref": "skill:woodcutting:maple",
+      "x": 34,
+      "z": 27
+    },
+    {
+      "id": "gather_0",
+      "ref": "gather:gather_snape_grass",
+      "x": 30,
+      "z": 23
+    }
+  ],
+  "encounters": [],
+  "access": [],
+  "exits": [],
+  "dressing": [
+    {
+      "model": "castle",
+      "x": 20,
+      "z": 7,
+      "scale": 1.08
+    },
+    {
+      "model": "altar",
+      "x": 26,
+      "z": 5,
+      "scale": 1.2
+    },
+    {
+      "model": "banner",
+      "x": 16,
+      "z": 13,
+      "scale": 1
+    },
+    {
+      "model": "banner",
+      "x": 24,
+      "z": 13,
+      "scale": 1
+    },
+    {
+      "model": "town_tower",
+      "x": 15,
+      "z": 2,
+      "scale": 1.8
+    },
+    {
+      "model": "town_wall",
+      "x": 18,
+      "z": 2,
+      "scale": 1.6
+    },
+    {
+      "model": "town_wall",
+      "x": 21,
+      "z": 2,
+      "scale": 1.6
+    },
+    {
+      "model": "town_tower",
+      "x": 24,
+      "z": 2,
+      "scale": 1.8
+    },
+    {
+      "model": "well",
+      "x": 28,
+      "z": 12,
+      "scale": 1.3
+    },
+    {
+      "model": "cart",
+      "x": 8,
+      "z": 12,
+      "scale": 1.1
+    },
+    {
+      "model": "banner",
+      "x": 17,
+      "z": 14,
+      "scale": 1
+    },
+    {
+      "model": "well",
+      "x": 23,
+      "z": 14,
+      "scale": 1.1
+    }
+  ],
+  "groves": [
+    {
+      "id": "north_canopy",
+      "x": 5,
+      "z": 1,
+      "w": 29,
+      "h": 8,
+      "count": 8,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "west_canopy",
+      "x": 1,
+      "z": 6,
+      "w": 9,
+      "h": 26,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "south_canopy",
+      "x": 7,
+      "z": 24,
+      "w": 26,
+      "h": 9,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.3
+      ]
+    },
+    {
+      "id": "garden_undergrowth",
+      "x": 1,
+      "z": 1,
+      "w": 38,
+      "h": 32,
+      "count": 22,
+      "models": [
+        "bush",
+        "flowers"
+      ],
+      "scaleRange": [
+        1.4,
+        2.5
+      ]
+    }
+  ],
+  "deferredBindings": [
+    {
+      "ref": "facility:altar",
+      "reason": "facility_adapter"
+    },
+    {
+      "ref": "combat:astral_ranger",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:drakthul_wyrmling",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:gravethorn_drake",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:nether_wraith",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:runestone_gargoyle",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:stonegale_elemental",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:voidweave_stalker",
+      "reason": "missing_model"
+    }
+  ],
+  "ambient": {
+    "critters": [
+      {
+        "model": "villager_a",
+        "x": 17,
+        "z": 16,
+        "w": 6,
+        "h": 3,
+        "count": 2
+      }
+    ],
+    "smoke": []
+  },
+  "connections": [
+    {
+      "point": "south",
+      "to": "seerhold"
+    },
+    {
+      "point": "south",
+      "to": "catherra"
+    },
+    {
+      "point": "south",
+      "to": "ardounne"
+    }
+  ],
+  "waymarks": [
+    {
+      "id": "road_seerhold",
+      "label": "Seerhold",
+      "destination": "seerhold",
+      "x": 20,
+      "z": 30
+    },
+    {
+      "id": "road_catherra",
+      "label": "Catherra",
+      "destination": "catherra",
+      "x": 20,
+      "z": 27
+    },
+    {
+      "id": "road_ardounne",
+      "label": "Ardounne",
+      "destination": "ardounne",
+      "x": 20,
+      "z": 24
+    }
+  ],
+  "terrain": {
+    "relief": 0.15,
+    "procedural": {
+      "seed": 6607,
+      "frequency": 0.03
+    },
+    "material": "meadow",
+    "scatter": []
+  },
+  "budgets": {
+    "props": 100,
+    "npcs": 8,
+    "ambient": 4,
+    "maxPropsPer8x8": 18
+  },
+  "reviewViews": [
+    {
+      "id": "overview",
+      "target": "court",
+      "mode": "overview",
+      "distance": 50,
+      "pitch": 0.95,
+      "yaw": 0
+    },
+    {
+      "id": "arrival",
+      "target": "arrival",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25
+    },
+    {
+      "id": "bank",
+      "target": "bank:approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "facility:bank"
+      ]
+    },
+    {
+      "id": "forge",
+      "target": "forge:approach",
+      "mode": "gameplay",
+      "yaw": 0.45,
+      "zoom": 1.25,
+      "covers": [
+        "facility:furnace_anvil"
+      ]
+    },
+    {
+      "id": "woodcutting",
+      "target": "woodcutting_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:woodcutting:magic",
+        "skill:woodcutting:maple"
+      ]
+    },
+    {
+      "id": "gather",
+      "target": "gather_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "gather:gather_snape_grass"
+      ]
+    },
+    {
+      "id": "district",
+      "target": "squires_house:door",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.1
+    }
+  ]
+}

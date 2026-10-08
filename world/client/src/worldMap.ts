@@ -601,6 +601,28 @@ export function describeDestination(from: {x:number;z:number}, to: {x:number;z:n
   return {direction:['north','northeast','east','southeast','south','southwest','west','northwest'][octant],distance,arrived:false}
 }
 
+/** Prefer a nearby named doorway before comparing distant city centres. */
+export function describeLocation(
+  self: {x:number;z:number},
+  landmarks: Pick<Landmark,'x'|'z'|'label'>[],
+  entrances: Pick<ExitMarker,'x'|'z'|'label'>[] = [],
+): string {
+  let entrance: typeof entrances[number] | undefined, entranceDistance = Infinity
+  for (const candidate of entrances) {
+    const distance = describeDestination(self,candidate).distance
+    if (candidate.label.trim() && distance <= 4 && distance < entranceDistance) {
+      entrance = candidate; entranceDistance = distance
+    }
+  }
+  if (entrance) return 'Entrance: '+entrance.label
+  let nearest: typeof landmarks[number] | undefined, nearestDistance = Infinity
+  for (const candidate of landmarks) {
+    const distance = describeDestination(self,candidate).distance
+    if (distance < nearestDistance) { nearest = candidate; nearestDistance = distance }
+  }
+  return nearest ? (nearestDistance <= 2 ? '' : 'Near ')+nearest.label : 'Exploring Eldermoor'
+}
+
 let disposeWayfindingLayout: (()=>void)|null=null
 
 /** Reposition only when the HUD layout changes; walking does not trigger layout work. */
@@ -642,7 +664,7 @@ function positionWayfinding(panel: HTMLElement): ()=>void {
 }
 
 /** Location and selected destination remain visible after closing the map. */
-export function createWayfinding(landmarks: Landmark[], cancel:()=>void): {
+export function createWayfinding(landmarks: Landmark[], cancel:()=>void, entrances: ExitMarker[] = []): {
   guide:(place:Landmark|null)=>void; update:(self:{x:number;z:number})=>void
 } {
   ensureCss()
@@ -658,8 +680,7 @@ export function createWayfinding(landmarks: Landmark[], cancel:()=>void): {
   return {
     guide:(place)=>{destination=place;stop.hidden=!place;last=''},
     update:(self)=>{
-      const nearest=[...landmarks].sort((a,b)=>describeDestination(self,a).distance-describeDestination(self,b).distance)[0]
-      const here=nearest ? (describeDestination(self,nearest).arrived?'':'Near ')+nearest.label : 'Exploring Eldermoor'
+      const here=describeLocation(self,landmarks,entrances)
       const guidance=destination && describeDestination(self,destination)
       const heading=destination ? (guidance!.arrived?'Arrived at ':'To ')+destination.label : here
       const line=destination ? (guidance!.arrived?'Choose another destination on the map.':guidance!.direction+' · '+guidance!.distance+' tiles · '+here) : 'Open the map to choose a destination.'

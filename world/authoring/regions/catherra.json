@@ -1,0 +1,710 @@
+{
+  "schemaVersion": 1,
+  "id": "catherra",
+  "name": "Catherra",
+  "place": "catherra",
+  "seed": 6059,
+  "width": 36,
+  "height": 34,
+  "spawn": {
+    "x": 18,
+    "z": 17
+  },
+  "intent": "A calm bay village: the lookout watches a plank promenade, a cooking yard faces the shore, and ore and oak pockets sit inland.",
+  "points": [
+    {
+      "id": "arrival",
+      "x": 18,
+      "z": 17,
+      "label": "Catherra arrival",
+      "role": "arrival"
+    },
+    {
+      "id": "court",
+      "x": 18,
+      "z": 17,
+      "label": "Bay lookout",
+      "role": "hub"
+    },
+    {
+      "id": "landmark",
+      "x": 18,
+      "z": 12,
+      "label": "Bay lookout",
+      "role": "landmark"
+    },
+    {
+      "id": "east",
+      "x": 34,
+      "z": 17,
+      "label": "Seerhold road",
+      "role": "gateway"
+    },
+    {
+      "id": "north",
+      "x": 3,
+      "z": 1,
+      "label": "Camlann road",
+      "role": "gateway"
+    },
+    {
+      "id": "mining_approach",
+      "x": 4,
+      "z": 30,
+      "label": "Working outcrop",
+      "role": "resource"
+    },
+    {
+      "id": "woodcutting_approach",
+      "x": 27,
+      "z": 28,
+      "label": "Timber grove",
+      "role": "resource"
+    },
+    {
+      "id": "fishing_approach",
+      "x": 29,
+      "z": 20,
+      "label": "Fishing landing",
+      "role": "resource"
+    }
+  ],
+  "routes": [
+    {
+      "id": "arrival_lane",
+      "from": "arrival",
+      "to": "court",
+      "via": [],
+      "width": 3,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "ceremonial_approach",
+      "from": "court",
+      "to": "landmark",
+      "via": [],
+      "width": 3,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "east_road",
+      "from": "court",
+      "to": "east",
+      "via": [],
+      "width": 3,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "north_road",
+      "from": "court",
+      "to": "north",
+      "via": [
+        {
+          "x": 3,
+          "z": 17
+        }
+      ],
+      "width": 3,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "district_0",
+      "from": "court",
+      "to": "mining_approach",
+      "via": [
+        {
+          "x": 15,
+          "z": 17
+        },
+        {
+          "x": 15,
+          "z": 27
+        },
+        {
+          "x": 5,
+          "z": 27
+        },
+        {
+          "x": 5,
+          "z": 30
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_1",
+      "from": "court",
+      "to": "woodcutting_approach",
+      "via": [
+        {
+          "x": 23,
+          "z": 17
+        },
+        {
+          "x": 23,
+          "z": 23
+        },
+        {
+          "x": 26,
+          "z": 23
+        },
+        {
+          "x": 26,
+          "z": 28
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_2",
+      "from": "court",
+      "to": "fishing_approach",
+      "via": [
+        {
+          "x": 29,
+          "z": 17
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_3",
+      "from": "court",
+      "to": "kitchen:approach",
+      "via": [
+        {
+          "x": 26,
+          "z": 17
+        }
+      ],
+      "width": 1,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "district_4",
+      "from": "court",
+      "to": "netmakers_home:door",
+      "via": [
+        {
+          "x": 13,
+          "z": 17
+        },
+        {
+          "x": 13,
+          "z": 14
+        },
+        {
+          "x": 12,
+          "z": 14
+        },
+        {
+          "x": 12,
+          "z": 9
+        }
+      ],
+      "width": 1,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "district_5",
+      "from": "court",
+      "to": "lookout_keepers_home:door",
+      "via": [
+        {
+          "x": 19,
+          "z": 17
+        },
+        {
+          "x": 19,
+          "z": 11
+        },
+        {
+          "x": 20,
+          "z": 11
+        },
+        {
+          "x": 20,
+          "z": 7
+        }
+      ],
+      "width": 1,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "district_6",
+      "from": "court",
+      "to": "fishermans_house:door",
+      "via": [
+        {
+          "x": 15,
+          "z": 17
+        },
+        {
+          "x": 15,
+          "z": 27
+        }
+      ],
+      "width": 1,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "district_7",
+      "from": "court",
+      "to": "bay_cottage:door",
+      "via": [
+        {
+          "x": 23,
+          "z": 17
+        },
+        {
+          "x": 23,
+          "z": 23
+        },
+        {
+          "x": 26,
+          "z": 23
+        },
+        {
+          "x": 26,
+          "z": 29
+        }
+      ],
+      "width": 1,
+      "kind": "floor_plank"
+    }
+  ],
+  "surfaces": [
+    {
+      "kind": "sand",
+      "x": 30,
+      "z": 0,
+      "w": 6,
+      "h": 34
+    },
+    {
+      "kind": "water",
+      "x": 32,
+      "z": 0,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 33,
+      "z": 3,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 31,
+      "z": 6,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 32,
+      "z": 9,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 31,
+      "z": 12,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 32,
+      "z": 15,
+      "w": 4,
+      "h": 1,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 32,
+      "z": 16,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "kind": "floor_plank",
+      "x": 31,
+      "z": 16,
+      "w": 5,
+      "h": 3
+    },
+    {
+      "kind": "water",
+      "x": 33,
+      "z": 19,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 31,
+      "z": 22,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 32,
+      "z": 25,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 31,
+      "z": 28,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 32,
+      "z": 31,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "path_dirt",
+      "x": 15,
+      "z": 15,
+      "w": 7,
+      "h": 5
+    }
+  ],
+  "lots": [
+    {
+      "id": "kitchen",
+      "prefab": "kitchen",
+      "x": 26,
+      "z": 11
+    },
+    {
+      "id": "netmakers_home",
+      "prefab": "cottage",
+      "x": 9,
+      "z": 6
+    },
+    {
+      "id": "lookout_keepers_home",
+      "prefab": "cottage",
+      "x": 23,
+      "z": 4
+    },
+    {
+      "id": "fishermans_house",
+      "prefab": "cottage",
+      "x": 12,
+      "z": 24
+    },
+    {
+      "id": "bay_cottage",
+      "prefab": "cottage",
+      "x": 23,
+      "z": 26
+    }
+  ],
+  "resources": [
+    {
+      "id": "mining_0",
+      "ref": "skill:mining:iron",
+      "x": 4,
+      "z": 29
+    },
+    {
+      "id": "woodcutting_0",
+      "ref": "skill:woodcutting:oak",
+      "x": 27,
+      "z": 27
+    },
+    {
+      "id": "fishing_0",
+      "ref": "skill:fishing:tuna",
+      "x": 30,
+      "z": 21
+    }
+  ],
+  "encounters": [],
+  "access": [],
+  "exits": [],
+  "dressing": [
+    {
+      "model": "watchtower",
+      "x": 18,
+      "z": 7,
+      "scale": 1.8
+    },
+    {
+      "model": "cart",
+      "x": 18,
+      "z": 26,
+      "scale": 1.15
+    },
+    {
+      "model": "well",
+      "x": 7,
+      "z": 12,
+      "scale": 1.4
+    },
+    {
+      "model": "stall",
+      "x": 25,
+      "z": 21,
+      "scale": 1.4
+    },
+    {
+      "model": "lantern",
+      "x": 29,
+      "z": 23,
+      "scale": 0.85
+    },
+    {
+      "model": "stall",
+      "x": 15,
+      "z": 14,
+      "scale": 1
+    },
+    {
+      "model": "cart",
+      "x": 21,
+      "z": 14,
+      "scale": 1
+    }
+  ],
+  "groves": [
+    {
+      "id": "north_canopy",
+      "x": 5,
+      "z": 1,
+      "w": 25,
+      "h": 8,
+      "count": 8,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "west_canopy",
+      "x": 1,
+      "z": 6,
+      "w": 9,
+      "h": 26,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "south_canopy",
+      "x": 7,
+      "z": 24,
+      "w": 22,
+      "h": 9,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.3
+      ]
+    },
+    {
+      "id": "garden_undergrowth",
+      "x": 1,
+      "z": 1,
+      "w": 34,
+      "h": 32,
+      "count": 22,
+      "models": [
+        "bush",
+        "flowers"
+      ],
+      "scaleRange": [
+        1.4,
+        2.5
+      ]
+    }
+  ],
+  "deferredBindings": [
+    {
+      "ref": "gather:burn_seaweed",
+      "reason": "processing_adapter"
+    },
+    {
+      "ref": "combat:elder_rock_golem",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:elder_tree_spirit",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:embertongue_lizard",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:hollow_reaver",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:sanguine_veld",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:stoneglare_basilisk",
+      "reason": "missing_model"
+    }
+  ],
+  "ambient": {
+    "critters": [
+      {
+        "model": "villager_a",
+        "x": 15,
+        "z": 16,
+        "w": 6,
+        "h": 3,
+        "count": 2
+      }
+    ],
+    "smoke": []
+  },
+  "connections": [
+    {
+      "point": "east",
+      "to": "seerhold"
+    },
+    {
+      "point": "north",
+      "to": "camlann"
+    }
+  ],
+  "waymarks": [
+    {
+      "id": "road_seerhold",
+      "label": "Seerhold",
+      "destination": "seerhold",
+      "x": 32,
+      "z": 17
+    },
+    {
+      "id": "road_camlann",
+      "label": "Camlann",
+      "destination": "camlann",
+      "x": 3,
+      "z": 3
+    }
+  ],
+  "terrain": {
+    "relief": 0.15,
+    "procedural": {
+      "seed": 6059,
+      "frequency": 0.03
+    },
+    "material": "meadow",
+    "scatter": []
+  },
+  "budgets": {
+    "props": 100,
+    "npcs": 8,
+    "ambient": 4,
+    "maxPropsPer8x8": 18
+  },
+  "reviewViews": [
+    {
+      "id": "overview",
+      "target": "court",
+      "mode": "overview",
+      "distance": 45,
+      "pitch": 0.95,
+      "yaw": 0
+    },
+    {
+      "id": "arrival",
+      "target": "arrival",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25
+    },
+    {
+      "id": "hearth",
+      "target": "kitchen:approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "facility:stove"
+      ]
+    },
+    {
+      "id": "mining",
+      "target": "mining_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:mining:iron"
+      ]
+    },
+    {
+      "id": "woodcutting",
+      "target": "woodcutting_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:woodcutting:oak"
+      ]
+    },
+    {
+      "id": "fishing",
+      "target": "fishing_approach",
+      "mode": "gameplay",
+      "yaw": -0.7,
+      "zoom": 1.25,
+      "covers": [
+        "skill:fishing:tuna"
+      ]
+    },
+    {
+      "id": "district",
+      "target": "netmakers_home:door",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.1
+    }
+  ]
+}

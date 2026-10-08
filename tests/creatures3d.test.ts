@@ -63,9 +63,9 @@ describe('creatures3d registry', () => {
   })
 
   it('returns null for unregistered monsters (GLB/classic fallback)', () => {
-    expect(getCreatureSpec('cave_goblin')).toBeNull()
+    expect(getCreatureSpec('arcane_adept')).toBeNull()
     expect(getCreatureSpec(undefined)).toBeNull()
-    expect(hasCreatureSpec('cave_goblin')).toBe(false)
+    expect(hasCreatureSpec('arcane_adept')).toBe(false)
   })
 
   it('resolves multiForm entries per form, falling back to the initial form', () => {
@@ -153,5 +153,14 @@ describe('buildBlendShellShaders', () => {
     expect(vertexShader).toContain('#define N 14')
     expect(vertexShader).toContain('uniform mat4 uXf[N]')
     expect(fragmentShader).toContain('uFlashAmt')
+  })
+})
+
+describe('opt-in procedural locomotion authoring', () => {
+  it('rejects gait flags on creatures without a paired humanoid stance', () => {
+    const s=validSpec()
+    expect(validateCreatureSpec({...s,locomotion:'biped'}).some(e=>e.includes('locomotion'))).toBe(true)
+    expect(validateCreatureSpec({...s,archetype:'humanoid',locomotion:'biped'})).toEqual([])
+    expect(validateCreatureSpec({...s,archetype:'humanoid',locomotion:'biped',legs:[s.legs[0]]}).some(e=>e.includes('locomotion'))).toBe(true)
   })
 })

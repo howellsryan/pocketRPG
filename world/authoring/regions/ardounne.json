@@ -1,0 +1,968 @@
+{
+  "schemaVersion": 1,
+  "id": "ardounne",
+  "name": "Ardounne",
+  "place": "ardounne",
+  "seed": 5374,
+  "width": 48,
+  "height": 38,
+  "spawn": {
+    "x": 24,
+    "z": 18
+  },
+  "intent": "Paired civic spires frame the square. A crooked wine-trader lane and a quieter waterfront separate the public market from the southern service yards.",
+  "points": [
+    {
+      "id": "arrival",
+      "x": 24,
+      "z": 18,
+      "label": "Ardounne arrival",
+      "role": "arrival"
+    },
+    {
+      "id": "court",
+      "x": 24,
+      "z": 18,
+      "label": "Twin-spire square",
+      "role": "hub"
+    },
+    {
+      "id": "landmark",
+      "x": 24,
+      "z": 13,
+      "label": "Twin-spire square",
+      "role": "landmark"
+    },
+    {
+      "id": "shrine",
+      "x": 30,
+      "z": 8,
+      "label": "Chapel forecourt",
+      "role": "discovery"
+    },
+    {
+      "id": "east",
+      "x": 46,
+      "z": 18,
+      "label": "Faloden road",
+      "role": "gateway"
+    },
+    {
+      "id": "north",
+      "x": 3,
+      "z": 1,
+      "label": "Camlann road",
+      "role": "gateway"
+    },
+    {
+      "id": "woodcutting_approach",
+      "x": 39,
+      "z": 32,
+      "label": "Timber grove",
+      "role": "resource"
+    },
+    {
+      "id": "fishing_approach",
+      "x": 41,
+      "z": 21,
+      "label": "Fishing landing",
+      "role": "resource"
+    },
+    {
+      "id": "gather_approach",
+      "x": 32,
+      "z": 9,
+      "label": "Wine shrine",
+      "role": "resource"
+    }
+  ],
+  "routes": [
+    {
+      "id": "arrival_lane",
+      "from": "arrival",
+      "to": "court",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "ceremonial_approach",
+      "from": "court",
+      "to": "landmark",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "east_road",
+      "from": "court",
+      "to": "east",
+      "via": [],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "north_road",
+      "from": "court",
+      "to": "north",
+      "via": [
+        {
+          "x": 3,
+          "z": 18
+        }
+      ],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_0",
+      "from": "court",
+      "to": "shrine",
+      "via": [
+        {
+          "x": 25,
+          "z": 18
+        },
+        {
+          "x": 25,
+          "z": 12
+        },
+        {
+          "x": 29,
+          "z": 12
+        },
+        {
+          "x": 29,
+          "z": 9
+        },
+        {
+          "x": 30,
+          "z": 9
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_1",
+      "from": "court",
+      "to": "woodcutting_approach",
+      "via": [
+        {
+          "x": 38,
+          "z": 18
+        },
+        {
+          "x": 38,
+          "z": 32
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_2",
+      "from": "court",
+      "to": "fishing_approach",
+      "via": [
+        {
+          "x": 41,
+          "z": 18
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_3",
+      "from": "court",
+      "to": "gather_approach",
+      "via": [
+        {
+          "x": 25,
+          "z": 18
+        },
+        {
+          "x": 25,
+          "z": 12
+        },
+        {
+          "x": 29,
+          "z": 12
+        },
+        {
+          "x": 29,
+          "z": 9
+        },
+        {
+          "x": 30,
+          "z": 9
+        },
+        {
+          "x": 30,
+          "z": 8
+        },
+        {
+          "x": 32,
+          "z": 8
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_4",
+      "from": "court",
+      "to": "bank:approach",
+      "via": [
+        {
+          "x": 16,
+          "z": 18
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_5",
+      "from": "court",
+      "to": "kitchen:approach",
+      "via": [
+        {
+          "x": 32,
+          "z": 18
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_6",
+      "from": "court",
+      "to": "forge:approach",
+      "via": [
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 25
+        },
+        {
+          "x": 21,
+          "z": 25
+        },
+        {
+          "x": 21,
+          "z": 27
+        }
+      ],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_7",
+      "from": "court",
+      "to": "timber:approach",
+      "via": [
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 25
+        },
+        {
+          "x": 28,
+          "z": 25
+        },
+        {
+          "x": 28,
+          "z": 27
+        }
+      ],
+      "width": 3,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_8",
+      "from": "court",
+      "to": "wine_traders_house:door",
+      "via": [
+        {
+          "x": 4,
+          "z": 18
+        },
+        {
+          "x": 4,
+          "z": 8
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_9",
+      "from": "court",
+      "to": "spice_merchants_house:door",
+      "via": [
+        {
+          "x": 25,
+          "z": 18
+        },
+        {
+          "x": 25,
+          "z": 12
+        },
+        {
+          "x": 29,
+          "z": 12
+        },
+        {
+          "x": 29,
+          "z": 9
+        },
+        {
+          "x": 30,
+          "z": 9
+        },
+        {
+          "x": 30,
+          "z": 8
+        },
+        {
+          "x": 33,
+          "z": 8
+        },
+        {
+          "x": 33,
+          "z": 7
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_10",
+      "from": "court",
+      "to": "old_town_house:door",
+      "via": [
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 25
+        },
+        {
+          "x": 21,
+          "z": 25
+        },
+        {
+          "x": 21,
+          "z": 27
+        },
+        {
+          "x": 11,
+          "z": 27
+        },
+        {
+          "x": 11,
+          "z": 29
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    },
+    {
+      "id": "district_11",
+      "from": "court",
+      "to": "quayside_lodge:door",
+      "via": [
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 25
+        },
+        {
+          "x": 28,
+          "z": 25
+        },
+        {
+          "x": 28,
+          "z": 35
+        }
+      ],
+      "width": 1,
+      "kind": "path_cobble"
+    }
+  ],
+  "surfaces": [
+    {
+      "kind": "plaza",
+      "x": 19,
+      "z": 15,
+      "w": 11,
+      "h": 7
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 0,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 45,
+      "z": 3,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 43,
+      "z": 6,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 9,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 43,
+      "z": 12,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 15,
+      "w": 4,
+      "h": 2,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 17,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "kind": "floor_plank",
+      "x": 43,
+      "z": 17,
+      "w": 5,
+      "h": 3
+    },
+    {
+      "kind": "water",
+      "x": 45,
+      "z": 20,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 43,
+      "z": 23,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 26,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 43,
+      "z": 29,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 44,
+      "z": 32,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 45,
+      "z": 35,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    }
+  ],
+  "lots": [
+    {
+      "id": "bank",
+      "prefab": "bank_front",
+      "x": 16,
+      "z": 12
+    },
+    {
+      "id": "kitchen",
+      "prefab": "kitchen",
+      "x": 32,
+      "z": 12
+    },
+    {
+      "id": "forge",
+      "prefab": "forge_front",
+      "x": 16,
+      "z": 24
+    },
+    {
+      "id": "timber",
+      "prefab": "sawmill_front",
+      "x": 32,
+      "z": 24
+    },
+    {
+      "id": "wine_traders_house",
+      "prefab": "cottage",
+      "x": 8,
+      "z": 5
+    },
+    {
+      "id": "spice_merchants_house",
+      "prefab": "cottage",
+      "x": 36,
+      "z": 4
+    },
+    {
+      "id": "old_town_house",
+      "prefab": "cottage",
+      "x": 8,
+      "z": 26
+    },
+    {
+      "id": "quayside_lodge",
+      "prefab": "cottage",
+      "x": 25,
+      "z": 32
+    }
+  ],
+  "resources": [
+    {
+      "id": "forge_stations",
+      "ref": "facility:furnace_anvil",
+      "components": {
+        "furnace": {
+          "x": 15,
+          "z": 25
+        },
+        "anvil": {
+          "x": 17,
+          "z": 25
+        }
+      }
+    },
+    {
+      "id": "woodcutting_0",
+      "ref": "skill:woodcutting:magic",
+      "x": 39,
+      "z": 31
+    },
+    {
+      "id": "fishing_0",
+      "ref": "skill:fishing:shark",
+      "x": 42,
+      "z": 22
+    },
+    {
+      "id": "gather_0",
+      "ref": "gather:collect_wine_of_zamorak",
+      "x": 31,
+      "z": 9
+    }
+  ],
+  "encounters": [],
+  "access": [],
+  "exits": [],
+  "dressing": [
+    {
+      "model": "column",
+      "x": 21,
+      "z": 8,
+      "scale": 2
+    },
+    {
+      "model": "altar",
+      "x": 30,
+      "z": 6,
+      "scale": 1.2
+    },
+    {
+      "model": "column",
+      "x": 27,
+      "z": 8,
+      "scale": 2
+    },
+    {
+      "model": "stall",
+      "x": 20,
+      "z": 22,
+      "scale": 1.1
+    },
+    {
+      "model": "stall",
+      "x": 28,
+      "z": 22,
+      "scale": 1.1,
+      "rot": 3.141592653589793
+    },
+    {
+      "model": "lantern",
+      "x": 29,
+      "z": 21,
+      "scale": 0.8
+    },
+    {
+      "model": "stall",
+      "x": 8,
+      "z": 12,
+      "scale": 1.6
+    },
+    {
+      "model": "stall",
+      "x": 8,
+      "z": 15,
+      "scale": 1.3
+    },
+    {
+      "model": "well",
+      "x": 36,
+      "z": 32,
+      "scale": 1.35
+    },
+    {
+      "model": "cart",
+      "x": 32,
+      "z": 30,
+      "scale": 1.15
+    },
+    {
+      "model": "column",
+      "x": 20,
+      "z": 5,
+      "scale": 1.2
+    },
+    {
+      "model": "column",
+      "x": 28,
+      "z": 5,
+      "scale": 1.2
+    },
+    {
+      "model": "stall",
+      "x": 21,
+      "z": 15,
+      "scale": 1
+    },
+    {
+      "model": "cart",
+      "x": 27,
+      "z": 15,
+      "scale": 1.05
+    }
+  ],
+  "groves": [
+    {
+      "id": "north_canopy",
+      "x": 5,
+      "z": 1,
+      "w": 37,
+      "h": 8,
+      "count": 8,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "west_canopy",
+      "x": 1,
+      "z": 6,
+      "w": 9,
+      "h": 30,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "south_canopy",
+      "x": 7,
+      "z": 28,
+      "w": 34,
+      "h": 9,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.3
+      ]
+    },
+    {
+      "id": "garden_undergrowth",
+      "x": 1,
+      "z": 1,
+      "w": 46,
+      "h": 36,
+      "count": 22,
+      "models": [
+        "bush",
+        "flowers"
+      ],
+      "scaleRange": [
+        1.4,
+        2.5
+      ]
+    }
+  ],
+  "deferredBindings": [
+    {
+      "ref": "facility:sawmill",
+      "reason": "facility_adapter"
+    },
+    {
+      "ref": "facility:altar",
+      "reason": "facility_adapter"
+    },
+    {
+      "ref": "gather:convert_log_to_plank",
+      "reason": "processing_adapter"
+    },
+    {
+      "ref": "gather:convert_mahogany_log_to_plank",
+      "reason": "processing_adapter"
+    },
+    {
+      "ref": "gather:convert_oak_log_to_plank",
+      "reason": "processing_adapter"
+    },
+    {
+      "ref": "gather:convert_teak_log_to_plank",
+      "reason": "processing_adapter"
+    },
+    {
+      "ref": "combat:deepmaw_kraken",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:hellbound_gorilla",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:king_black_dragon",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:nagadoth_prime",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:nagadoth_queen",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:nagadoth_rex",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:nagadoth_supreme",
+      "reason": "missing_model"
+    }
+  ],
+  "ambient": {
+    "critters": [
+      {
+        "model": "villager_a",
+        "x": 21,
+        "z": 17,
+        "w": 6,
+        "h": 3,
+        "count": 4
+      }
+    ],
+    "smoke": []
+  },
+  "connections": [
+    {
+      "point": "east",
+      "to": "faloden"
+    },
+    {
+      "point": "north",
+      "to": "camlann"
+    },
+    {
+      "point": "north",
+      "to": "seerhold"
+    }
+  ],
+  "waymarks": [
+    {
+      "id": "road_faloden",
+      "label": "Faloden",
+      "destination": "faloden",
+      "x": 44,
+      "z": 18
+    },
+    {
+      "id": "road_camlann",
+      "label": "Camlann",
+      "destination": "camlann",
+      "x": 3,
+      "z": 3
+    },
+    {
+      "id": "road_seerhold",
+      "label": "Seerhold",
+      "destination": "seerhold",
+      "x": 3,
+      "z": 6
+    }
+  ],
+  "terrain": {
+    "relief": 0.15,
+    "procedural": {
+      "seed": 5374,
+      "frequency": 0.03
+    },
+    "material": "meadow",
+    "scatter": []
+  },
+  "budgets": {
+    "props": 150,
+    "npcs": 8,
+    "ambient": 4,
+    "maxPropsPer8x8": 18
+  },
+  "reviewViews": [
+    {
+      "id": "overview",
+      "target": "court",
+      "mode": "overview",
+      "distance": 60,
+      "pitch": 0.95,
+      "yaw": 0
+    },
+    {
+      "id": "arrival",
+      "target": "arrival",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25
+    },
+    {
+      "id": "bank",
+      "target": "bank:approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "facility:bank"
+      ]
+    },
+    {
+      "id": "hearth",
+      "target": "kitchen:approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "facility:stove"
+      ]
+    },
+    {
+      "id": "forge",
+      "target": "forge:approach",
+      "mode": "gameplay",
+      "yaw": 0.45,
+      "zoom": 1.25,
+      "covers": [
+        "facility:furnace_anvil"
+      ]
+    },
+    {
+      "id": "woodcutting",
+      "target": "woodcutting_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:woodcutting:magic"
+      ]
+    },
+    {
+      "id": "fishing",
+      "target": "fishing_approach",
+      "mode": "gameplay",
+      "yaw": -0.7,
+      "zoom": 1.25,
+      "covers": [
+        "skill:fishing:shark"
+      ]
+    },
+    {
+      "id": "gather",
+      "target": "gather_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "gather:collect_wine_of_zamorak"
+      ]
+    },
+    {
+      "id": "district",
+      "target": "wine_traders_house:door",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.1
+    }
+  ]
+}

@@ -11,11 +11,13 @@ import creatures3dData from '../../../src/data/creatures3d.json'
 export type ProcCreature = {
   group: THREE.Object3D
   update: (dt: number) => void
+  setLocomotion?: (rate: number) => void
   trigger: (name: 'attack' | 'hit' | 'death' | 'respawn') => void
   dispose: () => void
 }
 
 type Spec = {
+  archetype?: string
   height?: number
   parts: { a: number[]; b: number[]; r1?: number; r2?: number }[]
   forms?: Record<string, Spec>

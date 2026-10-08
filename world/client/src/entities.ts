@@ -82,7 +82,7 @@ export type ProcAnimator = { kind: 'proc'; proc: ProcCreature; triggered: 'attac
 export type Animator = GltfAnimator | ProcAnimator
 
 /** Boss/monster procedural render height in tiles (blend-shell path only). */
-const PROC_TARGET_HEIGHT: Record<string, number> = { warlord_grondar: 2.8, dustpaw_rat: 0.45, stoneback_crab: 0.7 }
+const PROC_TARGET_HEIGHT: Record<string, number> = { warlord_grondar: 2.8, dustpaw_rat: 0.45, stoneback_crab: 0.7, cave_goblin: 1.0 }
 
 type Waypoint = { x: number; z: number }
 
@@ -874,8 +874,8 @@ function playSwing(animator: GltfAnimator, action: THREE.AnimationAction): void 
 
 /** Drives a procedural creature from the world's anim state: each new server
  * swing fires the two-hand smash once, death plays once, and a return to idle
- * after death respawns the rig. Movement (walk) is positional, not a clip. */
-function updateProcAnimator(a: ProcAnimator, name: AnimName, deltaSeconds: number): void {
+ * after death respawns the rig. Opted-in creatures also receive a movement gait. */
+function updateProcAnimator(a: ProcAnimator, name: AnimName, deltaSeconds: number, movementRate: number): void {
   const isAttack = isAttackAnim(name)
   const want = name === 'die' ? 'death' : isAttack ? 'attack' : 'idle'
   if (want === 'idle') {
@@ -885,6 +885,7 @@ function updateProcAnimator(a: ProcAnimator, name: AnimName, deltaSeconds: numbe
     a.proc.trigger(want)
     a.triggered = want
   }
+  a.proc.setLocomotion?.((name === 'walk' ? 1 : name === 'run' ? 1.5 : 0) * movementRate)
   a.proc.update(deltaSeconds)
 }
 
@@ -977,7 +978,7 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number, 
     const dying = entity.serverAnim === 'die'
     const name: AnimName = dying ? 'die' : entity.moving ? entity.segmentAnim : entity.serverAnim === 'walk' ? 'idle' : entity.serverAnim
     if (entity.animator.kind === 'proc') {
-      updateProcAnimator(entity.animator, name, deltaSeconds)
+      updateProcAnimator(entity.animator, name, deltaSeconds, MOVE_DURATION_MS / entity.segmentDuration)
     } else {
       // Catch-up segments play faster (segmentDurationMs) than a full 600ms
       // step; scale playback so a running or catching-up stride doesn't slide

@@ -113,6 +113,26 @@
     "mushrooms": {
       "role": "groundcover",
       "blocking": false
+    },
+    "fountain": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "lumbermill": {
+      "role": "building",
+      "blocking": true
+    },
+    "town_wall": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "town_tower": {
+      "role": "dressing",
+      "blocking": true
+    },
+    "stone_spire_ember": {
+      "role": "dressing",
+      "blocking": true
     }
   }
 }

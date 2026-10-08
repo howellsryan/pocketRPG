@@ -3,7 +3,7 @@
 // which forces castShadow on every object it walks; get that order wrong and
 // the flag silently does nothing.
 //
-// Driven with cave_goblin for the reason pickProxy.test.ts gives: it takes the
+// Driven with arcane_adept for the reason pickProxy.test.ts gives: it takes the
 // same createMonsterMesh registry branch Grondar takes, and its GLB carries no
 // textures, so the real production loader parses it under Node.
 import fs from 'node:fs'
@@ -13,8 +13,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createMonsterMesh } from '../client/src/entities'
 import { MONSTER_MODELS } from '../shared/monsterModels'
 
-const MONSTER = 'cave_goblin'
-const MODEL_PATH = path.join(__dirname, '../client/public/models/goblin.glb')
+const MONSTER = 'arcane_adept'
+const MODEL_PATH = path.join(__dirname, '../client/public/models/wizard.glb')
 
 function stubModelFetch(): void {
   const bytes = fs.readFileSync(MODEL_PATH)

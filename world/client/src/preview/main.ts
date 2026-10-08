@@ -24,6 +24,8 @@ import dragonRoostZone from '../../../zones/dragon_roost.json'
 import zarythThroneZone from '../../../zones/zaryth_throne.json'
 import wildernessZone from '../../../zones/wilderness.json'
 
+import placements from '../../../authoring/placements.json'
+const authoredModules=import.meta.glob('../../../zones/*.json',{eager:true,import:'default'}) as Record<string,ZoneDef>
 // Auth-free scene review using the gameplay terrain, meshes, lights, shadows
 // and close camera. No network simulation or authoritative NPC movement.
 // Review tools reject asset failures; readiness means all scene loads finished.
@@ -36,6 +38,11 @@ const ZONES: Record<string, ZoneDef> = {
   dragon_roost: dragonRoostZone as unknown as ZoneDef,
   zaryth_throne: zarythThroneZone as unknown as ZoneDef,
   wilderness: wildernessZone as unknown as ZoneDef,
+}
+for(const id of Object.keys(placements.regions)){
+ const definition=authoredModules['../../../zones/'+id+'.json']
+ if(!definition)throw Error('Missing authored preview zone '+id)
+ ZONES[id]=definition
 }
 declare global {
   interface Window {
@@ -97,7 +104,7 @@ if(params.get('hud')==='1'||params.has('map')) {
   updateHpPill(10,10);setRunState(100,false);setPrayerState(1,1,null,null);renderInventory(Array(28).fill(null))
   const minimap=createMinimap(def.collision,def.width,def.height,def.palette,def.objects,()=>{})
   minimap.update(targetTile,[])
-  const guidance=createWayfinding(def.landmarks??[],()=>{})
+  const guidance=createWayfinding(def.landmarks??[],()=>{},def.exits??[])
   const destination=params.has('guide')?def.landmarks?.find(p=>p.id===params.get('guide')):undefined
   if(destination)guidance.guide(destination)
   guidance.update(targetTile)

@@ -90,6 +90,9 @@ export function validateCreatureSpec(spec) {
   if (spec.archetype !== undefined && !CREATURE_ARCHETYPES.has(spec.archetype)) {
     errors.push(`archetype must be one of ${[...CREATURE_ARCHETYPES].join('/')}`)
   }
+  if (spec.locomotion !== undefined && (spec.locomotion !== 'biped' || spec.archetype !== 'humanoid' || !Array.isArray(spec.legs) || spec.legs.length !== 2)) {
+    errors.push('locomotion requires a two-legged humanoid with biped gait')
+  }
   if (spec.dissolve !== undefined && typeof spec.dissolve !== 'boolean') errors.push('dissolve must be a boolean')
 
   // Rig groups: every referenced part must exist, numeric tunables numeric.

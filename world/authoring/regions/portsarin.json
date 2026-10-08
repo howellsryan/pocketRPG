@@ -1,0 +1,795 @@
+{
+  "schemaVersion": 1,
+  "id": "portsarin",
+  "name": "Port Sarin",
+  "place": "portsarin",
+  "seed": 6744,
+  "width": 40,
+  "height": 32,
+  "spawn": {
+    "x": 20,
+    "z": 16
+  },
+  "intent": "A salt harbour of staggered market stalls, cooking smoke and a fishmongers hall. The quay leads to karam fishing while cactus, yew and mithril occupy distinct inland pockets.",
+  "points": [
+    {
+      "id": "arrival",
+      "x": 20,
+      "z": 16,
+      "label": "Port Sarin arrival",
+      "role": "arrival"
+    },
+    {
+      "id": "court",
+      "x": 20,
+      "z": 16,
+      "label": "Fishmongers quay",
+      "role": "hub"
+    },
+    {
+      "id": "landmark",
+      "x": 20,
+      "z": 11,
+      "label": "Fishmongers quay",
+      "role": "landmark"
+    },
+    {
+      "id": "north",
+      "x": 3,
+      "z": 1,
+      "label": "Faloden road",
+      "role": "gateway"
+    },
+    {
+      "id": "east",
+      "x": 38,
+      "z": 16,
+      "label": "Brimhollow road",
+      "role": "gateway"
+    },
+    {
+      "id": "mining_approach",
+      "x": 4,
+      "z": 28,
+      "label": "Working outcrop",
+      "role": "resource"
+    },
+    {
+      "id": "woodcutting_approach",
+      "x": 31,
+      "z": 26,
+      "label": "Timber grove",
+      "role": "resource"
+    },
+    {
+      "id": "fishing_approach",
+      "x": 33,
+      "z": 19,
+      "label": "Fishing landing",
+      "role": "resource"
+    },
+    {
+      "id": "gather_approach",
+      "x": 30,
+      "z": 23,
+      "label": "Fieldwork patch",
+      "role": "resource"
+    },
+    {
+      "id": "encounter_0",
+      "x": 8,
+      "z": 8,
+      "label": "Red Dragon approach",
+      "role": "encounter"
+    }
+  ],
+  "routes": [
+    {
+      "id": "arrival_lane",
+      "from": "arrival",
+      "to": "court",
+      "via": [],
+      "width": 3,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "ceremonial_approach",
+      "from": "court",
+      "to": "landmark",
+      "via": [],
+      "width": 3,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "north_road",
+      "from": "court",
+      "to": "north",
+      "via": [
+        {
+          "x": 3,
+          "z": 16
+        }
+      ],
+      "width": 3,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "east_road",
+      "from": "court",
+      "to": "east",
+      "via": [],
+      "width": 3,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "district_0",
+      "from": "court",
+      "to": "mining_approach",
+      "via": [
+        {
+          "x": 12,
+          "z": 16
+        },
+        {
+          "x": 12,
+          "z": 26
+        },
+        {
+          "x": 5,
+          "z": 26
+        },
+        {
+          "x": 5,
+          "z": 28
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_1",
+      "from": "court",
+      "to": "woodcutting_approach",
+      "via": [
+        {
+          "x": 29,
+          "z": 16
+        },
+        {
+          "x": 29,
+          "z": 23
+        },
+        {
+          "x": 30,
+          "z": 23
+        },
+        {
+          "x": 30,
+          "z": 26
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_2",
+      "from": "court",
+      "to": "fishing_approach",
+      "via": [
+        {
+          "x": 33,
+          "z": 16
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_3",
+      "from": "court",
+      "to": "gather_approach",
+      "via": [
+        {
+          "x": 29,
+          "z": 16
+        },
+        {
+          "x": 29,
+          "z": 23
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_4",
+      "from": "court",
+      "to": "encounter_0",
+      "via": [
+        {
+          "x": 8,
+          "z": 16
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_5",
+      "from": "court",
+      "to": "bank:approach",
+      "via": [
+        {
+          "x": 14,
+          "z": 16
+        }
+      ],
+      "width": 1,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "district_6",
+      "from": "court",
+      "to": "kitchen:approach",
+      "via": [
+        {
+          "x": 28,
+          "z": 16
+        }
+      ],
+      "width": 1,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "district_7",
+      "from": "court",
+      "to": "fishmongers_lodge:door",
+      "via": [
+        {
+          "x": 21,
+          "z": 16
+        },
+        {
+          "x": 21,
+          "z": 10
+        },
+        {
+          "x": 25,
+          "z": 10
+        },
+        {
+          "x": 25,
+          "z": 7
+        }
+      ],
+      "width": 1,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "district_8",
+      "from": "court",
+      "to": "dock_workers_home:door",
+      "via": [
+        {
+          "x": 12,
+          "z": 16
+        },
+        {
+          "x": 12,
+          "z": 26
+        }
+      ],
+      "width": 1,
+      "kind": "floor_plank"
+    },
+    {
+      "id": "district_9",
+      "from": "court",
+      "to": "shore_keepers_home:door",
+      "via": [
+        {
+          "x": 19,
+          "z": 16
+        },
+        {
+          "x": 19,
+          "z": 30
+        }
+      ],
+      "width": 1,
+      "kind": "floor_plank"
+    }
+  ],
+  "surfaces": [
+    {
+      "kind": "sand",
+      "x": 34,
+      "z": 0,
+      "w": 6,
+      "h": 32
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 0,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 37,
+      "z": 3,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 35,
+      "z": 6,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 9,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 35,
+      "z": 12,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 15,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "kind": "floor_plank",
+      "x": 35,
+      "z": 15,
+      "w": 5,
+      "h": 3
+    },
+    {
+      "kind": "water",
+      "x": 37,
+      "z": 18,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 35,
+      "z": 21,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 24,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 35,
+      "z": 27,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 30,
+      "w": 4,
+      "h": 2,
+      "blocked": true
+    },
+    {
+      "kind": "path_dirt",
+      "x": 17,
+      "z": 14,
+      "w": 7,
+      "h": 5
+    }
+  ],
+  "lots": [
+    {
+      "id": "bank",
+      "prefab": "bank_front",
+      "x": 14,
+      "z": 10
+    },
+    {
+      "id": "kitchen",
+      "prefab": "kitchen",
+      "x": 28,
+      "z": 10
+    },
+    {
+      "id": "fishmongers_lodge",
+      "prefab": "cottage",
+      "x": 29,
+      "z": 4
+    },
+    {
+      "id": "dock_workers_home",
+      "prefab": "cottage",
+      "x": 9,
+      "z": 23
+    },
+    {
+      "id": "shore_keepers_home",
+      "prefab": "cottage",
+      "x": 23,
+      "z": 27
+    }
+  ],
+  "resources": [
+    {
+      "id": "mining_0",
+      "ref": "skill:mining:mithril",
+      "x": 4,
+      "z": 27
+    },
+    {
+      "id": "woodcutting_0",
+      "ref": "skill:woodcutting:yew",
+      "x": 31,
+      "z": 25
+    },
+    {
+      "id": "fishing_0",
+      "ref": "skill:fishing:karam",
+      "x": 34,
+      "z": 20
+    },
+    {
+      "id": "gather_0",
+      "ref": "gather:harvest_potato_cactus",
+      "x": 30,
+      "z": 22
+    }
+  ],
+  "encounters": [
+    {
+      "id": "wild_red_dragon",
+      "ref": "combat:red_dragon",
+      "wander": {
+        "x": 6,
+        "z": 3,
+        "w": 4,
+        "h": 4
+      },
+      "spawns": [
+        {
+          "x": 7,
+          "z": 4
+        }
+      ]
+    }
+  ],
+  "access": [],
+  "exits": [],
+  "dressing": [
+    {
+      "model": "market",
+      "x": 20,
+      "z": 6,
+      "scale": 3.2
+    },
+    {
+      "model": "stall",
+      "x": 16,
+      "z": 20,
+      "scale": 1.1
+    },
+    {
+      "model": "stall",
+      "x": 24,
+      "z": 20,
+      "scale": 1.1,
+      "rot": 3.141592653589793
+    },
+    {
+      "model": "lantern",
+      "x": 25,
+      "z": 19,
+      "scale": 0.8
+    },
+    {
+      "model": "market",
+      "x": 27,
+      "z": 26,
+      "scale": 2
+    },
+    {
+      "model": "cart",
+      "x": 7,
+      "z": 19,
+      "scale": 1.1
+    },
+    {
+      "model": "well",
+      "x": 23,
+      "z": 12,
+      "scale": 1.2
+    },
+    {
+      "model": "stall",
+      "x": 17,
+      "z": 13,
+      "scale": 1
+    },
+    {
+      "model": "cart",
+      "x": 18,
+      "z": 11,
+      "scale": 1.1
+    }
+  ],
+  "groves": [
+    {
+      "id": "north_canopy",
+      "x": 5,
+      "z": 1,
+      "w": 29,
+      "h": 8,
+      "count": 8,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "west_canopy",
+      "x": 1,
+      "z": 6,
+      "w": 9,
+      "h": 24,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "south_canopy",
+      "x": 7,
+      "z": 22,
+      "w": 26,
+      "h": 9,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.3
+      ]
+    },
+    {
+      "id": "garden_undergrowth",
+      "x": 1,
+      "z": 1,
+      "w": 38,
+      "h": 30,
+      "count": 22,
+      "models": [
+        "bush",
+        "flowers"
+      ],
+      "scaleRange": [
+        1.4,
+        2.5
+      ]
+    }
+  ],
+  "deferredBindings": [
+    {
+      "ref": "combat:bone_wyvern",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:emberhowl_warlord",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:marshscale_shaman",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:razorwing_harpy",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:thornhide_colossus",
+      "reason": "missing_model"
+    }
+  ],
+  "ambient": {
+    "critters": [
+      {
+        "model": "villager_a",
+        "x": 17,
+        "z": 15,
+        "w": 6,
+        "h": 3,
+        "count": 2
+      }
+    ],
+    "smoke": []
+  },
+  "connections": [
+    {
+      "point": "north",
+      "to": "faloden"
+    },
+    {
+      "point": "north",
+      "to": "draynar"
+    },
+    {
+      "point": "east",
+      "to": "brimhollow"
+    }
+  ],
+  "waymarks": [
+    {
+      "id": "road_faloden",
+      "label": "Faloden",
+      "destination": "faloden",
+      "x": 3,
+      "z": 3
+    },
+    {
+      "id": "road_draynar",
+      "label": "Draynar",
+      "destination": "draynar",
+      "x": 3,
+      "z": 6
+    },
+    {
+      "id": "road_brimhollow",
+      "label": "Brimhollow",
+      "destination": "brimhollow",
+      "x": 36,
+      "z": 16
+    }
+  ],
+  "terrain": {
+    "relief": 0.15,
+    "procedural": {
+      "seed": 6744,
+      "frequency": 0.03
+    },
+    "material": "meadow",
+    "scatter": []
+  },
+  "budgets": {
+    "props": 100,
+    "npcs": 8,
+    "ambient": 4,
+    "maxPropsPer8x8": 18
+  },
+  "reviewViews": [
+    {
+      "id": "overview",
+      "target": "court",
+      "mode": "overview",
+      "distance": 50,
+      "pitch": 0.95,
+      "yaw": 0
+    },
+    {
+      "id": "arrival",
+      "target": "arrival",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25
+    },
+    {
+      "id": "bank",
+      "target": "bank:approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "facility:bank"
+      ]
+    },
+    {
+      "id": "hearth",
+      "target": "kitchen:approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "facility:stove"
+      ]
+    },
+    {
+      "id": "mining",
+      "target": "mining_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:mining:mithril"
+      ]
+    },
+    {
+      "id": "woodcutting",
+      "target": "woodcutting_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:woodcutting:yew"
+      ]
+    },
+    {
+      "id": "fishing",
+      "target": "fishing_approach",
+      "mode": "gameplay",
+      "yaw": -0.7,
+      "zoom": 1.25,
+      "covers": [
+        "skill:fishing:karam"
+      ]
+    },
+    {
+      "id": "gather",
+      "target": "gather_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "gather:harvest_potato_cactus"
+      ]
+    },
+    {
+      "id": "encounter_0",
+      "target": "encounter_0",
+      "mode": "gameplay",
+      "yaw": 0.3,
+      "zoom": 1.3,
+      "covers": [
+        "combat:red_dragon"
+      ]
+    },
+    {
+      "id": "district",
+      "target": "fishmongers_lodge:door",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.1
+    }
+  ]
+}

@@ -2,6 +2,7 @@ export function validateReviewEvidence({report,evidence,receipt,commit,files}) {
   if(!/^[a-f0-9]{64}$/.test(report.sourceHash)||evidence.sourceHash!==report.sourceHash)throw new Error('Review source mismatch')
   if(!/^[a-f0-9]{40}$/.test(commit)||evidence.commit!==commit)throw new Error('Review commit mismatch')
   const region=evidence.region
+  if(region!==report.region)throw new Error('Review region mismatch')
   if(!/^[a-z][a-z0-9_]*$/.test(region))throw new Error('Invalid review region')
   const required=report.reviewViews.flatMap(v=>v.mode==='overview'?['desktop:'+v.id]:['desktop:'+v.id,'mobile:'+v.id,'integrated:'+v.id])
   const seen=new Set()
@@ -14,7 +15,10 @@ export function validateReviewEvidence({report,evidence,receipt,commit,files}) {
     if(!files.has(region+'/'+capture.file))throw new Error('Missing capture file '+capture.file)
   }
   if(seen.size!==required.length)throw new Error('Incomplete capture coverage')
-  for(const state of ['idle','attack','hit','death'])if(!files.has('creatures/dustpaw_rat-'+state+'.png'))throw new Error('Missing creature state file '+state)
-  const approved=receipt?.sourceHash===report.sourceHash&&receipt.verdict==='approved'&&receipt.reviewedBy&&receipt.evidenceUrl&&required.every(v=>receipt.views?.includes(v))
+  for(const creature of region==='lumbright'?['dustpaw_rat','cave_goblin']:[]) {
+    const states=creature==='cave_goblin'?['idle','attack','hit','death','walk']:['idle','attack','hit','death']
+    for(const state of states)if(!files.has('creatures/'+creature+'-'+state+'.png'))throw new Error('Missing creature state file '+creature+':'+state)
+  }
+  const approved=receipt?.region===region&&receipt?.sourceHash===report.sourceHash&&receipt.verdict==='approved'&&receipt.reviewedBy&&receipt.evidenceUrl&&required.every(v=>receipt.views?.includes(v))
   return {schemaVersion:1,region,commit,sourceHash:report.sourceHash,approval:approved?'approved':'pending',scope:approved?(receipt.scope??'See versioned review receipt'):'Awaiting inspection and a current-source receipt',views:required}
 }

@@ -13,8 +13,10 @@ const worldDir=fileURLToPath(new URL('..',import.meta.url))
 const id=process.argv[2]??'lumbright'
 if(!/^[a-z][a-z0-9_]*$/.test(id))throw new Error('Invalid region id')
 // Standalone reviews must not label stale dist with a fresh source hash.
-execFileSync(process.execPath,[path.join(worldDir,'scripts/compile-world.mjs'),id,'--check'],{cwd:worldDir,stdio:'inherit'})
+if(!process.argv.includes('--prepared')) {
+execFileSync(process.execPath,[path.join(worldDir,'scripts/compile-world.mjs'),'--check'],{cwd:worldDir,stdio:'inherit'})
 execFileSync(process.platform==='win32'?'npm.cmd':'npm',['run','build'],{cwd:worldDir,stdio:'inherit'})
+}
 const report=JSON.parse(fs.readFileSync(path.join(worldDir,'authoring/reports',id+'.json'),'utf8'))
 const zone=JSON.parse(fs.readFileSync(path.join(worldDir,'zones',id+'.json'),'utf8'))
 const overworld=JSON.parse(fs.readFileSync(path.join(worldDir,'zones/overworld.json'),'utf8'))
@@ -45,7 +47,7 @@ async function sheet(name,shots,columns,tw,th) {
 
 const captures=[]
 const creatureDir=path.join(worldDir,'preview-shots/creatures')
-if(fs.existsSync(creatureDir)) {
+if(id==='lumbright'&&fs.existsSync(creatureDir)) {
   const shots=fs.readdirSync(creatureDir).filter((f)=>f.startsWith('dustpaw_rat-')&&f.endsWith('.png')).sort()
   const composites=[]
   for(const [i,file] of shots.entries()){
@@ -65,7 +67,7 @@ try {
   if(!available)throw new Error('Preview server did not start')
   browser=await chromium.launch({args:['--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']})
   const experience=[]
-  for(const view of EXPERIENCE_VIEWS) {
+  for(const view of id==='lumbright'?EXPERIENCE_VIEWS:[]) {
     const viewport=view.viewport==='mobile'?{width:390,height:844}:{width:1280,height:800}
     const page=await browser.newPage({viewport,deviceScaleFactor:1,hasTouch:view.viewport==='mobile',isMobile:view.viewport==='mobile'}),errors=[]
     page.on('pageerror',error=>errors.push(error.message))
@@ -104,8 +106,10 @@ try {
       if(!rect||rect.height<44||rect.y+rect.height>viewport.height)throw new Error('Journey action not usable at '+view.id)
     }
     if(view.entry){
+      await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/world/entry-review.css')),null,{timeout:30000})
+      await page.evaluate(()=>document.fonts.ready)
       const rect=await page.getByRole('button',{name:view.entry==='saving'?'Saving and entering…':'Enter the world',exact:true}).boundingBox()
-      if(!rect||rect.height<44||rect.x<0||rect.x+rect.width>viewport.width)throw new Error('Entry action not usable at '+view.id)
+      if(!rect||rect.height<44||rect.x<0||rect.x+rect.width>viewport.width)throw new Error('Entry action not usable at '+view.id+': '+JSON.stringify(rect))
     }
     const name=view.id.replace(':','-')+'.png'
     await page.screenshot({path:path.join(out,name),timeout:60000})

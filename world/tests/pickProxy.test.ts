@@ -9,7 +9,7 @@
 // invisible 12-triangle pick proxy and main.ts's getPickables hands those to
 // the raycaster instead of the models.
 //
-// Driven with cave_goblin: it is the same createMonsterMesh registry branch
+// Driven with arcane_adept: it is the same createMonsterMesh registry branch
 // Grondar takes, and its GLB carries no textures, so the real production
 // loader parses it under Node (webp-textured models need a browser).
 import fs from 'node:fs'
@@ -19,9 +19,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { PICK_PROXY, createMonsterMesh, pickProxyOf } from '../client/src/entities'
 import { MONSTER_MODELS } from '../shared/monsterModels'
 
-const MONSTER = 'cave_goblin'
+const MONSTER = 'arcane_adept'
 const SPEC = MONSTER_MODELS[MONSTER]
-const MODEL_PATH = path.join(__dirname, '../client/public/models/goblin.glb')
+const MODEL_PATH = path.join(__dirname, '../client/public/models/wizard.glb')
 
 /** Serves the real committed GLB to entities.ts's production loader. */
 function stubModelFetch(): void {

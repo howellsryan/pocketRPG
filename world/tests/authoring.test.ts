@@ -68,6 +68,8 @@ describe('semantic world compiler', () => {
     s.points.push({id:'west',x:1,z:10,role:'gateway'} as never)
     s.routes.push({id:'west_road',from:'arrival',to:'west',width:3,kind:'path_cobble'})
     expect(compileRegion(s,c).report.connections[0]).toMatchObject({to:'neighbor',outward:{x:-1,z:0}})
+    const absent={...s}; delete (absent as any).connections
+    expect(()=>compileRegion(absent,c)).toThrow(/connections.*required/)
     s.connections=[]
     expect(()=>compileRegion(s,c)).toThrow(/missing canonical road connections/)
     s.connections=[{point:'arrival',to:'neighbor'}]
@@ -126,4 +128,79 @@ describe('semantic world compiler', () => {
     s.budgets.props = 0; s.dressing.push({ model: 'house', x: 15, z: 15 } as never)
     expect(() => compileRegion(s, context())).toThrow(/budget/i)
   })
+})
+
+describe('regional canonical accounting', () => {
+  it('classifies canonical runecraft, raids and minigames without manufacturing outdoor actions', () => {
+    const c:any=context()
+    c.activities.test.push({kind:'skill',ref:'runecraft:air_rune'},{kind:'raid',ref:'vault'},{kind:'minigame',ref:'trial'})
+    expect(deriveContract('test',c)).toMatchObject({portable:['skill:runecraft:air_rune'],deferred:['minigame:trial','raid:vault']})
+  })
+  it('records an explicitly unavailable creature without spawning a fallback', () => {
+    const c:any=context(); c.assets.monsters=[]
+    const s:any=source(); s.encounters=[];s.deferredBindings=[{ref:'combat:rat',reason:'missing_model'}]
+    s.reviewViews[1].covers=s.reviewViews[1].covers.filter((v:string)=>v!=='combat:rat')
+    const {zone,report}=compileRegion(s,c)
+    expect(zone.npcs).toEqual([])
+    expect(report.deferredBindings).toEqual([{ref:'combat:rat',reason:'missing_model'}])
+    expect(report.parity.complete).toBe(false)
+  })
+  it('cannot defer supported content or use a deferral to hide an invented identity', () => {
+    const s:any=source();s.deferredBindings=[{ref:'skill:mining:clay',reason:'missing_model'}]
+    expect(()=>compileRegion(s,context())).toThrow(/invalid deferral|supported binding/)
+    s.deferredBindings=[{ref:'combat:invented',reason:'missing_model'}]
+    expect(()=>compileRegion(s,context())).toThrow(/unexpected content/)
+  })
+  it('keeps processing costs and probabilistic resources out of direct-yield nodes', () => {
+    const c:any=context()
+    c.activities.test.push({kind:'gather',ref:'convert'},{kind:'skill',ref:'mining:gems'})
+    c.gatherTasks.push({id:'convert',product:'plank',ticks:1,materials:{log:1},gpCost:150})
+    c.skills.mining.actions.push({id:'gems',dropTable:[{item:'ruby',chance:.2}],ticks:20})
+    const s:any=source();s.deferredBindings=[{ref:'gather:convert',reason:'processing_adapter'},{ref:'skill:mining:gems',reason:'probabilistic_resource'}]
+    const {zone,report}=compileRegion(s,c)
+    expect(zone.objects.some((o:any)=>o.gather==='convert'||o.rock==='gems')).toBe(false)
+    expect(report.deferredBindings).toHaveLength(2)
+    s.resources.push({id:'free_plank',ref:'gather:convert',x:14,z:14})
+    expect(()=>compileRegion(s,c)).toThrow(/deferred.*bound|unsupported gather/)
+  })
+  it('places the two furnace/anvil components explicitly and refuses a missing component', () => {
+    const c:any=context();c.world.places.test.facilities.push('furnace_anvil')
+    const s:any=source()
+    s.resources.push({id:'forge',ref:'facility:furnace_anvil',x:14,z:6,components:{furnace:{x:14,z:6},anvil:{x:14,z:8}}})
+    s.reviewViews[1].covers.push('facility:furnace_anvil')
+    const zone=compileRegion(s,c).zone
+    expect(zone.objects.find((o:any)=>o.id==='forge:furnace')).toMatchObject({type:'furnace',x:14,z:6})
+    expect(zone.objects.find((o:any)=>o.id==='forge:anvil')).toMatchObject({type:'anvil',x:14,z:8})
+    delete s.resources.at(-1).components.anvil
+    expect(()=>compileRegion(s,c)).toThrow(/component/)
+  })
+  it('accounts for an existing lair through a reachable reviewed access point', () => {
+    const c:any=context();c.monsters.rat.boss=true;c.instanceZones={test_lair:{collision:['...','...','...'],npcs:[{monsterId:'rat'}]}}
+    const s:any=source();s.encounters=[];s.exits=[{id:'enter_lair',x:10,z:8,toZone:'test_lair',toX:1,toZ:1}];s.access=[{ref:'combat:rat',zone:'test_lair',point:'arrival',exit:'enter_lair'}]
+    const {zone,report}=compileRegion(s,c)
+    expect(zone.npcs).toEqual([])
+    expect(report.access).toEqual([{ref:'combat:rat',zone:'test_lair',point:'arrival',exit:'enter_lair'}])
+    c.instanceZones.test_lair.npcs=[]
+    expect(()=>compileRegion(s,c)).toThrow(/lair.*identity|instance.*identity/)
+  })
+  it('refuses to move a canonical boss onto a safe-town encounter rectangle', () => {
+    const c:any=context();c.monsters.rat.boss=true
+    expect(()=>compileRegion(source(),c)).toThrow(/boss.*lair|boss.*instance/)
+  })
+})
+
+describe('physical instance access provenance',()=>{
+ it('cannot claim combat parity through a point without an actual reachable entrance',()=>{
+  const c:any=context();c.monsters.rat.boss=true;c.instanceZones={test_lair:{collision:['...','...','...'],npcs:[{monsterId:'rat'}]}}
+  const s:any=source();s.encounters=[];s.access=[{ref:'combat:rat',zone:'test_lair',point:'arrival',exit:'absent'}]
+  expect(()=>compileRegion(s,c)).toThrow(/physical.*entrance|access.*entrance/)
+ })
+ it('rejects a far-away access point and a blocked instance destination',()=>{
+  const c:any=context();c.monsters.rat.boss=true;c.instanceZones={test_lair:{collision:['...','.#.','...'],npcs:[{monsterId:'rat'}]}}
+  const s:any=source();s.encounters=[];s.exits=[{id:'enter_lair',x:10,z:8,toZone:'test_lair',toX:1,toZ:1}];s.access=[{ref:'combat:rat',zone:'test_lair',point:'arrival',exit:'enter_lair'}]
+  expect(()=>compileRegion(s,c)).toThrow(/destination/)
+  c.instanceZones.test_lair.collision=['...','...','...'];s.access[0].point='bank'
+  s.exits[0].z=15
+  expect(()=>compileRegion(s,c)).toThrow(/access.*approach|access.*entrance/)
+ })
 })

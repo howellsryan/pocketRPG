@@ -4,7 +4,8 @@
  "place": "lumbright",
  "seed": 4242,
  "parity": {
-  "scope": "gathering, combat identities and facilities",
+  "scope": "canonical gathering, combat and facility accounting; explicit deferred bindings are not playable in this regional contract",
+  "complete": true,
   "missing": [],
   "unexpected": []
  },
@@ -184,6 +185,8 @@
    "skill:magic:tan_leather"
   ]
  },
+ "deferredBindings": [],
+ "access": [],
  "points": [
   {
    "id": "arrival",
@@ -2515,5 +2518,5 @@
   "maxPropsPer8x8": 45
  },
  "visualApproval": "pending",
- "sourceHash": "bb384c3d76d4a2eb6ca4b2248912b362dddc0a3a636877319267c08966b8fbc9"
+ "sourceHash": "668960a370cbcc1eb5723fc98063bea90e0c824a03fc0d39c934be01a6d13626"
 }

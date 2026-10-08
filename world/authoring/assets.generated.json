@@ -587,6 +587,91 @@
    "role": "groundcover",
    "source": "world/client/public/models/props/mushrooms.glb",
    "sha256": "ab117952b9c7a40418fff9cc02e67b1262664ea2c7c628507900ade9bbed8020"
+  },
+  "fountain": {
+   "min": [
+    -1,
+    -4.591168408512693e-20,
+    -1
+   ],
+   "max": [
+    1,
+    0.48000001907348633,
+    1
+   ],
+   "baseScale": 1.5,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/fountain.glb",
+   "sha256": "5613e3f300646221747d9ec863d7c8e9908f90dd076416a1c1b0302cfdfdd0a4"
+  },
+  "lumbermill": {
+   "min": [
+    -0.9165546894073486,
+    -0.015705034136772156,
+    -0.8066155910491943
+   ],
+   "max": [
+    0.9074838757514954,
+    1.4538322687149048,
+    0.8508687019348145
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "building",
+   "source": "world/client/public/models/props/lumbermill.glb",
+   "sha256": "f2eaf79d7f7d7fdb7c9559bfa4f08eaec9754c3423fde326365c214857c3c07e"
+  },
+  "town_wall": {
+   "min": [
+    -0.5,
+    0,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    1.309999942779541,
+    0.5
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/town_wall.glb",
+   "sha256": "5b13add1c2ff33723d88c734a99e7e637d75ff8969c92d6c963f38ae5c637c53"
+  },
+  "town_tower": {
+   "min": [
+    -0.5,
+    0,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    1.309999942779541,
+    0.5
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/town_tower.glb",
+   "sha256": "8dca85b5492e7212cf09eb812a83659a26acec1756e1c4f70f379603866edfcd"
+  },
+  "stone_spire_ember": {
+   "min": [
+    -0.49153444170951843,
+    -0.05,
+    -0.34160539507865906
+   ],
+   "max": [
+    0.49153444170951843,
+    0.9459259033203125,
+    0.34160539507865906
+   ],
+   "baseScale": 1.9,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/stone_spire_ember.glb",
+   "sha256": "b231fa6f1b26182eb7cdd18dd3764543d7b1ab482eee5f3fbded2a2a07ecd188"
   }
  },
  "monsters": [

@@ -512,6 +512,79 @@
           "z": 3
         }
       ]
+    },
+    "forge_front": {
+      "props": [
+        {
+          "model": "house",
+          "x": 0,
+          "z": -2,
+          "scale": 2.2
+        },
+        {
+          "model": "lantern",
+          "x": 3,
+          "z": 1,
+          "scale": 0.8
+        }
+      ],
+      "ground": [
+        {
+          "kind": "floor_stone",
+          "x": -3,
+          "z": 0,
+          "w": 7,
+          "h": 4
+        }
+      ],
+      "points": [
+        {
+          "id": "approach",
+          "x": 0,
+          "z": 3
+        }
+      ],
+      "ambient": {
+        "smoke": [
+          {
+            "x": 0,
+            "z": -3,
+            "y": 2.1
+          }
+        ]
+      }
+    },
+    "sawmill_front": {
+      "props": [
+        {
+          "model": "lumbermill",
+          "x": 0,
+          "z": -1,
+          "scale": 2
+        },
+        {
+          "model": "cart",
+          "x": 3,
+          "z": 1,
+          "scale": 0.8
+        }
+      ],
+      "ground": [
+        {
+          "kind": "path_dirt",
+          "x": -3,
+          "z": 1,
+          "w": 7,
+          "h": 3
+        }
+      ],
+      "points": [
+        {
+          "id": "approach",
+          "x": 0,
+          "z": 3
+        }
+      ]
     }
   }
 }
