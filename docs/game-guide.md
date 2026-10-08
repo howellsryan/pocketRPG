@@ -97,9 +97,9 @@ The World Map shows every settlement in Eldermoor, joined by roads. Tap a settle
 
 When the open-world beta is enabled, choose Enter the world from the idle map or Help. Your character saves before entering in the same tab. New arrivals begin in Lumbright; returning explorers resume their world position. An active group boss session must finish before you enter.
 
-Eldermoor's cities share one overworld. Open its map, choose a named destination and select Walk to begin the complete journey. A direction and remaining distance stay visible after closing the map. Tap the ground to change course, or Stop journey to stop walking. Road signs name nearby destinations and can start a journey.
+Eldermoor's cities share one overworld. Open its map, choose a named destination and select Walk to begin the complete journey. Destination details show the direction and remaining distance. Tap the ground to change course.
 
-Caves, pastures and boss lairs have named entrances. Choose Enter to go through; simply walking past an entrance keeps you outside. Boss requirements still apply, and you must leave combat before moving between areas. The return doorway leads to a safe road outside. Leave world from the world settings to return to the idle game. Preview quick travel is available from destination details in the test preview only, and cannot be used during combat.
+Caves, pastures and boss lairs have named entrances. Choose Enter to go through; simply walking past an entrance keeps you outside. Boss requirements still apply, and you must leave combat before moving between areas. The return doorway leads to a safe road outside. Leave world from the world settings to return to the idle game.
 
 ## Idle progress and offline catch-up
 

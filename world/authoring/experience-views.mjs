@@ -166,15 +166,14 @@ export const EXPERIENCE_VIEWS=[
     "hud": true
   },
   {
-    "id": "desktop:journey_guidance",
+    "id": "desktop:world_hud",
     "zone": "overworld",
     "target": [
       178,
       120
     ],
     "viewport": "desktop",
-    "hud": true,
-    "guide": "draynar"
+    "hud": true
   },
   {
     "id": "desktop:destination_map",
@@ -187,15 +186,14 @@ export const EXPERIENCE_VIEWS=[
     "map": "draynar"
   },
   {
-    "id": "mobile:journey_guidance",
+    "id": "mobile:world_hud",
     "zone": "overworld",
     "target": [
       178,
       120
     ],
     "viewport": "mobile",
-    "hud": true,
-    "guide": "draynar"
+    "hud": true
   },
   {
     "id": "mobile:destination_map",

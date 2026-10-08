@@ -58,7 +58,6 @@ export type WorldMapData = {
   exits: ExitMarker[]
   self: { x: number; z: number }
   onJourney?: (place: Landmark) => void
-  onQuickTravel?: (place: Landmark) => void
 }
 
 // STATIC_CATEGORY (statics→category) and CATEGORY_ICON_KEY (category→bespoke
@@ -178,11 +177,7 @@ const NAVIGATION_CSS=`
 .wm-info-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .wm-info-actions button{min-height:44px;flex:1}
 .wm-marker{padding:0;border:0;background:none;color:inherit;font-family:inherit}.wm-info-body{white-space:pre-line}#wm-info{box-sizing:border-box;max-height:65vh;overflow:auto}
-#world-wayfinding{position:fixed;left:12px;top:126px;z-index:18;box-sizing:border-box;max-width:300px;background:rgba(30,23,15,.94);border:1px solid #9d7940;color:#ead8b4;box-shadow:0 2px 6px #0008;border-radius:5px;padding:8px 12px;font:14px/1.4 Georgia,serif;pointer-events:none}
-:root[data-hud-orient="portrait"]:not([data-hud-sheet="closed"]) #world-wayfinding{display:none}
-#world-wayfinding strong{display:block;font-size:16px;color:#f2dfa9}
-#world-wayfinding button{pointer-events:auto;min-height:44px;background:#352819;color:#efdbb6;border:1px solid #967240;border-radius:3px;margin-top:8px;width:100%;font:inherit}
-@media(max-width:600px){#world-wayfinding{left:8px;top:112px;max-width:calc(100vw - 68px);font-size:12px;padding:6px 8px}#world-wayfinding strong{font-size:14px}.wm-info-actions button{width:auto}}
+@media(max-width:600px){.wm-info-actions button{width:auto}}
 `
 
 let cssReady = false
@@ -441,12 +436,6 @@ export function openWorldMap(data: WorldMapData): void {
       guidance.arrived ? 'You are here.' : guidance.direction+' · '+guidance.distance+' tiles away. Walking remains in the shared world.'].filter(Boolean).join('\n\n')
     const actions:{label:string;run:()=>void}[]=[]
     if(data.onJourney && !guidance.arrived) actions.push({label:'Walk to '+(place?.name??lm.label),run:()=>{data.onJourney!(lm);closeWorldMap()}})
-    if(data.onQuickTravel) actions.push({label:'Preview quick travel',run:()=>{
-      showInfoCard('Preview quick travel','Move to '+(place?.name??lm.label)+' for testing. Available in this preview; leave combat first.',[
-        {label:'Travel to '+(place?.name??lm.label),run:()=>{data.onQuickTravel!(lm);closeWorldMap()}},
-        {label:'Back',run:()=>showPlace(lm)},
-      ])
-    }})
     showInfoCard(place?.name??lm.label,body||'A place in Eldermoor.',actions)
   }
 
@@ -623,69 +612,3 @@ export function describeLocation(
   return nearest ? (nearestDistance <= 2 ? '' : 'Near ')+nearest.label : 'Exploring Eldermoor'
 }
 
-let disposeWayfindingLayout: (()=>void)|null=null
-
-/** Reposition only when the HUD layout changes; walking does not trigger layout work. */
-function positionWayfinding(panel: HTMLElement): ()=>void {
-  const root=document.documentElement
-  const visibleRect=(id:string):DOMRect|null=>{
-    const el=document.getElementById(id)
-    return el&&getComputedStyle(el).display!=='none'&&el.getBoundingClientRect().width>0 ? el.getBoundingClientRect() : null
-  }
-  const place=():void=>{
-    const portrait=root.dataset.hudOrient==='portrait', rightDock=root.dataset.hudDock!=='left'
-    const vitals=visibleRect('hud-vitals'), eye=visibleRect('hud-eye'), compass=visibleRect('hud-compass'), map=visibleRect('minimap')
-    let inset=portrait?8:12, top=portrait?Math.max(112,(vitals?.bottom??104)+8):Math.max(126,...[vitals,eye,compass].map(r=>(r?.bottom??0)+8))
-    let width=portrait?innerWidth-inset-(map?148:60):innerWidth-2*inset-58
-    if(!portrait) {
-      const dock=visibleRect('hud-body'), rail=visibleRect('hud-rail-l')
-      const boundary=rightDock?(dock?.left??rail?.left??innerWidth):(dock?.right??rail?.right??0)
-      if(map) {
-        const beside=rightDock?map.right+8:innerWidth-map.left+8
-        const room=rightDock?boundary-beside-8:innerWidth-beside-boundary-8
-        if(room>=180){inset=beside;width=room}
-        else {top=Math.max(top,map.bottom+8);width=rightDock?boundary-inset-8:innerWidth-inset-boundary-8}
-      } else width=rightDock?boundary-inset-8:innerWidth-inset-boundary-8
-    }
-    panel.style.left=portrait||rightDock?inset+'px':'auto'
-    panel.style.right=!portrait&&!rightDock?inset+'px':'auto'
-    panel.style.top=portrait?'auto':top+'px'
-    const rail=visibleRect('hud-rail-p')
-    panel.style.bottom=portrait?Math.max(72,innerHeight-(rail?.top??innerHeight-64)+8)+'px':'auto'
-    panel.style.maxWidth=Math.min(300,Math.max(140,width))+'px'
-  }
-  place()
-  const mutation=new MutationObserver(place)
-  mutation.observe(root,{attributes:true,attributeFilter:['data-hud-orient','data-hud-dock','data-hud-hidden','data-minimap','data-hud-sheet','data-hud-scale']})
-  const resize=new ResizeObserver(place)
-  for(const id of ['hud-vitals','hud-eye','hud-compass','minimap','hud-body']){const el=document.getElementById(id);if(el)resize.observe(el)}
-  window.addEventListener('resize',place)
-  return ()=>{mutation.disconnect();resize.disconnect();window.removeEventListener('resize',place)}
-}
-
-/** Location and selected destination remain visible after closing the map. */
-export function createWayfinding(landmarks: Landmark[], cancel:()=>void, entrances: ExitMarker[] = []): {
-  guide:(place:Landmark|null)=>void; update:(self:{x:number;z:number})=>void
-} {
-  ensureCss()
-  disposeWayfindingLayout?.()
-  document.getElementById('world-wayfinding')?.remove()
-  const panel=document.createElement('div'); panel.id='world-wayfinding'; panel.className='hud-hideable'
-  const title=document.createElement('strong'),detail=document.createElement('span'),stop=document.createElement('button')
-  stop.textContent='Stop journey'; stop.hidden=true
-  let destination:Landmark|null=null, last=''
-  stop.addEventListener('click',()=>{destination=null;stop.hidden=true;last='';cancel()})
-  panel.appendChild(title);panel.appendChild(detail);panel.appendChild(stop);document.body.appendChild(panel)
-  disposeWayfindingLayout=positionWayfinding(panel)
-  return {
-    guide:(place)=>{destination=place;stop.hidden=!place;last=''},
-    update:(self)=>{
-      const here=describeLocation(self,landmarks,entrances)
-      const guidance=destination && describeDestination(self,destination)
-      const heading=destination ? (guidance!.arrived?'Arrived at ':'To ')+destination.label : here
-      const line=destination ? (guidance!.arrived?'Choose another destination on the map.':guidance!.direction+' · '+guidance!.distance+' tiles · '+here) : 'Open the map to choose a destination.'
-      if(last!==heading+'|'+line){title.textContent=heading;detail.textContent=line;last=heading+'|'+line}
-      if(guidance?.arrived){stop.hidden=true;destination=null}
-    },
-  }
-}

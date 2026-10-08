@@ -1,0 +1,13 @@
+# World UI cleanup review
+
+Reviewed on 2026-10-08 for the existing fourteen-town beta preview.
+
+The floating location/journey panel, including “Near Brimhollow”, is removed. The world renderer no longer creates the generic town-name signposts on tiles. The in-world destination map no longer offers Preview quick travel or its confirmation. Destination descriptions, direction and distance, map pins and Walk to remain. The named cave, pasture and boss entrances remain.
+
+The primary reviewer personally inspected 214 current native frames and verified 146 exact full-PNG SHA-256 matches against prior personally inspected frames. The complete record is [world-ui-cleanup-capture-comparison.json](world-ui-cleanup-capture-comparison.json): 329 regional views across fourteen towns, 22 current experience views and nine rat/goblin states. Desktop images were viewed at 1280×800, portrait at 390×844; large desktop files were inspected as two lossless unscaled halves that cover the complete image. Creature state images retain their native capture dimensions.
+
+The native mobile HUD and desktop HUD show no redundant floating panel. The destination map shows Draynar details, Bank, southwest/40-tile distance, Walk to Draynar and Close details with readable controls, and no Preview quick travel. The capture harness also rejects the removed panel or quick-travel button and checks the mobile Walk to target. Named Grondar’s Barrow, Lumbright Cow Pasture, Draynar Fiend Pit, Dragon Roost and Zaryth’s Throne entrances and their return doorway captures remain covered. Generic city signposts are absent from the refreshed world views.
+
+Five Cloudflare galleries were captured from the same immutable UI source tree. Their capture-time pending labels precede this review; the versioned regional receipts are the later beta approvals. The original normal review runner is retained on the delivered branch; temporary capture/check runners are not shipped. Node-generated reports and chat knowledge are checked for exact byte freshness in Cloudflare before any regeneration.
+
+This approval covers the requested UI cleanup. The [town expansion critical review](town-expansion.md) and its unresolved gates still apply: broad flat terrain and repeated cottages, angular shores and water tint over some crossings, occasional foliage/roof/flame overlap, decorative ambient figures, missing creature/facility adapters, protected civic pursuit areas and progression ownership. Static screenshots do not establish live phone frame times, movement latency, multiplayer behavior, accessibility of authenticated chat or save/return reliability. Those require live beta playtesting.

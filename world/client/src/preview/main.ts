@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import {h,render} from 'preact'
 import WorldEntryCard from '../../../../src/components/WorldEntryCard.jsx'
 import {initHud,updateHpPill,setRunState,setPrayerState,renderInventory,setHudPanelOpen,paintHudIcons} from '../ui'
-import {createWayfinding,openWorldMap} from '../worldMap'
+import {openWorldMap} from '../worldMap'
 import {createMinimap} from '../minimap'
 import {loadItemIcons} from '../itemIcon'
 import type { ZoneDef } from '../../../shared/zone'
@@ -12,7 +12,7 @@ import { createGraphicsBudget } from '../graphics'
 import { createScatterLayers } from '../scatter'
 import { createStatics } from '../statics'
 import { createProps } from '../props'
-import {createExitMarkers,createWaymarks} from '../exits'
+import {createExitMarkers} from '../exits'
 import { createAmbient } from '../ambient'
 import { createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from '../entities'
 import lumbrightZone from '../../../zones/lumbright.json'
@@ -86,7 +86,6 @@ const follow=params.has('follow') ? pair(params.get('follow'),targetTile) : game
 const {heightField}=createTerrain(scene,def.collision,def.width,def.height,def.palette,def.terrain,def.ground,
   {chunkCentre:follow ? {...follow,radius:number('radius',4)} : undefined})
 const exits=createExitMarkers(scene,def.exits??[])
-createWaymarks(scene,def.waymarks??[])
 if(params.get('entry')==='1') {
   const css=document.createElement('link');css.rel='stylesheet';css.href='/world/entry-review.css';document.head.appendChild(css)
   const surface=document.createElement('div')
@@ -104,14 +103,10 @@ if(params.get('hud')==='1'||params.has('map')) {
   updateHpPill(10,10);setRunState(100,false);setPrayerState(1,1,null,null);renderInventory(Array(28).fill(null))
   const minimap=createMinimap(def.collision,def.width,def.height,def.palette,def.objects,()=>{})
   minimap.update(targetTile,[])
-  const guidance=createWayfinding(def.landmarks??[],()=>{},def.exits??[])
-  const destination=params.has('guide')?def.landmarks?.find(p=>p.id===params.get('guide')):undefined
-  if(destination)guidance.guide(destination)
-  guidance.update(targetTile)
   if(params.has('map')) {
     openWorldMap({collision:def.collision,width:def.width,height:def.height,palette:def.palette,ground:def.ground,
       statics:def.objects,landmarks:def.landmarks??[],spawns:def.npcs,exits:def.exits??[],self:targetTile,
-      onJourney:place=>guidance.guide(place),onQuickTravel:()=>{}})
+      onJourney:()=>{}})
     const select=document.querySelector('.wm-destinations') as unknown as HTMLSelectElement|null
     if(select){select.value=params.get('map')!;select.dispatchEvent(new Event('change'))}
   }

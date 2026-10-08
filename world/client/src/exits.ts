@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { tileToWorld } from './scene'
-import type { ExitMarker, Waymark } from '../../shared/protocol'
+import type { ExitMarker } from '../../shared/protocol'
 import type { Pickable } from './picking'
 
 export type ExitLayer = {
@@ -73,16 +73,3 @@ export function createExitMarkers(scene: THREE.Scene, exits: ExitMarker[]): Exit
   }}
 }
 
-/** Destination identities come from semantic authoring, never free-form client coordinates. */
-export function createWaymarks(scene:THREE.Scene, waymarks:Waymark[]):THREE.Object3D[] {
-  return waymarks.map(sign=>{
-    const wrapper=new THREE.Group()
-    const post=new THREE.Mesh(new THREE.BoxGeometry(.12,1.7,.12),new THREE.MeshStandardMaterial({color:0x705030,roughness:1}))
-    post.position.set(-.7,.85,0);post.castShadow=true
-    const board=nameboard(sign.label);if(board){board.scale.set(2.6,.81,1);board.position.set(-.7,1.9,0);wrapper.add(board)}
-    wrapper.add(post);wrapper.position.copy(tileToWorld(sign.x,sign.z))
-    wrapper.userData.pick={kind:'exit',id:sign.id,name:sign.label,actions:[{label:'Walk to',action:'go'}],
-      examine:'Follow the road toward '+sign.label+'.'} satisfies Pickable
-    scene.add(wrapper);return wrapper
-  })
-}

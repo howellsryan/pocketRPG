@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "region": "catherra",
-  "sourceHash": "4029a5dfeabd09ff2b0c48552832364786dc9814bd1780c80e91b620c29e8959",
-  "sourceCommit": "47e4a8084d5b076fceb47fafbe7b7e79c3e72eb4",
+  "sourceHash": "0693773df24d837009bb2314769e97bb61712a61325ff220175107ff316d28aa",
+  "sourceCommit": "9d0c6f4b09677f0f5f89cc429c653cc8c836ccce",
   "verdict": "approved",
-  "scope": "Approved for town-expansion beta composition and interface legibility on the PR preview. This is not production MMORPG, performance, economy or multiplayer approval.",
-  "reviewedBy": "Codex primary agent; personally inspected native images or verified exact SHA-256 reuse of personally inspected native images, with per-image provenance in town-capture-comparison.json",
+  "scope": "Approved for the requested world UI cleanup on the existing town-expansion beta preview: remove floating location/journey panels, town-name tile signposts and map preview quick travel. Existing production MMORPG, performance, economy and multiplayer gates remain open.",
+  "reviewedBy": "Codex primary agent; personally inspected 214 current native frames and verified exact full-PNG SHA-256 reuse for 146 prior personally inspected native frames, with individual provenance in world-ui-cleanup-capture-comparison.json",
   "reviewedAt": "2026-10-08",
-  "evidenceUrl": "https://6f0a6a05-pocketrpg-world-review.rlh.workers.dev/47e4a8084d5b076fceb47fafbe7b7e79c3e72eb4/",
-  "buildId": "dd600a32-eae6-44f4-9872-fd5a4c521070",
+  "evidenceUrl": "https://7e02e113-pocketrpg-world-review.rlh.workers.dev/9d0c6f4b09677f0f5f89cc429c653cc8c836ccce/",
+  "buildId": "d7e8c79c-1389-4549-a61e-0d3db827e191",
   "views": [
     "desktop:overview",
     "desktop:arrival",
@@ -30,8 +30,8 @@
     "mobile:district",
     "integrated:district"
   ],
-  "comparisonManifest": "town-capture-comparison.json",
-  "criticalReview": "town-expansion.md",
+  "comparisonManifest": "world-ui-cleanup-capture-comparison.json",
+  "criticalReview": "world-ui-cleanup.md",
   "remainingGates": [
     "Live phone frame-time, movement latency, loading and background/resume measurements",
     "Two-player gathering, combat, banking, reconnect and save/return to idle testing",

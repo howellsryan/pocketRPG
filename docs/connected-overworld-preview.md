@@ -6,9 +6,7 @@ All fourteen cities remain districts of one continuous Eldermoor overworld. Walk
 
 Open the Worker preview, sign in and select your character. Open Map → Enter the world, or Help → Enter the world. Entry saves first and stays in the same tab. New arrivals start in Lumbright; returning characters resume their world position. Finish an active co-op session before entering.
 
-In the world, open the compass map, choose a named city and select Walk to. Journeys prefer painted roads and retain their entire path rather than stopping after 64 tiles. The location and destination panel shows a compass bearing and tile distance. Tap the ground to change course; Stop journey cancels walking. Semantic road signs name neighboring towns and start journeys along the connected world.
-
-Destination details contain clearly labelled Preview quick travel. It is a testing convenience enabled only by the preview Worker binding; the server refuses it in production and during combat. It is no longer presented as a free Magic spell.
+In the world, open the compass map, choose a named city and select Walk to. Journeys prefer painted roads and retain their entire path rather than stopping after 64 tiles. Destination details show a compass bearing and tile distance. Tap the ground to change course. Floating location overlays and town-name signposts are removed to keep the scene and mobile chat clear.
 
 Select a named entrance to enter a pasture or lair. Passing its tile without selecting it leaves the character in the overworld. Admission checks use live server progress and existing quest/kill gates. Room allocation, a successful serialized grant flush and the saved arrival happen before the source player is removed. Failed admission or saving keeps the character in the source world.
 
@@ -36,7 +34,7 @@ Idle activities currently retain their catch-up clock during a world visit. Deci
 
 Explicit Leave world now preserves the player and writer on failed grant or position saves, and waits for the server acknowledgement. Unexpected disconnect settlement still uses the older departure path. Kill-count and daily-task writes remain separate best-effort operations: they need transactional, idempotent settlement before claiming end-to-end progression durability or production MMORPG readiness. An audit-only outage no longer requeues already committed grant rewards. Admission rechecks room capacity after awaited reads. Unload beacons are ignored while admission or explicit logout owns the in-flight save, so they cannot remove or checkpoint the retained source player concurrently.
 
-The world starts with inventory panels closed so the scene and entrance signs stay visible. Portrait journey guidance sits above the bottom controls and hides while a HUD pane is open. The world map initially shows places and entrances; banks, skilling and monsters are optional filters.
+The world starts with inventory panels closed so the scene and entrance signs stay visible. The world map initially shows places and entrances; banks, skilling and monsters are optional filters.
 
 ## Review coverage follow-up
 

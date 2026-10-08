@@ -76,7 +76,6 @@ try {
     page.on('requestfailed',request=>errors.push('Failed '+request.url()))
     const params=new URLSearchParams({zone:view.zone,mode:'gameplay',snapshot:'1',target:view.target.join(','),yaw:String(view.yaw??0),zoom:'1.3'})
     if(view.hud)params.set('hud','1')
-    if(view.guide)params.set('guide',view.guide)
     if(view.map)params.set('map',view.map)
     if(view.entry){params.set('entry','1');if(view.entry==='saving')params.set('busy','1');if(view.entry==='error')params.set('entryError','Could not save your progress. Please try again.')}
     const url=origin+'/world/preview.html?'+params
@@ -85,22 +84,9 @@ try {
     await page.waitForTimeout(300)
     const state=await page.evaluate(()=>({ready:window.__previewReady,error:window.__previewError,stats:window.__previewStats}))
     if(!state.ready||state.error||errors.length)throw new Error('Experience capture failed '+view.id+': '+JSON.stringify({state,errors}))
-    if(view.hud&&!view.map) {
-      const overlap=await page.evaluate(()=>{
-        const panel=document.getElementById('world-wayfinding'),a=panel?.getBoundingClientRect()
-        if(!a)return 'Missing journey guidance'
-        if(a.x<0||a.right>innerWidth||a.bottom>innerHeight)return 'Journey guidance outside viewport'
-        for(const id of ['hud-vitals','hud-eye','hud-compass','minimap']) {
-          const el=document.getElementById(id)
-          if(!el||getComputedStyle(el).display==='none')continue
-          const b=el.getBoundingClientRect()
-          if(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top)return 'Journey guidance overlaps '+id
-        }
-        return null
-      })
-      if(overlap)throw new Error(view.id+': '+overlap)
-    }
+    if(view.hud&&await page.locator('#world-wayfinding').count())throw new Error(view.id+': Removed location overlay is present')
     if(view.map){
+      if(await page.getByRole('button',{name:'Preview quick travel',exact:true}).count())throw new Error(view.id+': Removed quick travel action is present')
       await page.getByRole('button',{name:'Walk to Draynar',exact:true}).waitFor({state:'visible'})
       const rect=await page.getByRole('button',{name:'Walk to Draynar',exact:true}).boundingBox()
       if(!rect||rect.height<44||rect.y+rect.height>viewport.height)throw new Error('Journey action not usable at '+view.id)
