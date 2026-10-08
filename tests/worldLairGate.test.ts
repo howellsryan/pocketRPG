@@ -1,81 +1,52 @@
-// Grondar's lair ships to production while the overworld does not, so the two
-// gates must stay separate flags. Collapsing them back together is exactly the
-// regression these tests exist to catch — one of them would either hide the
-// boss room or open the whole world.
-import { describe, it, expect, afterEach } from 'vitest'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { worldBetaEnabled, worldBossLairsEnabled, worldOrigin } from '../src/utils/helpers.js'
 
-const root = (p: string) => resolve(__dirname, '..', p)
-const globals = globalThis as Record<string, unknown>
+beforeEach(() => vi.stubGlobal('window', { location: { href: 'https://preview.example.workers.dev/' } }))
+afterEach(() => vi.unstubAllGlobals())
 
-afterEach(() => {
-  delete globals.pocketWorldBetaEnabled
-  delete globals.pocketWorldLairsEnabled
-  delete globals.pocketWorldOrigin
-})
-
-describe('open-world gates', () => {
-  it('opens the boss lair while the overworld stays shut — the production shape', () => {
-    globals.pocketWorldBetaEnabled = false
-    globals.pocketWorldLairsEnabled = true
-    expect(worldBossLairsEnabled()).toBe(true)
+describe('preview-only world entry', () => {
+  it('keeps all world entry closed without baked flags, including Vite/native builds', () => {
     expect(worldBetaEnabled()).toBe(false)
-  })
-
-  it('lets the lair flag shut the boss room without touching the beta', () => {
-    globals.pocketWorldBetaEnabled = true
-    globals.pocketWorldLairsEnabled = false
     expect(worldBossLairsEnabled()).toBe(false)
-    expect(worldBetaEnabled()).toBe(true)
   })
-
-  it('defaults both on when nothing is baked (Vite dev)', () => {
-    expect(worldBossLairsEnabled()).toBe(true)
+  it('closes boss lairs when the world beta is disabled', () => {
+    vi.stubGlobal('pocketWorldBetaEnabled', false)
+    vi.stubGlobal('pocketWorldLairsEnabled', true)
+    expect(worldBetaEnabled()).toBe(false)
+    expect(worldBossLairsEnabled()).toBe(false)
+  })
+  it('allows preview world entry while retaining the independent lair opt-out', () => {
+    vi.stubGlobal('pocketWorldBetaEnabled', true)
+    vi.stubGlobal('pocketWorldLairsEnabled', false)
     expect(worldBetaEnabled()).toBe(true)
+    expect(worldBossLairsEnabled()).toBe(false)
+  })
+  it('does not accept truthy strings as baked opt-in', () => {
+    vi.stubGlobal('pocketWorldBetaEnabled', 'true')
+    expect(worldBetaEnabled()).toBe(false)
+    expect(worldBossLairsEnabled()).toBe(false)
+  })
+  it.each(['https://pocketrpg.co.uk/', 'https://www.pocketrpg.co.uk/', 'https://world.pocketrpg.co.uk/', 'https://pocketrpg.co.uk./', 'https://pocketrpg-app.rlh.workers.dev/'])('refuses an accidentally enabled bundle at %s', href => {
+    vi.stubGlobal('window', { location: { href } })
+    vi.stubGlobal('pocketWorldBetaEnabled', true)
+    vi.stubGlobal('pocketWorldLairsEnabled', true)
+    expect(worldBetaEnabled()).toBe(false)
+    expect(worldBossLairsEnabled()).toBe(false)
+  })
+  it('refuses a native shell pointing to the production API', () => {
+    vi.stubGlobal('window', { location: { href: 'capacitor://localhost/' } })
+    vi.stubGlobal('Capacitor', { isNativePlatform: () => true })
+    vi.stubGlobal('pocketWorldBetaEnabled', true)
+    expect(worldBetaEnabled()).toBe(false)
   })
 })
 
 describe('world origin', () => {
-  it('uses the baked origin', () => {
-    globals.pocketWorldOrigin = '/world'
+  it('uses the baked same-origin world path', () => {
+    vi.stubGlobal('pocketWorldOrigin', '/world')
     expect(worldOrigin()).toBe('/world')
   })
-
-  it('falls back to the same origin, never production, when unbaked', () => {
-    // The world ships from this Worker now, so an unbaked build (Vite dev)
-    // resolves to its own /world prefix rather than naming a deployment.
+  it('falls back to a same-origin path when unbaked', () => {
     expect(worldOrigin()).toBe('/world')
-  })
-})
-
-describe('build bake', () => {
-  const build = readFileSync(root('build_single.cjs'), 'utf8')
-
-  it('ships both new globals in the game chunk', () => {
-    expect(build).toContain('const pocketWorldLairsEnabled = ${worldLairsEnabled}')
-    expect(build).toContain('const pocketWorldOrigin = ${JSON.stringify(worldOrigin)}')
-  })
-
-  it('never bakes a world.pocketrpg.co.uk hostname into any build', () => {
-    // The dedicated world subdomain was retired — every environment, including
-    // production, resolves the handoff to /world on the Worker's own origin.
-    expect(build).not.toContain("'https://world.pocketrpg.co.uk'")
-    expect(build).toContain("const worldOrigin = process.env.WorldOrigin || '/world'")
-  })
-})
-
-describe('entry points', () => {
-  it('gates the combat picker on the lair flag, not the world beta', () => {
-    const screen = readFileSync(root('src/screens/CombatScreen.jsx'), 'utf8')
-    expect(screen).toContain('worldBossLairsEnabled()')
-    expect(screen).not.toContain('worldBetaEnabled')
-  })
-
-  it('keeps the Help screen "Enter World" button on the world beta', () => {
-    const screen = readFileSync(root('src/screens/HelpScreen.jsx'), 'utf8')
-    expect(screen).toContain('worldBetaEnabled()')
-    expect(screen).not.toContain('worldBossLairsEnabled')
   })
 })

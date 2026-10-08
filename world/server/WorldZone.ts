@@ -1,5 +1,6 @@
 import { resourceNodeFor } from '../shared/resources'
 import { Server, type Connection as PartyConnection } from 'partyserver'
+import { worldAccessEnabled } from '../../src/engine/worldAccess.js'
 import { verifyJWT } from '../../functions/_lib/jwt.js'
 import { findPath, findPathAdjacent, findJourneyPath } from './pathfind'
 import { assignInstanceRoom } from './instances'
@@ -416,6 +417,10 @@ export class WorldZone extends Server<Env> {
   }
 
   async onConnect(connection: Connection, ctx: { request: Request }): Promise<void> {
+    if (!worldAccessEnabled(this.env, ctx.request.url)) {
+      connection.close(1008, 'world_disabled')
+      return
+    }
     // This DO is its own isolate — the Worker's fetch handler installed the
     // preview quest-gate bypass over there, not here.
     setQuestGateBypass(resolveQuestGateBypass(this.env, ctx?.request?.url))
@@ -446,6 +451,12 @@ export class WorldZone extends Server<Env> {
       return
     }
 
+    // Keep departure/flush working, but refuse new or resumed gameplay.
+    if (message.t !== 'leave' && !worldAccessEnabled(this.env)) {
+      this.clearAuthTimer(connection.id)
+      connection.close(1008, 'world_disabled')
+      return
+    }
     const charId = connection.state?.charId ?? null
     if (!charId) {
       if (message.t === 'hello') await this.handleHello(connection, message)

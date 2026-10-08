@@ -1,6 +1,7 @@
 import { combatLevelFromLevels } from '../engine/combatLevel.js'
 import { markWorldHandoff } from '../cloud/worldHandoff.js'
 import { apiUrl } from '../cloud/apiBase.js'
+import { isWorldPreviewUrl } from '../engine/worldAccess.js'
 
 /**
  * Random integer between min and max (inclusive)
@@ -134,25 +135,22 @@ export function worldOrigin() {
 }
 
 /**
- * Whether the whole open world may be entered — the Help screen's "Enter
- * World" button, which lands the player in the overworld. `pocketWorldBetaEnabled`
- * is baked in at build time by build_single.cjs (preview on, production off;
- * override with EnableWorldBeta) and lives in the game chunk, so it is read
- * lazily here — never at module evaluation (CLAUDE.md §12) — and guarded for
- * Vite dev, where no single-file build runs.
+ * Preview-only, immutable build opt-in. Read lazily because the flag lives in
+ * the game chunk; unbaked Vite/native builds and live-game origins stay closed.
  */
 export function worldBetaEnabled() {
-  return typeof pocketWorldBetaEnabled !== 'undefined' ? Boolean(pocketWorldBetaEnabled) : true
+  if (typeof pocketWorldBetaEnabled === 'undefined' || pocketWorldBetaEnabled !== true) return false
+  try {
+    return isWorldPreviewUrl(new URL(apiUrl('/'), window.location.href).href)
+  } catch {
+    return false
+  }
 }
 
-/**
- * Whether a boss's instanced open-world lair may be entered from the combat
- * picker. Deliberately independent of `worldBetaEnabled()` above: a lair is a
- * single authored room, so it ships to production while the overworld does
- * not. Don't collapse the two back together.
- */
+/** Boss lairs share the world beta gate and keep their own preview opt-out. */
 export function worldBossLairsEnabled() {
-  return typeof pocketWorldLairsEnabled !== 'undefined' ? Boolean(pocketWorldLairsEnabled) : true
+  return worldBetaEnabled()
+    && typeof pocketWorldLairsEnabled !== 'undefined' && pocketWorldLairsEnabled === true
 }
 
 /**
@@ -161,6 +159,7 @@ export function worldBossLairsEnabled() {
  * is fetched at click time, never held.
  */
 export async function openWorld(api, zone, options = {}) {
+  if (!worldBetaEnabled()) throw new Error('The open world is unavailable in this version.')
   if (options.beforeEnter && !await options.beforeEnter()) {
     throw new Error('Could not save your character. Finish your active world or co-op session, then try again.')
   }
@@ -207,6 +206,7 @@ export function chatActionCostLine(cost) {
  * showing an error.
  */
 export async function fetchWildernessCount() {
+  if (!worldBetaEnabled()) return null
   try {
     const res = await fetch(apiUrl('/api/world/pvp-count'))
     if (!res.ok) return null

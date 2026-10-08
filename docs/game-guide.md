@@ -95,7 +95,9 @@ The World Map shows every settlement in Eldermoor, joined by roads. Tap a settle
 
 ## Exploring the shared world
 
-When the open-world beta is enabled, choose Enter the world from the idle map or Help. Your character saves before entering in the same tab. New arrivals begin in Lumbright; returning explorers resume their world position. An active group boss session must finish before you enter.
+The open world, its boss lairs and the Wilderness are available only in the testing preview. They cannot be entered in the live game, and Map and Settings have no beta entry option. Idle-game group bosses and raids remain available.
+
+In the testing preview, choose Enter the world from Map or Settings. Your character saves before entering in the same tab. New arrivals begin in Lumbright; returning explorers resume their world position. An active group boss session must finish before you enter.
 
 Eldermoor's cities share one overworld. Open its map, choose a named destination and select Walk to begin the complete journey. Destination details show the direction and remaining distance. Tap the ground to change course.
 
@@ -285,7 +287,7 @@ The General Store sells a fixed catalogue of basics at fixed prices. Everything 
 
 ## PvP — the Wilderness
 
-PvP happens in one place: the Wilderness, an open-world area you enter from the Combat screen. There is no lobby and no matchmaking. You arrive in a walled border camp with a bank chest, where nothing can touch you. North through the gates is open PvP, and the game stops you at the line and asks you to confirm before you cross.
+The Wilderness is available only in the testing preview; the live game has no Wilderness entry. In the preview, enter this open-world PvP area from the Combat screen. There is no lobby and no matchmaking. You arrive in a walled border camp with a bank chest, where nothing can touch you. North through the gates is open PvP, and the game stops you at the line and asks you to confirm before you cross.
 
 Out there, anyone within 10 combat levels of you can attack you, and you can attack them. It is single combat: one fight at a time, and nobody can jump in on a fight already under way. Eating, potions, prayers (protection prayers included), special attacks and spells all work exactly as they do anywhere else in the open world.
 

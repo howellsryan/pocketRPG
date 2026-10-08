@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const esbuild = require('esbuild');
+const { resolveWorldBuildFlags } = require('./scripts/world-build-flags.cjs');
 
 const DIST = path.join(__dirname, 'dist_tmp');
 const SRC = path.join(__dirname, 'src');
@@ -18,6 +19,7 @@ const sourceFiles = [
   // Ahead of helpers.js, which calls into it (openWorld) — dependency-free by
   // design so it can sit this early.
   'cloud/worldHandoff.js',
+  'engine/worldAccess.js',
   'utils/helpers.js',
   'utils/complexityColors.js',
   'utils/completion.js',
@@ -763,35 +765,17 @@ const SPLIT_MINIFY = {
 // The branch this build is for. Workers Builds injects WORKERS_CI_BRANCH;
 // Pages injected CF_PAGES_BRANCH, still read so the Pages project keeps baking
 // correctly for as long as it stays deployed as the migration's rollback.
-// Every flag below derives from this ONE value: read the raw env var again and
-// a Workers build silently loses whichever flag missed the change — which for
-// the world origin below means production players handed to preview.
+// Quest flags derive from this value. World availability instead requires an
+// explicit preview build environment, since preview may use a main commit.
 const deployBranch = process.env.WORKERS_CI_BRANCH || process.env.CF_PAGES_BRANCH || '';
 const isProductionBranch = deployBranch === 'main';
 const branchLog = `branch=${deployBranch || 'unset'}`;
 
-// Open-world beta button flag, same build-time-bake pattern as the other
-// deploy-branch-derived flags in this file (and for the same reason: this is
-// a client-bundle toggle, and wrangler.toml [vars] never reach the client
-// build — only functions/**).
-// `EnableWorldBeta` ("true"/anything) is an explicit override when set;
-// otherwise derive from CF_PAGES_BRANCH the same way: preview = enabled,
-// production (main) = disabled. Fail-safe: no branch info disables.
-const worldBetaEnabled = process.env.EnableWorldBeta != null
-  ? process.env.EnableWorldBeta === 'true'
-  : Boolean(deployBranch) && !isProductionBranch;
-console.log(`World beta button: ${worldBetaEnabled ? 'ENABLED' : 'disabled'} (EnableWorldBeta=${process.env.EnableWorldBeta ?? 'unset'}, ${branchLog})`);
-// Boss lairs are a SEPARATE flag from the world beta above, deliberately: a
-// lair is one authored instanced room entered from the boss picker and left by
-// closing the tab, so it ships to production while the beta button — which
-// drops the player into the whole overworld — stays off. Default on; the
-// `EnableWorldLairs` override exists so a bad night is one redeploy, not a
-// code change. What may have a lair is still the allowlist in
-// src/engine/worldLairs.js.
-const worldLairsEnabled = process.env.EnableWorldLairs != null
-  ? process.env.EnableWorldLairs === 'true'
-  : true;
-console.log(`World boss lairs: ${worldLairsEnabled ? 'ENABLED' : 'disabled'} (EnableWorldLairs=${process.env.EnableWorldLairs ?? 'unset'})`);
+// Availability is deployment-environment based, never inferred from a branch.
+// Only build:site:preview opts in; ordinary/main builds stay closed even if an
+// old EnableWorldBeta=true build variable survives.
+const { worldBetaEnabled, worldLairsEnabled } = resolveWorldBuildFlags(process.env);
+console.log(`World beta: ${worldBetaEnabled ? 'ENABLED' : 'disabled'} (build environment=${process.env.POCKETRPG_BUILD_ENV ?? 'unset'}, ${branchLog})`);
 // Where the handoff opens the open-world client. The world ships from the same
 // Worker as the game, staged under /world/ (scripts/stage-site.mjs), so every
 // environment — production included — points at its OWN origin: a bare path,

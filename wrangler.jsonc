@@ -40,10 +40,10 @@
     "not_found_handling": "none",
     // Static assets are served without invoking the Worker — which is what
     // keeps the hashed game chunk, fonts, vendored three.js and 3D models free.
-    // Only the documents need the Worker first, because world.pocketrpg.co.uk's
-    // root has to be rewritten onto the /world/ prefix (worker/worldHost.js)
-    // and would otherwise resolve to the idle game's index.html.
-    "run_worker_first": ["/", "/index.html", "/editor", "/editor.html", "/preview", "/preview.html"]
+    // World documents/assets also go through the Worker first to enforce the
+    // runtime flag, including a mistakenly staged world build. Production
+    // normally omits these assets entirely.
+    "run_worker_first": ["/", "/index.html", "/editor", "/editor.html", "/preview", "/preview.html", "/world", "/world/*"]
   },
 
   "durable_objects": {
@@ -82,6 +82,8 @@
 
   "vars": {
     "APP_BASE_URL": "https://pocketrpg.co.uk",
+    // World admission stays disabled on production, including direct links.
+    "WORLD_BETA_ENABLED": "false",
     // Feature flag for the chat helper's 1-credit write-action fee
     // (CHAT_ACTION_FEE in functions/_lib/chat/actions.js). "false" disables it;
     // the fee logic stays in place, so flipping this back to "true" (or
@@ -91,11 +93,10 @@
     "CHAT_JEV_TOOL_ROUTING": "false"
   },
 
-  // NOTE: the 3D-render, world-beta, world-origin and quest-gate client flags
-  // are BUILD-time, not runtime bindings. build_single.cjs derives them from
-  // the deploy branch (WORKERS_CI_BRANCH on Workers Builds, CF_PAGES_BRANCH on
-  // Pages) and bakes them into the game chunk; listing them here would have no
-  // effect. See build_single.cjs and docs/3d-gameplay-investigation.md.
+  // Client world flags are baked only by build:site:preview; the runtime
+  // WORLD_BETA_ENABLED binding independently gates assets, APIs and sockets.
+  // Quest-gate client flags still derive from the deploy branch.
+  // See docs/world-preview-access.md.
   //
   // Secrets to set via the dashboard or `wrangler secret put`:
   //   JWT_SECRET                — random 32+ byte string used to sign session JWTs
@@ -147,6 +148,7 @@
       // ever needs it, give it its own value — never reuse production's.
       "vars": {
         "APP_BASE_URL": "https://pocketrpg-app-preview.rlh.workers.dev",
+        "WORLD_BETA_ENABLED": "true",
         "CHAT_ACTION_FEE_ENABLED": "false",
         "CHAT_JEV_TOOL_ROUTING": "false",
         "DISABLE_QUEST_REQUIREMENTS": "true",
@@ -156,7 +158,7 @@
         "directory": "dist_site",
         "binding": "ASSETS",
         "not_found_handling": "none",
-        "run_worker_first": ["/", "/index.html", "/editor", "/editor.html", "/preview", "/preview.html"]
+        "run_worker_first": ["/", "/index.html", "/editor", "/editor.html", "/preview", "/preview.html", "/world", "/world/*"]
       },
       // Bindings are NOT inherited from the top level — every one must be
       // redeclared here even though only the D1 target differs.

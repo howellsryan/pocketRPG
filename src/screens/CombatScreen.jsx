@@ -58,7 +58,7 @@ import raidsData from '../data/raids.json'
 import { isCoopBossId } from '../engine/coopBossEngine.js'
 import { isCoopRaidId } from '../engine/coopRaidEngine.js'
 import { hasWorldLair, worldLairZone } from '../engine/worldLairs.js'
-import { openWorld, worldBossLairsEnabled } from '../utils/helpers.js'
+import { openWorld, worldBetaEnabled, worldBossLairsEnabled } from '../utils/helpers.js'
 import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
@@ -1575,8 +1575,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Co-op needs a cloud account (the server owns the fight), so the offline demo
   // always goes straight to the solo path.
   const offersCoop = (monster) => isCoopBossId(monster.id) && !isDemo
-  // Gated on the lair flag, NOT the world beta: an authored boss room ships
-  // ahead of the overworld it lives in.
+  // World lairs are preview-only; idle co-op remains available independently.
   const offersWorldLair = (monster) => hasWorldLair(monster.id) && !isDemo && worldBossLairsEnabled()
 
   // Every picker tap goes through here so mobile and desktop behave the same —
@@ -2732,7 +2731,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             onStance={updateCombatStance}
             idleSetup={idleCombatSetup}
             onOpenIdle={setIdleSetupMode}
-            showPvp={!isDemo && !isDungeon}
+            showPvp={!isDemo && !isDungeon && worldBetaEnabled()}
             onOpenPvp={() => setShowWildernessEntry(true)}
             demoLockBosses={isDemo}
             coopBrowserPanel={coopBrowserPanel}
@@ -2980,11 +2979,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
         )}
 
-        {/* Wilderness entry — hidden only in the demo (no account, so no world
+        {/* Wilderness entry — preview-only, hidden in the demo (no account, so no world
             handoff) and in dungeons. Ironman and One Life accounts may both go:
             an Ironman simply cannot take another player's loot, and a One Life
             run ends there like it ends anywhere else. */}
-        {!isDemo && !isDungeon && (
+        {!isDemo && !isDungeon && worldBetaEnabled() && (
           <div class="mt-6 pb-2">
             <button
               onClick={() => setShowWildernessEntry(true)}
@@ -3003,7 +3002,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       </div>
       )}
 
-      {showWildernessEntry && (
+      {showWildernessEntry && worldBetaEnabled() && (
         <WildernessEntryModal onClose={() => setShowWildernessEntry(false)} />
       )}
 

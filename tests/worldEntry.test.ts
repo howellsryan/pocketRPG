@@ -7,11 +7,12 @@ describe('saved same-tab world entry', () => {
   let navigated: string[]
   let opened: string[]
   beforeEach(() => {
+    vi.stubGlobal('pocketWorldBetaEnabled', true)
     writes.clear()
     navigated = []
     opened = []
     vi.stubGlobal('localStorage', {getItem: (key: string) => writes.get(key) ?? null, setItem: (key: string, value: string) => writes.set(key, value)})
-    vi.stubGlobal('window', {location: {assign: (url: string) => navigated.push(url)}, open: (url: string) => {opened.push(url); return {}}})
+    vi.stubGlobal('window', {location: {href: 'https://preview.example.workers.dev/', assign: (url: string) => navigated.push(url)}, open: (url: string) => {opened.push(url); return {}}})
   })
   afterEach(() => vi.unstubAllGlobals())
   it('finishes saving before minting and navigating with the one-use handoff', async () => {
@@ -35,6 +36,17 @@ describe('saved same-tab world entry', () => {
     const api = {requestWorldHandoff: async () => {throw new Error('Leave your co-op session first')}}
     await expect(openWorld(api, undefined, {sameTab: true, beforeEnter: async () => true})).rejects.toThrow('Leave your co-op session first')
     expect(navigated).toEqual([])
+    expect(hasPendingWorldHandoff()).toBe(false)
+  })
+  it.each([false, undefined, 'true'])('refuses disabled or unbaked entry (%s) before any save or handoff', async flag => {
+    vi.stubGlobal('pocketWorldBetaEnabled', flag)
+    writes.set('pocketWorldBeta', 'true')
+    const actions: string[] = []
+    const api = {requestWorldHandoff: async () => {actions.push('handoff'); return {handoff: 'abc.def'}}}
+    await expect(openWorld(api, 'grondar_lair', {beforeEnter: async () => {actions.push('save'); return true}})).rejects.toThrow(/unavailable/i)
+    expect(actions).toEqual([])
+    expect(navigated).toEqual([])
+    expect(opened).toEqual([])
     expect(hasPendingWorldHandoff()).toBe(false)
   })
 })

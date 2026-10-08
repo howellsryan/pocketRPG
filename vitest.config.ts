@@ -1,6 +1,10 @@
 import { defineConfig } from 'vitest/config'
+import { createRequire } from 'node:module'
 
 export default defineConfig({
+  // The Worker imports root and world sources; share one mocked runtime even
+  // when both packages have installed their own copy of partyserver.
+  resolve: { alias: { partyserver: createRequire(import.meta.url).resolve('partyserver') } },
   test: {
     globals: true,
     environment: 'node',

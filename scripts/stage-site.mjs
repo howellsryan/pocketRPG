@@ -9,6 +9,7 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, copyFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import worldBuildFlags from './world-build-flags.cjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const out = join(root, 'dist_site')
@@ -52,10 +53,9 @@ function stage() {
   }
   for (const chunk of chunks) copyFileSync(join(root, chunk), join(out, chunk))
 
-  if (existsSync(WORLD_SOURCE)) {
+  if (worldBuildFlags.resolveWorldBuildFlags(process.env).worldBetaEnabled) {
+    if (!existsSync(WORLD_SOURCE)) throw new Error('stage-site: enabled preview is missing the world client build')
     cpSync(WORLD_SOURCE, join(out, WORLD_PREFIX), { recursive: true })
-  } else {
-    console.warn('stage-site: world/client/dist absent — the open world will 404. Run `npm --prefix world run build`.')
   }
 
   console.log(`dist_site: ${ROOT_ASSETS.length} root entries, ${chunks.length} game chunk(s)`)
