@@ -15,7 +15,7 @@ Model-first: every usable creature model we own, its best `monsters.json` match,
 | Model | Match in `monsters.json` (level) | Status | Notes |
 |---|---|---|---|
 | Chicken | field_chicken (1) | **In world** (Phase 6) | `build-monster.mjs`; the Whisperwood |
-| Goleling | cave_goblin (5) | **In world** (Phase 6) | Flyer — clips are `Flying_Idle`/`Fast_Flying`; hovers off the ground |
+| Goleling | — | Rejected for cave_goblin | Floating creature does not match the idle goblin identity; cave_goblin now uses the procedural moss-green humanoid with walking and combat poses |
 | Wizard | arcane_adept (9) / umbral_adept (20) | **In world** (Phase 6, arcane_adept) | Living-hat creature; umbral tint still pending |
 | Green/Pink/Spiky Blob | bogling_sprite (12) | **In world** (Phase 7, Green Blob) | Outside Lumbright's walls |
 | Ghost | wailing_banshee (23) / wraith-type specters | Candidate | |
@@ -27,7 +27,7 @@ Model-first: every usable creature model we own, its best `monsters.json` match,
 | Goleling Evolved | elder_rock_golem (70) | Matched | |
 | Demon | lesser_fiend (82) / pyreclaw_demon (88) | Matched | |
 | Yeti | gorroth_the_mountain_ape (650) / hellbound_gorilla (275) | Candidate | Far-future levels |
-| **Dragon** | **green_dragon (79) — first world boss** | **Matched** | Dragonfire + `antiDragon` mechanic makes it a real gear-check boss |
+| **Dragon** | **green_dragon (79), red_dragon, black_dragon** | **In world** | Shared dragon mesh with distinct tints and bounded presentation scale; ordinary dragon encounters retain their existing combat mechanics and 3 × 3 bodies |
 | Dragon Evolved | king_black_dragon (276) | Matched | Later; KBD is a collection-log boss — kill must emit the same server-side log/KC side-effects as `/api/actions/**` |
 | Squidle | deepmaw_kraken (291) | Matched | Needs a water zone first |
 | Mushroom King | — | — | No mushroom monster exists; strong candidate model if we ever author one (`add-content`) |
@@ -53,7 +53,7 @@ Model-first: every usable creature model we own, its best `monsters.json` match,
 
 ### Known gaps (no asset — DT-class C if wanted)
 
-dustpaw_rat (4) · broodfang_spider (27) — Halloween Bits is graveyard **props only**, no spider · frostmaw_direwolf (85) / wolf-types · stoneback/duneback/tidereaper crabs · elder_tree_spirit / briarheart_treant (treant) · snake/serpent types. None block any planned phase; skip rather than force a bad match.
+dustpaw_rat (4) now uses a reviewed procedural rat. cave_goblin (5) now uses a reviewed procedural humanoid; the former floating Goleling substitution was removed. Remaining gaps include broodfang_spider (27) — Halloween Bits is graveyard **props only**, no spider · frostmaw_direwolf (85) / wolf-types · stoneback/duneback/tidereaper crabs · elder_tree_spirit / briarheart_treant (treant) · snake/serpent types. Missing species block their corresponding canonical world activities; record those bindings as deferred instead of forcing a mismatched model.
 
 ## Equipment
 

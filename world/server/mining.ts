@@ -1,13 +1,14 @@
 // Mining data + session-inventory helpers. Pure module — no I/O, no DO state —
 // so the tick state machine and its tests share one source of truth.
+import { getEffectiveToolActionTicks } from '../../src/engine/skilling.js'
 import skillsData from '../../src/data/skills.json'
 import itemsData from '../../src/data/items.json'
 import type { InvSlot } from '../shared/protocol'
 
 export type MiningAction = { id: string; name: string; level: number; ticks: number; xp: number; product: string }
 
-type SkillsData = { mining: { actions: MiningAction[] }; woodcutting: { actions: MiningAction[] } }
-type ItemsData = Record<string, { stackable?: boolean } | undefined>
+type SkillsData = { mining: { actions: MiningAction[] }; woodcutting: { actions: MiningAction[] }; fishing: { actions: MiningAction[] } }
+type ItemsData = Record<string, { stackable?: boolean; scaleCharged?: boolean } | undefined>
 
 export const MINING_ACTIONS: Record<string, MiningAction> = Object.fromEntries(
   (skillsData as unknown as SkillsData).mining.actions.map((a) => [a.id, a])
@@ -17,7 +18,11 @@ export const WOODCUTTING_ACTIONS: Record<string, MiningAction> = Object.fromEntr
   (skillsData as unknown as SkillsData).woodcutting.actions.map((a) => [a.id, a])
 )
 
-export type GatherSkill = 'mining' | 'woodcutting'
+export const FISHING_ACTIONS: Record<string, MiningAction> = Object.fromEntries(
+  (skillsData as unknown as SkillsData).fishing.actions.map((a) => [a.id, a])
+)
+
+export type GatherSkill = 'mining' | 'woodcutting' | 'fishing'
 
 /** Per-skill gather config: real skills.json actions, the interact verb the
  * wire uses, and the level-gate message. Trees are a mining reskin — one state
@@ -27,6 +32,11 @@ export const GATHER_SKILLS: Record<GatherSkill, { actions: Record<string, Mining
     actions: MINING_ACTIONS,
     verb: 'mine',
     levelMsg: (level) => `You need Mining level ${level} to mine this rock.`,
+  },
+  fishing: {
+    actions: FISHING_ACTIONS,
+    verb: 'fish',
+    levelMsg: (level) => `You need Fishing level ${level} to fish here.`,
   },
   woodcutting: {
     actions: WOODCUTTING_ACTIONS,
@@ -135,4 +145,16 @@ export function inventoryToItems(inventory: InvSlot[]): { itemId: string; quanti
     byId.set(slot.itemId, (byId.get(slot.itemId) ?? 0) + slot.quantity)
   }
   return [...byId.entries()].map(([itemId, quantity]) => ({ itemId, quantity }))
+}
+
+/** Charged tools require charge settlement before world timing can use them.
+ * Ordinary held/equipped tool selection remains the shared idle formula. */
+export function fishingActionTicks(baseTicks: number, equipment: Record<string, unknown>, stats: Record<string, { xp: number; level: number }>, inventory: InvSlot[]): number {
+  const items = itemsData as unknown as ItemsData
+  const eligible = (slot: unknown): boolean => {
+    const id = (slot as { itemId?: string } | null)?.itemId
+    return !id || !items[id]?.scaleCharged
+  }
+  const gear = Object.fromEntries(Object.entries(equipment).filter(([,slot]) => eligible(slot)))
+  return getEffectiveToolActionTicks('fishing',baseTicks,gear,itemsData,stats,inventory.filter(eligible))
 }

@@ -131,6 +131,20 @@ export function createProcCreature(THREE, spec) {
   let hopT = Math.random() * 2 // hopper idle timer
   let idleT = 0 // time since combat motion ended (drives leg re-homing)
   let acc = 0
+  let locomotionRate = 0
+  let walkPhase = 0
+  const locomotionEnabled = spec.locomotion === 'biped' && archetype === 'humanoid' && legs.length === 2
+  const walking = () => locomotionRate > 0 && state === 'idle' && !dead
+  const resetStride = () => {
+    walkPhase = 0
+    for (const leg of legs) { leg.plant.copy(leg.footBase); leg.step = null }
+  }
+  const setLocomotion = rate => {
+    if (!locomotionEnabled) return
+    const next = Number.isFinite(rate) ? rigClamp(rate, 0, 2) : 0
+    if (locomotionRate > 0 && next === 0) resetStride()
+    locomotionRate = next
+  }
 
   const rootPos = new THREE.Vector3()
   const rootEuler = new THREE.Euler()
@@ -144,6 +158,10 @@ export function createProcCreature(THREE, spec) {
   const tmpE = new THREE.Euler()
 
   const trigger = (name) => {
+    if (locomotionEnabled && ['attack', 'hit', 'death', 'respawn'].includes(name)) {
+      locomotionRate = 0
+      resetStride()
+    }
     if (name === 'respawn') {
       dead = false
       state = 'idle'
@@ -292,7 +310,13 @@ export function createProcCreature(THREE, spec) {
       // hip rides the root; the planted foot does not
       tmpV.copy(leg.hipBase).applyMatrix4(shell.rootMat)
       overrideA[leg.idx].copy(tmpV)
-      if (deathP > 0) {
+      if (walking()) {
+        const phase = walkPhase + leg.group * Math.PI
+        leg.plant.copy(leg.footBase)
+        leg.plant.z += 0.12 * S * Math.sin(phase)
+        leg.plant.y += 0.055 * S * Math.max(0, Math.cos(phase))
+        leg.step = null
+      } else if (deathP > 0) {
         // death: the foot stops being planted and rides the keeling body
         // rigidly — legs stay coherent with the roll instead of slicing
         // through the torso toward a ground plant
@@ -401,6 +425,7 @@ export function createProcCreature(THREE, spec) {
       idleT += dt
     }
 
+    if (walking()) walkPhase += dt * Math.PI * 2 * 1.25 * locomotionRate
     applyRootMotion()
 
     for (let i = 0; i < parts.length; i++) { mats[i].identity(); radiusScale[i] = 1 }
@@ -435,6 +460,7 @@ export function createProcCreature(THREE, spec) {
         let pitch = 0.05 * Math.sin(t * 0.83 + arm.phase) + 0.02 * Math.sin(t * 1.31 + arm.phase)
         let roll = 0.03 * Math.sin(t * 1.07 + arm.phase)
         let bend = -0.12
+        if (walking()) pitch += 0.30 * Math.sin(walkPhase + (arm.right ? Math.PI : 0))
         if (atkP >= 0 && spec.attackStyle === 'smash') {
           // both arms heave overhead on the wind-up, then slam straight down
           // together — the double-fisted smash lands at the arena impact.
@@ -517,6 +543,7 @@ export function createProcCreature(THREE, spec) {
     group: shell.group,
     update,
     trigger,
+    setLocomotion,
     setFlash: shell.setFlash,
     dispose: shell.dispose,
   }

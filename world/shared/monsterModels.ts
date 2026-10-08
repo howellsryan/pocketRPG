@@ -57,12 +57,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     bounds: { minX: -1.17, minY: -0.01, minZ: -0.8, maxX: 1.17, maxY: 2.34, maxZ: 1.3 },
     targetHeight: 0.9,
   },
-  cave_goblin: {
-    url: '/models/goblin.glb',
-    bounds: { minX: -2.19, minY: 1.49, minZ: -1.43, maxX: 2.19, maxY: 3.04, maxZ: 0.51 },
-    targetHeight: 1.0,
-    hover: 0.25,
-  },
+
   arcane_adept: {
     url: '/models/wizard.glb',
     bounds: { minX: -1.16, minY: 0, minZ: -1.23, maxX: 1.17, maxY: 2.6, maxZ: 1.08 },
@@ -100,13 +95,13 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
   },
   // One dragon build, three hides. Sized by combat level (79 / 152 / 227); the
   // GLB only flies (Flying_Idle / Fast_Flying), so they hover as they wander.
-  // Deliberately the largest things in the world — they also carry a 3×3
-  // footprint (shared/monsterSize.ts) so a player fights the head instead of
-  // standing under the jaw.
+  // The low flying mesh is much wider than it is tall. Keep its wingspan
+  // below five tiles so mobile encounter views retain the player and court.
+  // Its 3×3 combat footprint (shared/monsterSize.ts) remains unchanged.
   green_dragon: {
     url: '/models/dragon.glb',
     bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
-    targetHeight: 2.6,
+    targetHeight: 1.3,
     hover: 0.25,
     attackImpactSec: 0.55,
     tint: { Dragon_Main: '#3f7a35', Dragon_Secondary: '#24451f' },
@@ -114,7 +109,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
   red_dragon: {
     url: '/models/dragon.glb',
     bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
-    targetHeight: 3.0,
+    targetHeight: 1.45,
     hover: 0.25,
     attackImpactSec: 0.55,
     tint: { Dragon_Main: '#8f2118', Dragon_Secondary: '#3d0f0a' },
@@ -122,7 +117,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
   black_dragon: {
     url: '/models/dragon.glb',
     bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
-    targetHeight: 3.4,
+    targetHeight: 1.6,
     hover: 0.25,
     attackImpactSec: 0.55,
     tint: { Dragon_Main: '#26262b', Dragon_Secondary: '#111114' },

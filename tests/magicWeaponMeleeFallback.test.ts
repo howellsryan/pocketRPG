@@ -9,6 +9,7 @@
 import { describe, expect, it } from 'vitest'
 import { createCombatState, processCombatTick } from '../src/engine/combat.js'
 import { resolveMagicSpell } from '../src/engine/equipment.js'
+import { mockRandomSequence } from './helpers/random'
 
 const staffItemsData: any = {
   staff: {
@@ -65,11 +66,16 @@ describe('processCombatTick — melee fallback for a magic weapon with no spell'
   })
 
   it('grants melee (attack) XP, not magic XP, while falling back', () => {
-    let state = createCombatState(buildDummy({ hitpoints: 1000 }), 'melee', 'accurate', null)
-    const { combatState } = processCombatTick(state, maxedStats, equipment, staffItemsData)
-    state = combatState
-    expect(state.xpGained.magic || 0).toBe(0)
-    expect((state.xpGained.attack || 0) + (state.xpGained.hitpoints || 0)).toBeGreaterThan(0)
+    // This assertion checks XP routing after a hit, rather than hit probability.
+    const random = mockRandomSequence([0.5])
+    try {
+      const state = createCombatState(buildDummy({ hitpoints: 1000 }), 'melee', 'accurate', null)
+      const { combatState } = processCombatTick(state, maxedStats, equipment, staffItemsData)
+      expect(combatState.xpGained.magic || 0).toBe(0)
+      expect(combatState.xpGained.attack || 0).toBeGreaterThan(0)
+    } finally {
+      random.mockRestore()
+    }
   })
 
   it('casts real magic once a spell is provided, using the same weapon', () => {

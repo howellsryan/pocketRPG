@@ -93,6 +93,16 @@ Your inventory holds a hard maximum of 28 slots, and you can drag items to rearr
 
 The World Map shows every settlement in Eldermoor, joined by roads. Tap a settlement to open its hub — lore, facilities, travel and teleport options, and a browsable list of what's available there. Walking follows the roads and takes real time; teleporting is instant but needs the destination's Magic level plus runes, and grants Magic XP. Some settlements (starting with Varrick) have their own illustrated town map: when you're there, tapping the settlement opens the town map instead, and you start activities by tapping the markers placed on it — city gates for monsters, the rooftop course for Agility, and so on. The bank marker opens banking plus training for the crafts doable at any banked settlement (Crafting, Fletching, Firemaking, Herblore, Magic, Construction). Prayer, Cooking and Smithing are tied to their own facilities — an altar, a stove, and a furnace & anvil — found only in some settlements; on a town map each facility is its own marker (in Varrick: the Royal Chapel, the Market Stove, the Grand Smithy). Every settlement with a sawmill (Varrick, Faloden, Ardounne, Seerhold) converts all log types to planks — its sawmill marker lists every conversion; the trading post marker opens the Trading Post. For mapped places the hub's activity list is browse-only — visit the town and tap a marker to begin — and backing out of a skilling screen you entered from the town map returns you to that map.
 
+## Exploring the shared world
+
+The open world, its boss lairs and the Wilderness are available only in the testing preview. They cannot be entered in the live game, and Map and Settings have no beta entry option. Idle-game group bosses and raids remain available.
+
+In the testing preview, choose Enter the world from Map or Settings. Your character saves before entering in the same tab. New arrivals begin in Lumbright; returning explorers resume their world position. An active group boss session must finish before you enter.
+
+Eldermoor's cities share one overworld. Open its map, choose a named destination and select Walk to begin the complete journey. Destination details show the direction and remaining distance. Tap the ground to change course.
+
+Caves, pastures and boss lairs have named entrances. Choose Enter to go through; simply walking past an entrance keeps you outside. Boss requirements still apply, and you must leave combat before moving between areas. The return doorway leads to a safe road outside. Leave world from the world settings to return to the idle game.
+
 ## Idle progress and offline catch-up
 
 Start a skilling task, gather task or auto-fight and it keeps running while the app is closed. When you come back, PocketRPG simulates the time you were away and awards the XP, loot and coins you earned. Supplies (food, potions, runes, ammunition) are consumed during idle combat exactly as they would be live — stock up before long sessions.
@@ -277,7 +287,7 @@ The General Store sells a fixed catalogue of basics at fixed prices. Everything 
 
 ## PvP — the Wilderness
 
-PvP happens in one place: the Wilderness, an open-world area you enter from the Combat screen. There is no lobby and no matchmaking. You arrive in a walled border camp with a bank chest, where nothing can touch you. North through the gates is open PvP, and the game stops you at the line and asks you to confirm before you cross.
+The Wilderness is available only in the testing preview; the live game has no Wilderness entry. In the preview, enter this open-world PvP area from the Combat screen. There is no lobby and no matchmaking. You arrive in a walled border camp with a bank chest, where nothing can touch you. North through the gates is open PvP, and the game stops you at the line and asks you to confirm before you cross.
 
 Out there, anyone within 10 combat levels of you can attack you, and you can attack them. It is single combat: one fight at a time, and nobody can jump in on a fight already under way. Eating, potions, prayers (protection prayers included), special attacks and spells all work exactly as they do anywhere else in the open world.
 

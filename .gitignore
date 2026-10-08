@@ -47,3 +47,7 @@ world/preview-shots/
 /.claude/skills/systematic-debugging
 /.claude/skills/verification-before-completion
 /.claude/skills/test-driven-development
+
+# Cloudflare semantic-review build outputs
+/world/review-site/
+/world/.review-browser/

@@ -353,3 +353,14 @@ describe('flushGrants', () => {
     expect(calls).toHaveLength(0)
   })
 })
+
+describe('committed grant audit failure',()=>{
+  it('retains the grant receipt and does not retry already saved rewards',async()=>{
+    const {env,calls}=makeDb()
+    const io=makeIO({stats:{}},{auditLog:vi.fn(async()=>{throw new Error('audit unavailable')})})
+    expect(await flushGrants(env,who,payload(),io)).toBe(true)
+    expect(io.writeSave).toHaveBeenCalledTimes(1)
+    expect(io.loadCharacterWithSave).toHaveBeenCalledTimes(1)
+    expect(calls.some(call=>call.sql.includes('DELETE FROM world_grants'))).toBe(false)
+  })
+})

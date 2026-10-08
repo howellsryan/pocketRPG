@@ -18,7 +18,7 @@ import {
   allowedMethods,
   hasMiddleware,
 } from './router.js'
-import { rewriteForWorldHost } from './worldHost.js'
+import { isWorldHost, rewriteForWorldHost } from './worldHost.js'
 import { onRequest as apiMiddleware } from '../functions/api/_middleware.js'
 import { setQuestGateBypass, resolveQuestGateBypass } from '../src/engine/questGates.js'
 import { handleWorldSession } from '../world/server/session'
@@ -26,6 +26,7 @@ import { handleWorldLeave } from '../world/server/leave'
 import { handlePvpCount } from '../world/server/pvpCount'
 import { handleEditorRequest } from '../world/server/editor'
 import { departInRoom } from '../world/server/departInRoom'
+import { worldAccessEnabled } from '../src/engine/worldAccess.js'
 
 export { WorldZone } from '../world/server/WorldZone'
 export { CoopBossRoom } from '../world/server/CoopBossRoom'
@@ -35,6 +36,16 @@ const ROUTES = compileRoutes(
 )
 
 const EDITOR_PREFIX = '/api/world/editor'
+
+function isWorldRequest(url) {
+  // Match the router's repeated/trailing slash handling before dispatch.
+  const path = '/' + url.pathname.split('/').filter(Boolean).join('/')
+  return isWorldHost(url.hostname)
+    || path === '/world' || path.startsWith('/world/')
+    || path === '/api/world-token'
+    || path === '/api/world' || path.startsWith('/api/world/')
+    || path === '/parties/world-zone' || path.startsWith('/parties/world-zone/')
+}
 
 /** The world Worker's own HTTP surface, which never went through Pages and so
  * never had the /api/** middleware. Kept off it here for the same reason: the
@@ -95,6 +106,13 @@ export default {
     setQuestGateBypass(resolveQuestGateBypass(env, request.url))
 
     try {
+      // Exit-only cleanup stays authenticated and releases existing save locks.
+      const departing = url.pathname === '/api/world/leave' && request.method === 'POST'
+      if (!departing && isWorldRequest(url) && !worldAccessEnabled(env, request.url)) {
+        return new Response(JSON.stringify({ error: 'World unavailable' }), {
+          status: 404, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+        })
+      }
       const worldResponse = await worldApiResponse(request, env, url)
       if (worldResponse) return worldResponse
 

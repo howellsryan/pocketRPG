@@ -1,5 +1,7 @@
 import * as THREE from 'three'
-import { groundKind, groundKindGrid, type ZoneGroundRegion } from '../../shared/groundKinds'
+import { GROUND_KINDS, groundKind, groundKindGrid, type ZoneGroundRegion } from '../../shared/groundKinds'
+
+import { paintGeometryData } from './paintGeometry'
 
 // Painted ground layer (docs/world-design-review-2026-07.md §4.1). Renders a
 // zone's `ground` regions — dirt paths, cobbled roads, plazas, farm soil,
@@ -14,8 +16,6 @@ import { groundKind, groundKindGrid, type ZoneGroundRegion } from '../../shared/
 // receives the sun's shadow, and never z-fights (a small polygonOffset lifts it
 // off the base). Raycasting is disabled on the overlay and water so click-to-
 // move still hits the base ground mesh underneath.
-
-const OVERLAY_EPSILON = 0.02
 
 /** Per-tile RGBA canvas: a painted tile gets its kind colour (opaque), an
  * unpainted tile is transparent. Null when nothing is painted. */
@@ -43,21 +43,6 @@ function buildKindTexture(width: number, height: number, grid: string[]): THREE.
   return tex
 }
 
-/** Lifts each vertex of a per-tile-subdivided plane to the terrain corner
- * heights (matching createGround), so the overlay drapes over relief. */
-function drape(geometry: THREE.PlaneGeometry, width: number, height: number, corners: Float32Array | null): void {
-  if (!corners) return
-  const stride = width + 1
-  const pos = geometry.attributes.position
-  for (let i = 0; i < pos.count; i++) {
-    const cx = Math.min(width, Math.max(0, Math.round(pos.getX(i))))
-    const cz = Math.min(height, Math.max(0, Math.round(pos.getZ(i))))
-    pos.setY(i, corners[cz * stride + cx])
-  }
-  pos.needsUpdate = true
-  geometry.computeVertexNormals()
-}
-
 /** Adds the painted-ground overlay for `ground` regions. Returns the mesh (for
  * disposal) or null when nothing is painted. */
 export function createGroundPaint(
@@ -70,10 +55,15 @@ export function createGroundPaint(
   const grid = groundKindGrid(width, height, ground)
   const texture = buildKindTexture(width, height, grid)
   if (!texture) return null
-  const geometry = new THREE.PlaneGeometry(width, height, width, height)
-  geometry.rotateX(-Math.PI / 2)
-  geometry.translate(width / 2, OVERLAY_EPSILON, height / 2)
-  drape(geometry, width, height, corners)
+  const codes=Object.fromEntries(GROUND_KINDS.map((kind,i)=>[kind.id,i+1]))
+  const matches=(ids:string[])=>ids.map(id=>'abs(vPaintKind-'+codes[id]+'.0)<.1').join(' || ')
+  const data=paintGeometryData(width,height,grid,codes,corners)
+  const geometry=new THREE.BufferGeometry()
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(data.positions,3))
+  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(data.uv,2))
+  geometry.setAttribute('normal',new THREE.Float32BufferAttribute(data.normals,3))
+  geometry.setAttribute('paintKind',new THREE.Float32BufferAttribute(data.kinds,1))
+  geometry.setIndex(data.indices)
   const material = new THREE.MeshStandardMaterial({
     map: texture,
     alphaTest: 0.5,
@@ -83,6 +73,33 @@ export function createGroundPaint(
     polygonOffsetFactor: -1,
     polygonOffsetUnits: -1,
   })
+  material.onBeforeCompile=(shader)=>{
+    shader.vertexShader=shader.vertexShader
+      .replace('#include <common>','#include <common>\nattribute float paintKind;\nvarying float vPaintKind;\nvarying vec2 vPaintXY;')
+      .replace('#include <begin_vertex>','#include <begin_vertex>\nvPaintKind=paintKind;\nvPaintXY=position.xz;')
+    shader.fragmentShader=shader.fragmentShader
+      .replace('#include <common>',`#include <common>
+varying float vPaintKind;
+varying vec2 vPaintXY;
+float paintHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}`)
+      .replace('#include <map_fragment>',`#include <map_fragment>
+float shade=.95+.10*paintHash(floor(vPaintXY*14.0));
+if(${matches(['path_cobble','plaza','floor_stone','floor_tile'])}){
+  vec2 cell=vec2(vPaintXY.x*2.4+mod(floor(vPaintXY.y*2.8),2.0)*.5,vPaintXY.y*2.8);
+  vec2 f=fract(cell);
+  float edge=min(min(f.x,1.0-f.x),min(f.y,1.0-f.y));
+  shade*=mix(.69,.92+.13*paintHash(floor(cell)),smoothstep(.025,.07,edge));
+}else if(${matches(['farm'])}){
+  shade*=.85+.15*smoothstep(.10,.45,abs(fract(vPaintXY.x*3.0)-.5));
+}else if(${matches(['floor_plank'])}){
+  float gap=min(fract(vPaintXY.y*4.0),1.0-fract(vPaintXY.y*4.0));
+  shade*=mix(.58,1.05,smoothstep(.025,.09,gap));
+  shade*=.92+.08*paintHash(floor(vec2(vPaintXY.x*.7,vPaintXY.y*4.0)));
+}else if(${matches(['path_dirt','sand','marsh'])}){
+  shade*=.94+.10*paintHash(floor(vPaintXY*2.5));
+}
+diffuseColor.rgb*=shade;`)
+  }
   const mesh = new THREE.Mesh(geometry, material)
   mesh.receiveShadow = true
   mesh.raycast = () => {}

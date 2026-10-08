@@ -31,6 +31,7 @@ export const GROUND_KINDS: GroundKind[] = [
   { id: 'plaza', label: 'Plaza / Paving', color: '#a89e88' },
   { id: 'sand', label: 'Sand', color: '#cdb888' },
   { id: 'farm', label: 'Farm Soil', color: '#6b4f34' },
+  { id: 'marsh', label: 'Marsh / Moss', color: '#46594b' },
   { id: 'floor_plank', label: 'Wood Floor', color: '#7a5a38' },
   { id: 'floor_stone', label: 'Stone Floor', color: '#8b8578' },
   { id: 'floor_tile', label: 'Tiled Floor', color: '#9a9488' },

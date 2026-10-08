@@ -105,11 +105,12 @@ const targets = ids.flatMap((id) => {
   const forms = entry.forms && !entry.parts ? Object.keys(entry.forms) : [null]
   return forms.map((f) => ({
     id: `${id}${f ? `-${f}` : ''}${biomeId ? `-${biomeId}` : ''}`,
+    locomotion: (f ? entry.forms[f] : entry).locomotion,
     query: `monster=${id}${f ? `&form=${encodeURIComponent(f)}` : ''}${biomeQ}`,
   }))
 })
 if (heroMode) targets.push({ id: (heroEquip ? 'hero-equipped' : 'hero') + (biomeId ? `-${biomeId}` : ''), query: `hero&equip=${encodeURIComponent(heroEquip)}${front}${biomeQ}` })
-for (const { id, query } of targets) {
+for (const { id, query, locomotion } of targets) {
   const page = await browser.newPage({ viewport: { width: 720, height: 560 } })
   page.on('pageerror', (e) => { console.error(`[${id}] page error:`, e.message); process.exitCode = 1 })
   await page.goto(`http://127.0.0.1:${port}/docs/prototypes/proc-creature-harness.html?${query}`)
@@ -131,6 +132,14 @@ for (const { id, query } of targets) {
       t += 0.4
       await page.evaluate((tt) => window.__setTime(tt), t)
     }
+  }
+  if (locomotion) {
+    await page.evaluate(() => { window.__trigger('respawn'); window.__setLocomotion(1) })
+    t += 0.13
+    await page.evaluate((tt) => window.__setTime(tt), t)
+    const out = path.join(ROOT, outDir, `${id}-walk.png`)
+    await page.screenshot({ path: out })
+    console.log(out)
   }
   await page.close()
 }

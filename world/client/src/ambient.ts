@@ -1,3 +1,4 @@
+import { AMBIENT_MODELS } from '../../shared/ambientModels'
 import * as THREE from 'three'
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
@@ -24,19 +25,7 @@ import { modelUrl } from './assetBase'
 // unreliable for skinned meshes — same reason as monsterModels.ts). `target`
 // is render height in tiles: field critters read smaller and cuter than their
 // combat cousins; villagers are human-scale.
-const CRITTERS: Record<string, { url: string; target: number; b: { minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number } }> = {
-  chicken: { url: '/models/chicken.glb', target: 0.55, b: { minX: -1.17, maxX: 1.17, minY: -0.01, maxY: 2.34, minZ: -0.8, maxZ: 1.3 } },
-  frog: { url: '/models/frog.glb', target: 0.4, b: { minX: -2.32, maxX: 2.32, minY: -0.01, maxY: 2.68, minZ: -0.58, maxZ: 0.97 } },
-  // Target 1.6 matches HERO_SCALE's rendered height in entities.ts (Quaternius
-  // Ranger outfit, ~1.9 units tall raw × 0.85 ≈ 1.615) — villagers read at the
-  // same human scale as the player instead of an arbitrarily different one.
-  // Bounds are the actual posed (idle, not bind/T-pose) box from a headless
-  // three.js render of the built GLB — Box3.setFromObject in the browser
-  // evaluates skinning correctly; gltf-transform's getBounds does not.
-  villager_a: { url: '/models/villager_a.glb', target: 1.6, b: { minX: -0.36, maxX: 0.395, minY: -0.004, maxY: 1.796, minZ: -0.323, maxZ: 0.388 } },
-  villager_b: { url: '/models/villager_b.glb', target: 1.6, b: { minX: -0.366, maxX: 0.399, minY: -0.004, maxY: 1.774, minZ: -0.335, maxZ: 0.392 } },
-  villager_c: { url: '/models/villager_c.glb', target: 1.6, b: { minX: -0.36, maxX: 0.395, minY: -0.004, maxY: 1.796, minZ: -0.323, maxZ: 0.388 } },
-}
+const CRITTERS = AMBIENT_MODELS
 
 // A rect fully walled in (author error, or a rect drawn over a building) must
 // not spin forever hunting for a walkable point — after this many misses the
@@ -168,21 +157,39 @@ export type WalkerFrame = { x: number; z: number; yaw: number }
  * ambient epoch. The one function two independent clients must agree on for
  * item 9 to work: same `walkers`/`collision`/`elapsedSeconds` in, same
  * `WalkerFrame[]` out, regardless of which client computed it or when. */
-export function walkerFramesAt(collision: string[], walkers: Walker[], elapsedSeconds: number, legSeconds = AMBIENT_LEG_SECONDS): WalkerFrame[] {
-  const legIndex = Math.floor(elapsedSeconds / legSeconds)
-  const frac = elapsedSeconds / legSeconds - legIndex
-  const starts = legWaypoints(collision, walkers, legIndex)
-  const ends = legWaypoints(collision, walkers, legIndex + 1)
-  return walkers.map((_, i) => {
-    const a = starts[i]
+function interpolateWalkers(starts: { x: number; z: number }[], ends: { x: number; z: number }[], frac: number): WalkerFrame[] {
+  return starts.map((a, i) => {
     const b = ends[i]
-    const dx = b.x - a.x
-    const dz = b.z - a.z
+    const dx = b.x - a.x, dz = b.z - a.z
     return { x: a.x + dx * frac, z: a.z + dz * frac, yaw: Math.hypot(dx, dz) < 1e-6 ? 0 : Math.atan2(dx, dz) }
   })
 }
 
-export type AmbientLayer = { update: (dt: number) => void; dispose: () => void }
+export function walkerFramesAt(collision: string[], walkers: Walker[], elapsedSeconds: number, legSeconds = AMBIENT_LEG_SECONDS): WalkerFrame[] {
+  const legIndex = Math.floor(elapsedSeconds / legSeconds)
+  return interpolateWalkers(legWaypoints(collision, walkers, legIndex),
+    legWaypoints(collision, walkers, legIndex + 1), elapsedSeconds / legSeconds - legIndex)
+}
+
+/** Waypoints depend on the leg, not the frame. Keep the complete walker order
+ * for separation, including villagers whose animation is currently asleep. */
+export function createWalkerSampler(collision: string[], walkers: Walker[]): (seconds: number) => WalkerFrame[] {
+  let previousLeg = NaN
+  let starts: { x: number; z: number }[] = [], ends: { x: number; z: number }[] = []
+  return seconds => {
+    const leg = Math.floor(seconds / AMBIENT_LEG_SECONDS)
+    if (leg !== previousLeg) {
+      starts = leg === previousLeg + 1 ? ends : legWaypoints(collision, walkers, leg)
+      ends = legWaypoints(collision, walkers, leg + 1)
+      previousLeg = leg
+    }
+    return interpolateWalkers(starts, ends, seconds / AMBIENT_LEG_SECONDS - leg)
+  }
+}
+
+export type AmbientView = { camera: THREE.Camera; centre: { x: number; z: number } }
+
+export type AmbientLayer = { ready: Promise<void>; update: (dt: number, elapsedSeconds?: number, view?: AmbientView) => void; dispose: () => void }
 
 /** Builds the ambient layer: kicks off critter/villager model loads (instances
  * appear as each GLB resolves) and adds the smoke emitters. Returns an
@@ -215,14 +222,41 @@ export function createAmbient(
     }
   })
 
-  specs.forEach((spec, specIndex) => void spawnCritters(scene, spec, walkerIndexBase[specIndex], instances))
+  const templates = new Map<string, Promise<GLTF | null>>()
+  const loadModel = (url: string): Promise<GLTF | null> => {
+    let pending = templates.get(url)
+    if (!pending) {
+      pending = new GLTFLoader().loadAsync(modelUrl(url)).catch(() => null)
+      templates.set(url, pending)
+    }
+    return pending
+  }
+  const ready = Promise.all(specs.map((spec, specIndex) => spawnCritters(scene, spec, walkerIndexBase[specIndex], instances, loadModel))).then(() => undefined)
+  const sample = createWalkerSampler(collision, walkers)
+  const frustum = new THREE.Frustum()
+  const projection = new THREE.Matrix4()
+  const bounds = new THREE.Sphere(new THREE.Vector3(), 2)
+  const visible = (position: THREE.Vector3, radius: number, view?: AmbientView): boolean => {
+    if (!view) return true
+    // Keep nearby shadow casters even when the camera points away from them.
+    if ((position.x - view.centre.x) ** 2 + (position.z - view.centre.z) ** 2 < 20 ** 2) return true
+    bounds.center.copy(position)
+    bounds.center.y += radius / 2
+    bounds.radius = radius
+    return frustum.intersectsSphere(bounds)
+  }
 
   let bob = 0
   return {
-    update: (dt: number) => {
+    ready,
+    update: (dt: number, elapsedSeconds = Date.now() / 1000, view?: AmbientView) => {
+      if (view) {
+        view.camera.updateMatrixWorld()
+        projection.multiplyMatrices(view.camera.projectionMatrix, view.camera.matrixWorldInverse)
+        frustum.setFromProjectionMatrix(projection)
+      }
       if (instances.length > 0) {
-        const elapsedSeconds = Date.now() / 1000
-        const frames = walkerFramesAt(collision, walkers, elapsedSeconds)
+        const frames = sample(elapsedSeconds)
         bob += dt * 8
         const bobOffset = Math.abs(Math.sin(bob)) * 0.06
         for (const c of instances) {
@@ -233,6 +267,8 @@ export function createAmbient(
           world.z = frame.z
           world.y = heightAt(world.x, world.z) + (c.mixer ? 0 : bobOffset)
           c.group.rotation.y = frame.yaw
+          c.group.visible = visible(world, 2, view)
+          if (!c.group.visible) continue
           if (c.mixer) {
             const wanted = c.walkAction
             if (wanted && wanted !== c.current) {
@@ -244,7 +280,10 @@ export function createAmbient(
           }
         }
       }
-      for (const s of smokers) s.update(dt)
+      for (const s of smokers) {
+        s.points.visible = visible(s.centre, 4, view)
+        if (s.points.visible) s.update(dt)
+      }
     },
     dispose: () => {
       for (const c of instances) scene.remove(c.group)
@@ -273,15 +312,11 @@ function makeAmbientAnimator(model: THREE.Object3D, gltf: GLTF): Pick<Instance, 
  * deterministic simulation — `update()` positions them from `walkerFramesAt`
  * once the mesh exists, so initial placement doesn't need its own spawn-point
  * logic (it's just this walker's frame at whatever moment the load resolves). */
-async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, walkerIndexBase: number, out: Instance[]): Promise<void> {
+async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, walkerIndexBase: number, out: Instance[], loadModel: (url: string) => Promise<GLTF | null>): Promise<void> {
   const def = CRITTERS[spec.model]
   if (!def) return
-  let gltf
-  try {
-    gltf = await new GLTFLoader().loadAsync(modelUrl(def.url))
-  } catch {
-    return
-  }
+  const gltf = await loadModel(def.url)
+  if (!gltf) return
   const { b, target } = def
   const scale = target / (b.maxY - b.minY)
   for (let i = 0; i < spec.count; i++) {
@@ -289,7 +324,10 @@ async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, walke
     model.position.set(-((b.minX + b.maxX) / 2) * scale, -b.minY * scale, -((b.minZ + b.maxZ) / 2) * scale)
     model.traverse((o) => {
       const mesh = o as THREE.Mesh
-      if (mesh.isMesh) mesh.castShadow = true
+      if (mesh.isMesh) {
+        mesh.castShadow = true
+        // Keep mesh bounds enabled for independent camera and shadow culling.
+      }
     })
     const group = new THREE.Group()
     group.scale.setScalar(scale)
@@ -320,7 +358,7 @@ function puffTexture(): THREE.CanvasTexture {
   return softTexture
 }
 
-function createSmoke(scene: THREE.Scene, wx: number, wy: number, wz: number): { update: (dt: number) => void; dispose: () => void } {
+function createSmoke(scene: THREE.Scene, wx: number, wy: number, wz: number): { points: THREE.Points; centre: THREE.Vector3; update: (dt: number) => void; dispose: () => void } {
   const ages = new Float32Array(PUFFS)
   const positions = new Float32Array(PUFFS * 3)
   for (let i = 0; i < PUFFS; i++) {
@@ -340,7 +378,8 @@ function createSmoke(scene: THREE.Scene, wx: number, wy: number, wz: number): { 
     sizeAttenuation: true,
   })
   const points = new THREE.Points(geometry, material)
-  points.frustumCulled = false
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(wx, wy + 1.65, wz), 4)
+  points.frustumCulled = true
   scene.add(points)
 
   const update = (dt: number): void => {
@@ -362,6 +401,8 @@ function createSmoke(scene: THREE.Scene, wx: number, wy: number, wz: number): { 
     attr.needsUpdate = true
   }
   return {
+    points,
+    centre: new THREE.Vector3(wx, wy + 1.65, wz),
     update,
     dispose: () => {
       scene.remove(points)

@@ -1,3 +1,5 @@
+import { SIMPLE_GATHER_TASKS, resourceAction } from './resources'
+import creaturesData from '../../src/data/creatures3d.json'
 import skillsData from '../../src/data/skills.json'
 import monstersData from '../../src/data/monsters.json'
 import { MODELED_MONSTERS } from './monsterModels'
@@ -10,6 +12,8 @@ import { MODELED_MONSTERS } from './monsterModels'
 export type CatalogEntry =
   | { kind: 'rock'; label: string; icon: string; rock: string; level: number }
   | { kind: 'tree'; label: string; icon: string; tree: string; level: number }
+  | { kind: 'fishing_spot'; label: string; icon: string; fishing: string; level: number }
+  | { kind: 'gather_site'; label: string; icon: string; gather: string; level: number }
   | { kind: 'npc'; label: string; icon: string; monsterId: string; combatLevel: number; hp: number; hasModel: boolean }
   | { kind: 'object'; label: string; icon: string; objectType: 'bank_chest' | 'furnace' | 'anvil' | 'range' }
   | { kind: 'prop'; label: string; icon: string; model: string }
@@ -26,24 +30,33 @@ const monsters = monstersData as unknown as Record<string, Monster>
 export function gatherCatalog(): CatalogGroup {
   const entries: CatalogEntry[] = []
   for (const action of skills.mining?.actions ?? []) {
+    if (!resourceAction({skill:'mining',rock:action.id})) continue
     entries.push({ kind: 'rock', label: action.name ?? action.id, icon: '⛏️', rock: action.id, level: action.level ?? 1 })
   }
   for (const action of skills.woodcutting?.actions ?? []) {
+    if (!resourceAction({skill:'woodcutting',rock:action.id})) continue
     entries.push({ kind: 'tree', label: action.name ?? action.id, icon: '🌲', tree: action.id, level: action.level ?? 1 })
   }
+  for (const action of skills.fishing?.actions ?? []) {
+    if (!resourceAction({skill:'fishing',rock:action.id})) continue
+    entries.push({ kind: 'fishing_spot', label: action.name ?? action.id, icon: '🎣', fishing: action.id, level: action.level ?? 1 })
+  }
+  for (const task of SIMPLE_GATHER_TASKS) entries.push({ kind: 'gather_site', label: task.name, icon: '🧵', gather: task.id, level: 1 })
   return { title: 'Gathering nodes', entries }
 }
+
+const hasVisual = (id: string) => MODELED_MONSTERS.has(id) || Object.hasOwn(creaturesData.monsters, id)
 
 export function monsterCatalog(): CatalogGroup {
   const entries: CatalogEntry[] = Object.entries(monsters)
     .map(([id, m]) => ({
       kind: 'npc' as const,
       label: m.name ?? id,
-      icon: MODELED_MONSTERS.has(id) ? '🐾' : '☠️',
+      icon: hasVisual(id) ? '🐾' : '☠️',
       monsterId: id,
       combatLevel: Number(m.combatLevel) || 0,
       hp: Number(m.hp ?? m.hitpoints) || 0,
-      hasModel: MODELED_MONSTERS.has(id),
+      hasModel: hasVisual(id),
     }))
     .sort((a, b) => a.combatLevel - b.combatLevel || a.label.localeCompare(b.label))
   return { title: 'Monsters', entries }

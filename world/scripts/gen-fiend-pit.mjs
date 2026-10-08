@@ -119,7 +119,7 @@ const npcs = [
 ]
 
 const exits = [
-  { id: 'exit_scorched', x: 20, z: 39, toZone: 'overworld', toX: 206, toZ: 134, label: 'The Scorched Reach', hideMarker: true },
+  { id: 'exit_scorched', x: 20, z: 39, toZone: 'overworld', toX: 125, toZ: 157, label: 'Draynar Road', hideMarker: true, presentation: 'door', activation: 'interact', description: 'Return to the shared overworld road.' },
 ]
 
 // A bank chest inside the mouth, within reach of the tile you land (and respawn)

@@ -135,7 +135,7 @@ const npcs = [
 
 // Arrival is by instance handoff; the farm gate is the way back out.
 const exits = [
-  { id: 'exit_farmland', x: 20, z: 39, toZone: 'overworld', toX: 170, toZ: 166, label: 'Farmland', hideMarker: true },
+  { id: 'exit_farmland', x: 20, z: 39, toZone: 'overworld', toX: 182, toZ: 158, label: 'Lumbright Farm Road', hideMarker: true, presentation: 'door', activation: 'interact', description: 'Return to the shared overworld road.' },
 ]
 
 // A bank chest inside the gate, within reach of the tile you land (and respawn)

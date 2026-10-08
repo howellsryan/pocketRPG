@@ -1,0 +1,657 @@
+{
+  "schemaVersion": 1,
+  "id": "canifel",
+  "name": "Canifel",
+  "place": "canifel",
+  "seed": 6470,
+  "width": 40,
+  "height": 36,
+  "spawn": {
+    "x": 20,
+    "z": 18
+  },
+  "intent": "A shuttered marsh village with a chapel forecourt, crooked lanes and dark groves. Seaweed collecting and a toad hollow lead away from the safe road.",
+  "points": [
+    {
+      "id": "arrival",
+      "x": 20,
+      "z": 18,
+      "label": "Canifel arrival",
+      "role": "arrival"
+    },
+    {
+      "id": "court",
+      "x": 20,
+      "z": 18,
+      "label": "Marsh chapel",
+      "role": "hub"
+    },
+    {
+      "id": "landmark",
+      "x": 20,
+      "z": 13,
+      "label": "Marsh chapel",
+      "role": "landmark"
+    },
+    {
+      "id": "shrine",
+      "x": 26,
+      "z": 8,
+      "label": "Chapel forecourt",
+      "role": "discovery"
+    },
+    {
+      "id": "west",
+      "x": 1,
+      "z": 18,
+      "label": "Varrick road",
+      "role": "gateway"
+    },
+    {
+      "id": "gather_approach",
+      "x": 30,
+      "z": 25,
+      "label": "Fieldwork patch",
+      "role": "resource"
+    },
+    {
+      "id": "encounter_0",
+      "x": 8,
+      "z": 8,
+      "label": "Marshfen Toad approach",
+      "role": "encounter"
+    }
+  ],
+  "routes": [
+    {
+      "id": "arrival_lane",
+      "from": "arrival",
+      "to": "court",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "ceremonial_approach",
+      "from": "court",
+      "to": "landmark",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "west_road",
+      "from": "court",
+      "to": "west",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_0",
+      "from": "court",
+      "to": "shrine",
+      "via": [
+        {
+          "x": 24,
+          "z": 18
+        },
+        {
+          "x": 24,
+          "z": 11
+        },
+        {
+          "x": 26,
+          "z": 11
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_1",
+      "from": "court",
+      "to": "gather_approach",
+      "via": [
+        {
+          "x": 25,
+          "z": 18
+        },
+        {
+          "x": 25,
+          "z": 21
+        },
+        {
+          "x": 31,
+          "z": 21
+        },
+        {
+          "x": 31,
+          "z": 25
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_2",
+      "from": "court",
+      "to": "encounter_0",
+      "via": [
+        {
+          "x": 11,
+          "z": 18
+        },
+        {
+          "x": 11,
+          "z": 9
+        },
+        {
+          "x": 8,
+          "z": 9
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_3",
+      "from": "court",
+      "to": "fen_keepers_home:door",
+      "via": [
+        {
+          "x": 11,
+          "z": 18
+        },
+        {
+          "x": 11,
+          "z": 15
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_4",
+      "from": "court",
+      "to": "reedcutters_house:door",
+      "via": [
+        {
+          "x": 15,
+          "z": 18
+        },
+        {
+          "x": 15,
+          "z": 21
+        },
+        {
+          "x": 14,
+          "z": 21
+        },
+        {
+          "x": 14,
+          "z": 30
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_5",
+      "from": "court",
+      "to": "shuttered_cottage:door",
+      "via": [
+        {
+          "x": 23,
+          "z": 18
+        },
+        {
+          "x": 23,
+          "z": 29
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_6",
+      "from": "court",
+      "to": "chapel_keepers_home:door",
+      "via": [
+        {
+          "x": 24,
+          "z": 18
+        },
+        {
+          "x": 24,
+          "z": 11
+        },
+        {
+          "x": 26,
+          "z": 11
+        },
+        {
+          "x": 26,
+          "z": 8
+        },
+        {
+          "x": 28,
+          "z": 8
+        },
+        {
+          "x": 28,
+          "z": 6
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    }
+  ],
+  "surfaces": [
+    {
+      "kind": "marsh",
+      "x": 0,
+      "z": 0,
+      "w": 40,
+      "h": 36
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 0,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 37,
+      "z": 3,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 35,
+      "z": 6,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 9,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 35,
+      "z": 12,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 15,
+      "w": 4,
+      "h": 2,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 17,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "kind": "floor_plank",
+      "x": 35,
+      "z": 17,
+      "w": 5,
+      "h": 3
+    },
+    {
+      "kind": "water",
+      "x": 37,
+      "z": 20,
+      "w": 3,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 35,
+      "z": 23,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 26,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 35,
+      "z": 29,
+      "w": 5,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 36,
+      "z": 32,
+      "w": 4,
+      "h": 3,
+      "blocked": true
+    },
+    {
+      "kind": "water",
+      "x": 37,
+      "z": 35,
+      "w": 3,
+      "h": 1,
+      "blocked": true
+    },
+    {
+      "kind": "marsh",
+      "x": 17,
+      "z": 16,
+      "w": 7,
+      "h": 5
+    }
+  ],
+  "lots": [
+    {
+      "id": "fen_keepers_home",
+      "prefab": "cottage",
+      "x": 8,
+      "z": 12
+    },
+    {
+      "id": "reedcutters_house",
+      "prefab": "cottage",
+      "x": 11,
+      "z": 27
+    },
+    {
+      "id": "shuttered_cottage",
+      "prefab": "cottage",
+      "x": 27,
+      "z": 26
+    },
+    {
+      "id": "chapel_keepers_home",
+      "prefab": "cottage",
+      "x": 30,
+      "z": 3
+    }
+  ],
+  "resources": [
+    {
+      "id": "gather_0",
+      "ref": "gather:collect_seaweed",
+      "x": 30,
+      "z": 24
+    }
+  ],
+  "encounters": [
+    {
+      "id": "wild_marshfen_toad",
+      "ref": "combat:marshfen_toad",
+      "wander": {
+        "x": 6,
+        "z": 3,
+        "w": 4,
+        "h": 4
+      },
+      "spawns": [
+        {
+          "x": 7,
+          "z": 4
+        }
+      ]
+    }
+  ],
+  "access": [],
+  "exits": [],
+  "dressing": [
+    {
+      "model": "crypt",
+      "x": 20,
+      "z": 8,
+      "scale": 1.25
+    },
+    {
+      "model": "altar",
+      "x": 26,
+      "z": 6,
+      "scale": 1.2
+    },
+    {
+      "model": "well",
+      "x": 26,
+      "z": 13,
+      "scale": 1.2
+    },
+    {
+      "model": "stone_slab",
+      "x": 29,
+      "z": 11,
+      "scale": 1.4
+    },
+    {
+      "model": "lantern",
+      "x": 26,
+      "z": 22,
+      "scale": 0.7
+    },
+    {
+      "model": "stone_slab",
+      "x": 17,
+      "z": 15,
+      "scale": 1.3
+    },
+    {
+      "model": "lantern",
+      "x": 23,
+      "z": 15,
+      "scale": 0.65
+    }
+  ],
+  "groves": [
+    {
+      "id": "north_canopy",
+      "x": 5,
+      "z": 1,
+      "w": 29,
+      "h": 8,
+      "count": 8,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "west_canopy",
+      "x": 1,
+      "z": 6,
+      "w": 9,
+      "h": 28,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.2
+      ]
+    },
+    {
+      "id": "south_canopy",
+      "x": 7,
+      "z": 26,
+      "w": 26,
+      "h": 9,
+      "count": 10,
+      "models": [
+        "pine_a",
+        "pine_b"
+      ],
+      "scaleRange": [
+        1.5,
+        2.3
+      ]
+    },
+    {
+      "id": "fen_undergrowth",
+      "x": 1,
+      "z": 1,
+      "w": 38,
+      "h": 34,
+      "count": 22,
+      "models": [
+        "bush",
+        "mushrooms"
+      ],
+      "scaleRange": [
+        1.4,
+        2.5
+      ]
+    }
+  ],
+  "deferredBindings": [
+    {
+      "ref": "facility:altar",
+      "reason": "facility_adapter"
+    },
+    {
+      "ref": "combat:briar_giant",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:cinderpaw_cub",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:duskmare",
+      "reason": "instance_required"
+    },
+    {
+      "ref": "combat:glaive_skeleton",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:mirebound_husk",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:verdant_stalker",
+      "reason": "missing_model"
+    }
+  ],
+  "ambient": {
+    "critters": [
+      {
+        "model": "villager_c",
+        "x": 17,
+        "z": 17,
+        "w": 6,
+        "h": 3,
+        "count": 2
+      }
+    ],
+    "smoke": []
+  },
+  "connections": [
+    {
+      "point": "west",
+      "to": "varrick"
+    }
+  ],
+  "waymarks": [
+    {
+      "id": "road_varrick",
+      "label": "Varrick",
+      "destination": "varrick",
+      "x": 3,
+      "z": 18
+    }
+  ],
+  "terrain": {
+    "relief": 0.15,
+    "procedural": {
+      "seed": 6470,
+      "frequency": 0.03
+    },
+    "material": "marsh",
+    "scatter": []
+  },
+  "budgets": {
+    "props": 100,
+    "npcs": 8,
+    "ambient": 4,
+    "maxPropsPer8x8": 18
+  },
+  "reviewViews": [
+    {
+      "id": "overview",
+      "target": "court",
+      "mode": "overview",
+      "distance": 50,
+      "pitch": 0.95,
+      "yaw": 0
+    },
+    {
+      "id": "arrival",
+      "target": "arrival",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25
+    },
+    {
+      "id": "gather",
+      "target": "gather_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "gather:collect_seaweed"
+      ]
+    },
+    {
+      "id": "encounter_0",
+      "target": "encounter_0",
+      "mode": "gameplay",
+      "yaw": 0.3,
+      "zoom": 1.3,
+      "covers": [
+        "combat:marshfen_toad"
+      ]
+    },
+    {
+      "id": "district",
+      "target": "fen_keepers_home:door",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.1
+    }
+  ]
+}

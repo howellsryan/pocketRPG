@@ -39,6 +39,7 @@ export function storeRunPref(on: boolean): void {
 const POCKETRPG_PROD_HOSTNAME = 'pocketrpg.co.uk'
 const POCKETRPG_PROD_URL = 'https://pocketrpg.co.uk'
 const POCKETRPG_PREVIEW_URL = 'https://preview.pocketrpg.pages.dev'
+const POCKETRPG_WORKERS_PREVIEW_URL = 'https://pocketrpg-app-preview.rlh.workers.dev'
 
 export function getStoredSession(): WorldSession | null {
   const raw = localStorage.getItem(STORAGE_KEY)
@@ -93,19 +94,10 @@ export async function exchangeHandoff(handoff: string): Promise<WorldSession> {
   return session
 }
 
-const KNOWN_POCKETRPG_ORIGINS = [POCKETRPG_PROD_URL, POCKETRPG_PREVIEW_URL]
+const KNOWN_POCKETRPG_ORIGINS = [POCKETRPG_PROD_URL, POCKETRPG_PREVIEW_URL, POCKETRPG_WORKERS_PREVIEW_URL]
 
-/** Resolves which PocketRPG deployment "Go to PocketRPG" should return to.
- * Prefers the referring page — wherever the "Enter World" button was
- * actually clicked from — over the world app's own hostname, since the same
- * world deployment can be reached from either PocketRPG site. Only trusts
- * the referrer when it's one of the two known PocketRPG origins (never an
- * open redirect to an arbitrary referrer). Falls back to the world app's own
- * hostname (the production custom domain vs anything else) when the
- * referrer is missing/unrecognized — a bookmarked or reloaded world tab has
- * no referrer at all. The world client ships from the game's own Worker now,
- * so that hostname fallback is just pocketrpg.co.uk vs anything else. Pure —
- * testable without a DOM. */
+/** Returns to a trusted referring game, or the deployment hosting this world.
+ * Unknown referrers cannot choose a redirect destination. */
 export function resolvePocketRpgUrl(referrer: string, worldHostname: string): string {
   try {
     const referrerOrigin = referrer ? new URL(referrer).origin : ''
@@ -113,7 +105,9 @@ export function resolvePocketRpgUrl(referrer: string, worldHostname: string): st
   } catch {
     // malformed referrer — fall through to the hostname heuristic
   }
-  return worldHostname === POCKETRPG_PROD_HOSTNAME ? POCKETRPG_PROD_URL : POCKETRPG_PREVIEW_URL
+  if (worldHostname === 'pocketrpg-app-preview.rlh.workers.dev') return POCKETRPG_WORKERS_PREVIEW_URL
+  return worldHostname === POCKETRPG_PROD_HOSTNAME || worldHostname === 'world.pocketrpg.co.uk'
+    ? POCKETRPG_PROD_URL : POCKETRPG_PREVIEW_URL
 }
 
 export function pocketRpgUrl(): string {

@@ -98,6 +98,7 @@ function renderAt(t) {
 
 window.__setTime = (t) => renderAt(t)
 window.__trigger = (name) => creature.trigger(name)
+window.__setLocomotion = (rate) => creature.setLocomotion?.(rate)
 window.__creatureGroup = creature.group
 window.__setFlash = (amt) => creature.setFlash(0.8, 0.05, 0.02, amt)
 window.__measureFps = (frames = 150) => new Promise((res) => {

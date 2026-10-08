@@ -164,12 +164,13 @@ const npcs = [
 ]
 
 const exits = [
-  { id: 'exit_highlands', x: 32, z: 63, toZone: 'overworld', toX: 272, toZ: 50, label: 'The Dragonspine', hideMarker: true },
+  { id: 'exit_highlands', x: 32, z: 63, toZone: 'overworld', toX: 117, toZ: 148, label: 'Draynar Dragon Trail', hideMarker: true, presentation: 'door', activation: 'interact', description: 'Return to the shared overworld road.' },
 ]
 
 // A bank chest on the arrival plaza, within reach of the tile you land (and
 // respawn) on: an instance is a closed room, so restocking has to happen in it.
-const SPAWN = { x: 32, z: 57 }
+// Four tiles from the return: its name stays below phone vitals on arrival.
+const SPAWN = { x: 32, z: 59 }
 const objects = [{ id: 'chest_1', type: 'bank_chest', x: SPAWN.x + 1, z: SPAWN.z }]
 
 // ── Collision post-pass, then reopen every route that must stay walkable ──

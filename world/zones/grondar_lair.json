@@ -77,10 +77,13 @@
    "x": 20,
    "z": 39,
    "toZone": "overworld",
-   "toX": 280,
-   "toZ": 56,
-   "label": "The Wilds",
-   "hideMarker": true
+   "toX": 251,
+   "toZ": 83,
+   "label": "Varrick Road",
+   "hideMarker": true,
+   "presentation": "door",
+   "activation": "interact",
+   "description": "Return to the shared overworld road."
   }
  ],
  "props": [

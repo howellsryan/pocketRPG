@@ -2,45 +2,17 @@ import * as THREE from 'three'
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { tileToWorld } from './scene'
 import type { PropPlacement } from '../../shared/protocol'
+import { PROP_BASE_SCALE } from '../../shared/propScale.js'
 import { modelUrl } from './assetBase'
+import { collectMeshParts } from './scatter'
 
 // Scenery dressing from the zone JSON `props` list: pure visuals — no pick
 // data, no collision (that lives in the ASCII grid under them). Each distinct
-// model loads once; instances are clones. A failed load just skips the model.
+// model loads once; complete mesh parts are instanced in spatial batches. A failed load just skips the model.
 
 // Kenney nature-kit models are authored ~1 unit tall; base scales size each
 // model against the 1-unit tile grid, multiplied by the placement's own scale.
-const BASE_SCALE: Record<string, number> = {
-  pine_a: 1.7,
-  pine_b: 1.6,
-  bush: 1.4,
-  mushrooms: 1.1,
-  flowers: 1.1,
-  boulder: 1.3,
-  // Varrick capital landmarks (native model bounds → tile-grid units).
-  castle: 3.0,
-  fountain: 1.5,
-  stall: 1.8,
-  banner: 2.0,
-  altar: 1.6,
-  crypt: 2.2,
-  column: 2.0,
-  dungeon_stairs: 0.9,
-  dungeon_door: 0.8,
-  // Pasture and pit dressing (native model bounds → tile-grid units).
-  fence: 1.0,
-  fence_gate: 1.0,
-  wheat: 1.4,
-  hay_bale: 1.6,
-  hay_stack: 1.8,
-  torch: 1.6,
-  stone_spire: 1.9,
-  stone_spire_ember: 1.9,
-  stone_slab: 1.4,
-  skull: 0.32,
-  bones: 1.2,
-  obelisk: 2.6,
-}
+export { PROP_BASE_SCALE } from '../../shared/propScale.js'
 export async function createProps(scene: THREE.Scene, props: PropPlacement[]): Promise<void> {
   if (props.length === 0) return
   const urls = [...new Set(props.map((p) => p.model))]
@@ -55,14 +27,29 @@ export async function createProps(scene: THREE.Scene, props: PropPlacement[]): P
     })
   )
   const group = new THREE.Group()
-  for (const p of props) {
-    const template = templates.get(p.model)
-    if (!template) continue
-    const obj = template.scene.clone(true)
-    obj.position.copy(tileToWorld(p.x, p.z))
-    if (p.rot) obj.rotation.y = p.rot
-    obj.scale.setScalar((BASE_SCALE[p.model] ?? 1) * (p.scale ?? 1))
-    group.add(obj)
+  for(const [model,template] of templates){
+    if(!template)continue
+    const parts=collectMeshParts(template.scene)
+    if(model==='wheat')for(const part of parts){
+      const tint=(material:THREE.Material)=>{const clone=material.clone() as THREE.MeshStandardMaterial;clone.color?.set(0xd6b35e);return clone}
+      part.material=Array.isArray(part.material)?part.material.map(tint):tint(part.material)
+    }
+    const batches=new Map<string,THREE.Matrix4[]>()
+    for(const p of props.filter((p)=>p.model===model)){
+      const key=Math.floor(p.x/32)+','+Math.floor(p.z/32),batch=batches.get(key)??[]
+      const scale=((PROP_BASE_SCALE as Record<string,number>)[model]??1)*(p.scale??1)
+      batch.push(new THREE.Matrix4().compose(tileToWorld(p.x,p.z),
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),p.rot??0),
+        new THREE.Vector3(scale,scale,scale)))
+      batches.set(key,batch)
+    }
+    for(const batch of batches.values())for(const part of parts){
+      const mesh=new THREE.InstancedMesh(part.geometry,part.material,batch.length)
+      batch.forEach((matrix,i)=>mesh.setMatrixAt(i,matrix))
+      mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere()
+      mesh.castShadow=true;mesh.receiveShadow=true
+      group.add(mesh)
+    }
   }
   scene.add(group)
 }

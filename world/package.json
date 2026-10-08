@@ -11,7 +11,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "ci": "npm run typecheck && npm run test && npm run build",
-    "shoot:zones": "node scripts/shoot-zone.mjs"
+    "shoot:zones": "node scripts/shoot-zone.mjs",
+    "author:build": "node scripts/compile-world.mjs",
+    "author:check": "node scripts/compile-world.mjs --check",
+    "author:release": "node scripts/compile-world.mjs --check --release",
+    "author:review": "node scripts/review-authoring.mjs lumbright",
+    "author:contract": "node scripts/authoring-contract.mjs"
   },
   "dependencies": {
     "partyserver": "0.5.8",

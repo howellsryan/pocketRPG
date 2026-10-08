@@ -85,7 +85,7 @@ import GameIcon from './components/GameIcon.jsx'
 import OneLifeIcon from './components/OneLifeIcon.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { emitXpDrops } from './utils/xpDrops.js'
-import { openWorld } from './utils/helpers.js'
+import { openWorld, worldBetaEnabled } from './utils/helpers.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
 import { fetchKillCounts } from './cloud/killCounts.js'
@@ -721,12 +721,12 @@ function GameApp() {
   // check server-side, so a boss requirement that changed meanwhile is still
   // enforced). Cleared immediately so this never refires.
   useEffect(() => {
-    if (cloudPhase !== 'ready' || !resumeWorldZoneRef.current) return
+    if (cloudPhase !== 'ready' || !gameChunkReady || !resumeWorldZoneRef.current) return
     const zone = resumeWorldZoneRef.current
     resumeWorldZoneRef.current = null
     try { sessionStorage.removeItem('pocketrpg_enter_world') } catch { /* non-fatal */ }
-    openWorld(api, zone).catch(() => addToast('Could not reach the world.', 'error'))
-  }, [cloudPhase])
+    if (worldBetaEnabled()) openWorld(api, zone).catch(() => addToast('Could not reach the world.', 'error'))
+  }, [cloudPhase, gameChunkReady])
 
   // Boot watchdog: if the boot sequence can't reach a usable state within 5s,
   // surface the existing error screen instead of leaving the user stranded on a

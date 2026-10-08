@@ -52,3 +52,33 @@ export function roadSegments(edges, districts, { step = 3, halfWidth = 1 } = {})
   }
   return rects
 }
+
+/** Continuous roads from semantic gateways to canonical neighboring districts.
+ * The outside bend approaches a cardinal town street and never cuts
+ * diagonally back through the protected authored region. */
+export function connectionRoadSegments(connections, districts, bounds) {
+  const byId=new Map(districts.map((d)=>[d.id,d])),rects=[]
+  for(const c of connections) {
+    const target=byId.get(c.to)
+    if(!target)throw new Error('Unknown road destination '+c.to)
+    const outside={
+      x:c.outward.x<0?bounds.x0-2:c.outward.x>0?bounds.x1+1:c.x,
+      z:c.outward.z<0?bounds.z0-2:c.outward.z>0?bounds.z1+1:c.z,
+    }
+    const bend=c.outward.x?{x:outside.x,z:target.z}:{x:target.x,z:outside.z}
+    const path=[c,outside,bend,target]
+    for(let i=1;i<path.length;i++) {
+      let {x,z}=path[i-1];const to=path[i]
+      if(x!==to.x&&z!==to.z)throw new Error('Road connection needs an orthogonal bend')
+      for(;;) {
+        // Only the first leg may occupy the region; global paint clips that leg
+        // at the boundary and meets its already reserved regional road.
+        if(i>1&&x>=bounds.x0&&x<bounds.x1&&z>=bounds.z0&&z<bounds.z1)throw new Error('Road to '+c.to+' re-enters the authored region')
+        rects.push({kind:'path_dirt',x:x-1,z:z-1,w:3,h:3})
+        if(x===to.x&&z===to.z)break
+        x+=Math.sign(to.x-x);z+=Math.sign(to.z-z)
+      }
+    }
+  }
+  return rects
+}

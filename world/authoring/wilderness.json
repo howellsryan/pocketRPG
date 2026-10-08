@@ -1,0 +1,314 @@
+{
+  "schemaVersion": 1,
+  "intent": "Preserved existing wilderness combat/resource pockets, kept outside owned town stamps. Legacy wild bosses remain until dedicated lair replacements are playable.",
+  "npcs": [
+    {
+      "id": "wild_bull_1",
+      "monsterId": "pasture_bull",
+      "x": 172,
+      "z": 164,
+      "wander": {
+        "x": 165,
+        "z": 158,
+        "w": 16,
+        "h": 14
+      }
+    },
+    {
+      "id": "wild_chicken_1",
+      "monsterId": "field_chicken",
+      "x": 162,
+      "z": 162,
+      "wander": {
+        "x": 156,
+        "z": 157,
+        "w": 16,
+        "h": 10
+      }
+    },
+    {
+      "id": "wild_chicken_2",
+      "monsterId": "field_chicken",
+      "x": 166,
+      "z": 166,
+      "wander": {
+        "x": 156,
+        "z": 157,
+        "w": 16,
+        "h": 10
+      }
+    },
+    {
+      "id": "wild_goblin_1",
+      "monsterId": "cave_goblin",
+      "x": 195,
+      "z": 72,
+      "wander": {
+        "x": 189,
+        "z": 67,
+        "w": 16,
+        "h": 12
+      }
+    },
+    {
+      "id": "wild_goblin_2",
+      "monsterId": "cave_goblin",
+      "x": 200,
+      "z": 75,
+      "wander": {
+        "x": 189,
+        "z": 67,
+        "w": 16,
+        "h": 12
+      }
+    },
+    {
+      "id": "wild_adept_1",
+      "monsterId": "arcane_adept",
+      "x": 104,
+      "z": 68,
+      "wander": {
+        "x": 98,
+        "z": 63,
+        "w": 14,
+        "h": 9
+      }
+    },
+    {
+      "id": "wild_krylth",
+      "monsterId": "krylth_the_defiler",
+      "x": 266,
+      "z": 40,
+      "wander": {
+        "x": 261,
+        "z": 36,
+        "w": 10,
+        "h": 8
+      }
+    },
+    {
+      "id": "wild_grondar",
+      "monsterId": "warlord_grondar",
+      "x": 280,
+      "z": 42,
+      "wander": {
+        "x": 275,
+        "z": 38,
+        "w": 10,
+        "h": 8
+      }
+    },
+    {
+      "id": "wild_venomcoil",
+      "monsterId": "venomcoil_matriarch",
+      "x": 294,
+      "z": 40,
+      "wander": {
+        "x": 289,
+        "z": 36,
+        "w": 10,
+        "h": 8
+      }
+    }
+  ],
+  "objects": [
+    {
+      "id": "wild_rock_tin_1",
+      "type": "rock",
+      "rock": "tin",
+      "x": 150,
+      "z": 160
+    },
+    {
+      "id": "wild_rock_tin_2",
+      "type": "rock",
+      "rock": "tin",
+      "x": 152,
+      "z": 162
+    },
+    {
+      "id": "wild_rock_tin_3",
+      "type": "rock",
+      "rock": "tin",
+      "x": 149,
+      "z": 163
+    },
+    {
+      "id": "wild_rock_copper_1",
+      "type": "rock",
+      "rock": "copper",
+      "x": 154,
+      "z": 159
+    },
+    {
+      "id": "wild_rock_copper_2",
+      "type": "rock",
+      "rock": "copper",
+      "x": 156,
+      "z": 161
+    },
+    {
+      "id": "wild_tree_n1",
+      "type": "tree",
+      "tree": "normal",
+      "x": 185,
+      "z": 158
+    },
+    {
+      "id": "wild_tree_n2",
+      "type": "tree",
+      "tree": "normal",
+      "x": 188,
+      "z": 161
+    },
+    {
+      "id": "wild_tree_n3",
+      "type": "tree",
+      "tree": "normal",
+      "x": 183,
+      "z": 163
+    },
+    {
+      "id": "wild_tree_n4",
+      "type": "tree",
+      "tree": "normal",
+      "x": 190,
+      "z": 78
+    },
+    {
+      "id": "wild_tree_n5",
+      "type": "tree",
+      "tree": "normal",
+      "x": 193,
+      "z": 80
+    },
+    {
+      "id": "wild_tree_n6",
+      "type": "tree",
+      "tree": "normal",
+      "x": 188,
+      "z": 82
+    },
+    {
+      "id": "wild_tree_o1",
+      "type": "tree",
+      "tree": "oak",
+      "x": 202,
+      "z": 68
+    },
+    {
+      "id": "wild_tree_o2",
+      "type": "tree",
+      "tree": "oak",
+      "x": 205,
+      "z": 71
+    },
+    {
+      "id": "wild_tree_n7",
+      "type": "tree",
+      "tree": "normal",
+      "x": 108,
+      "z": 72
+    },
+    {
+      "id": "wild_tree_n8",
+      "type": "tree",
+      "tree": "normal",
+      "x": 111,
+      "z": 74
+    },
+    {
+      "id": "wild_tree_n9",
+      "type": "tree",
+      "tree": "normal",
+      "x": 106,
+      "z": 60
+    },
+    {
+      "id": "wild_tree_n10",
+      "type": "tree",
+      "tree": "normal",
+      "x": 112,
+      "z": 77
+    },
+    {
+      "id": "wild_tree_n11",
+      "type": "tree",
+      "tree": "normal",
+      "x": 109,
+      "z": 80
+    },
+    {
+      "id": "wild_tree_o3",
+      "type": "tree",
+      "tree": "oak",
+      "x": 98,
+      "z": 63
+    },
+    {
+      "id": "wild_tree_o4",
+      "type": "tree",
+      "tree": "oak",
+      "x": 101,
+      "z": 65
+    },
+    {
+      "id": "wild_tree_o5",
+      "type": "tree",
+      "tree": "oak",
+      "x": 96,
+      "z": 66
+    }
+  ],
+  "exits": [
+    {
+      "id": "enter_pasture",
+      "x": 182,
+      "z": 155,
+      "toZone": "cow_pasture",
+      "toX": 20,
+      "toZ": 35,
+      "label": "Lumbright Cow Pasture",
+      "presentation": "gate",
+      "description": "A separate pasture beyond Lumbright. Cows and bulls roam inside.",
+      "activation": "interact"
+    }
+  ],
+  "ground": [
+    {
+      "kind": "path_dirt",
+      "x": 177,
+      "z": 152,
+      "w": 3,
+      "h": 4
+    },
+    {
+      "kind": "path_dirt",
+      "x": 178,
+      "z": 154,
+      "w": 6,
+      "h": 3
+    },
+    {
+      "kind": "path_dirt",
+      "x": 181,
+      "z": 155,
+      "w": 3,
+      "h": 4
+    }
+  ],
+  "blocked": [
+    {
+      "x": 180,
+      "z": 155,
+      "w": 1,
+      "h": 1
+    },
+    {
+      "x": 184,
+      "z": 155,
+      "w": 1,
+      "h": 1
+    }
+  ]
+}

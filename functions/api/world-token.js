@@ -5,6 +5,8 @@ import { bossEntryFailure, bossHasEntryGate, loadBossKillCounts } from '../_lib/
 import { loadCharacterWithSave } from '../_lib/game/save.js'
 import { worldLairMonster } from '../../src/engine/worldLairs.js'
 
+import { worldAccessEnabled } from '../../src/engine/worldAccess.js'
+
 const HANDOFF_EXPIRES_SECONDS = 60
 
 /** Where in the world the player asked to land. Passed straight through as a
@@ -17,6 +19,7 @@ function requestedZone(body) {
 }
 
 export async function onRequestPost({ request, env }) {
+  if (!worldAccessEnabled(env, request.url)) return json({ error: 'World unavailable' }, 404)
   const auth = await requireAuth(request, env)
   if (auth.error) return json({ error: auth.error }, auth.status)
 

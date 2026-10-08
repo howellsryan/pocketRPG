@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "region": "seerhold",
+  "sourceHash": "ba35f61128bf2f6edaac4945bf81094ce6bbb7e6252470754eb4b012e78e40ea",
+  "sourceCommit": "58d5feb7e296c2ff4f4d4cdbafa753127ecd9585",
+  "verdict": "approved",
+  "scope": "Approved for the requested world UI cleanup on the existing town-expansion beta preview: remove floating location/journey panels, town-name tile signposts and map preview quick travel. Existing production MMORPG, performance, economy and multiplayer gates remain open.",
+  "reviewedBy": "Codex primary agent; personally inspected 214 current native frames and verified exact full-PNG SHA-256 reuse for 146 prior personally inspected native frames, with individual provenance in world-ui-cleanup-capture-comparison.json",
+  "reviewedAt": "2026-10-08",
+  "evidenceUrl": "https://4e5d145b-pocketrpg-world-review.rlh.workers.dev/58d5feb7e296c2ff4f4d4cdbafa753127ecd9585/",
+  "buildId": "4a67243e-d96b-4715-b678-a5729eebb396",
+  "views": [
+    "desktop:overview",
+    "desktop:arrival",
+    "mobile:arrival",
+    "integrated:arrival",
+    "desktop:bank",
+    "mobile:bank",
+    "integrated:bank",
+    "desktop:mining",
+    "mobile:mining",
+    "integrated:mining",
+    "desktop:encounter_0",
+    "mobile:encounter_0",
+    "integrated:encounter_0",
+    "desktop:district",
+    "mobile:district",
+    "integrated:district"
+  ],
+  "comparisonManifest": "world-ui-cleanup-capture-comparison.json",
+  "criticalReview": "world-ui-cleanup.md",
+  "remainingGates": [
+    "Live phone frame-time, movement latency, loading and background/resume measurements",
+    "Two-player gathering, combat, banking, reconnect and save/return to idle testing",
+    "Server protected civic areas, pursuit leashes and animated-extent/lure regression coverage",
+    "Complete missing creature presentations and real facility/processing/probability adapters",
+    "Single progression clock, atomic session ownership and durable idempotent reward settlement",
+    "Organic terrain/shore edges, building variety, named interactive NPCs and local objectives"
+  ]
+}

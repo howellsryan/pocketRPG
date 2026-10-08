@@ -6,7 +6,7 @@ import { genId } from './placement'
 // fresh ids. Prefabs persist in localStorage so set-pieces (a camp, a grove, a
 // mine) can be reused across zones. Pure helpers; the editor wires the UI.
 
-type RelObject = { type: ZoneDef['objects'][number]['type']; rock?: string; tree?: string; dx: number; dz: number }
+type RelObject = { type: ZoneDef['objects'][number]['type']; rock?: string; tree?: string; fishing?: string; gather?: string; dx: number; dz: number }
 type RelNpc = { monsterId: string; dx: number; dz: number; wander: { x: number; z: number; w: number; h: number } }
 type RelExit = { dx: number; dz: number; toZone: string; toX: number; toZ: number; label: string }
 type RelProp = { model: string; dx: number; dz: number; rot?: number; scale?: number }
@@ -34,7 +34,7 @@ export function extractRegion(def: ZoneDef, x0: number, z0: number, x1: number, 
   const minZ = Math.min(z0, z1)
   const prefab: Prefab = { name, w: Math.abs(x1 - x0) + 1, h: Math.abs(z1 - z0) + 1, objects: [], npcs: [], exits: [], props: [] }
   for (const o of def.objects) {
-    if (within(o.x, o.z, x0, z0, x1, z1)) prefab.objects.push({ type: o.type, rock: o.rock, tree: o.tree, dx: o.x - minX, dz: o.z - minZ })
+    if (within(o.x, o.z, x0, z0, x1, z1)) prefab.objects.push({ type: o.type, rock: o.rock, tree: o.tree, fishing: o.fishing, gather: o.gather, dx: o.x - minX, dz: o.z - minZ })
   }
   for (const n of def.npcs) {
     if (within(n.x, n.z, x0, z0, x1, z1)) prefab.npcs.push({ monsterId: n.monsterId, dx: n.x - minX, dz: n.z - minZ, wander: { ...n.wander } })
@@ -58,7 +58,7 @@ function clamp(v: number, lo: number, hi: number): number {
 export function stampPrefab(def: ZoneDef, prefab: Prefab, x: number, z: number): void {
   for (const o of prefab.objects) {
     const prefix = o.type === 'tree' ? 'tree' : o.type === 'rock' ? 'rock' : 'chest'
-    def.objects.push({ id: genId(def, prefix), type: o.type, rock: o.rock, tree: o.tree, x: clamp(x + o.dx, 0, def.width - 1), z: clamp(z + o.dz, 0, def.height - 1) })
+    def.objects.push({ id: genId(def, prefix), type: o.type, rock: o.rock, tree: o.tree, fishing: o.fishing, gather: o.gather, x: clamp(x + o.dx, 0, def.width - 1), z: clamp(z + o.dz, 0, def.height - 1) })
   }
   for (const n of prefab.npcs) {
     const nx = clamp(x + n.dx, 0, def.width - 1)

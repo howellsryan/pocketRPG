@@ -595,7 +595,7 @@ function libItem(entry: CatalogEntry): HTMLElement {
   el.className = 'libitem'
   el.draggable = true
   const meta =
-    entry.kind === 'rock' || entry.kind === 'tree' ? `lvl ${entry.level}`
+    entry.kind === 'rock' || entry.kind === 'tree' || entry.kind === 'fishing_spot' || entry.kind === 'gather_site' ? `lvl ${entry.level}`
     : entry.kind === 'npc' ? `cb ${entry.combatLevel}` : ''
   el.innerHTML = `<span class="ic">${entry.icon}</span><span class="lbl">${escapeHtml(entry.label)}</span>` +
     (meta ? `<span class="meta">${meta}</span>` : '') +
@@ -662,7 +662,9 @@ function refreshInspector(): void {
     if (!obj) return void (selection = null)
     if (obj.type === 'rock') host.appendChild(dropdownField('Ore', obj.rock ?? '', gatherOptions('rock'), (v) => state.mutate((d) => (d.objects[index] as { rock?: string }).rock = v)))
     else if (obj.type === 'tree') host.appendChild(dropdownField('Tree', obj.tree ?? '', gatherOptions('tree'), (v) => state.mutate((d) => (d.objects[index] as { tree?: string }).tree = v)))
-    else host.appendChild(textLine(`Bank chest`))
+    else if (obj.type === 'fishing_spot') host.appendChild(dropdownField('Fishing', obj.fishing ?? '', gatherOptions('fishing_spot'), (v) => state.mutate((d) => d.objects[index].fishing = v)))
+    else if (obj.type === 'gather_site') host.appendChild(dropdownField('Fieldwork', obj.gather ?? '', gatherOptions('gather_site'), (v) => state.mutate((d) => d.objects[index].gather = v)))
+    else host.appendChild(textLine(obj.type.replaceAll('_', ' ')))
     host.appendChild(coordLine(obj.x, obj.z))
     host.appendChild(idLine(obj.id))
   } else if (group === 'npcs') {
@@ -709,11 +711,11 @@ function deleteSelection(): void {
   refreshSelectionHighlight()
 }
 
-function gatherOptions(kind: 'rock' | 'tree'): { value: string; label: string }[] {
+function gatherOptions(kind: 'rock' | 'tree' | 'fishing_spot' | 'gather_site'): { value: string; label: string }[] {
   const group = catalog.find((g) => g.title === 'Gathering nodes')
   return (group?.entries ?? [])
     .filter((e) => e.kind === kind)
-    .map((e) => ({ value: kind === 'rock' ? (e as { rock: string }).rock : (e as { tree: string }).tree, label: e.label }))
+    .map((e) => ({ value: kind === 'rock' ? (e as { rock: string }).rock : kind === 'tree' ? (e as { tree: string }).tree : kind === 'fishing_spot' ? (e as { fishing: string }).fishing : (e as { gather: string }).gather, label: e.label }))
 }
 
 function monsterOptions(): { value: string; label: string }[] {

@@ -2080,3 +2080,6 @@ export function showDeathChoiceOverlay(opts: { zoneName: string; returnHref: str
   }
   showOverlay()
 }
+
+/** Keep the scene open on arrival; players open inventory and other panes when needed. */
+export function setHudPanelOpen(open:boolean): void { setSheetOpen(open) }

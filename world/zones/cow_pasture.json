@@ -161,10 +161,13 @@
    "x": 20,
    "z": 39,
    "toZone": "overworld",
-   "toX": 170,
-   "toZ": 166,
-   "label": "Farmland",
-   "hideMarker": true
+   "toX": 182,
+   "toZ": 158,
+   "label": "Lumbright Farm Road",
+   "hideMarker": true,
+   "presentation": "door",
+   "activation": "interact",
+   "description": "Return to the shared overworld road."
   }
  ],
  "props": [

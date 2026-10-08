@@ -1,0 +1,889 @@
+{
+ "schemaVersion": 1,
+ "region": "draynar",
+ "place": "draynar",
+ "seed": 5511,
+ "parity": {
+  "scope": "canonical gathering, combat and facility accounting; explicit deferred bindings are not playable in this regional contract",
+  "complete": false,
+  "missing": [],
+  "unexpected": []
+ },
+ "contract": {
+  "resources": [
+   "gather:catch_newts",
+   "skill:fishing:trout"
+  ],
+  "monsters": [
+   "combat:briarheart_treant",
+   "combat:ember_giant",
+   "combat:frostmaw_direwolf",
+   "combat:gravehusk_brute",
+   "combat:green_dragon",
+   "combat:lesser_fiend"
+  ],
+  "facilities": [
+   "facility:bank"
+  ],
+  "deferred": [
+   "agility:draynor_village",
+   "farming:taverley",
+   "hunter:hunt_jeweller",
+   "quest:a_spirit_s_bane",
+   "quest:aegis_of_arrav",
+   "quest:arcane_workshop_ii",
+   "quest:fiend_slayer",
+   "quest:heir_ali_rescue",
+   "quest:skyhawks_peak",
+   "quest:starwatch_quest",
+   "quest:warden_in_peril",
+   "quest:wild_spirit",
+   "quest:wildwood_potion",
+   "quest:wool_herder",
+   "quest:wool_shearer",
+   "skill:dungeoneering:dungeoneering_floor_4",
+   "thieving:gardener"
+  ],
+  "portable": [
+   "skill:construction:build_mahogany_plank",
+   "skill:construction:build_oak_plank",
+   "skill:construction:build_plank",
+   "skill:construction:build_teak_plank",
+   "skill:crafting:black_d_hide_body",
+   "skill:crafting:black_d_hide_chaps",
+   "skill:crafting:cut_diamond",
+   "skill:crafting:cut_dragonstone",
+   "skill:crafting:cut_emerald",
+   "skill:crafting:cut_onyx",
+   "skill:crafting:cut_ruby",
+   "skill:crafting:cut_sapphire",
+   "skill:crafting:cut_zenyte",
+   "skill:crafting:diamond_amulet",
+   "skill:crafting:dragonstone_amulet",
+   "skill:crafting:emerald_amulet",
+   "skill:crafting:ferocious_gloves",
+   "skill:crafting:green_d_hide_body",
+   "skill:crafting:green_d_hide_chaps",
+   "skill:crafting:hard_leather_body",
+   "skill:crafting:leather_body",
+   "skill:crafting:leather_boots",
+   "skill:crafting:leather_chaps",
+   "skill:crafting:leather_cowl",
+   "skill:crafting:leather_gloves",
+   "skill:crafting:molten_glass",
+   "skill:crafting:onyx_amulet",
+   "skill:crafting:red_d_hide_body",
+   "skill:crafting:red_d_hide_chaps",
+   "skill:crafting:ruby_amulet",
+   "skill:crafting:sapphire_amulet",
+   "skill:crafting:tan_cowhide",
+   "skill:crafting:tan_cowhide_hard",
+   "skill:crafting:tan_green_dhide",
+   "skill:crafting:zyrite_amulet",
+   "skill:crafting:zyrite_bracelet",
+   "skill:crafting:zyrite_necklace",
+   "skill:crafting:zyrite_ring",
+   "skill:firemaking:magic_logs",
+   "skill:firemaking:maple_logs",
+   "skill:firemaking:normal_logs",
+   "skill:firemaking:oak_logs",
+   "skill:firemaking:redwood_logs",
+   "skill:firemaking:willow_logs",
+   "skill:firemaking:yew_logs",
+   "skill:fletching:adamant_arrows",
+   "skill:fletching:arrow_shafts",
+   "skill:fletching:bronze_arrows",
+   "skill:fletching:cut_diamond_bolt_tips",
+   "skill:fletching:cut_dragonstone_bolt_tips",
+   "skill:fletching:cut_onyx_bolt_tips",
+   "skill:fletching:cut_ruby_bolt_tips",
+   "skill:fletching:cut_wooden_stocks",
+   "skill:fletching:headless_arrows",
+   "skill:fletching:iron_arrows",
+   "skill:fletching:magic_shortbow_string",
+   "skill:fletching:magic_shortbow_u_cut",
+   "skill:fletching:make_adamant_bolts",
+   "skill:fletching:make_bronze_bolts",
+   "skill:fletching:make_dragon_bolts",
+   "skill:fletching:make_iron_bolts",
+   "skill:fletching:make_mithril_bolts",
+   "skill:fletching:make_runite_bolts",
+   "skill:fletching:make_steel_bolts",
+   "skill:fletching:maple_shortbow_string",
+   "skill:fletching:maple_shortbow_u_cut",
+   "skill:fletching:mithril_arrows",
+   "skill:fletching:oak_shortbow_string",
+   "skill:fletching:oak_shortbow_u_cut",
+   "skill:fletching:rune_arrows",
+   "skill:fletching:shortbow_string",
+   "skill:fletching:shortbow_u_cut",
+   "skill:fletching:steel_arrows",
+   "skill:fletching:tip_diamond_bolts",
+   "skill:fletching:tip_diamond_dragon_bolts",
+   "skill:fletching:tip_dragonstone_bolts",
+   "skill:fletching:tip_dragonstone_dragon_bolts",
+   "skill:fletching:tip_onyx_bolts",
+   "skill:fletching:tip_onyx_dragon_bolts",
+   "skill:fletching:tip_ruby_bolts",
+   "skill:fletching:tip_ruby_dragon_bolts",
+   "skill:fletching:willow_shortbow_string",
+   "skill:fletching:willow_shortbow_u_cut",
+   "skill:fletching:yew_shortbow_string",
+   "skill:fletching:yew_shortbow_u_cut",
+   "skill:herblore:attack_potion",
+   "skill:herblore:combat_potion",
+   "skill:herblore:defence_potion",
+   "skill:herblore:lumira_brew",
+   "skill:herblore:magic_potion",
+   "skill:herblore:prayer_potion",
+   "skill:herblore:ranging_potion",
+   "skill:herblore:strength_potion",
+   "skill:herblore:super_attack",
+   "skill:herblore:super_combat",
+   "skill:herblore:super_defence",
+   "skill:herblore:super_restore",
+   "skill:herblore:super_strength",
+   "skill:magic:curse",
+   "skill:magic:enchant_diamond",
+   "skill:magic:enchant_diamond_bolts",
+   "skill:magic:enchant_diamond_dragon_bolts",
+   "skill:magic:enchant_dragonstone",
+   "skill:magic:enchant_dragonstone_bolts",
+   "skill:magic:enchant_dragonstone_dragon_bolts",
+   "skill:magic:enchant_onyx",
+   "skill:magic:enchant_onyx_bolts",
+   "skill:magic:enchant_onyx_dragon_bolts",
+   "skill:magic:enchant_ruby",
+   "skill:magic:enchant_ruby_bolts",
+   "skill:magic:enchant_ruby_dragon_bolts",
+   "skill:magic:enchant_sapphire",
+   "skill:magic:enchant_zenyte_amulet",
+   "skill:magic:enchant_zenyte_bracelet",
+   "skill:magic:enchant_zenyte_necklace",
+   "skill:magic:enchant_zenyte_ring",
+   "skill:magic:high_alch",
+   "skill:magic:plank_make",
+   "skill:magic:stun",
+   "skill:magic:superheat",
+   "skill:magic:tan_leather",
+   "skill:runecraft:craft_body_rune",
+   "skill:runecraft:craft_cosmic_rune"
+  ]
+ },
+ "deferredBindings": [
+  {
+   "ref": "combat:briarheart_treant",
+   "reason": "missing_model"
+  },
+  {
+   "ref": "combat:ember_giant",
+   "reason": "missing_model"
+  },
+  {
+   "ref": "combat:frostmaw_direwolf",
+   "reason": "missing_model"
+  },
+  {
+   "ref": "combat:gravehusk_brute",
+   "reason": "missing_model"
+  }
+ ],
+ "access": [
+  {
+   "ref": "combat:green_dragon",
+   "zone": "dragon_roost",
+   "point": "enter_dragons_approach",
+   "exit": "enter_dragons"
+  },
+  {
+   "ref": "combat:lesser_fiend",
+   "zone": "fiend_pit",
+   "point": "enter_fiend_approach",
+   "exit": "enter_fiend"
+  }
+ ],
+ "points": [
+  {
+   "id": "arrival",
+   "x": 30,
+   "z": 17,
+   "label": "Draynar arrival",
+   "role": "arrival"
+  },
+  {
+   "id": "court",
+   "x": 27,
+   "z": 17,
+   "label": "River watch",
+   "role": "hub"
+  },
+  {
+   "id": "landmark",
+   "x": 27,
+   "z": 12,
+   "label": "River watch",
+   "role": "landmark"
+  },
+  {
+   "id": "east",
+   "x": 34,
+   "z": 17,
+   "label": "Lumbright road",
+   "role": "gateway"
+  },
+  {
+   "id": "west",
+   "x": 1,
+   "z": 15,
+   "label": "Faloden road",
+   "role": "gateway"
+  },
+  {
+   "id": "south",
+   "x": 27,
+   "z": 32,
+   "label": "Port Sarin road",
+   "role": "gateway"
+  },
+  {
+   "id": "fishing_approach",
+   "x": 29,
+   "z": 20,
+   "label": "Fishing landing",
+   "role": "resource"
+  },
+  {
+   "id": "gather_approach",
+   "x": 26,
+   "z": 24,
+   "label": "Fieldwork patch",
+   "role": "resource"
+  },
+  {
+   "id": "enter_fiend_approach",
+   "x": 17,
+   "z": 30,
+   "label": "Draynar Fiend Pit",
+   "role": "instance"
+  },
+  {
+   "id": "enter_dragons_approach",
+   "x": 9,
+   "z": 21,
+   "label": "Dragon Roost",
+   "role": "instance"
+  },
+  {
+   "id": "enter_fiend_door",
+   "x": 17,
+   "z": 28,
+   "role": "instance",
+   "label": "Draynar Fiend Pit entrance"
+  },
+  {
+   "id": "enter_dragons_door",
+   "x": 9,
+   "z": 19,
+   "role": "instance",
+   "label": "Dragon Roost entrance"
+  },
+  {
+   "id": "bank:counter",
+   "x": 19,
+   "z": 15
+  },
+  {
+   "id": "bank:approach",
+   "x": 19,
+   "z": 16
+  },
+  {
+   "id": "reed_cottage:door",
+   "x": 8,
+   "z": 9
+  },
+  {
+   "id": "riverkeepers_home:door",
+   "x": 18,
+   "z": 7
+  },
+  {
+   "id": "cave_wardens_lodge:door",
+   "x": 22,
+   "z": 28
+  }
+ ],
+ "footprints": [
+  {
+   "model": "market",
+   "x0": 17.550110340118408,
+   "z0": 9.493809294700622,
+   "x1": 21.37158226966858,
+   "z1": 13.847367930412293
+  },
+  {
+   "model": "lantern",
+   "x0": 22.391775757074356,
+   "z0": 12.387840002775192,
+   "x1": 22.608224242925644,
+   "z1": 12.612159997224808
+  },
+  {
+   "model": "house",
+   "x0": 6.137875843048096,
+   "z0": 4.20672287940979,
+   "x1": 10.862123823165893,
+   "z1": 8.8442138671875
+  },
+  {
+   "model": "lantern",
+   "x0": 5.408009393513202,
+   "z0": 8.404664002358913,
+   "x1": 5.591990606486798,
+   "z1": 8.595335997641087
+  },
+  {
+   "model": "house",
+   "x0": 16.137875843048096,
+   "z0": 2.2067228794097904,
+   "x1": 20.862123823165895,
+   "z1": 6.8442138671875
+  },
+  {
+   "model": "lantern",
+   "x0": 15.408009393513202,
+   "z0": 6.404664002358913,
+   "x1": 15.591990606486798,
+   "z1": 6.595335997641087
+  },
+  {
+   "model": "house",
+   "x0": 20.137875843048096,
+   "z0": 23.20672287940979,
+   "x1": 24.862123823165895,
+   "z1": 27.8442138671875
+  },
+  {
+   "model": "lantern",
+   "x0": 19.408009393513204,
+   "z0": 27.404664002358913,
+   "x1": 19.591990606486796,
+   "z1": 27.595335997641087
+  },
+  {
+   "model": "watchtower",
+   "x0": 26.49838011264801,
+   "z0": 5.652036809921265,
+   "x1": 28.536821565032007,
+   "z1": 9.249534326791764
+  },
+  {
+   "model": "well",
+   "x0": 6.83832773566246,
+   "z0": 10.8383278131485,
+   "x1": 8.161672109365464,
+   "z1": 12.16167226433754
+  },
+  {
+   "model": "cart",
+   "x0": 21.00883657515049,
+   "z0": 19.790500020980836,
+   "x1": 21.9911631824,
+   "z1": 21.264499992132187
+  },
+  {
+   "model": "hay_stack",
+   "x0": 3.6811226069927216,
+   "z0": 7.917917822301388,
+   "x1": 5.318877393007279,
+   "z1": 9.082082177698613
+  },
+  {
+   "model": "boulder",
+   "x0": 3.734715981781483,
+   "z0": 26.50992509126663,
+   "x1": 5.265284018218518,
+   "z1": 28.49007490873337
+  },
+  {
+   "model": "lantern",
+   "x0": 6.402598181366921,
+   "z0": 23.399056002497673,
+   "x1": 6.597401818633079,
+   "z1": 23.600943997502327
+  },
+  {
+   "model": "pine_a",
+   "x0": 7.449813121407515,
+   "z0": 1.4498131214075147,
+   "x1": 9.550186878592486,
+   "z1": 3.550186878592485
+  },
+  {
+   "model": "pine_a",
+   "x0": 23.615417272322663,
+   "z0": 4.615417272322663,
+   "x1": 25.384582727677337,
+   "z1": 6.384582727677337
+  },
+  {
+   "model": "pine_a",
+   "x0": 22.41120901034963,
+   "z0": 0.4112090103496293,
+   "x1": 24.58879098965037,
+   "z1": 2.588790989650371
+  },
+  {
+   "model": "pine_a",
+   "x0": 11.204799410466222,
+   "z0": 0.20479941046622185,
+   "x1": 13.795200589533778,
+   "z1": 2.795200589533778
+  },
+  {
+   "model": "pine_b",
+   "x0": 26.358951257071336,
+   "z0": 1.4464222849439428,
+   "x1": 28.641048742928664,
+   "z1": 3.5535777150560572
+  },
+  {
+   "model": "pine_a",
+   "x0": 28.545878650008614,
+   "z0": 5.545878650008612,
+   "x1": 30.454121349991386,
+   "z1": 7.454121349991388
+  },
+  {
+   "model": "pine_a",
+   "x0": 11.350941937851774,
+   "z0": 4.350941937851774,
+   "x1": 13.649058062148226,
+   "z1": 6.649058062148226
+  },
+  {
+   "model": "pine_a",
+   "x0": 23.467061898223708,
+   "z0": 6.467061898223709,
+   "x1": 25.532938101776292,
+   "z1": 8.532938101776292
+  },
+  {
+   "model": "pine_b",
+   "x0": 3.469448303707324,
+   "z0": 21.488723303989552,
+   "x1": 5.530551696292676,
+   "z1": 23.511276696010448
+  },
+  {
+   "model": "pine_a",
+   "x0": 4.4817074800284775,
+   "z0": 29.48170748002848,
+   "x1": 6.5182925199715225,
+   "z1": 31.51829251997152
+  },
+  {
+   "model": "pine_b",
+   "x0": 1.7396954716713404,
+   "z0": 9.67548495178391,
+   "x1": 3.2603045283286596,
+   "z1": 11.32451504821609
+  },
+  {
+   "model": "pine_b",
+   "x0": 0.6757241210341887,
+   "z0": 17.74999453659334,
+   "x1": 2.3242758789658113,
+   "z1": 19.25000546340666
+  },
+  {
+   "model": "pine_b",
+   "x0": 0.3458243729526129,
+   "z0": 22.326879736838425,
+   "x1": 2.654175627047387,
+   "z1": 24.673120263161575
+  },
+  {
+   "model": "pine_b",
+   "x0": 3.364851772772633,
+   "z0": 18.344959891279053,
+   "x1": 5.635148227227367,
+   "z1": 20.655040108720947
+  },
+  {
+   "model": "pine_b",
+   "x0": 4.7332569430107325,
+   "z0": 9.619563752702462,
+   "x1": 6.2667430569892675,
+   "z1": 11.380436247297538
+  },
+  {
+   "model": "pine_b",
+   "x0": 0.3792130004797103,
+   "z0": 28.431367588985907,
+   "x1": 2.6207869995202895,
+   "z1": 30.568632411014093
+  },
+  {
+   "model": "pine_a",
+   "x0": 0.37640318698586017,
+   "z0": 19.37640318698586,
+   "x1": 2.6235968130141396,
+   "z1": 21.62359681301414
+  },
+  {
+   "model": "pine_a",
+   "x0": 1.6935737262914061,
+   "z0": 26.693573726291405,
+   "x1": 3.3064262737085937,
+   "z1": 28.306426273708595
+  },
+  {
+   "model": "pine_a",
+   "x0": 21.404341458604787,
+   "z0": 30.404341458604787,
+   "x1": 23.595658541395213,
+   "z1": 32.59565854139521
+  },
+  {
+   "model": "pine_b",
+   "x0": 13.596627414856771,
+   "z0": 24.694040573088532,
+   "x1": 15.403372585143229,
+   "z1": 26.305959426911468
+  },
+  {
+   "model": "pine_a",
+   "x0": 15.617973027351885,
+   "z0": 24.617973027351887,
+   "x1": 17.382026972648113,
+   "z1": 26.382026972648113
+  },
+  {
+   "model": "pine_b",
+   "x0": 13.464219119372103,
+   "z0": 31.58748030899275,
+   "x1": 15.535780880627897,
+   "z1": 33.412519691007255
+  },
+  {
+   "model": "pine_b",
+   "x0": 19.672292016741604,
+   "z0": 31.630777941822362,
+   "x1": 21.327707983258396,
+   "z1": 33.36922205817764
+  },
+  {
+   "model": "pine_b",
+   "x0": 23.623195529441713,
+   "z0": 31.550610849852237,
+   "x1": 25.376804470558287,
+   "z1": 33.449389150147766
+  },
+  {
+   "model": "pine_b",
+   "x0": 13.53823780341465,
+   "z0": 29.538150445741543,
+   "x1": 15.46176219658535,
+   "z1": 31.461849554258457
+  },
+  {
+   "model": "pine_b",
+   "x0": 17.541916450846124,
+   "z0": 24.497300131964977,
+   "x1": 19.458083549153876,
+   "z1": 26.502699868035023
+  },
+  {
+   "model": "flowers",
+   "x0": 15.303147646405916,
+   "z0": 10.246363920001224,
+   "x1": 15.813876299833776,
+   "z1": 10.791765335018697
+  },
+  {
+   "model": "flowers",
+   "x0": 10.282010077856022,
+   "z0": 2.278887799851263,
+   "x1": 10.667315697122644,
+   "z1": 2.6592972962313053
+  },
+  {
+   "model": "flowers",
+   "x0": 29.19218615577808,
+   "z0": 24.22029901747539,
+   "x1": 29.682403999923714,
+   "z1": 24.754601349086172
+  },
+  {
+   "model": "flowers",
+   "x0": 2.1804648706686782,
+   "z0": 7.269208599149992,
+   "x1": 2.750176539075713,
+   "z1": 7.82708349109591
+  },
+  {
+   "model": "flowers",
+   "x0": 15.311908872404986,
+   "z0": 12.254090672902922,
+   "x1": 15.740231743485294,
+   "z1": 12.673510381926627
+  },
+  {
+   "model": "flowers",
+   "x0": 14.274530143773013,
+   "z0": 4.3396102301326325,
+   "x1": 14.680996782821342,
+   "z1": 4.733494002707298
+  },
+  {
+   "model": "flowers",
+   "x0": 8.177467060614664,
+   "z0": 12.262944056987575,
+   "x1": 8.745081531374826,
+   "z1": 12.82565801611307
+  },
+  {
+   "model": "flowers",
+   "x0": 13.227373028287126,
+   "z0": 18.24331554330081,
+   "x1": 13.676385057687044,
+   "z1": 18.71732743258162
+  },
+  {
+   "model": "bush",
+   "x0": 1.0265323119259415,
+   "z0": 2.0265323119259415,
+   "x1": 3.9734676880740585,
+   "z1": 4.9734676880740585
+  },
+  {
+   "model": "flowers",
+   "x0": 3.2619451376020865,
+   "z0": 30.353290530977166,
+   "x1": 3.740856261504712,
+   "z1": 30.776425163139336
+  },
+  {
+   "model": "flowers",
+   "x0": 4.238725206132798,
+   "z0": 10.325819066283517,
+   "x1": 4.7309419728835795,
+   "z1": 10.783376924518974
+  },
+  {
+   "model": "bush",
+   "x0": 25.589463454691842,
+   "z0": 3.589463454691843,
+   "x1": 27.410536545308158,
+   "z1": 5.410536545308156
+  },
+  {
+   "model": "flowers",
+   "x0": 11.310499393060034,
+   "z0": 10.232293441944693,
+   "x1": 11.778258430357447,
+   "z1": 10.716599136329032
+  },
+  {
+   "model": "flowers",
+   "x0": 23.272075289862308,
+   "z0": 22.21592097488405,
+   "x1": 23.76585727532194,
+   "z1": 22.68112897491893
+  },
+  {
+   "model": "bush",
+   "x0": 22.6730355449504,
+   "z0": 18.6730355449504,
+   "x1": 24.3269644550496,
+   "z1": 20.3269644550496
+  },
+  {
+   "model": "flowers",
+   "x0": 31.20498462953498,
+   "z0": 5.3021950755691245,
+   "x1": 31.758712930213587,
+   "z1": 5.818732284765785
+  },
+  {
+   "model": "flowers",
+   "x0": 3.2946431748307035,
+   "z0": 27.359484203211895,
+   "x1": 3.674956540451104,
+   "z1": 27.718767675769527
+  },
+  {
+   "model": "flowers",
+   "x0": 19.154517978286457,
+   "z0": 23.24508359084717,
+   "x1": 19.76071644452816,
+   "z1": 23.847740492339373
+  },
+  {
+   "model": "flowers",
+   "x0": 3.336544557007478,
+   "z0": 1.2975227785543197,
+   "x1": 3.75357928942376,
+   "z1": 1.738384633753394
+  },
+  {
+   "model": "flowers",
+   "x0": 25.242760561984056,
+   "z0": 20.30664347319528,
+   "x1": 25.790455445470187,
+   "z1": 20.815330755554793
+  },
+  {
+   "model": "flowers",
+   "x0": 30.15801069556284,
+   "z0": 14.155555464911115,
+   "x1": 30.75844432036961,
+   "z1": 14.752138980609272
+  },
+  {
+   "model": "flowers",
+   "x0": 16.264227527115033,
+   "z0": 17.313945110203296,
+   "x1": 16.655978555650677,
+   "z1": 17.72406107583205
+  }
+ ],
+ "connections": [
+  {
+   "point": "east",
+   "to": "lumbright",
+   "x": 34,
+   "z": 17,
+   "outward": {
+    "x": 1,
+    "z": 0
+   }
+  },
+  {
+   "point": "west",
+   "to": "faloden",
+   "x": 1,
+   "z": 15,
+   "outward": {
+    "x": -1,
+    "z": 0
+   }
+  },
+  {
+   "point": "south",
+   "to": "portsarin",
+   "x": 27,
+   "z": 32,
+   "outward": {
+    "x": 0,
+    "z": 1
+   }
+  }
+ ],
+ "reviewViews": [
+  {
+   "id": "overview",
+   "target": "court",
+   "mode": "overview",
+   "distance": 45,
+   "pitch": 0.95,
+   "yaw": 0,
+   "x": 27,
+   "z": 17
+  },
+  {
+   "id": "arrival",
+   "target": "arrival",
+   "mode": "gameplay",
+   "yaw": 0,
+   "zoom": 1.25,
+   "x": 30,
+   "z": 17
+  },
+  {
+   "id": "bank",
+   "target": "bank:approach",
+   "mode": "gameplay",
+   "yaw": 0,
+   "zoom": 1.25,
+   "covers": [
+    "facility:bank"
+   ],
+   "x": 19,
+   "z": 16
+  },
+  {
+   "id": "fishing",
+   "target": "fishing_approach",
+   "mode": "gameplay",
+   "yaw": -0.7,
+   "zoom": 1.25,
+   "covers": [
+    "skill:fishing:trout"
+   ],
+   "x": 29,
+   "z": 20
+  },
+  {
+   "id": "gather",
+   "target": "gather_approach",
+   "mode": "gameplay",
+   "yaw": 0.35,
+   "zoom": 1.25,
+   "covers": [
+    "gather:catch_newts"
+   ],
+   "x": 26,
+   "z": 24
+  },
+  {
+   "id": "enter_fiend",
+   "target": "enter_fiend_approach",
+   "mode": "gameplay",
+   "yaw": 0,
+   "zoom": 1.25,
+   "covers": [
+    "combat:lesser_fiend"
+   ],
+   "x": 17,
+   "z": 30
+  },
+  {
+   "id": "enter_dragons",
+   "target": "enter_dragons_approach",
+   "mode": "gameplay",
+   "yaw": 0,
+   "zoom": 1.25,
+   "covers": [
+    "combat:green_dragon"
+   ],
+   "x": 9,
+   "z": 21
+  },
+  {
+   "id": "district",
+   "target": "reed_cottage:door",
+   "mode": "gameplay",
+   "yaw": 0.35,
+   "zoom": 1.1,
+   "x": 8,
+   "z": 9
+  }
+ ],
+ "counts": {
+  "props": 62,
+  "npcs": 0,
+  "objects": 3,
+  "ambient": 2,
+  "reachableTiles": 732
+ },
+ "budgets": {
+  "props": 100,
+  "npcs": 8,
+  "ambient": 4,
+  "maxPropsPer8x8": 18
+ },
+ "visualApproval": "pending",
+ "sourceHash": "917959fb3e6f91566681580709b5365b85db45ae46d857fabcd1a4a32c398792"
+}

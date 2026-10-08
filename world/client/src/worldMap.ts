@@ -1,8 +1,7 @@
 // Full-screen world map: a button (top-right column, under the minimap) opens
 // a large, zoomable/pannable view of the whole zone with markers for every
 // interactive thing — places, banks, skilling nodes, monster spawns, exits.
-// Info-only (no "Travel here" — travel is walking or Magic-tab teleports
-// only, 2026-07). Pure DOM/canvas, no three.js; mirrors the conventions of
+// Named journeys stay in the shared overworld; instances have explicit entrances. Pure DOM/canvas, no three.js; mirrors the conventions of
 // minimap.ts/bank.ts (module-level style injection, one open/close pair, pure
 // helpers pulled out for testability).
 import type { ExitMarker, GroundPalette, Landmark, NpcSpawn, StaticObject, ZoneGroundRegion } from '../../shared/protocol'
@@ -12,6 +11,7 @@ import { CATEGORY_ICON_KEY, STATIC_CATEGORY } from '../../shared/mapCategories'
 import { uiIconMarkup } from './itemIcon'
 import worldData from '../../../src/data/world.json'
 import monstersData from '../../../src/data/monsters.json'
+import { resourceAction, resourceNodeFor } from '../../shared/resources'
 import skillsData from '../../../src/data/skills.json'
 import { MONSTER_ART } from '../../../src/utils/combatArt.js'
 import { registerEscapeHandler } from './ui'
@@ -57,6 +57,7 @@ export type WorldMapData = {
   spawns: NpcSpawn[]
   exits: ExitMarker[]
   self: { x: number; z: number }
+  onJourney?: (place: Landmark) => void
 }
 
 // STATIC_CATEGORY (statics→category) and CATEGORY_ICON_KEY (category→bespoke
@@ -66,15 +67,16 @@ export type WorldMapData = {
 const PLACE_EMOJI_FALLBACK = '📍'
 const MONSTER_ICON_FALLBACK = '👹'
 const CATEGORY_LABEL: Record<string, string> = {
-  bank: 'Bank', smithing: 'Smithing', cooking: 'Cooking', mining: 'Mining', woodcutting: 'Woodcutting',
+  bank: 'Bank', smithing: 'Smithing', cooking: 'Cooking', mining: 'Mining', woodcutting: 'Woodcutting', fishing: 'Fishing', gather: 'Fieldwork',
   place: 'Place', monster: 'Monster', exit: 'Exit',
 }
 // Filter chips group the four skilling categories under one "Skilling" toggle.
 const FILTER_CHIPS: { label: string; categories: string[] }[] = [
   { label: 'Places', categories: ['place'] },
   { label: 'Banks', categories: ['bank'] },
-  { label: 'Skilling', categories: ['smithing', 'cooking', 'mining', 'woodcutting'] },
+  { label: 'Skilling', categories: ['smithing', 'cooking', 'mining', 'woodcutting', 'fishing', 'gather'] },
   { label: 'Monsters', categories: ['monster'] },
+  { label: 'Entrances', categories: ['exit'] },
 ]
 
 const WORLD_MAP_CSS = `
@@ -100,13 +102,13 @@ const WORLD_MAP_CSS = `
   background: rgba(70, 58, 36, 0.6); border-bottom: 1px solid #4a3d26;
 }
 #worldmap-panel .wm-close {
-  min-width: 44px; min-height: 32px; border: none; border-radius: 6px; cursor: pointer;
+  min-width: 44px; min-height: 44px; border: none; border-radius: 6px; cursor: pointer;
   background: rgba(140, 40, 40, 0.9); color: #fff; font-size: 15px;
 }
 #wm-body { display: flex; flex-direction: column; min-height: 0; }
 #wm-filters { display: flex; gap: 6px; padding: 8px 12px 0; flex-wrap: wrap; }
 .wm-chip {
-  min-height: 36px; padding: 0 12px; border-radius: 18px; cursor: pointer; user-select: none;
+  min-height: 44px; padding: 0 12px; border-radius: 18px; cursor: pointer; user-select: none;
   background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30; color: #d8c9a2; font-size: 12px;
   display: flex; align-items: center; justify-content: center;
 }
@@ -170,12 +172,20 @@ const WORLD_MAP_CSS = `
 }
 `
 
+const NAVIGATION_CSS=`
+.wm-destinations{min-height:44px;max-width:48%;background:#211a12;color:#ecd8b2;border:1px solid #8e6d35;border-radius:4px;padding:6px;font:inherit}
+.wm-info-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.wm-info-actions button{min-height:44px;flex:1}
+.wm-marker{padding:0;border:0;background:none;color:inherit;font-family:inherit}.wm-info-body{white-space:pre-line}#wm-info{box-sizing:border-box;max-height:65vh;overflow:auto}
+@media(max-width:600px){.wm-info-actions button{width:auto}}
+`
+
 let cssReady = false
 function ensureCss(): void {
   if (cssReady) return
   cssReady = true
   const style = document.createElement('style')
-  style.textContent = WORLD_MAP_CSS
+  style.textContent = WORLD_MAP_CSS+NAVIGATION_CSS
   document.head.appendChild(style)
 }
 
@@ -207,6 +217,11 @@ function describeSkillNode(staticObj: StaticObject | undefined, category: string
   if (category === 'woodcutting' && staticObj?.tree) {
     const action = woodcuttingActions[staticObj.tree]
     return action ? `${action.name} (Woodcutting Lv ${action.level})` : 'A choppable tree.'
+  }
+  if ((category === 'fishing' || category === 'gather') && staticObj) {
+    const node = resourceNodeFor(staticObj)
+    const action = node && resourceAction(node)
+    if (action) return action.description ?? `${action.name} (Fishing Lv ${action.level})`
   }
   if (category === 'smithing') return 'Smelt bars at the furnace, smith gear at the anvil.'
   if (category === 'cooking') return 'Cook raw food at the range.'
@@ -258,7 +273,7 @@ export function zoomAt(
   return next
 }
 
-function showInfoCard(title: string, body: string): void {
+function showInfoCard(title: string, body: string, actions: {label:string;run:()=>void}[] = []): void {
   document.getElementById('wm-info')?.remove()
   const card = document.createElement('div')
   card.id = 'wm-info'
@@ -270,6 +285,16 @@ function showInfoCard(title: string, body: string): void {
   bodyEl.textContent = body
   card.appendChild(titleEl)
   card.appendChild(bodyEl)
+  const controls=document.createElement('div')
+  controls.className='wm-info-actions'
+  for(const action of [...actions,{label:'Close details',run:()=>card.remove()}]) {
+    const button=document.createElement('button')
+    button.className='wm-chip active'
+    button.textContent=action.label
+    button.addEventListener('click',action.run)
+    controls.appendChild(button)
+  }
+  card.appendChild(controls)
   document.body.appendChild(card)
 }
 
@@ -310,12 +335,28 @@ export function openWorldMap(data: WorldMapData): void {
   head.appendChild(close)
   panel.appendChild(head)
 
-  const hiddenCategories = new Set<string>()
+  const destinations=document.createElement('select')
+  destinations.setAttribute('aria-label','Choose a destination')
+  destinations.className='wm-destinations'
+  const placeholder=document.createElement('option')
+  placeholder.textContent='Choose a destination…'; placeholder.value=''
+  destinations.appendChild(placeholder)
+  for(const place of [...data.landmarks].sort((a,b)=>a.label.localeCompare(b.label))) {
+    const option=document.createElement('option')
+    option.value=place.id; option.textContent=worldPlaces[place.id]?.name??place.label
+    destinations.appendChild(option)
+  }
+  destinations.addEventListener('change',()=>{
+    const place=data.landmarks.find(p=>p.id===destinations.value)
+    if(place) showPlace(place)
+  })
+  head.insertBefore(destinations,close)
+  const hiddenCategories = new Set<string>(['bank','smithing','cooking','mining','woodcutting','fishing','gather','monster'])
   const filters = document.createElement('div')
   filters.id = 'wm-filters'
   for (const chip of FILTER_CHIPS) {
-    const btn = document.createElement('div')
-    btn.className = 'wm-chip active'
+    const btn = document.createElement('button')
+    btn.className = 'wm-chip'+(chip.categories.some(category=>hiddenCategories.has(category))?'':' active')
     btn.textContent = chip.label
     btn.addEventListener('click', () => {
       const nowHidden = btn.classList.toggle('active') === false
@@ -366,10 +407,14 @@ export function openWorldMap(data: WorldMapData): void {
   const markers: Marker[] = []
   const staticById = new Map<string, StaticObject>(data.statics.map((s) => [s.id, s]))
 
-  function addMarker(x: number, z: number, category: string, content: string, isSvg: boolean, count: number, onTap: () => void): void {
-    const el = document.createElement('div')
+  function addMarker(x: number, z: number, category: string, content: string, isSvg: boolean, count: number, onTap: () => void, label?:string): void {
+    const el = document.createElement('button')
+    el.type='button'
+    el.setAttribute('aria-label',label??category+' marker at '+x+', '+z)
+    el.title=label??CATEGORY_LABEL[category]??category
     el.className = isSvg ? 'wm-marker wm-svg' : 'wm-marker'
     el.dataset.category = category
+    el.classList.toggle('hidden-category',hiddenCategories.has(category))
     if (isSvg) el.innerHTML = content
     else el.textContent = content
     if (count > 1) {
@@ -378,12 +423,20 @@ export function openWorldMap(data: WorldMapData): void {
       badge.textContent = String(count)
       el.appendChild(badge)
     }
-    el.addEventListener('pointerdown', (e) => {
-      e.stopPropagation()
-      onTap()
-    })
+    el.addEventListener('pointerdown', (e) => e.stopPropagation())
+    el.addEventListener('click',onTap)
     viewport.appendChild(el)
     markers.push({ el, x, z })
+  }
+
+  function showPlace(lm: Landmark): void {
+    const place=worldPlaces[lm.id], facilities=(place?.facilities??[]).map(f=>FACILITY_LABEL[f]??f).join(', ')
+    const guidance=describeDestination(data.self,lm)
+    const body=[place?.lore,facilities ? 'Facilities: '+facilities : '',
+      guidance.arrived ? 'You are here.' : guidance.direction+' · '+guidance.distance+' tiles away. Walking remains in the shared world.'].filter(Boolean).join('\n\n')
+    const actions:{label:string;run:()=>void}[]=[]
+    if(data.onJourney && !guidance.arrived) actions.push({label:'Walk to '+(place?.name??lm.label),run:()=>{data.onJourney!(lm);closeWorldMap()}})
+    showInfoCard(place?.name??lm.label,body||'A place in Eldermoor.',actions)
   }
 
   // Places (landmarks) — one pin per overworld district, sourced from
@@ -392,10 +445,8 @@ export function openWorldMap(data: WorldMapData): void {
     const place = worldPlaces[lm.id]
     const emoji = place?.icon ?? PLACE_EMOJI_FALLBACK
     addMarker(lm.x, lm.z, 'place', emoji, false, 1, () => {
-      const facilities = (place?.facilities ?? []).map((f) => FACILITY_LABEL[f] ?? f).join(', ')
-      const body = [place?.lore, facilities ? `Facilities: ${facilities}` : ''].filter(Boolean).join('\n\n')
-      showInfoCard(place?.name ?? lm.label, body || 'A place in Eldermoor.')
-    })
+      showPlace(lm)
+    },place?.name??lm.label)
   }
 
   // Banks + skilling nodes, clustered so a mining site or forest is one pin.
@@ -428,11 +479,12 @@ export function openWorldMap(data: WorldMapData): void {
     })
   }
 
-  // Exits (present on per-zone maps; the merged overworld has none).
+  // Named entrances and returns use the shared icon set and authored descriptions.
   for (const exit of data.exits) {
-    addMarker(exit.x, exit.z, 'exit', uiIconMarkup('door', 26), true, 1, () => {
-      showInfoCard(exit.label, 'A way out of this zone.')
-    })
+    const markup=uiIconMarkup('door',26,'#ecd8b2')
+    addMarker(exit.x,exit.z,'exit',markup||'↪',!!markup,1,()=>{
+      showInfoCard(exit.label,exit.description??'Approach this entrance in the world and select its doorway.')
+    },exit.label)
   }
 
   const selfEl = document.createElement('div')
@@ -529,3 +581,34 @@ export function openWorldMap(data: WorldMapData): void {
   viewport.addEventListener('pointerup', endPointer)
   viewport.addEventListener('pointercancel', endPointer)
 }
+
+/** Compass bearing and remaining tile distance; the world uses south-positive z. */
+export function describeDestination(from: {x:number;z:number}, to: {x:number;z:number}): {direction:string;distance:number;arrived:boolean} {
+  const dx=to.x-from.x, dz=to.z-from.z, distance=Math.max(Math.abs(dx),Math.abs(dz))
+  if(distance<=2) return {direction:'here',distance,arrived:true}
+  const angle=Math.atan2(dx,-dz), octant=(Math.round(angle/(Math.PI/4))+8)%8
+  return {direction:['north','northeast','east','southeast','south','southwest','west','northwest'][octant],distance,arrived:false}
+}
+
+/** Prefer a nearby named doorway before comparing distant city centres. */
+export function describeLocation(
+  self: {x:number;z:number},
+  landmarks: Pick<Landmark,'x'|'z'|'label'>[],
+  entrances: Pick<ExitMarker,'x'|'z'|'label'>[] = [],
+): string {
+  let entrance: typeof entrances[number] | undefined, entranceDistance = Infinity
+  for (const candidate of entrances) {
+    const distance = describeDestination(self,candidate).distance
+    if (candidate.label.trim() && distance <= 4 && distance < entranceDistance) {
+      entrance = candidate; entranceDistance = distance
+    }
+  }
+  if (entrance) return 'Entrance: '+entrance.label
+  let nearest: typeof landmarks[number] | undefined, nearestDistance = Infinity
+  for (const candidate of landmarks) {
+    const distance = describeDestination(self,candidate).distance
+    if (distance < nearestDistance) { nearest = candidate; nearestDistance = distance }
+  }
+  return nearest ? (nearestDistance <= 2 ? '' : 'Near ')+nearest.label : 'Exploring Eldermoor'
+}
+

@@ -1,6 +1,9 @@
 import * as THREE from 'three'
+import { createGraphicsBudget, type GraphicsQuality } from './graphics'
 
 const CAMERA_OFFSET = new THREE.Vector3(0, 12, 9)
+const CAMERA_UP = new THREE.Vector3(0, 1, 0)
+const cameraOffset = new THREE.Vector3()
 export const ZOOM_MIN = 0.6
 export const ZOOM_MAX = 1.8
 const TILE_PIXELS = 16
@@ -21,11 +24,13 @@ export function createScene(ambience?: ZoneAmbience): THREE.Scene {
 }
 
 export function createRenderer(container: HTMLElement): THREE.WebGLRenderer {
-  const renderer = new THREE.WebGLRenderer({ antialias: true })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  const mobile = window.matchMedia?.('(pointer: coarse)').matches ?? false
+  const quality = createGraphicsBudget(window.devicePixelRatio, mobile).current
+  const renderer = new THREE.WebGLRenderer({ antialias: !mobile, powerPreference: 'high-performance' })
+  renderer.setPixelRatio(quality.pixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
   renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  renderer.shadowMap.type = mobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap
   container.appendChild(renderer.domElement)
   return renderer
 }
@@ -38,7 +43,7 @@ export function createCamera(): THREE.PerspectiveCamera {
  * rotated around `target` by `yaw` (radians, default 0 — no rotation),
  * looking at `target`. */
 export function updateCamera(camera: THREE.PerspectiveCamera, target: THREE.Vector3, zoom: number, yaw = 0): void {
-  const offset = CAMERA_OFFSET.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw).multiplyScalar(zoom)
+  const offset = cameraOffset.copy(CAMERA_OFFSET).applyAxisAngle(CAMERA_UP, yaw).multiplyScalar(zoom)
   camera.position.copy(target).add(offset)
   camera.lookAt(target)
 }
@@ -54,13 +59,13 @@ const SUN_OFFSET = new THREE.Vector3(6, 12, 4)
 /** Sun casts shadows in a frustum sized for the area immediately around its
  * target (the hero) — `updateShadowLight` recentres it every frame so a
  * 64-tile zone doesn't need (or pay for) a zone-sized shadow map. */
-export function createLights(scene: THREE.Scene, ambience?: ZoneAmbience): { sun: THREE.DirectionalLight } {
+export function createLights(scene: THREE.Scene, ambience?: ZoneAmbience, quality?: GraphicsQuality): { sun: THREE.DirectionalLight } {
   const hemi = new THREE.HemisphereLight(0xffffff, 0x3a3a2a, ambience?.hemiIntensity ?? 1.1)
   scene.add(hemi)
   const sun = new THREE.DirectionalLight(0xffffff, ambience?.sunIntensity ?? 1.4)
   sun.position.copy(SUN_OFFSET)
   sun.castShadow = true
-  sun.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE)
+  sun.shadow.mapSize.set(quality?.shadowSize ?? SHADOW_MAP_SIZE, quality?.shadowSize ?? SHADOW_MAP_SIZE)
   sun.shadow.camera.near = 1
   sun.shadow.camera.far = 60
   sun.shadow.camera.left = -SHADOW_RADIUS_TILES

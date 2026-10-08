@@ -3,6 +3,7 @@ import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import { isInstancedRoom, isInstancedZone } from '../shared/instances'
 import { isPvpZone } from '../shared/pvpArea'
 import { assignInstanceRoom } from './instances'
+import { worldAccessEnabled } from '../../src/engine/worldAccess.js'
 import type { Env } from './env'
 
 const WORLD_SESSION_EXPIRES_SECONDS = 60 * 60 * 24
@@ -12,6 +13,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 export async function handleWorldSession(request: Request, env: Env): Promise<Response> {
+  if (!worldAccessEnabled(env, request.url)) return jsonResponse({ error: 'World unavailable' }, 404)
   let body: { handoff?: unknown }
   try {
     body = await request.json()

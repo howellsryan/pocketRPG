@@ -1,0 +1,711 @@
+{
+ "schemaVersion": 1,
+ "files": {
+  "client/public/models/armor/body.glb": "9e2719fc5bb2de84753ef93e7b5c0f3f0762f29f17457c05d0861efa32617907",
+  "client/public/models/armor/boots.glb": "92a12e8d8907524bd700d0f203c0ec831066da68d2da8a425d4d206bed53575d",
+  "client/public/models/armor/legs.glb": "debfa9e900474823ee3f145beb23280fc20419f7af773a0e6cc8b695c188dbed",
+  "client/public/models/blob.glb": "458895facce83e3e50b340d1ee791f00a3a13aeec893fc748ac1e3eef415f1ef",
+  "client/public/models/chest.glb": "f72fd2201cd42ad399928a0b7bcc34d5b0e6d0624aeaf824fef81852109955f8",
+  "client/public/models/chicken.glb": "b48bf23fda20ecee3d61f480aba6467c78c1a6dc6e4d37ecc94058e04c54a6f1",
+  "client/public/models/cow.glb": "7c76dc20b1b16550dbbc63b8dfce9b3e7421606ab67611ce506e2053033d669a",
+  "client/public/models/demon.glb": "ad6ab19d23a9a3f1a70fc0096b7b453ccac04d4b934b6136c05ec2dcfc0b9224",
+  "client/public/models/dragon.glb": "784d3e5e601542cbcd1a49a8d89df4a96a0241e97eb67a5ce2f9373e63eb585c",
+  "client/public/models/equip/adamant_full_helm.glb": "1093a590538de835c829876985f87734aa34a694cae90211212b7897ada64a18",
+  "client/public/models/equip/amulets/necklace1.glb": "a3f282e71c3e22f7bfa4cfb2e9be8441c1390782b7df065291aa503a34d16134",
+  "client/public/models/equip/amulets/necklace2.glb": "b968cbf0f236dca88057332f40e8a0597464d4db87b261a9e512ed61fa762fad",
+  "client/public/models/equip/amulets/necklace3.glb": "8a1581722bf8fa21305661b8d606e0ef729a5fee2a22f6957a75a14ee04a9ded",
+  "client/public/models/equip/bronze_full_helm.glb": "3f47b12df6889cc84766d455f0233da42c848448b60bf22d2332d9330feff57b",
+  "client/public/models/equip/capes/cape.glb": "8a6056eaa2268a7579903cbac2663178857e310d5daea3126f5629c4a6cc39b5",
+  "client/public/models/equip/default_full_helm.glb": "0e016077461f08a0a55ec3135f9fdae6e072886178867447219cce185e4f483c",
+  "client/public/models/equip/dragon_full_helm.glb": "9dcc5edfd814c113c769989371d21c6ed5c1f350ca5903bf2a0b61e982bb4056",
+  "client/public/models/equip/full_helm.glb": "876e74b60db4838fac65f369a545095795fe98f0cbae54f328cdc1f9c9d20086",
+  "client/public/models/equip/iron_full_helm.glb": "308fc1507cc42d1a4eb01d43a8995fec69c565b79e6deb840b6fdb1b25dc435d",
+  "client/public/models/equip/mithril_full_helm.glb": "6ac24bfd5a72b0b5fdc030988c3dce1f49095ee74c2b0d83f7da8d4e7d890e31",
+  "client/public/models/equip/outfits/ranger_body.glb": "9e2719fc5bb2de84753ef93e7b5c0f3f0762f29f17457c05d0861efa32617907",
+  "client/public/models/equip/outfits/ranger_legs.glb": "debfa9e900474823ee3f145beb23280fc20419f7af773a0e6cc8b695c188dbed",
+  "client/public/models/equip/runeforged_full_helm.glb": "4cbb5099ea1e0fd81d14e491f928b001ae949c2b25ff40d5219fb32e3606a9d7",
+  "client/public/models/equip/shields/q_celtic.gltf": "b1f56ef569fdc8a64f387164a3a74169510282bae1e950e987e2ae859774147e",
+  "client/public/models/equip/shields/q_heater.gltf": "82a30877238cef21ab0d78a849eae4b07da5015e12397341977afef6ce7949c7",
+  "client/public/models/equip/shields/q_shield.gltf": "4d957cc109d579664331ae1373051029f40f1db135911d73fe7f178b509ef2f5",
+  "client/public/models/equip/weapons/crossbow.glb": "9f17f8364f6124c677f7b02ed0a10c511fd70be4e25905c0e431905857334728",
+  "client/public/models/equip/weapons/mace.glb": "31cc4633d73bc8ef71500991659b9569814ba5ea64be7889fef9a5675cb7f5ed",
+  "client/public/models/equip/weapons/pickaxe.glb": "2941e89fb523934500bd540c1ada966e5a63343d06f69cf72178df8a604000ab",
+  "client/public/models/equip/weapons/q_axe_double.glb": "f5538611c02acca344e3051b4b8fbb289b3ff7d5dfe2eee3a675f419e0e83eca",
+  "client/public/models/equip/weapons/q_axe_small.glb": "1f63ce27b3785c10de9e401b8f17a3ad04922f59a9db6509b264e1e3813eea0e",
+  "client/public/models/equip/weapons/q_bow.glb": "733ad828f7ec044ea4fc3cedcce8f99c5087764d315c2af4bee370a842c953b2",
+  "client/public/models/equip/weapons/q_claymore.gltf": "d607580bebadd28d46aa5fea22c2d8272bf35480223dea2c35c47a067b5792fc",
+  "client/public/models/equip/weapons/q_dagger.glb": "0a18b52ee1e2ed8e5fb270106e1da7e1bc0a99d2476e81f4ef833e32215af825",
+  "client/public/models/equip/weapons/q_hammer_double.glb": "b39dce52f200dba28426fedf6fc131a897c75f7fcceaa84d7640875b9d69731e",
+  "client/public/models/equip/weapons/q_staff.gltf": "5279eb900e2a92d782b4f3dc92792cec0267e135bdfacf9a29937353ec2f95c3",
+  "client/public/models/equip/weapons/q_sword_big.glb": "3bbf68f2de759593a486a7fef49d8013a8dc20eee70e48a08fd3d97f85b7b124",
+  "client/public/models/equip/weapons/q_sword.glb": "f3b0d673973811432b7e167182ab833ef6a252ad80243ef3c556683262a49acf",
+  "client/public/models/equip/weapons/spear.glb": "8cd1ab37556b0c396c1735d032e4e1cd35a9fa29877dfd35728c6bad1db05d36",
+  "client/public/models/equip/weapons/staff.glb": "ca5ad04c791c1b147e7a0d00fc42eab2f16af2f477534960beb90a7d33809606",
+  "client/public/models/equip/weapons/talwar.glb": "265c0587d99a4ce29698e004d445154ba1dfa53c6b9957784e124041e01f4f1b",
+  "client/public/models/equip/weapons/trident.glb": "f0a3318778546f91cec1516174cf694a9a7495c5c33160b5657b8d894f4352da",
+  "client/public/models/equip/wizard_hat.glb": "d492fb6a7bbe4c024cfb2283cef4b08c1237a11869dea8d52a885ac20a461e48",
+  "client/public/models/frog.glb": "4675d4b93329d4f078ebe00fc399bd6ace346ccbeeb6ec41a89d0aad46ce05d8",
+  "client/public/models/furnace.glb": "450651f12e67027c9c2915354eed72c02ef7ed974d02202771fcec280196f0d1",
+  "client/public/models/goblin.glb": "0ff75e3774f75df3c70d6d73546dced673fa9c98b66086d83f39f5baebeb15d3",
+  "client/public/models/hero.glb": "c284a49f696778599d6f9c4a1e554beddc067f40239b5424a5e80a8e96ec0747",
+  "client/public/models/imp.glb": "fb7086c5b3c5e0a4a42850f7051b7cf797cf1701968a217a1403eb2132c1d6de",
+  "client/public/models/props/altar.glb": "f2f2e0435561185351a1ebeb88be27596d59f4e1656b5bc86105823b0eb68755",
+  "client/public/models/props/banner.glb": "2575af2182aff274bd9a98c5d307784887f2e9e9ac0935f6b07e03e253fffadb",
+  "client/public/models/props/bones.glb": "618e34d8a7ee5d6b6b36fceb45d0deb2d7387fafe502c5f17bd95aa7784205c2",
+  "client/public/models/props/boulder.glb": "c0642a26d1709bb7b964b269215dae7181cf1a18a884eb005f1ca6d767299d86",
+  "client/public/models/props/bush.glb": "ff2092cad4f27ef9ee86e611e4d47fcb07c507acf7bbb8c6ba7b21fe6dff010d",
+  "client/public/models/props/cart.glb": "e4949affcb33129b5170a4ddedf2f7603069e860086087058abd7f8ee1c1c762",
+  "client/public/models/props/castle.glb": "4e92d916e38e05109b68af227203e1c999d8b9d5b9954880efa6514d1009aee1",
+  "client/public/models/props/column.glb": "30c4dd657cb6fa33cb889ba96df2b725cf1c79f4e2715fee61ef54122504974e",
+  "client/public/models/props/crypt.glb": "e57f9d0aa26910918b6ebcb27c47c2e301eef6565ba26789d43b6789d9845efe",
+  "client/public/models/props/dungeon_door.glb": "373323b376cbceb88ae4fc66e23ad7c038a993aa8089ad16324c0e982c953753",
+  "client/public/models/props/dungeon_stairs.glb": "0e0062e7ae6649b0cdebfdf097b83e0bd2f20509d7ebb5bf486eadd338be46b1",
+  "client/public/models/props/fence_gate.glb": "717fc8d5fd0704e7d233e641d65985fbdf4d4f93de4c581c3cbd670db8b563c9",
+  "client/public/models/props/fence.glb": "f199c84056447212c6ed47bec79e09892d46362fc461939b7b017a8c528a1cea",
+  "client/public/models/props/flowers.glb": "02ee2d1a90aea94547d4d595e80b3ec00c8c84097586e702a6cae0b482e8685f",
+  "client/public/models/props/fountain.glb": "5613e3f300646221747d9ec863d7c8e9908f90dd076416a1c1b0302cfdfdd0a4",
+  "client/public/models/props/hay_bale.glb": "a980bb6adf96c83fb59eb29f3a54a103ec24bca62a26cb99fa2375317d9c56e2",
+  "client/public/models/props/hay_stack.glb": "aacd8a9fe3ba7c41b4b3915dbbeb9dc89c5cbfb19f8092ab6d90ecb862e2c745",
+  "client/public/models/props/house.glb": "937bbb3e596acebf4ff3a82c1307a7a4c007cded199e943576052827fe859654",
+  "client/public/models/props/lantern.glb": "73303911346ed7a72c253359297c69cb1c17f442d7b8e197a44cc32567ffedfb",
+  "client/public/models/props/lumbermill.glb": "f2eaf79d7f7d7fdb7c9559bfa4f08eaec9754c3423fde326365c214857c3c07e",
+  "client/public/models/props/market.glb": "828460c653fcecee161205f7273a93234dc92c33be261af652fe7bc055eb2767",
+  "client/public/models/props/mill.glb": "223e87e40289220706639a7fb116cb68e55cb48847c8ec6b0a77e195341ad64d",
+  "client/public/models/props/mushrooms.glb": "ab117952b9c7a40418fff9cc02e67b1262664ea2c7c628507900ade9bbed8020",
+  "client/public/models/props/obelisk.glb": "c16db29ea4cf4680b2f7d5aba9618f27277be5108b4d53fd46d4605155dd381a",
+  "client/public/models/props/pine_a.glb": "1d40e274fc342ff9dedaacd3cc99a96d2d8d9dbf9bddfeceb0e8b97d5658edda",
+  "client/public/models/props/pine_b.glb": "b62e81884becbadb229f84d7e5cf31a2cd816214e573b3f5882ca2b4e6fa8388",
+  "client/public/models/props/skull.glb": "b1c5c236736ed9f9ecd6a3bbea6956f8de89b3fb28536635b73532272b3e07a8",
+  "client/public/models/props/stall.glb": "2adc5214a3b482dd2d31d727a805a0d08a7f9931b9130744daf2a2ebc04f200a",
+  "client/public/models/props/stone_slab.glb": "acfc857c2e44d4793353ed6f3958432b850cd4d260ce659a612e1107f00acd2f",
+  "client/public/models/props/stone_spire_ember.glb": "b231fa6f1b26182eb7cdd18dd3764543d7b1ab482eee5f3fbded2a2a07ecd188",
+  "client/public/models/props/stone_spire.glb": "ae16c04608ef9f27f2133eff44929279a2361f45aaf6b6a83a4026deb97ba2d8",
+  "client/public/models/props/torch.glb": "30a8f4ca4bb795b9ae40b014d1f82fc79f2820f44d7d7271eb53f33c0caa4a24",
+  "client/public/models/props/town_tower.glb": "8dca85b5492e7212cf09eb812a83659a26acec1756e1c4f70f379603866edfcd",
+  "client/public/models/props/town_wall.glb": "5b13add1c2ff33723d88c734a99e7e637d75ff8969c92d6c963f38ae5c637c53",
+  "client/public/models/props/watchtower.glb": "b4c8d200f5d6c16c603e32c859345f74e355c94acba6a9f21a82d94565c70c7d",
+  "client/public/models/props/well.glb": "4bc43aefc4b3b834f23203eb5b68892c1208258323d7d8b50ab57d5b1d544d8a",
+  "client/public/models/props/wheat.glb": "f1e34e09edd93f043005f2e8a043d65d5f10b2eef405487dc9382aaad4a200ab",
+  "client/public/models/range.glb": "d4be89086accc3e8e1c6fa93cc8c8d8a4ff878f5ee244bb3549b21d81a60d450",
+  "client/public/models/rock.glb": "e4fefd8d8d7deab42be61bd222bcd088330012f0025789146b81f25a46095ffd",
+  "client/public/models/skeleton_mage.glb": "12b4e036f55bbb212d8aeed4a7d104e841de9b65a82a1f26ed892cd0f6fdd2c3",
+  "client/public/models/skeleton_rogue.glb": "0939461defcbc0fc3f604f4cc0d0f9ca61474e9a519dd3064b86130d942f3515",
+  "client/public/models/skeleton_warrior.glb": "aa0e4939a2dbefa303c968561dd3404ad23113dedf5a26642135a90ceafd2423",
+  "client/public/models/stump.glb": "1fc53c1c88428c308996062c00f3942f3cdd65e77fba890d35f4de52c85b6f29",
+  "client/public/models/tree_normal.glb": "57d2e30c00b0f1dfdd9e0e33b515c245bab2da2a98e14abc2f99e46a19fbcc96",
+  "client/public/models/tree_oak.glb": "dd4cbd9328a86ea8f1ce6cc50a7ed59681d2746b0a997982144d316a311c0ac5",
+  "client/public/models/villager_a.glb": "143f47b2369870a5f8f47c39ad9202bd217f690f8b5df3bbff73437e1de00290",
+  "client/public/models/villager_b.glb": "df948e975d2470ccb4715603589b60c5bcb6626fb58895403c2f80e80868c71a",
+  "client/public/models/villager_c.glb": "23666e665af1a44571a116eaf34abb3fdfc87770437595e3552ca8795af3d5c4",
+  "client/public/models/warlord_grondar.glb": "a0825e4e21170a8f39be7c0fb0b452bb47da91a0a3c1e3108234cdd6318a8e4f",
+  "client/public/models/weapons/axe.glb": "34f2a2d29ecc8883361712a083c6d5922fc576275903492b42ecf101bed02c80",
+  "client/public/models/weapons/axe2h.glb": "9d9ae991159e4f97ef11dd63d0a95a5dfa3f653e8f2f7a551bc518b3fccc0731",
+  "client/public/models/weapons/blunt.glb": "0d0c1ce227b9cec832f733a936dc94060e5c92215582082164b5604273e82275",
+  "client/public/models/weapons/bow.glb": "07a27711054f04a5d3c6535cde51ebabba1759a0a46ba482010b9f7294aff2f7",
+  "client/public/models/weapons/crossbow.glb": "776a529aa20433ec4db4fcfcb532766e56da11f749f1721a2ab7ff6d4650b50f",
+  "client/public/models/weapons/dagger.glb": "4c87fa59f7350d4693ca4a6c7c3a9a4fc9adc3e53741147c87c52f19152f7e5f",
+  "client/public/models/weapons/staff.glb": "23017b27f360607f67f73e7df58458c0e6f28f6543b7500bd303b368fdb22fd1",
+  "client/public/models/weapons/sword.glb": "4a1fec80096cbd434b522885e090bb1dd3a33036d00a1a1ab6f4beef222721e1",
+  "client/public/models/weapons/sword2h.glb": "613aba803036b0eb8d0e793599403979baba0fb19406a0669dc04a18f0ae6192",
+  "client/public/models/weapons/wand.glb": "f3bb103c23a9b28931cc16df0a8ab4b1aef886dbe6995c66ea462ccd08cdbddb",
+  "client/public/models/wizard.glb": "f02119c8f442cf7e4dd8f8a7e3b8330c26e5773d3b91037fd2bae94abe018cd5",
+  "client/public/models/zaryth_the_empty_lord.glb": "e3d1d005e4f5028893448b9523823655f1eb0766ce7e78cbbc2314cf9fd703ed"
+ },
+ "props": {
+  "castle": {
+   "min": [
+    -0.9024187922477722,
+    -0.025685003027319908,
+    -0.9499285817146301
+   ],
+   "max": [
+    0.9024187922477722,
+    2.507077932357788,
+    0.9024187922477722
+   ],
+   "baseScale": 3,
+   "blocking": true,
+   "role": "building",
+   "source": "world/client/public/models/props/castle.glb",
+   "sha256": "4e92d916e38e05109b68af227203e1c999d8b9d5b9954880efa6514d1009aee1"
+  },
+  "house": {
+   "min": [
+    -0.8436157703399658,
+    -0.008920181542634964,
+    -0.8190275430679321
+   ],
+   "max": [
+    0.8436156511306763,
+    0.9049292206764221,
+    0.83721923828125
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "building",
+   "source": "world/client/public/models/props/house.glb",
+   "sha256": "937bbb3e596acebf4ff3a82c1307a7a4c007cded199e943576052827fe859654"
+  },
+  "market": {
+   "min": [
+    -0.7499575614929199,
+    -0.041470497846603394,
+    -0.7716118097305298
+   ],
+   "max": [
+    0.719839334487915,
+    0.8224505186080933,
+    0.9028338193893433
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "building",
+   "source": "world/client/public/models/props/market.glb",
+   "sha256": "828460c653fcecee161205f7273a93234dc92c33be261af652fe7bc055eb2767"
+  },
+  "mill": {
+   "min": [
+    -0.8436155319213867,
+    -0.025585658848285675,
+    -0.8081799745559692
+   ],
+   "max": [
+    0.8436161279678345,
+    1.9563468098640442,
+    0.8601409196853638
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "building",
+   "source": "world/client/public/models/props/mill.glb",
+   "sha256": "223e87e40289220706639a7fb116cb68e55cb48847c8ec6b0a77e195341ad64d"
+  },
+  "well": {
+   "min": [
+    -0.5089786648750305,
+    -0.0017956208903342485,
+    -0.5089786052703857
+   ],
+   "max": [
+    0.508978545665741,
+    0.7348325848579407,
+    0.5089786648750305
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/well.glb",
+   "sha256": "4bc43aefc4b3b834f23203eb5b68892c1208258323d7d8b50ab57d5b1d544d8a"
+  },
+  "stall": {
+   "min": [
+    -0.32499998807907104,
+    0,
+    -0.5
+   ],
+   "max": [
+    0.32499998807907104,
+    0.36550140380859375,
+    0.5
+   ],
+   "baseScale": 1.8,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/stall.glb",
+   "sha256": "2adc5214a3b482dd2d31d727a805a0d08a7f9931b9130744daf2a2ebc04f200a"
+  },
+  "lantern": {
+   "min": [
+    -0.10822424292564392,
+    0,
+    -0.11215999722480774
+   ],
+   "max": [
+    0.10822424292564392,
+    1.555999994277954,
+    0.11215999722480774
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/lantern.glb",
+   "sha256": "73303911346ed7a72c253359297c69cb1c17f442d7b8e197a44cc32567ffedfb"
+  },
+  "cart": {
+   "min": [
+    -0.44651220440864564,
+    -1.12798658e-17,
+    -0.6449999809265137
+   ],
+   "max": [
+    0.446511984,
+    0.5355013608932495,
+    0.6949999928474426
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/cart.glb",
+   "sha256": "e4949affcb33129b5170a4ddedf2f7603069e860086087058abd7f8ee1c1c762"
+  },
+  "banner": {
+   "min": [
+    0.375,
+    0.16064895689487457,
+    -0.25
+   ],
+   "max": [
+    0.42500001192092896,
+    0.9999999403953552,
+    0.25
+   ],
+   "baseScale": 2,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/banner.glb",
+   "sha256": "2575af2182aff274bd9a98c5d307784887f2e9e9ac0935f6b07e03e253fffadb"
+  },
+  "fence": {
+   "min": [
+    -0.5,
+    -0.05,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    0.29502729773521424,
+    -0.4300000071525574
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/fence.glb",
+   "sha256": "f199c84056447212c6ed47bec79e09892d46362fc461939b7b017a8c528a1cea"
+  },
+  "fence_gate": {
+   "min": [
+    -0.5,
+    -0.05,
+    -0.5000000121219186
+   ],
+   "max": [
+    0.5,
+    0.29502729773521424,
+    -0.42999999821870993
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/fence_gate.glb",
+   "sha256": "717fc8d5fd0704e7d233e641d65985fbdf4d4f93de4c581c3cbd670db8b563c9"
+  },
+  "wheat": {
+   "min": [
+    -0.2698039412498474,
+    -0.05,
+    -0.22334957122802734
+   ],
+   "max": [
+    0.2698039412498474,
+    0.4849356532096863,
+    0.22334957122802734
+   ],
+   "baseScale": 1.4,
+   "blocking": false,
+   "role": "groundcover",
+   "source": "world/client/public/models/props/wheat.glb",
+   "sha256": "f1e34e09edd93f043005f2e8a043d65d5f10b2eef405487dc9382aaad4a200ab"
+  },
+  "hay_bale": {
+   "min": [
+    -0.30328792333602905,
+    0.012876000255346298,
+    -0.20096999406814575
+   ],
+   "max": [
+    0.30328792333602905,
+    0.36696600914001465,
+    0.20096999406814575
+   ],
+   "baseScale": 1.6,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/hay_bale.glb",
+   "sha256": "a980bb6adf96c83fb59eb29f3a54a103ec24bca62a26cb99fa2375317d9c56e2"
+  },
+  "hay_stack": {
+   "min": [
+    -0.30328792333602905,
+    8.905454929758968e-17,
+    -0.21558599174022675
+   ],
+   "max": [
+    0.30328792333602905,
+    0.37984201312065125,
+    0.21558599174022675
+   ],
+   "baseScale": 1.8,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/hay_stack.glb",
+   "sha256": "aacd8a9fe3ba7c41b4b3915dbbeb9dc89c5cbfb19f8092ab6d90ecb862e2c745"
+  },
+  "stone_slab": {
+   "min": [
+    -0.18039999902248383,
+    -0.05,
+    -0.15623097121715546
+   ],
+   "max": [
+    0.18039999902248383,
+    0.2061679780483246,
+    0.15623097121715546
+   ],
+   "baseScale": 1.4,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/stone_slab.glb",
+   "sha256": "acfc857c2e44d4793353ed6f3958432b850cd4d260ce659a612e1107f00acd2f"
+  },
+  "stone_spire": {
+   "min": [
+    -0.49153444170951843,
+    -0.05,
+    -0.34160539507865906
+   ],
+   "max": [
+    0.49153444170951843,
+    0.9459259033203125,
+    0.34160539507865906
+   ],
+   "baseScale": 1.9,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/stone_spire.glb",
+   "sha256": "ae16c04608ef9f27f2133eff44929279a2361f45aaf6b6a83a4026deb97ba2d8"
+  },
+  "boulder": {
+   "min": [
+    -0.3924533426761627,
+    -0.050000000000000294,
+    -0.5077307224273682
+   ],
+   "max": [
+    0.3924533426761627,
+    0.20977596640586854,
+    0.5077307224273682
+   ],
+   "baseScale": 1.3,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/boulder.glb",
+   "sha256": "c0642a26d1709bb7b964b269215dae7181cf1a18a884eb005f1ca6d767299d86"
+  },
+  "pine_a": {
+   "min": [
+    -0.2659800052642822,
+    -0.05,
+    -0.2659800052642822
+   ],
+   "max": [
+    0.2659800052642822,
+    1.4958356142044067,
+    0.2659800052642822
+   ],
+   "baseScale": 1.7,
+   "blocking": true,
+   "role": "canopy",
+   "source": "world/client/public/models/props/pine_a.glb",
+   "sha256": "1d40e274fc342ff9dedaacd3cc99a96d2d8d9dbf9bddfeceb0e8b97d5658edda"
+  },
+  "pine_b": {
+   "min": [
+    -0.24019214510917664,
+    -0.05,
+    -0.2773500084877014
+   ],
+   "max": [
+    0.24019214510917664,
+    1.2028530359268188,
+    0.2773500084877014
+   ],
+   "baseScale": 1.6,
+   "blocking": true,
+   "role": "canopy",
+   "source": "world/client/public/models/props/pine_b.glb",
+   "sha256": "b62e81884becbadb229f84d7e5cf31a2cd816214e573b3f5882ca2b4e6fa8388"
+  },
+  "bush": {
+   "min": [
+    -0.30127185583114624,
+    -0.05,
+    -0.30127185583114624
+   ],
+   "max": [
+    0.30127185583114624,
+    0.3104109287261963,
+    0.30127185583114624
+   ],
+   "baseScale": 1.4,
+   "blocking": false,
+   "role": "groundcover",
+   "source": "world/client/public/models/props/bush.glb",
+   "sha256": "ff2092cad4f27ef9ee86e611e4d47fcb07c507acf7bbb8c6ba7b21fe6dff010d"
+  },
+  "flowers": {
+   "min": [
+    -0.10453449934720993,
+    -0.05,
+    -0.09052953124046326
+   ],
+   "max": [
+    0.054563019424676895,
+    0.1924999922513962,
+    0.09052953124046326
+   ],
+   "baseScale": 1.1,
+   "blocking": false,
+   "role": "groundcover",
+   "source": "world/client/public/models/props/flowers.glb",
+   "sha256": "02ee2d1a90aea94547d4d595e80b3ec00c8c84097586e702a6cae0b482e8685f"
+  },
+  "obelisk": {
+   "min": [
+    -0.17499999701976776,
+    0,
+    -0.17499999701976776
+   ],
+   "max": [
+    0.17499999701976776,
+    1.0120000839233398,
+    0.17499999701976776
+   ],
+   "baseScale": 2.6,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/obelisk.glb",
+   "sha256": "c16db29ea4cf4680b2f7d5aba9618f27277be5108b4d53fd46d4605155dd381a"
+  },
+  "altar": {
+   "min": [
+    -0.5197964906692505,
+    0,
+    -0.32659998536109924
+   ],
+   "max": [
+    0.5197964906692505,
+    0.4875999987125397,
+    0.32659998536109924
+   ],
+   "baseScale": 1.6,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/altar.glb",
+   "sha256": "f2f2e0435561185351a1ebeb88be27596d59f4e1656b5bc86105823b0eb68755"
+  },
+  "crypt": {
+   "min": [
+    -0.925000011920929,
+    0,
+    -1.2000877857208252
+   ],
+   "max": [
+    0.925000011920929,
+    1,
+    1.2000876665115356
+   ],
+   "baseScale": 2.2,
+   "blocking": true,
+   "role": "building",
+   "source": "world/client/public/models/props/crypt.glb",
+   "sha256": "e57f9d0aa26910918b6ebcb27c47c2e301eef6565ba26789d43b6789d9845efe"
+  },
+  "column": {
+   "min": [
+    -0.19500000774860382,
+    0,
+    -0.19500000774860382
+   ],
+   "max": [
+    0.19500000774860382,
+    1.1299999952316284,
+    0.19500000774860382
+   ],
+   "baseScale": 2,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/column.glb",
+   "sha256": "30c4dd657cb6fa33cb889ba96df2b725cf1c79f4e2715fee61ef54122504974e"
+  },
+  "watchtower": {
+   "min": [
+    -0.4769618511199951,
+    -0.025685006752610207,
+    -0.8799824714660645
+   ],
+   "max": [
+    0.4937245547771454,
+    1.9528006315231323,
+    0.833111584186554
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "building",
+   "source": "world/client/public/models/props/watchtower.glb",
+   "sha256": "b4c8d200f5d6c16c603e32c859345f74e355c94acba6a9f21a82d94565c70c7d"
+  },
+  "torch": {
+   "min": [
+    -0.2751416563987732,
+    -0.395045667886734,
+    -0.2751416862010956
+   ],
+   "max": [
+    0.2751416862010956,
+    0.7307469248771667,
+    0.2751415967941284
+   ],
+   "baseScale": 1.6,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/torch.glb",
+   "sha256": "30a8f4ca4bb795b9ae40b014d1f82fc79f2820f44d7d7271eb53f33c0caa4a24"
+  },
+  "mushrooms": {
+   "min": [
+    -0.13632944226264954,
+    -0.05,
+    -0.11201360821723938
+   ],
+   "max": [
+    0.13330155611038208,
+    0.20048801302909852,
+    0.14218299090862274
+   ],
+   "baseScale": 1.1,
+   "blocking": false,
+   "role": "groundcover",
+   "source": "world/client/public/models/props/mushrooms.glb",
+   "sha256": "ab117952b9c7a40418fff9cc02e67b1262664ea2c7c628507900ade9bbed8020"
+  },
+  "fountain": {
+   "min": [
+    -1,
+    -4.591168408512693e-20,
+    -1
+   ],
+   "max": [
+    1,
+    0.48000001907348633,
+    1
+   ],
+   "baseScale": 1.5,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/fountain.glb",
+   "sha256": "5613e3f300646221747d9ec863d7c8e9908f90dd076416a1c1b0302cfdfdd0a4"
+  },
+  "lumbermill": {
+   "min": [
+    -0.9165546894073486,
+    -0.015705034136772156,
+    -0.8066155910491943
+   ],
+   "max": [
+    0.9074838757514954,
+    1.4538322687149048,
+    0.8508687019348145
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "building",
+   "source": "world/client/public/models/props/lumbermill.glb",
+   "sha256": "f2eaf79d7f7d7fdb7c9559bfa4f08eaec9754c3423fde326365c214857c3c07e"
+  },
+  "town_wall": {
+   "min": [
+    -0.5,
+    0,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    1.309999942779541,
+    0.5
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/town_wall.glb",
+   "sha256": "5b13add1c2ff33723d88c734a99e7e637d75ff8969c92d6c963f38ae5c637c53"
+  },
+  "town_tower": {
+   "min": [
+    -0.5,
+    0,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    1.309999942779541,
+    0.5
+   ],
+   "baseScale": 1,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/town_tower.glb",
+   "sha256": "8dca85b5492e7212cf09eb812a83659a26acec1756e1c4f70f379603866edfcd"
+  },
+  "stone_spire_ember": {
+   "min": [
+    -0.49153444170951843,
+    -0.05,
+    -0.34160539507865906
+   ],
+   "max": [
+    0.49153444170951843,
+    0.9459259033203125,
+    0.34160539507865906
+   ],
+   "baseScale": 1.9,
+   "blocking": true,
+   "role": "dressing",
+   "source": "world/client/public/models/props/stone_spire_ember.glb",
+   "sha256": "b231fa6f1b26182eb7cdd18dd3764543d7b1ab482eee5f3fbded2a2a07ecd188"
+  }
+ },
+ "monsters": [
+  "arcane_adept",
+  "black_dragon",
+  "bogling_sprite",
+  "broodfang_spider",
+  "cave_goblin",
+  "cindermaw_serpent",
+  "duskmare",
+  "dustpaw_rat",
+  "field_chicken",
+  "frostbite_imp",
+  "green_dragon",
+  "krylth_the_defiler",
+  "lesser_fiend",
+  "marshfen_toad",
+  "pasture_bull",
+  "red_dragon",
+  "shroudwraith_specter",
+  "stoneback_crab",
+  "venomcoil_matriarch",
+  "verzik_vitur",
+  "warlord_grondar",
+  "zaryth_blade_sentinel",
+  "zaryth_bolt_sentinel",
+  "zaryth_rune_sentinel",
+  "zaryth_the_empty_lord"
+ ],
+ "ambient": [
+  "chicken",
+  "frog",
+  "villager_a",
+  "villager_b",
+  "villager_c"
+ ]
+}

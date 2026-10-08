@@ -1,0 +1,649 @@
+{
+ "schemaVersion": 1,
+ "region": "barlock",
+ "place": "barlock",
+ "seed": 5922,
+ "parity": {
+  "scope": "canonical gathering, combat and facility accounting; explicit deferred bindings are not playable in this regional contract",
+  "complete": false,
+  "missing": [],
+  "unexpected": []
+ },
+ "contract": {
+  "resources": [
+   "gather:collect_sand",
+   "skill:mining:tin",
+   "skill:woodcutting:normal"
+  ],
+  "monsters": [
+   "combat:broodfang_spider",
+   "combat:duneback_crab",
+   "combat:frostbite_imp",
+   "combat:highland_giant",
+   "combat:umbral_adept",
+   "combat:wailing_banshee"
+  ],
+  "facilities": [
+   "facility:furnace_anvil"
+  ],
+  "deferred": [
+   "minigame:warriors_guild",
+   "quest:doom_plateau",
+   "quest:doric_s_duty",
+   "quest:duel_arena",
+   "quest:echoes_of_guthix",
+   "quest:ernest_and_the_fowl_curse",
+   "quest:farewell_grubby",
+   "quest:gertrude_s_lost_cat",
+   "quest:gloomkin_diplomacy",
+   "quest:grove_gnome_village",
+   "quest:hazeel_conspiracy",
+   "quest:heirs_of_the_sun",
+   "quest:hex_s_house",
+   "skill:dungeoneering:dungeoneering_floor_2",
+   "thieving:cake_stall"
+  ],
+  "portable": [
+   "skill:runecraft:craft_air_rune",
+   "skill:smithing:forge_godsword_blade",
+   "skill:smithing:make_armadyl_godsword",
+   "skill:smithing:make_bandos_godsword",
+   "skill:smithing:make_dragonfire_shield",
+   "skill:smithing:make_saradomin_godsword",
+   "skill:smithing:make_zamorak_godsword",
+   "skill:smithing:smelt_adamant",
+   "skill:smithing:smelt_bronze",
+   "skill:smithing:smelt_gold",
+   "skill:smithing:smelt_iron",
+   "skill:smithing:smelt_mithril",
+   "skill:smithing:smelt_rune",
+   "skill:smithing:smelt_steel",
+   "skill:smithing:smith_adamant_arrowtips",
+   "skill:smithing:smith_adamant_axe",
+   "skill:smithing:smith_adamant_bolts_unf",
+   "skill:smithing:smith_adamant_dagger",
+   "skill:smithing:smith_adamant_full_helm",
+   "skill:smithing:smith_adamant_kiteshield",
+   "skill:smithing:smith_adamant_longsword",
+   "skill:smithing:smith_adamant_mace",
+   "skill:smithing:smith_adamant_pickaxe",
+   "skill:smithing:smith_adamant_platebody",
+   "skill:smithing:smith_adamant_platelegs",
+   "skill:smithing:smith_adamant_plateskirt",
+   "skill:smithing:smith_adamant_scimitar",
+   "skill:smithing:smith_adamant_spear",
+   "skill:smithing:smith_adamant_sword",
+   "skill:smithing:smith_bronze_arrowtips",
+   "skill:smithing:smith_bronze_axe",
+   "skill:smithing:smith_bronze_bolts_unf",
+   "skill:smithing:smith_bronze_dagger",
+   "skill:smithing:smith_bronze_pickaxe",
+   "skill:smithing:smith_bronze_scimitar",
+   "skill:smithing:smith_bronze_spear",
+   "skill:smithing:smith_iron_arrowtips",
+   "skill:smithing:smith_iron_axe",
+   "skill:smithing:smith_iron_bolts_unf",
+   "skill:smithing:smith_iron_chainbody",
+   "skill:smithing:smith_iron_dagger",
+   "skill:smithing:smith_iron_full_helm",
+   "skill:smithing:smith_iron_kiteshield",
+   "skill:smithing:smith_iron_longsword",
+   "skill:smithing:smith_iron_mace",
+   "skill:smithing:smith_iron_pickaxe",
+   "skill:smithing:smith_iron_platebody",
+   "skill:smithing:smith_iron_platelegs",
+   "skill:smithing:smith_iron_scimitar",
+   "skill:smithing:smith_iron_spear",
+   "skill:smithing:smith_iron_sword",
+   "skill:smithing:smith_mithril_arrowtips",
+   "skill:smithing:smith_mithril_axe",
+   "skill:smithing:smith_mithril_bolts_unf",
+   "skill:smithing:smith_mithril_chainbody",
+   "skill:smithing:smith_mithril_dagger",
+   "skill:smithing:smith_mithril_full_helm",
+   "skill:smithing:smith_mithril_kiteshield",
+   "skill:smithing:smith_mithril_longsword",
+   "skill:smithing:smith_mithril_mace",
+   "skill:smithing:smith_mithril_pickaxe",
+   "skill:smithing:smith_mithril_platebody",
+   "skill:smithing:smith_mithril_platelegs",
+   "skill:smithing:smith_mithril_plateskirt",
+   "skill:smithing:smith_mithril_scimitar",
+   "skill:smithing:smith_mithril_spear",
+   "skill:smithing:smith_mithril_sword",
+   "skill:smithing:smith_rune_axe",
+   "skill:smithing:smith_rune_pickaxe",
+   "skill:smithing:smith_rune_scimitar",
+   "skill:smithing:smith_rune_spear",
+   "skill:smithing:smith_runeforged_arrowtips",
+   "skill:smithing:smith_runeforged_chainbody",
+   "skill:smithing:smith_runeforged_full_helm",
+   "skill:smithing:smith_runeforged_kiteshield",
+   "skill:smithing:smith_runeforged_med_helm",
+   "skill:smithing:smith_runeforged_platebody",
+   "skill:smithing:smith_runeforged_platelegs",
+   "skill:smithing:smith_runeforged_plateskirt",
+   "skill:smithing:smith_runeforged_sword",
+   "skill:smithing:smith_runite_bolts_unf",
+   "skill:smithing:smith_steel_arrowtips",
+   "skill:smithing:smith_steel_axe",
+   "skill:smithing:smith_steel_bolts_unf",
+   "skill:smithing:smith_steel_chainbody",
+   "skill:smithing:smith_steel_dagger",
+   "skill:smithing:smith_steel_full_helm",
+   "skill:smithing:smith_steel_kiteshield",
+   "skill:smithing:smith_steel_longsword",
+   "skill:smithing:smith_steel_mace",
+   "skill:smithing:smith_steel_pickaxe",
+   "skill:smithing:smith_steel_platebody",
+   "skill:smithing:smith_steel_platelegs",
+   "skill:smithing:smith_steel_scimitar",
+   "skill:smithing:smith_steel_spear",
+   "skill:smithing:smith_steel_sword"
+  ]
+ },
+ "deferredBindings": [
+  {
+   "ref": "combat:duneback_crab",
+   "reason": "missing_model"
+  },
+  {
+   "ref": "combat:highland_giant",
+   "reason": "missing_model"
+  },
+  {
+   "ref": "combat:umbral_adept",
+   "reason": "missing_model"
+  },
+  {
+   "ref": "combat:wailing_banshee",
+   "reason": "missing_model"
+  }
+ ],
+ "access": [],
+ "points": [
+  {
+   "id": "arrival",
+   "x": 16,
+   "z": 20,
+   "label": "Barlock arrival",
+   "role": "arrival"
+  },
+  {
+   "id": "court",
+   "x": 16,
+   "z": 13,
+   "label": "Clan hall court",
+   "role": "hub"
+  },
+  {
+   "id": "landmark",
+   "x": 16,
+   "z": 8,
+   "label": "Clan hall court",
+   "role": "landmark"
+  },
+  {
+   "id": "east",
+   "x": 30,
+   "z": 13,
+   "label": "Varrick road",
+   "role": "gateway"
+  },
+  {
+   "id": "north",
+   "x": 3,
+   "z": 1,
+   "label": "Edgevale road",
+   "role": "gateway"
+  },
+  {
+   "id": "west",
+   "x": 1,
+   "z": 13,
+   "label": "Faloden road",
+   "role": "gateway"
+  },
+  {
+   "id": "mining_approach",
+   "x": 4,
+   "z": 20,
+   "label": "Working outcrop",
+   "role": "resource"
+  },
+  {
+   "id": "woodcutting_approach",
+   "x": 23,
+   "z": 18,
+   "label": "Timber grove",
+   "role": "resource"
+  },
+  {
+   "id": "gather_approach",
+   "x": 22,
+   "z": 20,
+   "label": "Fieldwork patch",
+   "role": "resource"
+  },
+  {
+   "id": "encounter_0",
+   "x": 8,
+   "z": 8,
+   "label": "Broodfang Spider approach",
+   "role": "encounter"
+  },
+  {
+   "id": "encounter_1",
+   "x": 23,
+   "z": 8,
+   "label": "Frostbite Imp approach",
+   "role": "encounter"
+  },
+  {
+   "id": "forge:approach",
+   "x": 8,
+   "z": 22
+  },
+  {
+   "id": "clan_cottage:door",
+   "x": 27,
+   "z": 22
+  }
+ ],
+ "footprints": [
+  {
+   "model": "house",
+   "x0": 6.644045305252075,
+   "z0": 15.698139405250549,
+   "x1": 10.355954432487488,
+   "z1": 19.34188232421875
+  },
+  {
+   "model": "lantern",
+   "x0": 11.413420605659486,
+   "z0": 20.410272002220154,
+   "x1": 11.586579394340514,
+   "z1": 20.589727997779846
+  },
+  {
+   "model": "house",
+   "x0": 25.137875843048096,
+   "z0": 17.20672287940979,
+   "x1": 29.862123823165895,
+   "z1": 21.8442138671875
+  },
+  {
+   "model": "lantern",
+   "x0": 24.408009393513204,
+   "z0": 21.404664002358913,
+   "x1": 24.591990606486796,
+   "z1": 21.595335997641087
+  },
+  {
+   "model": "house",
+   "x0": 13.125536918640137,
+   "z0": 0.22388982772827148,
+   "x1": 19.874462604522705,
+   "z1": 6.848876953125
+  },
+  {
+   "model": "cart",
+   "x0": 26.00883657515049,
+   "z0": 9.790500020980835,
+   "x1": 26.9911631824,
+   "z1": 11.264499992132187
+  },
+  {
+   "model": "well",
+   "x0": 6.914674535393715,
+   "z0": 9.914674603939057,
+   "x1": 8.085325327515601,
+   "z1": 11.085325464606285
+  },
+  {
+   "model": "boulder",
+   "x0": 28.836753850877287,
+   "z0": 2.6419350790977476,
+   "x1": 30.163246149122713,
+   "z1": 4.358064920902252
+  },
+  {
+   "model": "hay_stack",
+   "x0": 27.844898085594178,
+   "z0": 16.03433425784111,
+   "x1": 29.155101914405822,
+   "z1": 16.96566574215889
+  },
+  {
+   "model": "cart",
+   "x0": 13.00883657515049,
+   "z0": 16.790500020980836,
+   "x1": 13.9911631824,
+   "z1": 18.264499992132187
+  },
+  {
+   "model": "lantern",
+   "x0": 19.413420605659486,
+   "z0": 17.410272002220154,
+   "x1": 19.586579394340514,
+   "z1": 17.589727997779846
+  },
+  {
+   "model": "pine_b",
+   "x0": 25.4125794842324,
+   "z0": 5.395992343981671,
+   "x1": 27.5874205157676,
+   "z1": 7.604007656018329
+  },
+  {
+   "model": "pine_a",
+   "x0": 27.46222691140168,
+   "z0": 0.4622269114016797,
+   "x1": 29.53777308859832,
+   "z1": 2.5377730885983203
+  },
+  {
+   "model": "pine_a",
+   "x0": 21.58846848041679,
+   "z0": 0.5884684804167909,
+   "x1": 23.41153151958321,
+   "z1": 2.411531519583209
+  },
+  {
+   "model": "pine_a",
+   "x0": 7.589287190687069,
+   "z0": 0.5892871906870694,
+   "x1": 9.41071280931293,
+   "z1": 2.4107128093129306
+  },
+  {
+   "model": "pine_b",
+   "x0": 25.526139022569403,
+   "z0": 0.5840164022942973,
+   "x1": 27.473860977430597,
+   "z1": 2.4159835977057025
+  },
+  {
+   "model": "pine_b",
+   "x0": 19.724058234215363,
+   "z0": 8.687804550846575,
+   "x1": 21.275941765784637,
+   "z1": 10.312195449153425
+  },
+  {
+   "model": "pine_a",
+   "x0": 0.39363625793039114,
+   "z0": 18.393636257930392,
+   "x1": 2.606363742069609,
+   "z1": 20.606363742069608
+  },
+  {
+   "model": "pine_b",
+   "x0": 29.559794186688112,
+   "z0": 0.6161567403367206,
+   "x1": 31.440205813311888,
+   "z1": 2.3838432596632795
+  },
+  {
+   "model": "pine_a",
+   "x0": 29.62706094486385,
+   "z0": 6.6270609448638504,
+   "x1": 31.37293905513615,
+   "z1": 8.37293905513615
+  },
+  {
+   "model": "pine_b",
+   "x0": 29.62441399314574,
+   "z0": 9.591967231442526,
+   "x1": 31.37558600685426,
+   "z1": 11.408032768557474
+  },
+  {
+   "model": "pine_a",
+   "x0": 25.781221760075965,
+   "z0": 7.781221760075965,
+   "x1": 27.218778239924035,
+   "z1": 9.218778239924035
+  },
+  {
+   "model": "pine_a",
+   "x0": 10.752591050517038,
+   "z0": 16.752591050517037,
+   "x1": 12.247408949482962,
+   "z1": 18.247408949482963
+  },
+  {
+   "model": "bush",
+   "x0": 27.641515842443898,
+   "z0": 9.641515842443898,
+   "x1": 29.358484157556102,
+   "z1": 11.358484157556102
+  },
+  {
+   "model": "flowers",
+   "x0": 23.138990559432735,
+   "z0": 15.127513797731556,
+   "x1": 23.787531289175888,
+   "z1": 15.75805752799441
+  },
+  {
+   "model": "flowers",
+   "x0": 13.292585575195536,
+   "z0": 11.221724553656454,
+   "x1": 13.777806721155843,
+   "z1": 11.706210679828152
+  },
+  {
+   "model": "flowers",
+   "x0": 13.247660890043571,
+   "z0": 7.233976665047933,
+   "x1": 13.85111034746273,
+   "z1": 7.845781859239824
+  },
+  {
+   "model": "flowers",
+   "x0": 12.276788269240134,
+   "z0": 19.29205715313758,
+   "x1": 12.786851723903679,
+   "z1": 19.792797261049586
+  },
+  {
+   "model": "flowers",
+   "x0": 20.32486122604554,
+   "z0": 16.2521940945989,
+   "x1": 20.757874664585582,
+   "z1": 16.700996608361418
+  },
+  {
+   "model": "bush",
+   "x0": 2.6023157576768923,
+   "z0": 15.602315757676893,
+   "x1": 4.397684242323107,
+   "z1": 17.39768424232311
+  },
+  {
+   "model": "flowers",
+   "x0": 5.3088708840491945,
+   "z0": 8.35969547455741,
+   "x1": 5.712896256339833,
+   "z1": 8.732686798518394
+  },
+  {
+   "model": "flowers",
+   "x0": 30.342834586265766,
+   "z0": 3.303830467981352,
+   "x1": 30.745107594886836,
+   "z1": 3.7299198158938975
+  },
+  {
+   "model": "flowers",
+   "x0": 13.218443827843826,
+   "z0": 19.263933085247135,
+   "x1": 13.661063821790858,
+   "z1": 19.75235078437155
+  },
+  {
+   "model": "flowers",
+   "x0": 1.208988118222882,
+   "z0": 4.269452490037509,
+   "x1": 1.6908861354661846,
+   "z1": 4.775568174371311
+  },
+  {
+   "model": "flowers",
+   "x0": 30.255399969593338,
+   "z0": 20.193058052255598,
+   "x1": 30.789082617138842,
+   "z1": 20.69873503304637
+  }
+ ],
+ "connections": [
+  {
+   "point": "east",
+   "to": "varrick",
+   "x": 30,
+   "z": 13,
+   "outward": {
+    "x": 1,
+    "z": 0
+   }
+  },
+  {
+   "point": "north",
+   "to": "edgevale",
+   "x": 3,
+   "z": 1,
+   "outward": {
+    "x": 0,
+    "z": -1
+   }
+  },
+  {
+   "point": "west",
+   "to": "faloden",
+   "x": 1,
+   "z": 13,
+   "outward": {
+    "x": -1,
+    "z": 0
+   }
+  }
+ ],
+ "reviewViews": [
+  {
+   "id": "overview",
+   "target": "court",
+   "mode": "overview",
+   "distance": 40,
+   "pitch": 0.95,
+   "yaw": 0,
+   "x": 16,
+   "z": 13
+  },
+  {
+   "id": "arrival",
+   "target": "arrival",
+   "mode": "gameplay",
+   "yaw": 0,
+   "zoom": 1.25,
+   "x": 16,
+   "z": 20
+  },
+  {
+   "id": "forge",
+   "target": "forge:approach",
+   "mode": "gameplay",
+   "yaw": 0.45,
+   "zoom": 1.25,
+   "covers": [
+    "facility:furnace_anvil"
+   ],
+   "x": 8,
+   "z": 22
+  },
+  {
+   "id": "mining",
+   "target": "mining_approach",
+   "mode": "gameplay",
+   "yaw": 0.35,
+   "zoom": 1.25,
+   "covers": [
+    "skill:mining:tin"
+   ],
+   "x": 4,
+   "z": 20
+  },
+  {
+   "id": "woodcutting",
+   "target": "woodcutting_approach",
+   "mode": "gameplay",
+   "yaw": 0.35,
+   "zoom": 1.25,
+   "covers": [
+    "skill:woodcutting:normal"
+   ],
+   "x": 23,
+   "z": 18
+  },
+  {
+   "id": "gather",
+   "target": "gather_approach",
+   "mode": "gameplay",
+   "yaw": 0.35,
+   "zoom": 1.25,
+   "covers": [
+    "gather:collect_sand"
+   ],
+   "x": 22,
+   "z": 20
+  },
+  {
+   "id": "encounter_0",
+   "target": "encounter_0",
+   "mode": "gameplay",
+   "yaw": 0.3,
+   "zoom": 1.3,
+   "covers": [
+    "combat:broodfang_spider"
+   ],
+   "x": 8,
+   "z": 8
+  },
+  {
+   "id": "encounter_1",
+   "target": "encounter_1",
+   "mode": "gameplay",
+   "yaw": 0.3,
+   "zoom": 1.3,
+   "covers": [
+    "combat:frostbite_imp"
+   ],
+   "x": 23,
+   "z": 8
+  },
+  {
+   "id": "district",
+   "target": "clan_cottage:door",
+   "mode": "gameplay",
+   "yaw": 0.35,
+   "zoom": 1.1,
+   "x": 27,
+   "z": 22
+  }
+ ],
+ "counts": {
+  "props": 35,
+  "npcs": 2,
+  "objects": 5,
+  "ambient": 2,
+  "reachableTiles": 547
+ },
+ "budgets": {
+  "props": 100,
+  "npcs": 8,
+  "ambient": 4,
+  "maxPropsPer8x8": 18
+ },
+ "visualApproval": "pending",
+ "sourceHash": "c97b0b07bce5427cf389bd9541412442da420ef8f912d824bd74a9176e6ca27b"
+}

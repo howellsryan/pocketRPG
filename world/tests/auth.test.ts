@@ -32,16 +32,16 @@ describe('resolvePocketRpgUrl', () => {
   it('ignores an unrecognized referrer and falls back to the hostname heuristic', () => {
     expect(resolvePocketRpgUrl('https://evil.example.com/', 'pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
     expect(resolvePocketRpgUrl('https://evil.example.com/', 'pocketrpg-app-preview.rlh.workers.dev')).toBe(
-      'https://preview.pocketrpg.pages.dev'
+      'https://pocketrpg-app-preview.rlh.workers.dev'
     )
   })
 
   it('falls back to the hostname heuristic when there is no referrer at all', () => {
     // The world client ships from the game's own Worker now — pocketrpg.co.uk
-    // is production, anything else (a preview workers.dev URL, localhost) falls
-    // back to preview.
+    // is production, Workers preview returns to itself, and local development
+    // retains the legacy preview fallback.
     expect(resolvePocketRpgUrl('', 'pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
-    expect(resolvePocketRpgUrl('', 'pocketrpg-app-preview.rlh.workers.dev')).toBe('https://preview.pocketrpg.pages.dev')
+    expect(resolvePocketRpgUrl('', 'pocketrpg-app-preview.rlh.workers.dev')).toBe('https://pocketrpg-app-preview.rlh.workers.dev')
     expect(resolvePocketRpgUrl('', 'localhost')).toBe('https://preview.pocketrpg.pages.dev')
   })
 })
@@ -88,5 +88,14 @@ describe('run toggle preference', () => {
     expect(getRunPref()).toBe(true)
     storeRunPref(false)
     expect(getRunPref()).toBe(false)
+  })
+})
+
+describe('Workers preview return', () => {
+  it('returns a bookmarked world to its own Workers preview', () => {
+    expect(resolvePocketRpgUrl('', 'pocketrpg-app-preview.rlh.workers.dev')).toBe('https://pocketrpg-app-preview.rlh.workers.dev')
+  })
+  it('accepts the current Workers preview as a trusted referring game', () => {
+    expect(resolvePocketRpgUrl('https://pocketrpg-app-preview.rlh.workers.dev/', 'world.pocketrpg.co.uk')).toBe('https://pocketrpg-app-preview.rlh.workers.dev')
   })
 })

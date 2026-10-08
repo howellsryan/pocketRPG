@@ -367,3 +367,62 @@ describe('woodcutting', () => {
     expect(player.pendingXp.woodcutting).toBe(37)
   })
 })
+
+describe('Lumbright fishing and fieldwork', () => {
+  const node = (skill: 'fishing' | 'gather', rock: string): RockState => makeRock({ id: 'resource', skill, rock })
+  const playerFor = (action: string, overrides: Partial<TickPlayer> = {}) => makePlayer({
+    pendingInteract: { kind: 'rock', id: 'resource', action }, ...overrides,
+  })
+  const run = (p: TickPlayer, n: RockState, count: number) => {
+    const events: ReturnType<typeof tickPlayer>['events'] = []
+    const changes: ReturnType<typeof tickPlayer>['rockChanges'] = []
+    for (let t=1;t<=count;t++) {
+      const r=tickPlayer(p,makeCtx(n,t)); events.push(...r.events); changes.push(...r.rockChanges)
+    }
+    return { events, changes }
+  }
+  it('gathers a bowstring every six ticks with no invented XP or depletion wait', () => {
+    const p=playerFor('gather'), n=node('gather','gather_bowstring')
+    run(p,n,5); expect(p.minted.bowstring).toBeUndefined()
+    const result=run(p,n,7)
+    expect(p.minted.bowstring).toBe(2)
+    expect(p.inventory.filter((s)=>s?.itemId==='bowstring')).toEqual([{itemId:'bowstring',quantity:2}])
+    expect(result.events.some((e)=>e.e==='xp')).toBe(false)
+    expect(p.stats.gather).toBeUndefined()
+    expect(n.depletedUntilTick).toBe(0)
+    expect(result.changes).toEqual([])
+    expect(p.anim).toBe('idle')
+  })
+  it('uses the idle fishing tool timing and grants the canonical shrimp product and XP', () => {
+    const bare=playerFor('fish'), shore=node('fishing','shrimps')
+    run(bare,shore,7); expect(bare.minted.raw_shrimps).toBeUndefined()
+    run(bare,shore,1)
+    expect(bare.minted.raw_shrimps).toBe(1)
+    expect(bare.pendingXp.fishing).toBe(10)
+    const net=playerFor('fish',{ inventory: [{itemId:'fishing_net',quantity:1},...new Array(27).fill(null)] })
+    const result=run(net,node('fishing','shrimps'),4)
+    expect(net.minted.raw_shrimps).toBe(1)
+    expect(result.events).toContainEqual({e:'xp',skill:'fishing',amount:10})
+    expect(result.changes).toEqual([])
+  })
+  it('keeps charged-tool timing disabled until charge consumption is supported', () => {
+    const p=playerFor('fish', {
+      stats:{fishing:{xp:1000000,level:73}},
+      equipment:{weapon:{itemId:'shardglass_harpoon',charges:1}},
+      inventory:[{itemId:'fishing_net',quantity:1},...new Array(27).fill(null)],
+    })
+    run(p,node('fishing','shrimps'),2)
+    expect(p.minted.raw_shrimps).toBeUndefined()
+    run(p,node('fishing','shrimps'),2)
+    expect(p.minted.raw_shrimps).toBe(1)
+  })
+  it('refuses forged verbs, unsupported conversions, distance and a full inventory', () => {
+    const wrong=playerFor('mine'); run(wrong,node('fishing','shrimps'),12); expect(wrong.minted).toEqual({})
+    const distant=playerFor('gather',{x:10}); run(distant,node('gather','gather_bowstring'),12); expect(distant.minted).toEqual({})
+    const conversion=playerFor('gather'); run(conversion,node('gather','burn_seaweed'),12); expect(conversion.minted).toEqual({})
+    const full=playerFor('gather',{inventory:new Array(28).fill({itemId:'copper_ore',quantity:1})})
+    const result=run(full,node('gather','gather_bowstring'),6)
+    expect(full.minted).toEqual({})
+    expect(result.events).toContainEqual({e:'msg',text:'Your pack is full.'})
+  })
+})

@@ -97,7 +97,7 @@ type MeshPart = { geometry: THREE.BufferGeometry; material: THREE.Material | THR
 // Every mesh in the GLB, with its transform relative to the root baked into a
 // cloned geometry. Multi-mesh props (e.g. flowers = stems + petals) need all
 // parts — instancing only the first renders partial ("red crescent") props.
-function collectMeshParts(root: THREE.Object3D): MeshPart[] {
+export function collectMeshParts(root: THREE.Object3D): MeshPart[] {
   root.updateMatrixWorld(true)
   const parts: MeshPart[] = []
   root.traverse((o) => {
@@ -148,11 +148,17 @@ export async function createScatterLayers(
         scl.setScalar(it.scale * base)
         return new THREE.Matrix4().compose(pos, q, scl)
       })
-      for (const part of parts) {
-        const mesh = new THREE.InstancedMesh(part.geometry, part.material, instances.length)
-        matrices.forEach((mat, idx) => mesh.setMatrixAt(idx, mat))
-        mesh.instanceMatrix.needsUpdate = true
-        mesh.frustumCulled = false
+      const batches=new Map<string,THREE.Matrix4[]>()
+      instances.forEach((it,i)=>{
+        const key=Math.floor(it.x/32)+','+Math.floor(it.z/32)
+        const batch=batches.get(key)??[];batch.push(matrices[i]);batches.set(key,batch)
+      })
+      for(const batch of batches.values())for(const part of parts){
+        const mesh=new THREE.InstancedMesh(part.geometry,part.material,batch.length)
+        batch.forEach((mat,idx)=>mesh.setMatrixAt(idx,mat))
+        mesh.instanceMatrix.needsUpdate=true
+        mesh.computeBoundingSphere()
+        mesh.frustumCulled=true
         scene.add(mesh)
       }
     }),

@@ -34,6 +34,8 @@ export type StationType = 'furnace' | 'anvil' | 'range'
 export type ClientMessage =
   | { t: 'hello'; token: string }
   | { t: 'walk'; x: number; z: number }
+  | { t: 'journey'; placeId: string }
+  | { t: 'enter'; exitId: string }
   | { t: 'interact'; kind: 'rock' | 'npc' | 'loot' | 'object' | 'player'; id: string; action: string }
   | { t: 'cancel' }
   | { t: 'chat'; text: string }
@@ -156,14 +158,17 @@ export type EntityDiff = {
 
 export type StaticObject = {
   id: string
-  type: 'rock' | 'bank_chest' | 'tree' | StationType
+  type: 'rock' | 'bank_chest' | 'tree' | 'fishing_spot' | 'gather_site' | StationType
   rock?: string
   tree?: string
+  fishing?: string
+  gather?: string
   x: number
   z: number
 }
 
-export type ExitMarker = { id: string; x: number; z: number; label: string; hideMarker?: boolean }
+export type ExitMarker = { id: string; x: number; z: number; label: string; hideMarker?: boolean; presentation?: 'cave' | 'gate' | 'door'; activation?: 'interact'; description?: string }
+export type Waymark = { id: string; x: number; z: number; label: string; destination: string }
 /** Same-zone travel destination surfaced to the client's Travel menu. */
 export type Landmark = { id: string; label: string; x: number; z: number }
 export type PropPlacement = { model: string; x: number; z: number; rot?: number; scale?: number }
@@ -209,7 +214,7 @@ export type ServerMessage =
       t: 'welcome'
       selfId: string
       tick: number
-      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; landmarks?: Landmark[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; ambient?: ZoneAmbient; terrain?: ZoneTerrain; ground?: ZoneGroundRegion[]; spawns?: NpcSpawn[] }
+      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; landmarks?: Landmark[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; ambient?: ZoneAmbient; terrain?: ZoneTerrain; ground?: ZoneGroundRegion[]; spawns?: NpcSpawn[]; waymarks?: Waymark[]; previewTravel?: boolean }
       statics: StaticObject[]
       you: {
         x: number
@@ -350,6 +355,14 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
     case 'unequip': {
       const slot = (raw as Record<string, unknown>).slot
       return typeof slot === 'string' && slot.length > 0 && slot.length <= 32 ? { t: 'unequip', slot } : null
+    }
+    case 'journey': {
+      const placeId = (raw as Record<string, unknown>).placeId
+      return typeof placeId === 'string' && placeId.length > 0 && placeId.length <= 64 ? { t: 'journey', placeId } : null
+    }
+    case 'enter': {
+      const exitId = (raw as Record<string, unknown>).exitId
+      return typeof exitId === 'string' && exitId.length > 0 && exitId.length <= 64 ? { t: 'enter', exitId } : null
     }
     case 'teleport': {
       const placeId = (raw as Record<string, unknown>).placeId

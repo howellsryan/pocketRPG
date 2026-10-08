@@ -1,0 +1,648 @@
+{
+  "schemaVersion": 1,
+  "id": "alkarid",
+  "name": "Al-Karid",
+  "place": "alkarid",
+  "seed": 5648,
+  "width": 40,
+  "height": 36,
+  "spawn": {
+    "x": 7,
+    "z": 18
+  },
+  "intent": "A sandy toll town with an open caravan court, a shaded bank, an active forge yard and a small oasis grove; berries and coal belong here rather than a generic farm.",
+  "points": [
+    {
+      "id": "arrival",
+      "x": 7,
+      "z": 18,
+      "label": "Al-Karid arrival",
+      "role": "arrival"
+    },
+    {
+      "id": "court",
+      "x": 20,
+      "z": 18,
+      "label": "Caravan court",
+      "role": "hub"
+    },
+    {
+      "id": "landmark",
+      "x": 20,
+      "z": 13,
+      "label": "Caravan court",
+      "role": "landmark"
+    },
+    {
+      "id": "west",
+      "x": 1,
+      "z": 18,
+      "label": "Lumbright road",
+      "role": "gateway"
+    },
+    {
+      "id": "east",
+      "x": 38,
+      "z": 18,
+      "label": "Brimhollow road",
+      "role": "gateway"
+    },
+    {
+      "id": "mining_approach",
+      "x": 4,
+      "z": 32,
+      "label": "Working outcrop",
+      "role": "resource"
+    },
+    {
+      "id": "woodcutting_approach",
+      "x": 31,
+      "z": 30,
+      "label": "Timber grove",
+      "role": "resource"
+    },
+    {
+      "id": "gather_approach",
+      "x": 30,
+      "z": 25,
+      "label": "Fieldwork patch",
+      "role": "resource"
+    }
+  ],
+  "routes": [
+    {
+      "id": "arrival_lane",
+      "from": "arrival",
+      "to": "court",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "ceremonial_approach",
+      "from": "court",
+      "to": "landmark",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "west_road",
+      "from": "court",
+      "to": "west",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "east_road",
+      "from": "court",
+      "to": "east",
+      "via": [],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_0",
+      "from": "court",
+      "to": "mining_approach",
+      "via": [
+        {
+          "x": 9,
+          "z": 18
+        },
+        {
+          "x": 9,
+          "z": 27
+        },
+        {
+          "x": 5,
+          "z": 27
+        },
+        {
+          "x": 5,
+          "z": 32
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_1",
+      "from": "court",
+      "to": "woodcutting_approach",
+      "via": [
+        {
+          "x": 29,
+          "z": 18
+        },
+        {
+          "x": 29,
+          "z": 25
+        },
+        {
+          "x": 30,
+          "z": 25
+        },
+        {
+          "x": 30,
+          "z": 30
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_2",
+      "from": "court",
+      "to": "gather_approach",
+      "via": [
+        {
+          "x": 29,
+          "z": 18
+        },
+        {
+          "x": 29,
+          "z": 25
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_3",
+      "from": "court",
+      "to": "bank:approach",
+      "via": [
+        {
+          "x": 12,
+          "z": 18
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_4",
+      "from": "court",
+      "to": "kitchen:approach",
+      "via": [
+        {
+          "x": 28,
+          "z": 18
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_5",
+      "from": "court",
+      "to": "forge:approach",
+      "via": [
+        {
+          "x": 2,
+          "z": 18
+        },
+        {
+          "x": 2,
+          "z": 33
+        },
+        {
+          "x": 10,
+          "z": 33
+        },
+        {
+          "x": 10,
+          "z": 27
+        }
+      ],
+      "width": 3,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_6",
+      "from": "court",
+      "to": "caravan_lodge:door",
+      "via": [
+        {
+          "x": 9,
+          "z": 18
+        },
+        {
+          "x": 9,
+          "z": 8
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_7",
+      "from": "court",
+      "to": "toll_keepers_home:door",
+      "via": [
+        {
+          "x": 31,
+          "z": 18
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    },
+    {
+      "id": "district_8",
+      "from": "court",
+      "to": "oasis_house:door",
+      "via": [
+        {
+          "x": 22,
+          "z": 18
+        },
+        {
+          "x": 22,
+          "z": 24
+        },
+        {
+          "x": 24,
+          "z": 24
+        },
+        {
+          "x": 24,
+          "z": 31
+        }
+      ],
+      "width": 1,
+      "kind": "path_dirt"
+    }
+  ],
+  "surfaces": [
+    {
+      "kind": "sand",
+      "x": 0,
+      "z": 0,
+      "w": 40,
+      "h": 36
+    },
+    {
+      "kind": "sand",
+      "x": 15,
+      "z": 15,
+      "w": 11,
+      "h": 7
+    },
+    {
+      "kind": "sand",
+      "x": 17,
+      "z": 16,
+      "w": 7,
+      "h": 5
+    }
+  ],
+  "lots": [
+    {
+      "id": "bank",
+      "prefab": "bank_front",
+      "x": 12,
+      "z": 12
+    },
+    {
+      "id": "kitchen",
+      "prefab": "kitchen",
+      "x": 28,
+      "z": 12
+    },
+    {
+      "id": "forge",
+      "prefab": "forge_front",
+      "x": 12,
+      "z": 24
+    },
+    {
+      "id": "caravan_lodge",
+      "prefab": "cottage",
+      "x": 7,
+      "z": 5
+    },
+    {
+      "id": "toll_keepers_home",
+      "prefab": "cottage",
+      "x": 31,
+      "z": 5
+    },
+    {
+      "id": "oasis_house",
+      "prefab": "cottage",
+      "x": 21,
+      "z": 28
+    }
+  ],
+  "resources": [
+    {
+      "id": "forge_stations",
+      "ref": "facility:furnace_anvil",
+      "components": {
+        "furnace": {
+          "x": 11,
+          "z": 25
+        },
+        "anvil": {
+          "x": 13,
+          "z": 25
+        }
+      }
+    },
+    {
+      "id": "mining_0",
+      "ref": "skill:mining:coal",
+      "x": 4,
+      "z": 31
+    },
+    {
+      "id": "woodcutting_0",
+      "ref": "skill:woodcutting:willow",
+      "x": 31,
+      "z": 29
+    },
+    {
+      "id": "gather_0",
+      "ref": "gather:pick_white_berries",
+      "x": 30,
+      "z": 24
+    }
+  ],
+  "encounters": [],
+  "access": [],
+  "exits": [],
+  "dressing": [
+    {
+      "model": "watchtower",
+      "x": 20,
+      "z": 8,
+      "scale": 1.9
+    },
+    {
+      "model": "stall",
+      "x": 16,
+      "z": 22,
+      "scale": 1.1
+    },
+    {
+      "model": "stall",
+      "x": 24,
+      "z": 22,
+      "scale": 1.1,
+      "rot": 3.141592653589793
+    },
+    {
+      "model": "lantern",
+      "x": 25,
+      "z": 21,
+      "scale": 0.8
+    },
+    {
+      "model": "fountain",
+      "x": 27,
+      "z": 28,
+      "scale": 0.85
+    },
+    {
+      "model": "cart",
+      "x": 7,
+      "z": 11,
+      "scale": 1.3
+    },
+    {
+      "model": "well",
+      "x": 7,
+      "z": 29,
+      "scale": 1.3
+    },
+    {
+      "model": "stall",
+      "x": 4,
+      "z": 15,
+      "scale": 1
+    },
+    {
+      "model": "well",
+      "x": 3,
+      "z": 13,
+      "scale": 1.2
+    }
+  ],
+  "groves": [
+    {
+      "id": "dune_rocks",
+      "x": 1,
+      "z": 1,
+      "w": 38,
+      "h": 34,
+      "count": 12,
+      "models": [
+        "boulder",
+        "stone_slab"
+      ],
+      "scaleRange": [
+        1.2,
+        1.8
+      ]
+    },
+    {
+      "id": "oasis_scrub",
+      "x": 25,
+      "z": 21,
+      "w": 10,
+      "h": 13,
+      "count": 10,
+      "models": [
+        "bush",
+        "flowers"
+      ],
+      "scaleRange": [
+        1.2,
+        2.2
+      ]
+    },
+    {
+      "id": "garden_undergrowth",
+      "x": 1,
+      "z": 1,
+      "w": 38,
+      "h": 34,
+      "count": 22,
+      "models": [
+        "bush",
+        "flowers"
+      ],
+      "scaleRange": [
+        1.4,
+        2.5
+      ]
+    }
+  ],
+  "deferredBindings": [
+    {
+      "ref": "combat:bloodmoon_stalker",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:ironfang_drake",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:pyreclaw_demon",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:shadeglass_golem",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:warped_spectre",
+      "reason": "missing_model"
+    },
+    {
+      "ref": "combat:wraithgale_specter",
+      "reason": "missing_model"
+    }
+  ],
+  "ambient": {
+    "critters": [
+      {
+        "model": "villager_a",
+        "x": 17,
+        "z": 17,
+        "w": 6,
+        "h": 3,
+        "count": 2
+      }
+    ],
+    "smoke": []
+  },
+  "connections": [
+    {
+      "point": "west",
+      "to": "lumbright"
+    },
+    {
+      "point": "east",
+      "to": "brimhollow"
+    }
+  ],
+  "waymarks": [
+    {
+      "id": "road_lumbright",
+      "label": "Lumbright",
+      "destination": "lumbright",
+      "x": 3,
+      "z": 18
+    },
+    {
+      "id": "road_brimhollow",
+      "label": "Brimhollow",
+      "destination": "brimhollow",
+      "x": 36,
+      "z": 18
+    }
+  ],
+  "terrain": {
+    "relief": 0.15,
+    "procedural": {
+      "seed": 5648,
+      "frequency": 0.03
+    },
+    "material": "desert",
+    "scatter": []
+  },
+  "budgets": {
+    "props": 100,
+    "npcs": 8,
+    "ambient": 4,
+    "maxPropsPer8x8": 18
+  },
+  "reviewViews": [
+    {
+      "id": "overview",
+      "target": "court",
+      "mode": "overview",
+      "distance": 50,
+      "pitch": 0.95,
+      "yaw": 0
+    },
+    {
+      "id": "arrival",
+      "target": "arrival",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25
+    },
+    {
+      "id": "bank",
+      "target": "bank:approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "facility:bank"
+      ]
+    },
+    {
+      "id": "hearth",
+      "target": "kitchen:approach",
+      "mode": "gameplay",
+      "yaw": 0,
+      "zoom": 1.25,
+      "covers": [
+        "facility:stove"
+      ]
+    },
+    {
+      "id": "forge",
+      "target": "forge:approach",
+      "mode": "gameplay",
+      "yaw": 0.45,
+      "zoom": 1.25,
+      "covers": [
+        "facility:furnace_anvil"
+      ]
+    },
+    {
+      "id": "mining",
+      "target": "mining_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:mining:coal"
+      ]
+    },
+    {
+      "id": "woodcutting",
+      "target": "woodcutting_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "skill:woodcutting:willow"
+      ]
+    },
+    {
+      "id": "gather",
+      "target": "gather_approach",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.25,
+      "covers": [
+        "gather:pick_white_berries"
+      ]
+    },
+    {
+      "id": "district",
+      "target": "caravan_lodge:door",
+      "mode": "gameplay",
+      "yaw": 0.35,
+      "zoom": 1.1
+    }
+  ]
+}

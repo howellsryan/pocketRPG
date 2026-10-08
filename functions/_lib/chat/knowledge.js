@@ -138,6 +138,14 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "The World Map shows every settlement in Eldermoor, joined by roads. Tap a settlement to open its hub — lore, facilities, travel and teleport options, and a browsable list of what's available there. Walking follows the roads and takes real time; teleporting is instant but needs the destination's Magic level plus runes, and grants Magic XP. Some settlements (starting with Varrick) have their own illustrated town map: when you're there, tapping the settlement opens the town map instead, and you start activities by tapping the markers placed on it — city gates for monsters, the rooftop course for Agility, and so on. The bank marker opens banking plus training for the crafts doable at any banked settlement (Crafting, Fletching, Firemaking, Herblore, Magic, Construction). Prayer, Cooking and Smithing are tied to their own facilities — an altar, a stove, and a furnace & anvil — found only in some settlements; on a town map each facility is its own marker (in Varrick: the Royal Chapel, the Market Stove, the Grand Smithy). Every settlement with a sawmill (Varrick, Faloden, Ardounne, Seerhold) converts all log types to planks — its sawmill marker lists every conversion; the trading post marker opens the Trading Post. For mapped places the hub's activity list is browse-only — visit the town and tap a marker to begin — and backing out of a skilling screen you entered from the town map returns you to that map."
  },
  {
+  "id": "guide_exploring_the_shared_world",
+  "title": "Exploring the shared world",
+  "tags": [
+   "guide"
+  ],
+  "text": "The open world, its boss lairs and the Wilderness are available only in the testing preview. They cannot be entered in the live game, and Map and Settings have no beta entry option. Idle-game group bosses and raids remain available. In the testing preview, choose Enter the world from Map or Settings. Your character saves before entering in the same tab. New arrivals begin in Lumbright; returning explorers resume their world position. An active group boss session must finish before you enter. Eldermoor's cities share one overworld. Open its map, choose a named destination and select Walk to begin the complete journey. Destination details show the direction and remaining distance. Tap the ground to change course. Caves, pastures and boss lairs have named entrances. Choose Enter to go through; simply walking past an entrance keeps you outside. Boss requirements still apply, and you must leave combat before moving between areas. The return doorway leads to a safe road outside. Leave world from the world settings to return to the idle game."
+ },
+ {
   "id": "guide_idle_progress_and_offline_catch_up",
   "title": "Idle progress and offline catch-up",
   "tags": [
@@ -351,7 +359,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "PvP happens in one place: the Wilderness, an open-world area you enter from the Combat screen. There is no lobby and no matchmaking. You arrive in a walled border camp with a bank chest, where nothing can touch you. North through the gates is open PvP, and the game stops you at the line and asks you to confirm before you cross. Out there, anyone within 10 combat levels of you can attack you, and you can attack them. It is single combat: one fight at a time, and nobody can jump in on a fight already under way. Eating, potions, prayers (protection prayers included), special attacks and spells all work exactly as they do anywhere else in the open world. **If you die in the Wilderness you drop everything** — your whole inventory and every item you are wearing — on the ground for your killer. Bank what you cannot afford to lose. Untradeable items are the one exception, and not a kind one: they are destroyed rather than dropped, and your killer gets their shop value in coins instead. A one-life run ends there like it ends anywhere else. You cannot log out of a fight, and closing the tab is not a fight plan. Anywhere in the open world, leaving is refused while you are in combat — the Log out button tells you so, and if you close the tab or lose connection your character stays standing there, unable to fight back and perfectly killable, until the fight has been over for ten seconds. Run, eat, or die like everyone else. Outlaws roam the wastes when the map is quiet, so there is always something to fight. Several are out there at once and no two are the same account — pures, zerkers, rangers, mages and maxed mains, each kitted for its own build, and every one of them matched into your attack bracket. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not. Ironman and Grindman characters can fight in the Wilderness and keep every outlaw drop, but can never pick up loot dropped by another player."
+  "text": "The Wilderness is available only in the testing preview; the live game has no Wilderness entry. In the preview, enter this open-world PvP area from the Combat screen. There is no lobby and no matchmaking. You arrive in a walled border camp with a bank chest, where nothing can touch you. North through the gates is open PvP, and the game stops you at the line and asks you to confirm before you cross. Out there, anyone within 10 combat levels of you can attack you, and you can attack them. It is single combat: one fight at a time, and nobody can jump in on a fight already under way. Eating, potions, prayers (protection prayers included), special attacks and spells all work exactly as they do anywhere else in the open world. **If you die in the Wilderness you drop everything** — your whole inventory and every item you are wearing — on the ground for your killer. Bank what you cannot afford to lose. Untradeable items are the one exception, and not a kind one: they are destroyed rather than dropped, and your killer gets their shop value in coins instead. A one-life run ends there like it ends anywhere else. You cannot log out of a fight, and closing the tab is not a fight plan. Anywhere in the open world, leaving is refused while you are in combat — the Log out button tells you so, and if you close the tab or lose connection your character stays standing there, unable to fight back and perfectly killable, until the fight has been over for ten seconds. Run, eat, or die like everyone else. Outlaws roam the wastes when the map is quiet, so there is always something to fight. Several are out there at once and no two are the same account — pures, zerkers, rangers, mages and maxed mains, each kitted for its own build, and every one of them matched into your attack bracket. They carry a drop table of their own rather than the gear they wear, and they are the only source of the Zesta longsword, vest and skirt. Killing another player counts towards your PvP rank on the leaderboard; killing an outlaw does not. Ironman and Grindman characters can fight in the Wilderness and keep every outlaw drop, but can never pick up loot dropped by another player."
  },
  {
   "id": "guide_collection_log",
@@ -3505,12 +3513,12 @@ export const KNOWLEDGE_CHUNKS = [
  },
  {
   "id": "monster_sunclaw_gladiator",
-  "title": "Raid encounter monster: Sunclaw Gladiator (Sunspire Colosseum)",
+  "title": "Monster: Sunclaw Gladiator — stats and drops",
   "tags": [
    "monster",
-   "raid"
+   "drops"
   ],
-  "text": "Sunclaw Gladiator is a raid encounter monster fought only inside the Sunspire Colosseum, at combat level 240 with 480 HP, attacking with slash. It has no personal drop table — rewards come from the raid's own server-authoritative reward flow."
+  "text": "Sunclaw Gladiator is a monster at combat level 240 with 480 HP, attacking with slash."
  },
  {
   "id": "monster_dawnlance_colossus",

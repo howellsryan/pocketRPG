@@ -49,3 +49,12 @@ describe('stamps', () => {
     }
   })
 })
+
+it('preserves canonical fishing and fieldwork identities through a serialized editor stamp', () => {
+  const original=blankZone('source',16,16)
+  original.objects.push({id:'fish',type:'fishing_spot',fishing:'shrimps',x:2,z:3},{id:'cache',type:'gather_site',gather:'gather_bowstring',x:3,z:3})
+  const prefab=JSON.parse(JSON.stringify(extractRegion(original,1,2,4,4)!))
+  const target=blankZone('target',16,16)
+  stampPrefab(target,prefab,5,6)
+  expect(target.objects).toEqual([expect.objectContaining({type:'fishing_spot',fishing:'shrimps',x:6,z:7}),expect.objectContaining({type:'gather_site',gather:'gather_bowstring',x:7,z:7})])
+})

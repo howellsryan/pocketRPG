@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "region": "catherra",
+  "sourceHash": "0693773df24d837009bb2314769e97bb61712a61325ff220175107ff316d28aa",
+  "sourceCommit": "9d0c6f4b09677f0f5f89cc429c653cc8c836ccce",
+  "verdict": "approved",
+  "scope": "Approved for the requested world UI cleanup on the existing town-expansion beta preview: remove floating location/journey panels, town-name tile signposts and map preview quick travel. Existing production MMORPG, performance, economy and multiplayer gates remain open.",
+  "reviewedBy": "Codex primary agent; personally inspected 214 current native frames and verified exact full-PNG SHA-256 reuse for 146 prior personally inspected native frames, with individual provenance in world-ui-cleanup-capture-comparison.json",
+  "reviewedAt": "2026-10-08",
+  "evidenceUrl": "https://7e02e113-pocketrpg-world-review.rlh.workers.dev/9d0c6f4b09677f0f5f89cc429c653cc8c836ccce/",
+  "buildId": "d7e8c79c-1389-4549-a61e-0d3db827e191",
+  "views": [
+    "desktop:overview",
+    "desktop:arrival",
+    "mobile:arrival",
+    "integrated:arrival",
+    "desktop:hearth",
+    "mobile:hearth",
+    "integrated:hearth",
+    "desktop:mining",
+    "mobile:mining",
+    "integrated:mining",
+    "desktop:woodcutting",
+    "mobile:woodcutting",
+    "integrated:woodcutting",
+    "desktop:fishing",
+    "mobile:fishing",
+    "integrated:fishing",
+    "desktop:district",
+    "mobile:district",
+    "integrated:district"
+  ],
+  "comparisonManifest": "world-ui-cleanup-capture-comparison.json",
+  "criticalReview": "world-ui-cleanup.md",
+  "remainingGates": [
+    "Live phone frame-time, movement latency, loading and background/resume measurements",
+    "Two-player gathering, combat, banking, reconnect and save/return to idle testing",
+    "Server protected civic areas, pursuit leashes and animated-extent/lure regression coverage",
+    "Complete missing creature presentations and real facility/processing/probability adapters",
+    "Single progression clock, atomic session ownership and durable idempotent reward settlement",
+    "Organic terrain/shore edges, building variety, named interactive NPCs and local objectives"
+  ]
+}

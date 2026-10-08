@@ -9,10 +9,10 @@ async function makeAuthHeader(identityId = 'identity-1') {
   return `Bearer ${token}`
 }
 
-function makeRequest({ characterId = '42', auth = '', body = undefined as unknown } = {}) {
+function makeRequest({ characterId = '42', auth = '', body = undefined as unknown, url = 'https://preview.example.workers.dev/api/world-token' } = {}) {
   const headers: Record<string, string> = { 'X-Character-Id': characterId }
   if (auth) headers.Authorization = auth
-  return new Request('https://example.test/api/world-token', {
+  return new Request(url, {
     method: 'POST',
     headers,
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -37,7 +37,7 @@ function mockEnv({
       run: vi.fn().mockResolvedValue({}),
     })),
   }))
-  return { DB: { prepare }, JWT_SECRET: TEST_SECRET }
+  return { DB: { prepare }, JWT_SECRET: TEST_SECRET, WORLD_BETA_ENABLED: 'true' as unknown, APP_BASE_URL: 'https://preview.example.workers.dev' }
 }
 
 describe('POST /api/world-token', () => {
@@ -114,5 +114,27 @@ describe('POST /api/world-token', () => {
       const payload = await verifyJWT((await res.json()).handoff, TEST_SECRET)
       expect(payload.world_zone, String(zone)).toBeUndefined()
     }
+  })
+})
+
+describe('world handoff availability', () => {
+  it.each([undefined, 'false', true])('rejects missing or non-opt-in server flag (%s) before reading any character', async flag => {
+    const env = {...mockEnv(), WORLD_BETA_ENABLED: flag}
+    const res = await onRequestPost({request: makeRequest({auth: await makeAuthHeader()}), env} as any)
+    expect(res.status).toBe(404)
+    expect(await res.json()).not.toHaveProperty('handoff')
+    expect(env.DB.prepare).not.toHaveBeenCalled()
+  })
+  it.each(['https://pocketrpg.co.uk/api/world-token','https://www.pocketrpg.co.uk/api/world-token','https://world.pocketrpg.co.uk/api/world-token','https://pocketrpg.co.uk./api/world-token'])('rejects production request %s even with opt-in', async url => {
+    const env = mockEnv()
+    const res = await onRequestPost({request: makeRequest({auth: await makeAuthHeader(), url}), env} as any)
+    expect(res.status).toBe(404)
+    expect(env.DB.prepare).not.toHaveBeenCalled()
+  })
+  it('rejects production deployment through a Workers version alias', async () => {
+    const env = {...mockEnv(), APP_BASE_URL: 'https://pocketrpg.co.uk'}
+    const res = await onRequestPost({request: makeRequest({auth: await makeAuthHeader()}), env} as any)
+    expect(res.status).toBe(404)
+    expect(env.DB.prepare).not.toHaveBeenCalled()
   })
 })
