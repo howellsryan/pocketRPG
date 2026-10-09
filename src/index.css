@@ -783,9 +783,22 @@ html {
   height: 100dvh;
 }
 
-/* iOS can composite system strips outside the web viewport. Give those strips
-   the same opaque edge colour as the mobile frame. */
+/* Default status-bar mode places the installed viewport below the system bar.
+   iOS samples a real fixed element at the viewport's top for the bar's colour;
+   a pseudo-element or theme-color alone is not sufficient on recent iOS. */
+.pwa-status-bar { display: none; }
 @media (max-width: 767px) {
+  .pwa-standalone .pwa-status-bar {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    z-index: 2000;
+    background-color: var(--gf-shell-edge);
+    pointer-events: none;
+  }
   html.pwa-standalone,
   html.pwa-standalone body {
     background-color: var(--gf-shell-edge);
