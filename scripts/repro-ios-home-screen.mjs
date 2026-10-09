@@ -43,6 +43,13 @@ try {
     const errors = []
     page.on('pageerror', error => errors.push(String(error)))
     await page.goto(`http://127.0.0.1:${server.address().port}/`, { waitUntil: 'load' })
+    if (standalone) {
+      assert.equal(
+        await page.locator('meta[name="apple-mobile-web-app-status-bar-style"]').getAttribute('content'),
+        'default',
+        'Installation must place the web viewport below the status bar; translucent mode shifts it into the blurred region',
+      )
+    }
     await page.getByRole('navigation', { name: 'Quick actions' }).waitFor()
     await page.getByRole('button', { name: 'Close modal', exact: true }).click()
     await page.evaluate(() => document.fonts.ready)
@@ -74,9 +81,10 @@ try {
       return g
     }
     const initial = await check()
+    assert.equal(await page.locator('.pwa-status-bar').isVisible(), standalone, 'The status-bar colour sampler is limited to installed iOS apps')
     if (screenshots) await page.screenshot({ path: resolve(screenshots, `${browserName}-${standalone}-zero-inset.png`) })
+    const cdp = browserName === 'chromium' ? await context.newCDPSession(page) : null
     if (browserName === 'chromium') {
-      const cdp = await context.newCDPSession(page)
       await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 59, bottom: 34, left: 0, right: 0 } })
       await page.evaluate(() => new Promise(requestAnimationFrame))
       const notched = await check(59, 34)
@@ -94,7 +102,55 @@ try {
     await page.getByRole('navigation', { name: 'Quick actions' }).getByRole('button', { name: 'Equip', exact: true }).click()
     await page.getByRole('heading', { name: 'Equipment', exact: true }).waitFor()
     await page.getByRole('navigation', { name: 'Menu' }).getByRole('button', { name: 'Home', exact: true }).click()
+    if (standalone) {
+      // Model the available web window after iOS reserves the 59px status bar.
+      // This checks the page inside that window, not the native compositor.
+      await page.setViewportSize({ width: 390, height: 785 })
+      const bottomInset = cdp ? 34 : 0
+      if (cdp) await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 0, bottom: bottomInset, left: 0, right: 0 } })
+      await page.evaluate(() => new Promise(requestAnimationFrame))
+      await check(0, bottomInset)
+      const sampler = await page.locator('.pwa-status-bar').boundingBox()
+      assert.ok(sampler && sampler.y === 0 && sampler.height === 1 && sampler.width === 390, 'An opaque status-bar colour sampler spans the viewport without taking layout space')
+      const samplerStyle = await page.locator('.pwa-status-bar').evaluate(element => {
+        const style = getComputedStyle(element)
+        return { pointerEvents: style.pointerEvents, background: style.backgroundColor, opacity: style.opacity }
+      })
+      assert.deepEqual(samplerStyle, { pointerEvents: 'none', background: 'rgb(36, 24, 17)', opacity: '1' }, 'The sampler is opaque and cannot intercept taps')
+
+      // Disposable demo data reproduces the player's Firemaking screen without
+      // signing in or touching a cloud character.
+      await page.evaluate(async () => {
+        const db = await new Promise((resolve, reject) => {
+          const request = indexedDB.open('PocketRPG', 1)
+          request.onsuccess = () => resolve(request.result)
+          request.onerror = () => reject(request.error)
+        })
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction(['stats', 'bank'], 'readwrite')
+          transaction.objectStore('stats').put({ skill: 'firemaking', xp: 273742, level: 60 }, 'firemaking')
+          transaction.objectStore('bank').put({ itemId: 'yew_logs', quantity: 10000 }, 'yew_logs')
+          transaction.oncomplete = resolve
+          transaction.onerror = () => reject(transaction.error)
+        })
+        db.close()
+        localStorage.setItem('pocketrpg_theme', 'dark')
+      })
+      await page.reload({ waitUntil: 'load' })
+      await page.getByRole('button', { name: 'Firemaking, level 60', exact: true }).click()
+      await page.getByRole('button', { name: 'Skill Actions' }).click()
+      await page.getByRole('button', { name: /Burn yew logs/ }).click()
+      await page.getByRole('button', { name: 'Stop & Back', exact: true }).waitFor()
+      await page.evaluate(() => document.fonts.ready)
+      const active = await check(0, bottomInset)
+      const stop = await page.getByRole('button', { name: 'Stop & Back', exact: true }).boundingBox()
+      assert.ok(stop && stop.y + stop.height <= active.bottom.top, 'The action stop control stays above the bottom navigation')
+      if (screenshots) await page.screenshot({ path: resolve(screenshots, `${browserName}-firemaking-installed-window.png`) })
+      await page.getByRole('button', { name: 'Stop & Back', exact: true }).click()
+      if (cdp) await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 0, bottom: 0, left: 0, right: 0 } })
+    }
     await page.setViewportSize({ width: 1280, height: 800 })
+    assert.equal(await page.locator('.pwa-status-bar').isVisible(), false, 'Desktop does not render the iOS colour sampler')
     assert.equal(await page.getByRole('navigation', { name: 'Quick actions' }).isVisible(), false, 'Desktop keeps its own navigation')
     const desktop = await geometry()
     assert.equal(Math.round(desktop.root.height), 800, 'Desktop app fills the resized viewport')
