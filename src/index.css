@@ -765,6 +765,7 @@ html, body, #app {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  overscroll-behavior: none;
   background-color: var(--color-void);
   color: var(--color-parchment);
   font-family: var(--font-body);
@@ -774,11 +775,16 @@ html, body, #app {
   touch-action: manipulation;
 }
 
-/* Current iOS Home Screen apps can reserve a system-composited strip outside
-   the document viewport. That region cannot be filled by app content, but it
-   takes the root page paint. Match it to the mobile frame so the status-bar
-   and home-indicator edges stay visually continuous instead of exposing a
-   black/system-coloured band. */
+/* Percentage root heights can use iOS's reduced safe-area viewport. Size the
+   root explicitly; inner percentage heights then follow the available screen
+   through browser toolbar changes, rotation and standalone launches. */
+html {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* iOS can composite system strips outside the web viewport. Give those strips
+   the same opaque edge colour as the mobile frame. */
 @media (max-width: 767px) {
   html.pwa-standalone,
   html.pwa-standalone body {
@@ -858,8 +864,8 @@ html, body, #app {
   /* Carved dark-wood shell behind the rails and around the content panel. */
   .gf-shell {
     position: relative;
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
     background:
       radial-gradient(130% 50% at 50% 0%, rgba(0, 0, 0, 0.4), transparent 62%),
       radial-gradient(130% 50% at 50% 100%, rgba(0, 0, 0, 0.4), transparent 62%),
@@ -957,23 +963,12 @@ html, body, #app {
   }
 }
 
-/* PWA standalone — push the header below the system status bar (time/battery/wifi).
-   iOS Safari uses navigator.standalone (set via JS on <html>); Android/Chrome PWAs
-   match the display-mode media query. env(safe-area-inset-top) equals the status
-   bar height only when viewport-fit=cover is active and content sits behind it. */
-.pwa-standalone .pwa-header { padding-top: env(safe-area-inset-top); }
-@media (display-mode: standalone) {
-  .pwa-header { padding-top: env(safe-area-inset-top); }
-}
-
-/* PWA standalone — add bottom safe-area padding to scroll containers so content
-   scrolls above the home indicator instead of going behind it. Targeting
-   overflow-y-auto keeps the outer layout at full 100vh (no shrinkage), which
-   lets screens fill the extra space that was previously hidden by the browser
-   toolbar. The early pwa-standalone class handles iOS; the media query covers other standalone browsers. */
-.pwa-standalone .overflow-y-auto { padding-bottom: env(safe-area-inset-bottom); }
-@media (display-mode: standalone) {
-  .overflow-y-auto { padding-bottom: env(safe-area-inset-bottom); }
+/* Keep the medallion rings below the status bar even when iOS reserves that
+   strip itself and reports a zero inset. The bottom rail's pb-safe owns the
+   home-indicator clearance; inner scroll panels must not repeat that inset. */
+.pwa-header { padding-top: env(safe-area-inset-top, 0px); }
+@media (max-width: 767px) {
+  .gf-shell .pwa-header { padding-top: calc(0.75rem + env(safe-area-inset-top, 0px)); }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
