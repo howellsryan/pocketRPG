@@ -26,10 +26,17 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: world/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            world/package-lock.json
 
-      - name: Install world dependencies
-        run: cd world && npm ci
+      - name: Install root and world dependencies
+        # The world preview imports shared app components and their dependencies.
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm --prefix world ci --no-audit --no-fund
 
       - name: Typecheck and test the world subproject
         run: cd world && npm run typecheck && npm test
