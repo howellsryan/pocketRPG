@@ -103,15 +103,16 @@ try {
     await page.getByRole('heading', { name: 'Equipment', exact: true }).waitFor()
     await page.getByRole('navigation', { name: 'Menu' }).getByRole('button', { name: 'Home', exact: true }).click()
     if (standalone) {
-      // Model the available web window after iOS reserves the 59px status bar.
+      // Model an iPhone 15 Pro's available web window after iOS reserves the
+      // 59px status bar from its 393x852 CSS-pixel screen.
       // This checks the page inside that window, not the native compositor.
-      await page.setViewportSize({ width: 390, height: 785 })
+      await page.setViewportSize({ width: 393, height: 793 })
       const bottomInset = cdp ? 34 : 0
       if (cdp) await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 0, bottom: bottomInset, left: 0, right: 0 } })
       await page.evaluate(() => new Promise(requestAnimationFrame))
       await check(0, bottomInset)
       const sampler = await page.locator('.pwa-status-bar').boundingBox()
-      assert.ok(sampler && sampler.y === 0 && sampler.height === 1 && sampler.width === 390, 'An opaque status-bar colour sampler spans the viewport without taking layout space')
+      assert.ok(sampler && sampler.y === 0 && sampler.height === 1 && sampler.width === 393, 'An opaque status-bar colour sampler spans the viewport without taking layout space')
       const samplerStyle = await page.locator('.pwa-status-bar').evaluate(element => {
         const style = getComputedStyle(element)
         return { pointerEvents: style.pointerEvents, background: style.backgroundColor, opacity: style.opacity }

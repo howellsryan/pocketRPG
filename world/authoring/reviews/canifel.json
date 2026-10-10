@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "region": "canifel",
-  "sourceHash": "5f5bcd08fc997a5e016893dfb5696d97712313aa054dd10fc6c7b847175c0f95",
-  "sourceCommit": "58d5feb7e296c2ff4f4d4cdbafa753127ecd9585",
+  "sourceHash": "0c9089b1cc25af4597df36950001deef218a823bdbd1d21e755496c0966ce45b",
+  "sourceCommit": "1a13935faa8a99da6a78a9ce346c9e2d276df4bf",
   "verdict": "approved",
-  "scope": "Approved for the requested world UI cleanup on the existing town-expansion beta preview: remove floating location/journey panels, town-name tile signposts and map preview quick travel. Existing production MMORPG, performance, economy and multiplayer gates remain open.",
-  "reviewedBy": "Codex primary agent; personally inspected 214 current native frames and verified exact full-PNG SHA-256 reuse for 146 prior personally inspected native frames, with individual provenance in world-ui-cleanup-capture-comparison.json",
-  "reviewedAt": "2026-10-08",
-  "evidenceUrl": "https://4e5d145b-pocketrpg-world-review.rlh.workers.dev/58d5feb7e296c2ff4f4d4cdbafa753127ecd9585/",
-  "buildId": "4a67243e-d96b-4715-b678-a5729eebb396",
+  "scope": "Visual continuity approved after the already merged iPhone Home Screen layout fixes, within the existing world UI cleanup and fourteen-town beta preview scope. Existing production MMORPG, performance, economy and multiplayer gates remain open. Native iOS Home Screen status bar and compositor are not verified by these captures.",
+  "reviewedBy": "Codex primary agent; personally inspected 100 current native frames and verified exact full-PNG SHA-256 reuse for 260 prior inspected native frames, with individual provenance in home-screen-release-capture-comparison.json",
+  "reviewedAt": "2026-10-10",
+  "evidenceUrl": "https://128ca147-pocketrpg-world-review.rlh.workers.dev/1a13935faa8a99da6a78a9ce346c9e2d276df4bf/",
+  "buildId": "f48bcc37-6069-4ff6-b946-900938db13b4",
   "views": [
     "desktop:overview",
     "desktop:arrival",
@@ -24,8 +24,8 @@
     "mobile:district",
     "integrated:district"
   ],
-  "comparisonManifest": "world-ui-cleanup-capture-comparison.json",
-  "criticalReview": "world-ui-cleanup.md",
+  "comparisonManifest": "home-screen-release-capture-comparison.json",
+  "criticalReview": "home-screen-release.md",
   "remainingGates": [
     "Live phone frame-time, movement latency, loading and background/resume measurements",
     "Two-player gathering, combat, banking, reconnect and save/return to idle testing",
