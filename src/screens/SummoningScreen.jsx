@@ -1,3 +1,4 @@
+import { entrySkillMotionMs } from '../utils/skillMotion.js'
 import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import GameIcon from '../components/GameIcon.jsx'
@@ -83,8 +84,10 @@ export default function SummoningScreen({ onBack }) {
     const inkStage = inkPlan ? (
       <InkwrightStage
         plan={inkPlan}
+        elapsedAtEntry={entrySkillMotionMs(totalTicks, activeTask.ticksRemaining)}
         product={productItem}
         subject={riteCreature ? itemsData[riteCreature.pouch] : productItem}
+        rewards={[{ itemId: activeAction.product, quantity: activeAction.productQty || 1 }]}
         yieldToken={session.actions || 0}
         label={`${activeAction.name} in progress`}
       />

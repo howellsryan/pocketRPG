@@ -1,3 +1,4 @@
+import { entrySkillMotionMs } from '../utils/skillMotion.js'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
@@ -171,7 +172,9 @@ export default function ConstructionScreen({ onBack, onStopBack }) {
     const inkStage = inkPlan ? (
       <InkwrightStage
         plan={inkPlan}
+        elapsedAtEntry={entrySkillMotionMs(skilling.action.ticks, skilling.ticksRemaining)}
         subject={plankId ? itemsData[plankId] : null}
+        holding={skilling.justCompleted}
         yieldToken={skilling.totalActions}
         label={`${skilling.action.name} in progress`}
       />

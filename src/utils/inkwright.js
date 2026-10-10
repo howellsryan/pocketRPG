@@ -1,4 +1,5 @@
 import { actionCycleMs } from './actionSprites.js'
+import { skillMotionFamily } from './skillMotion.js'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Inkwright — the skilling figure. One inked-vector character, reused across
@@ -228,18 +229,20 @@ export function hasInkwrightMotion(skill) {
  * with a single truthiness check.
  */
 export function inkwrightPlan(skill, ticks, actionId) {
-  const sprite = inkwrightMotionForSkill(skill, actionId)
+  const sprite = inkwrightMotionForSkill(skill, actionId) || (skillMotionFamily(skill, actionId) ? { motion: 'sprite', prop: null, label: skill } : null)
   if (!sprite) return null
 
   const cycleMs = actionCycleMs(ticks)
   // Solve the count from the target, then the period back from the count, so
   // an exact whole number of strikes fills the action. Rounding the PERIOD
   // instead leaves a partial strike at the end and the yield lands mid-windup.
-  const strikes = Math.max(1, Math.min(MAX_STRIKES, Math.round(cycleMs / TARGET_STRIKE_MS)))
+  const strikes = Math.max(1, Math.min(skill === 'dungeoneering' || skill === 'agility' ? Infinity : MAX_STRIKES, Math.round(cycleMs / TARGET_STRIKE_MS)))
   const strikePeriodMs = Math.round(cycleMs / strikes)
 
   return {
     ...sprite,
+    skill,
+    actionId,
     cycleMs,
     strikes,
     strikePeriodMs,

@@ -1,3 +1,6 @@
+import { entrySkillMotionMs } from '../utils/skillMotion.js'
+import InkwrightStage from '../components/InkwrightStage.jsx'
+import { inkwrightPlan } from '../utils/inkwright.js'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -105,6 +108,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack, onS
           // Update session totals on the state object
           agilityRef.current = {
             ...agilityRef.current,
+            lastMotionRewards: ev.coinReward > 0 ? [{ itemId: 'coins', quantity: ev.coinReward }] : [],
             totalLaps: (agilityRef.current.totalLaps || 0) + 1,
             totalXP: (agilityRef.current.totalXP || 0) + grantedXP,
             totalCoins: (agilityRef.current.totalCoins || 0) + ev.coinReward
@@ -258,6 +262,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack, onS
   return (
     <SkillActivePanel
       skill="agility"
+      stage={<InkwrightStage plan={inkwrightPlan('agility', agility.action.ticks, agility.action.id)} elapsedAtEntry={entrySkillMotionMs(agility.action.ticks, agility.ticksRemaining)} yieldToken={agility.totalLaps} rewards={agility.lastMotionRewards || []} label={`${agility.action.name} in progress`} />}
       title={agility.action.name}
       subtitle={agility.action.description}
       progress={progress}

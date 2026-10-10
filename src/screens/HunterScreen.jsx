@@ -1,3 +1,4 @@
+import { entrySkillMotionMs } from '../utils/skillMotion.js'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
@@ -114,6 +115,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
           hunterRef.current = {
             ...hunterRef.current,
             totalActions: (hunterRef.current.totalActions || 0) + 1,
+            lastMotionRewards: ev.rewards,
             totalXP: (hunterRef.current.totalXP || 0) + grantedXP
           }
           if (ev.actionId) recordGameEvent?.({ kind: 'hunter_hunt', actionId: ev.actionId, count: 1 })
@@ -366,6 +368,8 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
   const inkStage = inkPlan ? (
     <InkwrightStage
       plan={inkPlan}
+      elapsedAtEntry={entrySkillMotionMs(hunter.action.ticks, hunter.ticksRemaining)}
+      rewards={hunter.lastMotionRewards || []}
       yieldToken={hunter.totalActions}
       paused={inventoryBlocked}
       label={`${hunter.action.name} in progress`}

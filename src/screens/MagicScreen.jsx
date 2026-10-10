@@ -1,3 +1,4 @@
+import { entrySkillMotionMs } from '../utils/skillMotion.js'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
@@ -183,6 +184,7 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
 
       for (const ev of events) {
         if (ev.type === 'actionComplete') {
+          skillingRef.current.lastMotionRewards = []
           const action = ev.action
           const newInv = [...inventoryRef.current]
 
@@ -231,6 +233,7 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
               } else {
                 newInv[slotIdx] = null
               }
+              skillingRef.current.lastMotionRewards = [{ itemId: 'coins', quantity: alchValue }]
               updateBankDirect({ coins: alchValue })
               updateInventory(newInv)
             }
@@ -260,6 +263,7 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
             }
             if (Object.keys(matsBankUpdates).length > 0) updateBankDirect(matsBankUpdates)
             if (action.product) {
+              skillingRef.current.lastMotionRewards = [{ itemId: action.product, quantity: action.productQty || 1 }]
               updateBankDirect({ [action.product]: action.productQty || 1 })
             }
             updateInventory(newInv)
@@ -307,8 +311,11 @@ export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
     const inkStage = inkPlan ? (
       <InkwrightStage
         plan={inkPlan}
+        elapsedAtEntry={entrySkillMotionMs(action.ticks, skilling.ticksRemaining)}
         product={stageProduct}
         subject={subjectId ? itemsData[subjectId] : null}
+        rewards={skilling.lastMotionRewards || []}
+        holding={skilling.justCompleted}
         yieldToken={skilling.totalActions}
         label={`${action.name} in progress`}
       />

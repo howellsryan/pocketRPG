@@ -1,3 +1,6 @@
+import InkwrightStage from '../components/InkwrightStage.jsx'
+import { inkwrightPlan } from '../utils/inkwright.js'
+import { farmingMotionAction } from '../utils/skillMotion.js'
 import { useState, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -32,10 +35,12 @@ export default function FarmingScreen({ initialLocationId, onBack }) {
     let totalXp = 0
     const items = {}
     let harvestedCount = 0
+    let motionType = 'herb'
     for (const patchData of allPatches) {
       if (!patchData.patch?.cropId || getEffectiveStage(patchData.patch) < 4) continue
       const result = harvestCrop(nextState, patchData.patchId, farmingLevel, herbMultiplier)
       if (!result) continue
+      if(harvestedCount === 0) motionType = patchData.type
       nextState = result.state
       totalXp += result.harvestXp
       items[result.cropId] = (items[result.cropId] || 0) + result.quantity
@@ -48,7 +53,7 @@ export default function FarmingScreen({ initialLocationId, onBack }) {
     updateFarming(nextState)
     if (totalXp > 0) grantXP('farming', totalXp)
     for (const [itemId, qty] of Object.entries(items)) addToBank(itemId, qty)
-    setResultModal({ title: 'Harvest All Complete', xp: totalXp, items, action: 'Harvested' })
+    setResultModal({ title: 'Harvest All Complete', xp: totalXp, items, action: 'Harvested', motionType })
   }
 
   const cropGroups = {
@@ -174,7 +179,9 @@ export default function FarmingScreen({ initialLocationId, onBack }) {
             summaryRows={summaryRows.length > 0 ? summaryRows : null}
             primaryAction={{ label: 'Continue', onClick: () => setResultModal(null) }}
             onClose={() => setResultModal(null)}
-          />
+          >
+            <InkwrightStage plan={inkwrightPlan('farming', 2, farmingMotionAction(isHarvest ? 'harvest' : 'plant', resultModal.motionType))} once label={resultModal.title}/>
+          </LootResultModal>
         )
       })()}
     </>

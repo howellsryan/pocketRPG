@@ -33,8 +33,7 @@ const FIGURE_SKILLS = [
 // hunter, summoning) are the same shape and are covered below too — thieving
 // and hunter pick their prop off the target's id, and summoning's actions are
 // built by engine/summoning.js rather than living in skills.json.
-// Agility is the last skill on the coverage plan (Tier B) with no figure yet.
-const NO_FIGURE_SKILLS = ['agility']
+// Sprite stages now cover Agility; the legacy SVG vocabulary stays unchanged.
 
 describe('inkwright — which skills have a figure', () => {
   it('covers every gathering/production skill wired so far, plus prayer, construction and magic', () => {
@@ -45,10 +44,7 @@ describe('inkwright — which skills have a figure', () => {
     expect(hasInkwrightMotion('hunter')).toBe(true)
     expect(hasInkwrightMotion('thieving')).toBe(true)
     expect(hasInkwrightMotion('summoning')).toBe(true)
-    for (const skill of NO_FIGURE_SKILLS) {
-      expect(hasInkwrightMotion(skill)).toBe(false)
-      expect(inkwrightPlan(skill, 4)).toBeNull()
-    }
+    expect(inkwrightPlan('agility', 4, 'gnome_stronghold')?.skill).toBe('agility')
   })
 
   it('every motion names a prop the stage can draw', () => {
@@ -373,11 +369,11 @@ describe('inkwright — the cadence law', () => {
     // inkwright.js signature change.
     const plan = inkwrightPlan('mining', 5)!
     expect(Object.keys(plan).sort()).toEqual(
-      ['cycleMs', 'label', 'motion', 'payoffMs', 'prop', 'strikePeriodMs', 'strikes'],
+      ['actionId', 'cycleMs', 'label', 'motion', 'payoffMs', 'prop', 'skill', 'strikePeriodMs', 'strikes'],
     )
     const prayerPlan = inkwrightPlan('prayer', 3, 'bury_bones')!
     expect(Object.keys(prayerPlan).sort()).toEqual(
-      ['cycleMs', 'label', 'motion', 'payoffMs', 'pose', 'prop', 'strikePeriodMs', 'strikes'],
+      ['actionId', 'cycleMs', 'label', 'motion', 'payoffMs', 'pose', 'prop', 'skill', 'strikePeriodMs', 'strikes'],
     )
   })
 
