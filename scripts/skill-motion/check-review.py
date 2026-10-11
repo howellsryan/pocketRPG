@@ -65,7 +65,7 @@ with sync_playwright() as p:
   assert page.locator('[data-family]').inner_text()==family,family
   methods.append(family)
   if len(methods)%10==0:print('Methods checked',len(methods),flush=True)
- assert len(methods)==56
+ assert len(methods)==70
  for tab in page.locator('nav[aria-label="Skills"] button').all():
   name=tab.inner_text();tab.click();ready();options=page.get_by_role('combobox',name='Action',exact=True).locator('option').evaluate_all('(es)=>es.map(e=>e.value)');counts[name]=len(options)
   print('Checking',name,len(options),flush=True)
@@ -93,7 +93,7 @@ with sync_playwright() as p:
  page.evaluate("Object.defineProperty(document,'hidden',{value:false,configurable:true});document.dispatchEvent(new Event('visibilitychange'))");page.wait_for_timeout(80);assert not rewardVisible(),'Hidden reward replayed on return'
  page.get_by_role('button',name='Pause',exact=True).click();page.get_by_role('slider',name='Inspect motion frame').fill('0');page.wait_for_timeout(80);page.evaluate('window.scrollTo(0,0)');page.screenshot(path=str(OUT/'gallery-desktop-final.png'),full_page=True)
  page.set_viewport_size({'width':390,'height':844});page.screenshot(path=str(OUT/'gallery-mobile-final.png'),full_page=True);width=page.evaluate('document.documentElement.scrollWidth');assert width<=390,width
- reduced=b.new_page(reduced_motion='reduce');reduced.on('pageerror',lambda e:errors.append(str(e)));reduced.goto(URL);reduced.get_by_role('combobox',name='Action',exact=True).select_option('magic');reduced.get_by_role('combobox',name='Tool',exact=True).select_option('none');reduced.wait_for_selector('canvas.is-ready');reduced.get_by_role('button',name='Play',exact=True).click();reduced.get_by_role('button',name='Preview completion',exact=True).click();reduced.wait_for_timeout(1200)
+ reduced=b.new_page(reduced_motion='reduce');reduced.on('pageerror',lambda e:errors.append(str(e)));reduced.goto(URL);reduced.get_by_role('button',name='Woodcutting',exact=True).click();reduced.get_by_role('combobox',name='Action',exact=True).select_option('magic');reduced.get_by_role('combobox',name='Tool',exact=True).select_option('none');reduced.wait_for_selector('canvas.is-ready');reduced.get_by_role('button',name='Play',exact=True).click();reduced.get_by_role('button',name='Preview completion',exact=True).click();reduced.wait_for_timeout(1200)
  assert reduced.locator('.skill-motion-rewards').evaluate('(e)=>getComputedStyle(e).visibility')=='hidden','Reduced reward lingered'
  rp=reduced.locator('.review-enlarged canvas').evaluate('(e)=>e.toDataURL()');reduced.wait_for_timeout(300);assert reduced.locator('.review-enlarged canvas').evaluate('(e)=>e.toDataURL()')==rp
  assert not errors,errors

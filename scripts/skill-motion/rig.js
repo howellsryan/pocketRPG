@@ -1,7 +1,7 @@
 import { palette } from './palette.js';
 import * as T from '../../public/vendor/three/three.module.min.js';
 
-const W = 400, H = 256;
+const W = 800, H = 512;
 const scene = new T.Scene();
 scene.background = new T.Color(palette['--ink-stone-shade']);
 const renderer = new T.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -11,9 +11,9 @@ renderer.outputColorSpace = T.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = T.PCFSoftShadowMap;
 document.body.append(renderer.domElement);
-const camera = new T.OrthographicCamera(-2.55,2.55,1.632,-1.632,.01,40);
-camera.position.set(4.1,4.4,7.1);
-camera.lookAt(.17,1.08,0);
+const camera = new T.OrthographicCamera(-1.72,1.72,1.1008,-1.1008,.01,40);
+camera.position.set(3.4,3.3,7.1);
+camera.lookAt(.12,.98,0);
 camera.updateMatrixWorld(true);
 scene.add(new T.HemisphereLight(palette['--ink-light-sky'],palette['--ink-light-ground'],2.15));
 const sun = new T.DirectionalLight(palette['--ink-light-sun'],2.45);
@@ -132,4 +132,4 @@ function ik(start,end,L1,L2,pole){
  return start.clone().addScaledVector(dir,along).addScaledVector(perp,height);
 }
 
-export {T,scene,renderer,camera,W,H,mat,mesh,box,ico,seg,setSeg,v,torso,pelvis,head,neck,feet,thighs,calves,boots,arms,ik};
+export {T,scene,renderer,camera,W,H,mat,mesh,box,ico,seg,setSeg,v,loft,patch,torso,pelvis,head,neck,feet,thighs,calves,boots,arms,ik};

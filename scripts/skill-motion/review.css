@@ -24,9 +24,11 @@ select { border:1px solid var(--hairline); border-radius:var(--fm-r-sm); min-hei
 .review-controls { align-items:flex-end; justify-content:center; }
 .review-scrubber { display:flex; align-items:center; justify-content:center; gap:12px; margin:16px 0; font-size:13px; }
 .review-scrubber input { min-height:44px; width:240px; accent-color:var(--accent-metal); }
-.review-detail { display:flex; justify-content:center; gap:35px; padding-top:18px; border-top:1px solid var(--hairline); }
+.review-detail { display:flex; flex-wrap:wrap; justify-content:center; gap:35px; padding-top:18px; border-top:1px solid var(--hairline); }
 .review-detail>div:last-child { max-width:320px; }
 .review-detail canvas { display:block; width:200px; height:128px; margin-top:12px; border-radius:var(--fm-r-sm); }
+.review-baseline img { display:block; margin-top:12px; border-radius:var(--fm-r-sm); }
+.review-baseline { max-width:200px; }
 .review-detail .fm-eyebrow { font-size:10px; }
 .review-items span { display:flex; align-items:center; gap:6px; font-size:13px; }
 .review-note { font-size:12px; color:var(--text-soft); line-height:1.6; }

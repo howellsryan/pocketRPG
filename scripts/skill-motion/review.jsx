@@ -26,10 +26,11 @@ function previewRewards(action,scenario){
  if(action.gemReward)return [{itemId:'diamond',quantity:1}]
  if(action.seedReward)return [{itemId:farms.herbs[0].id,quantity:1}]
  if(action.coinReward)return [{itemId:'coins',quantity:action.coinReward}]
+ if(action.coins)return [{itemId:'coins',quantity:action.coins}]
  return []
 }
 function MotionReview(){
- const [skill,setSkill]=useState('woodcutting'),[actionKey,setActionKey]=useState('normal'),[toolId,setToolId]=useState('dragon_axe')
+ const [skill,setSkill]=useState('thieving'),[actionKey,setActionKey]=useState('elf'),[toolId,setToolId]=useState('none')
  const [playing,setPlaying]=useState(!matchMedia('(prefers-reduced-motion: reduce)').matches),[frame,setFrame]=useState(null),[scenario,setScenario]=useState('normal'),[speed,setSpeed]=useState(1)
  const [session,setSession]=useState(null),[rewards,setRewards]=useState([]),engine=useRef(null),native=useRef(null)
  const actions=reviewActions[skill],action=actions.find(a=>(a.key||a.id)===actionKey)||actions[0]
@@ -54,7 +55,7 @@ function MotionReview(){
  },[playing,identity,scenario])
  useEffect(()=>{
   let raf=0
-  function paint(){const source=document.querySelector('.review-enlarged canvas.is-ready');if(source&&native.current)native.current.getContext('2d').drawImage(source,0,0);raf=requestAnimationFrame(paint)}
+  function paint(){const source=document.querySelector('.review-enlarged canvas.is-ready');if(source&&native.current)native.current.getContext('2d').drawImage(source,0,0,200,128);raf=requestAnimationFrame(paint)}
   paint();return()=>cancelAnimationFrame(raf)
  },[])
  function chooseSkill(s){setSkill(s);setActionKey(reviewActions[s][0].key||reviewActions[s][0].id);setToolId(Object.values(items).filter(i=>i.toolFor===s).sort((a,b)=>(b.requirements?.[s]||0)-(a.requirements?.[s]||0))[0]?.id||'none');setFrame(null)}
@@ -64,7 +65,7 @@ function MotionReview(){
  function showPayoff(){engine.current={...engine.current,totalActions:(engine.current?.totalActions||0)+1,justCompleted:true,ticksRemaining:0};setRewards(previewRewards(action,scenario));setSession({...engine.current});setFrame(null)}
  const subjectId=Object.keys(action.materials||{})[0],product=items[action.product]||items[action.dropTable?.[0]?.itemId]||items[action.rewardTables?.[0]?.rewards?.[0]?.itemId]||null
  return <main class="review-shell forge-shell">
-  <header><span class="fm-eyebrow">PocketRPG · Motion atelier</span><h1 class="fm-banner">The skills, brought to life.</h1><p>One approved human. Tools that meet their targets. Quiet, deliberate work.</p><div class="review-counts"><span class="fm-tag">339 recurring actions</span><span class="fm-tag">29 crops</span><span class="fm-tag">56 motion families</span></div></header>
+  <header><span class="fm-eyebrow">PocketRPG · Motion atelier</span><h1 class="fm-banner">A clearer, closer world.</h1><p>Distinct characters. Deliberate poses. Skill motions studied from Old School RuneScape.</p><div class="review-counts"><span class="fm-tag">339 recurring actions</span><span class="fm-tag">29 crops</span><span class="fm-tag">70 motion families</span><span class="fm-tag">12 Thieving targets</span></div></header>
   <nav class="review-skill-nav" aria-label="Skills">{Object.entries(reviewNames).map(([s,n])=><button class={`fm-toggle${s===skill?' is-on':''}`} aria-pressed={s===skill} onClick={()=>chooseSkill(s)}>{n}</button>)}</nav>
   <section class="fm-frame review-workbench"><div class="fm-parch">
    <div class="review-choice"><label>Action<select aria-label="Action" value={action.key||action.id} onChange={e=>{setActionKey(e.target.value);setFrame(null)}}>{actions.map(a=><option value={a.key||a.id}>{a.name}</option>)}</select></label>{tools.length>0&&<label>Tool<select aria-label="Tool" value={toolId} onChange={e=>{setToolId(e.target.value);setFrame(null)}}><option value="none">Bare hands</option>{tools.map(t=><option value={t.id}>{t.name}</option>)}</select></label>}</div>
@@ -72,10 +73,10 @@ function MotionReview(){
    <div class="review-enlarged"><InkwrightStage key={identity} plan={plan} tool={tool} subject={items[subjectId]||null} product={product} yieldToken={session?.totalActions||0} rewards={rewards} holding={session?.justCompleted||false} paused={!playing||frame!==null} frame={frame} label={`${action.name} preview`}/></div>
    <div class="review-controls"><button class="fm-btn fm-btn--ember" onClick={()=>{setPlaying(!playing);setFrame(null)}}>{playing?'Pause':'Play'}</button><button class="fm-btn fm-btn--brass" onClick={showPayoff}>Preview completion</button><label>Playback<select aria-label="Playback speed" value={speed} onChange={e=>setSpeed(Number(e.target.value))}><option value={1}>1× actual cadence</option><option value={.5}>½× inspection</option></select></label><label>Outcome<select aria-label="Outcome" value={scenario} onChange={e=>setScenario(e.target.value)}><option value="normal">Recipe output</option><option value="zero">No item output</option>{(action.dropTable||action.rewardTables?.length>1)&&<option value="multi">Multiple drops</option>}{action.burnStopLevel&&<option value="burn">Burnt food</option>}</select></label></div>
    <label class="review-scrubber">Inspect the full motion <input aria-label="Inspect motion frame" type="range" min="0" max="23" value={frame??0} onInput={e=>{setPlaying(false);setFrame(Number(e.target.value))}}/></label>
-   <div class="review-detail"><div><span class="fm-eyebrow">Native panel · 200 × 128</span><canvas ref={native} width="200" height="128" aria-label="Native size animation"/></div><div><span class="fm-eyebrow">Method & items</span><p class="fm-num" data-family={family}>{family}</p><div class="review-items">{tool&&<span><GameIcon item={tool} size={28}/>{tool.name}</span>}{product&&<span><GameIcon item={product} size={28}/>{product.name}</span>}</div><p class="review-note">{skill==='farming'?'Planting and harvesting complete immediately. This preview loops the presentation gesture.':'Completion follows the game’s 600ms ticks. The preview shows sample outcomes; it does not change an account.'}</p></div></div>
+   <div class="review-detail"><div><span class="fm-eyebrow">Native panel · 200 × 128</span><canvas ref={native} width="200" height="128" aria-label="Native size animation"/></div>{skill==='thieving'&&<div class="review-baseline"><span class="fm-eyebrow">Previous target artwork</span><img src={`baseline/${family==='steal-stall'?'steal-stall':['steal-guard','steal-knight','steal-ardougne-knight'].includes(family)?'steal-guard':'steal'}-still.webp`} width="200" height="128" alt="Previous Thieving artwork for comparison"/><p class="review-note">The previous set reused one civilian for eight targets.</p></div>}<div><span class="fm-eyebrow">Method & items</span><p class="fm-num" data-family={family}>{family}</p><div class="review-items">{tool&&<span><GameIcon item={tool} size={28}/>{tool.name}</span>}{product&&<span><GameIcon item={product} size={28}/>{product.name}</span>}</div><p class="review-note">{skill==='farming'?'Planting and harvesting complete immediately. This preview loops the presentation gesture.':'Completion follows the game’s 600ms ticks. The preview shows sample outcomes; it does not change an account.'}</p></div></div>
   </div></section>
-  <section class="review-methods"><h2 class="fm-rule-head">Every method, ready to inspect</h2><div class="review-method-grid">{Object.keys(SKILL_MOTION_CLIPS).map(f=><button class="fm-tile" aria-pressed={f===family} onClick={()=>chooseFamily(f)}><img loading="lazy" src={`skill-motion/${f}-still.webp`} width="200" height="128" alt=""/><span>{f.replaceAll('-',' ')}</span></button>)}</div></section>
-  <footer><a href="mining.html">Approved mining study & comparisons</a><a href="skill-motion-source.zip">Download the authoring and implementation sources</a></footer>
+  <section class="review-methods"><h2 class="fm-rule-head">Every method, ready to inspect</h2><div class="review-method-grid">{Object.keys(SKILL_MOTION_CLIPS).map(f=><button class="fm-tile" aria-pressed={f===family} onClick={()=>chooseFamily(f)}><img loading="lazy" src={`skill-motion/${f}-still.webp?v=2`} width="200" height="128" alt=""/><span>{f.replaceAll('-',' ')}</span></button>)}</div></section>
+  <footer><a href="references.html">OSRS references & motion notes</a><a href="mining.html">Approved mining study & comparisons</a><a href="skill-motion-source.zip">Download the authoring and implementation sources</a></footer>
  </main>
 }
 render(<MotionReview/>,document.getElementById('app'))

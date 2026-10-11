@@ -1,7 +1,7 @@
 import { actionCycleMs } from './actionSprites.js'
 // Presentation only. Timing is supplied by inkwrightPlan; rewards by callers.
-const SKILL_CLIP_NAMES = ['mine-pick','mine-hands','chop-axe','chop-hands','fish-net','fish-rod','fish-cage','fish-harpoon','fish-hands','kindle','cook','food-assemble','smelt','smith','smith-ammo','blade-assemble','special-assemble','tan','sew','glass','gem-cut','jewellery','carve','feather','arrow-tip','string-bow','bolt-tip','brew','combine-potions','bury','offer','scatter','hex','alchemy','superheat','enchant-jewel','enchant-bolt','magic-tan','magic-plank','runecraft','hunt-cow','hunt-person','hunt-herbi','hunt-reaper','steal','steal-guard','steal-stall','build','infuse','scroll','agility','dungeon','plant','harvest-ground','harvest-tree','harvest-fruit']
-export const SKILL_MOTION_CLIPS = Object.fromEntries(SKILL_CLIP_NAMES.map(name => [name, {src:`skill-motion/${name}.webp`,width:200,height:128,columns:6,frames:24}]))
+const SKILL_CLIP_NAMES = ['mine-pick','mine-hands','chop-axe','chop-hands','fish-net','fish-rod','fish-cage','fish-harpoon','fish-hands','kindle','cook','food-assemble','smelt','smith','smith-ammo','blade-assemble','special-assemble','tan','sew','glass','gem-cut','jewellery','carve','feather','arrow-tip','string-bow','bolt-tip','brew','combine-potions','bury','offer','scatter','hex','alchemy','superheat','enchant-jewel','enchant-bolt','magic-tan','magic-plank','runecraft','hunt-cow','hunt-person','hunt-wizard','hunt-jeweller','hunt-master-trader','hunt-herbi','hunt-reaper','steal','steal-farmer','steal-gardener','steal-baker','steal-master-farmer','steal-guard','steal-knight','steal-ardougne-knight','steal-vyre','steal-elf','steal-tzraar','steal-stall','build','infuse','scroll','agility','agility-balance','dungeon','plant','plant-sapling','harvest-ground','harvest-tree','harvest-fruit']
+export const SKILL_MOTION_CLIPS = Object.fromEntries(SKILL_CLIP_NAMES.map(name => [name, {src:`skill-motion/${name}.webp?v=2`,width:400,height:256,columns:6,frames:24}]))
 
 export function skillMotionFamily(skill, actionId = '', toolId = null) {
   const id=String(actionId || '')
@@ -22,11 +22,12 @@ export function skillMotionFamily(skill, actionId = '', toolId = null) {
   if(skill==='herblore')return id==='super_combat'?'combine-potions':'brew'
   if(skill==='prayer')return id.startsWith('altar_')?'offer':id.startsWith('scatter_')?'scatter':'bury'
   if(skill==='magic')return id==='curse'||id==='stun'?'hex':id==='high_alch'?'alchemy':id==='superheat'?'superheat':id==='tan_leather'?'magic-tan':id==='plank_make'?'magic-plank':id.includes('bolt')?'enchant-bolt':'enchant-jewel'
-  if(skill==='hunter')return id==='hunt_cow'?'hunt-cow':id==='hunt_herbi'?'hunt-herbi':id==='hunt_grim_reaper'?'hunt-reaper':'hunt-person'
-  if(skill==='thieving')return id.endsWith('_stall')?'steal-stall':['guard','knight','ardougne_knight'].includes(id)?'steal-guard':'steal'
+  if(skill==='hunter')return {hunt_cow:'hunt-cow',hunt_herbi:'hunt-herbi',hunt_grim_reaper:'hunt-reaper',hunt_wizard:'hunt-wizard',hunt_jeweller:'hunt-jeweller',hunt_master_trader:'hunt-master-trader'}[id]||'hunt-person'
+  if(skill==='thieving')return id.endsWith('_stall')?'steal-stall':id==='villager'?'steal':SKILL_MOTION_CLIPS[`steal-${id.replaceAll('_','-')}`]?`steal-${id.replaceAll('_','-')}`:'steal'
   if(skill==='summoning')return id.startsWith('summon_scroll_')?'scroll':'infuse'
-  if(skill==='farming')return id==='plant'?'plant':id==='harvest_tree'?'harvest-tree':id==='harvest_fruit'?'harvest-fruit':'harvest-ground'
-  return {firemaking:'kindle',runecraft:'runecraft',construction:'build',agility:'agility',dungeoneering:'dungeon'}[skill] || null
+  if(skill==='farming')return id==='plant_tree'?'plant-sapling':id==='plant'?'plant':id==='harvest_tree'?'harvest-tree':id==='harvest_fruit'?'harvest-fruit':'harvest-ground'
+  if(skill==='agility')return id==='gnome_stronghold'?'agility-balance':'agility'
+  return {firemaking:'kindle',runecraft:'runecraft',construction:'build',dungeoneering:'dungeon'}[skill] || null
 }
 
 /** A mount/action switch establishes a baseline; only a NEW token earns payoff. */
@@ -41,8 +42,12 @@ export function advanceSkillMotion(state, input, deltaMs) {
 export function sampleSkillMotion(family, elapsedMs, plan, reducedMotion=false) {
   if(reducedMotion)return 12
   let phase=(Math.max(0,elapsedMs)%plan.strikePeriodMs)/plan.strikePeriodMs
+  const cycle=Math.max(1,plan.cycleMs),elapsed=Math.max(0,elapsedMs)%cycle
+  if(family.startsWith('steal'))phase=Math.min(1,elapsed/Math.min(cycle,1200))
+  else if(['hex','alchemy','superheat','enchant-jewel','enchant-bolt','magic-tan','magic-plank','bury','scatter','offer','infuse','scroll'].includes(family))phase=Math.min(1,elapsed/Math.min(cycle,1800))
+  else if(family.startsWith('plant')||family.startsWith('harvest'))phase=elapsed/cycle
+  else if(family==='kindle')phase=elapsed<cycle*.72?.20+.025*Math.sin(elapsed/plan.strikePeriodMs*Math.PI*2):.77+(elapsed-cycle*.72)/(cycle*.28)*.23
   if(family.startsWith('fish-')||family.startsWith('hunt-')){
-    const cycle=Math.max(1,plan.cycleMs),elapsed=Math.max(0,elapsedMs)%cycle
     const setMs=Math.min(cycle*.35,plan.strikePeriodMs*1.4),retrieveMs=Math.min(cycle*.30,900)
     if(elapsed<setMs)phase=elapsed/setMs*.32
     else if(elapsed>=cycle-retrieveMs)phase=.78+(elapsed-(cycle-retrieveMs))/retrieveMs*.22
@@ -52,7 +57,7 @@ export function sampleSkillMotion(family, elapsedMs, plan, reducedMotion=false) 
 }
 
 export function farmingMotionAction(operation, type) {
-  if(operation==='plant')return 'plant'
+  if(operation==='plant')return type==='tree'||type==='fruitTree'?'plant_tree':'plant'
   return type==='tree'?'harvest_tree':type==='fruitTree'?'harvest_fruit':'harvest_ground'
 }
 

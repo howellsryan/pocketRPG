@@ -33,13 +33,14 @@ try:
    for i in range(160):
     data=page.evaluate('([p,f])=>{__pose(p,f,false);return __compact()}',[i/160,family]);matrices=[np.asarray(m).reshape(4,4).T for m in data['matrices']];body=np.concatenate([np.matmul(t,m[:3,:3].T)+m[:3,3] for t,m in zip(localBody,matrices)])
     if initialFeet is None:initialFeet=np.asarray(data['feet'])
-    if family not in ['agility','dungeon']:footSlide=max(footSlide,float(np.linalg.norm(np.asarray(data['feet'])-initialFeet,axis=1).max()))
+    if family not in ['agility','agility-balance','dungeon','hunt-herbi']:footSlide=max(footSlide,float(np.linalg.norm(np.asarray(data['feet'])-initialFeet,axis=1).max()))
     lengthError=max(lengthError,max(abs(l[j]-[.39,.39][j]) for l in data['arms'] for j in range(2)),max(abs(l[j]-[.39,.40][j]) for l in data['legs'] for j in range(2)))
     values={'shaft':float(mod.surface_distance(mod.line_points(data['shaft'],81),body).min()-.038) if data['shaft'] else 1.}
     for j,line in enumerate(data['forearms']):values[f'forearm{j}']=float((mod.surface_distance(mod.line_points(line,61),body)-np.linspace(.066,.045,61)).min())
     for k,n in values.items():minimum[k]=min(minimum[k],n)
     if any(n<0 for n in values.values()):bad.append({'phase':i/160,**values})
     if i==0 and data['contact'] and data['tip']:contactError=float(np.linalg.norm(np.array(data['contact'])-data['tip']))
+    if data.get('pocket') and .32<=i/160<=.45:contactError=max(contactError,float(np.linalg.norm(np.array(data['pocket'])-data['grips'][1])))
    r={'family':family,'samples':160,'minimum':minimum,'lengthError':lengthError,'contactError':contactError,'footSlide':footSlide,'bad':bad};rows.append(r)
    print(f'{family}: length {lengthError:.6f}; clearance {min(minimum.values()):.6f}; contact {contactError:.6f}; worst '+json.dumps(min(bad,key=lambda x:min(x[k] for k in minimum)) if bad else {}),flush=True)
    if lengthError>.002 or min(minimum.values())<0 or contactError>.001 or footSlide>.001:failures.append(r)

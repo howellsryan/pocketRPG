@@ -5857,7 +5857,7 @@ background-blend-mode: var(--surface-blend);
 .skill-motion-stage > .ink-stage { height: 100%; margin: 0; border: 0; }
 .skill-motion-canvas { display: none; width: 100%; height: auto; }
 .skill-motion-canvas.is-ready { display: block; }
-.skill-motion-subject { position: absolute; left: 56%; top: 51%; width: 7.5%; pointer-events: none; }
+.skill-motion-subject { position: absolute; left: 8px; bottom: 7px; width: 7.5%; pointer-events: none; }
 .skill-motion-subject svg { width: 100% !important; height: auto !important; }
 .skill-motion-rewards { position: absolute; left: 52%; right: 6px; top: 31%; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; color: var(--text-strong); background: var(--surface-raised); border-radius: var(--fm-r-sm); padding: 3px 5px; font: 11px var(--font-mono); }
 .skill-motion-rewards span { display: flex; align-items: center; gap: 2px; }

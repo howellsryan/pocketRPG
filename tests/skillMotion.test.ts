@@ -11,10 +11,25 @@ describe('skill motion presentation', () => {
     expect(inkwrightPlan('dungeoneering', 500, 'dungeoneering_floor_1')?.strikePeriodMs).toBeLessThanOrEqual(900)
   })
   it('chooses planting, ground harvesting, chopping and fruit picking from the actual operation', () => {
-    expect(farmingMotionAction('plant','fruitTree')).toBe('plant')
+    expect(farmingMotionAction('plant','fruitTree')).toBe('plant_tree')
+    expect(farmingMotionAction('plant','herb')).toBe('plant')
     expect(farmingMotionAction('harvest','herb')).toBe('harvest_ground')
     expect(farmingMotionAction('harvest','tree')).toBe('harvest_tree')
     expect(farmingMotionAction('harvest','fruitTree')).toBe('harvest_fruit')
+  })
+  it('draws each pickpocket target as its own character, and reaches for goods at stalls', () => {
+    const families=skills.thieving.npcs.map(n=>skillMotionFamily('thieving',n.id))
+    expect(new Set(families).size).toBe(skills.thieving.npcs.length)
+    expect(skillMotionFamily('thieving','elf')).toBe('steal-elf')
+    expect(skillMotionFamily('thieving','ardougne_knight')).toBe('steal-ardougne-knight')
+    expect(skillMotionFamily('thieving','cake_stall')).toBe('steal-stall')
+    for(const family of families)expect(SKILL_MOTION_CLIPS[family!]).toBeDefined()
+  })
+  it('performs one pickpocket attempt, then waits rather than repeatedly grabbing before a reward', () => {
+    const plan=inkwrightPlan('thieving',8,'master_farmer')!
+    expect(sampleSkillMotion('steal-master-farmer',300,plan)).toBeLessThan(18)
+    expect(sampleSkillMotion('steal-master-farmer',1800,plan)).toBe(23)
+    expect(sampleSkillMotion('steal-master-farmer',plan.cycleMs,plan)).toBe(0)
   })
   it('uses the selected fishing tool rather than imposing a species restriction', () => {
     expect(skillMotionFamily('fishing','shark','fishing_net')).toBe('fish-net')
