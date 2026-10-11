@@ -1,6 +1,6 @@
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-import json,threading,functools,shutil
+import json,threading,functools,shutil,sys
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'.tmp/skill-motion-browser';OUT.mkdir(exist_ok=True)
@@ -9,8 +9,46 @@ class Quiet(SimpleHTTPRequestHandler):
 server=ThreadingHTTPServer(('127.0.0.1',0),functools.partial(Quiet,directory=str(ROOT/'.tmp/skill-motion-review')))
 threading.Thread(target=server.serve_forever,daemon=True).start()
 URL=f'http://127.0.0.1:{server.server_port}'
+def check_scrolling(browser):
+ desktop=browser.new_page(viewport={'width':1360,'height':1000})
+ desktop.goto(URL);desktop.wait_for_selector('canvas.is-ready')
+ desktop.mouse.move(680,600);desktop.mouse.wheel(0,650);desktop.wait_for_timeout(350)
+ wheel=desktop.evaluate('window.scrollY')
+ desktop.mouse.wheel(0,100000);desktop.wait_for_timeout(350)
+ desktopFooter=desktop.locator('footer').bounding_box()
+ mobile=browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True)
+ phone=mobile.new_page();phone.goto(URL);phone.wait_for_selector('canvas.is-ready')
+ cdp=mobile.new_cdp_session(phone)
+ def swipe(distance=450,y=650):
+  end=max(80,y-distance)
+  cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':195,'y':y}]})
+  for step in range(1,13):
+   cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':195,'y':y-(y-end)*step/12}]})
+   phone.wait_for_timeout(20)
+  cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
+  phone.wait_for_timeout(120)
+ swipe();phone.wait_for_timeout(200);touch=phone.evaluate('window.scrollY')
+ canvasSwipe=0
+ if touch>0:
+  box=phone.locator('.review-enlarged canvas').bounding_box()
+  y=min(700,max(150,box['y']+box['height']*.7))
+  before=phone.evaluate('window.scrollY');swipe(y=y);phone.wait_for_timeout(200)
+  canvasSwipe=phone.evaluate('window.scrollY')-before
+  for _ in range(12):swipe(1000)
+ phone.wait_for_timeout(200);phoneFooter=phone.locator('footer').bounding_box()
+ result={'mouseWheel':wheel,'fingerSwipe':touch,'swipeOverAnimation':canvasSwipe,'desktopFooterReached':desktopFooter['y']<1000,'mobileFooterReached':phoneFooter['y']<844,'mobileWidth':phone.evaluate('document.documentElement.scrollWidth')}
+ desktop.close();mobile.close();print('Scrolling:',json.dumps(result),flush=True)
+ assert wheel>50 and touch>50 and canvasSwipe>50,result
+ assert result['desktopFooterReached'] and result['mobileFooterReached'],result
+ assert result['mobileWidth']<=390,result
+ (OUT/'scrolling.json').write_text(json.dumps(result,indent=2))
+ return result
+
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+ scrolling=check_scrolling(b)
+ if '--scroll-only' in sys.argv:
+  b.close();server.shutdown();sys.exit(0)
  page=b.new_page(viewport={'width':1360,'height':1000});errors=[];failed=[];methods=[];counts={}
  page.on('pageerror',lambda e:errors.append(str(e)))
  page.on('response',lambda r:failed.append({'status':r.status,'url':r.url}) if r.status>=400 else None)
@@ -60,7 +98,7 @@ with sync_playwright() as p:
  rp=reduced.locator('.review-enlarged canvas').evaluate('(e)=>e.toDataURL()');reduced.wait_for_timeout(300);assert reduced.locator('.review-enlarged canvas').evaluate('(e)=>e.toDataURL()')==rp
  assert not errors,errors
  assert not failed,failed
- report={'methods':methods,'actionCounts':counts,'recurringActions':339,'farmingOperations':58,'errors':errors,'failedRequests':failed,'mobileWidth':width,'lifecycle':['paused freeze','play advances','scrub five poses per family','new completion rewards','zero output','burnt food','multiple drops','no stale rewards on action switch','reduced static pose','reduced reward expiry','hidden freeze','no hidden reward replay']}
+ report={'scrolling':scrolling,'methods':methods,'actionCounts':counts,'recurringActions':339,'farmingOperations':58,'errors':errors,'failedRequests':failed,'mobileWidth':width,'lifecycle':['paused freeze','play advances','scrub five poses per family','new completion rewards','zero output','burnt food','multiple drops','no stale rewards on action switch','reduced static pose','reduced reward expiry','hidden freeze','no hidden reward replay']}
  (OUT/'browser-final.json').write_text(json.dumps(report,indent=2));print(json.dumps(report),flush=True);b.close()
 
 server.shutdown()
