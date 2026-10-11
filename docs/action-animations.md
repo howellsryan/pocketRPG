@@ -307,6 +307,39 @@ they're spelled out rather than left implicit.
    (or none), the exact bug the crossbow-vs-magic-orb naming collision would have
    been if `.inkc-shot--bolt` had been reused instead of adding `--crossbow`.
 
+## Faceted skilling motion
+
+The active skilling renderer is now `SkillMotionStage`, reached through the
+existing `InkwrightStage` interface. It uses the approved Mining human for
+56 method families covering 339 recurring actions and planting/harvesting
+29 crops. Agility and Dungeoneering also have traversal clips. The SVG sections
+below document the retained loading fallback and the separate combat renderer.
+
+Editable geometry and poses live in `scripts/skill-motion/`; baked atlases and
+material masks live in `public/skill-motion/`. Each atlas contains 24 native
+200×128 frames. Three.js runs only during authoring. The app paints Canvas
+frames and retains at most four decoded source images, plus the active tinted
+atlas. Fixed `--ink-*` material tokens in `src/index.css` own illustration
+colours, including the approved Mining cave palette. Masks recolour visible
+metal and resources without changing the human.
+
+`skillMotionFamily` chooses the physical method from the action and actual
+engine-selected tool. `inkwrightPlan` supplies the action cycle and strike
+cadence. Fishing and Hunter set, wait, and retrieve over the complete action;
+long courses and dungeon floors retain a brisk movement cadence. Screen entry
+seeds the current phase from remaining ticks. Paused or hidden stages stop,
+reduced motion uses a static pose, and action switches establish a fresh
+completion baseline. Only a new completion token displays a reward batch.
+Screens pass the actual awarded items and quantities, including zero output,
+multiple drops and burnt food; the renderer never rolls loot. Farming gestures
+follow the successful immediate operation and add no timer to crop mechanics.
+
+Authoring, asset regeneration and the standalone production-component gallery
+are documented in `scripts/skill-motion/README.md`. Geometry checks sample
+160 poses per family for fixed limb lengths, shaft/forearm clearance and
+working-tip contact. Inspect the rendered native-size poses as well: geometry
+checks alone cannot establish visual quality.
+
 ## Inkwright — the skilling figure
 
 `src/utils/inkwright.js` (pure) + `src/components/InkwrightStage.jsx` + the `.ink-*`
@@ -437,7 +470,7 @@ faster than a Bronze one for free; passing the base cost silently throws that aw
 | Firemaking, cooking, smithing, crafting, fletching, herblore, runecraft, prayer | `.ink-*` | shipped — Tier A, pure content on the system above |
 | Construction, magic (non-combat) | `.ink-*` | shipped — Tiers E and G, the first two screens off `SkillingScreen` (see below) |
 | Thieving, hunter, summoning | `.ink-*` | shipped — Tiers C, D and F (see below) |
-| Agility, dungeoneering | `.ink-*` | next — Tier B, the traversal motion family; plan in `docs/skill-animations-proposal.md`, built to the tier this file describes, not the pre-realism bar |
+| Agility, dungeoneering | `SkillMotionStage` | shipped — faceted traversal clips |
 | Slayer | — | no action of its own — trains via `CombatScreen`, already covered by `.inkc-*` |
 | Farming | — | out of scope for the Inkwright stage; patch-based UI, not a `SkillActivePanel` action loop |
 | Agility | — | own screen; it already renders `SkillActivePanel`, so wiring is a `stage` prop and the work is the motion design |

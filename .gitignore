@@ -51,3 +51,6 @@ world/preview-shots/
 # Cloudflare semantic-review build outputs
 /world/review-site/
 /world/.review-browser/
+
+# Python skill-motion authoring cache
+/scripts/skill-motion/__pycache__/

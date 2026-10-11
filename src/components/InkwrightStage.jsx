@@ -1,3 +1,4 @@
+import SkillMotionStage from './SkillMotionStage.jsx'
 import GameIcon from './GameIcon.jsx'
 import InkwrightFigure, { Limb } from './InkwrightFigure.jsx'
 import { getItemIconTint } from '../utils/itemIcons.js'
@@ -63,7 +64,12 @@ import gameIconsData from '../data/gameIcons.json'
  *   paused     — true when the action is stalled (inventory full), freezing the figure
  *   label      — accessible description
  */
-export default function InkwrightStage({ plan, product = null, subject = null, yieldToken = 0, paused = false, label = null }) {
+export default function InkwrightStage(props) {
+  if (!props.plan) return null
+  return <SkillMotionStage {...props} fallback={props.plan.motion === 'sprite' ? null : <LegacyInkwrightStage {...props} yieldToken={0} paused />} />
+}
+
+function LegacyInkwrightStage({ plan, product = null, subject = null, yieldToken = 0, paused = false, label = null }) {
   if (!plan) return null
 
   const { motion, prop, strikePeriodMs, payoffMs } = plan

@@ -1,3 +1,7 @@
+import InkwrightStage from '../components/InkwrightStage.jsx'
+import GameIcon from '../components/GameIcon.jsx'
+import { inkwrightPlan } from '../utils/inkwright.js'
+import { farmingMotionAction } from '../utils/skillMotion.js'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { getPatchesForLocation, getPlantableCropOptions, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel, getEffectiveStage, plantCrop, harvestCrop, herbYieldMultiplier } from '../engine/farming.ts'
@@ -20,6 +24,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack, backLa
   const location = farmingData.locations.find(l => l.id === locationId)
   const [patchStates, setPatchStates] = useState([])
   const [selectedPatch, setSelectedPatch] = useState(null)
+  const [motionResult, setMotionResult] = useState(null)
   const patchesRef = useRef(patchStates)
 
   useEffect(() => {
@@ -66,6 +71,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack, backLa
     if (seedSlot >= 0) removeFromInventory(seedSlot, 1)
     else updateBankDirect({ [seedId]: -1 })
     grantXP('farming', result.plantXp)
+    setMotionResult(previous => ({sequence:(previous?.sequence||0)+1, action:'plant', type:selectedPatch.type, itemId:seedId, quantity:1, label:`Planted ${crop.name}`}))
     setSelectedPatch(null)
   }
 
@@ -79,6 +85,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack, backLa
     updateFarming(result.state)
     grantXP('farming', result.harvestXp)
     addToBank(result.cropId, result.quantity)
+    setMotionResult(previous => ({sequence:(previous?.sequence||0)+1, action:'harvest', type:selectedPatch.type, itemId:result.cropId, quantity:result.quantity, label:`Harvested ${itemsData[result.cropId]?.name || result.cropId}`}))
     setSelectedPatch(null)
   }
 
@@ -101,6 +108,10 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack, backLa
         {location?.patches.map(p => `${p.count}× ${patchViewTypeLabels[p.type]}`).join(' · ')}
       </p>
 
+      {motionResult&&<div class="mb-3">
+        <InkwrightStage key={motionResult.sequence} plan={inkwrightPlan('farming', 2, farmingMotionAction(motionResult.action, motionResult.type))} once label={motionResult.label}/>
+        <span class="fm-tag"><GameIcon item={itemsData[motionResult.itemId]} size={18}/>{motionResult.label} ×{motionResult.quantity}</span>
+      </div>}
       <div class="space-y-2">
         {patchStates.map(patchData => (
           <PatchCard

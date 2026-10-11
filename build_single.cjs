@@ -30,6 +30,7 @@ const sourceFiles = [
   'utils/weaponShapes.js',
   'utils/monsterShapes.js',
   'utils/monsterFigures.js',
+  'utils/skillMotion.js',
   'utils/inkwright.js',
   'utils/xpDrops.js',
   'utils/lootModal.js',
@@ -201,6 +202,7 @@ const sourceFiles = [
   'components/HitSplat.js',
   'components/InkwrightFigure.js',
   'components/MonsterFigure.js',
+  'components/SkillMotionStage.js',
   'components/InkwrightStage.js',
   'components/InkwrightCombatStage.js',
   'components/ActivePotionBadges.js',
@@ -342,9 +344,11 @@ const GAME_CHUNK_FILES = new Set([
   'utils/weaponShapes.js', // -> game chunk, with the CombatTool that maps it (§12)
   'utils/monsterShapes.js', // -> game chunk, with the MonsterFigure that maps it (§12)
   'utils/monsterFigures.js', // -> game chunk, with the shapes it resolves against (§12)
+  'utils/skillMotion.js',
   'utils/inkwright.js', // -> game chunk, with the actionSprites law it reads (§12)
   'components/InkwrightFigure.js',
   'components/MonsterFigure.js',
+  'components/SkillMotionStage.js',
   'components/InkwrightStage.js',
   'components/InkwrightCombatStage.js',
   'hooks/useActionSwings.js', // -> game chunk, with the SWING_MAX_MS it reads (§12)

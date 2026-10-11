@@ -1,3 +1,4 @@
+import { entrySkillMotionMs } from '../utils/skillMotion.js'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
@@ -109,6 +110,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
       for (const ev of events) {
         if (ev.type === 'pickpocketSuccess') {
           const grantedXP = grantXP('thieving', ev.xp)
+          const motionRewards = []
 
           // Master Farmer rewards a single seed / sapling per pickpocket
           // (stackable, inventory-first, falling back to the bank).
@@ -129,6 +131,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
                 updateBankDirect({ [seedId]: 1 })
               }
             }
+            motionRewards.push({ itemId: seedId, quantity: 1 })
             seedGained = 1
           }
 
@@ -150,6 +153,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
               } else {
                 updateBankDirect({ [gemId]: 1 })
               }
+              motionRewards.push({ itemId: gemId, quantity: 1 })
               gemGained = 1
               lastGemId = gemId
             }
@@ -157,6 +161,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
 
           // Add coins to inventory or bank
           if (ev.coins > 0) {
+            motionRewards.push({ itemId: 'coins', quantity: ev.coins })
             const currentInv = [...(inventoryRef.current)]
             const coinsSlotIdx = currentInv.findIndex(s => s && s.itemId === 'coins')
             if (coinsSlotIdx >= 0) {
@@ -181,7 +186,8 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
             totalCoins: (thievingRef.current.totalCoins || 0) + ev.coins,
             totalSeeds: (thievingRef.current.totalSeeds || 0) + seedGained,
             totalGems: (thievingRef.current.totalGems || 0) + gemGained,
-            lastGemId
+            lastGemId,
+            lastMotionRewards: motionRewards
           }
         }
       }
@@ -353,7 +359,9 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
   const inkStage = inkPlan ? (
     <InkwrightStage
       plan={inkPlan}
+      elapsedAtEntry={entrySkillMotionMs(getPickpocketTicks(thieving.npc), thieving.ticksRemaining)}
       product={stealProduct}
+      rewards={thieving.lastMotionRewards || []}
       yieldToken={thieving.totalPickpockets}
       paused={inventoryBlocked}
       label={`Pickpocketing ${thieving.npc.name}`}

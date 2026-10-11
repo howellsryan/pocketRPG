@@ -1,0 +1,41 @@
+@font-face { font-family:"Grenze Gotisch"; src:url("fonts/grenze-gotisch.woff2") format("woff2"); font-weight:800; font-display:swap; }
+@font-face { font-family:"Spectral"; src:url("fonts/spectral.woff2") format("woff2"); font-weight:400; font-display:swap; }
+@font-face { font-family:"Spline Sans Mono"; src:url("fonts/spline-sans-mono.woff2") format("woff2"); font-weight:400; font-display:swap; }
+/* This standalone gallery scrolls as a document; the game locks its root. */
+html, body, #app { height:auto; min-height:100%; overflow:visible; overscroll-behavior:auto; }
+html { overflow-x:hidden; overflow-y:auto; }
+.review-counts .fm-tag { color:var(--text-soft); border-color:var(--hairline); }
+body { margin:0; background:var(--surface-page); color:var(--text-strong); font-family:var(--font-body); }
+.review-shell { color:var(--text-strong); font-family:var(--font-body); max-width:1100px; margin:auto; padding:40px 22px; }
+header { max-width:770px; margin-bottom:28px; }
+header h1 { font-size:clamp(38px,6vw,65px); margin:14px 0; }
+header p { color:var(--text-soft); font-size:19px; }
+.review-counts, .review-skill-nav, .review-controls, .review-choice, .review-items { display:flex; flex-wrap:wrap; gap:8px; }
+.review-skill-nav { margin:20px 0; }
+.review-skill-nav button { min-height:44px; }
+.review-workbench .fm-parch { padding:24px; }
+.review-choice label, .review-controls label { display:flex; flex-direction:column; gap:5px; font-size:13px; color:var(--text-soft); }
+.review-choice label:first-child { flex:1; }
+select { border:1px solid var(--hairline); border-radius:var(--fm-r-sm); min-height:44px; padding:8px 12px; background:var(--surface-card); color:var(--text-strong); max-width:100%; }
+.review-stage-heading { display:flex; justify-content:space-between; align-items:center; gap:15px; margin-top:18px; }
+.review-stage-heading h2 { font-size:24px; }
+.review-stage-heading .fm-num { white-space:nowrap; font-size:13px; }
+.review-enlarged { max-width:600px; margin:0 auto 20px; }
+.review-controls { align-items:flex-end; justify-content:center; }
+.review-scrubber { display:flex; align-items:center; justify-content:center; gap:12px; margin:16px 0; font-size:13px; }
+.review-scrubber input { min-height:44px; width:240px; accent-color:var(--accent-metal); }
+.review-detail { display:flex; flex-wrap:wrap; justify-content:center; gap:35px; padding-top:18px; border-top:1px solid var(--hairline); }
+.review-detail>div:last-child { max-width:320px; }
+.review-detail canvas { display:block; width:200px; height:128px; margin-top:12px; border-radius:var(--fm-r-sm); }
+.review-baseline img { display:block; margin-top:12px; border-radius:var(--fm-r-sm); }
+.review-baseline { max-width:200px; }
+.review-detail .fm-eyebrow { font-size:10px; }
+.review-items span { display:flex; align-items:center; gap:6px; font-size:13px; }
+.review-note { font-size:12px; color:var(--text-soft); line-height:1.6; }
+.review-methods { margin-top:35px; }
+.review-method-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+.review-method-grid button { display:block; padding:0 0 9px; overflow:hidden; text-align:left; }
+.review-method-grid img { width:100%; height:auto; display:block; }
+.review-method-grid span { display:block; padding:8px 12px 0; font-size:13px; text-transform:capitalize; }
+footer { display:flex; flex-wrap:wrap; gap:24px; padding:25px 0; color:var(--accent-metal); font-size:13px; }
+@media(max-width:600px) { .review-shell {padding:22px 12px;} .review-workbench .fm-parch {padding:12px;} .review-stage-heading {align-items:start;flex-direction:column;gap:0;} .review-detail {flex-direction:column;align-items:center;gap:20px;} .review-controls {justify-content:start;} .review-scrubber {flex-direction:column;gap:0;} .review-method-grid {grid-template-columns:repeat(2,minmax(0,1fr));} }

@@ -100,6 +100,39 @@
      a shade/highlight pair, matching weaponShapes.js's own restraint rather
      than the multi-stop gradients an early prototype used and rejected.
      docs/action-animations.md has the fuller rationale. */
+  --ink-trousers: #5a5039;
+  --ink-hair-cropped: #483421;
+  --ink-hair-highlight: #503a25;
+  --ink-sole: #241c14;
+  --ink-eye: #302a20;
+  --ink-lip: #89664b;
+  --ink-support-deep: #342e24;
+  --ink-mine-background: #38382f;
+  --ink-crate-gap: #3f3022;
+  --ink-support-dark: #4b3b28;
+  --ink-waist: #4b3e2b;
+  --ink-shale-deep: #4b4f43;
+  --ink-light-ground: #4c4436;
+  --ink-shale-shadow: #555749;
+  --ink-gravel-dark: #575849;
+  --ink-support-low: #5e4830;
+  --ink-shale-mid: #606052;
+  --ink-support-mid: #614c32;
+  --ink-crate-wood: #66492d;
+  --ink-shale-light: #686855;
+  --ink-gravel-mid: #696754;
+  --ink-floor-dark: #6c614d;
+  --ink-floor-shadow: #72654e;
+  --ink-floor-mid: #756950;
+  --ink-floor-light: #796d56;
+  --ink-floor-pale: #80735a;
+  --ink-gravel-light: #8a7d60;
+  --ink-light-fill: #9ba499;
+  --ink-copper-dark: #c2702f;
+  --ink-light-lamp: #e49c51;
+  --ink-copper-light: #e69a54;
+  --ink-light-sky: #efdfc1;
+  --ink-light-sun: #f7e6c5;
   --ink-skin: #caa27a;
   --ink-skin-shade: #a67c54;
   --ink-hair: #3a2a1c;
@@ -5818,3 +5851,15 @@ background-blend-mode: var(--surface-blend);
 }
 
 .wm-explore { position: absolute; top: 12px; left: 12px; z-index: 24; width: min(320px, calc(100% - 24px)); touch-action: auto; }
+
+/* Native sprite stages keep the authored camera at 200×128 at every viewport. */
+.skill-motion-stage { height: auto; aspect-ratio: 200 / 128; }
+.skill-motion-stage > .ink-stage { height: 100%; margin: 0; border: 0; }
+.skill-motion-canvas { display: none; width: 100%; height: auto; }
+.skill-motion-canvas.is-ready { display: block; }
+.skill-motion-subject { position: absolute; left: 8px; bottom: 7px; width: 7.5%; pointer-events: none; }
+.skill-motion-subject svg { width: 100% !important; height: auto !important; }
+.skill-motion-rewards { position: absolute; left: 52%; right: 6px; top: 31%; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; color: var(--text-strong); background: var(--surface-raised); border-radius: var(--fm-r-sm); padding: 3px 5px; font: 11px var(--font-mono); }
+.skill-motion-rewards span { display: flex; align-items: center; gap: 2px; }
+
+.skill-motion-tool { position: absolute; right: 8px; bottom: 7px; display: flex; }

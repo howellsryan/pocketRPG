@@ -1,3 +1,4 @@
+import { entrySkillMotionMs } from '../utils/skillMotion.js'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
@@ -14,7 +15,7 @@ import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillingActionBlockedByFullInventory, usesShardglassGatherTool, resolveShardglassToolSource, consumeShardglassGatherCharge } from '../engine/skilling.js'
+import { findBestToolForSkill, createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillingActionBlockedByFullInventory, usesShardglassGatherTool, resolveShardglassToolSource, consumeShardglassGatherCharge } from '../engine/skilling.js'
 import { applySkillYield } from '../engine/skillingPerks.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
@@ -217,6 +218,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
       for (const ev of events) {
         if (ev.type === 'actionComplete') {
           // Check materials and runes
+          skillingRef.current.lastMotionRewards = []
           const action = ev.action
           const newInv = [...inventoryRef.current]
 
@@ -306,6 +308,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
             const cookLevel = getLevelFromXP(stats.cooking?.xp || 0)
             if (checkBurn(cookLevel, { level: action.level, burnStopLevel: action.burnStopLevel })) {
               if (!deposit(newInv, { burnt_food: 1 })) return
+              skillingRef.current.lastMotionRewards = [{ itemId: 'burnt_food', quantity: 1 }]
               updateInventory(newInv)
               grantXP(state.skill, 1) // Tiny XP for burn
               setSkilling({ ...skillingRef.current })
@@ -342,6 +345,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
               }
 
               // Add coins to bank
+              skillingRef.current.lastMotionRewards = [{ itemId: 'coins', quantity: alchValue }]
               updateBankDirect({ coins: alchValue })
               updateInventory(newInv)
               addToast(`Alchemized ${alchItem.name} for ${alchValue.toLocaleString()} coins`, 'success')
@@ -359,6 +363,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
               }
             }
             if (!deposit(newInv, drops)) return
+            skillingRef.current.lastMotionRewards = Object.entries(drops).map(([itemId, quantity]) => ({ itemId, quantity }))
             updateInventory(newInv)
             recordGameEvent?.({ kind: isGatheringSkill ? 'skill_gather' : 'skill_produce', skill: state.skill, itemId: action.product, count: qty })
           } else if (action.dropTable) {
@@ -378,6 +383,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
             if (Object.keys(drops).length > 0) {
               if (!deposit(newInv, drops)) return
             }
+            skillingRef.current.lastMotionRewards = Object.entries(drops).map(([itemId, quantity]) => ({ itemId, quantity }))
             updateInventory(newInv)
           } else if (action.materials) {
             // Still update inventory if materials were consumed
@@ -993,17 +999,18 @@ Shop value: ×1.1
   const inventoryBlocked = skilling.action?.category !== 'reward'
     && skillingActionBlockedByFullInventory(skilling.action, inventory, itemsData)
 
-  // The figure, for the skills that have a motion. `skilling.action.ticks` is
-  // already the TOOL-ADJUSTED cost (getEffectiveToolActionTicks, stored on the
-  // session at start), so a Rune pickaxe strikes visibly faster than a Bronze
-  // one without this call site knowing tools exist. Built here rather than in
-  // SkillActivePanel because that panel is core and these modules are
-  // game-chunk only (§12).
+  // The session owns tool-adjusted ticks. The shared panel stays in core;
+  // motion modules and this caller belong to the deferred game chunk.
   const inkPlan = inkwrightPlan(selectedSkill, skilling.action.ticks, skilling.action.id)
   const inkStage = inkPlan ? (
     <InkwrightStage
       plan={inkPlan}
-      product={producedItem}
+      elapsedAtEntry={entrySkillMotionMs(skilling.action.ticks, skilling.ticksRemaining)}
+      product={producedItem || itemsData[skilling.action.dropTable?.[0]?.itemId] || null}
+      subject={itemsData[Object.keys(skilling.action.materials || {})[0]] || null}
+      tool={findBestToolForSkill(selectedSkill, equipment, inventory, itemsData, stats)}
+      rewards={skilling.lastMotionRewards || []}
+      holding={skilling.justCompleted}
       yieldToken={skilling.totalActions}
       paused={inventoryBlocked}
       label={`${skilling.action.name} in progress`}
